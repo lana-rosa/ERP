@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lana Rosa OS — Punto de Venta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.45.4/supabase.min.js"></script>
+<style>
+  :root {
+    --rosa-principal: #d8017c;
+    --rosa-medio: #ff8fd4;
+    --rosa-suave: #f9ddf4;
+    --azul-acero: #85a3c0;
+    --blanco-hueso: #efebeb;
+    --texto-oscuro: #3a2c35;
+    --verde-exito: #2e8b57;
+    --rojo-error: #c0392b;
+    --sombra: 0 2px 12px rgba(216, 1, 124, 0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: var(--blanco-hueso);
+    color: var(--texto-oscuro);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px;
+  }
+
+  .topbar {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  .marca {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .marca-oveja {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--rosa-suave);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .marca-texto {
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--rosa-principal);
+    line-height: 1.1;
+  }
+
+  .marca-texto span {
+    display: block;
+    font-weight: 400;
+    font-size: 11px;
+    color: var(--texto-oscuro);
+    opacity: 0.6;
+  }
+
+  .btn-salir {
+    background: none;
+    border: none;
+    color: var(--azul-acero);
+    font-size: 13px;
+    font-family: 'Poppins', sans-serif;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  .tarjeta {
+    width: 100%;
+    max-width: 480px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: var(--sombra);
+    padding: 28px 24px;
+  }
+
+  .tarjeta + .tarjeta {
+    margin-top: 16px;
+  }
+
+  h1 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--texto-oscuro);
+    margin-bottom: 6px;
+  }
+
+  .subtitulo {
+    font-size: 13px;
+    color: var(--texto-oscuro);
+    opacity: 0.65;
+    margin-bottom: 22px;
+  }
+
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    margin-top: 16px;
+  }
+
+  input {
+    width: 100%;
+    padding: 13px 14px;
+    border: 1.5px solid #e4d9e2;
+    border-radius: 10px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 15px;
+    background: #fdfbfd;
+    transition: border-color 0.15s ease;
+  }
+
+  input:focus {
+    outline: none;
+    border-color: var(--rosa-medio);
+  }
+
+  .btn-principal {
+    width: 100%;
+    padding: 15px;
+    margin-top: 24px;
+    background: var(--rosa-principal);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.05s ease;
+  }
+
+  .btn-principal:hover { background: #b80168; }
+  .btn-principal:active { transform: scale(0.98); }
+  .btn-principal:disabled {
+    background: #d9b8cb;
+    cursor: not-allowed;
+  }
+
+  .btn-secundario {
+    width: 100%;
+    padding: 15px;
+    margin-top: 12px;
+    background: white;
+    color: var(--rosa-principal);
+    border: 1.5px solid var(--rosa-principal);
+    border-radius: 10px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .btn-secundario:hover { background: var(--rosa-suave); }
+
+  .mensaje {
+    margin-top: 16px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    line-height: 1.4;
+    display: none;
+  }
+
+  .mensaje.visible { display: block; }
+  .mensaje.error { background: #fdecea; color: var(--rojo-error); }
+  .mensaje.exito { background: #eaf6ef; color: var(--verde-exito); }
+
+  .badge-rol {
+    display: inline-block;
+    background: var(--rosa-suave);
+    color: var(--rosa-principal);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 4px;
+  }
+
+  .estado-turno {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px;
+    border-radius: 10px;
+    background: var(--rosa-suave);
+    margin-bottom: 18px;
+    font-size: 14px;
+  }
+
+  .punto {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .punto.abierto { background: var(--verde-exito); }
+  .punto.cerrado { background: var(--azul-acero); }
+
+  .resumen-cierre {
+    background: var(--rosa-suave);
+    border-radius: 10px;
+    padding: 16px;
+    margin-top: 16px;
+    font-size: 14px;
+  }
+
+  .resumen-fila {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+  }
+
+  .resumen-fila.total {
+    font-weight: 700;
+    border-top: 1px solid rgba(216, 1, 124, 0.2);
+    margin-top: 6px;
+    padding-top: 10px;
+  }
+
+  .oculto { display: none !important; }
+
+  .cargando {
+    text-align: center;
+    color: var(--azul-acero);
+    font-size: 13px;
+    padding: 20px 0;
+  }
+
+  footer {
+    margin-top: 24px;
+    font-size: 11px;
+    color: var(--texto-oscuro);
+    opacity: 0.5;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="marca">
+    <div class="marca-oveja">🐑</div>
+    <div class="marca-texto">Lana Rosa OS<span>Punto de venta</span></div>
+  </div>
+  <button class="btn-salir oculto" id="btnSalir" onclick="cerrarSesion()">Cerrar sesión</button>
+</div>
+
+<!-- PANTALLA: LOGIN -->
+<div class="tarjeta" id="pantallaLogin">
+  <h1>Iniciar sesión</h1>
+  <div class="subtitulo">Ingresa con tu correo y contraseña de Lana Rosa OS</div>
+
+  <label for="inputCorreo">Correo</label>
+  <input type="email" id="inputCorreo" placeholder="tucorreo@gmail.com" autocomplete="email">
+
+  <label for="inputClave">Contraseña</label>
+  <input type="password" id="inputClave" placeholder="••••••••" autocomplete="current-password">
+
+  <button class="btn-principal" id="btnLogin" onclick="iniciarSesion()">Entrar</button>
+
+  <div class="mensaje" id="mensajeLogin"></div>
+</div>
+
+<!-- PANTALLA: CARGANDO TURNO (tras login) -->
+<div class="tarjeta oculto" id="pantallaCargando">
+  <div class="cargando">Consultando estado de tu turno...</div>
+</div>
+
+<!-- PANTALLA: ABRIR TURNO -->
+<div class="tarjeta oculto" id="pantallaAbrirTurno">
+  <span class="badge-rol" id="badgeRolAbrir"></span>
+  <h1>Abrir turno de caja</h1>
+  <div class="subtitulo">Cuenta el efectivo físico con el que vas a empezar el turno antes de hacer la primera venta.</div>
+
+  <label for="inputMontoApertura">Efectivo inicial en caja (COP)</label>
+  <input type="number" id="inputMontoApertura" placeholder="0" min="0" step="1000">
+
+  <button class="btn-principal" id="btnAbrirTurno" onclick="abrirTurno()">Abrir turno</button>
+
+  <div class="mensaje" id="mensajeAbrirTurno"></div>
+</div>
+
+<!-- PANTALLA: TURNO ACTIVO -->
+<div class="tarjeta oculto" id="pantallaTurnoActivo">
+  <span class="badge-rol" id="badgeRolActivo"></span>
+  <h1>Turno en curso</h1>
+
+  <div class="estado-turno">
+    <div class="punto abierto"></div>
+    <div>
+      Turno abierto desde <strong id="horaApertura"></strong><br>
+      Efectivo inicial: <strong id="montoAperturaTexto"></strong>
+    </div>
+  </div>
+
+  <div class="subtitulo">Desde aquí vas a poder registrar ventas (próximamente en esta misma pantalla). Por ahora puedes cerrar el turno para hacer el arqueo de caja.</div>
+
+  <button class="btn-secundario" id="btnIrCerrar" onclick="mostrarCierreTurno()">Cerrar turno (hacer arqueo)</button>
+</div>
+
+<!-- PANTALLA: CERRAR TURNO -->
+<div class="tarjeta oculto" id="pantallaCerrarTurno">
+  <h1>Cerrar turno — Arqueo de caja</h1>
+  <div class="subtitulo">Cuenta físicamente el efectivo que tienes en caja ahora y escribe el monto exacto.</div>
+
+  <label for="inputMontoDeclarado">Efectivo contado físicamente (COP)</label>
+  <input type="number" id="inputMontoDeclarado" placeholder="0" min="0" step="1000">
+
+  <label for="inputObservaciones">Observaciones (opcional)</label>
+  <input type="text" id="inputObservaciones" placeholder="Ej: faltaron $2.000 de cambio">
+
+  <button class="btn-principal" id="btnCerrarTurno" onclick="cerrarTurno()">Confirmar cierre</button>
+  <button class="btn-secundario" onclick="volverATurnoActivo()">Cancelar</button>
+
+  <div id="resumenCierre" class="resumen-cierre oculto"></div>
+  <div class="mensaje" id="mensajeCerrarTurno"></div>
+</div>
+
+<footer>Lana Rosa Crochet · Sistema interno · Versión 2026</footer>
+
+<script>
+  // ============================================================================
+  // CONFIGURACIÓN — Ajustar si cambia el proyecto de Supabase o la URL del Worker
+  // ============================================================================
+  const SUPABASE_URL = 'https://ngjoognzvehwjtpqwrqe.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5nam9vZ256dmVod2p0cHF3cnFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3MDAzMDYsImV4cCI6MjA5NzI3NjMwNn0.2BNYuaQOTh-lU8GZcYhJAnZPBiJvT5PwB9MYZwNHTUE';
+  const WORKER_URL = 'https://lana-rosa-os-pos.saralmunoz1301.workers.dev';
+
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let sesionActual = null; // { token, userId, email }
+  let rolActual = null;
+  let turnoActivoActual = null;
+
+  // ============================================================================
+  // UTILIDADES
+  // ============================================================================
+  function mostrarPantalla(idPantalla) {
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaCerrarTurno'];
+    pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
+    document.getElementById(idPantalla).classList.remove('oculto');
+    document.getElementById('btnSalir').classList.toggle('oculto', idPantalla === 'pantallaLogin');
+  }
+
+  function mostrarMensaje(idMensaje, texto, tipo) {
+    const el = document.getElementById(idMensaje);
+    el.textContent = texto;
+    el.className = 'mensaje visible ' + tipo;
+  }
+
+  function ocultarMensaje(idMensaje) {
+    document.getElementById(idMensaje).className = 'mensaje';
+  }
+
+  function formatearMoneda(valor) {
+    return '$' + Math.round(valor).toLocaleString('es-CO');
+  }
+
+  function etiquetaRol(rol) {
+    const etiquetas = { administrador: 'Administradora', cajero: 'Cajero/a', taller: 'Taller', contador: 'Contador/a' };
+    return etiquetas[rol] || rol;
+  }
+
+  // ============================================================================
+  // LOGIN
+  // ============================================================================
+  async function iniciarSesion() {
+    const correo = document.getElementById('inputCorreo').value.trim();
+    const clave = document.getElementById('inputClave').value;
+    ocultarMensaje('mensajeLogin');
+
+    if (!correo || !clave) {
+      mostrarMensaje('mensajeLogin', 'Escribe tu correo y contraseña.', 'error');
+      return;
+    }
+
+    const btn = document.getElementById('btnLogin');
+    btn.disabled = true;
+    btn.textContent = 'Entrando...';
+
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email: correo, password: clave });
+
+    btn.disabled = false;
+    btn.textContent = 'Entrar';
+
+    if (error) {
+      mostrarMensaje('mensajeLogin', 'No pudimos iniciar sesión: ' + traducirErrorAuth(error.message), 'error');
+      return;
+    }
+
+    sesionActual = { token: data.session.access_token, userId: data.user.id, email: data.user.email };
+    await obtenerRolUsuario();
+    await despuesDeLogin();
+  }
+
+  function traducirErrorAuth(mensaje) {
+    if (mensaje.includes('Invalid login credentials')) return 'correo o contraseña incorrectos.';
+    return mensaje;
+  }
+
+  async function cerrarSesion() {
+    await supabaseClient.auth.signOut();
+    sesionActual = null;
+    rolActual = null;
+    turnoActivoActual = null;
+    document.getElementById('inputClave').value = '';
+    mostrarPantalla('pantallaLogin');
+  }
+
+  // ============================================================================
+  // DESPUÉS DE INICIAR SESIÓN: consultar si ya hay un turno abierto
+  // ============================================================================
+  async function despuesDeLogin() {
+    mostrarPantalla('pantallaCargando');
+
+    try {
+      const resp = await fetch(WORKER_URL + '/api/pos/turnos/activo', {
+        headers: { Authorization: 'Bearer ' + sesionActual.token }
+      });
+
+      if (!resp.ok) {
+        const cuerpoError = await resp.json().catch(() => ({}));
+        throw new Error(cuerpoError.error || 'No se pudo consultar el turno');
+      }
+
+      const datos = await resp.json();
+      turnoActivoActual = datos.turno_activo;
+
+      if (turnoActivoActual) {
+        mostrarTurnoActivo();
+      } else {
+        mostrarPantallaAbrirTurno();
+      }
+    } catch (err) {
+      // Si el error es por rol no asignado, es importante que se vea claro
+      mostrarPantallaAbrirTurno();
+      mostrarMensaje('mensajeAbrirTurno', 'Aviso: ' + err.message, 'error');
+    }
+  }
+
+  function mostrarPantallaAbrirTurno() {
+    document.getElementById('badgeRolAbrir').textContent = etiquetaRol(rolActual || '');
+    mostrarPantalla('pantallaAbrirTurno');
+  }
+
+  // ============================================================================
+  // ABRIR TURNO
+  // ============================================================================
+  async function abrirTurno() {
+    const monto = Number(document.getElementById('inputMontoApertura').value);
+    ocultarMensaje('mensajeAbrirTurno');
+
+    if (isNaN(monto) || monto < 0) {
+      mostrarMensaje('mensajeAbrirTurno', 'Escribe un monto válido (puede ser 0 si la caja inicia vacía).', 'error');
+      return;
+    }
+
+    const btn = document.getElementById('btnAbrirTurno');
+    btn.disabled = true;
+    btn.textContent = 'Abriendo turno...';
+
+    try {
+      const resp = await fetch(WORKER_URL + '/api/pos/turnos/abrir', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+        body: JSON.stringify({ monto_apertura: monto })
+      });
+
+      const datos = await resp.json();
+
+      if (!resp.ok) {
+        throw new Error(datos.error || 'No se pudo abrir el turno');
+      }
+
+      turnoActivoActual = {
+        id: datos.turno_id,
+        monto_apertura: monto,
+        fecha_apertura: new Date().toISOString()
+      };
+
+      mostrarTurnoActivo();
+    } catch (err) {
+      mostrarMensaje('mensajeAbrirTurno', err.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Abrir turno';
+    }
+  }
+
+  // ============================================================================
+  // PANTALLA TURNO ACTIVO
+  // ============================================================================
+  function mostrarTurnoActivo() {
+    document.getElementById('badgeRolActivo').textContent = etiquetaRol(rolActual || '');
+    const fecha = new Date(turnoActivoActual.fecha_apertura);
+    document.getElementById('horaApertura').textContent = fecha.toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
+    document.getElementById('montoAperturaTexto').textContent = formatearMoneda(turnoActivoActual.monto_apertura);
+    mostrarPantalla('pantallaTurnoActivo');
+  }
+
+  function mostrarCierreTurno() {
+    document.getElementById('resumenCierre').classList.add('oculto');
+    document.getElementById('inputMontoDeclarado').value = '';
+    document.getElementById('inputObservaciones').value = '';
+    ocultarMensaje('mensajeCerrarTurno');
+    mostrarPantalla('pantallaCerrarTurno');
+  }
+
+  function volverATurnoActivo() {
+    mostrarTurnoActivo();
+  }
+
+  // ============================================================================
+  // CERRAR TURNO (ARQUEO)
+  // ============================================================================
+  async function cerrarTurno() {
+    const montoDeclarado = Number(document.getElementById('inputMontoDeclarado').value);
+    const observaciones = document.getElementById('inputObservaciones').value.trim();
+    ocultarMensaje('mensajeCerrarTurno');
+
+    if (isNaN(montoDeclarado) || montoDeclarado < 0) {
+      mostrarMensaje('mensajeCerrarTurno', 'Escribe el monto exacto que contaste en efectivo.', 'error');
+      return;
+    }
+
+    const btn = document.getElementById('btnCerrarTurno');
+    btn.disabled = true;
+    btn.textContent = 'Cerrando turno...';
+
+    try {
+      const resp = await fetch(WORKER_URL + '/api/pos/turnos/cerrar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+        body: JSON.stringify({
+          turno_id: turnoActivoActual.id,
+          monto_declarado_cierre: montoDeclarado,
+          observaciones: observaciones || null
+        })
+      });
+
+      const datos = await resp.json();
+
+      if (!resp.ok) {
+        throw new Error(datos.error || 'No se pudo cerrar el turno');
+      }
+
+      mostrarResumenCierre(datos);
+      turnoActivoActual = null;
+    } catch (err) {
+      mostrarMensaje('mensajeCerrarTurno', err.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Confirmar cierre';
+    }
+  }
+
+  function mostrarResumenCierre(datos) {
+    const etiquetaNovedad = { cuadrado: '✅ Caja cuadrada', sobrante: '🔺 Sobrante en caja', faltante: '🔻 Faltante en caja' };
+    const resumen = document.getElementById('resumenCierre');
+    resumen.innerHTML = `
+      <div class="resumen-fila"><span>Efectivo esperado</span><strong>${formatearMoneda(datos.monto_esperado)}</strong></div>
+      <div class="resumen-fila"><span>Efectivo contado</span><strong>${formatearMoneda(datos.monto_declarado)}</strong></div>
+      <div class="resumen-fila total"><span>${etiquetaNovedad[datos.tipo_novedad]}</span><strong>${formatearMoneda(Math.abs(datos.diferencia))}</strong></div>
+    `;
+    resumen.classList.remove('oculto');
+    mostrarMensaje('mensajeCerrarTurno', 'Turno cerrado correctamente. Puedes cerrar sesión o abrir un nuevo turno si vas a seguir vendiendo.', 'exito');
+  }
+
+  // ============================================================================
+  // OBTENER ROL DEL USUARIO (consulta directa a Supabase, solo lectura)
+  // ============================================================================
+  async function obtenerRolUsuario() {
+    const { data, error } = await supabaseClient
+      .from('usuarios_roles')
+      .select('rol')
+      .eq('user_id', sesionActual.userId)
+      .eq('activo', true)
+      .single();
+
+    if (error || !data) {
+      rolActual = null;
+      return;
+    }
+    rolActual = data.rol;
+  }
+
+  // ============================================================================
+  // AL CARGAR LA PÁGINA: revisar si ya hay una sesión guardada por Supabase
+  // ============================================================================
+  window.addEventListener('DOMContentLoaded', async () => {
+    const { data } = await supabaseClient.auth.getSession();
+    if (data.session) {
+      sesionActual = { token: data.session.access_token, userId: data.session.user.id, email: data.session.user.email };
+      await obtenerRolUsuario();
+      await despuesDeLogin();
+    }
+  });
+
+</script>
+
+</body>
+</html>
