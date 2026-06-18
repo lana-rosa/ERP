@@ -926,12 +926,19 @@
     <div style="margin-top:16px;">
       <h2>Datos del cliente <span style="font-size:12px;font-weight:400;opacity:0.6;">(opcional)</span></h2>
       <div style="margin-top:8px;">
-        <label for="clienteNombre">Nombre</label>
-        <input type="text" id="clienteNombre" placeholder="Nombre completo">
         <label for="clienteTelefono">Teléfono</label>
-        <input type="tel" id="clienteTelefono" placeholder="300 000 0000">
+        <input type="tel" id="clienteTelefono" placeholder="300 000 0000" oninput="autocompletarCliente('telefono')">
         <label for="clienteCorreo">Correo</label>
-        <input type="email" id="clienteCorreo" placeholder="correo@gmail.com">
+        <input type="email" id="clienteCorreo" placeholder="correo@gmail.com" oninput="autocompletarCliente('correo')">
+        <label for="clienteNombre">Nombre completo</label>
+        <input type="text" id="clienteNombre" placeholder="Nombre completo">
+        <label for="clienteIdentificacion">Número de identificación <span style="font-size:11px;opacity:0.6;">(opcional)</span></label>
+        <input type="text" id="clienteIdentificacion" placeholder="CC, CE, NIT...">
+        <label for="clienteDireccion">Dirección <span style="font-size:11px;opacity:0.6;">(opcional — para envíos)</span></label>
+        <input type="text" id="clienteDireccion" placeholder="Calle 10 # 5-20">
+        <label for="clienteCiudad">Ciudad <span style="font-size:11px;opacity:0.6;">(opcional)</span></label>
+        <input type="text" id="clienteCiudad" placeholder="Manizales">
+        <div id="mensajeAutocompletado" style="font-size:12px;color:var(--verde-exito);margin-top:6px;display:none;">✅ Cliente encontrado — datos precargados</div>
       </div>
     </div>
 
@@ -1214,11 +1221,31 @@
 
   function mostrarResumenCierre(datos) {
     const etiquetaNovedad = { cuadrado: '✅ Caja cuadrada', sobrante: '🔺 Sobrante en caja', faltante: '🔻 Faltante en caja' };
+    const etiquetasPago = { nequi: 'Nequi', daviplata: 'Daviplata', tarjeta_debito: 'Tarjeta débito', tarjeta_credito: 'Tarjeta crédito' };
+
+    let otrosMetodosHtml = '';
+    if (datos.otros_metodos && datos.otros_metodos.length > 0) {
+      otrosMetodosHtml = `
+        <div style="margin-top:10px;padding-top:8px;border-top:1px dashed rgba(216,1,124,0.2);font-size:12px;opacity:0.7;">
+          <div style="font-weight:600;margin-bottom:4px;">Pagos digitales (no cuentan en caja física):</div>
+          ${datos.otros_metodos.map(m => `
+            <div class="resumen-fila">
+              <span>${etiquetasPago[m.metodo_pago] || m.metodo_pago}</span>
+              <strong>${formatearMoneda(m.total_cobrado)}</strong>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
     const resumen = document.getElementById('resumenCierre');
     resumen.innerHTML = `
-      <div class="resumen-fila"><span>Efectivo esperado</span><strong>${formatearMoneda(datos.monto_esperado)}</strong></div>
-      <div class="resumen-fila"><span>Efectivo contado</span><strong>${formatearMoneda(datos.monto_declarado)}</strong></div>
+      <div class="resumen-fila"><span>Efectivo apertura</span><strong>${formatearMoneda(datos.monto_apertura)}</strong></div>
+      <div class="resumen-fila"><span>+ Ventas en efectivo</span><strong>${formatearMoneda(datos.ventas_efectivo)}</strong></div>
+      <div class="resumen-fila"><span>= Efectivo esperado en caja</span><strong>${formatearMoneda(datos.monto_esperado)}</strong></div>
+      <div class="resumen-fila"><span>Efectivo contado físicamente</span><strong>${formatearMoneda(datos.monto_declarado)}</strong></div>
       <div class="resumen-fila total"><span>${etiquetaNovedad[datos.tipo_novedad]}</span><strong>${formatearMoneda(Math.abs(datos.diferencia))}</strong></div>
+      ${otrosMetodosHtml}
     `;
     resumen.classList.remove('oculto');
     mostrarMensaje('mensajeCerrarTurno', 'Turno cerrado correctamente. Puedes cerrar sesión o abrir un nuevo turno si vas a seguir vendiendo.', 'exito');
@@ -1528,12 +1555,22 @@
       const clienteNombre = document.getElementById('clienteNombre').value.trim();
       const clienteTelefono = document.getElementById('clienteTelefono').value.trim();
       const clienteCorreo = document.getElementById('clienteCorreo').value.trim();
+      const clienteIdentificacion = document.getElementById('clienteIdentificacion').value.trim();
+      const clienteDireccion = document.getElementById('clienteDireccion').value.trim();
+      const clienteCiudad = document.getElementById('clienteCiudad').value.trim();
 
       if (clienteNombre && (clienteTelefono || clienteCorreo)) {
         const clienteResp = await fetch(WORKER_URL + '/api/pos/clientes', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-          body: JSON.stringify({ nombre: clienteNombre, telefono: clienteTelefono || null, correo: clienteCorreo || null })
+          body: JSON.stringify({
+            nombre: clienteNombre,
+            telefono: clienteTelefono || null,
+            correo: clienteCorreo || null,
+            identificacion: clienteIdentificacion || null,
+            direccion: clienteDireccion || null,
+            ciudad: clienteCiudad || null
+          })
         });
         const clienteDatos = await clienteResp.json();
         if (clienteResp.ok) {
@@ -1584,6 +1621,10 @@
       document.getElementById('clienteNombre').value = '';
       document.getElementById('clienteTelefono').value = '';
       document.getElementById('clienteCorreo').value = '';
+      document.getElementById('clienteIdentificacion').value = '';
+      document.getElementById('clienteDireccion').value = '';
+      document.getElementById('clienteCiudad').value = '';
+      document.getElementById('mensajeAutocompletado').style.display = 'none';
       renderizarCarrito();
       renderizarPagos();
       await cargarCatalogo(); // refresca el stock mostrado
@@ -1598,8 +1639,51 @@
   }
 
   // ============================================================================
-  // GESTIÓN DE INVENTARIO
+  // AUTOCOMPLETADO DE CLIENTE
   // ============================================================================
+  let autocompletadoTimeout = null;
+
+  async function autocompletarCliente(campo) {
+    clearTimeout(autocompletadoTimeout);
+    autocompletadoTimeout = setTimeout(async () => {
+      const telefono = document.getElementById('clienteTelefono').value.trim();
+      const correo = document.getElementById('clienteCorreo').value.trim();
+      const msgEl = document.getElementById('mensajeAutocompletado');
+
+      // Solo buscar si hay al menos 7 caracteres en el campo que se está escribiendo
+      const valorBusqueda = campo === 'telefono' ? telefono : correo;
+      if (valorBusqueda.length < 7) {
+        msgEl.style.display = 'none';
+        return;
+      }
+
+      let query = supabaseClient.from('terceros').select('nombre_completo, telefono, email, numero_documento, direccion, ciudad');
+      if (campo === 'telefono' && telefono) {
+        query = query.eq('telefono', telefono);
+      } else if (campo === 'correo' && correo) {
+        query = query.eq('email', correo);
+      }
+
+      const { data, error } = await query.limit(1).single();
+
+      if (error || !data) {
+        msgEl.style.display = 'none';
+        return;
+      }
+
+      // Precargar los campos con los datos encontrados
+      document.getElementById('clienteNombre').value = data.nombre_completo || '';
+      document.getElementById('clienteIdentificacion').value = data.numero_documento || '';
+      document.getElementById('clienteDireccion').value = data.direccion || '';
+      document.getElementById('clienteCiudad').value = data.ciudad || '';
+      if (campo === 'telefono' && data.email) document.getElementById('clienteCorreo').value = data.email;
+      if (campo === 'correo' && data.telefono) document.getElementById('clienteTelefono').value = data.telefono;
+
+      msgEl.style.display = 'block';
+    }, 500); // esperar 500ms después de que el usuario deje de escribir
+  }
+
+
   let inventarioGestionCompleto = [];
 
   async function mostrarPantallaInventario() {
