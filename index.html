@@ -1223,32 +1223,45 @@
     const etiquetaNovedad = { cuadrado: '✅ Caja cuadrada', sobrante: '🔺 Sobrante en caja', faltante: '🔻 Faltante en caja' };
     const etiquetasPago = { nequi: 'Nequi', daviplata: 'Daviplata', tarjeta_debito: 'Tarjeta débito', tarjeta_credito: 'Tarjeta crédito' };
 
-    let otrosMetodosHtml = '';
-    if (datos.otros_metodos && datos.otros_metodos.length > 0) {
-      otrosMetodosHtml = `
-        <div style="margin-top:10px;padding-top:8px;border-top:1px dashed rgba(216,1,124,0.2);font-size:12px;opacity:0.7;">
-          <div style="font-weight:600;margin-bottom:4px;">Pagos digitales (no cuentan en caja física):</div>
-          ${datos.otros_metodos.map(m => `
-            <div class="resumen-fila">
-              <span>${etiquetasPago[m.metodo_pago] || m.metodo_pago}</span>
-              <strong>${formatearMoneda(m.total_cobrado)}</strong>
-            </div>
-          `).join('')}
+    const resumen = document.getElementById('resumenCierre');
+
+    if (rolActual === 'administrador') {
+      // Administrador ve el desglose completo
+      let otrosMetodosHtml = '';
+      if (datos.otros_metodos && datos.otros_metodos.length > 0) {
+        otrosMetodosHtml = `
+          <div style="margin-top:10px;padding-top:8px;border-top:1px dashed rgba(216,1,124,0.2);font-size:12px;opacity:0.7;">
+            <div style="font-weight:600;margin-bottom:4px;">Pagos digitales (no cuentan en caja física):</div>
+            ${datos.otros_metodos.map(m => `
+              <div class="resumen-fila">
+                <span>${etiquetasPago[m.metodo_pago] || m.metodo_pago}</span>
+                <strong>${formatearMoneda(m.total_cobrado)}</strong>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+      resumen.innerHTML = `
+        <div class="resumen-fila"><span>Efectivo apertura</span><strong>${formatearMoneda(datos.monto_apertura)}</strong></div>
+        <div class="resumen-fila"><span>+ Ventas en efectivo</span><strong>${formatearMoneda(datos.ventas_efectivo)}</strong></div>
+        <div class="resumen-fila"><span>= Efectivo esperado en caja</span><strong>${formatearMoneda(datos.monto_esperado)}</strong></div>
+        <div class="resumen-fila"><span>Efectivo contado físicamente</span><strong>${formatearMoneda(datos.monto_declarado)}</strong></div>
+        <div class="resumen-fila total"><span>${etiquetaNovedad[datos.tipo_novedad]}</span><strong>${formatearMoneda(Math.abs(datos.diferencia))}</strong></div>
+        ${otrosMetodosHtml}
+      `;
+    } else {
+      // Cajero solo ve si cuadró o no, sin montos detallados
+      const colorNovedad = datos.tipo_novedad === 'cuadrado' ? 'var(--verde-exito)' : 'var(--rojo-error)';
+      resumen.innerHTML = `
+        <div style="text-align:center;padding:10px 0;">
+          <div style="font-size:22px;font-weight:700;color:${colorNovedad};">${etiquetaNovedad[datos.tipo_novedad]}</div>
+          ${datos.tipo_novedad !== 'cuadrado' ? `<div style="font-size:13px;margin-top:6px;opacity:0.7;">Diferencia: ${formatearMoneda(Math.abs(datos.diferencia))}</div>` : ''}
         </div>
       `;
     }
 
-    const resumen = document.getElementById('resumenCierre');
-    resumen.innerHTML = `
-      <div class="resumen-fila"><span>Efectivo apertura</span><strong>${formatearMoneda(datos.monto_apertura)}</strong></div>
-      <div class="resumen-fila"><span>+ Ventas en efectivo</span><strong>${formatearMoneda(datos.ventas_efectivo)}</strong></div>
-      <div class="resumen-fila"><span>= Efectivo esperado en caja</span><strong>${formatearMoneda(datos.monto_esperado)}</strong></div>
-      <div class="resumen-fila"><span>Efectivo contado físicamente</span><strong>${formatearMoneda(datos.monto_declarado)}</strong></div>
-      <div class="resumen-fila total"><span>${etiquetaNovedad[datos.tipo_novedad]}</span><strong>${formatearMoneda(Math.abs(datos.diferencia))}</strong></div>
-      ${otrosMetodosHtml}
-    `;
     resumen.classList.remove('oculto');
-    mostrarMensaje('mensajeCerrarTurno', 'Turno cerrado correctamente. Puedes cerrar sesión o abrir un nuevo turno si vas a seguir vendiendo.', 'exito');
+    mostrarMensaje('mensajeCerrarTurno', 'Turno cerrado. Puedes cerrar sesión o abrir un nuevo turno si vas a seguir vendiendo.', 'exito');
   }
 
   // ============================================================================
