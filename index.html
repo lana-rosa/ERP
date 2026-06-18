@@ -784,9 +784,12 @@
   <div class="subtitulo">Desde aquí puedes registrar ventas, gestionar inventario, o cerrar el turno para hacer el arqueo de caja.</div>
 
   <button class="btn-principal" id="btnIrVender" onclick="mostrarPantallaVentas()">Registrar venta</button>
-  <button class="btn-secundario" id="btnIrInventario" onclick="mostrarPantallaInventario()">Gestionar inventario</button>
-  <button class="btn-secundario" id="btnIrConsumoTaller" onclick="mostrarPantallaConsumoTaller()">Consumo de taller</button>
+  <button class="btn-secundario" id="btnIrInventario" onclick="mostrarPantallaInventario()" style="display:none;">Gestionar inventario</button>
+  <button class="btn-secundario" id="btnIrAjusteStock" onclick="mostrarPantallaAjusteStock()" style="display:none;">Ajustar stock (código de barras)</button>
+  <button class="btn-secundario" id="btnIrSolicitudes" onclick="mostrarPantallaSolicitudes()" style="display:none;">Solicitudes de material</button>
+  <button class="btn-secundario" id="btnIrConsumoTaller" onclick="mostrarPantallaConsumoTaller()" style="display:none;">Consumo de taller</button>
   <button class="btn-secundario" id="btnIrHistorial" onclick="mostrarPantallaHistorial()">Historial de ventas</button>
+  <button class="btn-secundario" id="btnIrReportes" onclick="mostrarPantallaReportes()" style="display:none;">Reportes de turno</button>
   <button class="btn-secundario" id="btnIrCerrar" onclick="mostrarCierreTurno()">Cerrar turno (hacer arqueo)</button>
 </div>
 
@@ -957,6 +960,59 @@
 
 </div>
 
+<!-- PANTALLA: SOLICITUDES DE MATERIAL (Cajero aprueba / Taller ve sus solicitudes) -->
+<div class="contenedor-ventas oculto" id="pantallaSolicitudes">
+
+  <div class="panel" id="panelCrearSolicitud">
+    <span class="badge-rol" id="badgeRolSolicitudes"></span>
+    <h2 id="tituloPanelSolicitudes">Solicitar insumo al taller</h2>
+    <div class="subtitulo" id="subtituloPanelSolicitudes" style="margin-bottom:14px;">Selecciona el insumo que necesitas y la cantidad. El cajero deberá aprobarlo.</div>
+
+    <div id="listaSolicitudInsumos">
+      <div class="cargando">Cargando insumos...</div>
+    </div>
+
+    <button class="btn-secundario" onclick="volverATurnoActivo()" style="margin-top:14px;">Volver</button>
+  </div>
+
+  <div class="panel">
+    <h2>Solicitudes pendientes</h2>
+    <div id="listaSolicitudesPendientes">
+      <div class="cargando">Cargando solicitudes...</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- PANTALLA: AJUSTE DE STOCK POR CÓDIGO DE BARRAS (Cajero) -->
+<div class="tarjeta oculto" id="pantallaAjusteStock" style="max-width:480px;">
+  <h1>Ajustar stock</h1>
+  <div class="subtitulo">Escanea el código de barras del producto y escribe el nuevo stock.</div>
+
+  <label for="inputSkuAjuste">Código de barras / SKU</label>
+  <input type="text" id="inputSkuAjuste" placeholder="Escanea o escribe el código...">
+
+  <label for="inputCantidadNueva">Nueva cantidad en stock</label>
+  <input type="number" id="inputCantidadNueva" placeholder="0" min="0" step="1">
+
+  <button class="btn-principal" id="btnConfirmarAjusteStock" onclick="confirmarAjusteStock()">Confirmar ajuste</button>
+  <button class="btn-secundario" onclick="volverATurnoActivo()">Cancelar</button>
+
+  <div class="mensaje" id="mensajeAjusteStock"></div>
+</div>
+
+<!-- PANTALLA: REPORTES DE TURNO (solo Admin) -->
+<div class="tarjeta oculto" id="pantallaReportes" style="max-width:680px;">
+  <h1>Reportes de turno</h1>
+  <div class="subtitulo">Resumen financiero de cada turno cerrado, más reciente primero.</div>
+
+  <div id="listaReportesTurno">
+    <div class="cargando">Cargando reportes...</div>
+  </div>
+
+  <button class="btn-secundario" onclick="volverATurnoActivo()" style="margin-top:14px;">Volver</button>
+</div>
+
 <!-- PANTALLA: CERRAR TURNO -->
 <div class="tarjeta oculto" id="pantallaCerrarTurno">
   <h1>Cerrar turno — Arqueo de caja</h1>
@@ -995,7 +1051,7 @@
   // UTILIDADES
   // ============================================================================
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaHistorial', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     document.getElementById('btnSalir').classList.toggle('oculto', idPantalla === 'pantallaLogin');
@@ -1160,6 +1216,17 @@
     const fecha = new Date(turnoActivoActual.fecha_apertura);
     document.getElementById('horaApertura').textContent = fecha.toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
     document.getElementById('montoAperturaTexto').textContent = formatearMoneda(turnoActivoActual.monto_apertura);
+
+    // Mostrar botones según el rol
+    const esAdmin = rolActual === 'administrador';
+    const esCajero = rolActual === 'cajero';
+
+    document.getElementById('btnIrInventario').style.display = esAdmin ? '' : 'none';
+    document.getElementById('btnIrAjusteStock').style.display = esCajero ? '' : 'none';
+    document.getElementById('btnIrSolicitudes').style.display = (esAdmin || esCajero) ? '' : 'none';
+    document.getElementById('btnIrConsumoTaller').style.display = esAdmin ? '' : 'none';
+    document.getElementById('btnIrReportes').style.display = esAdmin ? '' : 'none';
+
     mostrarPantalla('pantallaTurnoActivo');
   }
 
@@ -2205,6 +2272,283 @@
         <div class="fila-consumo-historial">
           <span class="fila-consumo-historial-cant">-${mov.cantidad} ${unidad}</span> de ${escaparHtml(nombreItem)}<br>
           <span style="opacity:0.6;">${fecha}</span>${notaTexto}
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ============================================================================
+  // SOLICITUDES DE MATERIAL
+  // ============================================================================
+  let catalogoSolicitudesCompleto = [];
+  let itemSolicitudAbiertoId = null;
+
+  async function mostrarPantallaSolicitudes() {
+    mostrarPantalla('pantallaSolicitudes');
+    document.getElementById('badgeRolSolicitudes').textContent = etiquetaRol(rolActual || '');
+
+    // Cajero ve las solicitudes pendientes para aprobar (sin formulario de crear)
+    // Taller puede crear solicitudes y ver las suyas
+    if (rolActual === 'cajero') {
+      document.getElementById('panelCrearSolicitud').style.display = 'none';
+    } else {
+      document.getElementById('panelCrearSolicitud').style.display = '';
+      await cargarCatalogoSolicitudes();
+    }
+    await cargarSolicitudesPendientes();
+  }
+
+  async function cargarCatalogoSolicitudes() {
+    const contenedor = document.getElementById('listaSolicitudInsumos');
+    contenedor.innerHTML = '<div class="cargando">Cargando insumos...</div>';
+
+    const { data, error } = await supabaseClient
+      .from('inventario_items')
+      .select('id, nombre, stock_actual, unidad_medida')
+      .eq('tipo', 'merceria')
+      .eq('activo', true)
+      .order('nombre', { ascending: true });
+
+    if (error) {
+      contenedor.innerHTML = '<div class="cargando">No se pudo cargar: ' + error.message + '</div>';
+      return;
+    }
+
+    catalogoSolicitudesCompleto = data;
+    renderizarCatalogoSolicitudes();
+  }
+
+  function renderizarCatalogoSolicitudes() {
+    const contenedor = document.getElementById('listaSolicitudInsumos');
+    if (!catalogoSolicitudesCompleto.length) {
+      contenedor.innerHTML = '<div class="cargando">No hay insumos de mercería disponibles.</div>';
+      return;
+    }
+
+    contenedor.innerHTML = catalogoSolicitudesCompleto.map(item => `
+      <div class="item-consumo">
+        <div class="item-consumo-fila" style="cursor:pointer;" onclick="alternarFormularioSolicitud('${item.id}')">
+          <div class="item-producto-info">
+            <div class="item-producto-nombre">${escaparHtml(item.nombre)}</div>
+            <div class="item-producto-meta">Stock disponible: ${item.stock_actual} ${item.unidad_medida}</div>
+          </div>
+        </div>
+        <div class="item-consumo-acciones ${itemSolicitudAbiertoId === item.id ? 'abierto' : ''}" style="flex-direction:column;align-items:stretch;">
+          <div style="display:flex;gap:8px;">
+            <input type="number" min="0.1" step="0.1" placeholder="Cantidad" id="cant-sol-${item.id}" style="flex:1;">
+          </div>
+          <input type="text" placeholder="Nota (para qué pedido o pieza)" id="nota-sol-${item.id}" style="margin-top:6px;">
+          <button onclick="enviarSolicitud('${item.id}')" style="margin-top:6px;padding:8px;border-radius:8px;border:none;background:var(--rosa-principal);color:white;font-family:'Poppins',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;">Enviar solicitud</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function alternarFormularioSolicitud(itemId) {
+    itemSolicitudAbiertoId = itemSolicitudAbiertoId === itemId ? null : itemId;
+    renderizarCatalogoSolicitudes();
+  }
+
+  async function enviarSolicitud(itemId) {
+    const cantidad = Number(document.getElementById(`cant-sol-${itemId}`).value);
+    const nota = document.getElementById(`nota-sol-${itemId}`).value.trim();
+
+    if (!cantidad || cantidad <= 0) {
+      alert('Escribe una cantidad válida.');
+      return;
+    }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/solicitudes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ inventario_item_id: itemId, cantidad_solicitada: cantidad, observaciones: nota || null })
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json();
+      alert('Error: ' + (err.error || 'No se pudo enviar la solicitud'));
+      return;
+    }
+
+    itemSolicitudAbiertoId = null;
+    renderizarCatalogoSolicitudes();
+    await cargarSolicitudesPendientes();
+  }
+
+  async function cargarSolicitudesPendientes() {
+    const contenedor = document.getElementById('listaSolicitudesPendientes');
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/solicitudes?estado=pendiente', {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+
+    if (!resp.ok) {
+      contenedor.innerHTML = '<div class="cargando">No se pudieron cargar las solicitudes.</div>';
+      return;
+    }
+
+    const { solicitudes } = await resp.json();
+
+    if (!solicitudes || solicitudes.length === 0) {
+      contenedor.innerHTML = '<div class="cargando">No hay solicitudes pendientes.</div>';
+      return;
+    }
+
+    const puedeAprobar = rolActual === 'cajero' || rolActual === 'administrador';
+
+    contenedor.innerHTML = solicitudes.map(sol => {
+      const fecha = new Date(sol.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
+      const nombreInsumo = sol.inventario_items ? sol.inventario_items.nombre : 'Insumo';
+      const unidad = sol.inventario_items ? sol.inventario_items.unidad_medida : '';
+      const solicitante = sol.usuarios_roles ? sol.usuarios_roles.nombre_completo : 'Tejedora';
+      const nota = sol.observaciones ? `<div style="font-style:italic;font-size:12px;opacity:0.65;margin-top:3px;">"${escaparHtml(sol.observaciones)}"</div>` : '';
+
+      return `
+        <div class="fila-inventario-editable" style="margin-bottom:10px;">
+          <div class="fila-inventario-titulo">
+            <span class="fila-inventario-nombre">${escaparHtml(nombreInsumo)}</span>
+            <span class="fila-inventario-tipo-tag" style="background:#fff3cd;color:#856404;">Pendiente</span>
+          </div>
+          <div style="font-size:13px;margin-top:4px;">
+            <strong>${sol.cantidad_solicitada} ${unidad}</strong> — Solicitado por ${escaparHtml(solicitante)}<br>
+            <span style="opacity:0.6;font-size:12px;">${fecha}</span>
+            ${nota}
+          </div>
+          ${puedeAprobar ? `
+            <div class="fila-inventario-acciones" style="margin-top:10px;">
+              <button class="btn-mini guardar" onclick="responderSolicitud('${sol.id}', 'aprobar')">✅ Aprobar</button>
+              <button class="btn-mini desactivar" onclick="responderSolicitud('${sol.id}', 'rechazar')">❌ Rechazar</button>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function responderSolicitud(solicitudId, accion) {
+    const endpoint = accion === 'aprobar' ? '/api/pos/solicitudes/aprobar' : '/api/pos/solicitudes/rechazar';
+    const resp = await fetch(WORKER_URL + endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ solicitud_id: solicitudId })
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json();
+      alert('Error: ' + (err.error || 'No se pudo procesar la solicitud'));
+      return;
+    }
+
+    await cargarSolicitudesPendientes();
+    if (accion === 'aprobar') await cargarCatalogoSolicitudes();
+  }
+
+  // ============================================================================
+  // AJUSTE DE STOCK POR CÓDIGO DE BARRAS (Cajero)
+  // ============================================================================
+  async function mostrarPantallaAjusteStock() {
+    mostrarPantalla('pantallaAjusteStock');
+    document.getElementById('inputSkuAjuste').value = '';
+    document.getElementById('inputCantidadNueva').value = '';
+    ocultarMensaje('mensajeAjusteStock');
+    setTimeout(() => document.getElementById('inputSkuAjuste').focus(), 100);
+  }
+
+  async function confirmarAjusteStock() {
+    const sku = document.getElementById('inputSkuAjuste').value.trim();
+    const cantidad = Number(document.getElementById('inputCantidadNueva').value);
+    ocultarMensaje('mensajeAjusteStock');
+
+    if (!sku) {
+      mostrarMensaje('mensajeAjusteStock', 'Escanea o escribe el código del producto.', 'error');
+      return;
+    }
+    if (isNaN(cantidad) || cantidad < 0) {
+      mostrarMensaje('mensajeAjusteStock', 'Escribe una cantidad válida (0 o más).', 'error');
+      return;
+    }
+
+    const btn = document.getElementById('btnConfirmarAjusteStock');
+    btn.disabled = true;
+    btn.textContent = 'Guardando...';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/inventario/ajustar-stock-sku', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ sku, cantidad_nueva: cantidad })
+    });
+
+    btn.disabled = false;
+    btn.textContent = 'Confirmar ajuste';
+
+    const datos = await resp.json();
+    if (!resp.ok) {
+      mostrarMensaje('mensajeAjusteStock', datos.error || 'No se pudo ajustar el stock.', 'error');
+      return;
+    }
+
+    mostrarMensaje('mensajeAjusteStock', '✅ Stock actualizado correctamente.', 'exito');
+    document.getElementById('inputSkuAjuste').value = '';
+    document.getElementById('inputCantidadNueva').value = '';
+    document.getElementById('inputSkuAjuste').focus();
+  }
+
+  // ============================================================================
+  // REPORTES DE TURNO (solo Administrador)
+  // ============================================================================
+  async function mostrarPantallaReportes() {
+    mostrarPantalla('pantallaReportes');
+    await cargarReportesTurno();
+  }
+
+  async function cargarReportesTurno() {
+    const contenedor = document.getElementById('listaReportesTurno');
+    contenedor.innerHTML = '<div class="cargando">Cargando reportes...</div>';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/reportes/turnos', {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+
+    if (!resp.ok) {
+      contenedor.innerHTML = '<div class="cargando">No se pudieron cargar los reportes.</div>';
+      return;
+    }
+
+    const { reportes } = await resp.json();
+
+    if (!reportes || reportes.length === 0) {
+      contenedor.innerHTML = '<div class="cargando">Todavía no hay turnos cerrados registrados.</div>';
+      return;
+    }
+
+    const etiquetasPago = { efectivo: 'Efectivo', nequi: 'Nequi', daviplata: 'Daviplata', tarjeta_debito: 'T. débito', tarjeta_credito: 'T. crédito' };
+    const etiquetaNovedad = { cuadrado: '✅ Cuadrada', sobrante: '🔺 Sobrante', faltante: '🔻 Faltante' };
+
+    contenedor.innerHTML = reportes.map(rep => {
+      const fechaAp = new Date(rep.fecha_apertura).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
+      const fechaCi = new Date(rep.fecha_cierre).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
+      const cajero = rep.usuarios_roles ? rep.usuarios_roles.nombre_completo : 'Cajero';
+      const resumen = Array.isArray(rep.resumen_por_metodo) ? rep.resumen_por_metodo.map(m =>
+        `${etiquetasPago[m.metodo_pago] || m.metodo_pago}: ${formatearMoneda(m.total_cobrado)}`
+      ).join(' · ') : '';
+
+      return `
+        <div class="fila-historial" style="margin-bottom:12px;">
+          <div class="fila-historial-encabezado">
+            <span class="fila-historial-consecutivo">${escaparHtml(cajero)}</span>
+            <span class="fila-historial-total">${formatearMoneda(rep.total_ventas_turno)}</span>
+          </div>
+          <div class="fila-historial-fecha">Apertura: ${fechaAp} · Cierre: ${fechaCi}</div>
+          <div class="fila-historial-detalle" style="margin-top:6px;">
+            <div class="resumen-fila"><span>Efectivo apertura</span><strong>${formatearMoneda(rep.monto_apertura)}</strong></div>
+            <div class="resumen-fila"><span>Ventas en efectivo</span><strong>${formatearMoneda(rep.ventas_efectivo)}</strong></div>
+            <div class="resumen-fila"><span>Efectivo esperado</span><strong>${formatearMoneda(rep.monto_esperado)}</strong></div>
+            <div class="resumen-fila"><span>Efectivo declarado</span><strong>${formatearMoneda(rep.monto_declarado)}</strong></div>
+            <div class="resumen-fila total"><span>${etiquetaNovedad[rep.tipo_novedad] || rep.tipo_novedad}</span><strong>${formatearMoneda(Math.abs(rep.diferencia))}</strong></div>
+          </div>
+          ${resumen ? `<div class="fila-historial-pagos" style="margin-top:8px;">${resumen}</div>` : ''}
+          <div style="font-size:11.5px;opacity:0.6;margin-top:4px;">${rep.num_ventas_turno} venta(s) en el turno</div>
         </div>
       `;
     }).join('');
