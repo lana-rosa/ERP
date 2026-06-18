@@ -838,6 +838,14 @@
     <input type="text" id="consumoBuscar" placeholder="Ej: lana rosa, ojos 12mm..." oninput="renderizarCatalogoConsumo()">
 
     <div id="listaCatalogoConsumo" style="margin-top:10px;"></div>
+
+    <div style="margin-top:24px;padding-top:16px;border-top:2px solid var(--rosa-suave);">
+      <h2>Devolver insumo al inventario</h2>
+      <div class="subtitulo" style="margin-bottom:12px;">Si sobró material del tejido, regístralo aquí para que vuelva al inventario.</div>
+      <label for="devolucionBuscar">Buscar insumo a devolver</label>
+      <input type="text" id="devolucionBuscar" placeholder="Ej: lana rosa, ojos 12mm..." oninput="renderizarCatalogoDevolucion()">
+      <div id="listaCatalogoDevolucion" style="margin-top:10px;"></div>
+    </div>
   </div>
 
   <div class="panel">
@@ -890,6 +898,18 @@
     <div class="resumen-total">
       <span>Total</span>
       <span class="valor" id="textoTotalCarrito">$0</span>
+    </div>
+
+    <div style="margin-top:16px;">
+      <h2>Datos del cliente <span style="font-size:12px;font-weight:400;opacity:0.6;">(opcional)</span></h2>
+      <div style="margin-top:8px;">
+        <label for="clienteNombre">Nombre</label>
+        <input type="text" id="clienteNombre" placeholder="Nombre completo">
+        <label for="clienteTelefono">Teléfono</label>
+        <input type="tel" id="clienteTelefono" placeholder="300 000 0000">
+        <label for="clienteCorreo">Correo</label>
+        <input type="email" id="clienteCorreo" placeholder="correo@gmail.com">
+      </div>
     </div>
 
     <div class="metodos-pago">
@@ -1480,6 +1500,23 @@
     btn.textContent = 'Registrando venta...';
 
     try {
+      // Si hay datos de cliente, guardarlos primero
+      let terceroId = null;
+      const clienteNombre = document.getElementById('clienteNombre').value.trim();
+      const clienteTelefono = document.getElementById('clienteTelefono').value.trim();
+      const clienteCorreo = document.getElementById('clienteCorreo').value.trim();
+
+      if (clienteNombre && (clienteTelefono || clienteCorreo)) {
+        const clienteResp = await fetch(WORKER_URL + '/api/pos/clientes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+          body: JSON.stringify({ nombre: clienteNombre, telefono: clienteTelefono || null, correo: clienteCorreo || null })
+        });
+        const clienteDatos = await clienteResp.json();
+        if (clienteResp.ok) {
+          terceroId = clienteDatos.tercero_id;
+        }
+      }
       // Centro de costo por defecto: Tienda Física (POS) — código '01'
       const { data: centroCosto, error: errorCentro } = await supabaseClient
         .from('centros_costo')
@@ -1497,6 +1534,7 @@
         body: JSON.stringify({
           centro_costo_id: centroCosto.id,
           turno_id: turnoActivoActual.id,
+          tercero_id: terceroId,
           lineas: carrito.map(linea => ({
             inventario_item_id: linea.id,
             descripcion: linea.nombre,
@@ -1520,6 +1558,9 @@
       mostrarMensaje('mensajeVenta', '✅ Venta registrada correctamente.', 'exito');
       carrito = [];
       filasPago = [{ metodo_pago: 'efectivo', monto: '', referencia: '' }];
+      document.getElementById('clienteNombre').value = '';
+      document.getElementById('clienteTelefono').value = '';
+      document.getElementById('clienteCorreo').value = '';
       renderizarCarrito();
       renderizarPagos();
       await cargarCatalogo(); // refresca el stock mostrado
@@ -1879,6 +1920,79 @@
     itemConsumoAbiertoId = null;
     await cargarCatalogoConsumo();
     await cargarHistorialConsumo();
+  }
+
+  // ============================================================================
+  // DEVOLUCIÓN AL INVENTARIO
+  // ============================================================================
+  let itemDevolucionAbiertoId = null;
+
+  function renderizarCatalogoDevolucion() {
+    const contenedor = document.getElementById('listaCatalogoDevolucion');
+    const textoBusqueda = document.getElementById('devolucionBuscar').value.trim().toLowerCase();
+
+    let items = catalogoConsumoCompleto;
+    if (textoBusqueda) {
+      items = items.filter(i => i.nombre.toLowerCase().includes(textoBusqueda));
+    }
+
+    if (!textoBusqueda) {
+      contenedor.innerHTML = '<div class="cargando" style="font-size:12.5px;">Escribe el nombre del insumo para buscarlo.</div>';
+      return;
+    }
+
+    if (items.length === 0) {
+      contenedor.innerHTML = '<div class="cargando">No se encontraron resultados.</div>';
+      return;
+    }
+
+    contenedor.innerHTML = items.map(item => `
+      <div class="item-consumo" data-id-dev="${item.id}">
+        <div class="item-consumo-fila" style="cursor:pointer;" onclick="alternarFormularioDevolucion('${item.id}')">
+          <div class="item-producto-info">
+            <div class="item-producto-nombre">${escaparHtml(item.nombre)}</div>
+            <div class="item-producto-meta">Stock actual: ${item.stock_actual} ${item.unidad_medida}</div>
+          </div>
+        </div>
+        <div class="item-consumo-acciones ${itemDevolucionAbiertoId === item.id ? 'abierto' : ''}" id="acciones-devolucion-${item.id}">
+          <input type="number" min="0" step="0.1" placeholder="Cantidad a devolver" id="cantidad-devolucion-${item.id}">
+          <button onclick="registrarDevolucion('${item.id}')" style="background:var(--verde-exito);">Devolver</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function alternarFormularioDevolucion(itemId) {
+    itemDevolucionAbiertoId = itemDevolucionAbiertoId === itemId ? null : itemId;
+    renderizarCatalogoDevolucion();
+  }
+
+  async function registrarDevolucion(itemId) {
+    const inputCantidad = document.getElementById(`cantidad-devolucion-${itemId}`);
+    const cantidad = Number(inputCantidad.value);
+
+    if (!cantidad || cantidad <= 0) {
+      alert('Escribe una cantidad válida mayor a cero.');
+      return;
+    }
+
+    const { error } = await supabaseClient.rpc('fn_devolver_insumo_taller', {
+      p_inventario_item_id: itemId,
+      p_cantidad: cantidad,
+      p_observaciones: 'Devolución desde taller',
+      p_registrado_por: sesionActual.userId
+    });
+
+    if (error) {
+      alert('No se pudo registrar la devolución: ' + error.message);
+      return;
+    }
+
+    itemDevolucionAbiertoId = null;
+    document.getElementById('devolucionBuscar').value = '';
+    await cargarCatalogoConsumo();
+    await cargarHistorialConsumo();
+    renderizarCatalogoDevolucion();
   }
 
   async function cargarHistorialConsumo() {
