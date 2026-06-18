@@ -599,6 +599,21 @@
     margin-left: 6px;
   }
 
+  .fila-inventario-lectura {
+    font-size: 13px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 16px;
+    margin-top: 8px;
+    opacity: 0.75;
+  }
+
+  .btn-mini.editar {
+    background: var(--rosa-suave);
+    color: var(--rosa-principal);
+    border: 1.5px solid var(--rosa-medio);
+  }
+
   /* ===== HISTORIAL DE VENTAS ===== */
   .fila-historial {
     border: 1px solid #f0e8ee;
@@ -783,6 +798,9 @@
     <label for="invNombre">Nombre</label>
     <input type="text" id="invNombre" placeholder="Ej: Amigurumi conejo personalizado">
 
+    <label for="invSku">SKU / Código de barras <span style="font-size:11px;opacity:0.6;">(opcional)</span></label>
+    <input type="text" id="invSku" placeholder="Ej: AMI-001 o código de barras">
+
     <label for="invTipo">Tipo</label>
     <select id="invTipo" style="width:100%;padding:13px 14px;border:1.5px solid #e4d9e2;border-radius:10px;font-family:'Poppins',sans-serif;font-size:15px;background:#fdfbfd;">
       <option value="producto_terminado">Amigurumi / Producto terminado</option>
@@ -817,6 +835,11 @@
     <h2>Inventario actual</h2>
     <div class="barra-busqueda">
       <input type="text" id="inputBuscarInventario" placeholder="Buscar por nombre..." oninput="renderizarTablaInventario()">
+    </div>
+    <div class="filtro-tipo" style="margin-bottom:12px;">
+      <button class="chip-filtro activo" data-filtro-inv="todos" onclick="cambiarFiltroInventario('todos', this)">Todos</button>
+      <button class="chip-filtro" data-filtro-inv="producto_terminado" onclick="cambiarFiltroInventario('producto_terminado', this)">Amigurumis</button>
+      <button class="chip-filtro" data-filtro-inv="merceria" onclick="cambiarFiltroInventario('merceria', this)">Mercería</button>
     </div>
     <div id="listaInventarioGestion">
       <div class="cargando">Cargando inventario...</div>
@@ -1588,6 +1611,7 @@
 
   function limpiarFormularioProducto() {
     document.getElementById('invNombre').value = '';
+    document.getElementById('invSku').value = '';
     document.getElementById('invTipo').value = 'producto_terminado';
     document.getElementById('invUnidad').value = 'unidad';
     document.getElementById('invPrecioVenta').value = '';
@@ -1599,6 +1623,7 @@
 
   async function guardarNuevoProducto() {
     const nombre = document.getElementById('invNombre').value.trim();
+    const sku = document.getElementById('invSku').value.trim() || null;
     const tipo = document.getElementById('invTipo').value;
     const unidad = document.getElementById('invUnidad').value;
     const precioVenta = Number(document.getElementById('invPrecioVenta').value);
@@ -1623,6 +1648,7 @@
 
     const { error } = await supabaseClient.from('inventario_items').insert({
       nombre,
+      sku,
       tipo,
       unidad_medida: unidad,
       precio_venta: precioVenta,
@@ -1663,13 +1689,26 @@
     renderizarTablaInventario();
   }
 
+  let filtroInventarioActual = 'todos';
+  let itemInventarioEditandoId = null;
+
+  function cambiarFiltroInventario(filtro, botonEl) {
+    filtroInventarioActual = filtro;
+    document.querySelectorAll('[data-filtro-inv]').forEach(c => c.classList.remove('activo'));
+    botonEl.classList.add('activo');
+    renderizarTablaInventario();
+  }
+
   function renderizarTablaInventario() {
     const contenedor = document.getElementById('listaInventarioGestion');
     const textoBusqueda = document.getElementById('inputBuscarInventario').value.trim().toLowerCase();
 
     let items = inventarioGestionCompleto;
+    if (filtroInventarioActual !== 'todos') {
+      items = items.filter(i => i.tipo === filtroInventarioActual);
+    }
     if (textoBusqueda) {
-      items = items.filter(i => i.nombre.toLowerCase().includes(textoBusqueda));
+      items = items.filter(i => i.nombre.toLowerCase().includes(textoBusqueda) || (i.sku && i.sku.toLowerCase().includes(textoBusqueda)));
     }
 
     if (items.length === 0) {
@@ -1677,40 +1716,78 @@
       return;
     }
 
+    const etiquetaTipoMap = { merceria: 'Mercería', producto_terminado: 'Amigurumi' };
+
     contenedor.innerHTML = items.map(item => {
-      const etiquetaTipo = item.tipo === 'merceria' ? 'Mercería' : 'Amigurumi';
+      const etiquetaTipo = etiquetaTipoMap[item.tipo] || item.tipo;
       const tagInactivo = !item.activo ? '<span class="badge-inactivo">Inactivo</span>' : '';
-      return `
-        <div class="fila-inventario-editable" data-id="${item.id}">
-          <div class="fila-inventario-titulo">
-            <span class="fila-inventario-nombre">${escaparHtml(item.nombre)}${tagInactivo}</span>
-            <span class="fila-inventario-tipo-tag">${etiquetaTipo}</span>
+      const skuTexto = item.sku ? `<span style="opacity:0.5;font-size:11px;margin-left:6px;">SKU: ${escaparHtml(item.sku)}</span>` : '';
+      const estaEditando = itemInventarioEditandoId === item.id;
+
+      if (estaEditando) {
+        // Modo edición
+        return `
+          <div class="fila-inventario-editable" style="border-color:var(--rosa-medio);" data-id="${item.id}">
+            <div class="fila-inventario-titulo">
+              <span class="fila-inventario-nombre">${escaparHtml(item.nombre)}${tagInactivo}</span>
+              <span class="fila-inventario-tipo-tag">${etiquetaTipo}</span>
+            </div>
+            <div class="grid-campos-inventario">
+              <div class="campo-mini">
+                <label>Precio de venta</label>
+                <input type="number" min="0" step="1000" value="${item.precio_venta}" id="edit-precio-${item.id}">
+              </div>
+              <div class="campo-mini">
+                <label>Costo aproximado</label>
+                <input type="number" min="0" step="1000" value="${item.costo_promedio_ponderado}" id="edit-costo-${item.id}">
+              </div>
+              <div class="campo-mini">
+                <label>Stock actual</label>
+                <input type="number" min="0" step="1" value="${item.stock_actual}" id="edit-stock-${item.id}">
+              </div>
+              <div class="campo-mini">
+                <label>Stock mínimo</label>
+                <input type="number" min="0" step="1" value="${item.stock_minimo}" id="edit-stockmin-${item.id}">
+              </div>
+            </div>
+            <div class="fila-inventario-acciones">
+              <button class="btn-mini guardar" onclick="guardarEdicionProducto('${item.id}')">Guardar cambios</button>
+              <button class="btn-mini desactivar" onclick="cancelarEdicionProducto()">Cancelar</button>
+              <button class="btn-mini desactivar" onclick="alternarActivoProducto('${item.id}', ${item.activo})">${item.activo ? 'Desactivar' : 'Reactivar'}</button>
+            </div>
           </div>
-          <div class="grid-campos-inventario">
-            <div class="campo-mini">
-              <label>Precio de venta</label>
-              <input type="number" min="0" step="1000" value="${item.precio_venta}" id="edit-precio-${item.id}">
+        `;
+      } else {
+        // Modo lectura
+        return `
+          <div class="fila-inventario-editable" data-id="${item.id}">
+            <div class="fila-inventario-titulo">
+              <span class="fila-inventario-nombre">${escaparHtml(item.nombre)}${tagInactivo}${skuTexto}</span>
+              <span class="fila-inventario-tipo-tag">${etiquetaTipo}</span>
             </div>
-            <div class="campo-mini">
-              <label>Costo aproximado</label>
-              <input type="number" min="0" step="1000" value="${item.costo_promedio_ponderado}" id="edit-costo-${item.id}">
+            <div class="fila-inventario-lectura">
+              <span>Precio: <strong>${formatearMoneda(item.precio_venta)}</strong></span>
+              <span>Costo: <strong>${formatearMoneda(item.costo_promedio_ponderado)}</strong></span>
+              <span>Stock: <strong>${item.stock_actual} und</strong></span>
+              <span>Mínimo: <strong>${item.stock_minimo} und</strong></span>
             </div>
-            <div class="campo-mini">
-              <label>Stock actual</label>
-              <input type="number" min="0" step="1" value="${item.stock_actual}" id="edit-stock-${item.id}">
-            </div>
-            <div class="campo-mini">
-              <label>Stock mínimo</label>
-              <input type="number" min="0" step="1" value="${item.stock_minimo}" id="edit-stockmin-${item.id}">
+            <div class="fila-inventario-acciones" style="margin-top:10px;">
+              <button class="btn-mini editar" onclick="activarEdicionProducto('${item.id}')">✏️ Editar</button>
             </div>
           </div>
-          <div class="fila-inventario-acciones">
-            <button class="btn-mini guardar" onclick="guardarEdicionProducto('${item.id}')">Guardar cambios</button>
-            <button class="btn-mini desactivar" onclick="alternarActivoProducto('${item.id}', ${item.activo})">${item.activo ? 'Desactivar' : 'Reactivar'}</button>
-          </div>
-        </div>
-      `;
+        `;
+      }
     }).join('');
+  }
+
+  function activarEdicionProducto(itemId) {
+    itemInventarioEditandoId = itemId;
+    renderizarTablaInventario();
+  }
+
+  function cancelarEdicionProducto() {
+    itemInventarioEditandoId = null;
+    renderizarTablaInventario();
   }
 
   async function guardarEdicionProducto(itemId) {
@@ -1883,9 +1960,12 @@
             <div class="item-producto-meta">Stock disponible: ${item.stock_actual} ${item.unidad_medida}</div>
           </div>
         </div>
-        <div class="item-consumo-acciones ${itemConsumoAbiertoId === item.id ? 'abierto' : ''}" id="acciones-consumo-${item.id}">
-          <input type="number" min="0" step="0.1" placeholder="Cantidad" id="cantidad-consumo-${item.id}">
-          <button onclick="registrarConsumo('${item.id}')">Registrar</button>
+        <div class="item-consumo-acciones ${itemConsumoAbiertoId === item.id ? 'abierto' : ''}" id="acciones-consumo-${item.id}" style="flex-direction:column;align-items:stretch;">
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="number" min="0" step="0.1" placeholder="Cantidad" id="cantidad-consumo-${item.id}" style="flex:1;">
+          </div>
+          <input type="text" placeholder="Nota: ¿para qué pedido o pieza? (opcional)" id="nota-consumo-${item.id}" style="margin-top:6px;">
+          <button onclick="registrarConsumo('${item.id}')" style="margin-top:6px;padding:8px 14px;border-radius:8px;border:none;background:var(--rosa-principal);color:white;font-family:'Poppins',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;">Registrar consumo</button>
         </div>
       </div>
     `).join('');
@@ -1898,7 +1978,9 @@
 
   async function registrarConsumo(itemId) {
     const inputCantidad = document.getElementById(`cantidad-consumo-${itemId}`);
+    const inputNota = document.getElementById(`nota-consumo-${itemId}`);
     const cantidad = Number(inputCantidad.value);
+    const nota = inputNota ? inputNota.value.trim() || null : null;
 
     if (!cantidad || cantidad <= 0) {
       alert('Escribe una cantidad válida mayor a cero.');
@@ -1908,7 +1990,7 @@
     const { error } = await supabaseClient.rpc('fn_registrar_consumo_taller', {
       p_inventario_item_id: itemId,
       p_cantidad: cantidad,
-      p_observaciones: null,
+      p_observaciones: nota,
       p_registrado_por: sesionActual.userId
     });
 
@@ -2021,10 +2103,11 @@
       const fecha = new Date(mov.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
       const nombreItem = mov.inventario_items ? mov.inventario_items.nombre : 'Insumo eliminado';
       const unidad = mov.inventario_items ? mov.inventario_items.unidad_medida : '';
+      const notaTexto = mov.observaciones ? `<br><span style="font-style:italic;opacity:0.55;">"${escaparHtml(mov.observaciones)}"</span>` : '';
       return `
         <div class="fila-consumo-historial">
           <span class="fila-consumo-historial-cant">-${mov.cantidad} ${unidad}</span> de ${escaparHtml(nombreItem)}<br>
-          <span style="opacity:0.6;">${fecha}</span>
+          <span style="opacity:0.6;">${fecha}</span>${notaTexto}
         </div>
       `;
     }).join('');
