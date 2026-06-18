@@ -962,7 +962,7 @@
 
     const { data, error } = await supabaseClient
       .from('inventario_items')
-      .select('id, tipo, nombre, stock_actual, stock_minimo, costo_promedio_ponderado, unidad_medida')
+      .select('id, tipo, nombre, stock_actual, stock_minimo, precio_venta, unidad_medida')
       .eq('activo', true)
       .order('nombre', { ascending: true });
 
@@ -971,14 +971,11 @@
       return;
     }
 
-    // Nota: el precio de venta aún no existe como columna separada del costo;
-    // por ahora usamos costo_promedio_ponderado como referencia de precio.
-    // Esto se puede ajustar cuando agreguemos precio_venta en una próxima fase.
     catalogoCompleto = data.map(item => ({
       id: item.id,
       tipo: item.tipo,
       nombre: item.nombre,
-      precio: Number(item.costo_promedio_ponderado) || 0,
+      precio: Number(item.precio_venta) || 0,
       stock_actual: Number(item.stock_actual),
       stock_minimo: Number(item.stock_minimo),
       unidad_medida: item.unidad_medida
