@@ -514,6 +514,191 @@
     font-size: 15px;
   }
 
+  /* ===== GESTIÓN DE INVENTARIO ===== */
+  .fila-inventario-editable {
+    border: 1px solid #f0e8ee;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+
+  .fila-inventario-titulo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .fila-inventario-nombre {
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .fila-inventario-tipo-tag {
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: var(--rosa-suave);
+    color: var(--rosa-principal);
+  }
+
+  .grid-campos-inventario {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .campo-mini label {
+    font-size: 11px;
+    margin-top: 0;
+    margin-bottom: 3px;
+    opacity: 0.65;
+  }
+
+  .campo-mini input {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+
+  .fila-inventario-acciones {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .btn-mini {
+    flex: 1;
+    padding: 8px;
+    border-radius: 8px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+  }
+
+  .btn-mini.guardar {
+    background: var(--rosa-principal);
+    color: white;
+  }
+
+  .btn-mini.desactivar {
+    background: #fdecea;
+    color: var(--rojo-error);
+  }
+
+  .badge-inactivo {
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: #eee;
+    color: #888;
+    margin-left: 6px;
+  }
+
+  /* ===== HISTORIAL DE VENTAS ===== */
+  .fila-historial {
+    border: 1px solid #f0e8ee;
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+
+  .fila-historial-encabezado {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+  }
+
+  .fila-historial-consecutivo {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--rosa-principal);
+  }
+
+  .fila-historial-total {
+    font-weight: 700;
+    font-size: 15px;
+  }
+
+  .fila-historial-fecha {
+    font-size: 12px;
+    opacity: 0.6;
+    margin-bottom: 8px;
+  }
+
+  .fila-historial-detalle {
+    font-size: 12.5px;
+    opacity: 0.8;
+    line-height: 1.5;
+  }
+
+  .fila-historial-pagos {
+    font-size: 11.5px;
+    margin-top: 6px;
+    opacity: 0.65;
+  }
+
+  /* ===== CONSUMO DE TALLER ===== */
+  .item-consumo {
+    border: 1px solid #f0e8ee;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+
+  .item-consumo-fila {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .item-consumo-acciones {
+    display: none;
+    gap: 8px;
+    margin-top: 10px;
+    align-items: center;
+  }
+
+  .item-consumo-acciones.abierto {
+    display: flex;
+  }
+
+  .item-consumo-acciones input {
+    flex: 1;
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+
+  .item-consumo-acciones button {
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: none;
+    background: var(--rosa-principal);
+    color: white;
+    font-family: 'Poppins', sans-serif;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .fila-consumo-historial {
+    font-size: 12.5px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f4eef2;
+  }
+
+  .fila-consumo-historial-cant {
+    font-weight: 700;
+    color: var(--rosa-principal);
+  }
+
+
   footer {
     margin-top: 24px;
     font-size: 11px;
@@ -581,11 +766,102 @@
     </div>
   </div>
 
-  <div class="subtitulo">Desde aquí puedes registrar ventas o cerrar el turno para hacer el arqueo de caja.</div>
+  <div class="subtitulo">Desde aquí puedes registrar ventas, gestionar inventario, o cerrar el turno para hacer el arqueo de caja.</div>
 
   <button class="btn-principal" id="btnIrVender" onclick="mostrarPantallaVentas()">Registrar venta</button>
+  <button class="btn-secundario" id="btnIrInventario" onclick="mostrarPantallaInventario()">Gestionar inventario</button>
+  <button class="btn-secundario" id="btnIrConsumoTaller" onclick="mostrarPantallaConsumoTaller()">Consumo de taller</button>
+  <button class="btn-secundario" id="btnIrHistorial" onclick="mostrarPantallaHistorial()">Historial de ventas</button>
   <button class="btn-secundario" id="btnIrCerrar" onclick="mostrarCierreTurno()">Cerrar turno (hacer arqueo)</button>
 </div>
+
+<!-- PANTALLA: INVENTARIO -->
+<div class="contenedor-ventas oculto" id="pantallaInventario">
+
+  <div class="panel">
+    <h2>Agregar producto o insumo</h2>
+    <label for="invNombre">Nombre</label>
+    <input type="text" id="invNombre" placeholder="Ej: Amigurumi conejo personalizado">
+
+    <label for="invTipo">Tipo</label>
+    <select id="invTipo" style="width:100%;padding:13px 14px;border:1.5px solid #e4d9e2;border-radius:10px;font-family:'Poppins',sans-serif;font-size:15px;background:#fdfbfd;">
+      <option value="producto_terminado">Amigurumi / Producto terminado</option>
+      <option value="merceria">Mercería / Insumo</option>
+    </select>
+
+    <label for="invUnidad">Unidad de medida</label>
+    <select id="invUnidad" style="width:100%;padding:13px 14px;border:1.5px solid #e4d9e2;border-radius:10px;font-family:'Poppins',sans-serif;font-size:15px;background:#fdfbfd;">
+      <option value="unidad">Unidad</option>
+      <option value="metro">Metro</option>
+      <option value="gramo">Gramo</option>
+      <option value="rollo">Rollo</option>
+    </select>
+
+    <label for="invPrecioVenta">Precio de venta (COP)</label>
+    <input type="number" id="invPrecioVenta" placeholder="0" min="0" step="1000">
+
+    <label for="invCostoPromedio">Costo aproximado (COP, opcional)</label>
+    <input type="number" id="invCostoPromedio" placeholder="0" min="0" step="1000">
+
+    <label for="invStockInicial">Stock inicial</label>
+    <input type="number" id="invStockInicial" placeholder="0" min="0" step="1">
+
+    <label for="invStockMinimo">Stock mínimo (para alertas)</label>
+    <input type="number" id="invStockMinimo" placeholder="0" min="0" step="1">
+
+    <button class="btn-principal" id="btnGuardarProducto" onclick="guardarNuevoProducto()">Agregar al inventario</button>
+    <div class="mensaje" id="mensajeInventarioForm"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Inventario actual</h2>
+    <div class="barra-busqueda">
+      <input type="text" id="inputBuscarInventario" placeholder="Buscar por nombre..." oninput="renderizarTablaInventario()">
+    </div>
+    <div id="listaInventarioGestion">
+      <div class="cargando">Cargando inventario...</div>
+    </div>
+    <button class="btn-secundario" onclick="volverATurnoActivo()" style="margin-top:14px;">Volver</button>
+  </div>
+
+</div>
+
+<!-- PANTALLA: CONSUMO DE TALLER -->
+<div class="contenedor-ventas oculto" id="pantallaConsumoTaller">
+
+  <div class="panel">
+    <span class="badge-rol" id="badgeRolConsumo"></span>
+    <h2>Registrar consumo de insumo</h2>
+    <div class="subtitulo" style="margin-bottom:14px;">Elige el insumo que vas a usar en el tejido y la cantidad. Se descuenta del inventario al instante.</div>
+
+    <label for="consumoBuscar">Buscar insumo</label>
+    <input type="text" id="consumoBuscar" placeholder="Ej: lana rosa, ojos 12mm..." oninput="renderizarCatalogoConsumo()">
+
+    <div id="listaCatalogoConsumo" style="margin-top:10px;"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Historial de mis consumos</h2>
+    <div id="listaHistorialConsumo">
+      <div class="cargando">Cargando historial...</div>
+    </div>
+    <button class="btn-secundario" onclick="volverDeConsumoTaller()" style="margin-top:14px;">Volver</button>
+  </div>
+
+</div>
+
+<!-- PANTALLA: HISTORIAL DE VENTAS -->
+<div class="tarjeta oculto" id="pantallaHistorial" style="max-width:680px;">
+  <h1>Historial de ventas</h1>
+  <div class="subtitulo">Ventas registradas en este sistema, más recientes primero.</div>
+
+  <div id="listaHistorialVentas">
+    <div class="cargando">Cargando historial...</div>
+  </div>
+
+  <button class="btn-secundario" onclick="volverATurnoActivo()" style="margin-top:14px;">Volver</button>
+</div>
+
 
 <!-- PANTALLA: VENTAS -->
 <div class="contenedor-ventas oculto" id="pantallaVentas">
@@ -669,7 +945,7 @@
   // UTILIDADES
   // ============================================================================
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaHistorial', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     document.getElementById('btnSalir').classList.toggle('oculto', idPantalla === 'pantallaLogin');
@@ -745,6 +1021,12 @@
   // ============================================================================
   async function despuesDeLogin() {
     mostrarPantalla('pantallaCargando');
+
+    // El rol Taller no maneja caja ni turnos: va directo a la pantalla de consumo de insumos.
+    if (rolActual === 'taller') {
+      await mostrarPantallaConsumoTaller();
+      return;
+    }
 
     try {
       const resp = await fetch(WORKER_URL + '/api/pos/turnos/activo', {
@@ -1249,6 +1531,389 @@
       btn.disabled = false;
       btn.textContent = 'Confirmar venta';
     }
+  }
+
+  // ============================================================================
+  // GESTIÓN DE INVENTARIO
+  // ============================================================================
+  let inventarioGestionCompleto = [];
+
+  async function mostrarPantallaInventario() {
+    mostrarPantalla('pantallaInventario');
+    limpiarFormularioProducto();
+    document.getElementById('inputBuscarInventario').value = '';
+    await cargarInventarioGestion();
+  }
+
+  function limpiarFormularioProducto() {
+    document.getElementById('invNombre').value = '';
+    document.getElementById('invTipo').value = 'producto_terminado';
+    document.getElementById('invUnidad').value = 'unidad';
+    document.getElementById('invPrecioVenta').value = '';
+    document.getElementById('invCostoPromedio').value = '';
+    document.getElementById('invStockInicial').value = '';
+    document.getElementById('invStockMinimo').value = '';
+    ocultarMensaje('mensajeInventarioForm');
+  }
+
+  async function guardarNuevoProducto() {
+    const nombre = document.getElementById('invNombre').value.trim();
+    const tipo = document.getElementById('invTipo').value;
+    const unidad = document.getElementById('invUnidad').value;
+    const precioVenta = Number(document.getElementById('invPrecioVenta').value);
+    const costo = Number(document.getElementById('invCostoPromedio').value) || 0;
+    const stockInicial = Number(document.getElementById('invStockInicial').value) || 0;
+    const stockMinimo = Number(document.getElementById('invStockMinimo').value) || 0;
+
+    ocultarMensaje('mensajeInventarioForm');
+
+    if (!nombre) {
+      mostrarMensaje('mensajeInventarioForm', 'Escribe un nombre para el producto.', 'error');
+      return;
+    }
+    if (!precioVenta || precioVenta <= 0) {
+      mostrarMensaje('mensajeInventarioForm', 'Escribe un precio de venta mayor a cero.', 'error');
+      return;
+    }
+
+    const btn = document.getElementById('btnGuardarProducto');
+    btn.disabled = true;
+    btn.textContent = 'Guardando...';
+
+    const { error } = await supabaseClient.from('inventario_items').insert({
+      nombre,
+      tipo,
+      unidad_medida: unidad,
+      precio_venta: precioVenta,
+      costo_promedio_ponderado: costo,
+      stock_actual: stockInicial,
+      stock_minimo: stockMinimo,
+      activo: true
+    });
+
+    btn.disabled = false;
+    btn.textContent = 'Agregar al inventario';
+
+    if (error) {
+      mostrarMensaje('mensajeInventarioForm', 'No se pudo guardar: ' + error.message, 'error');
+      return;
+    }
+
+    mostrarMensaje('mensajeInventarioForm', '✅ Producto agregado correctamente.', 'exito');
+    limpiarFormularioProducto();
+    await cargarInventarioGestion();
+  }
+
+  async function cargarInventarioGestion() {
+    const contenedor = document.getElementById('listaInventarioGestion');
+    contenedor.innerHTML = '<div class="cargando">Cargando inventario...</div>';
+
+    const { data, error } = await supabaseClient
+      .from('inventario_items')
+      .select('id, tipo, nombre, stock_actual, stock_minimo, precio_venta, costo_promedio_ponderado, unidad_medida, activo')
+      .order('nombre', { ascending: true });
+
+    if (error) {
+      contenedor.innerHTML = '<div class="cargando">No se pudo cargar: ' + error.message + '</div>';
+      return;
+    }
+
+    inventarioGestionCompleto = data;
+    renderizarTablaInventario();
+  }
+
+  function renderizarTablaInventario() {
+    const contenedor = document.getElementById('listaInventarioGestion');
+    const textoBusqueda = document.getElementById('inputBuscarInventario').value.trim().toLowerCase();
+
+    let items = inventarioGestionCompleto;
+    if (textoBusqueda) {
+      items = items.filter(i => i.nombre.toLowerCase().includes(textoBusqueda));
+    }
+
+    if (items.length === 0) {
+      contenedor.innerHTML = '<div class="cargando">No hay productos que coincidan.</div>';
+      return;
+    }
+
+    contenedor.innerHTML = items.map(item => {
+      const etiquetaTipo = item.tipo === 'merceria' ? 'Mercería' : 'Amigurumi';
+      const tagInactivo = !item.activo ? '<span class="badge-inactivo">Inactivo</span>' : '';
+      return `
+        <div class="fila-inventario-editable" data-id="${item.id}">
+          <div class="fila-inventario-titulo">
+            <span class="fila-inventario-nombre">${escaparHtml(item.nombre)}${tagInactivo}</span>
+            <span class="fila-inventario-tipo-tag">${etiquetaTipo}</span>
+          </div>
+          <div class="grid-campos-inventario">
+            <div class="campo-mini">
+              <label>Precio de venta</label>
+              <input type="number" min="0" step="1000" value="${item.precio_venta}" id="edit-precio-${item.id}">
+            </div>
+            <div class="campo-mini">
+              <label>Costo aproximado</label>
+              <input type="number" min="0" step="1000" value="${item.costo_promedio_ponderado}" id="edit-costo-${item.id}">
+            </div>
+            <div class="campo-mini">
+              <label>Stock actual</label>
+              <input type="number" min="0" step="1" value="${item.stock_actual}" id="edit-stock-${item.id}">
+            </div>
+            <div class="campo-mini">
+              <label>Stock mínimo</label>
+              <input type="number" min="0" step="1" value="${item.stock_minimo}" id="edit-stockmin-${item.id}">
+            </div>
+          </div>
+          <div class="fila-inventario-acciones">
+            <button class="btn-mini guardar" onclick="guardarEdicionProducto('${item.id}')">Guardar cambios</button>
+            <button class="btn-mini desactivar" onclick="alternarActivoProducto('${item.id}', ${item.activo})">${item.activo ? 'Desactivar' : 'Reactivar'}</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function guardarEdicionProducto(itemId) {
+    const precioVenta = Number(document.getElementById(`edit-precio-${itemId}`).value);
+    const costo = Number(document.getElementById(`edit-costo-${itemId}`).value);
+    const stock = Number(document.getElementById(`edit-stock-${itemId}`).value);
+    const stockMinimo = Number(document.getElementById(`edit-stockmin-${itemId}`).value);
+
+    const { error } = await supabaseClient
+      .from('inventario_items')
+      .update({
+        precio_venta: precioVenta,
+        costo_promedio_ponderado: costo,
+        stock_actual: stock,
+        stock_minimo: stockMinimo,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', itemId);
+
+    if (error) {
+      alert('No se pudo guardar el cambio: ' + error.message);
+      return;
+    }
+    await cargarInventarioGestion();
+  }
+
+  async function alternarActivoProducto(itemId, estabaActivo) {
+    const { error } = await supabaseClient
+      .from('inventario_items')
+      .update({ activo: !estabaActivo, updated_at: new Date().toISOString() })
+      .eq('id', itemId);
+
+    if (error) {
+      alert('No se pudo actualizar: ' + error.message);
+      return;
+    }
+    await cargarInventarioGestion();
+  }
+
+  // ============================================================================
+  // HISTORIAL DE VENTAS
+  // ============================================================================
+  async function mostrarPantallaHistorial() {
+    mostrarPantalla('pantallaHistorial');
+    await cargarHistorialVentas();
+  }
+
+  async function cargarHistorialVentas() {
+    const contenedor = document.getElementById('listaHistorialVentas');
+    contenedor.innerHTML = '<div class="cargando">Cargando historial...</div>';
+
+    const { data: ventas, error } = await supabaseClient
+      .from('ventas_pos')
+      .select('id, consecutivo, fecha, total, estado')
+      .order('fecha', { ascending: false })
+      .limit(50);
+
+    if (error) {
+      contenedor.innerHTML = '<div class="cargando">No se pudo cargar el historial: ' + error.message + '</div>';
+      return;
+    }
+
+    if (!ventas || ventas.length === 0) {
+      contenedor.innerHTML = '<div class="cargando">Todavía no hay ventas registradas.</div>';
+      return;
+    }
+
+    const ventaIds = ventas.map(v => v.id);
+
+    const { data: detalles } = await supabaseClient
+      .from('ventas_pos_detalle')
+      .select('venta_id, descripcion, cantidad, subtotal_linea')
+      .in('venta_id', ventaIds);
+
+    const { data: pagos } = await supabaseClient
+      .from('ventas_pos_pagos')
+      .select('venta_id, metodo_pago, monto')
+      .in('venta_id', ventaIds);
+
+    const etiquetasPago = { efectivo: 'Efectivo', nequi: 'Nequi', daviplata: 'Daviplata', tarjeta_debito: 'Tarjeta débito', tarjeta_credito: 'Tarjeta crédito' };
+
+    contenedor.innerHTML = ventas.map(venta => {
+      const lineasVenta = (detalles || []).filter(d => d.venta_id === venta.id);
+      const pagosVenta = (pagos || []).filter(p => p.venta_id === venta.id);
+
+      const textoLineas = lineasVenta.map(l => `${l.cantidad}x ${escaparHtml(l.descripcion)}`).join(', ');
+      const textoPagos = pagosVenta.map(p => `${etiquetasPago[p.metodo_pago] || p.metodo_pago}: ${formatearMoneda(p.monto)}`).join(' · ');
+
+      const fecha = new Date(venta.fecha);
+      const fechaTexto = fecha.toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
+      const tagAnulada = venta.estado === 'anulada' ? ' <span class="badge-inactivo">Anulada</span>' : '';
+
+      return `
+        <div class="fila-historial">
+          <div class="fila-historial-encabezado">
+            <span class="fila-historial-consecutivo">${venta.consecutivo}${tagAnulada}</span>
+            <span class="fila-historial-total">${formatearMoneda(venta.total)}</span>
+          </div>
+          <div class="fila-historial-fecha">${fechaTexto}</div>
+          <div class="fila-historial-detalle">${textoLineas || 'Sin detalle'}</div>
+          <div class="fila-historial-pagos">${textoPagos}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ============================================================================
+  // CONSUMO DE TALLER
+  // ============================================================================
+  let catalogoConsumoCompleto = [];
+  let itemConsumoAbiertoId = null;
+
+  async function mostrarPantallaConsumoTaller() {
+    mostrarPantalla('pantallaConsumoTaller');
+    document.getElementById('badgeRolConsumo').textContent = etiquetaRol(rolActual || '');
+    document.getElementById('consumoBuscar').value = '';
+    itemConsumoAbiertoId = null;
+    await cargarCatalogoConsumo();
+    await cargarHistorialConsumo();
+  }
+
+  function volverDeConsumoTaller() {
+    if (rolActual === 'taller') {
+      // El Taller no tiene pantalla de "turno activo" a la cual volver
+      cerrarSesion();
+    } else {
+      mostrarTurnoActivo();
+    }
+  }
+
+  async function cargarCatalogoConsumo() {
+    const contenedor = document.getElementById('listaCatalogoConsumo');
+    contenedor.innerHTML = '<div class="cargando">Cargando insumos...</div>';
+
+    const { data, error } = await supabaseClient
+      .from('inventario_items')
+      .select('id, nombre, tipo, stock_actual, unidad_medida')
+      .eq('tipo', 'merceria')
+      .eq('activo', true)
+      .order('nombre', { ascending: true });
+
+    if (error) {
+      contenedor.innerHTML = '<div class="cargando">No se pudo cargar: ' + error.message + '</div>';
+      return;
+    }
+
+    catalogoConsumoCompleto = data;
+    renderizarCatalogoConsumo();
+  }
+
+  function renderizarCatalogoConsumo() {
+    const contenedor = document.getElementById('listaCatalogoConsumo');
+    const textoBusqueda = document.getElementById('consumoBuscar').value.trim().toLowerCase();
+
+    let items = catalogoConsumoCompleto;
+    if (textoBusqueda) {
+      items = items.filter(i => i.nombre.toLowerCase().includes(textoBusqueda));
+    }
+
+    if (items.length === 0) {
+      contenedor.innerHTML = '<div class="cargando">' + (catalogoConsumoCompleto.length === 0 ? 'No hay insumos de mercería cargados todavía.' : 'No se encontraron resultados.') + '</div>';
+      return;
+    }
+
+    contenedor.innerHTML = items.map(item => `
+      <div class="item-consumo" data-id="${item.id}">
+        <div class="item-consumo-fila" style="cursor:pointer;" onclick="alternarFormularioConsumo('${item.id}')">
+          <div class="item-producto-info">
+            <div class="item-producto-nombre">${escaparHtml(item.nombre)}</div>
+            <div class="item-producto-meta">Stock disponible: ${item.stock_actual} ${item.unidad_medida}</div>
+          </div>
+        </div>
+        <div class="item-consumo-acciones ${itemConsumoAbiertoId === item.id ? 'abierto' : ''}" id="acciones-consumo-${item.id}">
+          <input type="number" min="0" step="0.1" placeholder="Cantidad" id="cantidad-consumo-${item.id}">
+          <button onclick="registrarConsumo('${item.id}')">Registrar</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function alternarFormularioConsumo(itemId) {
+    itemConsumoAbiertoId = itemConsumoAbiertoId === itemId ? null : itemId;
+    renderizarCatalogoConsumo();
+  }
+
+  async function registrarConsumo(itemId) {
+    const inputCantidad = document.getElementById(`cantidad-consumo-${itemId}`);
+    const cantidad = Number(inputCantidad.value);
+
+    if (!cantidad || cantidad <= 0) {
+      alert('Escribe una cantidad válida mayor a cero.');
+      return;
+    }
+
+    const { error } = await supabaseClient.rpc('fn_registrar_consumo_taller', {
+      p_inventario_item_id: itemId,
+      p_cantidad: cantidad,
+      p_observaciones: null,
+      p_registrado_por: sesionActual.userId
+    });
+
+    if (error) {
+      alert('No se pudo registrar el consumo: ' + error.message);
+      return;
+    }
+
+    itemConsumoAbiertoId = null;
+    await cargarCatalogoConsumo();
+    await cargarHistorialConsumo();
+  }
+
+  async function cargarHistorialConsumo() {
+    const contenedor = document.getElementById('listaHistorialConsumo');
+    contenedor.innerHTML = '<div class="cargando">Cargando historial...</div>';
+
+    const { data, error } = await supabaseClient
+      .from('movimientos_inventario')
+      .select('id, cantidad, created_at, observaciones, inventario_items(nombre, unidad_medida)')
+      .eq('registrado_por', sesionActual.userId)
+      .eq('tipo', 'consumo_taller')
+      .order('created_at', { ascending: false })
+      .limit(30);
+
+    if (error) {
+      contenedor.innerHTML = '<div class="cargando">No se pudo cargar: ' + error.message + '</div>';
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      contenedor.innerHTML = '<div class="cargando">Todavía no has registrado consumos.</div>';
+      return;
+    }
+
+    contenedor.innerHTML = data.map(mov => {
+      const fecha = new Date(mov.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
+      const nombreItem = mov.inventario_items ? mov.inventario_items.nombre : 'Insumo eliminado';
+      const unidad = mov.inventario_items ? mov.inventario_items.unidad_medida : '';
+      return `
+        <div class="fila-consumo-historial">
+          <span class="fila-consumo-historial-cant">-${mov.cantidad} ${unidad}</span> de ${escaparHtml(nombreItem)}<br>
+          <span style="opacity:0.6;">${fecha}</span>
+        </div>
+      `;
+    }).join('');
   }
 </script>
 
