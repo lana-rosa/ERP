@@ -41,13 +41,15 @@
     width: var(--sidebar-width);
     min-width: var(--sidebar-width);
     background: var(--sidebar-bg);
-    display: flex;
+    display: none;
     flex-direction: column;
     height: 100vh;
     position: fixed;
     left: 0; top: 0;
     z-index: 100;
   }
+
+  #sidebar.visible { display: flex; }
 
   .sidebar-marca {
     padding: 20px 16px 16px;
@@ -143,13 +145,16 @@
 
   /* ===== ÁREA PRINCIPAL ===== */
   #main {
-    margin-left: var(--sidebar-width);
     flex: 1;
     height: 100vh;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
+    margin-left: 0;
+    transition: margin-left 0.15s ease;
   }
+
+  #main.con-sidebar { margin-left: var(--sidebar-width); }
 
   /* Topbar solo para login */
   .topbar-login {
@@ -519,7 +524,7 @@
 <body>
 
 <!-- SIDEBAR DE NAVEGACIÓN -->
-<nav id="sidebar" style="display:none;">
+<nav id="sidebar">
   <div class="sidebar-marca">
     <div class="sidebar-oveja">🐑</div>
     <div class="sidebar-nombre">Lana Rosa OS<span>Punto de venta</span></div>
@@ -859,7 +864,28 @@
     const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
-    document.getElementById('btnSalir').classList.toggle('oculto', idPantalla === 'pantallaLogin');
+    // Sidebar y margen según pantalla
+    const esLogin = idPantalla === 'pantallaLogin';
+    const sidebar = document.getElementById('sidebar');
+    const main = document.getElementById('main');
+    if (sidebar) sidebar.classList.toggle('visible', !esLogin);
+    if (main) main.classList.toggle('con-sidebar', !esLogin);
+    // Resaltar nav activo
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('activo'));
+    const mapaNav = {
+      pantallaVentas: 'nav-ventas',
+      pantallaHistorial: 'nav-historial',
+      pantallaSolicitudes: 'nav-solicitudes',
+      pantallaInventario: 'nav-inventario',
+      pantallaAjusteStock: 'nav-ajustestock',
+      pantallaConsumoTaller: 'nav-consumotaller',
+      pantallaTurnoActivo: 'nav-turno',
+      pantallaReportes: 'nav-reportes',
+    };
+    if (mapaNav[idPantalla]) {
+      const btn = document.getElementById(mapaNav[idPantalla]);
+      if (btn) btn.classList.add('activo');
+    }
   }
 
   function mostrarMensaje(idMensaje, texto, tipo) {
