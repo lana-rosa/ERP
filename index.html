@@ -538,7 +538,7 @@
 
     <div class="sidebar-seccion" id="seccionInventario" style="display:none;">Inventario</div>
     <button class="nav-btn" id="nav-inventario" onclick="mostrarPantallaInventario()" style="display:none;"><span class="nav-icon">📊</span> Gestionar inventario</button>
-    <button class="nav-btn" id="nav-ajustestock" onclick="mostrarPantallaAjusteStock()" style="display:none;"><span class="nav-icon">🔍</span> Ajustar stock SKU</button>
+    <button class="nav-btn" id="nav-ajustestock" onclick="mostrarPantallaAjusteStock()" style="display:none;"><span class="nav-icon">📥</span> Entrada mercancía</button>
     <button class="nav-btn" id="nav-consumotaller" onclick="mostrarPantallaConsumoTaller()" style="display:none;"><span class="nav-icon">🧶</span> Consumo taller</button>
 
     <div class="sidebar-seccion" id="seccionCaja">Caja</div>
@@ -654,14 +654,14 @@
 
     <div class="panel">
       <h2>Datos del cliente <span style="font-size:11px;font-weight:400;opacity:0.6;">(opcional)</span></h2>
-      <label for="clienteTelefono">Teléfono</label>
-      <input type="tel" id="clienteTelefono" placeholder="300 000 0000" oninput="autocompletarCliente('telefono')">
-      <label for="clienteCorreo">Correo</label>
-      <input type="email" id="clienteCorreo" placeholder="correo@gmail.com" oninput="autocompletarCliente('correo')">
+      <label for="clienteIdentificacion">N° de identificación <span style="font-size:10px;opacity:0.6;">(busca cliente automáticamente)</span></label>
+      <input type="text" id="clienteIdentificacion" placeholder="CC, CE, NIT..." oninput="autocompletarCliente('identificacion')">
       <label for="clienteNombre">Nombre completo</label>
       <input type="text" id="clienteNombre" placeholder="Nombre completo">
-      <label for="clienteIdentificacion">Identificación <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
-      <input type="text" id="clienteIdentificacion" placeholder="CC, CE, NIT...">
+      <label for="clienteTelefono">Teléfono <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <input type="tel" id="clienteTelefono" placeholder="300 000 0000">
+      <label for="clienteCorreo">Correo <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <input type="email" id="clienteCorreo" placeholder="correo@gmail.com">
       <label for="clienteDireccion">Dirección <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
       <input type="text" id="clienteDireccion" placeholder="Para envíos">
       <label for="clienteCiudad">Ciudad <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
@@ -784,15 +784,15 @@
 <!-- ===== PANTALLA: AJUSTE STOCK ===== -->
 <div id="pantallaAjusteStock" class="oculto contenido">
   <div class="page-header">
-    <h1>Ajustar stock por código de barras</h1>
-    <div class="subtitulo">Escanea el código del producto y escribe el nuevo stock.</div>
+    <h1>Entrada de nueva mercancía</h1>
+    <div class="subtitulo">Registra las unidades que llegaron. Solo puedes aumentar el stock, no disminuirlo.</div>
   </div>
   <div class="tarjeta">
-    <label for="inputSkuAjuste">Código de barras / SKU</label>
-    <input type="text" id="inputSkuAjuste" placeholder="Escanea o escribe el código...">
-    <label for="inputCantidadNueva">Nueva cantidad en stock</label>
-    <input type="number" id="inputCantidadNueva" placeholder="0" min="0" step="1">
-    <button class="btn-principal" id="btnConfirmarAjusteStock" onclick="confirmarAjusteStock()">Confirmar ajuste</button>
+    <label for="inputSkuAjuste">Código de barras, SKU o nombre del producto</label>
+    <input type="text" id="inputSkuAjuste" placeholder="Escanea el código o escribe el nombre...">
+    <label for="inputCantidadNueva">¿Cuántas unidades entraron?</label>
+    <input type="number" id="inputCantidadNueva" placeholder="0" min="1" step="1">
+    <button class="btn-principal" id="btnConfirmarAjusteStock" onclick="confirmarAjusteStock()">Registrar entrada</button>
     <button class="btn-secundario" onclick="irATurnoActivo()">Cancelar</button>
     <div class="mensaje" id="mensajeAjusteStock"></div>
   </div>
@@ -1216,6 +1216,12 @@
   let contadorFilaPago = 0;
 
   async function mostrarPantallaVentas() {
+    // Guardia: verificar que hay un turno activo antes de permitir ventas
+    if (!turnoActivoActual) {
+      alert('Debes abrir un turno de caja antes de registrar ventas.');
+      mostrarPantallaAbrirTurno();
+      return;
+    }
     mostrarPantalla('pantallaVentas');
     carrito = [];
     filasPago = [{ metodo_pago: 'efectivo', monto: '', referencia: '' }];
@@ -1571,25 +1577,21 @@
   async function autocompletarCliente(campo) {
     clearTimeout(autocompletadoTimeout);
     autocompletadoTimeout = setTimeout(async () => {
-      const telefono = document.getElementById('clienteTelefono').value.trim();
-      const correo = document.getElementById('clienteCorreo').value.trim();
+      const identificacion = document.getElementById('clienteIdentificacion').value.trim();
       const msgEl = document.getElementById('mensajeAutocompletado');
 
-      // Solo buscar si hay al menos 7 caracteres en el campo que se está escribiendo
-      const valorBusqueda = campo === 'telefono' ? telefono : correo;
-      if (valorBusqueda.length < 7) {
+      // Solo buscar si hay al menos 5 dígitos
+      if (identificacion.length < 5) {
         msgEl.style.display = 'none';
         return;
       }
 
-      let query = supabaseClient.from('terceros').select('nombre_completo, telefono, email, numero_documento, direccion, ciudad');
-      if (campo === 'telefono' && telefono) {
-        query = query.eq('telefono', telefono);
-      } else if (campo === 'correo' && correo) {
-        query = query.eq('email', correo);
-      }
-
-      const { data, error } = await query.limit(1).single();
+      const { data, error } = await supabaseClient
+        .from('terceros')
+        .select('nombre_completo, telefono, email, numero_documento, direccion, ciudad')
+        .eq('numero_documento', identificacion)
+        .limit(1)
+        .single();
 
       if (error || !data) {
         msgEl.style.display = 'none';
@@ -1598,14 +1600,13 @@
 
       // Precargar los campos con los datos encontrados
       document.getElementById('clienteNombre').value = data.nombre_completo || '';
-      document.getElementById('clienteIdentificacion').value = data.numero_documento || '';
+      document.getElementById('clienteTelefono').value = data.telefono || '';
+      document.getElementById('clienteCorreo').value = data.email || '';
       document.getElementById('clienteDireccion').value = data.direccion || '';
       document.getElementById('clienteCiudad').value = data.ciudad || '';
-      if (campo === 'telefono' && data.email) document.getElementById('clienteCorreo').value = data.email;
-      if (campo === 'correo' && data.telefono) document.getElementById('clienteTelefono').value = data.telefono;
 
       msgEl.style.display = 'block';
-    }, 500); // esperar 500ms después de que el usuario deje de escribir
+    }, 400);
   }
 
 
@@ -1839,7 +1840,29 @@
   // ============================================================================
   // HISTORIAL DE VENTAS
   // ============================================================================
-  async function mostrarPantallaHistorial() {
+  // ============================================================
+  // ANULACIÓN DE VENTAS
+  // ============================================================
+  async function anularVenta(ventaId, consecutivo) {
+    if (!confirm(`¿Estás segura de que quieres anular la venta ${consecutivo}? Esta acción no se puede deshacer.`)) return;
+
+    const resp = await fetch(WORKER_URL + '/api/pos/ventas/anular', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ venta_id: ventaId })
+    });
+
+    const datos = await resp.json();
+    if (!resp.ok) {
+      alert('No se pudo anular la venta: ' + (datos.error || 'Error desconocido'));
+      return;
+    }
+
+    alert(`✅ Venta ${consecutivo} anulada correctamente. El stock fue restaurado.`);
+    await cargarHistorialVentas();
+  }
+
+    async function mostrarPantallaHistorial() {
     mostrarPantalla('pantallaHistorial');
     await cargarHistorialVentas();
   }
@@ -1850,9 +1873,9 @@
 
     const { data: ventas, error } = await supabaseClient
       .from('ventas_pos')
-      .select('id, consecutivo, fecha, total, estado')
+      .select('id, consecutivo, fecha, total, estado, turno_id, cajero_user_id, usuarios_roles!ventas_pos_cajero_user_id_fkey(nombre_completo), turnos_caja!ventas_pos_turno_id_fkey(fecha_apertura, fecha_cierre)')
       .order('fecha', { ascending: false })
-      .limit(50);
+      .limit(100);
 
     if (error) {
       contenedor.innerHTML = '<div class="cargando">No se pudo cargar el historial: ' + error.message + '</div>';
@@ -1878,29 +1901,57 @@
 
     const etiquetasPago = { efectivo: 'Efectivo', nequi: 'Nequi', daviplata: 'Daviplata', tarjeta_debito: 'Tarjeta débito', tarjeta_credito: 'Tarjeta crédito' };
 
-    contenedor.innerHTML = ventas.map(venta => {
-      const lineasVenta = (detalles || []).filter(d => d.venta_id === venta.id);
-      const pagosVenta = (pagos || []).filter(p => p.venta_id === venta.id);
+    // Agrupar ventas por turno
+    const turnosMap = new Map();
+    ventas.forEach(venta => {
+      const turnoId = venta.turno_id || 'sin_turno';
+      if (!turnosMap.has(turnoId)) {
+        const turno = venta.turnos_caja;
+        const cajero = venta.usuarios_roles ? venta.usuarios_roles.nombre_completo : 'Cajero';
+        const fechaAp = turno ? new Date(turno.fecha_apertura).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }) : '—';
+        const fechaCi = turno && turno.fecha_cierre ? new Date(turno.fecha_cierre).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }) : 'Activo';
+        turnosMap.set(turnoId, { cajero, fechaAp, fechaCi, ventas: [] });
+      }
+      turnosMap.get(turnoId).ventas.push(venta);
+    });
 
-      const textoLineas = lineasVenta.map(l => `${l.cantidad}x ${escaparHtml(l.descripcion)}`).join(', ');
-      const textoPagos = pagosVenta.map(p => `${etiquetasPago[p.metodo_pago] || p.metodo_pago}: ${formatearMoneda(p.monto)}`).join(' · ');
-
-      const fecha = new Date(venta.fecha);
-      const fechaTexto = fecha.toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
-      const tagAnulada = venta.estado === 'anulada' ? ' <span class="badge-inactivo">Anulada</span>' : '';
-
-      return `
-        <div class="fila-historial">
-          <div class="fila-historial-encabezado">
-            <span class="fila-historial-consecutivo">${venta.consecutivo}${tagAnulada}</span>
-            <span class="fila-historial-total">${formatearMoneda(venta.total)}</span>
+    let html = '';
+    for (const [turnoId, grupo] of turnosMap) {
+      const totalTurno = grupo.ventas.reduce((acc, v) => acc + (v.estado !== 'anulada' ? Number(v.total) : 0), 0);
+      html += `
+        <div style="margin-bottom:20px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--rosa-suave);border-radius:10px;margin-bottom:10px;">
+            <div>
+              <div style="font-weight:700;font-size:13.5px;">👤 ${escaparHtml(grupo.cajero)}</div>
+              <div style="font-size:11px;opacity:0.65;">Turno: ${grupo.fechaAp} → ${grupo.fechaCi}</div>
+            </div>
+            <div style="font-weight:700;color:var(--rosa-principal);">${formatearMoneda(totalTurno)}</div>
           </div>
-          <div class="fila-historial-fecha">${fechaTexto}</div>
-          <div class="fila-historial-detalle">${textoLineas || 'Sin detalle'}</div>
-          <div class="fila-historial-pagos">${textoPagos}</div>
-        </div>
       `;
-    }).join('');
+      for (const venta of grupo.ventas) {
+        const lineasVenta = (detalles || []).filter(d => d.venta_id === venta.id);
+        const pagosVenta = (pagos || []).filter(p => p.venta_id === venta.id);
+        const textoLineas = lineasVenta.map(l => `${l.cantidad}x ${escaparHtml(l.descripcion)}`).join(', ');
+        const textoPagos = pagosVenta.map(p => `${etiquetasPago[p.metodo_pago] || p.metodo_pago}: ${formatearMoneda(p.monto)}`).join(' · ');
+        const fecha = new Date(venta.fecha).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
+        const tagAnulada = venta.estado === 'anulada' ? ' <span class="badge-inactivo">Anulada</span>' : '';
+        const puedeAnular = venta.estado === 'completada' && turnoId === turnoActivoActual?.id;
+        html += `
+          <div class="fila-historial" style="margin-left:8px;">
+            <div class="fila-historial-encabezado">
+              <span class="fila-historial-consecutivo">${venta.consecutivo}${tagAnulada}</span>
+              <span class="fila-historial-total">${formatearMoneda(venta.total)}</span>
+            </div>
+            <div class="fila-historial-fecha">${fecha}</div>
+            <div class="fila-historial-detalle">${textoLineas || 'Sin detalle'}</div>
+            <div class="fila-historial-pagos">${textoPagos}</div>
+            ${puedeAnular ? `<button class="btn-mini desactivar" style="margin-top:8px;max-width:160px;" onclick="anularVenta('${venta.id}', '${venta.consecutivo}')">❌ Anular venta</button>` : ''}
+          </div>
+        `;
+      }
+      html += '</div>';
+    }
+    contenedor.innerHTML = html;
   }
 
   // ============================================================================
@@ -2303,16 +2354,16 @@
   }
 
   async function confirmarAjusteStock() {
-    const sku = document.getElementById('inputSkuAjuste').value.trim();
-    const cantidad = Number(document.getElementById('inputCantidadNueva').value);
+    const busqueda = document.getElementById('inputSkuAjuste').value.trim();
+    const cantidadEntrada = Number(document.getElementById('inputCantidadNueva').value);
     ocultarMensaje('mensajeAjusteStock');
 
-    if (!sku) {
-      mostrarMensaje('mensajeAjusteStock', 'Escanea o escribe el código del producto.', 'error');
+    if (!busqueda) {
+      mostrarMensaje('mensajeAjusteStock', 'Escanea el código o escribe el nombre del producto.', 'error');
       return;
     }
-    if (isNaN(cantidad) || cantidad < 0) {
-      mostrarMensaje('mensajeAjusteStock', 'Escribe una cantidad válida (0 o más).', 'error');
+    if (isNaN(cantidadEntrada) || cantidadEntrada <= 0) {
+      mostrarMensaje('mensajeAjusteStock', 'Escribe cuántas unidades entraron (debe ser mayor a cero).', 'error');
       return;
     }
 
@@ -2320,22 +2371,26 @@
     btn.disabled = true;
     btn.textContent = 'Guardando...';
 
-    const resp = await fetch(WORKER_URL + '/api/pos/inventario/ajustar-stock-sku', {
+    // El cajero solo puede AUMENTAR el stock (entrada de nueva mercancía)
+    // Se envía como cantidad_entrada, no como cantidad_nueva absoluta
+    const resp = await fetch(WORKER_URL + '/api/pos/inventario/entrada-stock', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ sku, cantidad_nueva: cantidad })
+      body: JSON.stringify({ busqueda, cantidad_entrada: cantidadEntrada })
     });
 
     btn.disabled = false;
-    btn.textContent = 'Confirmar ajuste';
+    btn.textContent = 'Registrar entrada';
 
     const datos = await resp.json();
     if (!resp.ok) {
-      mostrarMensaje('mensajeAjusteStock', datos.error || 'No se pudo ajustar el stock.', 'error');
+      mostrarMensaje('mensajeAjusteStock', datos.error || 'No se pudo registrar la entrada.', 'error');
       return;
     }
 
-    mostrarMensaje('mensajeAjusteStock', '✅ Stock actualizado correctamente.', 'exito');
+    mostrarMensaje('mensajeAjusteStock',
+      `✅ Entrada registrada: +${cantidadEntrada} unidades de "${datos.nombre_producto}". Stock actual: ${datos.stock_nuevo}.`,
+      'exito');
     document.getElementById('inputSkuAjuste').value = '';
     document.getElementById('inputCantidadNueva').value = '';
     document.getElementById('inputSkuAjuste').focus();
