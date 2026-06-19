@@ -18,1022 +18,827 @@
     --verde-exito: #2e8b57;
     --rojo-error: #c0392b;
     --sombra: 0 2px 12px rgba(216, 1, 124, 0.12);
+    --sidebar-width: 220px;
+    --sidebar-bg: #2d1a26;
+    --sidebar-texto: #f0e0ec;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body { height: 100%; }
 
   body {
     font-family: 'Poppins', sans-serif;
     background: var(--blanco-hueso);
     color: var(--texto-oscuro);
-    min-height: 100vh;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ===== SIDEBAR ===== */
+  #sidebar {
+    width: var(--sidebar-width);
+    min-width: var(--sidebar-width);
+    background: var(--sidebar-bg);
     display: flex;
     flex-direction: column;
-    align-items: center;
-    padding: 24px 16px;
+    height: 100vh;
+    position: fixed;
+    left: 0; top: 0;
+    z-index: 100;
   }
 
-  .topbar {
-    width: 100%;
-    max-width: 480px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 24px;
-  }
-
-  .marca {
+  .sidebar-marca {
+    padding: 20px 16px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
     display: flex;
     align-items: center;
     gap: 10px;
   }
 
-  .marca-oveja {
-    width: 36px;
-    height: 36px;
+  .sidebar-oveja {
+    width: 34px; height: 34px;
     border-radius: 50%;
     background: var(--rosa-suave);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px; flex-shrink: 0;
   }
 
-  .marca-texto {
+  .sidebar-nombre {
     font-weight: 700;
-    font-size: 16px;
-    color: var(--rosa-principal);
+    font-size: 13px;
+    color: var(--rosa-medio);
     line-height: 1.1;
   }
 
-  .marca-texto span {
+  .sidebar-nombre span {
     display: block;
     font-weight: 400;
-    font-size: 11px;
-    color: var(--texto-oscuro);
+    font-size: 10px;
+    color: var(--sidebar-texto);
     opacity: 0.6;
   }
 
-  .btn-salir {
-    background: none;
-    border: none;
-    color: var(--azul-acero);
-    font-size: 13px;
-    font-family: 'Poppins', sans-serif;
-    cursor: pointer;
-    text-decoration: underline;
+  .sidebar-nav {
+    flex: 1;
+    padding: 12px 8px;
+    overflow-y: auto;
   }
 
-  .tarjeta {
+  .sidebar-seccion {
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+    padding: 12px 8px 6px;
+  }
+
+  .nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     width: 100%;
-    max-width: 480px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: none;
+    background: none;
+    color: var(--sidebar-texto);
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s ease;
+    opacity: 0.85;
+  }
+
+  .nav-btn:hover { background: rgba(255,255,255,0.08); opacity: 1; }
+  .nav-btn.activo { background: var(--rosa-principal); color: white; opacity: 1; }
+  .nav-btn .nav-icon { font-size: 15px; width: 20px; text-align: center; }
+
+  .sidebar-footer {
+    padding: 12px 8px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .sidebar-usuario {
+    padding: 8px 12px;
+    font-size: 11.5px;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 6px;
+  }
+
+  #badgeRolSidebar {
+    display: inline-block;
+    background: rgba(216,1,124,0.25);
+    color: var(--rosa-medio);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-top: 3px;
+  }
+
+  /* ===== ÁREA PRINCIPAL ===== */
+  #main {
+    margin-left: var(--sidebar-width);
+    flex: 1;
+    height: 100vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Topbar solo para login */
+  .topbar-login {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 32px;
+    background: white;
+    border-bottom: 1px solid #f0e8ee;
+  }
+
+  .marca { display: flex; align-items: center; gap: 10px; }
+  .marca-oveja {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--rosa-suave);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .marca-texto { font-weight: 700; font-size: 16px; color: var(--rosa-principal); line-height: 1.1; }
+  .marca-texto span { display: block; font-weight: 400; font-size: 11px; color: var(--texto-oscuro); opacity: 0.6; }
+
+  .btn-salir {
+    background: none; border: none;
+    color: var(--azul-acero); font-size: 13px;
+    font-family: 'Poppins', sans-serif;
+    cursor: pointer; text-decoration: underline;
+  }
+
+  /* ===== CONTENIDO ===== */
+  .contenido {
+    flex: 1;
+    padding: 28px 32px;
+    overflow-y: auto;
+  }
+
+  .page-header {
+    margin-bottom: 24px;
+  }
+
+  .page-header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--texto-oscuro);
+  }
+
+  .page-header .subtitulo {
+    font-size: 13px;
+    color: var(--texto-oscuro);
+    opacity: 0.6;
+    margin-top: 4px;
+  }
+
+  /* ===== TARJETAS ===== */
+  .tarjeta {
+    background: white;
+    border-radius: 14px;
+    box-shadow: var(--sombra);
+    padding: 24px;
+    max-width: 520px;
+  }
+
+  .tarjeta + .tarjeta { margin-top: 16px; }
+
+  .tarjeta h1 { font-size: 19px; font-weight: 700; margin-bottom: 6px; }
+
+  /* ===== GRILLA DE PANELES ===== */
+  .grilla-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .grilla-3 {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr;
+    gap: 20px;
+  }
+
+  @media (max-width: 900px) {
+    .grilla-2, .grilla-3 { grid-template-columns: 1fr; }
+    #sidebar { display: none !important; }
+    #main { margin-left: 0; }
+  }
+
+  .panel {
+    background: white;
+    border-radius: 14px;
+    box-shadow: var(--sombra);
+    padding: 20px;
+    overflow-y: auto;
+    max-height: calc(100vh - 140px);
+  }
+
+  .panel h2 { font-size: 15px; font-weight: 700; margin-bottom: 14px; }
+
+  /* ===== LOGIN ===== */
+  #pantallaLogin {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: var(--blanco-hueso);
+  }
+
+  .login-card {
     background: white;
     border-radius: 16px;
     box-shadow: var(--sombra);
-    padding: 28px 24px;
-  }
-
-  .tarjeta + .tarjeta {
-    margin-top: 16px;
-  }
-
-  h1 {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--texto-oscuro);
-    margin-bottom: 6px;
-  }
-
-  .subtitulo {
-    font-size: 13px;
-    color: var(--texto-oscuro);
-    opacity: 0.65;
-    margin-bottom: 22px;
-  }
-
-  label {
-    display: block;
-    font-size: 13px;
-    font-weight: 600;
-    margin-bottom: 6px;
-    margin-top: 16px;
-  }
-
-  input {
+    padding: 36px 32px;
     width: 100%;
-    padding: 13px 14px;
+    max-width: 400px;
+  }
+
+  .login-logo {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .login-logo-icono {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: var(--rosa-suave);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+    margin: 0 auto 10px;
+  }
+
+  .login-logo-nombre {
+    font-weight: 700; font-size: 18px;
+    color: var(--rosa-principal);
+  }
+
+  .login-logo-sub {
+    font-size: 12px; opacity: 0.6;
+  }
+
+  /* ===== FORMULARIOS ===== */
+  label {
+    display: block; font-size: 12.5px;
+    font-weight: 600; margin-bottom: 5px; margin-top: 14px;
+  }
+
+  input, select {
+    width: 100%; padding: 11px 13px;
     border: 1.5px solid #e4d9e2;
-    border-radius: 10px;
+    border-radius: 9px;
     font-family: 'Poppins', sans-serif;
-    font-size: 15px;
+    font-size: 14px;
     background: #fdfbfd;
     transition: border-color 0.15s ease;
   }
 
-  input:focus {
-    outline: none;
-    border-color: var(--rosa-medio);
-  }
+  input:focus, select:focus { outline: none; border-color: var(--rosa-medio); }
 
+  /* ===== BOTONES ===== */
   .btn-principal {
-    width: 100%;
-    padding: 15px;
-    margin-top: 24px;
+    width: 100%; padding: 13px;
+    margin-top: 20px;
     background: var(--rosa-principal);
-    color: white;
-    border: none;
-    border-radius: 10px;
+    color: white; border: none;
+    border-radius: 9px;
     font-family: 'Poppins', sans-serif;
-    font-size: 15px;
-    font-weight: 600;
+    font-size: 14px; font-weight: 600;
     cursor: pointer;
-    transition: background 0.15s ease, transform 0.05s ease;
+    transition: background 0.15s ease;
   }
 
   .btn-principal:hover { background: #b80168; }
   .btn-principal:active { transform: scale(0.98); }
-  .btn-principal:disabled {
-    background: #d9b8cb;
-    cursor: not-allowed;
-  }
+  .btn-principal:disabled { background: #d9b8cb; cursor: not-allowed; }
 
   .btn-secundario {
-    width: 100%;
-    padding: 15px;
-    margin-top: 12px;
-    background: white;
-    color: var(--rosa-principal);
+    width: 100%; padding: 12px;
+    margin-top: 10px;
+    background: white; color: var(--rosa-principal);
     border: 1.5px solid var(--rosa-principal);
-    border-radius: 10px;
+    border-radius: 9px;
     font-family: 'Poppins', sans-serif;
-    font-size: 15px;
-    font-weight: 600;
+    font-size: 14px; font-weight: 600;
     cursor: pointer;
   }
 
   .btn-secundario:hover { background: var(--rosa-suave); }
 
+  .btn-mini {
+    flex: 1; padding: 8px;
+    border-radius: 8px; border: none;
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px; font-weight: 600;
+    cursor: pointer;
+  }
+
+  .btn-mini.guardar { background: var(--rosa-principal); color: white; }
+  .btn-mini.desactivar { background: #fdecea; color: var(--rojo-error); }
+  .btn-mini.editar { background: var(--rosa-suave); color: var(--rosa-principal); border: 1.5px solid var(--rosa-medio); }
+
+  /* ===== BADGES Y TAGS ===== */
+  .badge-rol {
+    display: inline-block;
+    background: var(--rosa-suave);
+    color: var(--rosa-principal);
+    font-size: 11px; font-weight: 600;
+    padding: 3px 12px; border-radius: 20px;
+    margin-bottom: 6px;
+  }
+
+  .badge-inactivo {
+    font-size: 10px; font-weight: 600;
+    padding: 2px 8px; border-radius: 10px;
+    background: #eee; color: #888; margin-left: 6px;
+  }
+
+  .stock-bajo-tag {
+    display: inline-block;
+    background: #fdecea; color: var(--rojo-error);
+    font-size: 10px; font-weight: 600;
+    padding: 1px 7px; border-radius: 10px; margin-left: 6px;
+  }
+
+  /* ===== MENSAJES ===== */
   .mensaje {
-    margin-top: 16px;
-    padding: 12px 14px;
-    border-radius: 10px;
-    font-size: 13.5px;
-    line-height: 1.4;
-    display: none;
+    margin-top: 14px; padding: 11px 13px;
+    border-radius: 9px; font-size: 13px;
+    line-height: 1.4; display: none;
   }
 
   .mensaje.visible { display: block; }
   .mensaje.error { background: #fdecea; color: var(--rojo-error); }
   .mensaje.exito { background: #eaf6ef; color: var(--verde-exito); }
 
-  .badge-rol {
-    display: inline-block;
-    background: var(--rosa-suave);
-    color: var(--rosa-principal);
-    font-size: 12px;
-    font-weight: 600;
-    padding: 4px 12px;
-    border-radius: 20px;
-    margin-bottom: 4px;
-  }
-
+  /* ===== ESTADO DE TURNO ===== */
   .estado-turno {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 14px;
-    border-radius: 10px;
-    background: var(--rosa-suave);
-    margin-bottom: 18px;
-    font-size: 14px;
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px; border-radius: 10px;
+    background: var(--rosa-suave); margin-bottom: 20px;
+    font-size: 13.5px;
   }
 
-  .punto {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
+  .punto { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
   .punto.abierto { background: var(--verde-exito); }
   .punto.cerrado { background: var(--azul-acero); }
 
-  .resumen-cierre {
-    background: var(--rosa-suave);
-    border-radius: 10px;
-    padding: 16px;
-    margin-top: 16px;
-    font-size: 14px;
-  }
-
-  .resumen-fila {
-    display: flex;
-    justify-content: space-between;
-    padding: 6px 0;
-  }
-
-  .resumen-fila.total {
-    font-weight: 700;
-    border-top: 1px solid rgba(216, 1, 124, 0.2);
-    margin-top: 6px;
-    padding-top: 10px;
-  }
-
-  .oculto { display: none !important; }
-
-  .cargando {
-    text-align: center;
-    color: var(--azul-acero);
-    font-size: 13px;
-    padding: 20px 0;
-  }
-
-  /* ===== PANTALLA DE VENTAS ===== */
-  .contenedor-ventas {
-    width: 100%;
-    max-width: 880px;
-    display: grid;
-    grid-template-columns: 1.3fr 1fr;
-    gap: 16px;
-  }
-
-  @media (max-width: 740px) {
-    .contenedor-ventas { grid-template-columns: 1fr; }
-  }
-
-  .panel {
-    background: white;
-    border-radius: 16px;
-    box-shadow: var(--sombra);
-    padding: 20px;
-    max-height: 80vh;
-    overflow-y: auto;
-  }
-
-  .panel h2 {
-    font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 12px;
-  }
-
+  /* ===== CATÁLOGO POS ===== */
   .barra-busqueda {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 14px;
-    position: sticky;
-    top: 0;
-    background: white;
-    padding-bottom: 8px;
+    display: flex; gap: 8px; margin-bottom: 12px;
   }
 
-  .barra-busqueda input {
-    flex: 1;
-  }
+  .barra-busqueda input { flex: 1; }
 
-  .filtro-tipo {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 14px;
-  }
+  .filtro-tipo { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
 
   .chip-filtro {
-    padding: 6px 14px;
-    border-radius: 20px;
+    padding: 5px 14px; border-radius: 20px;
     border: 1.5px solid var(--rosa-suave);
-    background: white;
-    color: var(--texto-oscuro);
-    font-size: 12.5px;
-    font-family: 'Poppins', sans-serif;
-    cursor: pointer;
-    font-weight: 500;
+    background: white; color: var(--texto-oscuro);
+    font-size: 12px; font-family: 'Poppins', sans-serif;
+    cursor: pointer; font-weight: 500;
   }
 
-  .chip-filtro.activo {
-    background: var(--rosa-principal);
-    color: white;
-    border-color: var(--rosa-principal);
-  }
+  .chip-filtro.activo { background: var(--rosa-principal); color: white; border-color: var(--rosa-principal); }
 
   .item-producto {
-    display: flex;
-    align-items: center;
+    display: flex; align-items: center;
     justify-content: space-between;
-    padding: 12px;
-    border-radius: 10px;
-    border: 1px solid #f0e8ee;
-    margin-bottom: 8px;
-    cursor: pointer;
-    transition: background 0.15s ease;
+    padding: 11px 12px; border-radius: 10px;
+    border: 1px solid #f0e8ee; margin-bottom: 7px;
+    cursor: pointer; transition: background 0.12s ease;
   }
 
   .item-producto:hover { background: var(--rosa-suave); }
+  .item-producto-nombre { font-weight: 600; font-size: 13.5px; }
+  .item-producto-meta { font-size: 11.5px; color: var(--texto-oscuro); opacity: 0.6; }
+  .item-producto-precio { font-weight: 700; color: var(--rosa-principal); font-size: 13.5px; white-space: nowrap; margin-left: 10px; }
+  .item-producto-info { display: flex; flex-direction: column; gap: 2px; }
 
-  .item-producto-info {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .item-producto-nombre {
-    font-weight: 600;
-    font-size: 14px;
-  }
-
-  .item-producto-meta {
-    font-size: 12px;
-    color: var(--texto-oscuro);
-    opacity: 0.6;
-  }
-
-  .item-producto-precio {
-    font-weight: 700;
-    color: var(--rosa-principal);
-    font-size: 14px;
-    white-space: nowrap;
-    margin-left: 10px;
-  }
-
-  .stock-bajo-tag {
-    display: inline-block;
-    background: #fdecea;
-    color: var(--rojo-error);
-    font-size: 10.5px;
-    font-weight: 600;
-    padding: 1px 7px;
-    border-radius: 10px;
-    margin-left: 6px;
-  }
-
+  /* ===== CARRITO ===== */
   .fila-carrito {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 0;
-    border-bottom: 1px solid #f4eef2;
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 0; border-bottom: 1px solid #f4eef2;
   }
 
-  .fila-carrito-info {
-    flex: 1;
-    min-width: 0;
-  }
+  .fila-carrito-info { flex: 1; min-width: 0; }
+  .fila-carrito-nombre { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fila-carrito-precio { font-size: 11.5px; opacity: 0.6; }
 
-  .fila-carrito-nombre {
-    font-size: 13.5px;
-    font-weight: 600;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .fila-carrito-precio {
-    font-size: 12px;
-    opacity: 0.6;
-  }
-
-  .control-cantidad {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
+  .control-cantidad { display: flex; align-items: center; gap: 5px; }
 
   .btn-cantidad {
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
+    width: 26px; height: 26px; border-radius: 50%;
     border: 1.5px solid var(--rosa-medio);
-    background: white;
-    color: var(--rosa-principal);
-    font-weight: 700;
-    font-size: 14px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    background: white; color: var(--rosa-principal);
+    font-weight: 700; font-size: 14px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
   }
 
-  .cantidad-texto {
-    min-width: 20px;
-    text-align: center;
-    font-size: 13px;
-    font-weight: 600;
-  }
-
-  .fila-carrito-subtotal {
-    font-size: 13px;
-    font-weight: 700;
-    min-width: 70px;
-    text-align: right;
-  }
-
-  .btn-quitar {
-    background: none;
-    border: none;
-    color: var(--azul-acero);
-    cursor: pointer;
-    font-size: 16px;
-    padding: 0 2px;
-  }
-
-  .carrito-vacio {
-    text-align: center;
-    padding: 30px 10px;
-    color: var(--texto-oscuro);
-    opacity: 0.5;
-    font-size: 13px;
-  }
+  .cantidad-texto { min-width: 20px; text-align: center; font-size: 13px; font-weight: 600; }
+  .fila-carrito-subtotal { font-size: 13px; font-weight: 700; min-width: 70px; text-align: right; }
+  .btn-quitar { background: none; border: none; color: var(--azul-acero); cursor: pointer; font-size: 15px; padding: 0 2px; }
+  .carrito-vacio { text-align: center; padding: 28px 10px; color: var(--texto-oscuro); opacity: 0.5; font-size: 13px; }
 
   .resumen-total {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 0 6px;
-    font-size: 18px;
-    font-weight: 700;
-    border-top: 2px solid var(--rosa-suave);
-    margin-top: 10px;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 0 5px; font-size: 17px; font-weight: 700;
+    border-top: 2px solid var(--rosa-suave); margin-top: 10px;
   }
 
   .resumen-total span.valor { color: var(--rosa-principal); }
 
-  .metodos-pago {
-    margin-top: 16px;
-  }
-
-  .fila-pago {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
-  }
-
-  .fila-pago select {
-    flex: 1.2;
-    padding: 10px;
-    border: 1.5px solid #e4d9e2;
-    border-radius: 8px;
-    font-family: 'Poppins', sans-serif;
-    font-size: 13px;
-    background: #fdfbfd;
-  }
-
-  .fila-pago input {
-    flex: 1;
-    padding: 10px;
-    font-size: 13px;
-  }
-
-  .btn-agregar-pago {
-    background: none;
-    border: 1.5px dashed var(--azul-acero);
-    color: var(--azul-acero);
-    border-radius: 8px;
-    padding: 8px;
-    width: 100%;
-    font-family: 'Poppins', sans-serif;
-    font-size: 12.5px;
-    cursor: pointer;
-    margin-top: 4px;
-  }
-
-  .resumen-pagos {
-    font-size: 12.5px;
-    margin-top: 10px;
-    padding: 10px 12px;
-    border-radius: 8px;
-    background: #fafafa;
-  }
-
+  /* ===== PAGOS ===== */
+  .metodos-pago { margin-top: 14px; }
+  .fila-pago { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+  .fila-pago select { flex: 1.2; padding: 9px; border: 1.5px solid #e4d9e2; border-radius: 8px; font-family: 'Poppins', sans-serif; font-size: 12.5px; background: #fdfbfd; }
+  .fila-pago input { flex: 1; padding: 9px; font-size: 12.5px; }
+  .btn-agregar-pago { background: none; border: 1.5px dashed var(--azul-acero); color: var(--azul-acero); border-radius: 8px; padding: 8px; width: 100%; font-family: 'Poppins', sans-serif; font-size: 12px; cursor: pointer; margin-top: 4px; }
+  .resumen-pagos { font-size: 12px; margin-top: 9px; padding: 9px 11px; border-radius: 8px; background: #fafafa; }
   .resumen-pagos.ok { background: #eaf6ef; color: var(--verde-exito); }
   .resumen-pagos.falta { background: #fdecea; color: var(--rojo-error); }
+  .btn-quitar-pago { background: none; border: none; color: var(--rojo-error); cursor: pointer; font-size: 15px; }
 
-  .btn-quitar-pago {
-    background: none;
-    border: none;
-    color: var(--rojo-error);
-    cursor: pointer;
-    font-size: 15px;
-  }
+  /* ===== INVENTARIO ===== */
+  .fila-inventario-editable { border: 1px solid #f0e8ee; border-radius: 10px; padding: 12px; margin-bottom: 9px; }
+  .fila-inventario-titulo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; }
+  .fila-inventario-nombre { font-weight: 600; font-size: 13.5px; }
+  .fila-inventario-tipo-tag { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; background: var(--rosa-suave); color: var(--rosa-principal); }
+  .fila-inventario-lectura { font-size: 12.5px; display: grid; grid-template-columns: 1fr 1fr; gap: 3px 14px; margin-top: 7px; opacity: 0.75; }
+  .fila-inventario-acciones { display: flex; gap: 7px; margin-top: 9px; }
+  .grid-campos-inventario { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .campo-mini label { font-size: 11px; margin-top: 0; margin-bottom: 3px; opacity: 0.65; }
+  .campo-mini input { padding: 7px 9px; font-size: 12.5px; }
 
-  /* ===== GESTIÓN DE INVENTARIO ===== */
-  .fila-inventario-editable {
-    border: 1px solid #f0e8ee;
-    border-radius: 10px;
-    padding: 12px;
-    margin-bottom: 10px;
-  }
+  /* ===== HISTORIAL ===== */
+  .fila-historial { border: 1px solid #f0e8ee; border-radius: 10px; padding: 13px; margin-bottom: 9px; }
+  .fila-historial-encabezado { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+  .fila-historial-consecutivo { font-weight: 700; font-size: 13.5px; color: var(--rosa-principal); }
+  .fila-historial-total { font-weight: 700; font-size: 14px; }
+  .fila-historial-fecha { font-size: 11.5px; opacity: 0.6; margin-bottom: 7px; }
+  .fila-historial-detalle { font-size: 12.5px; opacity: 0.8; line-height: 1.5; }
+  .fila-historial-pagos { font-size: 11px; margin-top: 5px; opacity: 0.65; }
 
-  .fila-inventario-titulo {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-  }
+  /* ===== CONSUMO TALLER ===== */
+  .item-consumo { border: 1px solid #f0e8ee; border-radius: 10px; padding: 11px; margin-bottom: 7px; }
+  .item-consumo-fila { display: flex; justify-content: space-between; align-items: center; }
+  .item-consumo-acciones { display: none; gap: 8px; margin-top: 9px; align-items: center; }
+  .item-consumo-acciones.abierto { display: flex; }
+  .item-consumo-acciones input { flex: 1; padding: 7px 9px; font-size: 12.5px; }
+  .item-consumo-acciones button { padding: 7px 13px; border-radius: 8px; border: none; background: var(--rosa-principal); color: white; font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+  .fila-consumo-historial { font-size: 12.5px; padding: 7px 0; border-bottom: 1px solid #f4eef2; }
+  .fila-consumo-historial-cant { font-weight: 700; color: var(--rosa-principal); }
 
-  .fila-inventario-nombre {
-    font-weight: 600;
-    font-size: 14px;
-  }
+  /* ===== RESUMEN ARQUEO ===== */
+  .resumen-cierre { background: var(--rosa-suave); border-radius: 10px; padding: 15px; margin-top: 14px; }
+  .resumen-fila { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13.5px; }
+  .resumen-fila.total { font-weight: 700; border-top: 1px solid rgba(216,1,124,0.2); margin-top: 5px; padding-top: 9px; }
 
-  .fila-inventario-tipo-tag {
-    font-size: 10.5px;
-    font-weight: 600;
-    padding: 2px 8px;
-    border-radius: 10px;
-    background: var(--rosa-suave);
-    color: var(--rosa-principal);
-  }
+  /* ===== CARGANDO ===== */
+  .cargando { text-align: center; color: var(--azul-acero); font-size: 13px; padding: 18px 0; }
 
-  .grid-campos-inventario {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-top: 8px;
-  }
+  /* ===== OCULTO ===== */
+  .oculto { display: none !important; }
 
-  .campo-mini label {
-    font-size: 11px;
-    margin-top: 0;
-    margin-bottom: 3px;
-    opacity: 0.65;
-  }
+  footer { font-size: 10.5px; color: var(--texto-oscuro); opacity: 0.45; text-align: center; padding: 12px 0 20px; }
 
-  .campo-mini input {
-    padding: 8px 10px;
-    font-size: 13px;
-  }
-
-  .fila-inventario-acciones {
-    display: flex;
-    gap: 8px;
-    margin-top: 10px;
-  }
-
-  .btn-mini {
-    flex: 1;
-    padding: 8px;
-    border-radius: 8px;
-    font-family: 'Poppins', sans-serif;
-    font-size: 12.5px;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-  }
-
-  .btn-mini.guardar {
-    background: var(--rosa-principal);
-    color: white;
-  }
-
-  .btn-mini.desactivar {
-    background: #fdecea;
-    color: var(--rojo-error);
-  }
-
-  .badge-inactivo {
-    font-size: 10.5px;
-    font-weight: 600;
-    padding: 2px 8px;
-    border-radius: 10px;
-    background: #eee;
-    color: #888;
-    margin-left: 6px;
-  }
-
-  .fila-inventario-lectura {
-    font-size: 13px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4px 16px;
-    margin-top: 8px;
-    opacity: 0.75;
-  }
-
-  .btn-mini.editar {
-    background: var(--rosa-suave);
-    color: var(--rosa-principal);
-    border: 1.5px solid var(--rosa-medio);
-  }
-
-  /* ===== HISTORIAL DE VENTAS ===== */
-  .fila-historial {
-    border: 1px solid #f0e8ee;
-    border-radius: 10px;
-    padding: 14px;
-    margin-bottom: 10px;
-  }
-
-  .fila-historial-encabezado {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 6px;
-  }
-
-  .fila-historial-consecutivo {
-    font-weight: 700;
-    font-size: 14px;
-    color: var(--rosa-principal);
-  }
-
-  .fila-historial-total {
-    font-weight: 700;
-    font-size: 15px;
-  }
-
-  .fila-historial-fecha {
-    font-size: 12px;
-    opacity: 0.6;
-    margin-bottom: 8px;
-  }
-
-  .fila-historial-detalle {
-    font-size: 12.5px;
-    opacity: 0.8;
-    line-height: 1.5;
-  }
-
-  .fila-historial-pagos {
-    font-size: 11.5px;
-    margin-top: 6px;
-    opacity: 0.65;
-  }
-
-  /* ===== CONSUMO DE TALLER ===== */
-  .item-consumo {
-    border: 1px solid #f0e8ee;
-    border-radius: 10px;
-    padding: 12px;
-    margin-bottom: 8px;
-  }
-
-  .item-consumo-fila {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .item-consumo-acciones {
-    display: none;
-    gap: 8px;
-    margin-top: 10px;
-    align-items: center;
-  }
-
-  .item-consumo-acciones.abierto {
-    display: flex;
-  }
-
-  .item-consumo-acciones input {
-    flex: 1;
-    padding: 8px 10px;
-    font-size: 13px;
-  }
-
-  .item-consumo-acciones button {
-    padding: 8px 14px;
-    border-radius: 8px;
-    border: none;
-    background: var(--rosa-principal);
-    color: white;
-    font-family: 'Poppins', sans-serif;
-    font-size: 12.5px;
-    font-weight: 600;
-    cursor: pointer;
-    white-space: nowrap;
-  }
-
-  .fila-consumo-historial {
-    font-size: 12.5px;
-    padding: 8px 0;
-    border-bottom: 1px solid #f4eef2;
-  }
-
-  .fila-consumo-historial-cant {
-    font-weight: 700;
-    color: var(--rosa-principal);
-  }
-
-
-  footer {
-    margin-top: 24px;
-    font-size: 11px;
-    color: var(--texto-oscuro);
-    opacity: 0.5;
-    text-align: center;
-  }
+  /* ===== SOLICITUDES ===== */
+  .subtitulo { font-size: 12.5px; color: var(--texto-oscuro); opacity: 0.65; margin-bottom: 18px; }
 </style>
 </head>
 <body>
 
-<div class="topbar">
-  <div class="marca">
-    <div class="marca-oveja">🐑</div>
-    <div class="marca-texto">Lana Rosa OS<span>Punto de venta</span></div>
+<!-- SIDEBAR DE NAVEGACIÓN -->
+<nav id="sidebar" style="display:none;">
+  <div class="sidebar-marca">
+    <div class="sidebar-oveja">🐑</div>
+    <div class="sidebar-nombre">Lana Rosa OS<span>Punto de venta</span></div>
   </div>
-  <button class="btn-salir oculto" id="btnSalir" onclick="cerrarSesion()">Cerrar sesión</button>
+
+  <div class="sidebar-nav">
+    <div class="sidebar-seccion">Operación</div>
+    <button class="nav-btn" id="nav-ventas" onclick="mostrarPantallaVentas()"><span class="nav-icon">🛒</span> Registrar venta</button>
+    <button class="nav-btn" id="nav-historial" onclick="mostrarPantallaHistorial()"><span class="nav-icon">📋</span> Historial ventas</button>
+    <button class="nav-btn" id="nav-solicitudes" onclick="mostrarPantallaSolicitudes()" style="display:none;"><span class="nav-icon">📦</span> Solicitudes</button>
+
+    <div class="sidebar-seccion" id="seccionInventario" style="display:none;">Inventario</div>
+    <button class="nav-btn" id="nav-inventario" onclick="mostrarPantallaInventario()" style="display:none;"><span class="nav-icon">📊</span> Gestionar inventario</button>
+    <button class="nav-btn" id="nav-ajustestock" onclick="mostrarPantallaAjusteStock()" style="display:none;"><span class="nav-icon">🔍</span> Ajustar stock SKU</button>
+    <button class="nav-btn" id="nav-consumotaller" onclick="mostrarPantallaConsumoTaller()" style="display:none;"><span class="nav-icon">🧶</span> Consumo taller</button>
+
+    <div class="sidebar-seccion" id="seccionCaja">Caja</div>
+    <button class="nav-btn" id="nav-turno" onclick="irATurnoActivo()"><span class="nav-icon">💵</span> Turno de caja</button>
+    <button class="nav-btn" id="nav-reportes" onclick="mostrarPantallaReportes()" style="display:none;"><span class="nav-icon">📈</span> Reportes turno</button>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-usuario">
+      <div id="nombreUsuarioSidebar">—</div>
+      <div id="badgeRolSidebar"></div>
+    </div>
+    <button class="nav-btn" id="btnSalir" style="opacity:0.7;" onclick="cerrarSesion()"><span class="nav-icon">🚪</span> Cerrar sesión</button>
+  </div>
+</nav>
+
+<!-- ÁREA PRINCIPAL -->
+<div id="main">
+
+<!-- ===== PANTALLA: LOGIN ===== -->
+<div id="pantallaLogin">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-icono">🐑</div>
+      <div class="login-logo-nombre">Lana Rosa OS</div>
+      <div class="login-logo-sub">Punto de venta</div>
+    </div>
+
+    <label for="inputCorreo">Correo</label>
+    <input type="email" id="inputCorreo" placeholder="tucorreo@gmail.com" autocomplete="email">
+    <label for="inputClave">Contraseña</label>
+    <input type="password" id="inputClave" placeholder="••••••••" autocomplete="current-password">
+    <button class="btn-principal" id="btnLogin" onclick="iniciarSesion()">Entrar</button>
+    <div class="mensaje" id="mensajeLogin"></div>
+  </div>
 </div>
 
-<!-- PANTALLA: LOGIN -->
-<div class="tarjeta" id="pantallaLogin">
-  <h1>Iniciar sesión</h1>
-  <div class="subtitulo">Ingresa con tu correo y contraseña de Lana Rosa OS</div>
-
-  <label for="inputCorreo">Correo</label>
-  <input type="email" id="inputCorreo" placeholder="tucorreo@gmail.com" autocomplete="email">
-
-  <label for="inputClave">Contraseña</label>
-  <input type="password" id="inputClave" placeholder="••••••••" autocomplete="current-password">
-
-  <button class="btn-principal" id="btnLogin" onclick="iniciarSesion()">Entrar</button>
-
-  <div class="mensaje" id="mensajeLogin"></div>
-</div>
-
-<!-- PANTALLA: CARGANDO TURNO (tras login) -->
-<div class="tarjeta oculto" id="pantallaCargando">
+<!-- ===== PANTALLA: CARGANDO ===== -->
+<div id="pantallaCargando" class="oculto" style="display:flex;align-items:center;justify-content:center;height:100vh;">
   <div class="cargando">Consultando estado de tu turno...</div>
 </div>
 
-<!-- PANTALLA: ABRIR TURNO -->
-<div class="tarjeta oculto" id="pantallaAbrirTurno">
-  <span class="badge-rol" id="badgeRolAbrir"></span>
-  <h1>Abrir turno de caja</h1>
-  <div class="subtitulo">Cuenta el efectivo físico con el que vas a empezar el turno antes de hacer la primera venta.</div>
-
-  <label for="inputMontoApertura">Efectivo inicial en caja (COP)</label>
-  <input type="number" id="inputMontoApertura" placeholder="0" min="0" step="1000">
-
-  <button class="btn-principal" id="btnAbrirTurno" onclick="abrirTurno()">Abrir turno</button>
-
-  <div class="mensaje" id="mensajeAbrirTurno"></div>
+<!-- ===== PANTALLA: ABRIR TURNO ===== -->
+<div id="pantallaAbrirTurno" class="oculto contenido">
+  <div class="page-header">
+    <span class="badge-rol" id="badgeRolAbrir"></span>
+    <h1>Abrir turno de caja</h1>
+    <div class="subtitulo">Cuenta el efectivo físico con el que vas a empezar el turno antes de hacer la primera venta.</div>
+  </div>
+  <div class="tarjeta">
+    <label for="inputMontoApertura">Efectivo inicial en caja (COP)</label>
+    <input type="number" id="inputMontoApertura" placeholder="0" min="0" step="1000">
+    <button class="btn-principal" id="btnAbrirTurno" onclick="abrirTurno()">Abrir turno</button>
+    <div class="mensaje" id="mensajeAbrirTurno"></div>
+  </div>
 </div>
 
-<!-- PANTALLA: TURNO ACTIVO -->
-<div class="tarjeta oculto" id="pantallaTurnoActivo">
-  <span class="badge-rol" id="badgeRolActivo"></span>
-  <h1>Turno en curso</h1>
-
-  <div class="estado-turno">
-    <div class="punto abierto"></div>
-    <div>
-      Turno abierto desde <strong id="horaApertura"></strong><br>
-      Efectivo inicial: <strong id="montoAperturaTexto"></strong>
-    </div>
+<!-- ===== PANTALLA: TURNO ACTIVO ===== -->
+<div id="pantallaTurnoActivo" class="oculto contenido">
+  <div class="page-header">
+    <span class="badge-rol" id="badgeRolActivo"></span>
+    <h1>Turno en curso</h1>
   </div>
-
-  <div class="subtitulo">Desde aquí puedes registrar ventas, gestionar inventario, o cerrar el turno para hacer el arqueo de caja.</div>
-
-  <button class="btn-principal" id="btnIrVender" onclick="mostrarPantallaVentas()">Registrar venta</button>
-  <button class="btn-secundario" id="btnIrInventario" onclick="mostrarPantallaInventario()" style="display:none;">Gestionar inventario</button>
-  <button class="btn-secundario" id="btnIrAjusteStock" onclick="mostrarPantallaAjusteStock()" style="display:none;">Ajustar stock (código de barras)</button>
-  <button class="btn-secundario" id="btnIrSolicitudes" onclick="mostrarPantallaSolicitudes()" style="display:none;">Solicitudes de material</button>
-  <button class="btn-secundario" id="btnIrConsumoTaller" onclick="mostrarPantallaConsumoTaller()" style="display:none;">Consumo de taller</button>
-  <button class="btn-secundario" id="btnIrHistorial" onclick="mostrarPantallaHistorial()">Historial de ventas</button>
-  <button class="btn-secundario" id="btnIrReportes" onclick="mostrarPantallaReportes()" style="display:none;">Reportes de turno</button>
-  <button class="btn-secundario" id="btnIrCerrar" onclick="mostrarCierreTurno()">Cerrar turno (hacer arqueo)</button>
+  <div class="tarjeta">
+    <div class="estado-turno">
+      <div class="punto abierto"></div>
+      <div>
+        Turno abierto desde <strong id="horaApertura"></strong><br>
+        Efectivo inicial: <strong id="montoAperturaTexto"></strong>
+      </div>
+    </div>
+    <div class="subtitulo">Usa el menú lateral para navegar entre los módulos disponibles.</div>
+    <button class="btn-secundario" id="btnIrCerrar" onclick="mostrarCierreTurno()">Cerrar turno (hacer arqueo)</button>
+  </div>
 </div>
 
-<!-- PANTALLA: INVENTARIO -->
-<div class="contenedor-ventas oculto" id="pantallaInventario">
-
-  <div class="panel">
-    <h2>Agregar producto o insumo</h2>
-    <label for="invNombre">Nombre</label>
-    <input type="text" id="invNombre" placeholder="Ej: Amigurumi conejo personalizado">
-
-    <label for="invSku">SKU / Código de barras <span style="font-size:11px;opacity:0.6;">(opcional)</span></label>
-    <input type="text" id="invSku" placeholder="Ej: AMI-001 o código de barras">
-
-    <label for="invTipo">Tipo</label>
-    <select id="invTipo" style="width:100%;padding:13px 14px;border:1.5px solid #e4d9e2;border-radius:10px;font-family:'Poppins',sans-serif;font-size:15px;background:#fdfbfd;">
-      <option value="producto_terminado">Amigurumi / Producto terminado</option>
-      <option value="merceria">Mercería / Insumo</option>
-    </select>
-
-    <label for="invUnidad">Unidad de medida</label>
-    <select id="invUnidad" style="width:100%;padding:13px 14px;border:1.5px solid #e4d9e2;border-radius:10px;font-family:'Poppins',sans-serif;font-size:15px;background:#fdfbfd;">
-      <option value="unidad">Unidad</option>
-      <option value="metro">Metro</option>
-      <option value="gramo">Gramo</option>
-      <option value="rollo">Rollo</option>
-    </select>
-
-    <label for="invPrecioVenta">Precio de venta (COP)</label>
-    <input type="number" id="invPrecioVenta" placeholder="0" min="0" step="1000">
-
-    <label for="invCostoPromedio">Costo aproximado (COP, opcional)</label>
-    <input type="number" id="invCostoPromedio" placeholder="0" min="0" step="1000">
-
-    <label for="invStockInicial">Stock inicial</label>
-    <input type="number" id="invStockInicial" placeholder="0" min="0" step="1">
-
-    <label for="invStockMinimo">Stock mínimo (para alertas)</label>
-    <input type="number" id="invStockMinimo" placeholder="0" min="0" step="1">
-
-    <button class="btn-principal" id="btnGuardarProducto" onclick="guardarNuevoProducto()">Agregar al inventario</button>
-    <div class="mensaje" id="mensajeInventarioForm"></div>
+<!-- ===== PANTALLA: VENTAS ===== -->
+<div id="pantallaVentas" class="oculto contenido">
+  <div class="page-header">
+    <h1>Registrar venta</h1>
   </div>
+  <div class="grilla-3">
 
-  <div class="panel">
-    <h2>Inventario actual</h2>
-    <div class="barra-busqueda">
-      <input type="text" id="inputBuscarInventario" placeholder="Buscar por nombre..." oninput="renderizarTablaInventario()">
+    <div class="panel">
+      <h2>Productos e insumos</h2>
+      <div class="barra-busqueda">
+        <input type="text" id="inputBuscarProducto" placeholder="Buscar por nombre o SKU..." oninput="renderizarCatalogo()">
+      </div>
+      <div class="filtro-tipo">
+        <button class="chip-filtro activo" data-filtro="todos" onclick="cambiarFiltroTipo('todos', this)">Todos</button>
+        <button class="chip-filtro" data-filtro="producto_terminado" onclick="cambiarFiltroTipo('producto_terminado', this)">Amigurumis</button>
+        <button class="chip-filtro" data-filtro="merceria" onclick="cambiarFiltroTipo('merceria', this)">Mercería</button>
+      </div>
+      <div id="listaCatalogo"><div class="cargando">Cargando inventario...</div></div>
     </div>
-    <div class="filtro-tipo" style="margin-bottom:12px;">
-      <button class="chip-filtro activo" data-filtro-inv="todos" onclick="cambiarFiltroInventario('todos', this)">Todos</button>
-      <button class="chip-filtro" data-filtro-inv="producto_terminado" onclick="cambiarFiltroInventario('producto_terminado', this)">Amigurumis</button>
-      <button class="chip-filtro" data-filtro-inv="merceria" onclick="cambiarFiltroInventario('merceria', this)">Mercería</button>
+
+    <div class="panel">
+      <h2>Carrito</h2>
+      <div id="listaCarrito"><div class="carrito-vacio">Aún no has agregado productos</div></div>
+      <div class="resumen-total">
+        <span>Total</span>
+        <span class="valor" id="textoTotalCarrito">$0</span>
+      </div>
+      <div class="metodos-pago">
+        <h2 style="margin-top:12px;">Forma de pago</h2>
+        <div id="listaPagos"></div>
+        <button class="btn-agregar-pago" onclick="agregarFilaPago()">+ Agregar otro método de pago</button>
+        <div class="resumen-pagos" id="resumenPagos"></div>
+      </div>
+      <button class="btn-principal" id="btnConfirmarVenta" onclick="confirmarVenta()">Confirmar venta</button>
+      <div class="mensaje" id="mensajeVenta"></div>
     </div>
-    <div id="listaInventarioGestion">
-      <div class="cargando">Cargando inventario...</div>
+
+    <div class="panel">
+      <h2>Datos del cliente <span style="font-size:11px;font-weight:400;opacity:0.6;">(opcional)</span></h2>
+      <label for="clienteTelefono">Teléfono</label>
+      <input type="tel" id="clienteTelefono" placeholder="300 000 0000" oninput="autocompletarCliente('telefono')">
+      <label for="clienteCorreo">Correo</label>
+      <input type="email" id="clienteCorreo" placeholder="correo@gmail.com" oninput="autocompletarCliente('correo')">
+      <label for="clienteNombre">Nombre completo</label>
+      <input type="text" id="clienteNombre" placeholder="Nombre completo">
+      <label for="clienteIdentificacion">Identificación <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <input type="text" id="clienteIdentificacion" placeholder="CC, CE, NIT...">
+      <label for="clienteDireccion">Dirección <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <input type="text" id="clienteDireccion" placeholder="Para envíos">
+      <label for="clienteCiudad">Ciudad <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <input type="text" id="clienteCiudad" placeholder="Manizales">
+      <div id="mensajeAutocompletado" style="font-size:12px;color:var(--verde-exito);margin-top:6px;display:none;">✅ Cliente encontrado — datos precargados</div>
     </div>
-    <button class="btn-secundario" onclick="volverATurnoActivo()" style="margin-top:14px;">Volver</button>
+
   </div>
-
 </div>
 
-<!-- PANTALLA: CONSUMO DE TALLER -->
-<div class="contenedor-ventas oculto" id="pantallaConsumoTaller">
+<!-- ===== PANTALLA: INVENTARIO ===== -->
+<div id="pantallaInventario" class="oculto contenido">
+  <div class="page-header">
+    <h1>Gestionar inventario</h1>
+    <div class="subtitulo">Solo el Administrador puede agregar o modificar productos.</div>
+  </div>
+  <div class="grilla-2">
 
-  <div class="panel">
+    <div class="panel">
+      <h2>Agregar producto o insumo</h2>
+      <label for="invNombre">Nombre</label>
+      <input type="text" id="invNombre" placeholder="Ej: Amigurumi conejo personalizado">
+      <label for="invSku">SKU / Código de barras <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <input type="text" id="invSku" placeholder="Ej: AMI-001">
+      <label for="invTipo">Tipo</label>
+      <select id="invTipo">
+        <option value="producto_terminado">Amigurumi / Producto terminado</option>
+        <option value="merceria">Mercería / Insumo</option>
+      </select>
+      <label for="invUnidad">Unidad de medida</label>
+      <select id="invUnidad">
+        <option value="unidad">Unidad</option>
+        <option value="metro">Metro</option>
+        <option value="gramo">Gramo</option>
+        <option value="rollo">Rollo</option>
+      </select>
+      <label for="invPrecioVenta">Precio de venta (COP)</label>
+      <input type="number" id="invPrecioVenta" placeholder="0" min="0" step="1000">
+      <label for="invCostoPromedio">Costo aproximado (COP, opcional)</label>
+      <input type="number" id="invCostoPromedio" placeholder="0" min="0" step="1000">
+      <label for="invStockInicial">Stock inicial</label>
+      <input type="number" id="invStockInicial" placeholder="0" min="0" step="1">
+      <label for="invStockMinimo">Stock mínimo (para alertas)</label>
+      <input type="number" id="invStockMinimo" placeholder="0" min="0" step="1">
+      <button class="btn-principal" id="btnGuardarProducto" onclick="guardarNuevoProducto()">Agregar al inventario</button>
+      <div class="mensaje" id="mensajeInventarioForm"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Inventario actual</h2>
+      <div class="barra-busqueda">
+        <input type="text" id="inputBuscarInventario" placeholder="Buscar por nombre o SKU..." oninput="renderizarTablaInventario()">
+      </div>
+      <div class="filtro-tipo">
+        <button class="chip-filtro activo" data-filtro-inv="todos" onclick="cambiarFiltroInventario('todos', this)">Todos</button>
+        <button class="chip-filtro" data-filtro-inv="producto_terminado" onclick="cambiarFiltroInventario('producto_terminado', this)">Amigurumis</button>
+        <button class="chip-filtro" data-filtro-inv="merceria" onclick="cambiarFiltroInventario('merceria', this)">Mercería</button>
+      </div>
+      <div id="listaInventarioGestion"><div class="cargando">Cargando inventario...</div></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== PANTALLA: CONSUMO TALLER ===== -->
+<div id="pantallaConsumoTaller" class="oculto contenido">
+  <div class="page-header">
     <span class="badge-rol" id="badgeRolConsumo"></span>
-    <h2>Registrar consumo de insumo</h2>
-    <div class="subtitulo" style="margin-bottom:14px;">Elige el insumo que vas a usar en el tejido y la cantidad. Se descuenta del inventario al instante.</div>
-
-    <label for="consumoBuscar">Buscar insumo</label>
-    <input type="text" id="consumoBuscar" placeholder="Ej: lana rosa, ojos 12mm..." oninput="renderizarCatalogoConsumo()">
-
-    <div id="listaCatalogoConsumo" style="margin-top:10px;"></div>
-
-    <div style="margin-top:24px;padding-top:16px;border-top:2px solid var(--rosa-suave);">
-      <h2>Devolver insumo al inventario</h2>
-      <div class="subtitulo" style="margin-bottom:12px;">Si sobró material del tejido, regístralo aquí para que vuelva al inventario.</div>
-      <label for="devolucionBuscar">Buscar insumo a devolver</label>
-      <input type="text" id="devolucionBuscar" placeholder="Ej: lana rosa, ojos 12mm..." oninput="renderizarCatalogoDevolucion()">
-      <div id="listaCatalogoDevolucion" style="margin-top:10px;"></div>
-    </div>
+    <h1>Consumo de insumos</h1>
   </div>
+  <div class="grilla-2">
 
-  <div class="panel">
-    <h2>Historial de mis consumos</h2>
-    <div id="listaHistorialConsumo">
-      <div class="cargando">Cargando historial...</div>
-    </div>
-    <button class="btn-secundario" onclick="volverDeConsumoTaller()" style="margin-top:14px;">Volver</button>
-  </div>
+    <div class="panel">
+      <h2>Registrar consumo</h2>
+      <div class="subtitulo">Elige el insumo que vas a usar. Se descuenta del inventario al instante.</div>
+      <label for="consumoBuscar">Buscar insumo</label>
+      <input type="text" id="consumoBuscar" placeholder="Ej: lana rosa, ojos 12mm..." oninput="renderizarCatalogoConsumo()">
+      <div id="listaCatalogoConsumo" style="margin-top:10px;"></div>
 
-</div>
-
-<!-- PANTALLA: HISTORIAL DE VENTAS -->
-<div class="tarjeta oculto" id="pantallaHistorial" style="max-width:680px;">
-  <h1>Historial de ventas</h1>
-  <div class="subtitulo">Ventas registradas en este sistema, más recientes primero.</div>
-
-  <div id="listaHistorialVentas">
-    <div class="cargando">Cargando historial...</div>
-  </div>
-
-  <button class="btn-secundario" onclick="volverATurnoActivo()" style="margin-top:14px;">Volver</button>
-</div>
-
-
-<!-- PANTALLA: VENTAS -->
-<div class="contenedor-ventas oculto" id="pantallaVentas">
-
-  <div class="panel">
-    <h2>Productos e insumos</h2>
-    <div class="barra-busqueda">
-      <input type="text" id="inputBuscarProducto" placeholder="Buscar por nombre..." oninput="renderizarCatalogo()">
-    </div>
-    <div class="filtro-tipo">
-      <button class="chip-filtro activo" data-filtro="todos" onclick="cambiarFiltroTipo('todos', this)">Todos</button>
-      <button class="chip-filtro" data-filtro="producto_terminado" onclick="cambiarFiltroTipo('producto_terminado', this)">Amigurumis</button>
-      <button class="chip-filtro" data-filtro="merceria" onclick="cambiarFiltroTipo('merceria', this)">Mercería</button>
-    </div>
-    <div id="listaCatalogo">
-      <div class="cargando">Cargando inventario...</div>
-    </div>
-  </div>
-
-  <div class="panel">
-    <h2>Carrito</h2>
-    <div id="listaCarrito">
-      <div class="carrito-vacio">Aún no has agregado productos</div>
-    </div>
-
-    <div class="resumen-total">
-      <span>Total</span>
-      <span class="valor" id="textoTotalCarrito">$0</span>
-    </div>
-
-    <div style="margin-top:16px;">
-      <h2>Datos del cliente <span style="font-size:12px;font-weight:400;opacity:0.6;">(opcional)</span></h2>
-      <div style="margin-top:8px;">
-        <label for="clienteTelefono">Teléfono</label>
-        <input type="tel" id="clienteTelefono" placeholder="300 000 0000" oninput="autocompletarCliente('telefono')">
-        <label for="clienteCorreo">Correo</label>
-        <input type="email" id="clienteCorreo" placeholder="correo@gmail.com" oninput="autocompletarCliente('correo')">
-        <label for="clienteNombre">Nombre completo</label>
-        <input type="text" id="clienteNombre" placeholder="Nombre completo">
-        <label for="clienteIdentificacion">Número de identificación <span style="font-size:11px;opacity:0.6;">(opcional)</span></label>
-        <input type="text" id="clienteIdentificacion" placeholder="CC, CE, NIT...">
-        <label for="clienteDireccion">Dirección <span style="font-size:11px;opacity:0.6;">(opcional — para envíos)</span></label>
-        <input type="text" id="clienteDireccion" placeholder="Calle 10 # 5-20">
-        <label for="clienteCiudad">Ciudad <span style="font-size:11px;opacity:0.6;">(opcional)</span></label>
-        <input type="text" id="clienteCiudad" placeholder="Manizales">
-        <div id="mensajeAutocompletado" style="font-size:12px;color:var(--verde-exito);margin-top:6px;display:none;">✅ Cliente encontrado — datos precargados</div>
+      <div style="margin-top:22px;padding-top:16px;border-top:2px solid var(--rosa-suave);">
+        <h2>Devolver al inventario</h2>
+        <div class="subtitulo">Si sobró material, regístralo aquí.</div>
+        <label for="devolucionBuscar">Buscar insumo a devolver</label>
+        <input type="text" id="devolucionBuscar" placeholder="Ej: lana rosa..." oninput="renderizarCatalogoDevolucion()">
+        <div id="listaCatalogoDevolucion" style="margin-top:10px;"></div>
       </div>
     </div>
 
-    <div class="metodos-pago">
-      <h2 style="margin-top:10px;">Forma de pago</h2>
-      <div id="listaPagos"></div>
-      <button class="btn-agregar-pago" onclick="agregarFilaPago()">+ Agregar otro método de pago</button>
-      <div class="resumen-pagos" id="resumenPagos"></div>
+    <div class="panel">
+      <h2>Historial de mis consumos</h2>
+      <div id="listaHistorialConsumo"><div class="cargando">Cargando historial...</div></div>
     </div>
 
-    <button class="btn-principal" id="btnConfirmarVenta" onclick="confirmarVenta()">Confirmar venta</button>
-    <button class="btn-secundario" onclick="volverATurnoActivo()">Cancelar / volver</button>
-
-    <div class="mensaje" id="mensajeVenta"></div>
   </div>
-
 </div>
 
-<!-- PANTALLA: SOLICITUDES DE MATERIAL (Cajero aprueba / Taller ve sus solicitudes) -->
-<div class="contenedor-ventas oculto" id="pantallaSolicitudes">
-
-  <div class="panel" id="panelCrearSolicitud">
+<!-- ===== PANTALLA: SOLICITUDES ===== -->
+<div id="pantallaSolicitudes" class="oculto contenido">
+  <div class="page-header">
     <span class="badge-rol" id="badgeRolSolicitudes"></span>
-    <h2 id="tituloPanelSolicitudes">Solicitar insumo al taller</h2>
-    <div class="subtitulo" id="subtituloPanelSolicitudes" style="margin-bottom:14px;">Selecciona el insumo que necesitas y la cantidad. El cajero deberá aprobarlo.</div>
+    <h1 id="tituloPanelSolicitudes">Solicitudes de material</h1>
+  </div>
+  <div class="grilla-2">
 
-    <div id="listaSolicitudInsumos">
-      <div class="cargando">Cargando insumos...</div>
+    <div class="panel" id="panelCrearSolicitud">
+      <h2>Nueva solicitud</h2>
+      <div class="subtitulo" id="subtituloPanelSolicitudes">Selecciona el insumo que necesitas. El cajero deberá aprobarlo.</div>
+      <div id="listaSolicitudInsumos"><div class="cargando">Cargando insumos...</div></div>
     </div>
 
-    <button class="btn-secundario" onclick="volverATurnoActivo()" style="margin-top:14px;">Volver</button>
-  </div>
-
-  <div class="panel">
-    <h2>Solicitudes pendientes</h2>
-    <div id="listaSolicitudesPendientes">
-      <div class="cargando">Cargando solicitudes...</div>
+    <div class="panel">
+      <h2>Solicitudes pendientes</h2>
+      <div id="listaSolicitudesPendientes"><div class="cargando">Cargando solicitudes...</div></div>
+      <button class="btn-secundario" onclick="irATurnoActivo()" style="margin-top:14px;">Volver al turno</button>
     </div>
+
   </div>
-
 </div>
 
-<!-- PANTALLA: AJUSTE DE STOCK POR CÓDIGO DE BARRAS (Cajero) -->
-<div class="tarjeta oculto" id="pantallaAjusteStock" style="max-width:480px;">
-  <h1>Ajustar stock</h1>
-  <div class="subtitulo">Escanea el código de barras del producto y escribe el nuevo stock.</div>
-
-  <label for="inputSkuAjuste">Código de barras / SKU</label>
-  <input type="text" id="inputSkuAjuste" placeholder="Escanea o escribe el código...">
-
-  <label for="inputCantidadNueva">Nueva cantidad en stock</label>
-  <input type="number" id="inputCantidadNueva" placeholder="0" min="0" step="1">
-
-  <button class="btn-principal" id="btnConfirmarAjusteStock" onclick="confirmarAjusteStock()">Confirmar ajuste</button>
-  <button class="btn-secundario" onclick="volverATurnoActivo()">Cancelar</button>
-
-  <div class="mensaje" id="mensajeAjusteStock"></div>
-</div>
-
-<!-- PANTALLA: REPORTES DE TURNO (solo Admin) -->
-<div class="tarjeta oculto" id="pantallaReportes" style="max-width:680px;">
-  <h1>Reportes de turno</h1>
-  <div class="subtitulo">Resumen financiero de cada turno cerrado, más reciente primero.</div>
-
-  <div id="listaReportesTurno">
-    <div class="cargando">Cargando reportes...</div>
+<!-- ===== PANTALLA: AJUSTE STOCK ===== -->
+<div id="pantallaAjusteStock" class="oculto contenido">
+  <div class="page-header">
+    <h1>Ajustar stock por código de barras</h1>
+    <div class="subtitulo">Escanea el código del producto y escribe el nuevo stock.</div>
   </div>
-
-  <button class="btn-secundario" onclick="volverATurnoActivo()" style="margin-top:14px;">Volver</button>
+  <div class="tarjeta">
+    <label for="inputSkuAjuste">Código de barras / SKU</label>
+    <input type="text" id="inputSkuAjuste" placeholder="Escanea o escribe el código...">
+    <label for="inputCantidadNueva">Nueva cantidad en stock</label>
+    <input type="number" id="inputCantidadNueva" placeholder="0" min="0" step="1">
+    <button class="btn-principal" id="btnConfirmarAjusteStock" onclick="confirmarAjusteStock()">Confirmar ajuste</button>
+    <button class="btn-secundario" onclick="irATurnoActivo()">Cancelar</button>
+    <div class="mensaje" id="mensajeAjusteStock"></div>
+  </div>
 </div>
 
-<!-- PANTALLA: CERRAR TURNO -->
-<div class="tarjeta oculto" id="pantallaCerrarTurno">
-  <h1>Cerrar turno — Arqueo de caja</h1>
-  <div class="subtitulo">Cuenta físicamente el efectivo que tienes en caja ahora y escribe el monto exacto.</div>
-
-  <label for="inputMontoDeclarado">Efectivo contado físicamente (COP)</label>
-  <input type="number" id="inputMontoDeclarado" placeholder="0" min="0" step="1000">
-
-  <label for="inputObservaciones">Observaciones (opcional)</label>
-  <input type="text" id="inputObservaciones" placeholder="Ej: faltaron $2.000 de cambio">
-
-  <button class="btn-principal" id="btnCerrarTurno" onclick="cerrarTurno()">Confirmar cierre</button>
-  <button class="btn-secundario" onclick="volverATurnoActivo()">Cancelar</button>
-
-  <div id="resumenCierre" class="resumen-cierre oculto"></div>
-  <div class="mensaje" id="mensajeCerrarTurno"></div>
+<!-- ===== PANTALLA: HISTORIAL VENTAS ===== -->
+<div id="pantallaHistorial" class="oculto contenido">
+  <div class="page-header">
+    <h1>Historial de ventas</h1>
+    <div class="subtitulo">Últimas 50 ventas, más reciente primero.</div>
+  </div>
+  <div class="panel" style="max-height:none;">
+    <div id="listaHistorialVentas"><div class="cargando">Cargando historial...</div></div>
+  </div>
 </div>
 
-<footer>Lana Rosa Crochet · Sistema interno · Versión 2026</footer>
+<!-- ===== PANTALLA: REPORTES TURNO ===== -->
+<div id="pantallaReportes" class="oculto contenido">
+  <div class="page-header">
+    <h1>Reportes de turno</h1>
+    <div class="subtitulo">Resumen financiero de cada turno cerrado. Solo visible para Administrador.</div>
+  </div>
+  <div class="panel" style="max-height:none;">
+    <div id="listaReportesTurno"><div class="cargando">Cargando reportes...</div></div>
+  </div>
+</div>
+
+<!-- ===== PANTALLA: CERRAR TURNO ===== -->
+<div id="pantallaCerrarTurno" class="oculto contenido">
+  <div class="page-header">
+    <h1>Cerrar turno — Arqueo de caja</h1>
+    <div class="subtitulo">Cuenta físicamente el efectivo que tienes en caja ahora y escribe el monto exacto.</div>
+  </div>
+  <div class="tarjeta">
+    <label for="inputMontoDeclarado">Efectivo contado físicamente (COP)</label>
+    <input type="number" id="inputMontoDeclarado" placeholder="0" min="0" step="1000">
+    <label for="inputObservaciones">Observaciones (opcional)</label>
+    <input type="text" id="inputObservaciones" placeholder="Ej: faltaron $2.000 de cambio">
+    <button class="btn-principal" id="btnCerrarTurno" onclick="cerrarTurno()">Confirmar cierre</button>
+    <button class="btn-secundario" onclick="irATurnoActivo()">Cancelar</button>
+    <div id="resumenCierre" class="resumen-cierre oculto"></div>
+    <div class="mensaje" id="mensajeCerrarTurno"></div>
+  </div>
+</div>
+
+<footer style="text-align:center;padding:16px 32px;">Lana Rosa Crochet · Sistema interno · Versión 2026</footer>
+
+</div><!-- fin #main -->
 
 <script>
+
   // ============================================================================
   // CONFIGURACIÓN — Ajustar si cambia el proyecto de Supabase o la URL del Worker
   // ============================================================================
@@ -1217,17 +1022,31 @@
     document.getElementById('horaApertura').textContent = fecha.toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
     document.getElementById('montoAperturaTexto').textContent = formatearMoneda(turnoActivoActual.monto_apertura);
 
-    // Mostrar botones según el rol
-    const esAdmin = rolActual === 'administrador';
-    const esCajero = rolActual === 'cajero';
-
-    document.getElementById('btnIrInventario').style.display = esAdmin ? '' : 'none';
-    document.getElementById('btnIrAjusteStock').style.display = esCajero ? '' : 'none';
-    document.getElementById('btnIrSolicitudes').style.display = (esAdmin || esCajero) ? '' : 'none';
-    document.getElementById('btnIrConsumoTaller').style.display = esAdmin ? '' : 'none';
-    document.getElementById('btnIrReportes').style.display = esAdmin ? '' : 'none';
+    // Configurar visibilidad del sidebar según el rol
+    configurarSidebarPorRol();
+    actualizarSidebar();
 
     mostrarPantalla('pantallaTurnoActivo');
+  }
+
+  function configurarSidebarPorRol() {
+    const esAdmin = rolActual === 'administrador';
+    const esCajero = rolActual === 'cajero';
+    const esTaller = rolActual === 'taller';
+
+    const mostrar = (id, visible) => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = visible ? '' : 'none';
+    };
+
+    mostrar('nav-inventario', esAdmin);
+    mostrar('nav-ajustestock', esCajero);
+    mostrar('nav-solicitudes', esAdmin || esCajero || esTaller);
+    mostrar('nav-consumotaller', esAdmin || esTaller);
+    mostrar('nav-reportes', esAdmin);
+    mostrar('nav-ventas', esAdmin || esCajero);
+    mostrar('nav-historial', esAdmin || esCajero);
+    mostrar('seccionInventario', esAdmin || esCajero);
   }
 
   function mostrarCierreTurno() {
@@ -2067,6 +1886,8 @@
   async function mostrarPantallaConsumoTaller() {
     mostrarPantalla('pantallaConsumoTaller');
     document.getElementById('badgeRolConsumo').textContent = etiquetaRol(rolActual || '');
+    configurarSidebarPorRol();
+    actualizarSidebar();
     document.getElementById('consumoBuscar').value = '';
     itemConsumoAbiertoId = null;
     await cargarCatalogoConsumo();
@@ -2552,6 +2373,24 @@
         </div>
       `;
     }).join('');
+  }
+
+  // Función de navegación al turno activo desde cualquier pantalla
+  function irATurnoActivo() {
+    if (turnoActivoActual) {
+      mostrarTurnoActivo();
+    } else {
+      mostrarPantallaAbrirTurno();
+    }
+  }
+
+  // Actualizar el sidebar con nombre y rol del usuario
+  function actualizarSidebar() {
+    if (!sesionActual) return;
+    const nombreEl = document.getElementById('nombreUsuarioSidebar');
+    const rolEl = document.getElementById('badgeRolSidebar');
+    if (nombreEl) nombreEl.textContent = sesionActual.email.split('@')[0];
+    if (rolEl) rolEl.textContent = etiquetaRol(rolActual || '');
   }
 </script>
 
