@@ -775,7 +775,7 @@
     <div class="panel">
       <h2>Solicitudes pendientes</h2>
       <div id="listaSolicitudesPendientes"><div class="cargando">Cargando solicitudes...</div></div>
-      <button class="btn-secundario" onclick="irATurnoActivo()" style="margin-top:14px;">Volver al turno</button>
+      <button class="btn-secundario" onclick="irAInicioSegunRol()" style="margin-top:14px;">Volver</button>
     </div>
 
   </div>
@@ -2558,6 +2558,16 @@
       mostrarTurnoActivo();
     } else {
       mostrarPantallaAbrirTurno();
+    }
+  }
+
+  // Navegación de "volver" consciente del rol: Taller no maneja turnos de caja,
+  // así que su botón de "volver" debe llevarlo a su pantalla de consumo, no a abrir caja.
+  function irAInicioSegunRol() {
+    if (rolActual === 'taller') {
+      mostrarPantallaConsumoTaller();
+    } else {
+      irATurnoActivo();
     }
   }
 
