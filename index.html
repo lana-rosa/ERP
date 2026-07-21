@@ -547,7 +547,8 @@
 
     <div class="sidebar-seccion" id="seccionDepartamentos" style="display:none;">Departamentos</div>
     <button class="nav-btn" id="nav-departamentos" onclick="mostrarPantallaDepartamentos()" style="display:none;"><span class="nav-icon">🏢</span> Cajas y ventas internas</button>
-    <button class="nav-btn" id="nav-pagos-pendientes" onclick="mostrarPantallaPagosPendientes()" style="display:none;"><span class="nav-icon">⏳</span> Pagos pendientes</button>
+    <button class="nav-btn" id="nav-reportes-financieros" onclick="mostrarPantallaReportesFinancieros()" style="display:none;"><span class="nav-icon">📊</span> Reportes financieros</button>
+    <button class="nav-btn" id="nav-pagos-pendientes" onclick="mostrarPantallaPagosPendientes()" style="display:none;"><span class="nav-icon">🏬</span> Mi departamento</button>
   </div>
 
   <div class="sidebar-footer">
@@ -834,11 +835,45 @@
 <!-- ===== PANTALLA: PAGOS INTERNOS PENDIENTES (Cajero / Taller) ===== -->
 <div id="pantallaPagosPendientes" class="oculto contenido">
   <div class="page-header">
-    <h1>Pagos internos pendientes</h1>
-    <div class="subtitulo">Ventas a otros departamentos donde tu departamento vendió, y todavía falta que llegue el pago real (efectivo o transferencia).</div>
+    <h1>Mi departamento</h1>
+    <div class="subtitulo">Cómo va tu departamento: cuánto ha entrado, cuánto ha salido, y los pagos internos pendientes.</div>
   </div>
-  <div class="panel" style="max-height:none;">
-    <div id="listaPagosPendientesPropios"><div class="cargando">Cargando...</div></div>
+
+  <div class="grilla-3">
+
+    <div class="panel">
+      <h2>Resumen de mi departamento</h2>
+      <div id="resumenMiDepartamento"><div class="cargando">Cargando...</div></div>
+    </div>
+
+    <div class="panel">
+      <h2>Registrar un gasto</h2>
+      <div class="subtitulo">Ej: compraste insumos a un proveedor, pagaste mano de obra, u otro gasto.</div>
+      <label for="gastoCategoria">Categoría</label>
+      <select id="gastoCategoria">
+        <option value="insumos">Insumos</option>
+        <option value="mano_obra">Mano de obra</option>
+        <option value="otros_gastos">Otros gastos</option>
+      </select>
+      <label for="gastoDescripcion">¿En qué se gastó?</label>
+      <input type="text" id="gastoDescripcion" placeholder="Ej: Compra de lana a proveedor X">
+      <label for="gastoMonto">Monto (COP)</label>
+      <input type="number" id="gastoMonto" placeholder="0" min="1" step="1000">
+      <button class="btn-principal" id="btnRegistrarGasto" onclick="confirmarRegistrarGasto()">Registrar gasto</button>
+      <div class="mensaje" id="mensajeGasto"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Pagos internos pendientes</h2>
+      <div class="subtitulo">Ventas a otros departamentos donde vendiste, y todavía falta el pago real.</div>
+      <div id="listaPagosPendientesPropios"><div class="cargando">Cargando...</div></div>
+    </div>
+
+  </div>
+
+  <div class="panel" style="margin-top:20px;max-height:none;">
+    <h2>Historial de mis gastos</h2>
+    <div id="listaHistorialGastosPropios"><div class="cargando">Cargando...</div></div>
   </div>
 </div>
 
@@ -901,6 +936,15 @@
   </div>
 </div>
 
+<!-- ===== PANTALLA: REPORTES FINANCIEROS POR DEPARTAMENTO (solo Admin) ===== -->
+<div id="pantallaReportesFinancieros" class="oculto contenido">
+  <div class="page-header">
+    <h1>Reportes financieros por departamento</h1>
+    <div class="subtitulo">Cómo va cada departamento: si genera más de lo que gasta (autosustentable) o está consumiendo su capital.</div>
+  </div>
+  <div id="listaReportesFinancieros"><div class="cargando">Cargando reportes...</div></div>
+</div>
+
 <!-- ===== PANTALLA: CERRAR TURNO ===== -->
 <div id="pantallaCerrarTurno" class="oculto contenido">
   <div class="page-header">
@@ -944,7 +988,7 @@
   // UTILIDADES
   // ============================================================================
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaDepartamentos', 'pantallaPagosPendientes', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaDepartamentos', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -965,6 +1009,7 @@
       pantallaTurnoActivo: 'nav-turno',
       pantallaReportes: 'nav-reportes',
       pantallaDepartamentos: 'nav-departamentos',
+      pantallaReportesFinancieros: 'nav-reportes-financieros',
       pantallaPagosPendientes: 'nav-pagos-pendientes',
     };
     if (mapaNav[idPantalla]) {
@@ -1156,6 +1201,7 @@
     mostrar('nav-consumotaller', esAdmin || esTaller);
     mostrar('nav-reportes', esAdmin);
     mostrar('nav-departamentos', esAdmin);
+    mostrar('nav-reportes-financieros', esAdmin);
     mostrar('nav-pagos-pendientes', esCajero || esTaller);
     mostrar('seccionDepartamentos', esAdmin || esCajero || esTaller);
     mostrar('nav-ventas', esAdmin || esCajero);
@@ -3054,11 +3100,158 @@
   }
 
   // ============================================================================
-  // PAGOS INTERNOS PENDIENTES (vista simple para Cajero y Taller)
+  // MI DEPARTAMENTO (vista simple para Cajero y Taller)
   // ============================================================================
+  function obtenerCentroCostoPropio() {
+    if (rolActual === 'cajero') return centroCostoTiendaId;
+    if (rolActual === 'taller') return centroCostoTallerId;
+    return null;
+  }
+
   async function mostrarPantallaPagosPendientes() {
     mostrarPantalla('pantallaPagosPendientes');
+    ocultarMensaje('mensajeGasto');
+    document.getElementById('gastoDescripcion').value = '';
+    document.getElementById('gastoMonto').value = '';
+    await cargarResumenMiDepartamento();
     await cargarPagosPendientesPropios();
+    await cargarHistorialGastosPropios();
+  }
+
+  async function cargarResumenMiDepartamento() {
+    const contenedor = document.getElementById('resumenMiDepartamento');
+    const centroCostoId = obtenerCentroCostoPropio();
+    if (!centroCostoId) {
+      contenedor.innerHTML = '<div class="cargando">No se pudo determinar tu departamento.</div>';
+      return;
+    }
+
+    const resp = await fetch(`${WORKER_URL}/api/pos/departamentos/reporte?centro_costo_id=${centroCostoId}`, {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+
+    if (!resp.ok) {
+      contenedor.innerHTML = '<div class="cargando">No se pudo cargar el resumen.</div>';
+      return;
+    }
+
+    const { reporte } = await resp.json();
+    if (!reporte) {
+      contenedor.innerHTML = '<div class="cargando">Sin datos todavía.</div>';
+      return;
+    }
+
+    contenedor.innerHTML = renderizarResumenDepartamento(reporte);
+  }
+
+  function renderizarResumenDepartamento(reporte) {
+    const esPositivo = Number(reporte.resultado_operativo) >= 0;
+    const colorResultado = esPositivo ? 'var(--verde-exito)' : 'var(--rojo-error)';
+    const etiquetaResultado = esPositivo ? '✅ Autosustentable' : '⚠️ Está gastando más de lo que genera';
+    return `
+      <div style="text-align:center;margin-bottom:14px;">
+        <div style="font-size:11px;opacity:0.6;">Saldo actual en caja</div>
+        <div style="font-size:26px;font-weight:700;color:var(--rosa-principal);">${formatearMoneda(reporte.saldo_actual)}</div>
+      </div>
+      <div class="resumen-fila"><span>Capital inicial recibido</span><strong>${formatearMoneda(reporte.capital_inicial_recibido)}</strong></div>
+      <div class="resumen-fila"><span>Ventas a clientes</span><strong>${formatearMoneda(reporte.ventas_externas)}</strong></div>
+      <div class="resumen-fila"><span>Ventas a otros departamentos</span><strong>${formatearMoneda(reporte.ventas_internas_recibidas)}</strong></div>
+      <div class="resumen-fila total"><span>Total ingresos</span><strong>${formatearMoneda(reporte.total_ingresos_operativos)}</strong></div>
+      <div class="resumen-fila" style="margin-top:10px;"><span>Gastos directos</span><strong>${formatearMoneda(reporte.gastos_directos)}</strong></div>
+      <div class="resumen-fila"><span>Compras a otros departamentos</span><strong>${formatearMoneda(reporte.compras_internas_pagadas)}</strong></div>
+      <div class="resumen-fila total"><span>Total gastos</span><strong>${formatearMoneda(reporte.total_egresos_operativos)}</strong></div>
+      <div style="text-align:center;margin-top:16px;padding:12px;border-radius:10px;background:${esPositivo ? '#eaf6ef' : '#fdecea'};">
+        <div style="font-size:12px;font-weight:600;color:${colorResultado};">${etiquetaResultado}</div>
+        <div style="font-size:20px;font-weight:700;color:${colorResultado};margin-top:4px;">${formatearMoneda(Math.abs(reporte.resultado_operativo))}</div>
+      </div>
+    `;
+  }
+
+  async function confirmarRegistrarGasto() {
+    const centroCostoId = obtenerCentroCostoPropio();
+    const categoria = document.getElementById('gastoCategoria').value;
+    const descripcion = document.getElementById('gastoDescripcion').value.trim();
+    const monto = Number(document.getElementById('gastoMonto').value);
+    ocultarMensaje('mensajeGasto');
+
+    if (!centroCostoId) {
+      mostrarMensaje('mensajeGasto', 'No se pudo determinar tu departamento.', 'error');
+      return;
+    }
+    if (!descripcion) {
+      mostrarMensaje('mensajeGasto', 'Describe en qué se gastó.', 'error');
+      return;
+    }
+    if (!monto || monto <= 0) {
+      mostrarMensaje('mensajeGasto', 'Escribe un monto válido mayor a cero.', 'error');
+      return;
+    }
+
+    const btn = document.getElementById('btnRegistrarGasto');
+    btn.disabled = true;
+    btn.textContent = 'Registrando...';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/departamentos/gastos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ centro_costo_id: centroCostoId, categoria, descripcion, monto })
+    });
+
+    btn.disabled = false;
+    btn.textContent = 'Registrar gasto';
+
+    const datos = await resp.json();
+    if (!resp.ok) {
+      mostrarMensaje('mensajeGasto', datos.error || 'No se pudo registrar el gasto.', 'error');
+      return;
+    }
+
+    mostrarMensaje('mensajeGasto', '✅ Gasto registrado correctamente.', 'exito');
+    document.getElementById('gastoDescripcion').value = '';
+    document.getElementById('gastoMonto').value = '';
+    await cargarResumenMiDepartamento();
+    await cargarHistorialGastosPropios();
+  }
+
+  async function cargarHistorialGastosPropios() {
+    const contenedor = document.getElementById('listaHistorialGastosPropios');
+    const centroCostoId = obtenerCentroCostoPropio();
+    if (!centroCostoId) {
+      contenedor.innerHTML = '<div class="cargando">No se pudo determinar tu departamento.</div>';
+      return;
+    }
+
+    const resp = await fetch(`${WORKER_URL}/api/pos/departamentos/gastos?centro_costo_id=${centroCostoId}`, {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+
+    if (!resp.ok) {
+      contenedor.innerHTML = '<div class="cargando">No se pudo cargar el historial.</div>';
+      return;
+    }
+
+    const { gastos } = await resp.json();
+
+    if (!gastos || gastos.length === 0) {
+      contenedor.innerHTML = '<div class="cargando">Todavía no hay gastos registrados.</div>';
+      return;
+    }
+
+    const etiquetasCategoria = { insumos: 'Insumos', mano_obra: 'Mano de obra', otros_gastos: 'Otros gastos' };
+
+    contenedor.innerHTML = gastos.map(g => {
+      const fecha = new Date(g.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
+      return `
+        <div class="fila-historial">
+          <div class="fila-historial-encabezado">
+            <span class="fila-historial-consecutivo">${etiquetasCategoria[g.categoria] || g.categoria}</span>
+            <span class="fila-historial-total">${formatearMoneda(g.monto)}</span>
+          </div>
+          <div class="fila-historial-fecha">${fecha}</div>
+          <div class="fila-historial-detalle">${escaparHtml(g.descripcion)}</div>
+        </div>
+      `;
+    }).join('');
   }
 
   async function cargarPagosPendientesPropios() {
@@ -3106,6 +3299,75 @@
         </div>
       `;
     }).join('');
+  }
+
+  // ============================================================================
+  // REPORTES FINANCIEROS CONSOLIDADOS (solo Admin)
+  // ============================================================================
+  async function mostrarPantallaReportesFinancieros() {
+    mostrarPantalla('pantallaReportesFinancieros');
+    const contenedor = document.getElementById('listaReportesFinancieros');
+    contenedor.innerHTML = '<div class="cargando">Cargando reportes...</div>';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/departamentos/reporte-consolidado', {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+
+    if (!resp.ok) {
+      contenedor.innerHTML = '<div class="cargando">No se pudieron cargar los reportes.</div>';
+      return;
+    }
+
+    const { reportes } = await resp.json();
+
+    if (!reportes || reportes.length === 0) {
+      contenedor.innerHTML = '<div class="cargando">No hay departamentos con datos todavía.</div>';
+      return;
+    }
+
+    // Totales consolidados de toda la empresa
+    const totalIngresos = reportes.reduce((acc, r) => acc + Number(r.total_ingresos_operativos), 0);
+    const totalEgresos = reportes.reduce((acc, r) => acc + Number(r.total_egresos_operativos), 0);
+    const totalSaldo = reportes.reduce((acc, r) => acc + Number(r.saldo_actual), 0);
+    const resultadoTotal = totalIngresos - totalEgresos;
+    const empresaPositiva = resultadoTotal >= 0;
+
+    let html = `
+      <div class="tarjeta" style="max-width:none;margin-bottom:20px;background:${empresaPositiva ? '#eaf6ef' : '#fdecea'};">
+        <h1 style="font-size:16px;">Resumen de toda la empresa</h1>
+        <div class="grilla-3" style="margin-top:14px;">
+          <div style="text-align:center;">
+            <div style="font-size:11px;opacity:0.6;">Saldo total en cajas</div>
+            <div style="font-size:22px;font-weight:700;color:var(--rosa-principal);">${formatearMoneda(totalSaldo)}</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:11px;opacity:0.6;">Ingresos totales</div>
+            <div style="font-size:22px;font-weight:700;color:var(--verde-exito);">${formatearMoneda(totalIngresos)}</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:11px;opacity:0.6;">Gastos totales</div>
+            <div style="font-size:22px;font-weight:700;color:var(--rojo-error);">${formatearMoneda(totalEgresos)}</div>
+          </div>
+        </div>
+        <div style="text-align:center;margin-top:14px;">
+          <div style="font-size:13px;font-weight:600;color:${empresaPositiva ? 'var(--verde-exito)' : 'var(--rojo-error)'};">
+            ${empresaPositiva ? '✅ La empresa está generando más de lo que gasta' : '⚠️ La empresa está gastando más de lo que genera'}
+          </div>
+          <div style="font-size:24px;font-weight:700;color:${empresaPositiva ? 'var(--verde-exito)' : 'var(--rojo-error)'};margin-top:4px;">${formatearMoneda(Math.abs(resultadoTotal))}</div>
+        </div>
+      </div>
+      <div class="grilla-3">
+    `;
+
+    html += reportes.map(reporte => `
+      <div class="panel" style="max-height:none;">
+        <h2>${escaparHtml(reporte.nombre_departamento)}</h2>
+        ${renderizarResumenDepartamento(reporte)}
+      </div>
+    `).join('');
+
+    html += '</div>';
+    contenedor.innerHTML = html;
   }
 
   function actualizarSidebar() {
