@@ -544,6 +544,10 @@
     <div class="sidebar-seccion" id="seccionCaja">Caja</div>
     <button class="nav-btn" id="nav-turno" onclick="irATurnoActivo()"><span class="nav-icon">💵</span> Turno de caja</button>
     <button class="nav-btn" id="nav-reportes" onclick="mostrarPantallaReportes()" style="display:none;"><span class="nav-icon">📈</span> Reportes turno</button>
+
+    <div class="sidebar-seccion" id="seccionDepartamentos" style="display:none;">Departamentos</div>
+    <button class="nav-btn" id="nav-departamentos" onclick="mostrarPantallaDepartamentos()" style="display:none;"><span class="nav-icon">🏢</span> Cajas y ventas internas</button>
+    <button class="nav-btn" id="nav-pagos-pendientes" onclick="mostrarPantallaPagosPendientes()" style="display:none;"><span class="nav-icon">⏳</span> Pagos pendientes</button>
   </div>
 
   <div class="sidebar-footer">
@@ -698,6 +702,8 @@
         <option value="gramo">Gramo</option>
         <option value="rollo">Rollo</option>
       </select>
+      <label for="invDepartamento">Departamento dueño de este producto</label>
+      <select id="invDepartamento"><option value="">Cargando departamentos...</option></select>
       <label for="invPrecioVenta">Precio de venta (COP)</label>
       <input type="number" id="invPrecioVenta" placeholder="0" min="0" step="1000">
       <label for="invCostoPromedio">Costo aproximado (COP, opcional)</label>
@@ -720,6 +726,7 @@
         <button class="chip-filtro" data-filtro-inv="producto_terminado" onclick="cambiarFiltroInventario('producto_terminado', this)">Amigurumis</button>
         <button class="chip-filtro" data-filtro-inv="merceria" onclick="cambiarFiltroInventario('merceria', this)">Mercería</button>
       </div>
+      <div class="filtro-tipo" id="filtroDepartamentoInv"></div>
       <div id="listaInventarioGestion"><div class="cargando">Cargando inventario...</div></div>
     </div>
 
@@ -824,6 +831,76 @@
   </div>
 </div>
 
+<!-- ===== PANTALLA: PAGOS INTERNOS PENDIENTES (Cajero / Taller) ===== -->
+<div id="pantallaPagosPendientes" class="oculto contenido">
+  <div class="page-header">
+    <h1>Pagos internos pendientes</h1>
+    <div class="subtitulo">Ventas a otros departamentos donde tu departamento vendió, y todavía falta que llegue el pago real (efectivo o transferencia).</div>
+  </div>
+  <div class="panel" style="max-height:none;">
+    <div id="listaPagosPendientesPropios"><div class="cargando">Cargando...</div></div>
+  </div>
+</div>
+
+<!-- ===== PANTALLA: DEPARTAMENTOS (cajas y ventas internas) ===== -->
+<div id="pantallaDepartamentos" class="oculto contenido">
+  <div class="page-header">
+    <h1>Departamentos — Cajas y ventas internas</h1>
+    <div class="subtitulo">Cada departamento tiene su propia caja. Las ventas entre departamentos mueven dinero real de una caja a otra.</div>
+  </div>
+
+  <div class="grilla-3">
+
+    <div class="panel">
+      <h2>Cajas por departamento</h2>
+      <div id="listaCajasDepartamentos"><div class="cargando">Cargando departamentos...</div></div>
+    </div>
+
+    <div class="panel">
+      <h2>Depositar capital</h2>
+      <div class="subtitulo">Ingresa dinero a la caja de un departamento (capital inicial o refuerzo).</div>
+      <label for="depositoDepartamento">Departamento</label>
+      <select id="depositoDepartamento"><option value="">Cargando...</option></select>
+      <label for="depositoMonto">Monto a depositar (COP)</label>
+      <input type="number" id="depositoMonto" placeholder="0" min="1" step="1000">
+      <label for="depositoDescripcion">Descripción <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <input type="text" id="depositoDescripcion" placeholder="Ej: Capital inicial">
+      <button class="btn-principal" id="btnDepositarCapital" onclick="confirmarDepositoCapital()">Depositar</button>
+      <div class="mensaje" id="mensajeDeposito"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Venta interna entre departamentos</h2>
+      <div class="subtitulo">Ej: el Taller le vende producto terminado a la Tienda. El stock y el dinero se mueven automáticamente.</div>
+      <label for="ventaInternaVendedor">Departamento que vende</label>
+      <select id="ventaInternaVendedor" onchange="cambiarDeptoVendedorVentaInterna()"><option value="">Selecciona...</option></select>
+      <label for="ventaInternaComprador">Departamento que compra</label>
+      <select id="ventaInternaComprador"><option value="">Selecciona...</option></select>
+
+      <label for="ventaInternaBuscar">Buscar producto en el inventario del vendedor</label>
+      <div style="position:relative;">
+        <input type="text" id="ventaInternaBuscar" placeholder="Escribe el nombre del producto..." oninput="buscarProductoVentaInterna()" autocomplete="off" disabled>
+        <div id="sugerenciasVentaInterna" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1.5px solid var(--rosa-medio);border-radius:9px;margin-top:4px;max-height:220px;overflow-y:auto;z-index:50;box-shadow:var(--sombra);"></div>
+      </div>
+      <div id="productoVentaInternaInfo" style="display:none;margin-top:10px;padding:10px 12px;background:var(--rosa-suave);border-radius:9px;font-size:13px;"></div>
+
+      <label for="ventaInternaCantidad">Cantidad</label>
+      <input type="number" id="ventaInternaCantidad" placeholder="1" min="0.01" step="0.01">
+      <label for="ventaInternaPrecio">Precio unitario (COP)</label>
+      <input type="number" id="ventaInternaPrecio" placeholder="0" min="0" step="1000">
+
+      <button class="btn-principal" id="btnRegistrarVentaInterna" onclick="confirmarVentaInterna()">Registrar venta interna</button>
+      <div class="mensaje" id="mensajeVentaInterna"></div>
+    </div>
+
+  </div>
+
+  <div class="panel" style="margin-top:20px;max-height:none;">
+    <h2>Historial de ventas internas</h2>
+    <div id="listaVentasInternas"><div class="cargando">Cargando historial...</div></div>
+  </div>
+</div>
+
 <!-- ===== PANTALLA: CERRAR TURNO ===== -->
 <div id="pantallaCerrarTurno" class="oculto contenido">
   <div class="page-header">
@@ -860,12 +937,14 @@
   let sesionActual = null; // { token, userId, email }
   let rolActual = null;
   let turnoActivoActual = null;
+  let centroCostoTiendaId = null;
+  let centroCostoTallerId = null;
 
   // ============================================================================
   // UTILIDADES
   // ============================================================================
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaDepartamentos', 'pantallaPagosPendientes', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -885,6 +964,8 @@
       pantallaConsumoTaller: 'nav-consumotaller',
       pantallaTurnoActivo: 'nav-turno',
       pantallaReportes: 'nav-reportes',
+      pantallaDepartamentos: 'nav-departamentos',
+      pantallaPagosPendientes: 'nav-pagos-pendientes',
     };
     if (mapaNav[idPantalla]) {
       const btn = document.getElementById(mapaNav[idPantalla]);
@@ -1074,6 +1155,9 @@
     mostrar('nav-solicitudes', esAdmin || esCajero || esTaller);
     mostrar('nav-consumotaller', esAdmin || esTaller);
     mostrar('nav-reportes', esAdmin);
+    mostrar('nav-departamentos', esAdmin);
+    mostrar('nav-pagos-pendientes', esCajero || esTaller);
+    mostrar('seccionDepartamentos', esAdmin || esCajero || esTaller);
     mostrar('nav-ventas', esAdmin || esCajero);
     mostrar('nav-historial', esAdmin || esCajero);
     mostrar('nav-turno', esAdmin || esCajero);
@@ -1209,6 +1293,22 @@
       return;
     }
     rolActual = data.rol;
+    await cargarIdsDepartamentosClave();
+  }
+
+  // Carga los IDs de Tienda y Taller una sola vez, para filtrar catálogos por departamento
+  async function cargarIdsDepartamentosClave() {
+    if (centroCostoTiendaId && centroCostoTallerId) return; // ya cargados
+    const { data } = await supabaseClient
+      .from('centros_costo')
+      .select('id, codigo')
+      .in('codigo', ['01', '03']);
+    if (data) {
+      const tienda = data.find(c => c.codigo === '01');
+      const taller = data.find(c => c.codigo === '03');
+      if (tienda) centroCostoTiendaId = tienda.id;
+      if (taller) centroCostoTallerId = taller.id;
+    }
   }
 
   // ============================================================================
@@ -1264,6 +1364,7 @@
       .from('inventario_items')
       .select('id, tipo, nombre, stock_actual, stock_minimo, precio_venta, unidad_medida')
       .eq('activo', true)
+      .eq('centro_costo_id', centroCostoTiendaId)
       .order('nombre', { ascending: true });
 
     if (error) {
@@ -1629,11 +1730,31 @@
 
   let inventarioGestionCompleto = [];
 
+  let departamentosParaInventario = [];
+
   async function mostrarPantallaInventario() {
     mostrarPantalla('pantallaInventario');
     limpiarFormularioProducto();
     document.getElementById('inputBuscarInventario').value = '';
+    await cargarDepartamentosParaInventario();
     await cargarInventarioGestion();
+  }
+
+  async function cargarDepartamentosParaInventario() {
+    const { data } = await supabaseClient
+      .from('centros_costo')
+      .select('id, codigo, nombre')
+      .eq('activo', true)
+      .order('codigo', { ascending: true });
+
+    departamentosParaInventario = data || [];
+
+    const selectForm = document.getElementById('invDepartamento');
+    selectForm.innerHTML = departamentosParaInventario.map(d => `<option value="${d.id}">${escaparHtml(d.nombre)}</option>`).join('');
+
+    const filtroEl = document.getElementById('filtroDepartamentoInv');
+    filtroEl.innerHTML = `<button class="chip-filtro activo" data-filtro-depto="todos" onclick="cambiarFiltroDepartamentoInv('todos', this)">Todos los departamentos</button>` +
+      departamentosParaInventario.map(d => `<button class="chip-filtro" data-filtro-depto="${d.id}" onclick="cambiarFiltroDepartamentoInv('${d.id}', this)">${escaparHtml(d.nombre)}</button>`).join('');
   }
 
   function limpiarFormularioProducto() {
@@ -1653,6 +1774,7 @@
     const sku = document.getElementById('invSku').value.trim() || null;
     const tipo = document.getElementById('invTipo').value;
     const unidad = document.getElementById('invUnidad').value;
+    const centroCostoId = document.getElementById('invDepartamento').value;
     const precioVenta = Number(document.getElementById('invPrecioVenta').value);
     const costo = Number(document.getElementById('invCostoPromedio').value) || 0;
     const stockInicial = Number(document.getElementById('invStockInicial').value) || 0;
@@ -1662,6 +1784,10 @@
 
     if (!nombre) {
       mostrarMensaje('mensajeInventarioForm', 'Escribe un nombre para el producto.', 'error');
+      return;
+    }
+    if (!centroCostoId) {
+      mostrarMensaje('mensajeInventarioForm', 'Selecciona a qué departamento pertenece este producto.', 'error');
       return;
     }
     if (!precioVenta || precioVenta <= 0) {
@@ -1678,6 +1804,7 @@
       sku,
       tipo,
       unidad_medida: unidad,
+      centro_costo_id: centroCostoId,
       precio_venta: precioVenta,
       costo_promedio_ponderado: costo,
       stock_actual: stockInicial,
@@ -1704,7 +1831,7 @@
 
     const { data, error } = await supabaseClient
       .from('inventario_items')
-      .select('id, tipo, nombre, stock_actual, stock_minimo, precio_venta, costo_promedio_ponderado, unidad_medida, activo')
+      .select('id, tipo, nombre, stock_actual, stock_minimo, precio_venta, costo_promedio_ponderado, unidad_medida, activo, centro_costo_id')
       .order('nombre', { ascending: true });
 
     if (error) {
@@ -1717,7 +1844,15 @@
   }
 
   let filtroInventarioActual = 'todos';
+  let filtroDepartamentoInvActual = 'todos';
   let itemInventarioEditandoId = null;
+
+  function cambiarFiltroDepartamentoInv(deptoId, botonEl) {
+    filtroDepartamentoInvActual = deptoId;
+    document.querySelectorAll('[data-filtro-depto]').forEach(c => c.classList.remove('activo'));
+    botonEl.classList.add('activo');
+    renderizarTablaInventario();
+  }
 
   function cambiarFiltroInventario(filtro, botonEl) {
     filtroInventarioActual = filtro;
@@ -1734,6 +1869,9 @@
     if (filtroInventarioActual !== 'todos') {
       items = items.filter(i => i.tipo === filtroInventarioActual);
     }
+    if (filtroDepartamentoInvActual !== 'todos') {
+      items = items.filter(i => i.centro_costo_id === filtroDepartamentoInvActual);
+    }
     if (textoBusqueda) {
       items = items.filter(i => i.nombre.toLowerCase().includes(textoBusqueda) || (i.sku && i.sku.toLowerCase().includes(textoBusqueda)));
     }
@@ -1744,14 +1882,19 @@
     }
 
     const etiquetaTipoMap = { merceria: 'Mercería', producto_terminado: 'Amigurumi' };
+    const nombreDeptoMap = Object.fromEntries(departamentosParaInventario.map(d => [d.id, d.nombre]));
 
     contenedor.innerHTML = items.map(item => {
       const etiquetaTipo = etiquetaTipoMap[item.tipo] || item.tipo;
       const tagInactivo = !item.activo ? '<span class="badge-inactivo">Inactivo</span>' : '';
       const skuTexto = item.sku ? `<span style="opacity:0.5;font-size:11px;margin-left:6px;">SKU: ${escaparHtml(item.sku)}</span>` : '';
+      const nombreDepto = nombreDeptoMap[item.centro_costo_id] || 'Sin departamento';
       const estaEditando = itemInventarioEditandoId === item.id;
 
       if (estaEditando) {
+        const opcionesDepto = departamentosParaInventario.map(d =>
+          `<option value="${d.id}" ${d.id === item.centro_costo_id ? 'selected' : ''}>${escaparHtml(d.nombre)}</option>`
+        ).join('');
         // Modo edición
         return `
           <div class="fila-inventario-editable" style="border-color:var(--rosa-medio);" data-id="${item.id}">
@@ -1759,6 +1902,8 @@
               <span class="fila-inventario-nombre">${escaparHtml(item.nombre)}${tagInactivo}</span>
               <span class="fila-inventario-tipo-tag">${etiquetaTipo}</span>
             </div>
+            <label style="margin-top:8px;">Departamento</label>
+            <select id="edit-depto-${item.id}">${opcionesDepto}</select>
             <div class="grid-campos-inventario">
               <div class="campo-mini">
                 <label>Precio de venta</label>
@@ -1792,6 +1937,7 @@
               <span class="fila-inventario-nombre">${escaparHtml(item.nombre)}${tagInactivo}${skuTexto}</span>
               <span class="fila-inventario-tipo-tag">${etiquetaTipo}</span>
             </div>
+            <div style="font-size:11px;color:var(--rosa-principal);font-weight:600;margin-top:2px;">🏢 ${escaparHtml(nombreDepto)}</div>
             <div class="fila-inventario-lectura">
               <span>Precio: <strong>${formatearMoneda(item.precio_venta)}</strong></span>
               <span>Costo: <strong>${formatearMoneda(item.costo_promedio_ponderado)}</strong></span>
@@ -1822,6 +1968,8 @@
     const costo = Number(document.getElementById(`edit-costo-${itemId}`).value);
     const stock = Number(document.getElementById(`edit-stock-${itemId}`).value);
     const stockMinimo = Number(document.getElementById(`edit-stockmin-${itemId}`).value);
+    const deptoEl = document.getElementById(`edit-depto-${itemId}`);
+    const centroCostoId = deptoEl ? deptoEl.value : undefined;
 
     const { error } = await supabaseClient
       .from('inventario_items')
@@ -1830,6 +1978,7 @@
         costo_promedio_ponderado: costo,
         stock_actual: stock,
         stock_minimo: stockMinimo,
+        centro_costo_id: centroCostoId,
         updated_at: new Date().toISOString()
       })
       .eq('id', itemId);
@@ -2030,6 +2179,7 @@
       .select('id, nombre, tipo, stock_actual, unidad_medida')
       .eq('tipo', 'merceria')
       .eq('activo', true)
+      .eq('centro_costo_id', centroCostoTallerId)
       .order('nombre', { ascending: true });
 
     if (error) {
@@ -2246,6 +2396,7 @@
       .select('id, nombre, stock_actual, unidad_medida')
       .eq('tipo', 'merceria')
       .eq('activo', true)
+      .eq('centro_costo_id', centroCostoTallerId)
       .order('nombre', { ascending: true });
 
     if (error) {
@@ -2418,6 +2569,7 @@
         .from('inventario_items')
         .select('id, nombre, sku, stock_actual, unidad_medida')
         .eq('activo', true)
+        .eq('centro_costo_id', centroCostoTiendaId)
         .or(`nombre.ilike.%${texto}%,sku.ilike.%${texto}%`)
         .limit(8);
 
@@ -2571,7 +2723,391 @@
     }
   }
 
-  // Actualizar el sidebar con nombre y rol del usuario
+  // ============================================================================
+  // DEPARTAMENTOS — CAJAS Y VENTAS INTERNAS
+  // ============================================================================
+  let departamentosCache = [];
+  let inventarioDeptoVendedorCache = [];
+
+  async function mostrarPantallaDepartamentos() {
+    mostrarPantalla('pantallaDepartamentos');
+    ocultarMensaje('mensajeDeposito');
+    ocultarMensaje('mensajeVentaInterna');
+    document.getElementById('depositoMonto').value = '';
+    document.getElementById('depositoDescripcion').value = '';
+    document.getElementById('ventaInternaVendedor').value = '';
+    document.getElementById('ventaInternaComprador').value = '';
+    document.getElementById('ventaInternaBuscar').value = '';
+    document.getElementById('ventaInternaBuscar').disabled = true;
+    document.getElementById('ventaInternaCantidad').value = '';
+    document.getElementById('ventaInternaPrecio').value = '';
+    document.getElementById('productoVentaInternaInfo').style.display = 'none';
+    productoVentaInternaSeleccionado = null;
+    await cargarDepartamentos();
+    await cargarVentasInternas();
+  }
+
+  async function cargarDepartamentos() {
+    const contenedorCajas = document.getElementById('listaCajasDepartamentos');
+    contenedorCajas.innerHTML = '<div class="cargando">Cargando departamentos...</div>';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/departamentos', {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+
+    if (!resp.ok) {
+      contenedorCajas.innerHTML = '<div class="cargando">No se pudieron cargar los departamentos.</div>';
+      return;
+    }
+
+    const { departamentos } = await resp.json();
+    departamentosCache = departamentos || [];
+
+    if (departamentosCache.length === 0) {
+      contenedorCajas.innerHTML = '<div class="cargando">No hay departamentos activos.</div>';
+      return;
+    }
+
+    // Render de las cajas
+    contenedorCajas.innerHTML = departamentosCache.map(depto => {
+      const saldo = depto.cajas_departamentales && depto.cajas_departamentales.length > 0
+        ? Number(depto.cajas_departamentales[0].saldo_actual) : 0;
+      return `
+        <div class="fila-inventario-editable">
+          <div class="fila-inventario-titulo">
+            <span class="fila-inventario-nombre">${escaparHtml(depto.nombre)}</span>
+            <span class="fila-inventario-tipo-tag">${escaparHtml(depto.codigo)}</span>
+          </div>
+          <div style="font-size:20px;font-weight:700;color:var(--rosa-principal);margin-top:6px;">${formatearMoneda(saldo)}</div>
+          <div style="font-size:11.5px;opacity:0.6;">Saldo en caja</div>
+        </div>
+      `;
+    }).join('');
+
+    // Llenar los selects de depósito y venta interna
+    const opciones = departamentosCache.map(d => `<option value="${d.id}">${escaparHtml(d.nombre)}</option>`).join('');
+    document.getElementById('depositoDepartamento').innerHTML = '<option value="">Selecciona un departamento...</option>' + opciones;
+    document.getElementById('ventaInternaVendedor').innerHTML = '<option value="">Selecciona...</option>' + opciones;
+    document.getElementById('ventaInternaComprador').innerHTML = '<option value="">Selecciona...</option>' + opciones;
+  }
+
+  async function confirmarDepositoCapital() {
+    const centroCostoId = document.getElementById('depositoDepartamento').value;
+    const monto = Number(document.getElementById('depositoMonto').value);
+    const descripcion = document.getElementById('depositoDescripcion').value.trim();
+    ocultarMensaje('mensajeDeposito');
+
+    if (!centroCostoId) {
+      mostrarMensaje('mensajeDeposito', 'Selecciona un departamento.', 'error');
+      return;
+    }
+    if (!monto || monto <= 0) {
+      mostrarMensaje('mensajeDeposito', 'Escribe un monto válido mayor a cero.', 'error');
+      return;
+    }
+
+    const btn = document.getElementById('btnDepositarCapital');
+    btn.disabled = true;
+    btn.textContent = 'Depositando...';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/departamentos/depositar-capital', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ centro_costo_id: centroCostoId, monto, descripcion: descripcion || null })
+    });
+
+    btn.disabled = false;
+    btn.textContent = 'Depositar';
+
+    const datos = await resp.json();
+    if (!resp.ok) {
+      mostrarMensaje('mensajeDeposito', datos.error || 'No se pudo depositar el capital.', 'error');
+      return;
+    }
+
+    mostrarMensaje('mensajeDeposito', '✅ Capital depositado correctamente.', 'exito');
+    document.getElementById('depositoMonto').value = '';
+    document.getElementById('depositoDescripcion').value = '';
+    await cargarDepartamentos();
+  }
+
+  let productoVentaInternaSeleccionado = null;
+  let timeoutBusquedaVentaInterna = null;
+
+  function cambiarDeptoVendedorVentaInterna() {
+    const vendedorId = document.getElementById('ventaInternaVendedor').value;
+    const inputBuscar = document.getElementById('ventaInternaBuscar');
+    productoVentaInternaSeleccionado = null;
+    document.getElementById('productoVentaInternaInfo').style.display = 'none';
+    inputBuscar.value = '';
+    document.getElementById('sugerenciasVentaInterna').style.display = 'none';
+    inputBuscar.disabled = !vendedorId;
+    inputBuscar.placeholder = vendedorId ? 'Escribe el nombre del producto...' : 'Primero selecciona el departamento que vende';
+  }
+
+  async function buscarProductoVentaInterna() {
+    const vendedorId = document.getElementById('ventaInternaVendedor').value;
+    const texto = document.getElementById('ventaInternaBuscar').value.trim();
+    productoVentaInternaSeleccionado = null;
+    document.getElementById('productoVentaInternaInfo').style.display = 'none';
+
+    clearTimeout(timeoutBusquedaVentaInterna);
+    const sugerenciasEl = document.getElementById('sugerenciasVentaInterna');
+
+    if (!vendedorId || texto.length < 2) {
+      sugerenciasEl.style.display = 'none';
+      return;
+    }
+
+    timeoutBusquedaVentaInterna = setTimeout(async () => {
+      const resp = await fetch(
+        `${WORKER_URL}/api/pos/departamentos/buscar-inventario?centro_costo_id=${vendedorId}&q=${encodeURIComponent(texto)}`,
+        { headers: { Authorization: 'Bearer ' + sesionActual.token } }
+      );
+
+      if (!resp.ok) {
+        sugerenciasEl.innerHTML = '<div style="padding:12px;font-size:12.5px;opacity:0.6;">No se pudo buscar.</div>';
+        sugerenciasEl.style.display = 'block';
+        return;
+      }
+
+      const { items } = await resp.json();
+
+      if (!items || items.length === 0) {
+        sugerenciasEl.innerHTML = '<div style="padding:12px;font-size:12.5px;opacity:0.6;">No se encontraron productos con ese nombre en este departamento.</div>';
+        sugerenciasEl.style.display = 'block';
+        return;
+      }
+
+      sugerenciasEl.innerHTML = items.map(item => `
+        <div style="padding:10px 12px;cursor:pointer;border-bottom:1px solid #f4eef2;" onmouseover="this.style.background='var(--rosa-suave)'" onmouseout="this.style.background='white'"
+          onclick='seleccionarProductoVentaInterna(${JSON.stringify(item).replace(/'/g, "&apos;")})'>
+          <div style="font-weight:600;font-size:13px;">${escaparHtml(item.nombre)}</div>
+          <div style="font-size:11.5px;opacity:0.6;">Stock: ${item.stock_actual} ${item.unidad_medida} · Precio ref: ${formatearMoneda(item.precio_venta)}</div>
+        </div>
+      `).join('');
+      sugerenciasEl.style.display = 'block';
+    }, 300);
+  }
+
+  function seleccionarProductoVentaInterna(item) {
+    productoVentaInternaSeleccionado = item;
+    document.getElementById('ventaInternaBuscar').value = item.nombre;
+    document.getElementById('sugerenciasVentaInterna').style.display = 'none';
+
+    const infoEl = document.getElementById('productoVentaInternaInfo');
+    infoEl.innerHTML = `✅ <strong>${escaparHtml(item.nombre)}</strong> — Stock disponible: ${item.stock_actual} ${item.unidad_medida}`;
+    infoEl.style.display = 'block';
+
+    // Precargar el precio de venta como sugerencia (se puede editar)
+    if (!document.getElementById('ventaInternaPrecio').value) {
+      document.getElementById('ventaInternaPrecio').value = item.precio_venta;
+    }
+    document.getElementById('ventaInternaCantidad').focus();
+  }
+
+  async function confirmarVentaInterna() {
+    const vendedorId = document.getElementById('ventaInternaVendedor').value;
+    const compradorId = document.getElementById('ventaInternaComprador').value;
+    const cantidad = Number(document.getElementById('ventaInternaCantidad').value);
+    const precio = Number(document.getElementById('ventaInternaPrecio').value);
+    ocultarMensaje('mensajeVentaInterna');
+
+    if (!vendedorId || !compradorId) {
+      mostrarMensaje('mensajeVentaInterna', 'Selecciona el departamento que vende y el que compra.', 'error');
+      return;
+    }
+    if (vendedorId === compradorId) {
+      mostrarMensaje('mensajeVentaInterna', 'Un departamento no puede venderse a sí mismo.', 'error');
+      return;
+    }
+    if (!productoVentaInternaSeleccionado) {
+      mostrarMensaje('mensajeVentaInterna', 'Busca y selecciona el producto de la lista antes de continuar.', 'error');
+      return;
+    }
+    if (!cantidad || cantidad <= 0) {
+      mostrarMensaje('mensajeVentaInterna', 'Escribe una cantidad válida.', 'error');
+      return;
+    }
+    if (!precio || precio <= 0) {
+      mostrarMensaje('mensajeVentaInterna', 'Escribe un precio unitario válido.', 'error');
+      return;
+    }
+    if (cantidad > productoVentaInternaSeleccionado.stock_actual) {
+      mostrarMensaje('mensajeVentaInterna', `No hay suficiente stock. Disponible: ${productoVentaInternaSeleccionado.stock_actual}.`, 'error');
+      return;
+    }
+
+    const btn = document.getElementById('btnRegistrarVentaInterna');
+    btn.disabled = true;
+    btn.textContent = 'Registrando...';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/departamentos/venta-interna', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({
+        departamento_vendedor_id: vendedorId,
+        departamento_comprador_id: compradorId,
+        inventario_item_id: productoVentaInternaSeleccionado.id,
+        cantidad,
+        precio_unitario: precio
+      })
+    });
+
+    btn.disabled = false;
+    btn.textContent = 'Registrar venta interna';
+
+    const datos = await resp.json();
+    if (!resp.ok) {
+      mostrarMensaje('mensajeVentaInterna', datos.error || 'No se pudo registrar la venta interna.', 'error');
+      return;
+    }
+
+    mostrarMensaje('mensajeVentaInterna', '✅ Venta interna registrada. El stock y el dinero se movieron entre departamentos.', 'exito');
+    document.getElementById('ventaInternaBuscar').value = '';
+    document.getElementById('ventaInternaCantidad').value = '';
+    document.getElementById('ventaInternaPrecio').value = '';
+    document.getElementById('productoVentaInternaInfo').style.display = 'none';
+    productoVentaInternaSeleccionado = null;
+    await cargarDepartamentos();
+    await cargarVentasInternas();
+  }
+
+  async function cargarVentasInternas() {
+    const contenedor = document.getElementById('listaVentasInternas');
+    contenedor.innerHTML = '<div class="cargando">Cargando historial...</div>';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/departamentos/ventas-internas', {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+
+    if (!resp.ok) {
+      contenedor.innerHTML = '<div class="cargando">No se pudo cargar el historial.</div>';
+      return;
+    }
+
+    const { ventas } = await resp.json();
+
+    if (!ventas || ventas.length === 0) {
+      contenedor.innerHTML = '<div class="cargando">Todavía no hay ventas internas registradas.</div>';
+      return;
+    }
+
+    contenedor.innerHTML = ventas.map(venta => {
+      const fecha = new Date(venta.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
+      const lineasTexto = Array.isArray(venta.lineas)
+        ? venta.lineas.map(l => `${l.cantidad}x ${escaparHtml(l.descripcion)}`).join(', ')
+        : '';
+      const pendiente = venta.estado_pago === 'pendiente_pago';
+      const tagEstado = pendiente
+        ? '<span class="stock-bajo-tag">⏳ Falta confirmar pago</span>'
+        : `<span class="badge-rol" style="background:#eaf6ef;color:var(--verde-exito);">✅ Pagado (${venta.metodo_pago_real === 'efectivo' ? 'Efectivo' : 'Transferencia'})</span>`;
+
+      return `
+        <div class="fila-historial">
+          <div class="fila-historial-encabezado">
+            <span class="fila-historial-consecutivo">${venta.consecutivo}</span>
+            <span class="fila-historial-total">${formatearMoneda(venta.total)}</span>
+          </div>
+          <div class="fila-historial-fecha">${fecha}</div>
+          <div class="fila-historial-detalle">
+            <strong>${escaparHtml(venta.nombre_vendedor || 'Departamento')}</strong> vendió a
+            <strong>${escaparHtml(venta.nombre_comprador || 'Departamento')}</strong>
+          </div>
+          <div class="fila-historial-pagos">${lineasTexto}</div>
+          <div style="margin-top:8px;">${tagEstado}</div>
+          ${pendiente ? `
+            <div style="display:flex;gap:8px;margin-top:8px;">
+              <button class="btn-mini guardar" onclick="confirmarPagoVentaInterna('${venta.id}', 'efectivo')">💵 Ya pagué en efectivo</button>
+              <button class="btn-mini guardar" style="background:var(--azul-acero);" onclick="confirmarPagoVentaInterna('${venta.id}', 'transferencia')">🏦 Ya pagué por transferencia</button>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function confirmarPagoVentaInterna(ventaId, metodo) {
+    const textoMetodo = metodo === 'efectivo' ? 'efectivo' : 'transferencia';
+    if (!confirm(`¿Confirmas que el pago en ${textoMetodo} ya se realizó de verdad? Esto va a mover el dinero entre las cajas de los departamentos.`)) return;
+
+    const resp = await fetch(WORKER_URL + '/api/pos/departamentos/confirmar-pago', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ venta_interna_id: ventaId, metodo_pago_real: metodo })
+    });
+
+    const datos = await resp.json();
+    if (!resp.ok) {
+      alert('No se pudo confirmar el pago: ' + (datos.error || 'Error desconocido'));
+      return;
+    }
+
+    alert('✅ Pago confirmado. El dinero ya se movió entre las cajas.');
+    if (typeof cargarDepartamentos === 'function' && document.getElementById('pantallaDepartamentos') && !document.getElementById('pantallaDepartamentos').classList.contains('oculto')) {
+      await cargarDepartamentos();
+    }
+    await cargarVentasInternas();
+    if (typeof cargarPagosPendientesPropios === 'function') {
+      await cargarPagosPendientesPropios();
+    }
+  }
+
+  // ============================================================================
+  // PAGOS INTERNOS PENDIENTES (vista simple para Cajero y Taller)
+  // ============================================================================
+  async function mostrarPantallaPagosPendientes() {
+    mostrarPantalla('pantallaPagosPendientes');
+    await cargarPagosPendientesPropios();
+  }
+
+  async function cargarPagosPendientesPropios() {
+    const contenedor = document.getElementById('listaPagosPendientesPropios');
+    if (!contenedor) return;
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/departamentos/ventas-internas?estado_pago=pendiente_pago', {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+
+    if (!resp.ok) {
+      contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>';
+      return;
+    }
+
+    const { ventas } = await resp.json();
+
+    if (!ventas || ventas.length === 0) {
+      contenedor.innerHTML = '<div class="cargando">No tienes pagos pendientes por confirmar. 🎉</div>';
+      return;
+    }
+
+    contenedor.innerHTML = ventas.map(venta => {
+      const fecha = new Date(venta.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
+      const lineasTexto = Array.isArray(venta.lineas)
+        ? venta.lineas.map(l => `${l.cantidad}x ${escaparHtml(l.descripcion)}`).join(', ')
+        : '';
+      return `
+        <div class="fila-historial">
+          <div class="fila-historial-encabezado">
+            <span class="fila-historial-consecutivo">${venta.consecutivo}</span>
+            <span class="fila-historial-total">${formatearMoneda(venta.total)}</span>
+          </div>
+          <div class="fila-historial-fecha">${fecha}</div>
+          <div class="fila-historial-detalle">
+            <strong>${escaparHtml(venta.nombre_vendedor || 'Departamento')}</strong> vendió a
+            <strong>${escaparHtml(venta.nombre_comprador || 'Departamento')}</strong>
+          </div>
+          <div class="fila-historial-pagos">${lineasTexto}</div>
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <button class="btn-mini guardar" onclick="confirmarPagoVentaInterna('${venta.id}', 'efectivo')">💵 Ya pagué en efectivo</button>
+            <button class="btn-mini guardar" style="background:var(--azul-acero);" onclick="confirmarPagoVentaInterna('${venta.id}', 'transferencia')">🏦 Ya pagué por transferencia</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
   function actualizarSidebar() {
     if (!sesionActual) return;
     const nombreEl = document.getElementById('nombreUsuarioSidebar');
