@@ -1082,6 +1082,11 @@
   }
 
   function mostrarCierreTurno() {
+    if (!turnoActivoActual || !turnoActivoActual.id) {
+      alert('No hay un turno activo para cerrar.');
+      irATurnoActivo();
+      return;
+    }
     document.getElementById('resumenCierre').classList.add('oculto');
     document.getElementById('inputMontoDeclarado').value = '';
     document.getElementById('inputObservaciones').value = '';
@@ -1097,6 +1102,12 @@
   // CERRAR TURNO (ARQUEO)
   // ============================================================================
   async function cerrarTurno() {
+    if (!turnoActivoActual || !turnoActivoActual.id) {
+      mostrarMensaje('mensajeCerrarTurno', 'No se encontró un turno activo. Vuelve a la pantalla de turno e intenta de nuevo.', 'error');
+      setTimeout(() => irATurnoActivo(), 1500);
+      return;
+    }
+
     const montoDeclarado = Number(document.getElementById('inputMontoDeclarado').value);
     const observaciones = document.getElementById('inputObservaciones').value.trim();
     ocultarMensaje('mensajeCerrarTurno');
