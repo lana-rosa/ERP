@@ -789,7 +789,11 @@
   </div>
   <div class="tarjeta">
     <label for="inputSkuAjuste">Código de barras, SKU o nombre del producto</label>
-    <input type="text" id="inputSkuAjuste" placeholder="Escanea el código o escribe el nombre...">
+    <div style="position:relative;">
+      <input type="text" id="inputSkuAjuste" placeholder="Escanea el código o escribe el nombre..." oninput="buscarProductoEntrada()" autocomplete="off">
+      <div id="sugerenciasEntrada" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1.5px solid var(--rosa-medio);border-radius:9px;margin-top:4px;max-height:220px;overflow-y:auto;z-index:50;box-shadow:var(--sombra);"></div>
+    </div>
+    <div id="productoSeleccionadoInfo" style="display:none;margin-top:10px;padding:10px 12px;background:var(--rosa-suave);border-radius:9px;font-size:13px;"></div>
     <label for="inputCantidadNueva">¿Cuántas unidades entraron?</label>
     <input type="number" id="inputCantidadNueva" placeholder="0" min="1" step="1">
     <button class="btn-principal" id="btnConfirmarAjusteStock" onclick="confirmarAjusteStock()">Registrar entrada</button>
@@ -1072,7 +1076,9 @@
     mostrar('nav-reportes', esAdmin);
     mostrar('nav-ventas', esAdmin || esCajero);
     mostrar('nav-historial', esAdmin || esCajero);
+    mostrar('nav-turno', esAdmin || esCajero);
     mostrar('seccionInventario', esAdmin || esCajero);
+    mostrar('seccionCaja', esAdmin || esCajero);
   }
 
   function mostrarCierreTurno() {
@@ -1873,7 +1879,7 @@
 
     const { data: ventas, error } = await supabaseClient
       .from('ventas_pos')
-      .select('id, consecutivo, fecha, total, estado, turno_id, cajero_user_id, usuarios_roles!ventas_pos_cajero_user_id_fkey(nombre_completo), turnos_caja!ventas_pos_turno_id_fkey(fecha_apertura, fecha_cierre)')
+      .select('id, consecutivo, fecha, total, estado, turno_id, cajero_user_id')
       .order('fecha', { ascending: false })
       .limit(100);
 
@@ -1888,6 +1894,8 @@
     }
 
     const ventaIds = ventas.map(v => v.id);
+    const turnoIds = [...new Set(ventas.map(v => v.turno_id).filter(Boolean))];
+    const cajeroIds = [...new Set(ventas.map(v => v.cajero_user_id).filter(Boolean))];
 
     const { data: detalles } = await supabaseClient
       .from('ventas_pos_detalle')
@@ -1899,6 +1907,28 @@
       .select('venta_id, metodo_pago, monto')
       .in('venta_id', ventaIds);
 
+    // Resolver turnos y cajeros por separado (sin depender de joins automáticos)
+    let turnosData = [];
+    if (turnoIds.length > 0) {
+      const { data } = await supabaseClient
+        .from('turnos_caja')
+        .select('id, fecha_apertura, fecha_cierre')
+        .in('id', turnoIds);
+      turnosData = data || [];
+    }
+
+    let cajerosData = [];
+    if (cajeroIds.length > 0) {
+      const { data } = await supabaseClient
+        .from('usuarios_roles')
+        .select('user_id, nombre_completo')
+        .in('user_id', cajeroIds);
+      cajerosData = data || [];
+    }
+
+    const turnosPorId = Object.fromEntries(turnosData.map(t => [t.id, t]));
+    const cajerosPorId = Object.fromEntries(cajerosData.map(c => [c.user_id, c.nombre_completo]));
+
     const etiquetasPago = { efectivo: 'Efectivo', nequi: 'Nequi', daviplata: 'Daviplata', tarjeta_debito: 'Tarjeta débito', tarjeta_credito: 'Tarjeta crédito' };
 
     // Agrupar ventas por turno
@@ -1906,8 +1936,8 @@
     ventas.forEach(venta => {
       const turnoId = venta.turno_id || 'sin_turno';
       if (!turnosMap.has(turnoId)) {
-        const turno = venta.turnos_caja;
-        const cajero = venta.usuarios_roles ? venta.usuarios_roles.nombre_completo : 'Cajero';
+        const turno = turnosPorId[venta.turno_id];
+        const cajero = cajerosPorId[venta.cajero_user_id] || 'Cajero';
         const fechaAp = turno ? new Date(turno.fecha_apertura).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }) : '—';
         const fechaCi = turno && turno.fecha_cierre ? new Date(turno.fecha_cierre).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }) : 'Activo';
         turnosMap.set(turnoId, { cajero, fechaAp, fechaCi, ventas: [] });
@@ -2299,7 +2329,7 @@
       const fecha = new Date(sol.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
       const nombreInsumo = sol.inventario_items ? sol.inventario_items.nombre : 'Insumo';
       const unidad = sol.inventario_items ? sol.inventario_items.unidad_medida : '';
-      const solicitante = sol.usuarios_roles ? sol.usuarios_roles.nombre_completo : 'Tejedora';
+      const solicitante = sol.nombre_solicitante || 'Tejedora';
       const nota = sol.observaciones ? `<div style="font-style:italic;font-size:12px;opacity:0.65;margin-top:3px;">"${escaparHtml(sol.observaciones)}"</div>` : '';
 
       return `
@@ -2343,23 +2373,77 @@
   }
 
   // ============================================================================
-  // AJUSTE DE STOCK POR CÓDIGO DE BARRAS (Cajero)
+  // ENTRADA DE MERCANCÍA (Cajero) — con buscador de productos existentes
   // ============================================================================
+  let productoEntradaSeleccionado = null; // { id, nombre, stock_actual }
+  let timeoutBusquedaEntrada = null;
+
   async function mostrarPantallaAjusteStock() {
     mostrarPantalla('pantallaAjusteStock');
     document.getElementById('inputSkuAjuste').value = '';
     document.getElementById('inputCantidadNueva').value = '';
+    document.getElementById('sugerenciasEntrada').style.display = 'none';
+    document.getElementById('productoSeleccionadoInfo').style.display = 'none';
+    productoEntradaSeleccionado = null;
     ocultarMensaje('mensajeAjusteStock');
     setTimeout(() => document.getElementById('inputSkuAjuste').focus(), 100);
   }
 
+  async function buscarProductoEntrada() {
+    const texto = document.getElementById('inputSkuAjuste').value.trim();
+    productoEntradaSeleccionado = null;
+    document.getElementById('productoSeleccionadoInfo').style.display = 'none';
+
+    clearTimeout(timeoutBusquedaEntrada);
+    const sugerenciasEl = document.getElementById('sugerenciasEntrada');
+
+    if (texto.length < 2) {
+      sugerenciasEl.style.display = 'none';
+      return;
+    }
+
+    timeoutBusquedaEntrada = setTimeout(async () => {
+      const { data, error } = await supabaseClient
+        .from('inventario_items')
+        .select('id, nombre, sku, stock_actual, unidad_medida')
+        .eq('activo', true)
+        .or(`nombre.ilike.%${texto}%,sku.ilike.%${texto}%`)
+        .limit(8);
+
+      if (error || !data || data.length === 0) {
+        sugerenciasEl.innerHTML = '<div style="padding:12px;font-size:12.5px;opacity:0.6;">No se encontraron productos con ese nombre o código.</div>';
+        sugerenciasEl.style.display = 'block';
+        return;
+      }
+
+      sugerenciasEl.innerHTML = data.map(item => `
+        <div style="padding:10px 12px;cursor:pointer;border-bottom:1px solid #f4eef2;" onmouseover="this.style.background='var(--rosa-suave)'" onmouseout="this.style.background='white'" onclick="seleccionarProductoEntrada('${item.id}', '${escaparHtml(item.nombre).replace(/'/g, "\\'")}', ${item.stock_actual}, '${item.unidad_medida}')">
+          <div style="font-weight:600;font-size:13px;">${escaparHtml(item.nombre)}</div>
+          <div style="font-size:11.5px;opacity:0.6;">${item.sku ? 'SKU: ' + escaparHtml(item.sku) + ' · ' : ''}Stock actual: ${item.stock_actual} ${item.unidad_medida}</div>
+        </div>
+      `).join('');
+      sugerenciasEl.style.display = 'block';
+    }, 300);
+  }
+
+  function seleccionarProductoEntrada(id, nombre, stockActual, unidad) {
+    productoEntradaSeleccionado = { id, nombre, stock_actual: stockActual, unidad };
+    document.getElementById('inputSkuAjuste').value = nombre;
+    document.getElementById('sugerenciasEntrada').style.display = 'none';
+
+    const infoEl = document.getElementById('productoSeleccionadoInfo');
+    infoEl.innerHTML = `✅ <strong>${escaparHtml(nombre)}</strong> — Stock actual: ${stockActual} ${unidad}`;
+    infoEl.style.display = 'block';
+
+    document.getElementById('inputCantidadNueva').focus();
+  }
+
   async function confirmarAjusteStock() {
-    const busqueda = document.getElementById('inputSkuAjuste').value.trim();
     const cantidadEntrada = Number(document.getElementById('inputCantidadNueva').value);
     ocultarMensaje('mensajeAjusteStock');
 
-    if (!busqueda) {
-      mostrarMensaje('mensajeAjusteStock', 'Escanea el código o escribe el nombre del producto.', 'error');
+    if (!productoEntradaSeleccionado) {
+      mostrarMensaje('mensajeAjusteStock', 'Busca y selecciona el producto de la lista antes de continuar.', 'error');
       return;
     }
     if (isNaN(cantidadEntrada) || cantidadEntrada <= 0) {
@@ -2371,12 +2455,10 @@
     btn.disabled = true;
     btn.textContent = 'Guardando...';
 
-    // El cajero solo puede AUMENTAR el stock (entrada de nueva mercancía)
-    // Se envía como cantidad_entrada, no como cantidad_nueva absoluta
     const resp = await fetch(WORKER_URL + '/api/pos/inventario/entrada-stock', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ busqueda, cantidad_entrada: cantidadEntrada })
+      body: JSON.stringify({ inventario_item_id: productoEntradaSeleccionado.id, cantidad_entrada: cantidadEntrada })
     });
 
     btn.disabled = false;
@@ -2393,8 +2475,11 @@
       'exito');
     document.getElementById('inputSkuAjuste').value = '';
     document.getElementById('inputCantidadNueva').value = '';
+    document.getElementById('productoSeleccionadoInfo').style.display = 'none';
+    productoEntradaSeleccionado = null;
     document.getElementById('inputSkuAjuste').focus();
   }
+
 
   // ============================================================================
   // REPORTES DE TURNO (solo Administrador)
@@ -2430,7 +2515,7 @@
     contenedor.innerHTML = reportes.map(rep => {
       const fechaAp = new Date(rep.fecha_apertura).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
       const fechaCi = new Date(rep.fecha_cierre).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
-      const cajero = rep.usuarios_roles ? rep.usuarios_roles.nombre_completo : 'Cajero';
+      const cajero = rep.nombre_cajero || 'Cajero';
       const resumen = Array.isArray(rep.resumen_por_metodo) ? rep.resumen_por_metodo.map(m =>
         `${etiquetasPago[m.metodo_pago] || m.metodo_pago}: ${formatearMoneda(m.total_cobrado)}`
       ).join(' · ') : '';
