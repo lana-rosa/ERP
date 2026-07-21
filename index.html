@@ -534,6 +534,7 @@
     <div class="sidebar-seccion">Operación</div>
     <button class="nav-btn" id="nav-ventas" onclick="mostrarPantallaVentas()"><span class="nav-icon">🛒</span> Registrar venta</button>
     <button class="nav-btn" id="nav-historial" onclick="mostrarPantallaHistorial()"><span class="nav-icon">📋</span> Historial ventas</button>
+    <button class="nav-btn" id="nav-pedidos-canal" onclick="mostrarPantallaPedidosCanal()" style="display:none;"><span class="nav-icon">📱</span> Pedidos WhatsApp/Redes</button>
     <button class="nav-btn" id="nav-solicitudes" onclick="mostrarPantallaSolicitudes()" style="display:none;"><span class="nav-icon">📦</span> Solicitudes</button>
 
     <div class="sidebar-seccion" id="seccionInventario" style="display:none;">Inventario</div>
@@ -810,6 +811,69 @@
   </div>
 </div>
 
+<!-- ===== PANTALLA: PEDIDOS POR CANAL (WhatsApp/Instagram/Facebook/Tienda virtual) ===== -->
+<div id="pantallaPedidosCanal" class="oculto contenido">
+  <div class="page-header">
+    <h1>Pedidos por WhatsApp, Instagram, Facebook y Tienda virtual</h1>
+    <div class="subtitulo">Todos se despachan y facturan desde la Tienda. Redes sociales cobran 50% de anticipo (sin envío); Tienda virtual cobra el 100% de una vez.</div>
+  </div>
+
+  <div class="grilla-2">
+
+    <div class="panel">
+      <h2>Nuevo pedido</h2>
+      <label for="pedidoCanal">Canal</label>
+      <select id="pedidoCanal" onchange="actualizarResumenAnticipoPedido()">
+        <option value="whatsapp">WhatsApp</option>
+        <option value="instagram">Instagram</option>
+        <option value="facebook">Facebook</option>
+        <option value="tienda_virtual">Tienda virtual</option>
+      </select>
+
+      <label for="pedidoIdentificacionCliente">N° de identificación del cliente <span style="font-size:10px;opacity:0.6;">(busca autom.)</span></label>
+      <input type="text" id="pedidoIdentificacionCliente" placeholder="CC, CE, NIT..." oninput="autocompletarClientePedido()">
+      <label for="pedidoNombreCliente">Nombre completo</label>
+      <input type="text" id="pedidoNombreCliente" placeholder="Nombre del cliente">
+      <label for="pedidoTelefonoCliente">Teléfono</label>
+      <input type="tel" id="pedidoTelefonoCliente" placeholder="300 000 0000">
+      <div id="mensajeAutocompletadoPedido" style="font-size:12px;color:var(--verde-exito);margin-top:4px;display:none;">✅ Cliente encontrado</div>
+
+      <label for="pedidoBuscarProducto">Buscar producto en el inventario de Tienda <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <div style="position:relative;">
+        <input type="text" id="pedidoBuscarProducto" placeholder="Si ya existe en stock, búscalo aquí..." oninput="buscarProductoPedido()" autocomplete="off">
+        <div id="sugerenciasPedidoProducto" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1.5px solid var(--rosa-medio);border-radius:9px;margin-top:4px;max-height:200px;overflow-y:auto;z-index:50;box-shadow:var(--sombra);"></div>
+      </div>
+      <div id="pedidoProductoInfo" style="display:none;margin-top:8px;padding:9px 11px;background:var(--rosa-suave);border-radius:9px;font-size:12.5px;"></div>
+
+      <label for="pedidoDescripcionProducto">Descripción del producto</label>
+      <input type="text" id="pedidoDescripcionProducto" placeholder="Ej: Amigurumi personalizado conejo azul">
+      <label for="pedidoCantidad">Cantidad</label>
+      <input type="number" id="pedidoCantidad" placeholder="1" min="1" step="1" value="1">
+      <label for="pedidoValorProducto">Valor del producto, sin envío (COP)</label>
+      <input type="number" id="pedidoValorProducto" placeholder="0" min="0" step="1000" oninput="actualizarResumenAnticipoPedido()">
+      <label for="pedidoValorEnvio">Valor del envío (COP)</label>
+      <input type="number" id="pedidoValorEnvio" placeholder="0" min="0" step="1000" oninput="actualizarResumenAnticipoPedido()">
+
+      <div id="resumenAnticipoPedido" class="resumen-cierre" style="margin-top:12px;"></div>
+
+      <button class="btn-principal" id="btnCrearPedido" onclick="confirmarCrearPedidoCanal()">Crear pedido</button>
+      <div class="mensaje" id="mensajePedidoCanal"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Pedidos activos</h2>
+      <div class="filtro-tipo">
+        <button class="chip-filtro activo" data-filtro-pedido="todos" onclick="cambiarFiltroPedidos('todos', this)">Todos</button>
+        <button class="chip-filtro" data-filtro-pedido="esperando_pago" onclick="cambiarFiltroPedidos('esperando_pago', this)">Esperando pago</button>
+        <button class="chip-filtro" data-filtro-pedido="en_preparacion" onclick="cambiarFiltroPedidos('en_preparacion', this)">En preparación</button>
+        <button class="chip-filtro" data-filtro-pedido="listo_despacho" onclick="cambiarFiltroPedidos('listo_despacho', this)">Listo despacho</button>
+      </div>
+      <div id="listaPedidosCanal"><div class="cargando">Cargando pedidos...</div></div>
+    </div>
+
+  </div>
+</div>
+
 <!-- ===== PANTALLA: HISTORIAL VENTAS ===== -->
 <div id="pantallaHistorial" class="oculto contenido">
   <div class="page-header">
@@ -988,7 +1052,7 @@
   // UTILIDADES
   // ============================================================================
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaDepartamentos', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaDepartamentos', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -1002,6 +1066,7 @@
     const mapaNav = {
       pantallaVentas: 'nav-ventas',
       pantallaHistorial: 'nav-historial',
+      pantallaPedidosCanal: 'nav-pedidos-canal',
       pantallaSolicitudes: 'nav-solicitudes',
       pantallaInventario: 'nav-inventario',
       pantallaAjusteStock: 'nav-ajustestock',
@@ -1206,6 +1271,7 @@
     mostrar('seccionDepartamentos', esAdmin || esCajero || esTaller);
     mostrar('nav-ventas', esAdmin || esCajero);
     mostrar('nav-historial', esAdmin || esCajero);
+    mostrar('nav-pedidos-canal', esAdmin || esCajero);
     mostrar('nav-turno', esAdmin || esCajero);
     mostrar('seccionInventario', esAdmin || esCajero);
     mostrar('seccionCaja', esAdmin || esCajero);
@@ -3368,6 +3434,333 @@
 
     html += '</div>';
     contenedor.innerHTML = html;
+  }
+
+  // ============================================================================
+  // PEDIDOS POR CANAL (WhatsApp, Instagram, Facebook, Tienda virtual)
+  // ============================================================================
+  let productoPedidoSeleccionado = null;
+  let timeoutBusquedaPedidoProducto = null;
+  let timeoutAutocompletadoPedido = null;
+  let filtroPedidosActual = 'todos';
+
+  async function mostrarPantallaPedidosCanal() {
+    mostrarPantalla('pantallaPedidosCanal');
+    limpiarFormularioPedidoCanal();
+    await cargarPedidosCanal();
+  }
+
+  function limpiarFormularioPedidoCanal() {
+    document.getElementById('pedidoCanal').value = 'whatsapp';
+    document.getElementById('pedidoIdentificacionCliente').value = '';
+    document.getElementById('pedidoNombreCliente').value = '';
+    document.getElementById('pedidoTelefonoCliente').value = '';
+    document.getElementById('mensajeAutocompletadoPedido').style.display = 'none';
+    document.getElementById('pedidoBuscarProducto').value = '';
+    document.getElementById('sugerenciasPedidoProducto').style.display = 'none';
+    document.getElementById('pedidoProductoInfo').style.display = 'none';
+    document.getElementById('pedidoDescripcionProducto').value = '';
+    document.getElementById('pedidoCantidad').value = '1';
+    document.getElementById('pedidoValorProducto').value = '';
+    document.getElementById('pedidoValorEnvio').value = '';
+    productoPedidoSeleccionado = null;
+    ocultarMensaje('mensajePedidoCanal');
+    actualizarResumenAnticipoPedido();
+  }
+
+  async function autocompletarClientePedido() {
+    clearTimeout(timeoutAutocompletadoPedido);
+    timeoutAutocompletadoPedido = setTimeout(async () => {
+      const identificacion = document.getElementById('pedidoIdentificacionCliente').value.trim();
+      const msgEl = document.getElementById('mensajeAutocompletadoPedido');
+      if (identificacion.length < 5) { msgEl.style.display = 'none'; return; }
+
+      const { data, error } = await supabaseClient
+        .from('terceros')
+        .select('nombre_completo, telefono')
+        .eq('numero_documento', identificacion)
+        .limit(1)
+        .single();
+
+      if (error || !data) { msgEl.style.display = 'none'; return; }
+
+      document.getElementById('pedidoNombreCliente').value = data.nombre_completo || '';
+      document.getElementById('pedidoTelefonoCliente').value = data.telefono || '';
+      msgEl.style.display = 'block';
+    }, 400);
+  }
+
+  async function buscarProductoPedido() {
+    const texto = document.getElementById('pedidoBuscarProducto').value.trim();
+    productoPedidoSeleccionado = null;
+    document.getElementById('pedidoProductoInfo').style.display = 'none';
+    clearTimeout(timeoutBusquedaPedidoProducto);
+    const sugerenciasEl = document.getElementById('sugerenciasPedidoProducto');
+
+    if (texto.length < 2 || !centroCostoTiendaId) { sugerenciasEl.style.display = 'none'; return; }
+
+    timeoutBusquedaPedidoProducto = setTimeout(async () => {
+      const { data, error } = await supabaseClient
+        .from('inventario_items')
+        .select('id, nombre, stock_actual, unidad_medida, precio_venta')
+        .eq('centro_costo_id', centroCostoTiendaId)
+        .eq('activo', true)
+        .ilike('nombre', `%${texto}%`)
+        .limit(8);
+
+      if (error || !data || data.length === 0) {
+        sugerenciasEl.innerHTML = '<div style="padding:10px;font-size:12px;opacity:0.6;">No se encontró en el stock de Tienda. Puedes seguir escribiendo la descripción manualmente abajo — se enviará a producir al Taller.</div>';
+        sugerenciasEl.style.display = 'block';
+        return;
+      }
+
+      sugerenciasEl.innerHTML = data.map(item => `
+        <div style="padding:9px 11px;cursor:pointer;border-bottom:1px solid #f4eef2;" onmouseover="this.style.background='var(--rosa-suave)'" onmouseout="this.style.background='white'"
+          onclick='seleccionarProductoPedido(${JSON.stringify(item).replace(/'/g, "&apos;")})'>
+          <div style="font-weight:600;font-size:12.5px;">${escaparHtml(item.nombre)}</div>
+          <div style="font-size:11px;opacity:0.6;">Stock: ${item.stock_actual} ${item.unidad_medida} · ${formatearMoneda(item.precio_venta)}</div>
+        </div>
+      `).join('');
+      sugerenciasEl.style.display = 'block';
+    }, 300);
+  }
+
+  function seleccionarProductoPedido(item) {
+    productoPedidoSeleccionado = item;
+    document.getElementById('pedidoBuscarProducto').value = item.nombre;
+    document.getElementById('pedidoDescripcionProducto').value = item.nombre;
+    document.getElementById('sugerenciasPedidoProducto').style.display = 'none';
+
+    const infoEl = document.getElementById('pedidoProductoInfo');
+    const hayStock = item.stock_actual > 0;
+    infoEl.innerHTML = hayStock
+      ? `✅ Disponible en stock: ${item.stock_actual} ${item.unidad_medida}`
+      : `⚠️ No hay stock disponible ahora mismo — habrá que pedirlo al Taller`;
+    infoEl.style.display = 'block';
+
+    if (!document.getElementById('pedidoValorProducto').value) {
+      document.getElementById('pedidoValorProducto').value = item.precio_venta;
+      actualizarResumenAnticipoPedido();
+    }
+  }
+
+  function actualizarResumenAnticipoPedido() {
+    const canal = document.getElementById('pedidoCanal').value;
+    const valorProducto = Number(document.getElementById('pedidoValorProducto').value) || 0;
+    const valorEnvio = Number(document.getElementById('pedidoValorEnvio').value) || 0;
+    const total = valorProducto + valorEnvio;
+
+    let anticipo, saldo, notaCanal;
+    if (canal === 'tienda_virtual') {
+      anticipo = total;
+      saldo = 0;
+      notaCanal = 'Tienda virtual: se cobra el 100% (producto + envío) de una vez.';
+    } else {
+      anticipo = Math.round(valorProducto * 0.5);
+      saldo = total - anticipo;
+      notaCanal = 'Redes sociales: 50% de anticipo (sin envío) para confirmar, el resto + envío se paga al entregar.';
+    }
+
+    const el = document.getElementById('resumenAnticipoPedido');
+    el.innerHTML = `
+      <div class="resumen-fila"><span>Valor producto</span><strong>${formatearMoneda(valorProducto)}</strong></div>
+      <div class="resumen-fila"><span>Valor envío</span><strong>${formatearMoneda(valorEnvio)}</strong></div>
+      <div class="resumen-fila total"><span>Total pedido</span><strong>${formatearMoneda(total)}</strong></div>
+      <div class="resumen-fila" style="margin-top:8px;color:var(--rosa-principal);"><span>Anticipo a cobrar ahora</span><strong>${formatearMoneda(anticipo)}</strong></div>
+      <div class="resumen-fila"><span>Saldo pendiente</span><strong>${formatearMoneda(saldo)}</strong></div>
+      <div style="font-size:11px;opacity:0.6;margin-top:8px;">${notaCanal}</div>
+    `;
+  }
+
+  async function confirmarCrearPedidoCanal() {
+    const canal = document.getElementById('pedidoCanal').value;
+    const identificacion = document.getElementById('pedidoIdentificacionCliente').value.trim();
+    const nombreCliente = document.getElementById('pedidoNombreCliente').value.trim();
+    const telefonoCliente = document.getElementById('pedidoTelefonoCliente').value.trim();
+    const descripcion = document.getElementById('pedidoDescripcionProducto').value.trim();
+    const cantidad = Number(document.getElementById('pedidoCantidad').value);
+    const valorProducto = Number(document.getElementById('pedidoValorProducto').value);
+    const valorEnvio = Number(document.getElementById('pedidoValorEnvio').value) || 0;
+    ocultarMensaje('mensajePedidoCanal');
+
+    if (!descripcion) {
+      mostrarMensaje('mensajePedidoCanal', 'Describe el producto del pedido.', 'error');
+      return;
+    }
+    if (!cantidad || cantidad <= 0) {
+      mostrarMensaje('mensajePedidoCanal', 'Escribe una cantidad válida.', 'error');
+      return;
+    }
+    if (!valorProducto || valorProducto <= 0) {
+      mostrarMensaje('mensajePedidoCanal', 'Escribe el valor del producto.', 'error');
+      return;
+    }
+
+    const btn = document.getElementById('btnCrearPedido');
+    btn.disabled = true;
+    btn.textContent = 'Creando...';
+
+    try {
+      // Si hay datos de cliente, guardarlos primero (mismo mecanismo que ventas normales)
+      let terceroId = null;
+      if (nombreCliente && (telefonoCliente || identificacion)) {
+        const clienteResp = await fetch(WORKER_URL + '/api/pos/clientes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+          body: JSON.stringify({ nombre: nombreCliente, telefono: telefonoCliente || null, identificacion: identificacion || null })
+        });
+        const clienteDatos = await clienteResp.json();
+        if (clienteResp.ok) terceroId = clienteDatos.tercero_id;
+      }
+
+      const resp = await fetch(WORKER_URL + '/api/pos/pedidos-canal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+        body: JSON.stringify({
+          canal,
+          centro_costo_id: centroCostoTiendaId,
+          tercero_id: terceroId,
+          inventario_item_id: productoPedidoSeleccionado ? productoPedidoSeleccionado.id : null,
+          descripcion_producto: descripcion,
+          cantidad,
+          valor_producto: valorProducto,
+          valor_envio: valorEnvio
+        })
+      });
+
+      const datos = await resp.json();
+      if (!resp.ok) {
+        mostrarMensaje('mensajePedidoCanal', datos.error || 'No se pudo crear el pedido.', 'error');
+        return;
+      }
+
+      mostrarMensaje('mensajePedidoCanal', '✅ Pedido creado. Ahora regístrale el anticipo cuando el cliente pague.', 'exito');
+      limpiarFormularioPedidoCanal();
+      await cargarPedidosCanal();
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Crear pedido';
+    }
+  }
+
+  function cambiarFiltroPedidos(filtro, botonEl) {
+    filtroPedidosActual = filtro;
+    document.querySelectorAll('[data-filtro-pedido]').forEach(c => c.classList.remove('activo'));
+    botonEl.classList.add('activo');
+    cargarPedidosCanal();
+  }
+
+  async function cargarPedidosCanal() {
+    const contenedor = document.getElementById('listaPedidosCanal');
+    contenedor.innerHTML = '<div class="cargando">Cargando pedidos...</div>';
+
+    const filtro = filtroPedidosActual !== 'todos' ? `?estado=${filtroPedidosActual}` : '';
+    const resp = await fetch(WORKER_URL + '/api/pos/pedidos-canal' + filtro, {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+
+    if (!resp.ok) {
+      contenedor.innerHTML = '<div class="cargando">No se pudieron cargar los pedidos.</div>';
+      return;
+    }
+
+    const { pedidos } = await resp.json();
+
+    if (!pedidos || pedidos.length === 0) {
+      contenedor.innerHTML = '<div class="cargando">No hay pedidos en este filtro.</div>';
+      return;
+    }
+
+    const etiquetasCanal = { whatsapp: '💬 WhatsApp', instagram: '📷 Instagram', facebook: '👍 Facebook', tienda_virtual: '🛍️ Tienda virtual' };
+    const etiquetasEstado = { esperando_pago: '⏳ Esperando pago', en_preparacion: '🧵 En preparación', listo_despacho: '📦 Listo despacho', entregado: '✅ Entregado' };
+
+    contenedor.innerHTML = pedidos.map(p => {
+      const fecha = new Date(p.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
+      const cliente = p.nombre_cliente || 'Sin datos de cliente';
+      let acciones = '';
+
+      if (p.estado === 'esperando_pago') {
+        acciones = `
+          <div style="font-size:11.5px;margin-top:6px;">Cobrar anticipo: <strong>${formatearMoneda(p.monto_anticipo_requerido)}</strong></div>
+          <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+            ${['efectivo','nequi','daviplata','transferencia'].map(m => `<button class="btn-mini guardar" onclick="registrarPagoAnticipoPedido('${p.id}', '${m}')">${m}</button>`).join('')}
+          </div>
+        `;
+      } else if (p.estado === 'en_preparacion') {
+        const avisoStock = !p.disponible_en_stock ? '<div style="font-size:11.5px;color:var(--rojo-error);margin-top:4px;">⚠️ No estaba en stock — pídelo al Taller desde "Cajas y ventas internas".</div>' : '';
+        acciones = `${avisoStock}<button class="btn-mini guardar" style="margin-top:8px;" onclick="marcarPedidoListoUI('${p.id}')">📦 Marcar listo para despachar</button>`;
+      } else if (p.estado === 'listo_despacho') {
+        if (p.monto_saldo_requerido > 0 && !p.saldo_pagado) {
+          acciones = `
+            <div style="font-size:11.5px;margin-top:6px;">Cobrar saldo + envío: <strong>${formatearMoneda(p.monto_saldo_requerido)}</strong></div>
+            <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+              ${['efectivo','nequi','daviplata','transferencia'].map(m => `<button class="btn-mini guardar" onclick="registrarPagoSaldoPedido('${p.id}', '${m}')">${m}</button>`).join('')}
+            </div>
+          `;
+        } else {
+          acciones = `<button class="btn-mini guardar" onclick="entregarPedidoSinSaldoUI('${p.id}')">✅ Marcar como entregado</button>`;
+        }
+      }
+
+      return `
+        <div class="fila-historial">
+          <div class="fila-historial-encabezado">
+            <span class="fila-historial-consecutivo">${p.consecutivo}</span>
+            <span class="fila-historial-total">${formatearMoneda(p.total_pedido)}</span>
+          </div>
+          <div class="fila-historial-fecha">${etiquetasCanal[p.canal] || p.canal} · ${fecha}</div>
+          <div class="fila-historial-detalle">${escaparHtml(p.descripcion_producto)} (x${p.cantidad}) — ${escaparHtml(cliente)}</div>
+          <div style="margin-top:6px;"><span class="badge-rol">${etiquetasEstado[p.estado] || p.estado}</span></div>
+          ${acciones}
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function registrarPagoAnticipoPedido(pedidoId, metodo) {
+    if (!confirm(`¿Confirmas que el cliente ya pagó el anticipo por ${metodo}?`)) return;
+    const resp = await fetch(WORKER_URL + '/api/pos/pedidos-canal/pagar-anticipo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ pedido_id: pedidoId, metodo_pago: metodo })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudo registrar el anticipo')); return; }
+    await cargarPedidosCanal();
+  }
+
+  async function marcarPedidoListoUI(pedidoId) {
+    const resp = await fetch(WORKER_URL + '/api/pos/pedidos-canal/marcar-listo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ pedido_id: pedidoId })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudo actualizar')); return; }
+    await cargarPedidosCanal();
+  }
+
+  async function registrarPagoSaldoPedido(pedidoId, metodo) {
+    if (!confirm(`¿Confirmas que el cliente ya pagó el saldo + envío por ${metodo}?`)) return;
+    const resp = await fetch(WORKER_URL + '/api/pos/pedidos-canal/pagar-saldo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ pedido_id: pedidoId, metodo_pago: metodo })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudo registrar el pago')); return; }
+    await cargarPedidosCanal();
+  }
+
+  async function entregarPedidoSinSaldoUI(pedidoId) {
+    const resp = await fetch(WORKER_URL + '/api/pos/pedidos-canal/entregar-sin-saldo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ pedido_id: pedidoId })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudo marcar como entregado')); return; }
+    await cargarPedidosCanal();
   }
 
   function actualizarSidebar() {
