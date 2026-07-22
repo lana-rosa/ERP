@@ -1285,8 +1285,8 @@
       if (el) el.style.display = visible ? '' : 'none';
     };
 
-    mostrar('nav-inventario', esAdmin);
-    mostrar('nav-ajustestock', esCajero);
+    mostrar('nav-inventario', esAdmin || esCajero || esTaller);
+    mostrar('nav-ajustestock', esCajero || esTaller);
     mostrar('nav-solicitudes', esAdmin || esCajero || esTaller);
     mostrar('nav-consumotaller', esAdmin || esTaller);
     mostrar('nav-pedidos-crm', esAdmin || esTaller);
@@ -1299,7 +1299,7 @@
     mostrar('nav-historial', esAdmin || esCajero);
     mostrar('nav-pedidos-canal', esAdmin || esCajero);
     mostrar('nav-turno', esAdmin || esCajero);
-    mostrar('seccionInventario', esAdmin || esCajero);
+    mostrar('seccionInventario', esAdmin || esCajero || esTaller);
     mostrar('seccionCaja', esAdmin || esCajero);
   }
 
@@ -1888,11 +1888,28 @@
     departamentosParaInventario = data || [];
 
     const selectForm = document.getElementById('invDepartamento');
-    selectForm.innerHTML = departamentosParaInventario.map(d => `<option value="${d.id}">${escaparHtml(d.nombre)}</option>`).join('');
-
     const filtroEl = document.getElementById('filtroDepartamentoInv');
-    filtroEl.innerHTML = `<button class="chip-filtro activo" data-filtro-depto="todos" onclick="cambiarFiltroDepartamentoInv('todos', this)">Todos los departamentos</button>` +
-      departamentosParaInventario.map(d => `<button class="chip-filtro" data-filtro-depto="${d.id}" onclick="cambiarFiltroDepartamentoInv('${d.id}', this)">${escaparHtml(d.nombre)}</button>`).join('');
+    const labelDepartamento = document.querySelector('label[for="invDepartamento"]');
+
+    if (rolActual === 'administrador') {
+      // Admin ve y elige entre todos los departamentos
+      selectForm.innerHTML = departamentosParaInventario.map(d => `<option value="${d.id}">${escaparHtml(d.nombre)}</option>`).join('');
+      if (labelDepartamento) labelDepartamento.style.display = '';
+      selectForm.style.display = '';
+      filtroEl.innerHTML = `<button class="chip-filtro activo" data-filtro-depto="todos" onclick="cambiarFiltroDepartamentoInv('todos', this)">Todos los departamentos</button>` +
+        departamentosParaInventario.map(d => `<button class="chip-filtro" data-filtro-depto="${d.id}" onclick="cambiarFiltroDepartamentoInv('${d.id}', this)">${escaparHtml(d.nombre)}</button>`).join('');
+      filtroDepartamentoInvActual = 'todos';
+    } else {
+      // Cajero y Taller solo trabajan con su propio departamento: se oculta el selector y el filtro
+      const miDepartamentoId = obtenerCentroCostoPropio();
+      selectForm.innerHTML = departamentosParaInventario
+        .filter(d => d.id === miDepartamentoId)
+        .map(d => `<option value="${d.id}" selected>${escaparHtml(d.nombre)}</option>`).join('');
+      if (labelDepartamento) labelDepartamento.style.display = 'none';
+      selectForm.style.display = 'none';
+      filtroEl.innerHTML = '';
+      filtroDepartamentoInvActual = miDepartamentoId;
+    }
   }
 
   function limpiarFormularioProducto() {
@@ -2033,6 +2050,10 @@
         const opcionesDepto = departamentosParaInventario.map(d =>
           `<option value="${d.id}" ${d.id === item.centro_costo_id ? 'selected' : ''}>${escaparHtml(d.nombre)}</option>`
         ).join('');
+        const nombreDeptoActual = nombreDeptoMap[item.centro_costo_id] || 'Sin departamento';
+        const selectorDepartamento = rolActual === 'administrador'
+          ? `<label style="margin-top:8px;">Departamento</label><select id="edit-depto-${item.id}">${opcionesDepto}</select>`
+          : `<div style="font-size:11px;color:var(--rosa-principal);font-weight:600;margin-top:8px;">🏢 ${escaparHtml(nombreDeptoActual)}</div>`;
         // Modo edición
         return `
           <div class="fila-inventario-editable" style="border-color:var(--rosa-medio);" data-id="${item.id}">
@@ -2040,8 +2061,7 @@
               <span class="fila-inventario-nombre">${escaparHtml(item.nombre)}${tagInactivo}</span>
               <span class="fila-inventario-tipo-tag">${etiquetaTipo}</span>
             </div>
-            <label style="margin-top:8px;">Departamento</label>
-            <select id="edit-depto-${item.id}">${opcionesDepto}</select>
+            ${selectorDepartamento}
             <div class="grid-campos-inventario">
               <div class="campo-mini">
                 <label>Precio de venta</label>
@@ -2107,18 +2127,22 @@
     const stock = Number(document.getElementById(`edit-stock-${itemId}`).value);
     const stockMinimo = Number(document.getElementById(`edit-stockmin-${itemId}`).value);
     const deptoEl = document.getElementById(`edit-depto-${itemId}`);
-    const centroCostoId = deptoEl ? deptoEl.value : undefined;
+
+    const cambios = {
+      precio_venta: precioVenta,
+      costo_promedio_ponderado: costo,
+      stock_actual: stock,
+      stock_minimo: stockMinimo,
+      updated_at: new Date().toISOString()
+    };
+    // Solo el Administrador puede reasignar el departamento de un producto
+    if (deptoEl) {
+      cambios.centro_costo_id = deptoEl.value;
+    }
 
     const { error } = await supabaseClient
       .from('inventario_items')
-      .update({
-        precio_venta: precioVenta,
-        costo_promedio_ponderado: costo,
-        stock_actual: stock,
-        stock_minimo: stockMinimo,
-        centro_costo_id: centroCostoId,
-        updated_at: new Date().toISOString()
-      })
+      .update(cambios)
       .eq('id', itemId);
 
     if (error) {
@@ -2711,7 +2735,7 @@
         .from('inventario_items')
         .select('id, nombre, sku, stock_actual, unidad_medida')
         .eq('activo', true)
-        .eq('centro_costo_id', centroCostoTiendaId)
+        .eq('centro_costo_id', obtenerCentroCostoPropio())
         .or(`nombre.ilike.%${texto}%,sku.ilike.%${texto}%`)
         .limit(8);
 
