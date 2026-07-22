@@ -1075,6 +1075,34 @@
 
   <div id="panelAlertasVacaciones" style="margin-bottom:20px;"></div>
 
+  <div class="panel" style="max-width:none;margin-bottom:20px;">
+    <h2>Datos del empleador (aparecen en el desprendible de pago)</h2>
+    <div class="grid-campos-inventario">
+      <div class="campo-mini">
+        <label>Razón social</label>
+        <input type="text" id="perfilRazonSocial" placeholder="Nombre completo o de la empresa">
+      </div>
+      <div class="campo-mini">
+        <label>NIT / Documento</label>
+        <input type="text" id="perfilNit" placeholder="0000000000-0">
+      </div>
+      <div class="campo-mini">
+        <label>Dirección</label>
+        <input type="text" id="perfilDireccion" placeholder="Dirección de la empresa">
+      </div>
+      <div class="campo-mini">
+        <label>Teléfono</label>
+        <input type="text" id="perfilTelefono" placeholder="300 000 0000">
+      </div>
+      <div class="campo-mini">
+        <label>Ciudad</label>
+        <input type="text" id="perfilCiudad" placeholder="Manizales">
+      </div>
+    </div>
+    <button class="btn-mini guardar" style="width:100%;margin-top:10px;" onclick="guardarPerfilEmpresa()">Guardar datos del empleador</button>
+    <div class="mensaje" id="mensajePerfilEmpresa"></div>
+  </div>
+
   <div class="grilla-2" style="margin-bottom:20px;">
 
     <div class="panel">
@@ -1116,10 +1144,16 @@
         <input type="checkbox" id="empTeletrabajo" style="width:auto;">
         <span style="font-size:13px;">Trabaja en teletrabajo (no recibe auxilio de transporte)</span>
       </label>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+        <input type="checkbox" id="empEsPropietario" style="width:auto;">
+        <span style="font-size:13px;">Es la propietaria / persona natural dueña del negocio (no se le liquida nómina formal)</span>
+      </label>
       <label for="empDireccion" style="margin-top:14px;">Dirección <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
       <input type="text" id="empDireccion" placeholder="Dirección de residencia">
       <label for="empTelefono">Teléfono <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
       <input type="tel" id="empTelefono" placeholder="300 000 0000">
+      <label for="empCorreo">Correo electrónico <span style="font-size:10px;opacity:0.6;">(para enviarle su desprendible)</span></label>
+      <input type="email" id="empCorreo" placeholder="correo@gmail.com">
       <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--rosa-suave);font-size:12px;font-weight:600;opacity:0.7;">Afiliaciones a seguridad social</div>
       <label for="empEps">EPS</label>
       <input type="text" id="empEps" placeholder="Ej: Sura, Nueva EPS, Sanitas...">
@@ -1165,6 +1199,18 @@
   <div class="panel" style="max-height:none;">
     <h2>Liquidaciones del período seleccionado</h2>
     <div id="listaLiquidacionesNomina"><div class="cargando">Selecciona un período arriba para ver sus liquidaciones.</div></div>
+  </div>
+
+  <div class="panel" style="max-height:none;margin-top:20px;">
+    <h2>👑 Retiro de la propietaria</h2>
+    <div class="subtitulo">Registro del retiro y la cotización como independiente, separado de la nómina formal.</div>
+    <div id="listaRetirosPropietario"><div class="cargando">Selecciona un período arriba.</div></div>
+  </div>
+
+  <div class="panel" style="max-height:none;margin-top:20px;">
+    <h2>📧 Envío de desprendibles por correo</h2>
+    <div class="subtitulo">Los desprendibles no se envían solos: revisa la lista y confirma el envío. Requiere que el correo del empleado esté registrado.</div>
+    <div id="listaDesprendiblesPendientes"><div class="cargando">Selecciona un período arriba.</div></div>
   </div>
 
   <div class="panel" style="max-height:none;margin-top:20px;">
@@ -4335,8 +4381,10 @@
     document.getElementById('empSalario').value = '';
     document.getElementById('empFechaIngreso').value = '';
     document.getElementById('empTeletrabajo').checked = false;
+    document.getElementById('empEsPropietario').checked = false;
     document.getElementById('empDireccion').value = '';
     document.getElementById('empTelefono').value = '';
+    document.getElementById('empCorreo').value = '';
     document.getElementById('empEps').value = '';
     document.getElementById('empFondoPension').value = '';
     document.getElementById('empFondoCesantias').value = '';
@@ -4351,6 +4399,46 @@
     await cargarEmpleados();
     await cargarPeriodosNomina();
     await cargarAlertasVacaciones();
+    await cargarPerfilEmpresa();
+  }
+
+  async function cargarPerfilEmpresa() {
+    const resp = await fetch(WORKER_URL + '/api/pos/nomina/perfil-empresa', {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+    if (!resp.ok) return;
+    const { perfil } = await resp.json();
+    if (!perfil) return;
+    document.getElementById('perfilRazonSocial').value = perfil.razon_social || '';
+    document.getElementById('perfilNit').value = perfil.nit || '';
+    document.getElementById('perfilDireccion').value = perfil.direccion || '';
+    document.getElementById('perfilTelefono').value = perfil.telefono || '';
+    document.getElementById('perfilCiudad').value = perfil.ciudad || '';
+  }
+
+  async function guardarPerfilEmpresa() {
+    ocultarMensaje('mensajePerfilEmpresa');
+    const body = {
+      razon_social: document.getElementById('perfilRazonSocial').value.trim(),
+      nit: document.getElementById('perfilNit').value.trim(),
+      direccion: document.getElementById('perfilDireccion').value.trim(),
+      telefono: document.getElementById('perfilTelefono').value.trim(),
+      ciudad: document.getElementById('perfilCiudad').value.trim()
+    };
+
+    const resp = await fetch(WORKER_URL + '/api/pos/nomina/perfil-empresa', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify(body)
+    });
+
+    if (!resp.ok) {
+      const datos = await resp.json().catch(() => ({}));
+      mostrarMensaje('mensajePerfilEmpresa', datos.error || 'No se pudo guardar.', 'error');
+      return;
+    }
+
+    mostrarMensaje('mensajePerfilEmpresa', '✅ Datos del empleador guardados.', 'exito');
   }
 
   async function cargarAlertasVacaciones() {
@@ -4404,8 +4492,10 @@
     const centroCostoId = document.getElementById('empDepartamento').value;
     const riesgoArl = document.getElementById('empRiesgoArl').value;
     const teletrabajo = document.getElementById('empTeletrabajo').checked;
+    const esPropietario = document.getElementById('empEsPropietario').checked;
     const direccion = document.getElementById('empDireccion').value.trim();
     const telefono = document.getElementById('empTelefono').value.trim();
+    const correoElectronico = document.getElementById('empCorreo').value.trim();
     const eps = document.getElementById('empEps').value.trim();
     const fondoPension = document.getElementById('empFondoPension').value.trim();
     const fondoCesantias = document.getElementById('empFondoCesantias').value.trim();
@@ -4433,8 +4523,10 @@
         centro_costo_id: centroCostoId || null,
         clase_riesgo_arl: riesgoArl,
         teletrabajo,
+        es_propietario: esPropietario,
         direccion: direccion || null,
         telefono: telefono || null,
+        correo_electronico: correoElectronico || null,
         eps: eps || null,
         fondo_pension: fondoPension || null,
         fondo_cesantias: fondoCesantias || null,
@@ -4455,8 +4547,10 @@
     document.getElementById('empSalario').value = '';
     document.getElementById('empFechaIngreso').value = '';
     document.getElementById('empTeletrabajo').checked = false;
+    document.getElementById('empEsPropietario').checked = false;
     document.getElementById('empDireccion').value = '';
     document.getElementById('empTelefono').value = '';
+    document.getElementById('empCorreo').value = '';
     document.getElementById('empEps').value = '';
     document.getElementById('empFondoPension').value = '';
     document.getElementById('empFondoCesantias').value = '';
@@ -4541,6 +4635,8 @@
             <input type="text" id="edit-emp-direccion-${e.id}" value="${escaparHtml(e.direccion || '')}">
             <label style="margin-top:8px;">Teléfono</label>
             <input type="tel" id="edit-emp-telefono-${e.id}" value="${escaparHtml(e.telefono || '')}">
+            <label style="margin-top:8px;">Correo electrónico</label>
+            <input type="email" id="edit-emp-correo-${e.id}" value="${escaparHtml(e.correo_electronico || '')}">
             <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--rosa-suave);font-size:11.5px;font-weight:600;opacity:0.7;">Afiliaciones</div>
             <label style="margin-top:6px;">EPS</label>
             <input type="text" id="edit-emp-eps-${e.id}" value="${escaparHtml(e.eps || '')}">
@@ -4561,6 +4657,24 @@
       const puedeLiquidarIndividual = !!periodoNominaSeleccionadoId;
       const novedadesAbiertas = empleadoNovedadesAbiertoId === e.id;
       const prestamosAbiertos = empleadoPrestamosAbiertoId === e.id;
+
+      if (e.es_propietario) {
+        return `
+          <div class="fila-inventario-editable" style="border-color:var(--azul-acero);">
+            <div class="fila-inventario-titulo">
+              <span class="fila-inventario-nombre">${escaparHtml(e.nombre_completo)}</span>
+              <span class="fila-inventario-tipo-tag" style="background:var(--azul-acero);color:white;">👑 Propietaria</span>
+            </div>
+            <div style="font-size:11.5px;margin-top:6px;opacity:0.75;">No tiene nómina formal (persona natural). Se le registra un retiro + cotización como independiente, garantizando mínimo el SMMLV.</div>
+            <div class="fila-inventario-acciones" style="margin-top:8px;flex-wrap:wrap;">
+              <button class="btn-mini editar" onclick="activarEdicionEmpleado('${e.id}')">✏️ Editar</button>
+              <button class="btn-mini editar" onclick="alternarBeneficiarios('${e.id}')">👪 Beneficiarios</button>
+            </div>
+            ${puedeLiquidarIndividual ? `<button class="btn-mini guardar" style="width:100%;margin-top:8px;" onclick="registrarRetiroPropietaria('${e.id}', '${escaparHtml(e.nombre_completo).replace(/'/g, "\\'")}', ${e.salario_basico})">👑 Registrar retiro de la propietaria en este período</button>` : ''}
+            ${beneficiariosAbiertos ? renderizarPanelBeneficiarios(e.id) : ''}
+          </div>
+        `;
+      }
 
       return `
         <div class="fila-inventario-editable">
@@ -4928,6 +5042,107 @@
     await cargarBeneficiariosEmpleado(empleadoId);
   }
 
+  async function registrarRetiroPropietaria(empleadoId, nombre, salarioBasico) {
+    const montoTexto = prompt(`¿Cuánto se retira ${nombre} en este período? (Recuerda: por requisito de Fondo Emprender, nunca puede ser menor al salario mínimo)`, String(salarioBasico));
+    if (montoTexto === null) return;
+    const monto = Number(montoTexto);
+    if (isNaN(monto) || monto <= 0) { alert('Escribe un monto válido.'); return; }
+
+    if (!confirm(`¿Confirmas registrar un retiro de ${formatearMoneda(monto)} para ${nombre} en este período? Se calculará también su cotización como independiente.`)) return;
+
+    const resp = await fetch(WORKER_URL + '/api/pos/nomina/retiro-propietario', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ periodo_nomina_id: periodoNominaSeleccionadoId, empleado_id: empleadoId, monto_retiro: monto })
+    });
+
+    const datos = await resp.json();
+    if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudo registrar el retiro')); return; }
+
+    alert(`✅ Retiro registrado para ${nombre}.`);
+    await cargarRetirosPropietario(periodoNominaSeleccionadoId);
+  }
+
+  async function cargarRetirosPropietario(periodoId) {
+    const resp = await fetch(`${WORKER_URL}/api/pos/nomina/retiros-propietario?periodo_nomina_id=${periodoId}`, {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+    const contenedor = document.getElementById('listaRetirosPropietario');
+    if (!contenedor) return;
+    if (!resp.ok) { contenedor.innerHTML = ''; return; }
+
+    const { retiros } = await resp.json();
+    if (!retiros || retiros.length === 0) {
+      contenedor.innerHTML = '<div class="cargando">Sin retiros registrados en este período todavía.</div>';
+      return;
+    }
+
+    contenedor.innerHTML = retiros.map(r => `
+      <div class="fila-historial" style="margin-bottom:10px;">
+        <div class="fila-historial-encabezado">
+          <span class="fila-historial-consecutivo">${escaparHtml(r.empleados ? r.empleados.nombre_completo : 'Propietaria')}</span>
+          <span class="fila-historial-total">${formatearMoneda(r.monto_retiro)}</span>
+        </div>
+        <div class="resumen-fila"><span>Base de cotización (IBC)</span><strong>${formatearMoneda(r.ibc_independiente)}</strong></div>
+        <div class="resumen-fila"><span>Salud independiente (12.5%)</span><strong>${formatearMoneda(r.aporte_salud_independiente)}</strong></div>
+        <div class="resumen-fila"><span>Pensión independiente (16%)</span><strong>${formatearMoneda(r.aporte_pension_independiente)}</strong></div>
+        <div class="resumen-fila total"><span>Total a cotizar en la PILA</span><strong>${formatearMoneda(r.total_cotizacion)}</strong></div>
+      </div>
+    `).join('');
+  }
+
+  // ============================================================
+  // APROBACIÓN Y ENVÍO DE DESPRENDIBLES POR CORREO
+  // ============================================================
+  async function cargarDesprendiblesPendientes(periodoId) {
+    const contenedor = document.getElementById('listaDesprendiblesPendientes');
+    if (!contenedor) return;
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+
+    const resp = await fetch(`${WORKER_URL}/api/pos/nomina/desprendibles-pendientes?periodo_nomina_id=${periodoId}`, {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+
+    const { liquidaciones } = await resp.json();
+    if (!liquidaciones || liquidaciones.length === 0) {
+      contenedor.innerHTML = '<div class="cargando">Este período todavía no tiene liquidaciones.</div>';
+      return;
+    }
+
+    const etiquetas = { pendiente: '🟡 Pendiente de enviar', aprobado_para_enviar: '🔵 Aprobado, enviando...', enviado: '✅ Enviado', error_envio: '❌ Error (revisa el correo)' };
+    const hayPendientes = liquidaciones.some(l => l.estado_envio === 'pendiente');
+
+    contenedor.innerHTML = liquidaciones.map(l => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f4eef2;font-size:12.5px;">
+        <div>
+          <strong>${escaparHtml(l.empleados ? l.empleados.nombre_completo : 'Empleado')}</strong><br>
+          <span style="opacity:0.6;">${l.empleados && l.empleados.correo_electronico ? escaparHtml(l.empleados.correo_electronico) : '⚠️ Sin correo registrado'}</span>
+        </div>
+        <span>${etiquetas[l.estado_envio] || l.estado_envio}</span>
+      </div>
+    `).join('') + (hayPendientes ? `
+      <button class="btn-principal" style="margin-top:14px;" onclick="confirmarEnvioDesprendibles('${periodoId}')">✅ Aprobar y enviar todos los desprendibles pendientes</button>
+    ` : '<div style="font-size:12px;opacity:0.6;margin-top:10px;">No hay desprendibles pendientes de enviar en este período.</div>');
+  }
+
+  async function confirmarEnvioDesprendibles(periodoId) {
+    if (!confirm('¿Confirmas el envío de los desprendibles pendientes de este período por correo? Esta acción no se puede deshacer.')) return;
+
+    const resp = await fetch(WORKER_URL + '/api/pos/nomina/aprobar-enviar-desprendibles', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ periodo_nomina_id: periodoId })
+    });
+
+    const datos = await resp.json();
+    if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudieron enviar los desprendibles')); return; }
+
+    const resumen = (datos.resultados || []).map(r => `${r.empleado}: ${r.estado}`).join('\n');
+    alert(`Resultado del envío:\n\n${resumen}`);
+    await cargarDesprendiblesPendientes(periodoId);
+  }
+
   function activarEdicionEmpleado(empleadoId) {
     empleadoEditandoId = empleadoId;
     renderizarListaEmpleados();
@@ -4950,6 +5165,7 @@
     const teletrabajo = document.getElementById(`edit-emp-teletrabajo-${empleadoId}`).checked;
     const direccion = document.getElementById(`edit-emp-direccion-${empleadoId}`).value.trim();
     const telefono = document.getElementById(`edit-emp-telefono-${empleadoId}`).value.trim();
+    const correoElectronico = document.getElementById(`edit-emp-correo-${empleadoId}`).value.trim();
     const eps = document.getElementById(`edit-emp-eps-${empleadoId}`).value.trim();
     const fondoPension = document.getElementById(`edit-emp-fondopension-${empleadoId}`).value.trim();
     const fondoCesantias = document.getElementById(`edit-emp-fondocesantias-${empleadoId}`).value.trim();
@@ -4975,6 +5191,7 @@
         teletrabajo,
         direccion: direccion || null,
         telefono: telefono || null,
+        correo_electronico: correoElectronico || null,
         eps: eps || null,
         fondo_pension: fondoPension || null,
         fondo_cesantias: fondoCesantias || null,
@@ -5088,6 +5305,8 @@
     periodoNominaSeleccionadoId = periodoId;
     renderizarListaEmpleados(); // refresca para mostrar el botón "Liquidar este empleado"
     cargarReportePila(periodoId);
+    cargarRetirosPropietario(periodoId);
+    cargarDesprendiblesPendientes(periodoId);
     const contenedor = document.getElementById('listaLiquidacionesNomina');
     contenedor.innerHTML = '<div class="cargando">Cargando liquidaciones...</div>';
 
@@ -5196,13 +5415,19 @@
       <body>
         <div class="encabezado">
           <div><h1>Desprendible de pago de nómina</h1><div>Período: ${fechaInicio} — ${fechaFin}</div></div>
-          <div style="text-align:right;font-size:13px;"><strong>${escaparHtml(empleador.razon_social || 'Lana Rosa Crochet')}</strong><br>${empleador.nit ? 'NIT: ' + escaparHtml(empleador.nit) : ''}</div>
+          <div style="text-align:right;font-size:12px;">
+            <strong>${escaparHtml(empleador.razon_social || 'Lana Rosa Crochet')}</strong><br>
+            ${empleador.nit ? 'NIT/Doc: ' + escaparHtml(empleador.nit) + '<br>' : ''}
+            ${empleador.direccion ? escaparHtml(empleador.direccion) + '<br>' : ''}
+            ${empleador.ciudad ? escaparHtml(empleador.ciudad) + (empleador.telefono ? ' · ' : '') : ''}${empleador.telefono ? 'Tel: ' + escaparHtml(empleador.telefono) : ''}
+          </div>
         </div>
 
         <h2>Datos del empleado</h2>
         <table>
           <tr><td>Nombre</td><td>${escaparHtml(emp.nombre_completo || '')}</td></tr>
           <tr><td>Documento</td><td>${escaparHtml(emp.tipo_documento || '')} ${escaparHtml(emp.numero_documento || '—')}</td></tr>
+          <tr><td>Correo</td><td>${escaparHtml(emp.correo_electronico || '—')}</td></tr>
           <tr><td>Fecha de ingreso</td><td>${fechaIngreso}</td></tr>
           <tr><td>Cargo / departamento</td><td>${escaparHtml(emp.centros_costo ? emp.centros_costo.nombre : 'Sin departamento')}</td></tr>
           <tr><td>Salario básico</td><td>${formatearMoneda(emp.salario_basico || 0)}</td></tr>
