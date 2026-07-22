@@ -550,6 +550,7 @@
     <div class="sidebar-seccion" id="seccionDepartamentos" style="display:none;">Departamentos</div>
     <button class="nav-btn" id="nav-departamentos" onclick="mostrarPantallaDepartamentos()" style="display:none;"><span class="nav-icon">🏢</span> Cajas y ventas internas</button>
     <button class="nav-btn" id="nav-reportes-financieros" onclick="mostrarPantallaReportesFinancieros()" style="display:none;"><span class="nav-icon">📊</span> Reportes financieros</button>
+    <button class="nav-btn" id="nav-nomina" onclick="mostrarPantallaNomina()" style="display:none;"><span class="nav-icon">👥</span> Nómina</button>
     <button class="nav-btn" id="nav-pagos-pendientes" onclick="mostrarPantallaPagosPendientes()" style="display:none;"><span class="nav-icon">🏬</span> Mi departamento</button>
   </div>
 
@@ -1065,6 +1066,75 @@
   <div id="listaReportesFinancieros"><div class="cargando">Cargando reportes...</div></div>
 </div>
 
+<!-- ===== PANTALLA: NÓMINA (solo Admin) ===== -->
+<div id="pantallaNomina" class="oculto contenido">
+  <div class="page-header">
+    <h1>Nómina</h1>
+    <div class="subtitulo">Empleados con salario fijo, liquidación mensual y pagos. Cifras 2026: SMMLV $1.750.905, auxilio de transporte $249.095. Antes de pagar por primera vez, revisa los cálculos con tu contador.</div>
+  </div>
+
+  <div class="grilla-2" style="margin-bottom:20px;">
+
+    <div class="panel">
+      <h2>Agregar empleado</h2>
+      <label for="empNombre">Nombre completo</label>
+      <input type="text" id="empNombre" placeholder="Nombre del empleado">
+      <label for="empSalario">Salario básico mensual (COP)</label>
+      <input type="number" id="empSalario" placeholder="0" min="1" step="1000">
+      <label for="empFechaIngreso">Fecha de ingreso</label>
+      <input type="date" id="empFechaIngreso">
+      <label for="empDepartamento">Departamento</label>
+      <select id="empDepartamento"><option value="">Selecciona...</option></select>
+      <label for="empRiesgoArl">Clase de riesgo ARL</label>
+      <select id="empRiesgoArl">
+        <option value="I">Clase I — Riesgo mínimo (taller/oficina)</option>
+        <option value="II">Clase II — Riesgo bajo</option>
+        <option value="III">Clase III — Riesgo medio</option>
+        <option value="IV">Clase IV — Riesgo alto</option>
+        <option value="V">Clase V — Riesgo máximo</option>
+      </select>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:12px;">
+        <input type="checkbox" id="empTeletrabajo" style="width:auto;">
+        <span style="font-size:13px;">Trabaja en teletrabajo (no recibe auxilio de transporte)</span>
+      </label>
+      <button class="btn-principal" id="btnCrearEmpleado" onclick="confirmarCrearEmpleado()">Agregar empleado</button>
+      <div class="mensaje" id="mensajeEmpleado"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Empleados activos</h2>
+      <div id="listaEmpleados"><div class="cargando">Cargando...</div></div>
+    </div>
+
+  </div>
+
+  <div class="grilla-2" style="margin-bottom:20px;">
+
+    <div class="panel">
+      <h2>Crear período de nómina</h2>
+      <label for="periodoFechaInicio">Fecha de inicio</label>
+      <input type="date" id="periodoFechaInicio">
+      <label for="periodoFechaFin">Fecha de fin</label>
+      <input type="date" id="periodoFechaFin">
+      <label for="periodoDias">Días efectivos (normalmente 30)</label>
+      <input type="number" id="periodoDias" value="30" min="1" max="30">
+      <button class="btn-principal" id="btnCrearPeriodo" onclick="confirmarCrearPeriodo()">Crear período</button>
+      <div class="mensaje" id="mensajePeriodo"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Períodos de nómina</h2>
+      <div id="listaPeriodosNomina"><div class="cargando">Cargando...</div></div>
+    </div>
+
+  </div>
+
+  <div class="panel" style="max-height:none;">
+    <h2>Liquidaciones del período seleccionado</h2>
+    <div id="listaLiquidacionesNomina"><div class="cargando">Selecciona un período arriba para ver sus liquidaciones.</div></div>
+  </div>
+</div>
+
 <!-- ===== PANTALLA: CERRAR TURNO ===== -->
 <div id="pantallaCerrarTurno" class="oculto contenido">
   <div class="page-header">
@@ -1108,7 +1178,7 @@
   // UTILIDADES
   // ============================================================================
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaDepartamentos', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaDepartamentos', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -1132,6 +1202,7 @@
       pantallaReportes: 'nav-reportes',
       pantallaDepartamentos: 'nav-departamentos',
       pantallaReportesFinancieros: 'nav-reportes-financieros',
+      pantallaNomina: 'nav-nomina',
       pantallaPagosPendientes: 'nav-pagos-pendientes',
     };
     if (mapaNav[idPantalla]) {
@@ -1325,6 +1396,7 @@
     mostrar('nav-reportes', esAdmin);
     mostrar('nav-departamentos', esAdmin);
     mostrar('nav-reportes-financieros', esAdmin);
+    mostrar('nav-nomina', esAdmin);
     mostrar('nav-pagos-pendientes', esCajero || esTaller);
     mostrar('seccionDepartamentos', esAdmin || esCajero || esTaller);
     mostrar('nav-ventas', esAdmin || esCajero);
@@ -4163,6 +4235,273 @@
         ${renderizarCategoriasPresupuesto(d.categorias)}
       </div>
     `).join('');
+  }
+
+  // ============================================================================
+  // NÓMINA (solo Admin)
+  // ============================================================================
+  let periodoNominaSeleccionadoId = null;
+
+  async function mostrarPantallaNomina() {
+    mostrarPantalla('pantallaNomina');
+    ocultarMensaje('mensajeEmpleado');
+    ocultarMensaje('mensajePeriodo');
+    document.getElementById('empNombre').value = '';
+    document.getElementById('empSalario').value = '';
+    document.getElementById('empFechaIngreso').value = '';
+    document.getElementById('empTeletrabajo').checked = false;
+    periodoNominaSeleccionadoId = null;
+    document.getElementById('listaLiquidacionesNomina').innerHTML = '<div class="cargando">Selecciona un período arriba para ver sus liquidaciones.</div>';
+
+    await cargarDepartamentosParaEmpleado();
+    await cargarEmpleados();
+    await cargarPeriodosNomina();
+  }
+
+  async function cargarDepartamentosParaEmpleado() {
+    const { data } = await supabaseClient
+      .from('centros_costo')
+      .select('id, nombre')
+      .eq('activo', true)
+      .order('codigo', { ascending: true });
+    document.getElementById('empDepartamento').innerHTML =
+      '<option value="">Sin departamento específico</option>' +
+      (data || []).map(d => `<option value="${d.id}">${escaparHtml(d.nombre)}</option>`).join('');
+  }
+
+  async function confirmarCrearEmpleado() {
+    const nombre = document.getElementById('empNombre').value.trim();
+    const salario = Number(document.getElementById('empSalario').value);
+    const fechaIngreso = document.getElementById('empFechaIngreso').value;
+    const centroCostoId = document.getElementById('empDepartamento').value;
+    const riesgoArl = document.getElementById('empRiesgoArl').value;
+    const teletrabajo = document.getElementById('empTeletrabajo').checked;
+    ocultarMensaje('mensajeEmpleado');
+
+    if (!nombre) { mostrarMensaje('mensajeEmpleado', 'Escribe el nombre del empleado.', 'error'); return; }
+    if (!salario || salario <= 0) { mostrarMensaje('mensajeEmpleado', 'Escribe un salario válido.', 'error'); return; }
+    if (!fechaIngreso) { mostrarMensaje('mensajeEmpleado', 'Escribe la fecha de ingreso.', 'error'); return; }
+
+    const btn = document.getElementById('btnCrearEmpleado');
+    btn.disabled = true;
+    btn.textContent = 'Guardando...';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/nomina/empleados', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({
+        nombre_completo: nombre,
+        salario_basico: salario,
+        fecha_ingreso: fechaIngreso,
+        centro_costo_id: centroCostoId || null,
+        clase_riesgo_arl: riesgoArl,
+        teletrabajo
+      })
+    });
+
+    btn.disabled = false;
+    btn.textContent = 'Agregar empleado';
+
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeEmpleado', datos.error || 'No se pudo crear el empleado.', 'error'); return; }
+
+    mostrarMensaje('mensajeEmpleado', '✅ Empleado agregado correctamente.', 'exito');
+    document.getElementById('empNombre').value = '';
+    document.getElementById('empSalario').value = '';
+    document.getElementById('empFechaIngreso').value = '';
+    document.getElementById('empTeletrabajo').checked = false;
+    await cargarEmpleados();
+  }
+
+  async function cargarEmpleados() {
+    const contenedor = document.getElementById('listaEmpleados');
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/nomina/empleados', {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+
+    const { empleados } = await resp.json();
+    const activos = (empleados || []).filter(e => e.activo);
+
+    if (activos.length === 0) {
+      contenedor.innerHTML = '<div class="cargando">No hay empleados registrados todavía.</div>';
+      return;
+    }
+
+    contenedor.innerHTML = activos.map(e => {
+      const nombreDepto = e.centros_costo ? e.centros_costo.nombre : 'Sin departamento';
+      return `
+        <div class="fila-inventario-editable">
+          <div class="fila-inventario-titulo">
+            <span class="fila-inventario-nombre">${escaparHtml(e.nombre_completo)}</span>
+            <span class="fila-inventario-tipo-tag">Clase ${e.clase_riesgo_arl}</span>
+          </div>
+          <div style="font-size:12.5px;margin-top:6px;">
+            Salario: <strong>${formatearMoneda(e.salario_basico)}</strong> · 🏢 ${escaparHtml(nombreDepto)}<br>
+            <span style="opacity:0.6;">Ingreso: ${new Date(e.fecha_ingreso).toLocaleDateString('es-CO')}${e.teletrabajo ? ' · Teletrabajo' : ''}</span>
+          </div>
+          <button class="btn-mini desactivar" style="margin-top:8px;max-width:160px;" onclick="desactivarEmpleado('${e.id}')">Marcar como retirado</button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function desactivarEmpleado(empleadoId) {
+    if (!confirm('¿Confirmas que este empleado ya no trabaja aquí? No se le incluirá en las próximas liquidaciones.')) return;
+
+    const resp = await fetch(WORKER_URL + '/api/pos/nomina/empleados/actualizar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ empleado_id: empleadoId, activo: false, fecha_retiro: new Date().toISOString().slice(0, 10) })
+    });
+
+    if (!resp.ok) { alert('No se pudo actualizar.'); return; }
+    await cargarEmpleados();
+  }
+
+  async function confirmarCrearPeriodo() {
+    const fechaInicio = document.getElementById('periodoFechaInicio').value;
+    const fechaFin = document.getElementById('periodoFechaFin').value;
+    const dias = Number(document.getElementById('periodoDias').value) || 30;
+    ocultarMensaje('mensajePeriodo');
+
+    if (!fechaInicio || !fechaFin) { mostrarMensaje('mensajePeriodo', 'Escribe las dos fechas.', 'error'); return; }
+
+    const btn = document.getElementById('btnCrearPeriodo');
+    btn.disabled = true;
+    btn.textContent = 'Creando...';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/nomina/periodos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ fecha_inicio: fechaInicio, fecha_fin: fechaFin, dias_efectivos: dias })
+    });
+
+    btn.disabled = false;
+    btn.textContent = 'Crear período';
+
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajePeriodo', datos.error || 'No se pudo crear el período.', 'error'); return; }
+
+    mostrarMensaje('mensajePeriodo', '✅ Período creado. Ahora puedes liquidarlo.', 'exito');
+    await cargarPeriodosNomina();
+  }
+
+  async function cargarPeriodosNomina() {
+    const contenedor = document.getElementById('listaPeriodosNomina');
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/nomina/periodos', {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+
+    const { periodos } = await resp.json();
+
+    if (!periodos || periodos.length === 0) {
+      contenedor.innerHTML = '<div class="cargando">No hay períodos creados todavía.</div>';
+      return;
+    }
+
+    const etiquetasEstado = { borrador: '📝 Borrador', liquidado: '✅ Liquidado', pagado: '💵 Pagado' };
+
+    contenedor.innerHTML = periodos.map(p => {
+      const inicio = new Date(p.fecha_inicio + 'T00:00:00').toLocaleDateString('es-CO');
+      const fin = new Date(p.fecha_fin + 'T00:00:00').toLocaleDateString('es-CO');
+      return `
+        <div class="fila-inventario-editable" style="cursor:pointer;" onclick="verLiquidacionesPeriodo('${p.id}')">
+          <div class="fila-inventario-titulo">
+            <span class="fila-inventario-nombre">${inicio} — ${fin}</span>
+            <span class="fila-inventario-tipo-tag">${etiquetasEstado[p.estado] || p.estado}</span>
+          </div>
+          ${p.estado === 'borrador' ? `<button class="btn-mini guardar" style="margin-top:8px;" onclick="event.stopPropagation(); confirmarLiquidarPeriodo('${p.id}')">Liquidar este período</button>` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function confirmarLiquidarPeriodo(periodoId) {
+    if (!confirm('¿Confirmas que quieres liquidar este período? Se calculará la nómina completa de todos los empleados activos y no se podrá deshacer.')) return;
+
+    const resp = await fetch(WORKER_URL + '/api/pos/nomina/liquidar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ periodo_nomina_id: periodoId })
+    });
+
+    const datos = await resp.json();
+    if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudo liquidar')); return; }
+
+    alert('✅ Nómina liquidada correctamente.');
+    await cargarPeriodosNomina();
+    await verLiquidacionesPeriodo(periodoId);
+  }
+
+  async function verLiquidacionesPeriodo(periodoId) {
+    periodoNominaSeleccionadoId = periodoId;
+    const contenedor = document.getElementById('listaLiquidacionesNomina');
+    contenedor.innerHTML = '<div class="cargando">Cargando liquidaciones...</div>';
+
+    const resp = await fetch(`${WORKER_URL}/api/pos/nomina/liquidaciones?periodo_nomina_id=${periodoId}`, {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+
+    const { liquidaciones } = await resp.json();
+
+    if (!liquidaciones || liquidaciones.length === 0) {
+      contenedor.innerHTML = '<div class="cargando">Este período todavía no ha sido liquidado.</div>';
+      return;
+    }
+
+    contenedor.innerHTML = liquidaciones.map(l => {
+      const nombreEmpleado = l.empleados ? l.empleados.nombre_completo : 'Empleado';
+      const pagado = l.estado === 'pagado';
+      return `
+        <div class="fila-historial" style="margin-bottom:10px;">
+          <div class="fila-historial-encabezado">
+            <span class="fila-historial-consecutivo">${escaparHtml(nombreEmpleado)}</span>
+            <span class="fila-historial-total">${formatearMoneda(l.neto_pagar)}</span>
+          </div>
+          <div class="fila-historial-detalle" style="margin-top:6px;">
+            <div class="resumen-fila"><span>Salario devengado</span><strong>${formatearMoneda(l.salario_devengado)}</strong></div>
+            <div class="resumen-fila"><span>Auxilio de transporte</span><strong>${formatearMoneda(l.auxilio_transporte)}</strong></div>
+            <div class="resumen-fila"><span>(-) Salud empleado</span><strong>${formatearMoneda(l.deduccion_salud)}</strong></div>
+            <div class="resumen-fila"><span>(-) Pensión empleado</span><strong>${formatearMoneda(l.deduccion_pension)}</strong></div>
+            <div class="resumen-fila total"><span>Neto a pagar</span><strong>${formatearMoneda(l.neto_pagar)}</strong></div>
+          </div>
+          <div style="font-size:11px;opacity:0.6;margin-top:8px;">
+            Costo total para la empresa (con aportes y provisiones): <strong>${formatearMoneda(l.costo_total_empleador)}</strong>
+          </div>
+          ${pagado
+            ? '<div style="margin-top:8px;"><span class="badge-rol" style="background:#eaf6ef;color:var(--verde-exito);">✅ Pagado</span></div>'
+            : `<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+                ${['efectivo','nequi','daviplata','transferencia'].map(m => `<button class="btn-mini guardar" onclick="confirmarPagoNomina('${l.id}', '${m}')">${m}</button>`).join('')}
+              </div>`
+          }
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function confirmarPagoNomina(liquidacionId, metodo) {
+    if (!confirm(`¿Confirmas que ya se pagó por ${metodo}?`)) return;
+
+    const resp = await fetch(WORKER_URL + '/api/pos/nomina/pagar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ liquidacion_id: liquidacionId, metodo_pago: metodo })
+    });
+
+    const datos = await resp.json();
+    if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudo registrar el pago')); return; }
+
+    await verLiquidacionesPeriodo(periodoNominaSeleccionadoId);
   }
 
   function actualizarSidebar() {
