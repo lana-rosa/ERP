@@ -1079,6 +1079,23 @@
       <h2>Agregar empleado</h2>
       <label for="empNombre">Nombre completo</label>
       <input type="text" id="empNombre" placeholder="Nombre del empleado">
+      <div class="grid-campos-inventario">
+        <div class="campo-mini">
+          <label for="empTipoDocumento">Tipo de documento</label>
+          <select id="empTipoDocumento">
+            <option value="CC">Cédula de ciudadanía</option>
+            <option value="CE">Cédula de extranjería</option>
+            <option value="TI">Tarjeta de identidad</option>
+            <option value="PASAPORTE">Pasaporte</option>
+          </select>
+        </div>
+        <div class="campo-mini">
+          <label for="empNumeroDocumento">Número de documento</label>
+          <input type="text" id="empNumeroDocumento" placeholder="0000000000">
+        </div>
+      </div>
+      <label for="empFechaNacimiento">Fecha de nacimiento</label>
+      <input type="date" id="empFechaNacimiento">
       <label for="empSalario">Salario básico mensual (COP)</label>
       <input type="number" id="empSalario" placeholder="0" min="1" step="1000">
       <label for="empFechaIngreso">Fecha de ingreso</label>
@@ -1097,6 +1114,19 @@
         <input type="checkbox" id="empTeletrabajo" style="width:auto;">
         <span style="font-size:13px;">Trabaja en teletrabajo (no recibe auxilio de transporte)</span>
       </label>
+      <label for="empDireccion" style="margin-top:14px;">Dirección <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <input type="text" id="empDireccion" placeholder="Dirección de residencia">
+      <label for="empTelefono">Teléfono <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <input type="tel" id="empTelefono" placeholder="300 000 0000">
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--rosa-suave);font-size:12px;font-weight:600;opacity:0.7;">Afiliaciones a seguridad social</div>
+      <label for="empEps">EPS</label>
+      <input type="text" id="empEps" placeholder="Ej: Sura, Nueva EPS, Sanitas...">
+      <label for="empFondoPension">Fondo de pensión</label>
+      <input type="text" id="empFondoPension" placeholder="Ej: Colpensiones, Protección...">
+      <label for="empFondoCesantias">Fondo de cesantías</label>
+      <input type="text" id="empFondoCesantias" placeholder="Ej: Porvenir, Colpensiones...">
+      <label for="empArlEntidad">ARL</label>
+      <input type="text" id="empArlEntidad" placeholder="Ej: Sura, Positiva, Colmena...">
       <button class="btn-principal" id="btnCrearEmpleado" onclick="confirmarCrearEmpleado()">Agregar empleado</button>
       <div class="mensaje" id="mensajeEmpleado"></div>
     </div>
@@ -1132,6 +1162,15 @@
   <div class="panel" style="max-height:none;">
     <h2>Liquidaciones del período seleccionado</h2>
     <div id="listaLiquidacionesNomina"><div class="cargando">Selecciona un período arriba para ver sus liquidaciones.</div></div>
+  </div>
+
+  <div class="panel" style="max-height:none;margin-top:20px;">
+    <h2>Reporte para pago de PILA (seguridad social)</h2>
+    <div class="subtitulo">Valores consolidados del período seleccionado, listos para digitar en el operador de información al pagar la planilla.</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+      <button class="btn-secundario" style="width:auto;margin-top:0;flex:1;min-width:200px;" onclick="window.open('https://www.soi.com.co', '_blank')">🌐 Ir a SOI a pagar la PILA</button>
+    </div>
+    <div id="listaReportePila"><div class="cargando">Selecciona un período arriba para ver el reporte.</div></div>
   </div>
 </div>
 
@@ -4269,18 +4308,41 @@
   let departamentosParaEmpleadoCache = [];
   let empleadosActivosCache = [];
   let empleadoEditandoId = null;
+  let empleadoBeneficiariosAbiertoId = null;
+  let beneficiariosPorEmpleadoCache = {};
+
+  function calcularEdad(fechaNacimientoStr) {
+    if (!fechaNacimientoStr) return null;
+    const hoy = new Date();
+    const nacimiento = new Date(fechaNacimientoStr + 'T00:00:00');
+    let edad = hoy.getFullYear() - nacimiento.getFullYear();
+    const mesDiff = hoy.getMonth() - nacimiento.getMonth();
+    if (mesDiff < 0 || (mesDiff === 0 && hoy.getDate() < nacimiento.getDate())) edad--;
+    return edad;
+  }
 
   async function mostrarPantallaNomina() {
     mostrarPantalla('pantallaNomina');
     ocultarMensaje('mensajeEmpleado');
     ocultarMensaje('mensajePeriodo');
     document.getElementById('empNombre').value = '';
+    document.getElementById('empTipoDocumento').value = 'CC';
+    document.getElementById('empNumeroDocumento').value = '';
+    document.getElementById('empFechaNacimiento').value = '';
     document.getElementById('empSalario').value = '';
     document.getElementById('empFechaIngreso').value = '';
     document.getElementById('empTeletrabajo').checked = false;
+    document.getElementById('empDireccion').value = '';
+    document.getElementById('empTelefono').value = '';
+    document.getElementById('empEps').value = '';
+    document.getElementById('empFondoPension').value = '';
+    document.getElementById('empFondoCesantias').value = '';
+    document.getElementById('empArlEntidad').value = '';
     periodoNominaSeleccionadoId = null;
     empleadoEditandoId = null;
+    empleadoBeneficiariosAbiertoId = null;
     document.getElementById('listaLiquidacionesNomina').innerHTML = '<div class="cargando">Selecciona un período arriba para ver sus liquidaciones.</div>';
+    document.getElementById('listaReportePila').innerHTML = '<div class="cargando">Selecciona un período arriba para ver el reporte.</div>';
 
     await cargarDepartamentosParaEmpleado();
     await cargarEmpleados();
@@ -4301,11 +4363,20 @@
 
   async function confirmarCrearEmpleado() {
     const nombre = document.getElementById('empNombre').value.trim();
+    const tipoDocumento = document.getElementById('empTipoDocumento').value;
+    const numeroDocumento = document.getElementById('empNumeroDocumento').value.trim();
+    const fechaNacimiento = document.getElementById('empFechaNacimiento').value;
     const salario = Number(document.getElementById('empSalario').value);
     const fechaIngreso = document.getElementById('empFechaIngreso').value;
     const centroCostoId = document.getElementById('empDepartamento').value;
     const riesgoArl = document.getElementById('empRiesgoArl').value;
     const teletrabajo = document.getElementById('empTeletrabajo').checked;
+    const direccion = document.getElementById('empDireccion').value.trim();
+    const telefono = document.getElementById('empTelefono').value.trim();
+    const eps = document.getElementById('empEps').value.trim();
+    const fondoPension = document.getElementById('empFondoPension').value.trim();
+    const fondoCesantias = document.getElementById('empFondoCesantias').value.trim();
+    const arlEntidad = document.getElementById('empArlEntidad').value.trim();
     ocultarMensaje('mensajeEmpleado');
 
     if (!nombre) { mostrarMensaje('mensajeEmpleado', 'Escribe el nombre del empleado.', 'error'); return; }
@@ -4321,11 +4392,20 @@
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({
         nombre_completo: nombre,
+        tipo_documento: tipoDocumento,
+        numero_documento: numeroDocumento || null,
+        fecha_nacimiento: fechaNacimiento || null,
         salario_basico: salario,
         fecha_ingreso: fechaIngreso,
         centro_costo_id: centroCostoId || null,
         clase_riesgo_arl: riesgoArl,
-        teletrabajo
+        teletrabajo,
+        direccion: direccion || null,
+        telefono: telefono || null,
+        eps: eps || null,
+        fondo_pension: fondoPension || null,
+        fondo_cesantias: fondoCesantias || null,
+        arl_entidad: arlEntidad || null
       })
     });
 
@@ -4337,9 +4417,17 @@
 
     mostrarMensaje('mensajeEmpleado', '✅ Empleado agregado correctamente.', 'exito');
     document.getElementById('empNombre').value = '';
+    document.getElementById('empNumeroDocumento').value = '';
+    document.getElementById('empFechaNacimiento').value = '';
     document.getElementById('empSalario').value = '';
     document.getElementById('empFechaIngreso').value = '';
     document.getElementById('empTeletrabajo').checked = false;
+    document.getElementById('empDireccion').value = '';
+    document.getElementById('empTelefono').value = '';
+    document.getElementById('empEps').value = '';
+    document.getElementById('empFondoPension').value = '';
+    document.getElementById('empFondoCesantias').value = '';
+    document.getElementById('empArlEntidad').value = '';
     await cargarEmpleados();
   }
 
@@ -4377,17 +4465,33 @@
     contenedor.innerHTML = empleadosActivosCache.map(e => {
       const nombreDepto = e.centros_costo ? e.centros_costo.nombre : 'Sin departamento';
       const estaEditando = empleadoEditandoId === e.id;
+      const edad = calcularEdad(e.fecha_nacimiento);
+      const beneficiariosAbiertos = empleadoBeneficiariosAbiertoId === e.id;
 
       if (estaEditando) {
         const opcionesDepto = '<option value="">Sin departamento específico</option>' +
           departamentosParaEmpleadoCache.map(d => `<option value="${d.id}" ${d.id === e.centro_costo_id ? 'selected' : ''}>${escaparHtml(d.nombre)}</option>`).join('');
         const opcionesArl = opcionesRiesgoArl.map(o => `<option value="${o.valor}" ${o.valor === e.clase_riesgo_arl ? 'selected' : ''}>${escaparHtml(o.texto)}</option>`).join('');
         const fechaIngresoValor = e.fecha_ingreso ? e.fecha_ingreso.slice(0, 10) : '';
+        const fechaNacimientoValor = e.fecha_nacimiento ? e.fecha_nacimiento.slice(0, 10) : '';
+        const opcionesTipoDoc = ['CC','CE','TI','PASAPORTE'].map(t => `<option value="${t}" ${t === (e.tipo_documento || 'CC') ? 'selected' : ''}>${t}</option>`).join('');
 
         return `
           <div class="fila-inventario-editable" style="border-color:var(--rosa-medio);">
             <label>Nombre completo</label>
             <input type="text" id="edit-emp-nombre-${e.id}" value="${escaparHtml(e.nombre_completo)}">
+            <div class="grid-campos-inventario">
+              <div class="campo-mini">
+                <label>Tipo doc.</label>
+                <select id="edit-emp-tipodoc-${e.id}">${opcionesTipoDoc}</select>
+              </div>
+              <div class="campo-mini">
+                <label>Número</label>
+                <input type="text" id="edit-emp-numdoc-${e.id}" value="${escaparHtml(e.numero_documento || '')}">
+              </div>
+            </div>
+            <label style="margin-top:8px;">Fecha de nacimiento</label>
+            <input type="date" id="edit-emp-nacimiento-${e.id}" value="${fechaNacimientoValor}">
             <label style="margin-top:8px;">Salario básico mensual (COP)</label>
             <input type="number" id="edit-emp-salario-${e.id}" min="1" step="1000" value="${e.salario_basico}">
             <label style="margin-top:8px;">Fecha de ingreso</label>
@@ -4400,6 +4504,19 @@
               <input type="checkbox" id="edit-emp-teletrabajo-${e.id}" style="width:auto;" ${e.teletrabajo ? 'checked' : ''}>
               <span style="font-size:13px;">Trabaja en teletrabajo (no recibe auxilio de transporte)</span>
             </label>
+            <label style="margin-top:10px;">Dirección</label>
+            <input type="text" id="edit-emp-direccion-${e.id}" value="${escaparHtml(e.direccion || '')}">
+            <label style="margin-top:8px;">Teléfono</label>
+            <input type="tel" id="edit-emp-telefono-${e.id}" value="${escaparHtml(e.telefono || '')}">
+            <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--rosa-suave);font-size:11.5px;font-weight:600;opacity:0.7;">Afiliaciones</div>
+            <label style="margin-top:6px;">EPS</label>
+            <input type="text" id="edit-emp-eps-${e.id}" value="${escaparHtml(e.eps || '')}">
+            <label style="margin-top:8px;">Fondo de pensión</label>
+            <input type="text" id="edit-emp-fondopension-${e.id}" value="${escaparHtml(e.fondo_pension || '')}">
+            <label style="margin-top:8px;">Fondo de cesantías</label>
+            <input type="text" id="edit-emp-fondocesantias-${e.id}" value="${escaparHtml(e.fondo_cesantias || '')}">
+            <label style="margin-top:8px;">ARL</label>
+            <input type="text" id="edit-emp-arlentidad-${e.id}" value="${escaparHtml(e.arl_entidad || '')}">
             <div class="fila-inventario-acciones" style="margin-top:12px;">
               <button class="btn-mini guardar" onclick="guardarEdicionEmpleado('${e.id}')">Guardar cambios</button>
               <button class="btn-mini desactivar" onclick="cancelarEdicionEmpleado()">Cancelar</button>
@@ -4408,6 +4525,8 @@
         `;
       }
 
+      const puedeLiquidarIndividual = !!periodoNominaSeleccionadoId;
+
       return `
         <div class="fila-inventario-editable">
           <div class="fila-inventario-titulo">
@@ -4415,16 +4534,185 @@
             <span class="fila-inventario-tipo-tag">Clase ${e.clase_riesgo_arl}</span>
           </div>
           <div style="font-size:12.5px;margin-top:6px;">
-            Salario: <strong>${formatearMoneda(e.salario_basico)}</strong> · 🏢 ${escaparHtml(nombreDepto)}<br>
-            <span style="opacity:0.6;">Ingreso: ${new Date(e.fecha_ingreso).toLocaleDateString('es-CO')}${e.teletrabajo ? ' · Teletrabajo' : ''}</span>
+            Salario: <strong>${formatearMoneda(e.salario_basico)}</strong> · 🏢 ${escaparHtml(nombreDepto)}${edad !== null ? ' · ' + edad + ' años' : ''}<br>
+            <span style="opacity:0.6;">Ingreso: ${new Date(e.fecha_ingreso).toLocaleDateString('es-CO')}${e.teletrabajo ? ' · Teletrabajo' : ''}${e.numero_documento ? ' · Doc: ' + escaparHtml(e.numero_documento) : ''}</span>
           </div>
-          <div class="fila-inventario-acciones" style="margin-top:8px;">
+          <div class="fila-inventario-acciones" style="margin-top:8px;flex-wrap:wrap;">
             <button class="btn-mini editar" onclick="activarEdicionEmpleado('${e.id}')">✏️ Editar</button>
-            <button class="btn-mini desactivar" onclick="desactivarEmpleado('${e.id}')">Marcar como retirado</button>
+            <button class="btn-mini editar" onclick="alternarBeneficiarios('${e.id}')">👪 Beneficiarios</button>
+            <button class="btn-mini desactivar" onclick="desactivarEmpleado('${e.id}')">Retirar</button>
           </div>
+          ${puedeLiquidarIndividual ? `
+            <button class="btn-mini guardar" style="width:100%;margin-top:8px;" onclick="liquidarEmpleadoIndividual('${e.id}', '${escaparHtml(e.nombre_completo).replace(/'/g, "\\'")}')">💰 Liquidar este empleado en el período seleccionado</button>
+          ` : ''}
+          ${beneficiariosAbiertos ? renderizarPanelBeneficiarios(e.id) : ''}
         </div>
       `;
     }).join('');
+  }
+
+  // ============================================================
+  // BENEFICIARIOS DEL EMPLEADO (salud / caja de compensación)
+  // ============================================================
+  function alternarBeneficiarios(empleadoId) {
+    if (empleadoBeneficiariosAbiertoId === empleadoId) {
+      empleadoBeneficiariosAbiertoId = null;
+      renderizarListaEmpleados();
+      return;
+    }
+    empleadoBeneficiariosAbiertoId = empleadoId;
+    renderizarListaEmpleados();
+    cargarBeneficiariosEmpleado(empleadoId);
+  }
+
+  async function cargarBeneficiariosEmpleado(empleadoId) {
+    const resp = await fetch(`${WORKER_URL}/api/pos/nomina/beneficiarios?empleado_id=${empleadoId}`, {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+    if (resp.ok) {
+      const { beneficiarios } = await resp.json();
+      beneficiariosPorEmpleadoCache[empleadoId] = beneficiarios || [];
+    } else {
+      beneficiariosPorEmpleadoCache[empleadoId] = [];
+    }
+    renderizarListaEmpleados();
+  }
+
+  function renderizarPanelBeneficiarios(empleadoId) {
+    const lista = beneficiariosPorEmpleadoCache[empleadoId];
+    const etiquetasParentesco = {
+      conyuge_o_companero: 'Cónyuge / compañero(a) permanente',
+      hijo: 'Hijo(a)',
+      padre: 'Padre',
+      madre: 'Madre',
+      otro: 'Otro'
+    };
+
+    let filasHtml = '<div class="cargando" style="padding:10px 0;">Cargando beneficiarios...</div>';
+    if (lista) {
+      if (lista.length === 0) {
+        filasHtml = '<div style="font-size:12px;opacity:0.6;padding:6px 0;">Este empleado no tiene beneficiarios registrados todavía.</div>';
+      } else {
+        filasHtml = lista.map(b => {
+          const edadBen = calcularEdad(b.fecha_nacimiento);
+          const tags = [b.aplica_salud ? 'Salud' : null, b.aplica_ccf ? 'Caja de compensación' : null].filter(Boolean).join(' + ') || 'Sin cobertura marcada';
+          return `
+            <div style="border:1px solid #f0e8ee;border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:12px;">
+              <div style="display:flex;justify-content:space-between;">
+                <strong>${escaparHtml(b.nombre_completo)}</strong>
+                <button class="btn-quitar" onclick="eliminarBeneficiario('${b.id}', '${empleadoId}')" title="Eliminar">✕</button>
+              </div>
+              <div style="opacity:0.7;margin-top:2px;">${etiquetasParentesco[b.parentesco] || b.parentesco}${edadBen !== null ? ' · ' + edadBen + ' años' : ''} · ${tags}</div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    return `
+      <div style="margin-top:10px;padding-top:10px;border-top:1.5px dashed var(--rosa-medio);">
+        <div style="font-size:12.5px;font-weight:700;margin-bottom:6px;">👪 Beneficiarios (salud / caja de compensación)</div>
+        <div style="font-size:11px;opacity:0.6;margin-bottom:8px;">Pueden afiliarse: cónyuge o compañero(a) permanente, hijos (hasta 25 años si estudian, sin límite si tienen discapacidad), y padres que dependan económicamente. La caja de compensación aplica normalmente a hijos menores de 18 años (23 si estudian) y padres dependientes.</div>
+        ${filasHtml}
+        <div style="margin-top:8px;padding:10px;background:var(--rosa-suave);border-radius:8px;">
+          <label style="margin-top:0;font-size:11px;">Nombre completo</label>
+          <input type="text" id="ben-nombre-${empleadoId}" placeholder="Nombre del beneficiario" style="font-size:12.5px;padding:7px 9px;">
+          <div class="grid-campos-inventario" style="margin-top:6px;">
+            <div class="campo-mini">
+              <label>Parentesco</label>
+              <select id="ben-parentesco-${empleadoId}" style="font-size:12px;padding:7px 9px;">
+                <option value="conyuge_o_companero">Cónyuge / compañero(a)</option>
+                <option value="hijo">Hijo(a)</option>
+                <option value="padre">Padre</option>
+                <option value="madre">Madre</option>
+                <option value="otro">Otro</option>
+              </select>
+            </div>
+            <div class="campo-mini">
+              <label>Fecha de nacimiento</label>
+              <input type="date" id="ben-nacimiento-${empleadoId}" style="font-size:12px;padding:7px 9px;">
+            </div>
+          </div>
+          <div style="display:flex;gap:14px;margin-top:8px;">
+            <label style="display:flex;align-items:center;gap:6px;margin-top:0;font-weight:400;">
+              <input type="checkbox" id="ben-salud-${empleadoId}" style="width:auto;" checked>
+              <span style="font-size:12px;">Salud</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;margin-top:0;font-weight:400;">
+              <input type="checkbox" id="ben-ccf-${empleadoId}" style="width:auto;">
+              <span style="font-size:12px;">Caja de compensación</span>
+            </label>
+          </div>
+          <button class="btn-mini guardar" style="width:100%;margin-top:8px;" onclick="agregarBeneficiario('${empleadoId}')">+ Agregar beneficiario</button>
+        </div>
+      </div>
+    `;
+  }
+
+  async function agregarBeneficiario(empleadoId) {
+    const nombre = document.getElementById(`ben-nombre-${empleadoId}`).value.trim();
+    const parentesco = document.getElementById(`ben-parentesco-${empleadoId}`).value;
+    const fechaNacimiento = document.getElementById(`ben-nacimiento-${empleadoId}`).value;
+    const aplicaSalud = document.getElementById(`ben-salud-${empleadoId}`).checked;
+    const aplicaCcf = document.getElementById(`ben-ccf-${empleadoId}`).checked;
+
+    if (!nombre) { alert('Escribe el nombre del beneficiario.'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/nomina/beneficiarios', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({
+        empleado_id: empleadoId,
+        nombre_completo: nombre,
+        parentesco,
+        fecha_nacimiento: fechaNacimiento || null,
+        aplica_salud: aplicaSalud,
+        aplica_ccf: aplicaCcf
+      })
+    });
+
+    if (!resp.ok) {
+      const datos = await resp.json().catch(() => ({}));
+      alert('No se pudo agregar el beneficiario: ' + (datos.error || 'Error desconocido'));
+      return;
+    }
+
+    await cargarBeneficiariosEmpleado(empleadoId);
+  }
+
+  async function eliminarBeneficiario(beneficiarioId, empleadoId) {
+    if (!confirm('¿Quitar este beneficiario?')) return;
+    const resp = await fetch(WORKER_URL + '/api/pos/nomina/beneficiarios/eliminar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ beneficiario_id: beneficiarioId })
+    });
+    if (!resp.ok) { alert('No se pudo eliminar.'); return; }
+    await cargarBeneficiariosEmpleado(empleadoId);
+  }
+
+  // ============================================================
+  // LIQUIDAR UN SOLO EMPLEADO EN EL PERÍODO SELECCIONADO
+  // ============================================================
+  async function liquidarEmpleadoIndividual(empleadoId, nombreEmpleado) {
+    if (!periodoNominaSeleccionadoId) {
+      alert('Primero selecciona un período de nómina en el panel de la derecha.');
+      return;
+    }
+    if (!confirm(`¿Confirmas que quieres liquidar a ${nombreEmpleado} en el período seleccionado?`)) return;
+
+    const resp = await fetch(WORKER_URL + '/api/pos/nomina/liquidar-empleado', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ periodo_nomina_id: periodoNominaSeleccionadoId, empleado_id: empleadoId })
+    });
+
+    const datos = await resp.json();
+    if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudo liquidar')); return; }
+
+    alert(`✅ ${nombreEmpleado} fue liquidado correctamente.`);
+    await verLiquidacionesPeriodo(periodoNominaSeleccionadoId);
+    await cargarPeriodosNomina();
   }
 
   function activarEdicionEmpleado(empleadoId) {
@@ -4439,11 +4727,20 @@
 
   async function guardarEdicionEmpleado(empleadoId) {
     const nombre = document.getElementById(`edit-emp-nombre-${empleadoId}`).value.trim();
+    const tipoDocumento = document.getElementById(`edit-emp-tipodoc-${empleadoId}`).value;
+    const numeroDocumento = document.getElementById(`edit-emp-numdoc-${empleadoId}`).value.trim();
+    const fechaNacimiento = document.getElementById(`edit-emp-nacimiento-${empleadoId}`).value;
     const salario = Number(document.getElementById(`edit-emp-salario-${empleadoId}`).value);
     const fechaIngreso = document.getElementById(`edit-emp-fecha-${empleadoId}`).value;
     const centroCostoId = document.getElementById(`edit-emp-depto-${empleadoId}`).value;
     const claseRiesgoArl = document.getElementById(`edit-emp-arl-${empleadoId}`).value;
     const teletrabajo = document.getElementById(`edit-emp-teletrabajo-${empleadoId}`).checked;
+    const direccion = document.getElementById(`edit-emp-direccion-${empleadoId}`).value.trim();
+    const telefono = document.getElementById(`edit-emp-telefono-${empleadoId}`).value.trim();
+    const eps = document.getElementById(`edit-emp-eps-${empleadoId}`).value.trim();
+    const fondoPension = document.getElementById(`edit-emp-fondopension-${empleadoId}`).value.trim();
+    const fondoCesantias = document.getElementById(`edit-emp-fondocesantias-${empleadoId}`).value.trim();
+    const arlEntidad = document.getElementById(`edit-emp-arlentidad-${empleadoId}`).value.trim();
 
     if (!nombre) { alert('El nombre no puede quedar vacío.'); return; }
     if (!salario || salario <= 0) { alert('Escribe un salario válido.'); return; }
@@ -4455,11 +4752,20 @@
       body: JSON.stringify({
         empleado_id: empleadoId,
         nombre_completo: nombre,
+        tipo_documento: tipoDocumento,
+        numero_documento: numeroDocumento || null,
+        fecha_nacimiento: fechaNacimiento || null,
         salario_basico: salario,
         fecha_ingreso: fechaIngreso,
         centro_costo_id: centroCostoId || null,
         clase_riesgo_arl: claseRiesgoArl,
-        teletrabajo
+        teletrabajo,
+        direccion: direccion || null,
+        telefono: telefono || null,
+        eps: eps || null,
+        fondo_pension: fondoPension || null,
+        fondo_cesantias: fondoCesantias || null,
+        arl_entidad: arlEntidad || null
       })
     });
 
@@ -4567,6 +4873,8 @@
 
   async function verLiquidacionesPeriodo(periodoId) {
     periodoNominaSeleccionadoId = periodoId;
+    renderizarListaEmpleados(); // refresca para mostrar el botón "Liquidar este empleado"
+    cargarReportePila(periodoId);
     const contenedor = document.getElementById('listaLiquidacionesNomina');
     contenedor.innerHTML = '<div class="cargando">Cargando liquidaciones...</div>';
 
@@ -4593,11 +4901,28 @@
             <span class="fila-historial-total">${formatearMoneda(l.neto_pagar)}</span>
           </div>
           <div class="fila-historial-detalle" style="margin-top:6px;">
+            <div style="font-size:11px;font-weight:700;opacity:0.6;margin-top:6px;">DEVENGADO</div>
             <div class="resumen-fila"><span>Salario devengado</span><strong>${formatearMoneda(l.salario_devengado)}</strong></div>
             <div class="resumen-fila"><span>Auxilio de transporte</span><strong>${formatearMoneda(l.auxilio_transporte)}</strong></div>
-            <div class="resumen-fila"><span>(-) Salud empleado</span><strong>${formatearMoneda(l.deduccion_salud)}</strong></div>
-            <div class="resumen-fila"><span>(-) Pensión empleado</span><strong>${formatearMoneda(l.deduccion_pension)}</strong></div>
+
+            <div style="font-size:11px;font-weight:700;opacity:0.6;margin-top:10px;">DEDUCCIONES DEL EMPLEADO</div>
+            <div class="resumen-fila"><span>(-) Salud (4%)</span><strong>${formatearMoneda(l.deduccion_salud)}</strong></div>
+            <div class="resumen-fila"><span>(-) Pensión (4%)</span><strong>${formatearMoneda(l.deduccion_pension)}</strong></div>
             <div class="resumen-fila total"><span>Neto a pagar</span><strong>${formatearMoneda(l.neto_pagar)}</strong></div>
+
+            <div style="font-size:11px;font-weight:700;opacity:0.6;margin-top:10px;">APORTES DEL EMPLEADOR</div>
+            <div class="resumen-fila"><span>Salud</span><strong>${formatearMoneda(l.aporte_salud_empleador)}</strong></div>
+            <div class="resumen-fila"><span>Pensión (12%)</span><strong>${formatearMoneda(l.aporte_pension_empleador)}</strong></div>
+            <div class="resumen-fila"><span>ARL</span><strong>${formatearMoneda(l.aporte_arl_empleador)}</strong></div>
+            <div class="resumen-fila"><span>Caja de Compensación (4%)</span><strong>${formatearMoneda(l.aporte_ccf_empleador)}</strong></div>
+            <div class="resumen-fila"><span>SENA (exonerado)</span><strong>$0</strong></div>
+            <div class="resumen-fila"><span>ICBF (exonerado)</span><strong>$0</strong></div>
+
+            <div style="font-size:11px;font-weight:700;opacity:0.6;margin-top:10px;">PROVISIONES (prestaciones sociales)</div>
+            <div class="resumen-fila"><span>Prima</span><strong>${formatearMoneda(l.provision_prima)}</strong></div>
+            <div class="resumen-fila"><span>Cesantías</span><strong>${formatearMoneda(l.provision_cesantias)}</strong></div>
+            <div class="resumen-fila"><span>Intereses de cesantías</span><strong>${formatearMoneda(l.provision_intereses_cesantias)}</strong></div>
+            <div class="resumen-fila"><span>Vacaciones</span><strong>${formatearMoneda(l.provision_vacaciones)}</strong></div>
           </div>
           <div style="font-size:11px;opacity:0.6;margin-top:8px;">
             Costo total para la empresa (con aportes y provisiones): <strong>${formatearMoneda(l.costo_total_empleador)}</strong>
@@ -4611,6 +4936,57 @@
         </div>
       `;
     }).join('');
+  }
+
+  // ============================================================
+  // REPORTE PILA (para pagar en SOI u otro operador)
+  // ============================================================
+  async function cargarReportePila(periodoId) {
+    const contenedor = document.getElementById('listaReportePila');
+    contenedor.innerHTML = '<div class="cargando">Cargando reporte...</div>';
+
+    const resp = await fetch(`${WORKER_URL}/api/pos/nomina/reporte-pila?periodo_nomina_id=${periodoId}`, {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar el reporte.</div>'; return; }
+
+    const { detalle_por_empleado, totales, nota_exoneracion } = await resp.json();
+
+    if (!detalle_por_empleado || detalle_por_empleado.length === 0) {
+      contenedor.innerHTML = '<div class="cargando">Este período todavía no tiene empleados liquidados.</div>';
+      return;
+    }
+
+    let html = detalle_por_empleado.map(e => `
+      <div class="fila-historial" style="margin-bottom:10px;">
+        <div class="fila-historial-encabezado">
+          <span class="fila-historial-consecutivo">${escaparHtml(e.nombre_completo)}</span>
+          <span class="fila-historial-total">IBC: ${formatearMoneda(e.ibc)}</span>
+        </div>
+        <div style="font-size:11.5px;opacity:0.65;margin-bottom:6px;">
+          ${e.numero_documento ? 'Doc: ' + escaparHtml(e.numero_documento) + ' · ' : ''}
+          EPS: ${e.eps ? escaparHtml(e.eps) : '—'} · Pensión: ${e.fondo_pension ? escaparHtml(e.fondo_pension) : '—'} · ARL: ${e.arl_entidad ? escaparHtml(e.arl_entidad) : '—'}
+        </div>
+        <div class="resumen-fila"><span>Salud (empleado + empleador)</span><strong>${formatearMoneda(e.aporte_salud_empleado + e.aporte_salud_empleador)}</strong></div>
+        <div class="resumen-fila"><span>Pensión (empleado + empleador)</span><strong>${formatearMoneda(e.aporte_pension_empleado + e.aporte_pension_empleador)}</strong></div>
+        <div class="resumen-fila"><span>ARL</span><strong>${formatearMoneda(e.aporte_arl)}</strong></div>
+        <div class="resumen-fila"><span>Caja de Compensación</span><strong>${formatearMoneda(e.aporte_ccf)}</strong></div>
+      </div>
+    `).join('');
+
+    html += `
+      <div class="resumen-cierre" style="margin-top:6px;">
+        <div class="resumen-fila total"><span>Total IBC del período</span><strong>${formatearMoneda(totales.total_ibc)}</strong></div>
+        <div class="resumen-fila"><span>Total salud (empleado + empleador)</span><strong>${formatearMoneda(totales.total_salud_empleado + totales.total_salud_empleador)}</strong></div>
+        <div class="resumen-fila"><span>Total pensión (empleado + empleador)</span><strong>${formatearMoneda(totales.total_pension_empleado + totales.total_pension_empleador)}</strong></div>
+        <div class="resumen-fila"><span>Total ARL</span><strong>${formatearMoneda(totales.total_arl)}</strong></div>
+        <div class="resumen-fila total"><span>Total Caja de Compensación</span><strong>${formatearMoneda(totales.total_ccf)}</strong></div>
+      </div>
+      <div style="font-size:11px;opacity:0.6;margin-top:10px;">${escaparHtml(nota_exoneracion)}</div>
+    `;
+
+    contenedor.innerHTML = html;
   }
 
   async function confirmarPagoNomina(liquidacionId, metodo) {
