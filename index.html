@@ -535,7 +535,7 @@
     <button class="nav-btn" id="nav-ventas" onclick="mostrarPantallaVentas()"><span class="nav-icon">🛒</span> Registrar venta</button>
     <button class="nav-btn" id="nav-historial" onclick="mostrarPantallaHistorial()"><span class="nav-icon">📋</span> Historial ventas</button>
     <button class="nav-btn" id="nav-pedidos-canal" onclick="mostrarPantallaPedidosCanal()" style="display:none;"><span class="nav-icon">📱</span> Pedidos WhatsApp/Redes</button>
-    <button class="nav-btn" id="nav-solicitudes" onclick="mostrarPantallaSolicitudes()" style="display:none;"><span class="nav-icon">📦</span> Solicitudes</button>
+    <button class="nav-btn" id="nav-solicitudes" onclick="mostrarPantallaSolicitudes()" style="display:none;"><span class="nav-icon">📦</span> Compras a la Tienda</button>
 
     <div class="sidebar-seccion" id="seccionInventario" style="display:none;">Inventario</div>
     <button class="nav-btn" id="nav-inventario" onclick="mostrarPantallaInventario()" style="display:none;"><span class="nav-icon">📊</span> Gestionar inventario</button>
@@ -771,18 +771,18 @@
 <div id="pantallaSolicitudes" class="oculto contenido">
   <div class="page-header">
     <span class="badge-rol" id="badgeRolSolicitudes"></span>
-    <h1 id="tituloPanelSolicitudes">Solicitudes de material</h1>
+    <h1 id="tituloPanelSolicitudes">Compras a la Tienda</h1>
   </div>
   <div class="grilla-2">
 
     <div class="panel" id="panelCrearSolicitud">
-      <h2>Nueva solicitud</h2>
-      <div class="subtitulo" id="subtituloPanelSolicitudes">Selecciona el insumo que necesitas. El cajero deberá aprobarlo.</div>
+      <h2>Comprar insumo a la Tienda</h2>
+      <div class="subtitulo" id="subtituloPanelSolicitudes">Busca el insumo en el inventario de la Tienda. El cajero debe aprobar la compra antes de que pase al Taller.</div>
       <div id="listaSolicitudInsumos"><div class="cargando">Cargando insumos...</div></div>
     </div>
 
     <div class="panel">
-      <h2>Solicitudes pendientes</h2>
+      <h2>Compras pendientes de aprobar</h2>
       <div id="listaSolicitudesPendientes"><div class="cargando">Cargando solicitudes...</div></div>
       <button class="btn-secundario" onclick="irAInicioSegunRol()" style="margin-top:14px;">Volver</button>
     </div>
@@ -2501,14 +2501,14 @@
 
   async function cargarCatalogoSolicitudes() {
     const contenedor = document.getElementById('listaSolicitudInsumos');
-    contenedor.innerHTML = '<div class="cargando">Cargando insumos...</div>';
+    contenedor.innerHTML = '<div class="cargando">Cargando insumos de la Tienda...</div>';
 
     const { data, error } = await supabaseClient
       .from('inventario_items')
       .select('id, nombre, stock_actual, unidad_medida')
       .eq('tipo', 'merceria')
       .eq('activo', true)
-      .eq('centro_costo_id', centroCostoTallerId)
+      .eq('centro_costo_id', centroCostoTiendaId)
       .order('nombre', { ascending: true });
 
     if (error) {
@@ -2540,7 +2540,7 @@
             <input type="number" min="0.1" step="0.1" placeholder="Cantidad" id="cant-sol-${item.id}" style="flex:1;">
           </div>
           <input type="text" placeholder="Nota (para qué pedido o pieza)" id="nota-sol-${item.id}" style="margin-top:6px;">
-          <button onclick="enviarSolicitud('${item.id}')" style="margin-top:6px;padding:8px;border-radius:8px;border:none;background:var(--rosa-principal);color:white;font-family:'Poppins',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;">Enviar solicitud</button>
+          <button onclick="enviarSolicitud('${item.id}')" style="margin-top:6px;padding:8px;border-radius:8px;border:none;background:var(--rosa-principal);color:white;font-family:'Poppins',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;">Solicitar compra</button>
         </div>
       </div>
     `).join('');
@@ -2593,7 +2593,7 @@
     const { solicitudes } = await resp.json();
 
     if (!solicitudes || solicitudes.length === 0) {
-      contenedor.innerHTML = '<div class="cargando">No hay solicitudes pendientes.</div>';
+      contenedor.innerHTML = '<div class="cargando">No hay compras pendientes de aprobar.</div>';
       return;
     }
 
@@ -2619,7 +2619,7 @@
           </div>
           ${puedeAprobar ? `
             <div class="fila-inventario-acciones" style="margin-top:10px;">
-              <button class="btn-mini guardar" onclick="responderSolicitud('${sol.id}', 'aprobar')">✅ Aprobar</button>
+              <button class="btn-mini guardar" onclick="responderSolicitud('${sol.id}', 'aprobar')">✅ Aprobar compra</button>
               <button class="btn-mini desactivar" onclick="responderSolicitud('${sol.id}', 'rechazar')">❌ Rechazar</button>
             </div>
           ` : ''}
@@ -2640,6 +2640,10 @@
       const err = await resp.json();
       alert('Error: ' + (err.error || 'No se pudo procesar la solicitud'));
       return;
+    }
+
+    if (accion === 'aprobar') {
+      alert('✅ Compra aprobada. El insumo ya se movió al inventario del Taller. El pago queda pendiente de confirmación en "Mi departamento".');
     }
 
     await cargarSolicitudesPendientes();
