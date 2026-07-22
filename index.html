@@ -541,6 +541,7 @@
     <button class="nav-btn" id="nav-inventario" onclick="mostrarPantallaInventario()" style="display:none;"><span class="nav-icon">📊</span> Gestionar inventario</button>
     <button class="nav-btn" id="nav-ajustestock" onclick="mostrarPantallaAjusteStock()" style="display:none;"><span class="nav-icon">📥</span> Entrada mercancía</button>
     <button class="nav-btn" id="nav-consumotaller" onclick="mostrarPantallaConsumoTaller()" style="display:none;"><span class="nav-icon">🧶</span> Consumo taller</button>
+    <button class="nav-btn" id="nav-pedidos-crm" onclick="mostrarPantallaPedidosCrm()" style="display:none;"><span class="nav-icon">🧵</span> Pedidos y material por pedido</button>
 
     <div class="sidebar-seccion" id="seccionCaja">Caja</div>
     <button class="nav-btn" id="nav-turno" onclick="irATurnoActivo()"><span class="nav-icon">💵</span> Turno de caja</button>
@@ -762,6 +763,29 @@
     <div class="panel">
       <h2>Historial de mis consumos</h2>
       <div id="listaHistorialConsumo"><div class="cargando">Cargando historial...</div></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== PANTALLA: PEDIDOS CRM Y MATERIAL POR PEDIDO ===== -->
+<div id="pantallaPedidosCrm" class="oculto contenido">
+  <div class="page-header">
+    <h1>Pedidos y material por pedido</h1>
+    <div class="subtitulo">Elige un pedido activo, toma el material que vas a usar, y al terminar devuelve el sobrante. El sistema calcula solo cuánto gastaste de verdad y cuánto costó.</div>
+  </div>
+
+  <div class="grilla-2">
+
+    <div class="panel">
+      <h2>Pedidos activos (CRM)</h2>
+      <div id="listaPedidosCrmActivos"><div class="cargando">Cargando pedidos...</div></div>
+    </div>
+
+    <div class="panel">
+      <h2>Material que tengo en uso ahora</h2>
+      <div class="subtitulo">Cuando termines una pieza, devuelve el sobrante aquí para cerrar el consumo.</div>
+      <div id="listaConsumosEnCurso"><div class="cargando">Cargando...</div></div>
     </div>
 
   </div>
@@ -1052,7 +1076,7 @@
   // UTILIDADES
   // ============================================================================
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaDepartamentos', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaDepartamentos', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -1071,6 +1095,7 @@
       pantallaInventario: 'nav-inventario',
       pantallaAjusteStock: 'nav-ajustestock',
       pantallaConsumoTaller: 'nav-consumotaller',
+      pantallaPedidosCrm: 'nav-pedidos-crm',
       pantallaTurnoActivo: 'nav-turno',
       pantallaReportes: 'nav-reportes',
       pantallaDepartamentos: 'nav-departamentos',
@@ -1264,6 +1289,7 @@
     mostrar('nav-ajustestock', esCajero);
     mostrar('nav-solicitudes', esAdmin || esCajero || esTaller);
     mostrar('nav-consumotaller', esAdmin || esTaller);
+    mostrar('nav-pedidos-crm', esAdmin || esTaller);
     mostrar('nav-reportes', esAdmin);
     mostrar('nav-departamentos', esAdmin);
     mostrar('nav-reportes-financieros', esAdmin);
@@ -3765,6 +3791,175 @@
     const datos = await resp.json();
     if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudo marcar como entregado')); return; }
     await cargarPedidosCanal();
+  }
+
+  // ============================================================================
+  // PEDIDOS DEL CRM Y MATERIAL POR PEDIDO
+  // ============================================================================
+  let pedidoCrmAbiertoId = null;
+  let insumosTallerCache = [];
+
+  async function mostrarPantallaPedidosCrm() {
+    mostrarPantalla('pantallaPedidosCrm');
+    pedidoCrmAbiertoId = null;
+    await cargarInsumosTallerCache();
+    await cargarPedidosCrmActivos();
+    await cargarConsumosEnCurso();
+  }
+
+  async function cargarInsumosTallerCache() {
+    const { data } = await supabaseClient
+      .from('inventario_items')
+      .select('id, nombre, stock_actual, unidad_medida')
+      .eq('tipo', 'merceria')
+      .eq('activo', true)
+      .eq('centro_costo_id', centroCostoTallerId)
+      .order('nombre', { ascending: true });
+    insumosTallerCache = data || [];
+  }
+
+  async function cargarPedidosCrmActivos() {
+    const contenedor = document.getElementById('listaPedidosCrmActivos');
+    contenedor.innerHTML = '<div class="cargando">Cargando pedidos del CRM...</div>';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/crm/pedidos-activos', {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      contenedor.innerHTML = '<div class="cargando">No se pudieron cargar los pedidos del CRM: ' + (err.error || 'Error desconocido') + '</div>';
+      return;
+    }
+
+    const { pedidos } = await resp.json();
+
+    if (!pedidos || pedidos.length === 0) {
+      contenedor.innerHTML = '<div class="cargando">No hay pedidos activos en el CRM ahora mismo.</div>';
+      return;
+    }
+
+    const etiquetasEstado = { 'en proceso': '📝 En proceso', 'en produccion': '🧵 En producción', 'listo': '📦 Listo', 'enviado': '🚚 Enviado' };
+
+    contenedor.innerHTML = pedidos.map(p => {
+      const numeroPedido = p.numero_pedido || p.id.slice(0, 8);
+      const entrega = p.fecha_entrega ? new Date(p.fecha_entrega).toLocaleDateString('es-CO') : 'Sin fecha';
+      const abierto = pedidoCrmAbiertoId === p.id;
+
+      const opcionesInsumo = insumosTallerCache.map(i => `<option value="${i.id}">${escaparHtml(i.nombre)} (stock: ${i.stock_actual} ${i.unidad_medida})</option>`).join('');
+
+      return `
+        <div class="item-consumo">
+          <div class="item-consumo-fila" style="cursor:pointer;" onclick="alternarTomaMaterial('${p.id}')">
+            <div class="item-producto-info">
+              <div class="item-producto-nombre">${escaparHtml(numeroPedido)} — ${escaparHtml(p.tipo || 'Amigurumi')}</div>
+              <div class="item-producto-meta">${escaparHtml(p.nombre_cliente || 'Sin cliente')} · Entrega: ${entrega} · <span class="badge-inactivo" style="background:var(--rosa-suave);color:var(--rosa-principal);">${etiquetasEstado[p.estado] || p.estado}</span></div>
+            </div>
+          </div>
+          ${p.descripcion ? `<div style="font-size:12px;opacity:0.65;margin-top:4px;padding-left:2px;">${escaparHtml(p.descripcion)}</div>` : ''}
+          <div class="item-consumo-acciones ${abierto ? 'abierto' : ''}" style="flex-direction:column;align-items:stretch;">
+            <label style="margin-top:8px;font-size:11px;">Insumo a tomar</label>
+            <select id="insumo-tomar-${p.id}">${opcionesInsumo || '<option value="">No hay insumos cargados en el Taller</option>'}</select>
+            <label style="margin-top:6px;font-size:11px;">Cantidad</label>
+            <input type="number" min="0.1" step="0.1" placeholder="Ej: 50 (gramos)" id="cantidad-tomar-${p.id}">
+            <button onclick="confirmarTomaMaterial('${p.id}', '${escaparHtml(numeroPedido)}')" style="margin-top:8px;padding:8px;border-radius:8px;border:none;background:var(--rosa-principal);color:white;font-family:'Poppins',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;">Tomar material</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function alternarTomaMaterial(pedidoId) {
+    pedidoCrmAbiertoId = pedidoCrmAbiertoId === pedidoId ? null : pedidoId;
+    cargarPedidosCrmActivos();
+  }
+
+  async function confirmarTomaMaterial(pedidoId, numeroPedido) {
+    const insumoId = document.getElementById(`insumo-tomar-${pedidoId}`).value;
+    const cantidad = Number(document.getElementById(`cantidad-tomar-${pedidoId}`).value);
+
+    if (!insumoId) { alert('Selecciona un insumo.'); return; }
+    if (!cantidad || cantidad <= 0) { alert('Escribe una cantidad válida.'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/crm/tomar-material', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({
+        pedido_crm_id: pedidoId,
+        numero_pedido_crm: numeroPedido,
+        inventario_item_id: insumoId,
+        cantidad_tomada: cantidad
+      })
+    });
+
+    const datos = await resp.json();
+    if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudo registrar')); return; }
+
+    pedidoCrmAbiertoId = null;
+    await cargarInsumosTallerCache();
+    await cargarPedidosCrmActivos();
+    await cargarConsumosEnCurso();
+  }
+
+  async function cargarConsumosEnCurso() {
+    const contenedor = document.getElementById('listaConsumosEnCurso');
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/crm/consumos-en-curso', {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+
+    if (!resp.ok) {
+      contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>';
+      return;
+    }
+
+    const { consumos } = await resp.json();
+
+    if (!consumos || consumos.length === 0) {
+      contenedor.innerHTML = '<div class="cargando">No tienes material en uso ahora mismo.</div>';
+      return;
+    }
+
+    contenedor.innerHTML = consumos.map(c => {
+      const nombreInsumo = c.inventario_items ? c.inventario_items.nombre : 'Insumo';
+      const unidad = c.inventario_items ? c.inventario_items.unidad_medida : '';
+      const fecha = new Date(c.fecha_toma).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
+      return `
+        <div class="fila-consumo-historial" style="padding:10px 0;">
+          <div><strong>${c.cantidad_tomada} ${unidad}</strong> de ${escaparHtml(nombreInsumo)}</div>
+          <div style="opacity:0.6;font-size:11.5px;">Pedido: ${escaparHtml(c.numero_pedido_crm || c.pedido_crm_id.slice(0,8))} · Tomado: ${fecha}</div>
+          <div style="display:flex;gap:8px;margin-top:6px;align-items:center;">
+            <input type="number" min="0" step="0.1" placeholder="¿Cuánto sobró?" id="devolver-${c.id}" style="flex:1;padding:7px 9px;font-size:12.5px;">
+            <button onclick="confirmarDevolverMaterial('${c.id}')" style="padding:7px 12px;border-radius:8px;border:none;background:var(--verde-exito);color:white;font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">Devolver sobrante</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function confirmarDevolverMaterial(consumoId) {
+    const inputEl = document.getElementById(`devolver-${consumoId}`);
+    const cantidadDevuelta = Number(inputEl.value);
+
+    if (inputEl.value === '' || isNaN(cantidadDevuelta) || cantidadDevuelta < 0) {
+      alert('Escribe cuánto sobró (puede ser 0 si no sobró nada).');
+      return;
+    }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/crm/devolver-material', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ consumo_id: consumoId, cantidad_devuelta: cantidadDevuelta })
+    });
+
+    const datos = await resp.json();
+    if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudo registrar la devolución')); return; }
+
+    alert('✅ Consumo registrado correctamente.');
+    await cargarInsumosTallerCache();
+    await cargarPedidosCrmActivos();
+    await cargarConsumosEnCurso();
   }
 
   function actualizarSidebar() {
