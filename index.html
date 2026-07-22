@@ -932,78 +932,97 @@
     <div class="subtitulo">Presupuesto asignado este mes, gastos, y los pagos internos pendientes.</div>
   </div>
 
-  <div class="grilla-3">
-
-    <div class="panel">
-      <h2>Resumen de mi departamento</h2>
-      <div id="resumenMiDepartamento"><div class="cargando">Cargando...</div></div>
-    </div>
-
-    <div class="panel">
-      <h2>Registrar un gasto</h2>
-      <div class="subtitulo">Ej: compraste insumos a un proveedor, pagaste mano de obra, u otro gasto.</div>
-      <label for="gastoCategoria">Categoría</label>
-      <select id="gastoCategoria">
-        <option value="insumos">Insumos</option>
-        <option value="mano_obra">Mano de obra</option>
-        <option value="otros_gastos">Otros gastos</option>
-      </select>
-      <label for="gastoDescripcion">¿En qué se gastó?</label>
-      <input type="text" id="gastoDescripcion" placeholder="Ej: Compra de lana a proveedor X">
-      <label for="gastoMonto">Monto (COP)</label>
-      <input type="number" id="gastoMonto" placeholder="0" min="1" step="1000">
-      <button class="btn-principal" id="btnRegistrarGasto" onclick="confirmarRegistrarGasto()">Registrar gasto</button>
-      <div class="mensaje" id="mensajeGasto"></div>
-    </div>
-
-    <div class="panel">
-      <h2>Pagos internos pendientes</h2>
-      <div class="subtitulo">Ventas a otros departamentos donde vendiste, y todavía falta el pago real.</div>
-      <div id="listaPagosPendientesPropios"><div class="cargando">Cargando...</div></div>
-    </div>
-
+  <div class="filtro-tipo" style="margin-bottom:20px;">
+    <button class="chip-filtro activo" data-subtab-btn="pagosPendientes" onclick="mostrarSubTabGrupo('pagosPendientes', 'subtabPagosResumen', this)">📊 Resumen</button>
+    <button class="chip-filtro" data-subtab-btn="pagosPendientes" onclick="mostrarSubTabGrupo('pagosPendientes', 'subtabPagosGastos', this)">💸 Gastos</button>
+    <button class="chip-filtro" data-subtab-btn="pagosPendientes" onclick="mostrarSubTabGrupo('pagosPendientes', 'subtabPagosPresupuesto', this)">📋 Presupuesto</button>
   </div>
 
-  <div class="panel" style="margin-top:20px;max-height:none;">
-    <h2>Presupuesto de este mes</h2>
-    <div class="subtitulo">Cuánto puedes gastar en cada categoría este mes, y cuánto llevas gastado.</div>
-    <div id="listaPresupuestoMio"><div class="cargando">Cargando...</div></div>
+  <div id="subtabPagosResumen" data-subtab-grupo="pagosPendientes">
+    <div class="grilla-2">
+      <div class="panel">
+        <h2>Resumen de mi departamento</h2>
+        <div id="resumenMiDepartamento"><div class="cargando">Cargando...</div></div>
+      </div>
+      <div class="panel">
+        <h2>Pagos internos pendientes</h2>
+        <div class="subtitulo">Ventas a otros departamentos donde vendiste, y todavía falta el pago real.</div>
+        <div id="listaPagosPendientesPropios"><div class="cargando">Cargando...</div></div>
+      </div>
+    </div>
   </div>
 
-  <div class="panel" style="margin-top:20px;max-height:none;">
-    <h2>Historial de mis gastos</h2>
-    <div id="listaHistorialGastosPropios"><div class="cargando">Cargando...</div></div>
+  <div id="subtabPagosGastos" data-subtab-grupo="pagosPendientes" class="oculto">
+    <div class="grilla-2">
+      <div class="panel">
+        <h2>Registrar un gasto</h2>
+        <div class="subtitulo">Ej: compraste insumos a un proveedor, pagaste mano de obra, u otro gasto.</div>
+        <label for="gastoCategoria">Categoría</label>
+        <select id="gastoCategoria">
+          <option value="insumos">Insumos</option>
+          <option value="mano_obra">Mano de obra</option>
+          <option value="otros_gastos">Otros gastos</option>
+        </select>
+        <label for="gastoDescripcion">¿En qué se gastó?</label>
+        <input type="text" id="gastoDescripcion" placeholder="Ej: Compra de lana a proveedor X">
+        <label for="gastoMonto">Monto (COP)</label>
+        <input type="number" id="gastoMonto" placeholder="0" min="1" step="1000">
+        <button class="btn-principal" id="btnRegistrarGasto" onclick="confirmarRegistrarGasto()">Registrar gasto</button>
+        <div class="mensaje" id="mensajeGasto"></div>
+      </div>
+      <div class="panel">
+        <h2>Historial de mis gastos</h2>
+        <div id="listaHistorialGastosPropios"><div class="cargando">Cargando...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="subtabPagosPresupuesto" data-subtab-grupo="pagosPendientes" class="oculto">
+    <div class="panel" style="max-height:none;">
+      <h2>Presupuesto de este mes</h2>
+      <div class="subtitulo">Cuánto puedes gastar en cada categoría este mes, y cuánto llevas gastado.</div>
+      <div id="listaPresupuestoMio"><div class="cargando">Cargando...</div></div>
+    </div>
   </div>
 </div>
 
 <!-- ===== PANTALLA: DEPARTAMENTOS (cajas y ventas internas) ===== -->
+
 <div id="pantallaDepartamentos" class="oculto contenido">
   <div class="page-header">
     <h1>Departamentos — Cajas y ventas internas</h1>
     <div class="subtitulo">Cada departamento tiene su propia caja. Las ventas entre departamentos mueven dinero real de una caja a otra.</div>
   </div>
 
-  <div class="grilla-3">
+  <div class="filtro-tipo" style="margin-bottom:20px;">
+    <button class="chip-filtro activo" data-subtab-btn="departamentos" onclick="mostrarSubTabGrupo('departamentos', 'subtabDeptoCajas', this)">💰 Cajas y capital</button>
+    <button class="chip-filtro" data-subtab-btn="departamentos" onclick="mostrarSubTabGrupo('departamentos', 'subtabDeptoVentaInterna', this)">🔄 Venta interna</button>
+    <button class="chip-filtro" data-subtab-btn="departamentos" onclick="mostrarSubTabGrupo('departamentos', 'subtabDeptoHistorial', this)">📋 Historial</button>
+  </div>
 
-    <div class="panel">
-      <h2>Cajas por departamento</h2>
-      <div id="listaCajasDepartamentos"><div class="cargando">Cargando departamentos...</div></div>
+  <div id="subtabDeptoCajas" data-subtab-grupo="departamentos">
+    <div class="grilla-2">
+      <div class="panel">
+        <h2>Cajas por departamento</h2>
+        <div id="listaCajasDepartamentos"><div class="cargando">Cargando departamentos...</div></div>
+      </div>
+      <div class="panel">
+        <h2>Depositar capital</h2>
+        <div class="subtitulo">Ingresa dinero a la caja de un departamento (capital inicial o refuerzo).</div>
+        <label for="depositoDepartamento">Departamento</label>
+        <select id="depositoDepartamento"><option value="">Cargando...</option></select>
+        <label for="depositoMonto">Monto a depositar (COP)</label>
+        <input type="number" id="depositoMonto" placeholder="0" min="1" step="1000">
+        <label for="depositoDescripcion">Descripción <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+        <input type="text" id="depositoDescripcion" placeholder="Ej: Capital inicial">
+        <button class="btn-principal" id="btnDepositarCapital" onclick="confirmarDepositoCapital()">Depositar</button>
+        <div class="mensaje" id="mensajeDeposito"></div>
+      </div>
     </div>
+  </div>
 
-    <div class="panel">
-      <h2>Depositar capital</h2>
-      <div class="subtitulo">Ingresa dinero a la caja de un departamento (capital inicial o refuerzo).</div>
-      <label for="depositoDepartamento">Departamento</label>
-      <select id="depositoDepartamento"><option value="">Cargando...</option></select>
-      <label for="depositoMonto">Monto a depositar (COP)</label>
-      <input type="number" id="depositoMonto" placeholder="0" min="1" step="1000">
-      <label for="depositoDescripcion">Descripción <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
-      <input type="text" id="depositoDescripcion" placeholder="Ej: Capital inicial">
-      <button class="btn-principal" id="btnDepositarCapital" onclick="confirmarDepositoCapital()">Depositar</button>
-      <div class="mensaje" id="mensajeDeposito"></div>
-    </div>
-
-    <div class="panel">
+  <div id="subtabDeptoVentaInterna" data-subtab-grupo="departamentos" class="oculto">
+    <div class="panel" style="max-width:520px;">
       <h2>Venta interna entre departamentos</h2>
       <div class="subtitulo">Ej: el Taller le vende producto terminado a la Tienda. El stock y el dinero se mueven automáticamente.</div>
       <label for="ventaInternaVendedor">Departamento que vende</label>
@@ -1026,12 +1045,13 @@
       <button class="btn-principal" id="btnRegistrarVentaInterna" onclick="confirmarVentaInterna()">Registrar venta interna</button>
       <div class="mensaje" id="mensajeVentaInterna"></div>
     </div>
-
   </div>
 
-  <div class="panel" style="margin-top:20px;max-height:none;">
-    <h2>Historial de ventas internas</h2>
-    <div id="listaVentasInternas"><div class="cargando">Cargando historial...</div></div>
+  <div id="subtabDeptoHistorial" data-subtab-grupo="departamentos" class="oculto">
+    <div class="panel" style="max-height:none;">
+      <h2>Historial de ventas internas</h2>
+      <div id="listaVentasInternas"><div class="cargando">Cargando historial...</div></div>
+    </div>
   </div>
 </div>
 
@@ -1042,34 +1062,43 @@
     <div class="subtitulo">Presupuesto mensual vs gasto real de cada departamento, con alertas, más el resumen financiero general.</div>
   </div>
 
-  <div class="grilla-2" style="margin-bottom:20px;">
-    <div class="panel">
-      <h2>Asignar presupuesto del mes</h2>
-      <label for="presupuestoDepartamento">Departamento</label>
-      <select id="presupuestoDepartamento"><option value="">Cargando...</option></select>
-      <label for="presupuestoPeriodo">Mes</label>
-      <input type="month" id="presupuestoPeriodo" onchange="cargarPresupuestoConsolidado()">
-      <label for="presupuestoCategoria">Categoría</label>
-      <select id="presupuestoCategoria">
-        <option value="insumos">Insumos</option>
-        <option value="mano_obra">Mano de obra</option>
-        <option value="otros_gastos">Otros gastos</option>
-      </select>
-      <label for="presupuestoMonto">Monto asignado (COP)</label>
-      <input type="number" id="presupuestoMonto" placeholder="0" min="0" step="1000">
-      <button class="btn-principal" id="btnAsignarPresupuesto" onclick="confirmarAsignarPresupuesto()">Guardar presupuesto</button>
-      <div class="mensaje" id="mensajePresupuesto"></div>
-    </div>
+  <div class="filtro-tipo" style="margin-bottom:20px;">
+    <button class="chip-filtro activo" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinPresupuestos', this)">💵 Presupuestos</button>
+    <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinReportes', this)">📊 Reportes por departamento</button>
+  </div>
 
-    <div class="panel">
-      <h2>Presupuesto vs gasto — todos los departamentos</h2>
-      <div id="listaPresupuestoConsolidado"><div class="cargando">Cargando...</div></div>
+  <div id="subtabFinPresupuestos" data-subtab-grupo="reportesFin">
+    <div class="grilla-2">
+      <div class="panel">
+        <h2>Asignar presupuesto del mes</h2>
+        <label for="presupuestoDepartamento">Departamento</label>
+        <select id="presupuestoDepartamento"><option value="">Cargando...</option></select>
+        <label for="presupuestoPeriodo">Mes</label>
+        <input type="month" id="presupuestoPeriodo" onchange="cargarPresupuestoConsolidado()">
+        <label for="presupuestoCategoria">Categoría</label>
+        <select id="presupuestoCategoria">
+          <option value="insumos">Insumos</option>
+          <option value="mano_obra">Mano de obra</option>
+          <option value="otros_gastos">Otros gastos</option>
+        </select>
+        <label for="presupuestoMonto">Monto asignado (COP)</label>
+        <input type="number" id="presupuestoMonto" placeholder="0" min="0" step="1000">
+        <button class="btn-principal" id="btnAsignarPresupuesto" onclick="confirmarAsignarPresupuesto()">Guardar presupuesto</button>
+        <div class="mensaje" id="mensajePresupuesto"></div>
+      </div>
+      <div class="panel">
+        <h2>Presupuesto vs gasto — todos los departamentos</h2>
+        <div id="listaPresupuestoConsolidado"><div class="cargando">Cargando...</div></div>
+      </div>
     </div>
   </div>
 
-  <div id="listaReportesFinancieros"><div class="cargando">Cargando reportes...</div></div>
+  <div id="subtabFinReportes" data-subtab-grupo="reportesFin" class="oculto">
+    <div id="listaReportesFinancieros"><div class="cargando">Cargando reportes...</div></div>
+  </div>
 </div>
 
+<!-- ===== PANTALLA: NÓMINA (solo Admin) ===== -->
 <!-- ===== PANTALLA: NÓMINA (solo Admin) ===== -->
 <div id="pantallaNomina" class="oculto contenido">
   <div class="page-header">
@@ -3132,6 +3161,7 @@
 
   async function mostrarPantallaDepartamentos() {
     mostrarPantalla('pantallaDepartamentos');
+    mostrarSubTabGrupo('departamentos', 'subtabDeptoCajas', document.querySelector('[data-subtab-btn="departamentos"]'));
     ocultarMensaje('mensajeDeposito');
     ocultarMensaje('mensajeVentaInterna');
     document.getElementById('depositoMonto').value = '';
@@ -3465,6 +3495,7 @@
 
   async function mostrarPantallaPagosPendientes() {
     mostrarPantalla('pantallaPagosPendientes');
+    mostrarSubTabGrupo('pagosPendientes', 'subtabPagosResumen', document.querySelector('[data-subtab-btn="pagosPendientes"]'));
     ocultarMensaje('mensajeGasto');
     document.getElementById('gastoDescripcion').value = '';
     document.getElementById('gastoMonto').value = '';
@@ -3721,6 +3752,7 @@
   // ============================================================================
   async function mostrarPantallaReportesFinancieros() {
     mostrarPantalla('pantallaReportesFinancieros');
+    mostrarSubTabGrupo('reportesFin', 'subtabFinPresupuestos', document.querySelector('[data-subtab-btn="reportesFin"]'));
     document.getElementById('presupuestoPeriodo').value = new Date().toISOString().slice(0, 7);
     ocultarMensaje('mensajePresupuesto');
     await cargarDepartamentosParaPresupuesto();
@@ -4786,6 +4818,13 @@
   // ============================================================
   let empleadoNovedadesAbiertoId = null;
   let historialSalarioAbierto = null;
+
+  function mostrarSubTabGrupo(grupo, tabId, botonEl) {
+    document.querySelectorAll(`[data-subtab-grupo="${grupo}"]`).forEach(el => el.classList.add('oculto'));
+    document.getElementById(tabId).classList.remove('oculto');
+    document.querySelectorAll(`[data-subtab-btn="${grupo}"]`).forEach(b => b.classList.remove('activo'));
+    if (botonEl) botonEl.classList.add('activo');
+  }
 
   function mostrarSubTabNomina(tab, botonEl) {
     document.querySelectorAll('.subtab-nomina').forEach(el => el.classList.add('oculto'));
