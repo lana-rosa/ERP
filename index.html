@@ -1113,10 +1113,10 @@
     <div class="panel">
       <h2>Crear período de nómina</h2>
       <label for="periodoFechaInicio">Fecha de inicio</label>
-      <input type="date" id="periodoFechaInicio">
+      <input type="date" id="periodoFechaInicio" onchange="calcularDiasPeriodo()">
       <label for="periodoFechaFin">Fecha de fin</label>
-      <input type="date" id="periodoFechaFin">
-      <label for="periodoDias">Días efectivos (normalmente 30)</label>
+      <input type="date" id="periodoFechaFin" onchange="calcularDiasPeriodo()">
+      <label for="periodoDias">Días efectivos (se calcula solo, pero puedes ajustarlo)</label>
       <input type="number" id="periodoDias" value="30" min="1" max="30">
       <button class="btn-principal" id="btnCrearPeriodo" onclick="confirmarCrearPeriodo()">Crear período</button>
       <div class="mensaje" id="mensajePeriodo"></div>
@@ -1195,7 +1195,7 @@
       pantallaPedidosCanal: 'nav-pedidos-canal',
       pantallaSolicitudes: 'nav-solicitudes',
       pantallaInventario: 'nav-inventario',
-      pantallaAjusteStock: 'nav-ajustestock',
+      pantallaAjustestock: 'nav-ajustestock',
       pantallaConsumoTaller: 'nav-consumotaller',
       pantallaPedidosCrm: 'nav-pedidos-crm',
       pantallaTurnoActivo: 'nav-turno',
@@ -4242,6 +4242,34 @@
   // ============================================================================
   let periodoNominaSeleccionadoId = null;
 
+  function calcularDiasPeriodo() {
+    const fechaInicioStr = document.getElementById('periodoFechaInicio').value;
+    const fechaFinStr = document.getElementById('periodoFechaFin').value;
+    if (!fechaInicioStr || !fechaFinStr) return;
+
+    const inicio = new Date(fechaInicioStr + 'T00:00:00');
+    const fin = new Date(fechaFinStr + 'T00:00:00');
+    if (fin < inicio) return;
+
+    let diaInicio = inicio.getDate();
+    let diaFin = fin.getDate();
+    // Convención colombiana de nómina: el día 31 se cuenta como si fuera 30
+    if (diaInicio === 31) diaInicio = 30;
+    if (diaFin === 31) diaFin = 30;
+
+    const mesesDiff = (fin.getFullYear() - inicio.getFullYear()) * 12 + (fin.getMonth() - inicio.getMonth());
+    let dias = mesesDiff * 30 + (diaFin - diaInicio) + 1; // +1 incluye el día de inicio y el de fin
+
+    if (dias < 1) dias = 1;
+    if (dias > 30) dias = 30;
+
+    document.getElementById('periodoDias').value = dias;
+  }
+
+  let departamentosParaEmpleadoCache = [];
+  let empleadosActivosCache = [];
+  let empleadoEditandoId = null;
+
   async function mostrarPantallaNomina() {
     mostrarPantalla('pantallaNomina');
     ocultarMensaje('mensajeEmpleado');
@@ -4251,6 +4279,7 @@
     document.getElementById('empFechaIngreso').value = '';
     document.getElementById('empTeletrabajo').checked = false;
     periodoNominaSeleccionadoId = null;
+    empleadoEditandoId = null;
     document.getElementById('listaLiquidacionesNomina').innerHTML = '<div class="cargando">Selecciona un período arriba para ver sus liquidaciones.</div>';
 
     await cargarDepartamentosParaEmpleado();
@@ -4264,9 +4293,10 @@
       .select('id, nombre')
       .eq('activo', true)
       .order('codigo', { ascending: true });
+    departamentosParaEmpleadoCache = data || [];
     document.getElementById('empDepartamento').innerHTML =
       '<option value="">Sin departamento específico</option>' +
-      (data || []).map(d => `<option value="${d.id}">${escaparHtml(d.nombre)}</option>`).join('');
+      departamentosParaEmpleadoCache.map(d => `<option value="${d.id}">${escaparHtml(d.nombre)}</option>`).join('');
   }
 
   async function confirmarCrearEmpleado() {
@@ -4324,15 +4354,60 @@
     if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
 
     const { empleados } = await resp.json();
-    const activos = (empleados || []).filter(e => e.activo);
+    empleadosActivosCache = (empleados || []).filter(e => e.activo);
+    renderizarListaEmpleados();
+  }
 
-    if (activos.length === 0) {
+  function renderizarListaEmpleados() {
+    const contenedor = document.getElementById('listaEmpleados');
+
+    if (empleadosActivosCache.length === 0) {
       contenedor.innerHTML = '<div class="cargando">No hay empleados registrados todavía.</div>';
       return;
     }
 
-    contenedor.innerHTML = activos.map(e => {
+    const opcionesRiesgoArl = [
+      { valor: 'I', texto: 'Clase I — Riesgo mínimo (taller/oficina)' },
+      { valor: 'II', texto: 'Clase II — Riesgo bajo' },
+      { valor: 'III', texto: 'Clase III — Riesgo medio' },
+      { valor: 'IV', texto: 'Clase IV — Riesgo alto' },
+      { valor: 'V', texto: 'Clase V — Riesgo máximo' },
+    ];
+
+    contenedor.innerHTML = empleadosActivosCache.map(e => {
       const nombreDepto = e.centros_costo ? e.centros_costo.nombre : 'Sin departamento';
+      const estaEditando = empleadoEditandoId === e.id;
+
+      if (estaEditando) {
+        const opcionesDepto = '<option value="">Sin departamento específico</option>' +
+          departamentosParaEmpleadoCache.map(d => `<option value="${d.id}" ${d.id === e.centro_costo_id ? 'selected' : ''}>${escaparHtml(d.nombre)}</option>`).join('');
+        const opcionesArl = opcionesRiesgoArl.map(o => `<option value="${o.valor}" ${o.valor === e.clase_riesgo_arl ? 'selected' : ''}>${escaparHtml(o.texto)}</option>`).join('');
+        const fechaIngresoValor = e.fecha_ingreso ? e.fecha_ingreso.slice(0, 10) : '';
+
+        return `
+          <div class="fila-inventario-editable" style="border-color:var(--rosa-medio);">
+            <label>Nombre completo</label>
+            <input type="text" id="edit-emp-nombre-${e.id}" value="${escaparHtml(e.nombre_completo)}">
+            <label style="margin-top:8px;">Salario básico mensual (COP)</label>
+            <input type="number" id="edit-emp-salario-${e.id}" min="1" step="1000" value="${e.salario_basico}">
+            <label style="margin-top:8px;">Fecha de ingreso</label>
+            <input type="date" id="edit-emp-fecha-${e.id}" value="${fechaIngresoValor}">
+            <label style="margin-top:8px;">Departamento</label>
+            <select id="edit-emp-depto-${e.id}">${opcionesDepto}</select>
+            <label style="margin-top:8px;">Clase de riesgo ARL</label>
+            <select id="edit-emp-arl-${e.id}">${opcionesArl}</select>
+            <label style="display:flex;align-items:center;gap:8px;margin-top:10px;">
+              <input type="checkbox" id="edit-emp-teletrabajo-${e.id}" style="width:auto;" ${e.teletrabajo ? 'checked' : ''}>
+              <span style="font-size:13px;">Trabaja en teletrabajo (no recibe auxilio de transporte)</span>
+            </label>
+            <div class="fila-inventario-acciones" style="margin-top:12px;">
+              <button class="btn-mini guardar" onclick="guardarEdicionEmpleado('${e.id}')">Guardar cambios</button>
+              <button class="btn-mini desactivar" onclick="cancelarEdicionEmpleado()">Cancelar</button>
+            </div>
+          </div>
+        `;
+      }
+
       return `
         <div class="fila-inventario-editable">
           <div class="fila-inventario-titulo">
@@ -4343,10 +4418,59 @@
             Salario: <strong>${formatearMoneda(e.salario_basico)}</strong> · 🏢 ${escaparHtml(nombreDepto)}<br>
             <span style="opacity:0.6;">Ingreso: ${new Date(e.fecha_ingreso).toLocaleDateString('es-CO')}${e.teletrabajo ? ' · Teletrabajo' : ''}</span>
           </div>
-          <button class="btn-mini desactivar" style="margin-top:8px;max-width:160px;" onclick="desactivarEmpleado('${e.id}')">Marcar como retirado</button>
+          <div class="fila-inventario-acciones" style="margin-top:8px;">
+            <button class="btn-mini editar" onclick="activarEdicionEmpleado('${e.id}')">✏️ Editar</button>
+            <button class="btn-mini desactivar" onclick="desactivarEmpleado('${e.id}')">Marcar como retirado</button>
+          </div>
         </div>
       `;
     }).join('');
+  }
+
+  function activarEdicionEmpleado(empleadoId) {
+    empleadoEditandoId = empleadoId;
+    renderizarListaEmpleados();
+  }
+
+  function cancelarEdicionEmpleado() {
+    empleadoEditandoId = null;
+    renderizarListaEmpleados();
+  }
+
+  async function guardarEdicionEmpleado(empleadoId) {
+    const nombre = document.getElementById(`edit-emp-nombre-${empleadoId}`).value.trim();
+    const salario = Number(document.getElementById(`edit-emp-salario-${empleadoId}`).value);
+    const fechaIngreso = document.getElementById(`edit-emp-fecha-${empleadoId}`).value;
+    const centroCostoId = document.getElementById(`edit-emp-depto-${empleadoId}`).value;
+    const claseRiesgoArl = document.getElementById(`edit-emp-arl-${empleadoId}`).value;
+    const teletrabajo = document.getElementById(`edit-emp-teletrabajo-${empleadoId}`).checked;
+
+    if (!nombre) { alert('El nombre no puede quedar vacío.'); return; }
+    if (!salario || salario <= 0) { alert('Escribe un salario válido.'); return; }
+    if (!fechaIngreso) { alert('Escribe la fecha de ingreso.'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/nomina/empleados/actualizar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({
+        empleado_id: empleadoId,
+        nombre_completo: nombre,
+        salario_basico: salario,
+        fecha_ingreso: fechaIngreso,
+        centro_costo_id: centroCostoId || null,
+        clase_riesgo_arl: claseRiesgoArl,
+        teletrabajo
+      })
+    });
+
+    if (!resp.ok) {
+      const datos = await resp.json().catch(() => ({}));
+      alert('No se pudo guardar el cambio: ' + (datos.error || 'Error desconocido'));
+      return;
+    }
+
+    empleadoEditandoId = null;
+    await cargarEmpleados();
   }
 
   async function desactivarEmpleado(empleadoId) {
