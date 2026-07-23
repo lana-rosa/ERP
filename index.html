@@ -798,7 +798,7 @@
   <div class="grilla-2">
 
     <div class="panel">
-      <h2>Pedidos activos (CRM)</h2>
+      <h2>Pedidos en producción (CRM)</h2>
       <div id="listaPedidosCrmActivos"><div class="cargando">Cargando pedidos...</div></div>
     </div>
 
@@ -862,9 +862,13 @@
     <div class="subtitulo">Todos se despachan y facturan desde la Tienda. Redes sociales cobran 50% de anticipo (sin envío); Tienda virtual cobra el 100% de una vez.</div>
   </div>
 
-  <div class="grilla-2">
+  <div class="filtro-tipo" style="margin-bottom:20px;">
+    <button class="chip-filtro activo" data-subtab-btn="pedidosCanal" onclick="mostrarSubTabGrupo('pedidosCanal', 'subtabCanalActivos', this)">📋 Pedidos activos</button>
+    <button class="chip-filtro" data-subtab-btn="pedidosCanal" onclick="mostrarSubTabGrupo('pedidosCanal', 'subtabCanalNuevo', this)">+ Nuevo pedido</button>
+  </div>
 
-    <div class="panel">
+  <div id="subtabCanalNuevo" data-subtab-grupo="pedidosCanal" class="oculto">
+    <div class="panel" style="max-width:520px;">
       <h2>Nuevo pedido</h2>
       <label for="pedidoCanal">Canal</label>
       <select id="pedidoCanal" onchange="actualizarResumenAnticipoPedido()">
@@ -903,8 +907,10 @@
       <button class="btn-principal" id="btnCrearPedido" onclick="confirmarCrearPedidoCanal()">Crear pedido</button>
       <div class="mensaje" id="mensajePedidoCanal"></div>
     </div>
+  </div>
 
-    <div class="panel">
+  <div id="subtabCanalActivos" data-subtab-grupo="pedidosCanal">
+    <div class="panel" style="max-width:none;max-height:none;">
       <h2>Pedidos activos</h2>
       <div class="filtro-tipo">
         <button class="chip-filtro activo" data-filtro-pedido="todos" onclick="cambiarFiltroPedidos('todos', this)">Todos</button>
@@ -914,7 +920,6 @@
       </div>
       <div id="listaPedidosCanal"><div class="cargando">Cargando pedidos...</div></div>
     </div>
-
   </div>
 </div>
 
@@ -1132,8 +1137,19 @@
 
   <!-- ===== SUBTAB: EMPLEADOS ===== -->
   <div id="subtabNominaEmpleados" class="subtab-nomina">
-    <div class="grilla-2" style="margin-bottom:20px;">
+    <div class="filtro-tipo" style="margin-bottom:16px;">
+      <button class="chip-filtro activo" data-subtab-btn="empNomina" onclick="mostrarSubTabGrupo('empNomina', 'subtabEmpListado', this)">👥 Empleados activos</button>
+      <button class="chip-filtro" data-subtab-btn="empNomina" onclick="mostrarSubTabGrupo('empNomina', 'subtabEmpAgregar', this)">+ Agregar empleado</button>
+    </div>
 
+    <div id="subtabEmpListado" data-subtab-grupo="empNomina">
+      <div class="panel" style="max-width:none;">
+        <h2>Empleados activos</h2>
+        <div id="listaEmpleados"><div class="cargando">Cargando...</div></div>
+      </div>
+    </div>
+
+    <div id="subtabEmpAgregar" data-subtab-grupo="empNomina" class="oculto">
       <div class="panel">
         <h2>Agregar empleado</h2>
         <label for="empNombre">Nombre completo</label>
@@ -1195,15 +1211,9 @@
         <button class="btn-principal" id="btnCrearEmpleado" onclick="confirmarCrearEmpleado()">Agregar empleado</button>
         <div class="mensaje" id="mensajeEmpleado"></div>
       </div>
-
-      <div class="panel">
-        <h2>Empleados activos</h2>
-        <div id="listaEmpleados"><div class="cargando">Cargando...</div></div>
-      </div>
-
     </div>
 
-    <div class="panel" style="max-height:none;">
+    <div class="panel" style="max-height:none;margin-top:20px;">
       <h2>🏖️ Banco de vacaciones</h2>
       <div class="subtitulo">Días causados (15 por cada 360 días trabajados, Art. 186 CST) menos los días ya tomados en liquidaciones.</div>
       <div id="listaSaldoVacaciones"><div class="cargando">Cargando...</div></div>
@@ -3923,6 +3933,7 @@
 
   async function mostrarPantallaPedidosCanal() {
     mostrarPantalla('pantallaPedidosCanal');
+    mostrarSubTabGrupo('pedidosCanal', 'subtabCanalActivos', document.querySelector('[data-subtab-btn="pedidosCanal"]'));
     limpiarFormularioPedidoCanal();
     await cargarPedidosCanal();
   }
@@ -4114,6 +4125,7 @@
       mostrarMensaje('mensajePedidoCanal', '✅ Pedido creado. Ahora regístrale el anticipo cuando el cliente pague.', 'exito');
       limpiarFormularioPedidoCanal();
       await cargarPedidosCanal();
+      setTimeout(() => mostrarSubTabGrupo('pedidosCanal', 'subtabCanalActivos', document.querySelector('[data-subtab-btn="pedidosCanal"]')), 1200);
     } finally {
       btn.disabled = false;
       btn.textContent = 'Crear pedido';
@@ -4279,10 +4291,11 @@
       return;
     }
 
-    const { pedidos } = await resp.json();
+    const { pedidos: pedidosTodos } = await resp.json();
+    const pedidos = (pedidosTodos || []).filter(p => p.estado === 'en produccion');
 
     if (!pedidos || pedidos.length === 0) {
-      contenedor.innerHTML = '<div class="cargando">No hay pedidos activos en el CRM ahora mismo.</div>';
+      contenedor.innerHTML = '<div class="cargando">No hay pedidos en producción en el CRM ahora mismo.</div>';
       return;
     }
 
@@ -4539,6 +4552,7 @@
   async function mostrarPantallaNomina() {
     mostrarPantalla('pantallaNomina');
     mostrarSubTabNomina('empleados', document.querySelector('[data-subtab-nomina="empleados"]'));
+    mostrarSubTabGrupo('empNomina', 'subtabEmpListado', document.querySelector('[data-subtab-btn="empNomina"]'));
     ocultarMensaje('mensajeEmpleado');
     ocultarMensaje('mensajePeriodo');
     document.getElementById('empNombre').value = '';
@@ -4753,6 +4767,7 @@
     document.getElementById('empFondoCesantias').value = '';
     document.getElementById('empArlEntidad').value = '';
     await cargarEmpleados();
+    setTimeout(() => mostrarSubTabGrupo('empNomina', 'subtabEmpListado', document.querySelector('[data-subtab-btn="empNomina"]')), 1200);
   }
 
   async function cargarEmpleados() {
