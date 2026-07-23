@@ -524,18 +524,39 @@
   /* ===== SUBTABS NÓMINA ===== */
   .subtab-nomina.oculto { display: none !important; }
 
-  /* ===== CALENDARIO ===== */
-  .calendario-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-  .calendario-dia-nombre { font-size: 10.5px; font-weight: 700; text-align: center; opacity: 0.5; padding: 4px 0; }
-  .calendario-celda { min-height: 56px; border-radius: 8px; border: 1px solid #f0e8ee; padding: 4px; cursor: pointer; font-size: 11px; position: relative; }
-  .calendario-celda:hover { background: var(--rosa-suave); }
-  .calendario-celda.vacia { border: none; cursor: default; }
-  .calendario-celda.vacia:hover { background: none; }
-  .calendario-celda.hoy { border-color: var(--rosa-principal); border-width: 2px; }
-  .calendario-celda.seleccionada { background: var(--rosa-principal); color: white; }
-  .calendario-celda .num-dia { font-weight: 600; }
-  .calendario-celda .punto-evento { width: 6px; height: 6px; border-radius: 50%; background: var(--rosa-principal); display: inline-block; margin: 1px; }
-  .calendario-celda.seleccionada .punto-evento { background: white; }
+  /* ===== SIDEBAR POR DEPARTAMENTOS (acordeón) ===== */
+  .sidebar-depto-header {
+    display: flex; align-items: center; justify-content: space-between;
+    width: 100%; padding: 10px 12px; border-radius: 8px; border: none;
+    background: rgba(255,255,255,0.04); color: var(--sidebar-texto);
+    font-family: 'Poppins', sans-serif; font-size: 12.5px; font-weight: 700;
+    cursor: pointer; text-align: left; margin-top: 6px;
+  }
+  .sidebar-depto-header:hover { background: rgba(255,255,255,0.1); }
+  .sidebar-depto-header .chevron { font-size: 10px; transition: transform 0.15s ease; opacity: 0.6; }
+  .sidebar-depto-header.abierto .chevron { transform: rotate(180deg); }
+  .sidebar-depto-submenu { padding-left: 6px; overflow: hidden; max-height: 0; transition: max-height 0.2s ease; }
+  .sidebar-depto-submenu.abierto { max-height: 600px; }
+  .sidebar-depto-submenu .nav-btn { font-size: 12.5px; padding: 8px 12px; }
+
+  /* ===== CALENDARIO ESTILO GOOGLE ===== */
+  .gcal-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .gcal-toolbar-izq { display: flex; align-items: center; gap: 10px; }
+  .gcal-btn-hoy { padding: 7px 16px; border-radius: 20px; border: 1px solid #dadce0; background: white; font-family: 'Poppins', sans-serif; font-size: 12.5px; font-weight: 600; color: var(--texto-oscuro); cursor: pointer; }
+  .gcal-btn-hoy:hover { background: #f4eef2; }
+  .gcal-nav-flecha { width: 32px; height: 32px; border-radius: 50%; border: none; background: none; font-size: 15px; cursor: pointer; color: var(--texto-oscuro); }
+  .gcal-nav-flecha:hover { background: #f0e8ee; }
+  .gcal-titulo { font-size: 16px; font-weight: 500; color: var(--texto-oscuro); text-transform: capitalize; }
+  .gcal-grid { display: grid; grid-template-columns: repeat(7, 1fr); border-top: 1px solid #e4d9e2; border-left: 1px solid #e4d9e2; }
+  .gcal-dia-nombre { text-align: center; font-size: 10.5px; font-weight: 600; color: #70757a; padding: 6px 0; text-transform: uppercase; letter-spacing: 0.5px; }
+  .gcal-celda { min-height: 84px; border-right: 1px solid #e4d9e2; border-bottom: 1px solid #e4d9e2; padding: 4px; cursor: pointer; position: relative; background: white; }
+  .gcal-celda:hover { background: #f8f5f7; }
+  .gcal-celda.vacia { background: #fbf9fa; cursor: default; }
+  .gcal-celda .gcal-num-dia { width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 12.5px; font-weight: 500; }
+  .gcal-celda.hoy .gcal-num-dia { background: var(--rosa-principal); color: white; font-weight: 700; }
+  .gcal-celda.seleccionada { background: var(--rosa-suave); }
+  .gcal-evento-chip { font-size: 10.5px; padding: 2px 6px; border-radius: 4px; color: white; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+  .gcal-mas-eventos { font-size: 10px; color: #70757a; padding: 2px 6px; }
 </style>
 </head>
 <body>
@@ -548,30 +569,57 @@
   </div>
 
   <div class="sidebar-nav">
-    <div class="sidebar-seccion">Operación</div>
-    <button class="nav-btn" id="nav-ventas" onclick="mostrarPantallaVentas()"><span class="nav-icon">🛒</span> Registrar venta</button>
-    <button class="nav-btn" id="nav-historial" onclick="mostrarPantallaHistorial()"><span class="nav-icon">📋</span> Historial ventas</button>
-    <button class="nav-btn" id="nav-pedidos-canal" onclick="mostrarPantallaPedidosCanal()" style="display:none;"><span class="nav-icon">📱</span> Pedidos WhatsApp/Redes</button>
-    <button class="nav-btn" id="nav-solicitudes" onclick="mostrarPantallaSolicitudes()" style="display:none;"><span class="nav-icon">📦</span> Compras a la Tienda</button>
-
-    <div class="sidebar-seccion" id="seccionInventario" style="display:none;">Inventario</div>
-    <button class="nav-btn" id="nav-inventario" onclick="mostrarPantallaInventario()" style="display:none;"><span class="nav-icon">📊</span> Gestionar inventario</button>
-    <button class="nav-btn" id="nav-ajustestock" onclick="mostrarPantallaAjusteStock()" style="display:none;"><span class="nav-icon">📥</span> Entrada mercancía</button>
-    <button class="nav-btn" id="nav-consumotaller" onclick="mostrarPantallaPedidosCrm()" style="display:none;"><span class="nav-icon">🧶</span> Consumo taller</button>
-    <button class="nav-btn" id="nav-pedidos-crm" onclick="mostrarPantallaPedidosCrm()" style="display:none !important;"><span class="nav-icon">🧵</span> Pedidos y material por pedido</button>
-
-    <div class="sidebar-seccion" id="seccionCaja">Caja</div>
     <button class="nav-btn" id="nav-turno" onclick="irATurnoActivo()"><span class="nav-icon">💵</span> Turno de caja</button>
-    <button class="nav-btn" id="nav-reportes" onclick="mostrarPantallaReportes()" style="display:none;"><span class="nav-icon">📈</span> Reportes turno</button>
-
-    <div class="sidebar-seccion" id="seccionDepartamentos" style="display:none;">Departamentos</div>
-    <button class="nav-btn" id="nav-departamentos" onclick="mostrarPantallaDepartamentos()" style="display:none;"><span class="nav-icon">🏢</span> Cajas y ventas internas</button>
-    <button class="nav-btn" id="nav-reportes-financieros" onclick="mostrarPantallaReportesFinancieros()" style="display:none;"><span class="nav-icon">📊</span> Reportes financieros</button>
-    <button class="nav-btn" id="nav-nomina" onclick="mostrarPantallaNomina()" style="display:none;"><span class="nav-icon">👥</span> Nómina</button>
-    <button class="nav-btn" id="nav-talento-humano" onclick="mostrarPantallaTalentoHumano()" style="display:none;"><span class="nav-icon">🗂️</span> Talento Humano</button>
-    <button class="nav-btn" id="nav-academia" onclick="mostrarPantallaAcademia()" style="display:none;"><span class="nav-icon">🎓</span> Lana Rosa Academy</button>
     <button class="nav-btn" id="nav-calendario" onclick="mostrarPantallaCalendario()"><span class="nav-icon">📅</span> Calendario del equipo</button>
-    <button class="nav-btn" id="nav-pagos-pendientes" onclick="mostrarPantallaPagosPendientes()" style="display:none;"><span class="nav-icon">🏬</span> Mi departamento</button>
+
+    <div class="sidebar-depto" id="deptoTiendaGrupo" style="display:none;">
+      <button class="sidebar-depto-header" id="headerDeptoTienda" onclick="toggleSidebarDepto('deptoTiendaSubmenu', 'headerDeptoTienda')">🏬 Tienda Física <span class="chevron">▾</span></button>
+      <div class="sidebar-depto-submenu" id="deptoTiendaSubmenu">
+        <button class="nav-btn" id="nav-ventas" onclick="mostrarPantallaVentas()"><span class="nav-icon">🛒</span> Registrar venta</button>
+        <button class="nav-btn" id="nav-historial" onclick="mostrarPantallaHistorial('01')"><span class="nav-icon">📋</span> Historial ventas</button>
+        <button class="nav-btn" id="nav-pedidos-canal" onclick="mostrarPantallaPedidosCanal()"><span class="nav-icon">📱</span> Pedidos WhatsApp/Redes</button>
+        <button class="nav-btn" id="nav-solicitudes-tienda" onclick="mostrarPantallaSolicitudes()"><span class="nav-icon">📦</span> Compras a la Tienda</button>
+        <button class="nav-btn" id="nav-inventario-tienda" onclick="mostrarPantallaInventario('01')"><span class="nav-icon">📊</span> Inventario</button>
+        <button class="nav-btn" id="nav-ajustestock" onclick="mostrarPantallaAjusteStock()"><span class="nav-icon">📥</span> Entrada mercancía</button>
+        <button class="nav-btn" id="nav-reportes" onclick="mostrarPantallaReportes()"><span class="nav-icon">📈</span> Reportes de turno</button>
+      </div>
+    </div>
+
+    <div class="sidebar-depto" id="deptoTallerGrupo" style="display:none;">
+      <button class="sidebar-depto-header" id="headerDeptoTaller" onclick="toggleSidebarDepto('deptoTallerSubmenu', 'headerDeptoTaller')">🧶 Taller <span class="chevron">▾</span></button>
+      <div class="sidebar-depto-submenu" id="deptoTallerSubmenu">
+        <button class="nav-btn" id="nav-consumotaller" onclick="mostrarPantallaPedidosCrm()"><span class="nav-icon">🧶</span> Consumo de material</button>
+        <button class="nav-btn" id="nav-inventario-taller" onclick="mostrarPantallaInventario('03')"><span class="nav-icon">📊</span> Inventario</button>
+        <button class="nav-btn" id="nav-solicitudes-taller" onclick="mostrarPantallaSolicitudes()"><span class="nav-icon">📦</span> Compras a la Tienda</button>
+        <button class="nav-btn" id="nav-pagos-pendientes" onclick="mostrarPantallaPagosPendientes()"><span class="nav-icon">🏬</span> Mi departamento (caja, gastos, indicadores)</button>
+      </div>
+    </div>
+
+    <div class="sidebar-depto" id="deptoAcademiaGrupo" style="display:none;">
+      <button class="sidebar-depto-header" id="headerDeptoAcademia" onclick="toggleSidebarDepto('deptoAcademiaSubmenu', 'headerDeptoAcademia')">🎓 Lana Rosa Academy <span class="chevron">▾</span></button>
+      <div class="sidebar-depto-submenu" id="deptoAcademiaSubmenu">
+        <button class="nav-btn" onclick="mostrarPantallaAcademia()"><span class="nav-icon">💰</span> Registrar venta</button>
+        <button class="nav-btn" onclick="mostrarPantallaAcademiaKits()"><span class="nav-icon">🧶</span> Kits de tejido</button>
+        <button class="nav-btn" onclick="mostrarPantallaInventario('04')"><span class="nav-icon">📊</span> Inventario</button>
+        <button class="nav-btn" onclick="mostrarPantallaAcademiaInforme()"><span class="nav-icon">📈</span> Informe y metas</button>
+      </div>
+    </div>
+
+    <div class="sidebar-depto" id="deptoTalentoGrupo" style="display:none;">
+      <button class="sidebar-depto-header" id="headerDeptoTalento" onclick="toggleSidebarDepto('deptoTalentoSubmenu', 'headerDeptoTalento')">🗂️ Talento Humano <span class="chevron">▾</span></button>
+      <div class="sidebar-depto-submenu" id="deptoTalentoSubmenu">
+        <button class="nav-btn" id="nav-nomina" onclick="mostrarPantallaNomina()"><span class="nav-icon">👥</span> Nómina</button>
+        <button class="nav-btn" id="nav-talento-humano" onclick="mostrarPantallaTalentoHumano()"><span class="nav-icon">📁</span> Carpetas por empleado</button>
+      </div>
+    </div>
+
+    <div class="sidebar-depto" id="deptoReportesGrupo" style="display:none;">
+      <button class="sidebar-depto-header" id="headerDeptoReportes" onclick="toggleSidebarDepto('deptoReportesSubmenu', 'headerDeptoReportes')">📊 Reportes financieros <span class="chevron">▾</span></button>
+      <div class="sidebar-depto-submenu" id="deptoReportesSubmenu">
+        <button class="nav-btn" id="nav-departamentos" onclick="mostrarPantallaDepartamentos()"><span class="nav-icon">🏢</span> Cajas y ventas internas</button>
+        <button class="nav-btn" id="nav-reportes-financieros" onclick="mostrarPantallaReportesFinancieros()"><span class="nav-icon">📊</span> Por departamento y global</button>
+      </div>
+    </div>
   </div>
 
   <div class="sidebar-footer">
@@ -1414,16 +1462,19 @@
     </div>
 
     <div class="panel">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;">
-        <button class="btn-mini editar" style="max-width:36px;" onclick="cambiarMesCalendario(-1)">←</button>
-        <h2 id="tituloMesCalendario" style="margin:0;flex:1;text-align:center;"></h2>
-        <button class="btn-mini editar" style="max-width:36px;" onclick="cambiarMesCalendario(1)">→</button>
+      <div class="gcal-toolbar">
+        <div class="gcal-toolbar-izq">
+          <button class="gcal-btn-hoy" onclick="irAHoyCalendario()">Hoy</button>
+          <button class="gcal-nav-flecha" onclick="cambiarMesCalendario(-1)">‹</button>
+          <button class="gcal-nav-flecha" onclick="cambiarMesCalendario(1)">›</button>
+          <div class="gcal-titulo" id="tituloMesCalendario"></div>
+        </div>
+        <div class="filtro-tipo" style="margin-bottom:0;">
+          <button class="chip-filtro activo" data-vista-calendario="mes" onclick="cambiarVistaCalendario('mes', this)">Mes</button>
+          <button class="chip-filtro" data-vista-calendario="dia" onclick="cambiarVistaCalendario('dia', this)">Día</button>
+        </div>
       </div>
-      <div class="filtro-tipo" style="margin-bottom:10px;">
-        <button class="chip-filtro activo" data-vista-calendario="mes" onclick="cambiarVistaCalendario('mes', this)">📅 Mes</button>
-        <button class="chip-filtro" data-vista-calendario="dia" onclick="cambiarVistaCalendario('dia', this)">📆 Día</button>
-      </div>
-      <div id="gridCalendario"></div>
+      <div id="gridCalendario" class="gcal-grid"></div>
       <div id="listaEventosDelDia" style="margin-top:16px;"></div>
     </div>
   </div>
@@ -1597,8 +1648,6 @@
       pantallaVentas: 'nav-ventas',
       pantallaHistorial: 'nav-historial',
       pantallaPedidosCanal: 'nav-pedidos-canal',
-      pantallaSolicitudes: 'nav-solicitudes',
-      pantallaInventario: 'nav-inventario',
       pantallaAjustestock: 'nav-ajustestock',
       pantallaConsumoTaller: 'nav-consumotaller',
       pantallaPedidosCrm: 'nav-consumotaller',
@@ -1609,12 +1658,15 @@
       pantallaNomina: 'nav-nomina',
       pantallaTalentoHumano: 'nav-talento-humano',
       pantallaCalendario: 'nav-calendario',
-      pantallaAcademia: 'nav-academia',
       pantallaPagosPendientes: 'nav-pagos-pendientes',
     };
     if (mapaNav[idPantalla]) {
       const btn = document.getElementById(mapaNav[idPantalla]);
-      if (btn) btn.classList.add('activo');
+      if (btn) {
+        btn.classList.add('activo');
+        const submenuPadre = btn.closest('.sidebar-depto-submenu');
+        if (submenuPadre) abrirSidebarDepto(submenuPadre.id, submenuPadre.previousElementSibling.id);
+      }
     }
   }
 
@@ -1795,25 +1847,39 @@
       if (el) el.style.display = visible ? '' : 'none';
     };
 
-    mostrar('nav-inventario', esAdmin || esCajero || esTaller);
-    mostrar('nav-ajustestock', esCajero || esTaller);
-    mostrar('nav-solicitudes', esAdmin || esCajero || esTaller);
-    mostrar('nav-consumotaller', esAdmin || esTaller);
-    mostrar('nav-pedidos-crm', esAdmin || esTaller);
-    mostrar('nav-reportes', esAdmin);
-    mostrar('nav-departamentos', esAdmin);
-    mostrar('nav-reportes-financieros', esAdmin);
-    mostrar('nav-nomina', esAdmin);
-    mostrar('nav-talento-humano', esAdmin);
-    mostrar('nav-academia', esAdmin);
-    mostrar('nav-pagos-pendientes', esCajero || esTaller);
-    mostrar('seccionDepartamentos', esAdmin || esCajero || esTaller);
-    mostrar('nav-ventas', esAdmin || esCajero);
-    mostrar('nav-historial', esAdmin || esCajero);
-    mostrar('nav-pedidos-canal', esAdmin || esCajero);
+    // Grupos de departamento completos (acordeón)
+    mostrar('deptoTiendaGrupo', esAdmin || esCajero);
+    mostrar('deptoTallerGrupo', esAdmin || esTaller);
+    mostrar('deptoAcademiaGrupo', esAdmin);
+    mostrar('deptoTalentoGrupo', esAdmin);
+    mostrar('deptoReportesGrupo', esAdmin);
+
+    // Turno de caja solo aplica a quien maneja caja física (Tienda)
     mostrar('nav-turno', esAdmin || esCajero);
-    mostrar('seccionInventario', esAdmin || esCajero || esTaller);
-    mostrar('seccionCaja', esAdmin || esCajero);
+
+    // Botones específicos dentro de Taller que no aplican a Cajero/Admin visitando ahí
+    mostrar('nav-pagos-pendientes', esCajero || esTaller);
+
+    // Si el usuario solo tiene un departamento, se abre expandido automáticamente
+    if (esCajero) abrirSidebarDepto('deptoTiendaSubmenu', 'headerDeptoTienda');
+    if (esTaller) abrirSidebarDepto('deptoTallerSubmenu', 'headerDeptoTaller');
+  }
+
+  function toggleSidebarDepto(submenuId, headerId) {
+    const submenu = document.getElementById(submenuId);
+    const header = document.getElementById(headerId);
+    const abierto = submenu.classList.contains('abierto');
+    if (abierto) {
+      submenu.classList.remove('abierto');
+      header.classList.remove('abierto');
+    } else {
+      abrirSidebarDepto(submenuId, headerId);
+    }
+  }
+
+  function abrirSidebarDepto(submenuId, headerId) {
+    document.getElementById(submenuId).classList.add('abierto');
+    document.getElementById(headerId).classList.add('abierto');
   }
 
   function mostrarCierreTurno() {
@@ -2469,11 +2535,11 @@
   let inventarioDeptoActivo = null;
   let categoriasInventarioCache = { merceria: [], producto_terminado: [] };
 
-  async function mostrarPantallaInventario() {
+  async function mostrarPantallaInventario(codigoDeptoForzado) {
     mostrarPantalla('pantallaInventario');
     limpiarFormularioProducto();
     document.getElementById('inputBuscarInventario').value = '';
-    await cargarDepartamentosParaInventario();
+    await cargarDepartamentosParaInventario(codigoDeptoForzado);
     await cargarCategoriasInventario();
     cargarCategoriasParaFormulario();
     await cargarInventarioGestion();
@@ -2483,7 +2549,7 @@
     }
   }
 
-  async function cargarDepartamentosParaInventario() {
+  async function cargarDepartamentosParaInventario(codigoDeptoForzado) {
     const { data } = await supabaseClient
       .from('centros_costo')
       .select('id, codigo, nombre')
@@ -2496,12 +2562,14 @@
     if (rolActual === 'cajero') visibles = departamentosParaInventario.filter(d => d.id === centroCostoTiendaId);
     else if (rolActual === 'taller') visibles = departamentosParaInventario.filter(d => d.id === centroCostoTallerId);
 
+    const deptoObjetivo = codigoDeptoForzado ? visibles.find(d => d.codigo === codigoDeptoForzado) : null;
+
     const tabsEl = document.getElementById('filtroDeptoInventarioTabs');
-    tabsEl.innerHTML = visibles.map((d, i) =>
-      `<button class="chip-filtro ${i === 0 ? 'activo' : ''}" data-filtro-depto-inv="${d.id}" onclick="cambiarDeptoInventario('${d.id}', this)">${escaparHtml(d.nombre)}</button>`
+    tabsEl.innerHTML = visibles.map((d) =>
+      `<button class="chip-filtro ${(deptoObjetivo ? d.id === deptoObjetivo.id : d === visibles[0]) ? 'activo' : ''}" data-filtro-depto-inv="${d.id}" onclick="cambiarDeptoInventario('${d.id}', this)">${escaparHtml(d.nombre)}</button>`
     ).join('');
 
-    inventarioDeptoActivo = visibles[0] ? visibles[0].id : null;
+    inventarioDeptoActivo = deptoObjetivo ? deptoObjetivo.id : (visibles[0] ? visibles[0].id : null);
   }
 
   function actualizarVisibilidadSincronizarCrm() {
@@ -2919,7 +2987,7 @@
   let centrosCostoHistorialCache = [];
   let filtroDeptoHistorialActual = null;
 
-  async function mostrarPantallaHistorial() {
+  async function mostrarPantallaHistorial(codigoDeptoForzado) {
     mostrarPantalla('pantallaHistorial');
 
     const { data: centros } = await supabaseClient
@@ -2937,12 +3005,14 @@
       centrosVisibles = centrosCostoHistorialCache.filter(c => c.id === centroCostoTallerId);
     }
 
+    const deptoObjetivo = codigoDeptoForzado ? centrosVisibles.find(c => c.codigo === codigoDeptoForzado) : null;
+
     const filtroEl = document.getElementById('filtroDeptoHistorial');
-    filtroEl.innerHTML = centrosVisibles.map((c, i) =>
-      `<button class="chip-filtro ${i === 0 ? 'activo' : ''}" data-filtro-depto-hist="${c.id}" onclick="cambiarFiltroDeptoHistorial('${c.id}', this)">${escaparHtml(c.nombre)}</button>`
+    filtroEl.innerHTML = centrosVisibles.map((c) =>
+      `<button class="chip-filtro ${(deptoObjetivo ? c.id === deptoObjetivo.id : c === centrosVisibles[0]) ? 'activo' : ''}" data-filtro-depto-hist="${c.id}" onclick="cambiarFiltroDeptoHistorial('${c.id}', this)">${escaparHtml(c.nombre)}</button>`
     ).join('');
 
-    filtroDeptoHistorialActual = centrosVisibles[0] ? centrosVisibles[0].id : null;
+    filtroDeptoHistorialActual = deptoObjetivo ? deptoObjetivo.id : (centrosVisibles[0] ? centrosVisibles[0].id : null);
     await cargarHistorialVentas();
   }
 
@@ -6272,10 +6342,23 @@
 
   async function mostrarPantallaAcademia() {
     mostrarPantalla('pantallaAcademia');
-    mostrarSubTabGrupo('academia', 'subtabAcademiaRegistrar', document.querySelector('[data-subtab-btn="academia"]'));
+    mostrarSubTabGrupo('academia', 'subtabAcademiaRegistrar', document.querySelectorAll('[data-subtab-btn="academia"]')[0]);
     ocultarMensaje('mensajeVentaAcademia');
     document.getElementById('academiaPeriodoInforme').value = new Date().toISOString().slice(0, 7);
     await cargarVentasAcademia();
+  }
+
+  async function mostrarPantallaAcademiaKits() {
+    mostrarPantalla('pantallaAcademia');
+    mostrarSubTabGrupo('academia', 'subtabAcademiaKits', document.querySelectorAll('[data-subtab-btn="academia"]')[1]);
+    await cargarRadicadosKit();
+  }
+
+  async function mostrarPantallaAcademiaInforme() {
+    mostrarPantalla('pantallaAcademia');
+    document.getElementById('academiaPeriodoInforme').value = new Date().toISOString().slice(0, 7);
+    mostrarSubTabGrupo('academia', 'subtabAcademiaInforme', document.querySelectorAll('[data-subtab-btn="academia"]')[2]);
+    await cargarInformeAcademia();
   }
 
   async function confirmarRegistrarVentaAcademia() {
@@ -6678,6 +6761,15 @@
     renderizarGridCalendario();
   }
 
+  function irAHoyCalendario() {
+    const hoy = new Date();
+    mesCalendarioActual = hoy.getMonth();
+    anioCalendarioActual = hoy.getFullYear();
+    diaSeleccionadoCalendario = hoy.toISOString().slice(0, 10);
+    renderizarGridCalendario();
+    renderizarEventosDelDia();
+  }
+
   function cambiarMesCalendario(delta) {
     if (vistaCalendarioActual === 'dia') {
       const fecha = new Date(diaSeleccionadoCalendario + 'T00:00:00');
@@ -6725,23 +6817,28 @@
       eventosPorDia[clave].push(ev);
     });
 
-    const nombresDias = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-    let html = nombresDias.map(n => `<div class="calendario-dia-nombre">${n}</div>`).join('');
+    const nombresDias = ['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'];
+    let html = nombresDias.map(n => `<div class="gcal-dia-nombre">${n}</div>`).join('');
 
     for (let i = 0; i < offsetInicio; i++) {
-      html += '<div class="calendario-celda vacia"></div>';
+      html += '<div class="gcal-celda vacia"></div>';
     }
 
     for (let dia = 1; dia <= diasEnMes; dia++) {
       const claveIso = `${anioCalendarioActual}-${String(mesCalendarioActual + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
-      const eventosDia = eventosPorDia[claveIso] || [];
+      const eventosDia = (eventosPorDia[claveIso] || []).sort((a, b) => new Date(a.fecha_inicio) - new Date(b.fecha_inicio));
       const esHoy = claveIso === hoyIso;
       const esSeleccionado = claveIso === diaSeleccionadoCalendario;
-      const puntos = eventosDia.slice(0, 4).map(ev => `<span class="punto-evento" style="background:${coloresTipoEvento[ev.tipo] || '#999'};"></span>`).join('');
+      const chipsVisibles = eventosDia.slice(0, 2).map(ev => {
+        const hora = new Date(ev.fecha_inicio).toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' });
+        return `<div class="gcal-evento-chip" style="background:${coloresTipoEvento[ev.tipo] || '#999'};" title="${escaparHtml(ev.titulo)}">${hora} ${escaparHtml(ev.titulo)}</div>`;
+      }).join('');
+      const masEventos = eventosDia.length > 2 ? `<div class="gcal-mas-eventos">+${eventosDia.length - 2} más</div>` : '';
       html += `
-        <div class="calendario-celda ${esHoy ? 'hoy' : ''} ${esSeleccionado ? 'seleccionada' : ''}" onclick="seleccionarDiaCalendario('${claveIso}')">
-          <div class="num-dia">${dia}</div>
-          <div>${puntos}</div>
+        <div class="gcal-celda ${esSeleccionado ? 'seleccionada' : ''}" onclick="seleccionarDiaCalendario('${claveIso}')">
+          <div class="gcal-num-dia ${esHoy ? 'hoy' : ''}">${dia}</div>
+          ${chipsVisibles}
+          ${masEventos}
         </div>
       `;
     }
