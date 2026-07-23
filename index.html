@@ -555,6 +555,8 @@
     <button class="nav-btn" id="nav-departamentos" onclick="mostrarPantallaDepartamentos()" style="display:none;"><span class="nav-icon">🏢</span> Cajas y ventas internas</button>
     <button class="nav-btn" id="nav-reportes-financieros" onclick="mostrarPantallaReportesFinancieros()" style="display:none;"><span class="nav-icon">📊</span> Reportes financieros</button>
     <button class="nav-btn" id="nav-nomina" onclick="mostrarPantallaNomina()" style="display:none;"><span class="nav-icon">👥</span> Nómina</button>
+    <button class="nav-btn" id="nav-talento-humano" onclick="mostrarPantallaTalentoHumano()" style="display:none;"><span class="nav-icon">🗂️</span> Talento Humano</button>
+    <button class="nav-btn" id="nav-calendario" onclick="mostrarPantallaCalendario()"><span class="nav-icon">📅</span> Calendario del equipo</button>
     <button class="nav-btn" id="nav-pagos-pendientes" onclick="mostrarPantallaPagosPendientes()" style="display:none;"><span class="nav-icon">🏬</span> Mi departamento</button>
   </div>
 
@@ -1295,7 +1297,75 @@
   </div>
 </div>
 
+<!-- ===== PANTALLA: TALENTO HUMANO (solo Admin) ===== -->
+<div id="pantallaTalentoHumano" class="oculto contenido">
+  <div class="page-header">
+    <h1>Gestión del Talento Humano</h1>
+    <div class="subtitulo">Documentos de cada empleado (hoja de vida, contrato, cédula, afiliaciones) y quién puede programar en el calendario del equipo.</div>
+  </div>
+
+  <div class="filtro-tipo" style="margin-bottom:20px;">
+    <button class="chip-filtro activo" data-subtab-btn="talentoHumano" onclick="mostrarSubTabGrupo('talentoHumano', 'subtabRhDocumentos', this)">📁 Documentos</button>
+    <button class="chip-filtro" data-subtab-btn="talentoHumano" onclick="mostrarSubTabGrupo('talentoHumano', 'subtabRhAutorizados', this)">📅 Autorizados del calendario</button>
+  </div>
+
+  <div id="subtabRhDocumentos" data-subtab-grupo="talentoHumano">
+    <div class="panel" style="max-width:none;max-height:none;">
+      <h2>Empleados</h2>
+      <div id="listaEmpleadosRh"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+
+  <div id="subtabRhAutorizados" data-subtab-grupo="talentoHumano" class="oculto">
+    <div class="panel">
+      <h2>¿Quién puede programar eventos en el calendario?</h2>
+      <div class="subtitulo">Además de la administradora, puedes autorizar a otras personas del equipo a crear reuniones, capacitaciones, juntas o salidas.</div>
+      <div id="listaAutorizadosCalendario"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PANTALLA: CALENDARIO DEL EQUIPO ===== -->
+<div id="pantallaCalendario" class="oculto contenido">
+  <div class="page-header">
+    <h1>Calendario del equipo</h1>
+    <div class="subtitulo">Reuniones, capacitaciones, juntas y salidas. Visible para todo el equipo; solo la administradora o quien ella autorice puede programar eventos. La sincronización con Google Calendar de cada empleado está pendiente de configurar.</div>
+  </div>
+
+  <div class="grilla-2">
+    <div class="panel" id="panelNuevoEvento">
+      <h2>+ Nuevo evento</h2>
+      <label for="eventoTitulo">Título</label>
+      <input type="text" id="eventoTitulo" placeholder="Ej: Reunión de equipo">
+      <label for="eventoTipo">Tipo</label>
+      <select id="eventoTipo">
+        <option value="reunion">Reunión</option>
+        <option value="capacitacion">Capacitación</option>
+        <option value="junta">Junta</option>
+        <option value="salida">Salida</option>
+        <option value="otro">Otro</option>
+      </select>
+      <label for="eventoFechaInicio">Fecha y hora de inicio</label>
+      <input type="datetime-local" id="eventoFechaInicio">
+      <label for="eventoFechaFin">Fecha y hora de fin</label>
+      <input type="datetime-local" id="eventoFechaFin">
+      <label for="eventoUbicacion">Ubicación <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <input type="text" id="eventoUbicacion" placeholder="Ej: Taller, Google Meet...">
+      <label for="eventoDescripcion">Descripción <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <input type="text" id="eventoDescripcion" placeholder="Detalles del evento">
+      <button class="btn-principal" id="btnCrearEvento" onclick="confirmarCrearEvento()">Programar evento</button>
+      <div class="mensaje" id="mensajeEvento"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Próximos eventos</h2>
+      <div id="listaEventosCalendario"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+</div>
+
 <!-- ===== PANTALLA: CERRAR TURNO ===== -->
+
 <div id="pantallaCerrarTurno" class="oculto contenido">
   <div class="page-header">
     <h1>Cerrar turno — Arqueo de caja</h1>
@@ -1338,7 +1408,7 @@
   // UTILIDADES
   // ============================================================================
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaDepartamentos', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaDepartamentos', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -1363,6 +1433,8 @@
       pantallaDepartamentos: 'nav-departamentos',
       pantallaReportesFinancieros: 'nav-reportes-financieros',
       pantallaNomina: 'nav-nomina',
+      pantallaTalentoHumano: 'nav-talento-humano',
+      pantallaCalendario: 'nav-calendario',
       pantallaPagosPendientes: 'nav-pagos-pendientes',
     };
     if (mapaNav[idPantalla]) {
@@ -1557,6 +1629,7 @@
     mostrar('nav-departamentos', esAdmin);
     mostrar('nav-reportes-financieros', esAdmin);
     mostrar('nav-nomina', esAdmin);
+    mostrar('nav-talento-humano', esAdmin);
     mostrar('nav-pagos-pendientes', esCajero || esTaller);
     mostrar('seccionDepartamentos', esAdmin || esCajero || esTaller);
     mostrar('nav-ventas', esAdmin || esCajero);
@@ -4776,9 +4849,14 @@
             <div class="fila-inventario-acciones" style="margin-top:8px;flex-wrap:wrap;">
               <button class="btn-mini editar" onclick="activarEdicionEmpleado('${e.id}')">✏️ Editar</button>
               <button class="btn-mini editar" onclick="alternarBeneficiarios('${e.id}')">👪 Beneficiarios</button>
+              <button class="btn-mini editar" onclick="alternarHistorialSalario('${e.id}')">📈 Historial salario</button>
+              <button class="btn-mini editar" onclick="verRetirosPropietariaEmpleado('${e.id}', '${escaparHtml(e.nombre_completo).replace(/'/g, "\\'")}')">💰 Mis retiros</button>
+              <button class="btn-mini editar" onclick="alternarDocumentosRh('${e.id}')">📁 Documentos</button>
             </div>
             ${puedeLiquidarIndividual ? `<button class="btn-mini guardar" style="width:100%;margin-top:8px;" onclick="registrarRetiroPropietaria('${e.id}', '${escaparHtml(e.nombre_completo).replace(/'/g, "\\'")}', ${e.salario_basico})">👑 Registrar retiro de la propietaria en este período</button>` : ''}
             ${beneficiariosAbiertos ? renderizarPanelBeneficiarios(e.id) : ''}
+            ${historialSalarioAbierto === e.id ? renderizarPanelHistorialSalario(e.id) : ''}
+            ${documentosRhAbierto === e.id ? renderizarPanelDocumentos(e.id) : ''}
           </div>
         `;
       }
@@ -4799,6 +4877,7 @@
             <button class="btn-mini editar" onclick="alternarPrestamos('${e.id}')">💵 Préstamos</button>
             <button class="btn-mini editar" onclick="alternarHistorialSalario('${e.id}')">📈 Historial salario</button>
             <button class="btn-mini editar" onclick="verLiquidacionesEmpleado('${e.id}', '${escaparHtml(e.nombre_completo).replace(/'/g, "\\'")}')">📄 Mis liquidaciones</button>
+            <button class="btn-mini editar" onclick="alternarDocumentosRh('${e.id}')">📁 Documentos</button>
             <button class="btn-mini desactivar" onclick="desactivarEmpleado('${e.id}')">Retirar</button>
           </div>
           ${puedeLiquidarIndividual ? `
@@ -4808,6 +4887,7 @@
           ${beneficiariosAbiertos ? renderizarPanelBeneficiarios(e.id) : ''}
           ${prestamosAbiertos ? renderizarPanelPrestamos(e.id) : ''}
           ${historialSalarioAbierto === e.id ? renderizarPanelHistorialSalario(e.id) : ''}
+          ${documentosRhAbierto === e.id ? renderizarPanelDocumentos(e.id) : ''}
         </div>
       `;
     }).join('');
@@ -4818,6 +4898,8 @@
   // ============================================================
   let empleadoNovedadesAbiertoId = null;
   let historialSalarioAbierto = null;
+  let documentosRhAbierto = null;
+  let documentosPorEmpleadoCache = {};
 
   function mostrarSubTabGrupo(grupo, tabId, botonEl) {
     document.querySelectorAll(`[data-subtab-grupo="${grupo}"]`).forEach(el => el.classList.add('oculto'));
@@ -5281,6 +5363,10 @@
           <div style="font-size:18px;font-weight:700;">${formatearMoneda(totales.costoEmpresa)}</div>
         </div>
       </div>
+      <div style="margin-top:16px;">
+        <div style="font-size:12.5px;font-weight:700;margin-bottom:8px;">Resumen por mes</div>
+        ${renderizarResumenPorMes(consolidadoNominaCache)}
+      </div>
     `;
 
     contenedorLista.innerHTML = `
@@ -5300,6 +5386,48 @@
               <td style="padding:6px 4px;">${inicio}</td>
               <td style="padding:6px 4px;text-align:right;">${formatearMoneda(l.neto_pagar)}</td>
               <td style="padding:6px 4px;text-align:right;">${formatearMoneda(l.costo_total_empleador)}</td>
+            </tr>
+          `;
+        }).join('')}
+      </table>
+    `;
+  }
+
+  function renderizarResumenPorMes(liquidaciones) {
+    const nombresMes = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    const porMes = {};
+    liquidaciones.forEach(l => {
+      const fecha = l.periodos_nomina && l.periodos_nomina.fecha_inicio;
+      if (!fecha) return;
+      const clave = fecha.slice(0, 7); // YYYY-MM
+      if (!porMes[clave]) porMes[clave] = { neto: 0, devengado: 0, costoEmpresa: 0, cantidad: 0 };
+      porMes[clave].neto += Number(l.neto_pagar || 0);
+      porMes[clave].devengado += Number(l.total_devengado || 0);
+      porMes[clave].costoEmpresa += Number(l.costo_total_empleador || 0);
+      porMes[clave].cantidad += 1;
+    });
+
+    const claves = Object.keys(porMes).sort().reverse();
+    if (claves.length === 0) return '<div style="font-size:12px;opacity:0.6;">Sin datos.</div>';
+
+    return `
+      <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+        <tr style="border-bottom:2px solid var(--rosa-suave);text-align:left;">
+          <th style="padding:6px 4px;">Mes</th>
+          <th style="padding:6px 4px;text-align:right;">Liquidaciones</th>
+          <th style="padding:6px 4px;text-align:right;">Neto pagado</th>
+          <th style="padding:6px 4px;text-align:right;">Costo empresa</th>
+        </tr>
+        ${claves.map(clave => {
+          const [anio, mes] = clave.split('-');
+          const nombreMes = nombresMes[parseInt(mes, 10) - 1] || mes;
+          const d = porMes[clave];
+          return `
+            <tr style="border-bottom:1px solid #f4eef2;">
+              <td style="padding:6px 4px;">${nombreMes} ${anio}</td>
+              <td style="padding:6px 4px;text-align:right;">${d.cantidad}</td>
+              <td style="padding:6px 4px;text-align:right;">${formatearMoneda(d.neto)}</td>
+              <td style="padding:6px 4px;text-align:right;">${formatearMoneda(d.costoEmpresa)}</td>
             </tr>
           `;
         }).join('')}
@@ -5385,6 +5513,369 @@
         ${filas}
       </div>
     `;
+  }
+
+  async function verRetirosPropietariaEmpleado(empleadoId, nombreEmpleado) {
+    const resp = await fetch(`${WORKER_URL}/api/pos/nomina/retiros-propietario-empleado?empleado_id=${empleadoId}`, {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+    if (!resp.ok) { alert('No se pudieron cargar los retiros.'); return; }
+
+    const { retiros } = await resp.json();
+    let filas = '<p style="opacity:0.6;">Sin retiros registrados todavía.</p>';
+    if (retiros && retiros.length > 0) {
+      filas = `
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <tr style="border-bottom:2px solid var(--azul-acero);text-align:left;">
+            <th style="padding:6px 4px;">Período</th>
+            <th style="padding:6px 4px;text-align:right;">Retiro</th>
+            <th style="padding:6px 4px;text-align:right;">IBC</th>
+            <th style="padding:6px 4px;text-align:right;">Total a cotizar</th>
+          </tr>
+          ${retiros.map(r => {
+            const p = r.periodos_nomina || {};
+            const inicio = p.fecha_inicio ? new Date(p.fecha_inicio + 'T00:00:00').toLocaleDateString('es-CO') : '—';
+            return `
+              <tr style="border-bottom:1px solid #eee;">
+                <td style="padding:6px 4px;">${inicio}</td>
+                <td style="padding:6px 4px;text-align:right;">${formatearMoneda(r.monto_retiro)}</td>
+                <td style="padding:6px 4px;text-align:right;">${formatearMoneda(r.ibc_independiente)}</td>
+                <td style="padding:6px 4px;text-align:right;font-weight:700;">${formatearMoneda(r.total_cotizacion)}</td>
+              </tr>
+            `;
+          }).join('')}
+        </table>
+      `;
+    }
+
+    const html = `<html><head><title>Retiros — ${escaparHtml(nombreEmpleado)}</title>
+      <style>body{font-family:Arial,sans-serif;padding:30px;max-width:700px;margin:0 auto;} h1{font-size:18px;color:var(--azul-acero, #85a3c0);}</style>
+      </head><body><h1>Historial de retiros — ${escaparHtml(nombreEmpleado)}</h1>${filas}
+      <p style="font-size:11px;color:#888;margin-top:20px;">Esta información es solo de referencia (retiros + cotización como independiente). No es nómina formal.</p>
+      </body></html>`;
+    const ventana = window.open('', '_blank');
+    ventana.document.write(html);
+    ventana.document.close();
+  }
+
+  // ============================================================
+  // DOCUMENTOS DEL EMPLEADO (Gestión del Talento Humano)
+  // ============================================================
+  function alternarDocumentosRh(empleadoId) {
+    documentosRhAbierto = documentosRhAbierto === empleadoId ? null : empleadoId;
+    renderizarListaEmpleados();
+    if (typeof renderizarListaEmpleadosRh === 'function') renderizarListaEmpleadosRh();
+    if (documentosRhAbierto === empleadoId) cargarDocumentosEmpleado(empleadoId);
+  }
+
+  async function cargarDocumentosEmpleado(empleadoId) {
+    const resp = await fetch(`${WORKER_URL}/api/pos/rh/documentos?empleado_id=${empleadoId}`, {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+    documentosPorEmpleadoCache[empleadoId] = resp.ok ? (await resp.json()).documentos || [] : [];
+    renderizarListaEmpleados();
+    if (typeof renderizarListaEmpleadosRh === 'function') renderizarListaEmpleadosRh();
+  }
+
+  const etiquetasTipoDocumento = {
+    hoja_vida: 'Hoja de vida', contrato: 'Contrato', cedula: 'Copia de cédula',
+    afiliacion_eps: 'Afiliación EPS', afiliacion_pension: 'Afiliación pensión',
+    afiliacion_arl: 'Afiliación ARL', afiliacion_ccf: 'Afiliación caja de compensación',
+    certificado: 'Certificado', otro: 'Otro'
+  };
+
+  function renderizarPanelDocumentos(empleadoId) {
+    const documentos = documentosPorEmpleadoCache[empleadoId];
+    let filas = '<div class="cargando" style="padding:8px 0;">Cargando documentos...</div>';
+    if (documentos) {
+      filas = documentos.length === 0
+        ? '<div style="font-size:12px;opacity:0.6;padding:6px 0;">Sin documentos subidos todavía.</div>'
+        : documentos.map(d => `
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f4eef2;font-size:12px;">
+              <div>
+                <strong>${etiquetasTipoDocumento[d.tipo_documento] || d.tipo_documento}</strong><br>
+                <span style="opacity:0.6;">${escaparHtml(d.nombre_archivo)}</span>
+              </div>
+              <div style="display:flex;gap:6px;">
+                <button class="btn-mini editar" onclick="verDocumentoRh('${d.id}')">👁️ Ver</button>
+                <button class="btn-mini desactivar" onclick="eliminarDocumentoRh('${d.id}', '${empleadoId}')">✕</button>
+              </div>
+            </div>
+          `).join('');
+    }
+
+    return `
+      <div style="margin-top:10px;padding:12px;background:var(--rosa-suave);border-radius:10px;">
+        <div style="font-size:12.5px;font-weight:700;margin-bottom:8px;">📁 Documentos</div>
+        ${filas}
+        <div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--rosa-medio);">
+          <label style="margin-top:0;font-size:11px;">Tipo de documento</label>
+          <select id="doc-tipo-${empleadoId}" style="font-size:12.5px;padding:8px;">
+            <option value="hoja_vida">Hoja de vida</option>
+            <option value="contrato">Contrato</option>
+            <option value="cedula">Copia de cédula</option>
+            <option value="afiliacion_eps">Afiliación EPS</option>
+            <option value="afiliacion_pension">Afiliación pensión</option>
+            <option value="afiliacion_arl">Afiliación ARL</option>
+            <option value="afiliacion_ccf">Afiliación caja de compensación</option>
+            <option value="certificado">Certificado</option>
+            <option value="otro">Otro</option>
+          </select>
+          <label style="margin-top:8px;font-size:11px;">Archivo</label>
+          <input type="file" id="doc-archivo-${empleadoId}" style="font-size:12px;padding:6px 0;">
+          <button class="btn-mini guardar" style="width:100%;margin-top:8px;" onclick="subirDocumentoRh('${empleadoId}')">+ Subir documento</button>
+        </div>
+      </div>
+    `;
+  }
+
+  async function subirDocumentoRh(empleadoId) {
+    const tipo = document.getElementById(`doc-tipo-${empleadoId}`).value;
+    const inputArchivo = document.getElementById(`doc-archivo-${empleadoId}`);
+    const archivo = inputArchivo.files[0];
+
+    if (!archivo) { alert('Selecciona un archivo primero.'); return; }
+    if (archivo.size > 10 * 1024 * 1024) { alert('El archivo no puede pesar más de 10 MB.'); return; }
+
+    const form = new FormData();
+    form.append('empleado_id', empleadoId);
+    form.append('tipo_documento', tipo);
+    form.append('archivo', archivo);
+
+    const resp = await fetch(WORKER_URL + '/api/pos/rh/documentos', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + sesionActual.token },
+      body: form
+    });
+
+    if (!resp.ok) {
+      const datos = await resp.json().catch(() => ({}));
+      alert('No se pudo subir el documento: ' + (datos.error || 'Error desconocido'));
+      return;
+    }
+
+    inputArchivo.value = '';
+    await cargarDocumentosEmpleado(empleadoId);
+  }
+
+  async function verDocumentoRh(documentoId) {
+    const resp = await fetch(`${WORKER_URL}/api/pos/rh/documentos/url?documento_id=${documentoId}`, {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+    if (!resp.ok) { alert('No se pudo generar el enlace del documento.'); return; }
+    const { url } = await resp.json();
+    window.open(url, '_blank');
+  }
+
+  async function eliminarDocumentoRh(documentoId, empleadoId) {
+    if (!confirm('¿Eliminar este documento? Esta acción no se puede deshacer.')) return;
+    const resp = await fetch(WORKER_URL + '/api/pos/rh/documentos/eliminar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ documento_id: documentoId })
+    });
+    if (!resp.ok) { alert('No se pudo eliminar.'); return; }
+    await cargarDocumentosEmpleado(empleadoId);
+  }
+
+  // ============================================================
+  // PANTALLA: GESTIÓN DEL TALENTO HUMANO
+  // ============================================================
+  async function mostrarPantallaTalentoHumano() {
+    mostrarPantalla('pantallaTalentoHumano');
+    mostrarSubTabGrupo('talentoHumano', 'subtabRhDocumentos', document.querySelector('[data-subtab-btn="talentoHumano"]'));
+    await cargarEmpleadosParaRh();
+    await cargarAutorizadosCalendario();
+  }
+
+  let empleadosRhCache = [];
+
+  async function cargarEmpleadosParaRh() {
+    const resp = await fetch(WORKER_URL + '/api/pos/nomina/empleados', {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+    if (!resp.ok) { document.getElementById('listaEmpleadosRh').innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const { empleados } = await resp.json();
+    empleadosRhCache = (empleados || []).filter(e => e.activo);
+    renderizarListaEmpleadosRh();
+  }
+
+  function renderizarListaEmpleadosRh() {
+    const contenedor = document.getElementById('listaEmpleadosRh');
+    if (!contenedor) return;
+    if (empleadosRhCache.length === 0) {
+      contenedor.innerHTML = '<div class="cargando">No hay empleados registrados.</div>';
+      return;
+    }
+    contenedor.innerHTML = empleadosRhCache.map(e => `
+      <div class="fila-inventario-editable">
+        <div class="fila-inventario-titulo">
+          <span class="fila-inventario-nombre">${escaparHtml(e.nombre_completo)}${e.es_propietario ? ' 👑' : ''}</span>
+        </div>
+        <button class="btn-mini editar" style="margin-top:8px;" onclick="alternarDocumentosRh('${e.id}')">📁 ${documentosRhAbierto === e.id ? 'Ocultar documentos' : 'Ver documentos'}</button>
+        ${documentosRhAbierto === e.id ? renderizarPanelDocumentos(e.id) : ''}
+      </div>
+    `).join('');
+  }
+
+  // ============================================================
+  // AUTORIZADOS DEL CALENDARIO
+  // ============================================================
+  async function cargarAutorizadosCalendario() {
+    const contenedor = document.getElementById('listaAutorizadosCalendario');
+    if (!contenedor) return;
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+
+    const [respAutorizados, respUsuarios] = await Promise.all([
+      fetch(WORKER_URL + '/api/pos/rh/calendario/autorizados', { headers: { Authorization: 'Bearer ' + sesionActual.token } }),
+      fetch(WORKER_URL + '/api/pos/rh/usuarios', { headers: { Authorization: 'Bearer ' + sesionActual.token } })
+    ]);
+
+    const autorizados = respAutorizados.ok ? (await respAutorizados.json()).autorizados || [] : [];
+    const usuarios = respUsuarios.ok ? (await respUsuarios.json()).usuarios || [] : [];
+    const idsAutorizados = new Set(autorizados.map(a => a.user_id));
+
+    const opciones = usuarios
+      .filter(u => !idsAutorizados.has(u.user_id))
+      .map(u => `<option value="${u.user_id}">${escaparHtml(u.nombre_completo || u.user_id)} (${etiquetaRol(u.rol)})</option>`)
+      .join('');
+
+    contenedor.innerHTML = `
+      ${autorizados.length === 0 ? '<div style="font-size:12px;opacity:0.6;">Por ahora solo la administradora puede programar eventos.</div>' : autorizados.map(a => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f4eef2;font-size:13px;">
+          <span>${escaparHtml(a.nombre_completo || 'Usuario')} <span style="opacity:0.6;">(${etiquetaRol(a.rol || '')})</span></span>
+          <button class="btn-mini desactivar" onclick="revocarAutorizacionCalendario('${a.user_id}')">Quitar</button>
+        </div>
+      `).join('')}
+      ${opciones ? `
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--rosa-suave);">
+          <label style="margin-top:0;">Autorizar a alguien más</label>
+          <select id="selectUsuarioAutorizar">${opciones}</select>
+          <button class="btn-mini guardar" style="width:100%;margin-top:8px;" onclick="autorizarUsuarioCalendario()">+ Autorizar</button>
+        </div>
+      ` : ''}
+    `;
+  }
+
+  async function autorizarUsuarioCalendario() {
+    const userId = document.getElementById('selectUsuarioAutorizar').value;
+    if (!userId) return;
+    const resp = await fetch(WORKER_URL + '/api/pos/rh/calendario/autorizar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ user_id: userId })
+    });
+    if (!resp.ok) { alert('No se pudo autorizar.'); return; }
+    await cargarAutorizadosCalendario();
+  }
+
+  async function revocarAutorizacionCalendario(userId) {
+    if (!confirm('¿Quitar el permiso de programar eventos a esta persona?')) return;
+    const resp = await fetch(WORKER_URL + '/api/pos/rh/calendario/revocar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ user_id: userId })
+    });
+    if (!resp.ok) { alert('No se pudo quitar el permiso.'); return; }
+    await cargarAutorizadosCalendario();
+  }
+
+  // ============================================================
+  // CALENDARIO DEL EQUIPO
+  // ============================================================
+  async function mostrarPantallaCalendario() {
+    mostrarPantalla('pantallaCalendario');
+    ocultarMensaje('mensajeEvento');
+    await cargarEventosCalendario();
+  }
+
+  const etiquetasTipoEvento = { reunion: '🗓️ Reunión', capacitacion: '🎓 Capacitación', junta: '🤝 Junta', salida: '🚗 Salida', otro: '📌 Otro' };
+
+  async function cargarEventosCalendario() {
+    const contenedor = document.getElementById('listaEventosCalendario');
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+
+    const desde = new Date().toISOString();
+    const resp = await fetch(`${WORKER_URL}/api/pos/rh/calendario/eventos?desde=${encodeURIComponent(desde)}`, {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+
+    const { eventos } = await resp.json();
+    if (!eventos || eventos.length === 0) {
+      contenedor.innerHTML = '<div class="cargando">No hay eventos próximos programados.</div>';
+      return;
+    }
+
+    contenedor.innerHTML = eventos.map(ev => {
+      const inicio = new Date(ev.fecha_inicio).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
+      const fin = new Date(ev.fecha_fin).toLocaleString('es-CO', { timeStyle: 'short' });
+      return `
+        <div class="fila-historial" style="margin-bottom:10px;">
+          <div class="fila-historial-encabezado">
+            <span class="fila-historial-consecutivo">${etiquetasTipoEvento[ev.tipo] || ev.tipo}</span>
+          </div>
+          <div style="font-weight:700;font-size:14px;margin-top:4px;">${escaparHtml(ev.titulo)}</div>
+          <div class="fila-historial-fecha">${inicio} — ${fin}${ev.ubicacion ? ' · ' + escaparHtml(ev.ubicacion) : ''}</div>
+          ${ev.descripcion ? `<div style="font-size:12.5px;opacity:0.75;margin-top:4px;">${escaparHtml(ev.descripcion)}</div>` : ''}
+          <button class="btn-mini desactivar" style="margin-top:8px;max-width:100px;" onclick="eliminarEventoCalendario('${ev.id}')">Eliminar</button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function confirmarCrearEvento() {
+    const titulo = document.getElementById('eventoTitulo').value.trim();
+    const tipo = document.getElementById('eventoTipo').value;
+    const fechaInicio = document.getElementById('eventoFechaInicio').value;
+    const fechaFin = document.getElementById('eventoFechaFin').value;
+    const ubicacion = document.getElementById('eventoUbicacion').value.trim();
+    const descripcion = document.getElementById('eventoDescripcion').value.trim();
+    ocultarMensaje('mensajeEvento');
+
+    if (!titulo) { mostrarMensaje('mensajeEvento', 'Escribe un título para el evento.', 'error'); return; }
+    if (!fechaInicio || !fechaFin) { mostrarMensaje('mensajeEvento', 'Escribe la fecha de inicio y de fin.', 'error'); return; }
+
+    const btn = document.getElementById('btnCrearEvento');
+    btn.disabled = true;
+    btn.textContent = 'Programando...';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/rh/calendario/eventos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({
+        titulo, tipo,
+        fecha_inicio: new Date(fechaInicio).toISOString(),
+        fecha_fin: new Date(fechaFin).toISOString(),
+        ubicacion: ubicacion || null,
+        descripcion: descripcion || null
+      })
+    });
+
+    btn.disabled = false;
+    btn.textContent = 'Programar evento';
+
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeEvento', datos.error || 'No se pudo programar el evento.', 'error'); return; }
+
+    mostrarMensaje('mensajeEvento', '✅ Evento programado correctamente.', 'exito');
+    document.getElementById('eventoTitulo').value = '';
+    document.getElementById('eventoUbicacion').value = '';
+    document.getElementById('eventoDescripcion').value = '';
+    document.getElementById('eventoFechaInicio').value = '';
+    document.getElementById('eventoFechaFin').value = '';
+    await cargarEventosCalendario();
+  }
+
+  async function eliminarEventoCalendario(eventoId) {
+    if (!confirm('¿Eliminar este evento?')) return;
+    const resp = await fetch(WORKER_URL + '/api/pos/rh/calendario/eventos/eliminar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ evento_id: eventoId })
+    });
+    if (!resp.ok) { alert('No tienes permiso para eliminar este evento, o ya fue eliminado.'); return; }
+    await cargarEventosCalendario();
   }
 
   async function registrarRetiroPropietaria(empleadoId, nombre, salarioBasico) {
