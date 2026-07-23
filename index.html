@@ -715,8 +715,11 @@
       <h2>Agregar producto o insumo</h2>
       <label for="invNombre">Nombre</label>
       <input type="text" id="invNombre" placeholder="Ej: Amigurumi conejo personalizado">
-      <label for="invSku">SKU / Código de barras <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
-      <input type="text" id="invSku" placeholder="Ej: AMI-001">
+      <label for="invSku">SKU / Código de barras <span style="font-size:10px;opacity:0.6;">(opcional — escanea o escribe)</span></label>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="invSku" placeholder="Ej: AMI-001" style="flex:1;">
+        <button type="button" class="btn-mini editar" style="max-width:80px;" onclick="abrirEscanerCodigoBarras('invSku')">📷 Escanear</button>
+      </div>
       <label for="invTipo">Tipo</label>
       <select id="invTipo" onchange="cargarCategoriasParaFormulario()">
         <option value="producto_terminado">Producto tejido</option>
@@ -747,7 +750,9 @@
 
     <div class="panel">
       <h2>Inventario actual</h2>
-      <button class="btn-secundario" style="margin-top:0;margin-bottom:14px;" onclick="sincronizarStockCrm(this)">🔄 Traer stock de producto terminado del CRM</button>
+      <div id="contenedorSincronizarCrm" style="margin-bottom:14px;">
+        <button class="btn-secundario" style="margin-top:0;" onclick="sincronizarStockCrm(this)">🔄 Volver a traer stock del CRM</button>
+      </div>
       <div id="mensajeSincronizarCrm" class="mensaje"></div>
       <div class="barra-busqueda">
         <input type="text" id="inputBuscarInventario" placeholder="Buscar por nombre o SKU..." oninput="renderizarTablaInventario()">
@@ -856,9 +861,12 @@
   </div>
   <div class="tarjeta">
     <label for="inputSkuAjuste">Código de barras, SKU o nombre del producto</label>
-    <div style="position:relative;">
-      <input type="text" id="inputSkuAjuste" placeholder="Escanea el código o escribe el nombre..." oninput="buscarProductoEntrada()" autocomplete="off">
-      <div id="sugerenciasEntrada" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1.5px solid var(--rosa-medio);border-radius:9px;margin-top:4px;max-height:220px;overflow-y:auto;z-index:50;box-shadow:var(--sombra);"></div>
+    <div style="display:flex;gap:8px;">
+      <div style="position:relative;flex:1;">
+        <input type="text" id="inputSkuAjuste" placeholder="Escanea el código o escribe el nombre..." oninput="buscarProductoEntrada()" autocomplete="off">
+        <div id="sugerenciasEntrada" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1.5px solid var(--rosa-medio);border-radius:9px;margin-top:4px;max-height:220px;overflow-y:auto;z-index:50;box-shadow:var(--sombra);"></div>
+      </div>
+      <button type="button" class="btn-mini editar" style="max-width:90px;" onclick="abrirEscanerCodigoBarras('inputSkuAjuste', buscarProductoEntrada)">📷 Escanear</button>
     </div>
     <div id="productoSeleccionadoInfo" style="display:none;margin-top:10px;padding:10px 12px;background:var(--rosa-suave);border-radius:9px;font-size:13px;"></div>
     <label for="inputCantidadNueva">¿Cuántas unidades entraron?</label>
@@ -1430,6 +1438,7 @@
 
   <div class="filtro-tipo" style="margin-bottom:20px;">
     <button class="chip-filtro activo" data-subtab-btn="academia" onclick="mostrarSubTabGrupo('academia', 'subtabAcademiaRegistrar', this)">+ Registrar venta</button>
+    <button class="chip-filtro" data-subtab-btn="academia" onclick="mostrarSubTabGrupo('academia', 'subtabAcademiaKits', this); cargarRadicadosKit();">🧶 Kits de tejido</button>
     <button class="chip-filtro" data-subtab-btn="academia" onclick="mostrarSubTabGrupo('academia', 'subtabAcademiaInforme', this); cargarInformeAcademia();">📊 Informe y metas</button>
   </div>
 
@@ -1478,6 +1487,27 @@
     </div>
   </div>
 
+  <div id="subtabAcademiaKits" data-subtab-grupo="academia" class="oculto">
+    <div class="grilla-2">
+      <div class="panel">
+        <h2>+ Nuevo radicado de kit</h2>
+        <div class="subtitulo">Para una clase presencial específica. Se genera un código automático (KIT-año-###).</div>
+        <label for="kitDescripcion">¿Para qué clase o kit es?</label>
+        <input type="text" id="kitDescripcion" placeholder="Ej: Clase presencial amigurumi básico — Sábado 25">
+        <button class="btn-principal" id="btnCrearRadicadoKit" onclick="confirmarCrearRadicadoKit()">Crear radicado</button>
+        <div class="mensaje" id="mensajeRadicadoKit"></div>
+      </div>
+      <div class="panel">
+        <h2>Radicados en proceso</h2>
+        <div id="listaRadicadosKit"><div class="cargando">Cargando...</div></div>
+      </div>
+    </div>
+
+    <div class="panel" style="max-height:none;margin-top:20px;" id="panelDetalleRadicadoKit">
+      <h2>Selecciona un radicado arriba para tomar material</h2>
+    </div>
+  </div>
+
   <div id="subtabAcademiaInforme" data-subtab-grupo="academia" class="oculto">
     <div class="panel" style="max-width:none;">
       <h2>Informe por subárea</h2>
@@ -1492,6 +1522,19 @@
       <div class="subtitulo">Escribe la meta de ventas de cada subárea para el mes seleccionado arriba.</div>
       <div id="formMetasAcademia"></div>
     </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: ESCÁNER DE CÓDIGO DE BARRAS ===== -->
+<div id="modalEscanerCodigoBarras" class="oculto" style="position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:500;display:none;align-items:center;justify-content:center;">
+  <div style="background:white;border-radius:14px;padding:20px;max-width:420px;width:90%;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <h2 style="font-size:16px;">📷 Escanear código de barras</h2>
+      <button onclick="cerrarEscanerCodigoBarras()" style="background:none;border:none;font-size:20px;cursor:pointer;">✕</button>
+    </div>
+    <video id="videoEscanerCodigoBarras" style="width:100%;border-radius:10px;background:#000;" autoplay playsinline muted></video>
+    <div id="mensajeEscanerCodigoBarras" style="font-size:12.5px;margin-top:10px;text-align:center;color:var(--texto-oscuro);opacity:0.7;">Apunta la cámara al código de barras...</div>
+    <button class="btn-secundario" onclick="cerrarEscanerCodigoBarras()">Cancelar y escribir manualmente</button>
   </div>
 </div>
 
@@ -2340,31 +2383,87 @@
 
   let departamentosParaInventario = [];
 
-  async function sincronizarStockCrm(btn) {
+  // ============================================================
+  // ESCÁNER DE CÓDIGO DE BARRAS (cámara del navegador)
+  // Usa la API nativa BarcodeDetector (Chrome/Edge/Android). En navegadores
+  // sin soporte (ej. Safari/iOS) se avisa y se puede seguir escribiendo a mano.
+  // ============================================================
+  let escanerStreamActivo = null;
+  let escanerInputDestino = null;
+  let escanerCallbackDespues = null;
+  let escanerIntervalId = null;
+
+  async function abrirEscanerCodigoBarras(inputId, callbackDespues) {
+    escanerInputDestino = inputId;
+    escanerCallbackDespues = callbackDespues || null;
+    const modal = document.getElementById('modalEscanerCodigoBarras');
+    const mensaje = document.getElementById('mensajeEscanerCodigoBarras');
+    modal.style.display = 'flex';
+    modal.classList.remove('oculto');
+
+    if (!('BarcodeDetector' in window)) {
+      mensaje.textContent = '⚠️ Este navegador no soporta el escáner de cámara. Escribe el código manualmente y cierra esta ventana.';
+      return;
+    }
+
+    try {
+      escanerStreamActivo = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      const video = document.getElementById('videoEscanerCodigoBarras');
+      video.srcObject = escanerStreamActivo;
+
+      const detector = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'qr_code'] });
+
+      escanerIntervalId = setInterval(async () => {
+        try {
+          const codigos = await detector.detect(video);
+          if (codigos.length > 0) {
+            const valor = codigos[0].rawValue;
+            document.getElementById(escanerInputDestino).value = valor;
+            mensaje.textContent = `✅ Código detectado: ${valor}`;
+            cerrarEscanerCodigoBarras();
+            if (escanerCallbackDespues) escanerCallbackDespues();
+          }
+        } catch (e) { /* frame sin código legible, seguir intentando */ }
+      }, 400);
+    } catch (err) {
+      mensaje.textContent = '⚠️ No se pudo acceder a la cámara (revisa los permisos). Escribe el código manualmente.';
+    }
+  }
+
+  function cerrarEscanerCodigoBarras() {
+    const modal = document.getElementById('modalEscanerCodigoBarras');
+    modal.style.display = 'none';
+    modal.classList.add('oculto');
+    if (escanerIntervalId) { clearInterval(escanerIntervalId); escanerIntervalId = null; }
+    if (escanerStreamActivo) {
+      escanerStreamActivo.getTracks().forEach(t => t.stop());
+      escanerStreamActivo = null;
+    }
+  }
+
+  async function sincronizarStockCrm(btn, silencioso) {
     ocultarMensaje('mensajeSincronizarCrm');
-    btn.disabled = true;
-    btn.textContent = 'Consultando el CRM...';
+    if (btn) { btn.disabled = true; btn.textContent = 'Consultando el CRM...'; }
 
     const resp = await fetch(WORKER_URL + '/api/pos/inventario/sincronizar-crm', {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + sesionActual.token }
     });
 
-    btn.disabled = false;
-    btn.textContent = '🔄 Traer stock de producto terminado del CRM';
+    if (btn) { btn.disabled = false; btn.textContent = '🔄 Volver a traer stock del CRM'; }
 
     const datos = await resp.json();
     if (!resp.ok) {
-      mostrarMensaje('mensajeSincronizarCrm', datos.error || 'No se pudo sincronizar con el CRM.', 'error');
+      if (!silencioso) mostrarMensaje('mensajeSincronizarCrm', datos.error || 'No se pudo sincronizar con el CRM.', 'error');
       return;
     }
 
     if (datos.importados === 0) {
-      mostrarMensaje('mensajeSincronizarCrm', `No hay piezas nuevas por traer (ya estaban las ${datos.ya_existian} que había en el CRM).`, 'exito');
+      if (!silencioso) mostrarMensaje('mensajeSincronizarCrm', `No hay piezas nuevas por traer (ya estaban las ${datos.ya_existian} que había en el CRM).`, 'exito');
     } else {
-      mostrarMensaje('mensajeSincronizarCrm', `✅ Se importaron ${datos.importados} pieza(s) nueva(s) al inventario de Tienda.${datos.ya_existian > 0 ? ' (' + datos.ya_existian + ' ya estaban importadas)' : ''}`, 'exito');
+      mostrarMensaje('mensajeSincronizarCrm', `✅ Se importaron ${datos.importados} pieza(s) nueva(s) automáticamente desde el CRM.${datos.ya_existian > 0 ? ' (' + datos.ya_existian + ' ya estaban importadas)' : ''}`, 'exito');
+      await cargarInventarioGestion();
     }
-    await cargarInventarioGestion();
   }
 
   let inventarioDeptoActivo = null;
@@ -2378,6 +2477,10 @@
     await cargarCategoriasInventario();
     cargarCategoriasParaFormulario();
     await cargarInventarioGestion();
+    actualizarVisibilidadSincronizarCrm();
+    if (inventarioDeptoActivo === centroCostoTiendaId) {
+      await sincronizarStockCrm(null, true); // silencioso, automático al entrar
+    }
   }
 
   async function cargarDepartamentosParaInventario() {
@@ -2401,11 +2504,23 @@
     inventarioDeptoActivo = visibles[0] ? visibles[0].id : null;
   }
 
-  function cambiarDeptoInventario(centroCostoId, botonEl) {
+  function actualizarVisibilidadSincronizarCrm() {
+    const contenedor = document.getElementById('contenedorSincronizarCrm');
+    if (!contenedor) return;
+    // El stock del CRM solo aplica a la Tienda física (mercería/producto terminado
+    // que se vende al público). Taller y Lana Rosa Academy nunca lo traen.
+    contenedor.style.display = inventarioDeptoActivo === centroCostoTiendaId ? '' : 'none';
+  }
+
+  async function cambiarDeptoInventario(centroCostoId, botonEl) {
     inventarioDeptoActivo = centroCostoId;
     document.querySelectorAll('[data-filtro-depto-inv]').forEach(b => b.classList.remove('activo'));
     botonEl.classList.add('activo');
     renderizarTablaInventario();
+    actualizarVisibilidadSincronizarCrm();
+    if (inventarioDeptoActivo === centroCostoTiendaId) {
+      await sincronizarStockCrm(null, true);
+    }
   }
 
   async function cargarCategoriasInventario() {
@@ -2622,9 +2737,6 @@
     const textoBusqueda = document.getElementById('inputBuscarInventario').value.trim().toLowerCase();
 
     let items = inventarioGestionCompleto.filter(i => i.centro_costo_id === inventarioDeptoActivo);
-    if (filtroInventarioActual !== 'todos') {
-      items = items.filter(i => i.tipo === filtroInventarioActual);
-    }
     if (filtroCategoriaInvActual && filtroCategoriaInvActual !== 'todas') {
       items = items.filter(i => i.categoria_id === filtroCategoriaInvActual);
     }
@@ -2637,75 +2749,94 @@
       return;
     }
 
+    // Siempre se separan por tipo, con encabezado propio, para que nunca se mezclen
+    // visualmente Mercería y Productos tejidos — aunque el filtro esté en "Todos".
+    const grupos = [
+      { tipo: 'merceria', titulo: '🧵 Mercería', icono: '🧵' },
+      { tipo: 'producto_terminado', titulo: '🧶 Productos tejidos', icono: '🧶' },
+    ];
+
+    let html = '';
+    for (const grupo of grupos) {
+      if (filtroInventarioActual !== 'todos' && filtroInventarioActual !== grupo.tipo) continue;
+      const itemsGrupo = items.filter(i => i.tipo === grupo.tipo);
+      html += `<div style="font-size:13px;font-weight:700;color:var(--rosa-principal);margin:14px 0 8px;padding-bottom:6px;border-bottom:2px solid var(--rosa-suave);">${grupo.titulo} (${itemsGrupo.length})</div>`;
+      html += itemsGrupo.length === 0
+        ? `<div class="cargando" style="padding:10px 0;">Sin productos en ${grupo.titulo.replace(/^\S+\s/, '')} todavía.</div>`
+        : itemsGrupo.map(item => renderizarFilaInventarioItem(item)).join('');
+    }
+
+    contenedor.innerHTML = html;
+  }
+
+  function renderizarFilaInventarioItem(item) {
     const etiquetaTipoMap = { merceria: 'Mercería', producto_terminado: 'Producto tejido' };
     const todasCategorias = [...categoriasInventarioCache.merceria, ...categoriasInventarioCache.producto_terminado];
     const nombreCategoriaMap = Object.fromEntries(todasCategorias.map(c => [c.id, c.nombre]));
 
-    contenedor.innerHTML = items.map(item => {
-      const etiquetaTipo = etiquetaTipoMap[item.tipo] || item.tipo;
-      const tagInactivo = !item.activo ? '<span class="badge-inactivo">Inactivo</span>' : '';
-      const skuTexto = item.sku ? `<span style="opacity:0.5;font-size:11px;margin-left:6px;">SKU: ${escaparHtml(item.sku)}</span>` : '';
-      const nombreCategoria = item.categoria_id ? (nombreCategoriaMap[item.categoria_id] || '') : '';
-      const estaEditando = itemInventarioEditandoId === item.id;
+    const etiquetaTipo = etiquetaTipoMap[item.tipo] || item.tipo;
+    const tagInactivo = !item.activo ? '<span class="badge-inactivo">Inactivo</span>' : '';
+    const skuTexto = item.sku ? `<span style="opacity:0.5;font-size:11px;margin-left:6px;">SKU: ${escaparHtml(item.sku)}</span>` : '';
+    const nombreCategoria = item.categoria_id ? (nombreCategoriaMap[item.categoria_id] || '') : '';
+    const estaEditando = itemInventarioEditandoId === item.id;
 
-      if (estaEditando) {
-        const categoriasDelTipo = categoriasInventarioCache[item.tipo] || [];
-        const opcionesCategoria = '<option value="">Sin categoría específica</option>' +
-          categoriasDelTipo.map(c => `<option value="${c.id}" ${c.id === item.categoria_id ? 'selected' : ''}>${escaparHtml(c.nombre)}</option>`).join('');
-        return `
-          <div class="fila-inventario-editable" style="border-color:var(--rosa-medio);" data-id="${item.id}">
-            <div class="fila-inventario-titulo">
-              <span class="fila-inventario-nombre">${escaparHtml(item.nombre)}${tagInactivo}</span>
-              <span class="fila-inventario-tipo-tag">${etiquetaTipo}</span>
+    if (estaEditando) {
+      const categoriasDelTipo = categoriasInventarioCache[item.tipo] || [];
+      const opcionesCategoria = '<option value="">Sin categoría específica</option>' +
+        categoriasDelTipo.map(c => `<option value="${c.id}" ${c.id === item.categoria_id ? 'selected' : ''}>${escaparHtml(c.nombre)}</option>`).join('');
+      return `
+        <div class="fila-inventario-editable" style="border-color:var(--rosa-medio);" data-id="${item.id}">
+          <div class="fila-inventario-titulo">
+            <span class="fila-inventario-nombre">${escaparHtml(item.nombre)}${tagInactivo}</span>
+            <span class="fila-inventario-tipo-tag">${etiquetaTipo}</span>
+          </div>
+          <label style="margin-top:8px;">Categoría</label>
+          <select id="edit-categoria-${item.id}">${opcionesCategoria}</select>
+          <div class="grid-campos-inventario">
+            <div class="campo-mini">
+              <label>Precio de venta</label>
+              <input type="number" min="0" step="1000" value="${item.precio_venta}" id="edit-precio-${item.id}">
             </div>
-            <label style="margin-top:8px;">Categoría</label>
-            <select id="edit-categoria-${item.id}">${opcionesCategoria}</select>
-            <div class="grid-campos-inventario">
-              <div class="campo-mini">
-                <label>Precio de venta</label>
-                <input type="number" min="0" step="1000" value="${item.precio_venta}" id="edit-precio-${item.id}">
-              </div>
-              <div class="campo-mini">
-                <label>Costo aproximado</label>
-                <input type="number" min="0" step="1000" value="${item.costo_promedio_ponderado}" id="edit-costo-${item.id}">
-              </div>
-              <div class="campo-mini">
-                <label>Stock actual</label>
-                <input type="number" min="0" step="1" value="${item.stock_actual}" id="edit-stock-${item.id}">
-              </div>
-              <div class="campo-mini">
-                <label>Stock mínimo</label>
-                <input type="number" min="0" step="1" value="${item.stock_minimo}" id="edit-stockmin-${item.id}">
-              </div>
+            <div class="campo-mini">
+              <label>Costo aproximado</label>
+              <input type="number" min="0" step="1000" value="${item.costo_promedio_ponderado}" id="edit-costo-${item.id}">
             </div>
-            <div class="fila-inventario-acciones">
-              <button class="btn-mini guardar" onclick="guardarEdicionProducto('${item.id}')">Guardar cambios</button>
-              <button class="btn-mini desactivar" onclick="cancelarEdicionProducto()">Cancelar</button>
-              <button class="btn-mini desactivar" onclick="alternarActivoProducto('${item.id}', ${item.activo})">${item.activo ? 'Desactivar' : 'Reactivar'}</button>
+            <div class="campo-mini">
+              <label>Stock actual</label>
+              <input type="number" min="0" step="1" value="${item.stock_actual}" id="edit-stock-${item.id}">
+            </div>
+            <div class="campo-mini">
+              <label>Stock mínimo</label>
+              <input type="number" min="0" step="1" value="${item.stock_minimo}" id="edit-stockmin-${item.id}">
             </div>
           </div>
-        `;
-      } else {
-        return `
-          <div class="fila-inventario-editable" data-id="${item.id}">
-            <div class="fila-inventario-titulo">
-              <span class="fila-inventario-nombre">${escaparHtml(item.nombre)}${tagInactivo}${skuTexto}</span>
-              <span class="fila-inventario-tipo-tag">${etiquetaTipo}</span>
-            </div>
-            ${nombreCategoria ? `<div style="font-size:11px;color:var(--rosa-principal);font-weight:600;margin-top:2px;">🏷️ ${escaparHtml(nombreCategoria)}</div>` : ''}
-            <div class="fila-inventario-lectura">
-              <span>Precio: <strong>${formatearMoneda(item.precio_venta)}</strong></span>
-              <span>Costo: <strong>${formatearMoneda(item.costo_promedio_ponderado)}</strong></span>
-              <span>Stock: <strong>${item.stock_actual} und</strong></span>
-              <span>Mínimo: <strong>${item.stock_minimo} und</strong></span>
-            </div>
-            <div class="fila-inventario-acciones" style="margin-top:10px;">
-              <button class="btn-mini editar" onclick="activarEdicionProducto('${item.id}')">✏️ Editar</button>
-            </div>
+          <div class="fila-inventario-acciones">
+            <button class="btn-mini guardar" onclick="guardarEdicionProducto('${item.id}')">Guardar cambios</button>
+            <button class="btn-mini desactivar" onclick="cancelarEdicionProducto()">Cancelar</button>
+            <button class="btn-mini desactivar" onclick="alternarActivoProducto('${item.id}', ${item.activo})">${item.activo ? 'Desactivar' : 'Reactivar'}</button>
           </div>
-        `;
-      }
-    }).join('');
+        </div>
+      `;
+    }
+
+    return `
+      <div class="fila-inventario-editable" data-id="${item.id}">
+        <div class="fila-inventario-titulo">
+          <span class="fila-inventario-nombre">${escaparHtml(item.nombre)}${tagInactivo}${skuTexto}</span>
+          <span class="fila-inventario-tipo-tag">${etiquetaTipo}</span>
+        </div>
+        ${nombreCategoria ? `<div style="font-size:11px;color:var(--rosa-principal);font-weight:600;margin-top:2px;">🏷️ ${escaparHtml(nombreCategoria)}</div>` : ''}
+        <div class="fila-inventario-lectura">
+          <span>Precio: <strong>${formatearMoneda(item.precio_venta)}</strong></span>
+          <span>Costo: <strong>${formatearMoneda(item.costo_promedio_ponderado)}</strong></span>
+          <span>Stock: <strong>${item.stock_actual} und</strong></span>
+          <span>Mínimo: <strong>${item.stock_minimo} und</strong></span>
+        </div>
+        <div class="fila-inventario-acciones" style="margin-top:10px;">
+          <button class="btn-mini editar" onclick="activarEdicionProducto('${item.id}')">✏️ Editar</button>
+        </div>
+      </div>
+    `;
   }
 
   function activarEdicionProducto(itemId) {
@@ -6277,6 +6408,195 @@
         </div>
       `;
     }).join('') + `<button class="btn-mini guardar" style="width:100%;margin-top:10px;" onclick="guardarMetasAcademia()">Guardar metas del mes</button>`;
+  }
+
+  // ============================================================
+  // KITS DE TEJIDO (Lana Rosa Academy)
+  // ============================================================
+  let radicadosKitCache = [];
+  let radicadoKitSeleccionadoId = null;
+  let insumosAcademiaCache = [];
+
+  async function confirmarCrearRadicadoKit() {
+    const descripcion = document.getElementById('kitDescripcion').value.trim();
+    ocultarMensaje('mensajeRadicadoKit');
+    if (!descripcion) { mostrarMensaje('mensajeRadicadoKit', 'Escribe para qué clase o kit es.', 'error'); return; }
+
+    const btn = document.getElementById('btnCrearRadicadoKit');
+    btn.disabled = true;
+    btn.textContent = 'Creando...';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/academia/radicados-kit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ descripcion })
+    });
+
+    btn.disabled = false;
+    btn.textContent = 'Crear radicado';
+
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeRadicadoKit', datos.error || 'No se pudo crear el radicado.', 'error'); return; }
+
+    mostrarMensaje('mensajeRadicadoKit', `✅ Radicado ${datos.codigo} creado.`, 'exito');
+    document.getElementById('kitDescripcion').value = '';
+    await cargarRadicadosKit();
+  }
+
+  async function cargarRadicadosKit() {
+    const contenedor = document.getElementById('listaRadicadosKit');
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/academia/radicados-kit?estado=en_proceso', {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+
+    const { radicados } = await resp.json();
+    radicadosKitCache = radicados || [];
+
+    if (radicadosKitCache.length === 0) {
+      contenedor.innerHTML = '<div class="cargando">No hay radicados en proceso.</div>';
+      return;
+    }
+
+    contenedor.innerHTML = radicadosKitCache.map(r => `
+      <div class="fila-inventario-editable" style="cursor:pointer;" onclick="seleccionarRadicadoKit('${r.id}')">
+        <div class="fila-inventario-titulo">
+          <span class="fila-inventario-nombre">${escaparHtml(r.codigo)}</span>
+        </div>
+        <div style="font-size:12.5px;opacity:0.75;margin-top:4px;">${escaparHtml(r.descripcion)}</div>
+      </div>
+    `).join('');
+  }
+
+  async function seleccionarRadicadoKit(radicadoId) {
+    radicadoKitSeleccionadoId = radicadoId;
+    if (insumosAcademiaCache.length === 0) await cargarInsumosAcademia();
+    await renderizarDetalleRadicadoKit();
+  }
+
+  async function cargarInsumosAcademia() {
+    const resp = await fetch(WORKER_URL + '/api/pos/academia/insumos', {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+    insumosAcademiaCache = resp.ok ? (await resp.json()).insumos || [] : [];
+  }
+
+  async function renderizarDetalleRadicadoKit() {
+    const radicado = radicadosKitCache.find(r => r.id === radicadoKitSeleccionadoId);
+    const contenedor = document.getElementById('panelDetalleRadicadoKit');
+    if (!radicado) { contenedor.innerHTML = '<h2>Selecciona un radicado arriba para tomar material</h2>'; return; }
+
+    const respConsumos = await fetch(`${WORKER_URL}/api/pos/academia/kit/consumos-en-curso?radicado_kit_id=${radicadoKitSeleccionadoId}`, {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+    const consumosEnCurso = respConsumos.ok ? (await respConsumos.json()).consumos || [] : [];
+
+    const opcionesInsumo = insumosAcademiaCache.map(i => `<option value="${i.id}">${escaparHtml(i.nombre)} (stock: ${i.stock_actual} ${i.unidad_medida})</option>`).join('');
+
+    contenedor.innerHTML = `
+      <h2>${escaparHtml(radicado.codigo)} — ${escaparHtml(radicado.descripcion)}</h2>
+
+      <div style="margin-top:12px;padding:12px;background:var(--rosa-suave);border-radius:10px;">
+        <div style="font-size:12.5px;font-weight:700;margin-bottom:8px;">Tomar insumo del inventario de Academy</div>
+        <select id="kitInsumoSelect">${opcionesInsumo || '<option value="">No hay insumos de mercería en el inventario de Academy</option>'}</select>
+        <input type="number" min="0.1" step="0.1" placeholder="Cantidad (gramos o unidades)" id="kitCantidadTomar" style="margin-top:8px;">
+        <button class="btn-mini guardar" style="width:100%;margin-top:8px;" onclick="confirmarTomarMaterialKit()">Tomar material</button>
+      </div>
+
+      <div style="margin-top:16px;">
+        <div style="font-size:12.5px;font-weight:700;margin-bottom:8px;">Material tomado (sin devolver sobrante)</div>
+        ${consumosEnCurso.length === 0 ? '<div style="font-size:12px;opacity:0.6;">Nada pendiente.</div>' : consumosEnCurso.map(c => `
+          <div class="fila-consumo-historial" style="padding:10px 0;">
+            <div><strong>${c.cantidad_tomada} ${c.inventario_items ? c.inventario_items.unidad_medida : ''}</strong> de ${escaparHtml(c.inventario_items ? c.inventario_items.nombre : 'Insumo')}</div>
+            <div style="display:flex;gap:8px;margin-top:6px;align-items:center;">
+              <input type="number" min="0" step="0.1" placeholder="¿Cuánto sobró?" id="devolver-kit-${c.id}" style="flex:1;padding:7px 9px;font-size:12.5px;">
+              <button onclick="confirmarDevolverMaterialKit('${c.id}')" style="padding:7px 12px;border-radius:8px;border:none;background:var(--verde-exito);color:white;font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">Devolver sobrante</button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+
+      <div style="margin-top:16px;padding-top:14px;border-top:2px solid var(--rosa-suave);">
+        <div style="font-size:12.5px;font-weight:700;margin-bottom:8px;">🎁 Finalizar y crear el kit terminado</div>
+        <div style="font-size:11px;opacity:0.6;margin-bottom:8px;">${consumosEnCurso.length > 0 ? '⚠️ Primero devuelve el sobrante de todos los insumos.' : 'Todos los insumos ya están cerrados — listo para finalizar.'}</div>
+        <label style="margin-top:0;">Nombre del kit</label>
+        <input type="text" id="kitNombreFinal" placeholder="Ej: Kit amigurumi básico">
+        <label style="margin-top:8px;">Cuántos kits salieron</label>
+        <input type="number" min="1" step="1" value="1" id="kitCantidadFinal">
+        <label style="margin-top:8px;">Precio de venta por kit (COP)</label>
+        <input type="number" min="0" step="1000" id="kitPrecioFinal">
+        <button class="btn-principal" ${consumosEnCurso.length > 0 ? 'disabled' : ''} onclick="confirmarFinalizarKit()">Finalizar kit</button>
+      </div>
+    `;
+  }
+
+  async function confirmarTomarMaterialKit() {
+    const insumoId = document.getElementById('kitInsumoSelect').value;
+    const cantidad = Number(document.getElementById('kitCantidadTomar').value);
+    if (!insumoId) { alert('Selecciona un insumo.'); return; }
+    if (!cantidad || cantidad <= 0) { alert('Escribe una cantidad válida.'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/academia/kit/tomar-material', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ radicado_kit_id: radicadoKitSeleccionadoId, inventario_item_id: insumoId, cantidad })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudo tomar el material')); return; }
+
+    await cargarInsumosAcademia();
+    await renderizarDetalleRadicadoKit();
+  }
+
+  async function confirmarDevolverMaterialKit(consumoId) {
+    const inputEl = document.getElementById(`devolver-kit-${consumoId}`);
+    const cantidadDevuelta = Number(inputEl.value);
+    if (inputEl.value === '' || isNaN(cantidadDevuelta) || cantidadDevuelta < 0) {
+      alert('Escribe cuánto sobró (puede ser 0 si no sobró nada).');
+      return;
+    }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/academia/kit/devolver-material', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ consumo_id: consumoId, cantidad_devuelta: cantidadDevuelta })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudo registrar la devolución')); return; }
+
+    await cargarInsumosAcademia();
+    await renderizarDetalleRadicadoKit();
+  }
+
+  async function confirmarFinalizarKit() {
+    const nombreKit = document.getElementById('kitNombreFinal').value.trim();
+    const cantidadKits = Number(document.getElementById('kitCantidadFinal').value);
+    const precioVenta = Number(document.getElementById('kitPrecioFinal').value) || 0;
+
+    if (!nombreKit) { alert('Escribe el nombre del kit.'); return; }
+    if (!cantidadKits || cantidadKits <= 0) { alert('Escribe cuántos kits salieron.'); return; }
+
+    if (!confirm(`¿Confirmas finalizar este radicado y agregar ${cantidadKits} unidad(es) de "${nombreKit}" al inventario de Academy?`)) return;
+
+    const resp = await fetch(WORKER_URL + '/api/pos/academia/kit/finalizar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({
+        radicado_kit_id: radicadoKitSeleccionadoId,
+        nombre_kit: nombreKit,
+        precio_venta: precioVenta,
+        cantidad_kits: cantidadKits
+      })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudo finalizar el kit')); return; }
+
+    alert(`✅ Kit "${nombreKit}" agregado al inventario de Lana Rosa Academy.`);
+    radicadoKitSeleccionadoId = null;
+    document.getElementById('panelDetalleRadicadoKit').innerHTML = '<h2>Selecciona un radicado arriba para tomar material</h2>';
+    await cargarRadicadosKit();
   }
 
   async function guardarMetasAcademia() {
