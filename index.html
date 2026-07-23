@@ -704,8 +704,11 @@
 <div id="pantallaInventario" class="oculto contenido">
   <div class="page-header">
     <h1>Gestionar inventario</h1>
-    <div class="subtitulo">Solo el Administrador puede agregar o modificar productos.</div>
+    <div class="subtitulo">Cada departamento tiene su propio inventario. Solo el Administrador puede agregar o modificar productos.</div>
   </div>
+
+  <div class="filtro-tipo" id="filtroDeptoInventarioTabs" style="margin-bottom:16px;"></div>
+
   <div class="grilla-2">
 
     <div class="panel">
@@ -715,19 +718,21 @@
       <label for="invSku">SKU / Código de barras <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
       <input type="text" id="invSku" placeholder="Ej: AMI-001">
       <label for="invTipo">Tipo</label>
-      <select id="invTipo">
-        <option value="producto_terminado">Amigurumi / Producto terminado</option>
+      <select id="invTipo" onchange="cargarCategoriasParaFormulario()">
+        <option value="producto_terminado">Producto tejido</option>
         <option value="merceria">Mercería / Insumo</option>
       </select>
-      <label for="invUnidad">Unidad de medida</label>
+      <label for="invCategoria">Categoría</label>
+      <select id="invCategoria"><option value="">Cargando categorías...</option></select>
+      <button type="button" class="btn-mini editar" style="width:100%;margin-top:6px;" onclick="alternarGestionCategorias()">⚙️ Agregar o editar categorías</button>
+      <div id="panelGestionCategorias" class="oculto" style="margin-top:8px;padding:10px;background:var(--rosa-suave);border-radius:9px;"></div>
+      <label for="invUnidad" style="margin-top:14px;">Unidad de medida</label>
       <select id="invUnidad">
         <option value="unidad">Unidad</option>
         <option value="metro">Metro</option>
         <option value="gramo">Gramo</option>
         <option value="rollo">Rollo</option>
       </select>
-      <label for="invDepartamento">Departamento dueño de este producto</label>
-      <select id="invDepartamento"><option value="">Cargando departamentos...</option></select>
       <label for="invPrecioVenta">Precio de venta (COP)</label>
       <input type="number" id="invPrecioVenta" placeholder="0" min="0" step="1000">
       <label for="invCostoPromedio">Costo aproximado (COP, opcional)</label>
@@ -749,10 +754,10 @@
       </div>
       <div class="filtro-tipo">
         <button class="chip-filtro activo" data-filtro-inv="todos" onclick="cambiarFiltroInventario('todos', this)">Todos</button>
-        <button class="chip-filtro" data-filtro-inv="producto_terminado" onclick="cambiarFiltroInventario('producto_terminado', this)">Amigurumis</button>
+        <button class="chip-filtro" data-filtro-inv="producto_terminado" onclick="cambiarFiltroInventario('producto_terminado', this)">Producto tejido</button>
         <button class="chip-filtro" data-filtro-inv="merceria" onclick="cambiarFiltroInventario('merceria', this)">Mercería</button>
       </div>
-      <div class="filtro-tipo" id="filtroDepartamentoInv"></div>
+      <div class="filtro-tipo" id="filtroCategoriaInv"></div>
       <div id="listaInventarioGestion"><div class="cargando">Cargando inventario...</div></div>
     </div>
 
@@ -1365,6 +1370,8 @@
     <div class="subtitulo">Reuniones, capacitaciones, juntas y salidas. Visible para todo el equipo; solo la administradora o quien ella autorice puede programar eventos. La sincronización con Google Calendar de cada empleado está pendiente de configurar.</div>
   </div>
 
+  <div id="bannerRecordatoriosCalendario"></div>
+
   <div class="grilla-2">
     <div class="panel" id="panelNuevoEvento">
       <h2>+ Nuevo evento</h2>
@@ -1372,11 +1379,11 @@
       <input type="text" id="eventoTitulo" placeholder="Ej: Reunión de equipo">
       <label for="eventoTipo">Tipo</label>
       <select id="eventoTipo">
-        <option value="reunion">Reunión</option>
-        <option value="capacitacion">Capacitación</option>
-        <option value="junta">Junta</option>
-        <option value="salida">Salida</option>
-        <option value="otro">Otro</option>
+        <option value="reunion">🔵 Reunión</option>
+        <option value="capacitacion">🟢 Capacitación</option>
+        <option value="junta">🟠 Junta</option>
+        <option value="salida">🟣 Salida</option>
+        <option value="otro">⚪ Otro</option>
       </select>
       <label for="eventoFechaInicio">Fecha y hora de inicio</label>
       <input type="datetime-local" id="eventoFechaInicio">
@@ -1386,15 +1393,27 @@
       <input type="text" id="eventoUbicacion" placeholder="Ej: Taller, Google Meet...">
       <label for="eventoDescripcion">Descripción <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
       <input type="text" id="eventoDescripcion" placeholder="Detalles del evento">
+      <label for="eventoRecordatorio">Recordarme antes</label>
+      <select id="eventoRecordatorio">
+        <option value="">Sin recordatorio</option>
+        <option value="10">10 minutos antes</option>
+        <option value="30">30 minutos antes</option>
+        <option value="60">1 hora antes</option>
+        <option value="1440">1 día antes</option>
+      </select>
       <button class="btn-principal" id="btnCrearEvento" onclick="confirmarCrearEvento()">Programar evento</button>
       <div class="mensaje" id="mensajeEvento"></div>
     </div>
 
     <div class="panel">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;">
         <button class="btn-mini editar" style="max-width:36px;" onclick="cambiarMesCalendario(-1)">←</button>
-        <h2 id="tituloMesCalendario" style="margin:0;"></h2>
+        <h2 id="tituloMesCalendario" style="margin:0;flex:1;text-align:center;"></h2>
         <button class="btn-mini editar" style="max-width:36px;" onclick="cambiarMesCalendario(1)">→</button>
+      </div>
+      <div class="filtro-tipo" style="margin-bottom:10px;">
+        <button class="chip-filtro activo" data-vista-calendario="mes" onclick="cambiarVistaCalendario('mes', this)">📅 Mes</button>
+        <button class="chip-filtro" data-vista-calendario="dia" onclick="cambiarVistaCalendario('dia', this)">📆 Día</button>
       </div>
       <div id="gridCalendario"></div>
       <div id="listaEventosDelDia" style="margin-top:16px;"></div>
@@ -2348,11 +2367,16 @@
     await cargarInventarioGestion();
   }
 
+  let inventarioDeptoActivo = null;
+  let categoriasInventarioCache = { merceria: [], producto_terminado: [] };
+
   async function mostrarPantallaInventario() {
     mostrarPantalla('pantallaInventario');
     limpiarFormularioProducto();
     document.getElementById('inputBuscarInventario').value = '';
     await cargarDepartamentosParaInventario();
+    await cargarCategoriasInventario();
+    cargarCategoriasParaFormulario();
     await cargarInventarioGestion();
   }
 
@@ -2365,29 +2389,131 @@
 
     departamentosParaInventario = data || [];
 
-    const selectForm = document.getElementById('invDepartamento');
-    const filtroEl = document.getElementById('filtroDepartamentoInv');
-    const labelDepartamento = document.querySelector('label[for="invDepartamento"]');
+    let visibles = departamentosParaInventario;
+    if (rolActual === 'cajero') visibles = departamentosParaInventario.filter(d => d.id === centroCostoTiendaId);
+    else if (rolActual === 'taller') visibles = departamentosParaInventario.filter(d => d.id === centroCostoTallerId);
 
-    if (rolActual === 'administrador') {
-      // Admin ve y elige entre todos los departamentos
-      selectForm.innerHTML = departamentosParaInventario.map(d => `<option value="${d.id}">${escaparHtml(d.nombre)}</option>`).join('');
-      if (labelDepartamento) labelDepartamento.style.display = '';
-      selectForm.style.display = '';
-      filtroEl.innerHTML = `<button class="chip-filtro activo" data-filtro-depto="todos" onclick="cambiarFiltroDepartamentoInv('todos', this)">Todos los departamentos</button>` +
-        departamentosParaInventario.map(d => `<button class="chip-filtro" data-filtro-depto="${d.id}" onclick="cambiarFiltroDepartamentoInv('${d.id}', this)">${escaparHtml(d.nombre)}</button>`).join('');
-      filtroDepartamentoInvActual = 'todos';
-    } else {
-      // Cajero y Taller solo trabajan con su propio departamento: se oculta el selector y el filtro
-      const miDepartamentoId = obtenerCentroCostoPropio();
-      selectForm.innerHTML = departamentosParaInventario
-        .filter(d => d.id === miDepartamentoId)
-        .map(d => `<option value="${d.id}" selected>${escaparHtml(d.nombre)}</option>`).join('');
-      if (labelDepartamento) labelDepartamento.style.display = 'none';
-      selectForm.style.display = 'none';
-      filtroEl.innerHTML = '';
-      filtroDepartamentoInvActual = miDepartamentoId;
+    const tabsEl = document.getElementById('filtroDeptoInventarioTabs');
+    tabsEl.innerHTML = visibles.map((d, i) =>
+      `<button class="chip-filtro ${i === 0 ? 'activo' : ''}" data-filtro-depto-inv="${d.id}" onclick="cambiarDeptoInventario('${d.id}', this)">${escaparHtml(d.nombre)}</button>`
+    ).join('');
+
+    inventarioDeptoActivo = visibles[0] ? visibles[0].id : null;
+  }
+
+  function cambiarDeptoInventario(centroCostoId, botonEl) {
+    inventarioDeptoActivo = centroCostoId;
+    document.querySelectorAll('[data-filtro-depto-inv]').forEach(b => b.classList.remove('activo'));
+    botonEl.classList.add('activo');
+    renderizarTablaInventario();
+  }
+
+  async function cargarCategoriasInventario() {
+    const { data } = await supabaseClient
+      .from('categorias_inventario')
+      .select('id, tipo, nombre, orden, activo')
+      .eq('activo', true)
+      .order('orden', { ascending: true });
+
+    categoriasInventarioCache = { merceria: [], producto_terminado: [] };
+    (data || []).forEach(c => {
+      if (categoriasInventarioCache[c.tipo]) categoriasInventarioCache[c.tipo].push(c);
+    });
+  }
+
+  function cargarCategoriasParaFormulario() {
+    const tipo = document.getElementById('invTipo').value;
+    const select = document.getElementById('invCategoria');
+    const categorias = categoriasInventarioCache[tipo] || [];
+    select.innerHTML = '<option value="">Sin categoría específica</option>' +
+      categorias.map(c => `<option value="${c.id}">${escaparHtml(c.nombre)}</option>`).join('');
+    renderizarFiltroCategoriaInv();
+    if (document.getElementById('panelGestionCategorias').classList.contains('oculto') === false) {
+      renderizarGestionCategorias();
     }
+  }
+
+  function alternarGestionCategorias() {
+    const panel = document.getElementById('panelGestionCategorias');
+    panel.classList.toggle('oculto');
+    if (!panel.classList.contains('oculto')) renderizarGestionCategorias();
+  }
+
+  function renderizarGestionCategorias() {
+    const tipo = document.getElementById('invTipo').value;
+    const categorias = categoriasInventarioCache[tipo] || [];
+    const panel = document.getElementById('panelGestionCategorias');
+
+    panel.innerHTML = `
+      <div style="font-size:11.5px;font-weight:700;margin-bottom:6px;">Categorías de ${tipo === 'merceria' ? 'Mercería' : 'Producto tejido'}</div>
+      ${categorias.map(c => `
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+          <input type="text" value="${escaparHtml(c.nombre)}" id="cat-nombre-${c.id}" style="font-size:12px;padding:6px 8px;flex:1;">
+          <button class="btn-mini guardar" style="max-width:60px;padding:6px;" onclick="renombrarCategoria('${c.id}')">Guardar</button>
+          <button class="btn-mini desactivar" style="max-width:36px;padding:6px;" onclick="eliminarCategoria('${c.id}')">✕</button>
+        </div>
+      `).join('')}
+      <div style="display:flex;gap:6px;margin-top:8px;">
+        <input type="text" id="nuevaCategoriaNombre" placeholder="Nueva categoría..." style="font-size:12px;padding:6px 8px;flex:1;">
+        <button class="btn-mini guardar" onclick="crearCategoria()">+ Agregar</button>
+      </div>
+    `;
+  }
+
+  async function crearCategoria() {
+    const tipo = document.getElementById('invTipo').value;
+    const nombre = document.getElementById('nuevaCategoriaNombre').value.trim();
+    if (!nombre) { alert('Escribe el nombre de la categoría.'); return; }
+
+    const { error } = await supabaseClient.from('categorias_inventario').insert({
+      tipo, nombre, orden: (categoriasInventarioCache[tipo] || []).length + 1
+    });
+    if (error) { alert('No se pudo crear la categoría: ' + error.message); return; }
+
+    await cargarCategoriasInventario();
+    cargarCategoriasParaFormulario();
+    renderizarGestionCategorias();
+  }
+
+  async function renombrarCategoria(categoriaId) {
+    const nuevoNombre = document.getElementById(`cat-nombre-${categoriaId}`).value.trim();
+    if (!nuevoNombre) { alert('El nombre no puede quedar vacío.'); return; }
+
+    const { error } = await supabaseClient.from('categorias_inventario').update({ nombre: nuevoNombre }).eq('id', categoriaId);
+    if (error) { alert('No se pudo renombrar: ' + error.message); return; }
+
+    await cargarCategoriasInventario();
+    cargarCategoriasParaFormulario();
+    renderizarGestionCategorias();
+    await cargarInventarioGestion();
+  }
+
+  async function eliminarCategoria(categoriaId) {
+    if (!confirm('¿Eliminar esta categoría? Los productos que la tengan asignada quedarán sin categoría.')) return;
+    const { error } = await supabaseClient.from('categorias_inventario').update({ activo: false }).eq('id', categoriaId);
+    if (error) { alert('No se pudo eliminar: ' + error.message); return; }
+
+    await cargarCategoriasInventario();
+    cargarCategoriasParaFormulario();
+    renderizarGestionCategorias();
+    await cargarInventarioGestion();
+  }
+
+  function renderizarFiltroCategoriaInv() {
+    const contenedor = document.getElementById('filtroCategoriaInv');
+    if (!contenedor) return;
+    const todasCategorias = [...categoriasInventarioCache.merceria, ...categoriasInventarioCache.producto_terminado];
+    if (todasCategorias.length === 0) { contenedor.innerHTML = ''; return; }
+    contenedor.innerHTML = `<button class="chip-filtro activo" data-filtro-cat="todas" onclick="cambiarFiltroCategoriaInv('todas', this)">Todas las categorías</button>` +
+      todasCategorias.map(c => `<button class="chip-filtro" data-filtro-cat="${c.id}" onclick="cambiarFiltroCategoriaInv('${c.id}', this)">${escaparHtml(c.nombre)}</button>`).join('');
+    filtroCategoriaInvActual = 'todas';
+  }
+
+  function cambiarFiltroCategoriaInv(categoriaId, botonEl) {
+    filtroCategoriaInvActual = categoriaId;
+    document.querySelectorAll('[data-filtro-cat]').forEach(b => b.classList.remove('activo'));
+    botonEl.classList.add('activo');
+    renderizarTablaInventario();
   }
 
   function limpiarFormularioProducto() {
@@ -2399,15 +2525,18 @@
     document.getElementById('invCostoPromedio').value = '';
     document.getElementById('invStockInicial').value = '';
     document.getElementById('invStockMinimo').value = '';
+    document.getElementById('panelGestionCategorias').classList.add('oculto');
     ocultarMensaje('mensajeInventarioForm');
+    cargarCategoriasParaFormulario();
   }
 
   async function guardarNuevoProducto() {
     const nombre = document.getElementById('invNombre').value.trim();
     const sku = document.getElementById('invSku').value.trim() || null;
     const tipo = document.getElementById('invTipo').value;
+    const categoriaId = document.getElementById('invCategoria').value || null;
     const unidad = document.getElementById('invUnidad').value;
-    const centroCostoId = document.getElementById('invDepartamento').value;
+    const centroCostoId = inventarioDeptoActivo;
     const precioVenta = Number(document.getElementById('invPrecioVenta').value);
     const costo = Number(document.getElementById('invCostoPromedio').value) || 0;
     const stockInicial = Number(document.getElementById('invStockInicial').value) || 0;
@@ -2420,7 +2549,7 @@
       return;
     }
     if (!centroCostoId) {
-      mostrarMensaje('mensajeInventarioForm', 'Selecciona a qué departamento pertenece este producto.', 'error');
+      mostrarMensaje('mensajeInventarioForm', 'Selecciona el departamento arriba.', 'error');
       return;
     }
     if (!precioVenta || precioVenta <= 0) {
@@ -2436,6 +2565,7 @@
       nombre,
       sku,
       tipo,
+      categoria_id: categoriaId,
       unidad_medida: unidad,
       centro_costo_id: centroCostoId,
       precio_venta: precioVenta,
@@ -2464,7 +2594,7 @@
 
     const { data, error } = await supabaseClient
       .from('inventario_items')
-      .select('id, tipo, nombre, stock_actual, stock_minimo, precio_venta, costo_promedio_ponderado, unidad_medida, activo, centro_costo_id')
+      .select('id, tipo, nombre, sku, stock_actual, stock_minimo, precio_venta, costo_promedio_ponderado, unidad_medida, activo, centro_costo_id, categoria_id')
       .order('nombre', { ascending: true });
 
     if (error) {
@@ -2477,15 +2607,8 @@
   }
 
   let filtroInventarioActual = 'todos';
-  let filtroDepartamentoInvActual = 'todos';
+  let filtroCategoriaInvActual = 'todas';
   let itemInventarioEditandoId = null;
-
-  function cambiarFiltroDepartamentoInv(deptoId, botonEl) {
-    filtroDepartamentoInvActual = deptoId;
-    document.querySelectorAll('[data-filtro-depto]').forEach(c => c.classList.remove('activo'));
-    botonEl.classList.add('activo');
-    renderizarTablaInventario();
-  }
 
   function cambiarFiltroInventario(filtro, botonEl) {
     filtroInventarioActual = filtro;
@@ -2498,48 +2621,45 @@
     const contenedor = document.getElementById('listaInventarioGestion');
     const textoBusqueda = document.getElementById('inputBuscarInventario').value.trim().toLowerCase();
 
-    let items = inventarioGestionCompleto;
+    let items = inventarioGestionCompleto.filter(i => i.centro_costo_id === inventarioDeptoActivo);
     if (filtroInventarioActual !== 'todos') {
       items = items.filter(i => i.tipo === filtroInventarioActual);
     }
-    if (filtroDepartamentoInvActual !== 'todos') {
-      items = items.filter(i => i.centro_costo_id === filtroDepartamentoInvActual);
+    if (filtroCategoriaInvActual && filtroCategoriaInvActual !== 'todas') {
+      items = items.filter(i => i.categoria_id === filtroCategoriaInvActual);
     }
     if (textoBusqueda) {
       items = items.filter(i => i.nombre.toLowerCase().includes(textoBusqueda) || (i.sku && i.sku.toLowerCase().includes(textoBusqueda)));
     }
 
     if (items.length === 0) {
-      contenedor.innerHTML = '<div class="cargando">No hay productos que coincidan.</div>';
+      contenedor.innerHTML = '<div class="cargando">No hay productos que coincidan en este departamento.</div>';
       return;
     }
 
-    const etiquetaTipoMap = { merceria: 'Mercería', producto_terminado: 'Amigurumi' };
-    const nombreDeptoMap = Object.fromEntries(departamentosParaInventario.map(d => [d.id, d.nombre]));
+    const etiquetaTipoMap = { merceria: 'Mercería', producto_terminado: 'Producto tejido' };
+    const todasCategorias = [...categoriasInventarioCache.merceria, ...categoriasInventarioCache.producto_terminado];
+    const nombreCategoriaMap = Object.fromEntries(todasCategorias.map(c => [c.id, c.nombre]));
 
     contenedor.innerHTML = items.map(item => {
       const etiquetaTipo = etiquetaTipoMap[item.tipo] || item.tipo;
       const tagInactivo = !item.activo ? '<span class="badge-inactivo">Inactivo</span>' : '';
       const skuTexto = item.sku ? `<span style="opacity:0.5;font-size:11px;margin-left:6px;">SKU: ${escaparHtml(item.sku)}</span>` : '';
-      const nombreDepto = nombreDeptoMap[item.centro_costo_id] || 'Sin departamento';
+      const nombreCategoria = item.categoria_id ? (nombreCategoriaMap[item.categoria_id] || '') : '';
       const estaEditando = itemInventarioEditandoId === item.id;
 
       if (estaEditando) {
-        const opcionesDepto = departamentosParaInventario.map(d =>
-          `<option value="${d.id}" ${d.id === item.centro_costo_id ? 'selected' : ''}>${escaparHtml(d.nombre)}</option>`
-        ).join('');
-        const nombreDeptoActual = nombreDeptoMap[item.centro_costo_id] || 'Sin departamento';
-        const selectorDepartamento = rolActual === 'administrador'
-          ? `<label style="margin-top:8px;">Departamento</label><select id="edit-depto-${item.id}">${opcionesDepto}</select>`
-          : `<div style="font-size:11px;color:var(--rosa-principal);font-weight:600;margin-top:8px;">🏢 ${escaparHtml(nombreDeptoActual)}</div>`;
-        // Modo edición
+        const categoriasDelTipo = categoriasInventarioCache[item.tipo] || [];
+        const opcionesCategoria = '<option value="">Sin categoría específica</option>' +
+          categoriasDelTipo.map(c => `<option value="${c.id}" ${c.id === item.categoria_id ? 'selected' : ''}>${escaparHtml(c.nombre)}</option>`).join('');
         return `
           <div class="fila-inventario-editable" style="border-color:var(--rosa-medio);" data-id="${item.id}">
             <div class="fila-inventario-titulo">
               <span class="fila-inventario-nombre">${escaparHtml(item.nombre)}${tagInactivo}</span>
               <span class="fila-inventario-tipo-tag">${etiquetaTipo}</span>
             </div>
-            ${selectorDepartamento}
+            <label style="margin-top:8px;">Categoría</label>
+            <select id="edit-categoria-${item.id}">${opcionesCategoria}</select>
             <div class="grid-campos-inventario">
               <div class="campo-mini">
                 <label>Precio de venta</label>
@@ -2566,14 +2686,13 @@
           </div>
         `;
       } else {
-        // Modo lectura
         return `
           <div class="fila-inventario-editable" data-id="${item.id}">
             <div class="fila-inventario-titulo">
               <span class="fila-inventario-nombre">${escaparHtml(item.nombre)}${tagInactivo}${skuTexto}</span>
               <span class="fila-inventario-tipo-tag">${etiquetaTipo}</span>
             </div>
-            <div style="font-size:11px;color:var(--rosa-principal);font-weight:600;margin-top:2px;">🏢 ${escaparHtml(nombreDepto)}</div>
+            ${nombreCategoria ? `<div style="font-size:11px;color:var(--rosa-principal);font-weight:600;margin-top:2px;">🏷️ ${escaparHtml(nombreCategoria)}</div>` : ''}
             <div class="fila-inventario-lectura">
               <span>Precio: <strong>${formatearMoneda(item.precio_venta)}</strong></span>
               <span>Costo: <strong>${formatearMoneda(item.costo_promedio_ponderado)}</strong></span>
@@ -2604,19 +2723,16 @@
     const costo = Number(document.getElementById(`edit-costo-${itemId}`).value);
     const stock = Number(document.getElementById(`edit-stock-${itemId}`).value);
     const stockMinimo = Number(document.getElementById(`edit-stockmin-${itemId}`).value);
-    const deptoEl = document.getElementById(`edit-depto-${itemId}`);
+    const categoriaEl = document.getElementById(`edit-categoria-${itemId}`);
 
     const cambios = {
       precio_venta: precioVenta,
       costo_promedio_ponderado: costo,
       stock_actual: stock,
       stock_minimo: stockMinimo,
+      categoria_id: categoriaEl ? (categoriaEl.value || null) : null,
       updated_at: new Date().toISOString()
     };
-    // Solo el Administrador puede reasignar el departamento de un producto
-    if (deptoEl) {
-      cambios.centro_costo_id = deptoEl.value;
-    }
 
     const { error } = await supabaseClient
       .from('inventario_items')
@@ -2627,6 +2743,7 @@
       alert('No se pudo guardar el cambio: ' + error.message);
       return;
     }
+    itemInventarioEditandoId = null;
     await cargarInventarioGestion();
   }
 
@@ -5075,7 +5192,7 @@
             ${puedeLiquidarIndividual ? `<button class="btn-mini guardar" style="width:100%;margin-top:8px;" onclick="registrarRetiroPropietaria('${e.id}', '${escaparHtml(e.nombre_completo).replace(/'/g, "\\'")}', ${e.salario_basico})">👑 Liquidar pago de Sara (retiro de utilidades)</button>` : ''}
             ${beneficiariosAbiertos ? renderizarPanelBeneficiarios(e.id) : ''}
             ${historialSalarioAbierto === e.id ? renderizarPanelHistorialSalario(e.id) : ''}
-            ${documentosRhAbierto === e.id ? renderizarPanelDocumentos(e.id) : ''}
+            ${documentosRhAbierto === e.id ? renderizarPanelDocumentos(e.id, true) : ''}
           </div>
         `;
       }
@@ -5106,7 +5223,7 @@
           ${beneficiariosAbiertos ? renderizarPanelBeneficiarios(e.id) : ''}
           ${prestamosAbiertos ? renderizarPanelPrestamos(e.id) : ''}
           ${historialSalarioAbierto === e.id ? renderizarPanelHistorialSalario(e.id) : ''}
-          ${documentosRhAbierto === e.id ? renderizarPanelDocumentos(e.id) : ''}
+          ${documentosRhAbierto === e.id ? renderizarPanelDocumentos(e.id, true) : ''}
         </div>
       `;
     }).join('');
@@ -5805,7 +5922,7 @@
     certificado: 'Certificado', otro: 'Otro'
   };
 
-  function renderizarPanelDocumentos(empleadoId) {
+  function renderizarPanelDocumentos(empleadoId, soloLectura) {
     const documentos = documentosPorEmpleadoCache[empleadoId];
     let filas = '<div class="cargando" style="padding:8px 0;">Cargando documentos...</div>';
     if (documentos) {
@@ -5819,16 +5936,17 @@
               </div>
               <div style="display:flex;gap:6px;">
                 <button class="btn-mini editar" onclick="verDocumentoRh('${d.id}')">👁️ Ver</button>
-                <button class="btn-mini desactivar" onclick="eliminarDocumentoRh('${d.id}', '${empleadoId}')">✕</button>
+                ${soloLectura ? '' : `<button class="btn-mini desactivar" onclick="eliminarDocumentoRh('${d.id}', '${empleadoId}')">✕</button>`}
               </div>
             </div>
           `).join('');
     }
 
-    return `
-      <div style="margin-top:10px;padding:12px;background:var(--rosa-suave);border-radius:10px;">
-        <div style="font-size:12.5px;font-weight:700;margin-bottom:8px;">📁 Documentos</div>
-        ${filas}
+    const formularioSubida = soloLectura ? `
+      <div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--rosa-medio);font-size:11px;opacity:0.6;">
+        Para subir o eliminar documentos, ve a <strong>Talento Humano</strong>.
+      </div>
+    ` : `
         <div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--rosa-medio);">
           <label style="margin-top:0;font-size:11px;">Tipo de documento</label>
           <select id="doc-tipo-${empleadoId}" style="font-size:12.5px;padding:8px;">
@@ -5846,6 +5964,13 @@
           <input type="file" id="doc-archivo-${empleadoId}" style="font-size:12px;padding:6px 0;">
           <button class="btn-mini guardar" style="width:100%;margin-top:8px;" onclick="subirDocumentoRh('${empleadoId}')">+ Subir documento</button>
         </div>
+    `;
+
+    return `
+      <div style="margin-top:10px;padding:12px;background:var(--rosa-suave);border-radius:10px;">
+        <div style="font-size:12.5px;font-weight:700;margin-bottom:8px;">📁 Documentos${soloLectura ? ' (solo lectura)' : ''}</div>
+        ${filas}
+        ${formularioSubida}
       </div>
     `;
   }
@@ -5935,7 +6060,7 @@
         </div>
         <div style="font-size:11.5px;opacity:0.65;margin-top:3px;">Fecha de ingreso: ${new Date(e.fecha_ingreso).toLocaleDateString('es-CO')}</div>
         <button class="btn-mini editar" style="margin-top:8px;" onclick="alternarDocumentosRh('${e.id}')">📁 ${documentosRhAbierto === e.id ? 'Ocultar documentos' : 'Ver documentos'}</button>
-        ${documentosRhAbierto === e.id ? renderizarPanelDocumentos(e.id) : ''}
+        ${documentosRhAbierto === e.id ? renderizarPanelDocumentos(e.id, false) : ''}
       </div>
     `).join('');
   }
@@ -6178,6 +6303,7 @@
     mesCalendarioActual = hoy.getMonth();
     anioCalendarioActual = hoy.getFullYear();
     diaSeleccionadoCalendario = hoy.toISOString().slice(0, 10);
+    vistaCalendarioActual = 'mes';
     await cargarEventosCalendario();
   }
 
@@ -6185,8 +6311,10 @@
   let mesCalendarioActual = new Date().getMonth();
   let anioCalendarioActual = new Date().getFullYear();
   let diaSeleccionadoCalendario = new Date().toISOString().slice(0, 10);
+  let vistaCalendarioActual = 'mes';
 
   const etiquetasTipoEvento = { reunion: '🗓️ Reunión', capacitacion: '🎓 Capacitación', junta: '🤝 Junta', salida: '🚗 Salida', otro: '📌 Otro' };
+  const coloresTipoEvento = { reunion: '#4a90d9', capacitacion: '#2e8b57', junta: '#e0922f', salida: '#8a5fc4', otro: '#999999' };
 
   async function cargarEventosCalendario() {
     const resp = await fetch(WORKER_URL + '/api/pos/rh/calendario/eventos', {
@@ -6195,9 +6323,52 @@
     todosLosEventosCalendario = resp.ok ? (await resp.json()).eventos || [] : [];
     renderizarGridCalendario();
     renderizarEventosDelDia();
+    revisarRecordatoriosCalendario();
+  }
+
+  function revisarRecordatoriosCalendario() {
+    const contenedor = document.getElementById('bannerRecordatoriosCalendario');
+    if (!contenedor) return;
+    const ahora = new Date();
+
+    const pendientes = todosLosEventosCalendario.filter(ev => {
+      if (!ev.recordatorio_minutos_antes) return false;
+      const inicio = new Date(ev.fecha_inicio);
+      const minutosFaltantes = (inicio - ahora) / 60000;
+      return minutosFaltantes > 0 && minutosFaltantes <= ev.recordatorio_minutos_antes;
+    });
+
+    if (pendientes.length === 0) { contenedor.innerHTML = ''; return; }
+
+    contenedor.innerHTML = `
+      <div style="background:#fff3cd;border:1.5px solid #f0d98c;border-radius:12px;padding:14px 16px;margin-bottom:16px;">
+        <div style="font-weight:700;font-size:13px;color:#856404;margin-bottom:6px;">🔔 Recordatorio</div>
+        ${pendientes.map(ev => {
+          const inicio = new Date(ev.fecha_inicio).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
+          return `<div style="font-size:12.5px;color:#856404;padding:3px 0;"><strong>${escaparHtml(ev.titulo)}</strong> — ${inicio}</div>`;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  function cambiarVistaCalendario(vista, botonEl) {
+    vistaCalendarioActual = vista;
+    document.querySelectorAll('[data-vista-calendario]').forEach(b => b.classList.remove('activo'));
+    botonEl.classList.add('activo');
+    renderizarGridCalendario();
   }
 
   function cambiarMesCalendario(delta) {
+    if (vistaCalendarioActual === 'dia') {
+      const fecha = new Date(diaSeleccionadoCalendario + 'T00:00:00');
+      fecha.setDate(fecha.getDate() + delta);
+      diaSeleccionadoCalendario = fecha.toISOString().slice(0, 10);
+      mesCalendarioActual = fecha.getMonth();
+      anioCalendarioActual = fecha.getFullYear();
+      renderizarGridCalendario();
+      renderizarEventosDelDia();
+      return;
+    }
     mesCalendarioActual += delta;
     if (mesCalendarioActual > 11) { mesCalendarioActual = 0; anioCalendarioActual++; }
     if (mesCalendarioActual < 0) { mesCalendarioActual = 11; anioCalendarioActual--; }
@@ -6212,6 +6383,14 @@
 
   function renderizarGridCalendario() {
     const nombresMes = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+    if (vistaCalendarioActual === 'dia') {
+      const fechaObj = new Date(diaSeleccionadoCalendario + 'T00:00:00');
+      document.getElementById('tituloMesCalendario').textContent = fechaObj.toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' });
+      document.getElementById('gridCalendario').innerHTML = '';
+      return;
+    }
+
     document.getElementById('tituloMesCalendario').textContent = `${nombresMes[mesCalendarioActual]} ${anioCalendarioActual}`;
 
     const primerDiaMes = new Date(anioCalendarioActual, mesCalendarioActual, 1);
@@ -6238,10 +6417,11 @@
       const eventosDia = eventosPorDia[claveIso] || [];
       const esHoy = claveIso === hoyIso;
       const esSeleccionado = claveIso === diaSeleccionadoCalendario;
+      const puntos = eventosDia.slice(0, 4).map(ev => `<span class="punto-evento" style="background:${coloresTipoEvento[ev.tipo] || '#999'};"></span>`).join('');
       html += `
         <div class="calendario-celda ${esHoy ? 'hoy' : ''} ${esSeleccionado ? 'seleccionada' : ''}" onclick="seleccionarDiaCalendario('${claveIso}')">
           <div class="num-dia">${dia}</div>
-          <div>${eventosDia.slice(0, 3).map(() => '<span class="punto-evento"></span>').join('')}</div>
+          <div>${puntos}</div>
         </div>
       `;
     }
@@ -6251,13 +6431,20 @@
 
   function seleccionarDiaCalendario(claveIso) {
     diaSeleccionadoCalendario = claveIso;
+    if (vistaCalendarioActual === 'dia') {
+      const fecha = new Date(claveIso + 'T00:00:00');
+      mesCalendarioActual = fecha.getMonth();
+      anioCalendarioActual = fecha.getFullYear();
+    }
     renderizarGridCalendario();
     renderizarEventosDelDia();
   }
 
   function renderizarEventosDelDia() {
     const contenedor = document.getElementById('listaEventosDelDia');
-    const eventosDelDia = todosLosEventosCalendario.filter(ev => fechaLocalISO(ev.fecha_inicio) === diaSeleccionadoCalendario);
+    const eventosDelDia = todosLosEventosCalendario
+      .filter(ev => fechaLocalISO(ev.fecha_inicio) === diaSeleccionadoCalendario)
+      .sort((a, b) => new Date(a.fecha_inicio) - new Date(b.fecha_inicio));
     const fechaLegible = new Date(diaSeleccionadoCalendario + 'T00:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' });
 
     if (eventosDelDia.length === 0) {
@@ -6269,14 +6456,16 @@
       eventosDelDia.map(ev => {
         const inicio = new Date(ev.fecha_inicio).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
         const fin = new Date(ev.fecha_fin).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+        const color = coloresTipoEvento[ev.tipo] || '#999';
         return `
-          <div class="fila-historial" style="margin-bottom:10px;">
+          <div class="fila-historial" style="margin-bottom:10px;border-left:4px solid ${color};padding-left:12px;">
             <div class="fila-historial-encabezado">
               <span class="fila-historial-consecutivo">${etiquetasTipoEvento[ev.tipo] || ev.tipo}</span>
             </div>
             <div style="font-weight:700;font-size:14px;margin-top:4px;">${escaparHtml(ev.titulo)}</div>
             <div class="fila-historial-fecha">${inicio} — ${fin}${ev.ubicacion ? ' · ' + escaparHtml(ev.ubicacion) : ''}</div>
             ${ev.descripcion ? `<div style="font-size:12.5px;opacity:0.75;margin-top:4px;">${escaparHtml(ev.descripcion)}</div>` : ''}
+            ${ev.recordatorio_minutos_antes ? `<div style="font-size:11px;opacity:0.6;margin-top:4px;">🔔 Recordatorio ${ev.recordatorio_minutos_antes >= 1440 ? (ev.recordatorio_minutos_antes / 1440) + ' día(s)' : ev.recordatorio_minutos_antes + ' min'} antes</div>` : ''}
             <button class="btn-mini desactivar" style="margin-top:8px;max-width:100px;" onclick="eliminarEventoCalendario('${ev.id}')">Eliminar</button>
           </div>
         `;
@@ -6290,6 +6479,7 @@
     const fechaFin = document.getElementById('eventoFechaFin').value;
     const ubicacion = document.getElementById('eventoUbicacion').value.trim();
     const descripcion = document.getElementById('eventoDescripcion').value.trim();
+    const recordatorio = document.getElementById('eventoRecordatorio').value;
     ocultarMensaje('mensajeEvento');
 
     if (!titulo) { mostrarMensaje('mensajeEvento', 'Escribe un título para el evento.', 'error'); return; }
@@ -6307,7 +6497,8 @@
         fecha_inicio: new Date(fechaInicio).toISOString(),
         fecha_fin: new Date(fechaFin).toISOString(),
         ubicacion: ubicacion || null,
-        descripcion: descripcion || null
+        descripcion: descripcion || null,
+        recordatorio_minutos_antes: recordatorio ? Number(recordatorio) : null
       })
     });
 
@@ -6326,6 +6517,7 @@
     document.getElementById('eventoDescripcion').value = '';
     document.getElementById('eventoFechaInicio').value = '';
     document.getElementById('eventoFechaFin').value = '';
+    document.getElementById('eventoRecordatorio').value = '';
     await cargarEventosCalendario();
   }
 
