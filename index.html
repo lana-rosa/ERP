@@ -569,6 +569,7 @@
     <button class="nav-btn" id="nav-reportes-financieros" onclick="mostrarPantallaReportesFinancieros()" style="display:none;"><span class="nav-icon">📊</span> Reportes financieros</button>
     <button class="nav-btn" id="nav-nomina" onclick="mostrarPantallaNomina()" style="display:none;"><span class="nav-icon">👥</span> Nómina</button>
     <button class="nav-btn" id="nav-talento-humano" onclick="mostrarPantallaTalentoHumano()" style="display:none;"><span class="nav-icon">🗂️</span> Talento Humano</button>
+    <button class="nav-btn" id="nav-academia" onclick="mostrarPantallaAcademia()" style="display:none;"><span class="nav-icon">🎓</span> Lana Rosa Academy</button>
     <button class="nav-btn" id="nav-calendario" onclick="mostrarPantallaCalendario()"><span class="nav-icon">📅</span> Calendario del equipo</button>
     <button class="nav-btn" id="nav-pagos-pendientes" onclick="mostrarPantallaPagosPendientes()" style="display:none;"><span class="nav-icon">🏬</span> Mi departamento</button>
   </div>
@@ -1401,6 +1402,80 @@
   </div>
 </div>
 
+<!-- ===== PANTALLA: LANA ROSA ACADEMY ===== -->
+<div id="pantallaAcademia" class="oculto contenido">
+  <div class="page-header">
+    <h1>🎓 Lana Rosa Academy</h1>
+    <div class="subtitulo">Clases presenciales, cursos virtuales, YouTube, patrones de tejido, libros y mini apps. Presupuesto y caja compartidos; resultados por subárea.</div>
+  </div>
+
+  <div class="filtro-tipo" style="margin-bottom:20px;">
+    <button class="chip-filtro activo" data-subtab-btn="academia" onclick="mostrarSubTabGrupo('academia', 'subtabAcademiaRegistrar', this)">+ Registrar venta</button>
+    <button class="chip-filtro" data-subtab-btn="academia" onclick="mostrarSubTabGrupo('academia', 'subtabAcademiaInforme', this); cargarInformeAcademia();">📊 Informe y metas</button>
+  </div>
+
+  <div id="subtabAcademiaRegistrar" data-subtab-grupo="academia">
+    <div class="grilla-2">
+      <div class="panel">
+        <h2>Registrar venta</h2>
+        <div class="subtitulo">Por ahora se registra manualmente.</div>
+        <label for="academiaSubarea">Subárea</label>
+        <select id="academiaSubarea">
+          <option value="clase_presencial">Clase presencial</option>
+          <option value="curso_virtual">Curso virtual</option>
+          <option value="youtube">YouTube</option>
+          <option value="patron_tejido">Patrón de tejido</option>
+          <option value="libro_digital">Libro digital</option>
+          <option value="libro_fisico">Libro físico</option>
+          <option value="mini_app">Mini app</option>
+          <option value="otro">Otro</option>
+        </select>
+        <label for="academiaDescripcion">Descripción</label>
+        <input type="text" id="academiaDescripcion" placeholder="Ej: Curso de amigurumis nivel 1 — María P.">
+        <label for="academiaCliente">Cliente <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+        <input type="text" id="academiaCliente" placeholder="Nombre del cliente">
+        <label for="academiaMonto">Monto (COP)</label>
+        <input type="number" id="academiaMonto" placeholder="0" min="1" step="1000">
+        <label for="academiaMetodoPago">Método de pago</label>
+        <select id="academiaMetodoPago">
+          <option value="efectivo">Efectivo</option>
+          <option value="nequi">Nequi</option>
+          <option value="daviplata">Daviplata</option>
+          <option value="transferencia">Transferencia</option>
+          <option value="tarjeta_debito">Tarjeta débito</option>
+          <option value="tarjeta_credito">Tarjeta crédito</option>
+          <option value="hotmart">Hotmart</option>
+          <option value="youtube_adsense">YouTube AdSense</option>
+          <option value="otro">Otro</option>
+        </select>
+        <button class="btn-principal" id="btnRegistrarVentaAcademia" onclick="confirmarRegistrarVentaAcademia()">Registrar venta</button>
+        <div class="mensaje" id="mensajeVentaAcademia"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Ventas recientes</h2>
+        <div id="listaVentasAcademia"><div class="cargando">Cargando...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="subtabAcademiaInforme" data-subtab-grupo="academia" class="oculto">
+    <div class="panel" style="max-width:none;">
+      <h2>Informe por subárea</h2>
+      <label for="academiaPeriodoInforme">Mes</label>
+      <input type="month" id="academiaPeriodoInforme" onchange="cargarInformeAcademia()" style="max-width:220px;">
+      <div id="resumenInformeAcademia" style="margin-top:14px;"></div>
+      <div id="listaInformeAcademia" style="margin-top:14px;"></div>
+    </div>
+
+    <div class="panel" style="max-width:none;margin-top:20px;">
+      <h2>Fijar metas del mes</h2>
+      <div class="subtitulo">Escribe la meta de ventas de cada subárea para el mes seleccionado arriba.</div>
+      <div id="formMetasAcademia"></div>
+    </div>
+  </div>
+</div>
+
 <!-- ===== PANTALLA: CERRAR TURNO ===== -->
 
 <div id="pantallaCerrarTurno" class="oculto contenido">
@@ -1445,7 +1520,7 @@
   // UTILIDADES
   // ============================================================================
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaDepartamentos', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaDepartamentos', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -1472,6 +1547,7 @@
       pantallaNomina: 'nav-nomina',
       pantallaTalentoHumano: 'nav-talento-humano',
       pantallaCalendario: 'nav-calendario',
+      pantallaAcademia: 'nav-academia',
       pantallaPagosPendientes: 'nav-pagos-pendientes',
     };
     if (mapaNav[idPantalla]) {
@@ -1667,6 +1743,7 @@
     mostrar('nav-reportes-financieros', esAdmin);
     mostrar('nav-nomina', esAdmin);
     mostrar('nav-talento-humano', esAdmin);
+    mostrar('nav-academia', esAdmin);
     mostrar('nav-pagos-pendientes', esCajero || esTaller);
     mostrar('seccionDepartamentos', esAdmin || esCajero || esTaller);
     mostrar('nav-ventas', esAdmin || esCajero);
@@ -5928,6 +6005,172 @@
   // ============================================================
   // CALENDARIO DEL EQUIPO
   // ============================================================
+  // ============================================================
+  // LANA ROSA ACADEMY
+  // ============================================================
+  const etiquetasSubareaAcademia = {
+    clase_presencial: 'Clase presencial', curso_virtual: 'Curso virtual', youtube: 'YouTube',
+    patron_tejido: 'Patrón de tejido', libro_digital: 'Libro digital', libro_fisico: 'Libro físico',
+    mini_app: 'Mini app', otro: 'Otro'
+  };
+
+  async function mostrarPantallaAcademia() {
+    mostrarPantalla('pantallaAcademia');
+    mostrarSubTabGrupo('academia', 'subtabAcademiaRegistrar', document.querySelector('[data-subtab-btn="academia"]'));
+    ocultarMensaje('mensajeVentaAcademia');
+    document.getElementById('academiaPeriodoInforme').value = new Date().toISOString().slice(0, 7);
+    await cargarVentasAcademia();
+  }
+
+  async function confirmarRegistrarVentaAcademia() {
+    const areaFormacion = document.getElementById('academiaSubarea').value;
+    const descripcion = document.getElementById('academiaDescripcion').value.trim();
+    const cliente = document.getElementById('academiaCliente').value.trim();
+    const monto = Number(document.getElementById('academiaMonto').value);
+    const metodoPago = document.getElementById('academiaMetodoPago').value;
+    ocultarMensaje('mensajeVentaAcademia');
+
+    if (!descripcion) { mostrarMensaje('mensajeVentaAcademia', 'Escribe una descripción.', 'error'); return; }
+    if (!monto || monto <= 0) { mostrarMensaje('mensajeVentaAcademia', 'Escribe un monto válido.', 'error'); return; }
+
+    const btn = document.getElementById('btnRegistrarVentaAcademia');
+    btn.disabled = true;
+    btn.textContent = 'Registrando...';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/academia/ventas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({
+        area_formacion: areaFormacion,
+        descripcion,
+        cliente_nombre: cliente || null,
+        monto,
+        metodo_pago: metodoPago
+      })
+    });
+
+    btn.disabled = false;
+    btn.textContent = 'Registrar venta';
+
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeVentaAcademia', datos.error || 'No se pudo registrar la venta.', 'error'); return; }
+
+    mostrarMensaje('mensajeVentaAcademia', '✅ Venta registrada correctamente.', 'exito');
+    document.getElementById('academiaDescripcion').value = '';
+    document.getElementById('academiaCliente').value = '';
+    document.getElementById('academiaMonto').value = '';
+    await cargarVentasAcademia();
+  }
+
+  async function cargarVentasAcademia() {
+    const contenedor = document.getElementById('listaVentasAcademia');
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/academia/ventas', {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+
+    const { ventas } = await resp.json();
+    if (!ventas || ventas.length === 0) {
+      contenedor.innerHTML = '<div class="cargando">Todavía no hay ventas registradas.</div>';
+      return;
+    }
+
+    contenedor.innerHTML = ventas.map(v => {
+      const fecha = new Date(v.fecha + 'T00:00:00').toLocaleDateString('es-CO');
+      return `
+        <div class="fila-historial" style="margin-bottom:9px;">
+          <div class="fila-historial-encabezado">
+            <span class="fila-historial-consecutivo">${etiquetasSubareaAcademia[v.area_formacion] || v.area_formacion}</span>
+            <span class="fila-historial-total">${formatearMoneda(v.monto)}</span>
+          </div>
+          <div class="fila-historial-fecha">${fecha}${v.cliente_nombre ? ' · ' + escaparHtml(v.cliente_nombre) : ''}</div>
+          <div class="fila-historial-detalle">${escaparHtml(v.descripcion)}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function cargarInformeAcademia() {
+    const periodo = document.getElementById('academiaPeriodoInforme').value || new Date().toISOString().slice(0, 7);
+    const contenedorResumen = document.getElementById('resumenInformeAcademia');
+    const contenedorLista = document.getElementById('listaInformeAcademia');
+    const contenedorForm = document.getElementById('formMetasAcademia');
+    contenedorLista.innerHTML = '<div class="cargando">Cargando...</div>';
+
+    const resp = await fetch(`${WORKER_URL}/api/pos/academia/informe?periodo=${periodo}`, {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+    if (!resp.ok) { contenedorLista.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+
+    const { subareas, total_vendido, total_meta } = await resp.json();
+
+    const porcentajeTotal = total_meta > 0 ? Math.round((total_vendido / total_meta) * 100) : null;
+    contenedorResumen.innerHTML = `
+      <div class="grilla-3">
+        <div style="text-align:center;padding:12px;background:var(--rosa-suave);border-radius:10px;">
+          <div style="font-size:11px;opacity:0.6;">Total vendido</div>
+          <div style="font-size:18px;font-weight:700;color:var(--rosa-principal);">${formatearMoneda(total_vendido)}</div>
+        </div>
+        <div style="text-align:center;padding:12px;background:var(--rosa-suave);border-radius:10px;">
+          <div style="font-size:11px;opacity:0.6;">Meta total</div>
+          <div style="font-size:18px;font-weight:700;">${formatearMoneda(total_meta)}</div>
+        </div>
+        <div style="text-align:center;padding:12px;background:var(--rosa-suave);border-radius:10px;">
+          <div style="font-size:11px;opacity:0.6;">Cumplimiento</div>
+          <div style="font-size:18px;font-weight:700;color:${porcentajeTotal !== null && porcentajeTotal >= 100 ? 'var(--verde-exito)' : 'var(--rosa-principal)'};">${porcentajeTotal !== null ? porcentajeTotal + '%' : 'Sin meta'}</div>
+        </div>
+      </div>
+    `;
+
+    contenedorLista.innerHTML = subareas.map(s => {
+      const color = s.porcentaje_cumplimiento === null ? '#888' : s.porcentaje_cumplimiento >= 100 ? 'var(--verde-exito)' : s.porcentaje_cumplimiento >= 60 ? '#856404' : 'var(--rojo-error)';
+      const anchoBarra = Math.min(s.porcentaje_cumplimiento || 0, 100);
+      return `
+        <div style="padding:10px 0;border-bottom:1px solid #f4eef2;">
+          <div style="display:flex;justify-content:space-between;font-size:13px;">
+            <strong>${etiquetasSubareaAcademia[s.area_formacion]}</strong>
+            <span>${formatearMoneda(s.total_vendido)} ${s.meta_monto > 0 ? '/ ' + formatearMoneda(s.meta_monto) : ''}</span>
+          </div>
+          ${s.meta_monto > 0 ? `
+            <div style="background:#f0e8ee;border-radius:6px;height:8px;margin-top:6px;overflow:hidden;">
+              <div style="background:${color};height:100%;width:${anchoBarra}%;"></div>
+            </div>
+            <div style="font-size:11px;text-align:right;margin-top:3px;color:${color};">${s.porcentaje_cumplimiento}% de la meta</div>
+          ` : '<div style="font-size:11px;opacity:0.5;margin-top:4px;">Sin meta asignada este mes</div>'}
+        </div>
+      `;
+    }).join('');
+
+    contenedorForm.innerHTML = Object.keys(etiquetasSubareaAcademia).map(area => {
+      const actual = subareas.find(s => s.area_formacion === area);
+      return `
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <span style="flex:1;font-size:13px;">${etiquetasSubareaAcademia[area]}</span>
+          <input type="number" min="0" step="10000" value="${actual ? actual.meta_monto : 0}" id="meta-${area}" style="flex:1;">
+        </div>
+      `;
+    }).join('') + `<button class="btn-mini guardar" style="width:100%;margin-top:10px;" onclick="guardarMetasAcademia()">Guardar metas del mes</button>`;
+  }
+
+  async function guardarMetasAcademia() {
+    const periodo = document.getElementById('academiaPeriodoInforme').value || new Date().toISOString().slice(0, 7);
+    const areas = Object.keys(etiquetasSubareaAcademia);
+
+    for (const area of areas) {
+      const monto = Number(document.getElementById(`meta-${area}`).value) || 0;
+      await fetch(WORKER_URL + '/api/pos/academia/metas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+        body: JSON.stringify({ periodo, area_formacion: area, meta_monto: monto })
+      });
+    }
+
+    alert('✅ Metas guardadas correctamente.');
+    await cargarInformeAcademia();
+  }
+
   async function mostrarPantallaCalendario() {
     mostrarPantalla('pantallaCalendario');
     ocultarMensaje('mensajeEvento');
