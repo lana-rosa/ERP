@@ -1240,8 +1240,8 @@
     </div>
 
     <div class="panel" style="max-height:none;margin-top:20px;">
-      <h2>👑 Retiro de la propietaria</h2>
-      <div class="subtitulo">Registro del retiro y la cotización como independiente, separado de la nómina formal.</div>
+      <h2>👑 Liquidación de retiro de utilidades (Sara)</h2>
+      <div class="subtitulo">Retiro de utilidades + cotización como trabajadora independiente (salud, pensión y ARL opcional), separado de la nómina formal. Se provisiona también un "adelanto de utilidades" equivalente a prima, cesantías y vacaciones, solo como referencia financiera — no son prestaciones sociales legales.</div>
       <div id="listaRetirosPropietario"><div class="cargando">Selecciona un período arriba.</div></div>
     </div>
 
@@ -4871,7 +4871,7 @@
               <button class="btn-mini editar" onclick="verRetirosPropietariaEmpleado('${e.id}', '${escaparHtml(e.nombre_completo).replace(/'/g, "\\'")}')">💰 Mis retiros</button>
               <button class="btn-mini editar" onclick="alternarDocumentosRh('${e.id}')">📁 Documentos</button>
             </div>
-            ${puedeLiquidarIndividual ? `<button class="btn-mini guardar" style="width:100%;margin-top:8px;" onclick="registrarRetiroPropietaria('${e.id}', '${escaparHtml(e.nombre_completo).replace(/'/g, "\\'")}', ${e.salario_basico})">👑 Registrar retiro de la propietaria en este período</button>` : ''}
+            ${puedeLiquidarIndividual ? `<button class="btn-mini guardar" style="width:100%;margin-top:8px;" onclick="registrarRetiroPropietaria('${e.id}', '${escaparHtml(e.nombre_completo).replace(/'/g, "\\'")}', ${e.salario_basico})">👑 Liquidar pago de Sara (retiro de utilidades)</button>` : ''}
             ${beneficiariosAbiertos ? renderizarPanelBeneficiarios(e.id) : ''}
             ${historialSalarioAbierto === e.id ? renderizarPanelHistorialSalario(e.id) : ''}
             ${documentosRhAbierto === e.id ? renderizarPanelDocumentos(e.id) : ''}
@@ -5549,6 +5549,7 @@
             <th style="padding:6px 4px;text-align:right;">Retiro</th>
             <th style="padding:6px 4px;text-align:right;">IBC</th>
             <th style="padding:6px 4px;text-align:right;">Total a cotizar</th>
+            <th style="padding:6px 4px;text-align:right;">Adelanto de utilidades</th>
           </tr>
           ${retiros.map(r => {
             const p = r.periodos_nomina || {};
@@ -5559,6 +5560,7 @@
                 <td style="padding:6px 4px;text-align:right;">${formatearMoneda(r.monto_retiro)}</td>
                 <td style="padding:6px 4px;text-align:right;">${formatearMoneda(r.ibc_independiente)}</td>
                 <td style="padding:6px 4px;text-align:right;font-weight:700;">${formatearMoneda(r.total_cotizacion)}</td>
+                <td style="padding:6px 4px;text-align:right;">${formatearMoneda(r.total_provisiones_utilidad || 0)}</td>
               </tr>
             `;
           }).join('')}
@@ -5972,23 +5974,39 @@
   }
 
   async function registrarRetiroPropietaria(empleadoId, nombre, salarioBasico) {
-    const montoTexto = prompt(`¿Cuánto se retira ${nombre} en este período? (Recuerda: por requisito de Fondo Emprender, nunca puede ser menor al salario mínimo)`, String(salarioBasico));
+    const montoTexto = prompt(`¿Cuánto retira ${nombre} en este período como retiro de utilidades? (Recuerda: por requisito de Fondo Emprender, nunca puede ser menor al salario mínimo)`, String(salarioBasico));
     if (montoTexto === null) return;
     const monto = Number(montoTexto);
     if (isNaN(monto) || monto <= 0) { alert('Escribe un monto válido.'); return; }
 
-    if (!confirm(`¿Confirmas registrar un retiro de ${formatearMoneda(monto)} para ${nombre} en este período? Se calculará también su cotización como independiente.`)) return;
+    const aplicaArl = confirm('¿Quieres que también cotice ARL como independiente este período? (voluntario)\n\nAceptar = Sí, incluir ARL\nCancelar = No incluir ARL');
+
+    let claseRiesgo = 'I';
+    if (aplicaArl) {
+      const claseTexto = prompt('Clase de riesgo ARL (I, II, III, IV o V):', 'I');
+      if (claseTexto && ['I','II','III','IV','V'].includes(claseTexto.trim().toUpperCase())) {
+        claseRiesgo = claseTexto.trim().toUpperCase();
+      }
+    }
+
+    if (!confirm(`¿Confirmas liquidar el retiro de utilidades de ${nombre} por ${formatearMoneda(monto)} en este período? Se calculará su cotización como independiente${aplicaArl ? ' (incluyendo ARL clase ' + claseRiesgo + ')' : ''} y el adelanto de utilidades equivalente a prestaciones.`)) return;
 
     const resp = await fetch(WORKER_URL + '/api/pos/nomina/retiro-propietario', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ periodo_nomina_id: periodoNominaSeleccionadoId, empleado_id: empleadoId, monto_retiro: monto })
+      body: JSON.stringify({
+        periodo_nomina_id: periodoNominaSeleccionadoId,
+        empleado_id: empleadoId,
+        monto_retiro: monto,
+        aplica_arl: aplicaArl,
+        clase_riesgo_arl: claseRiesgo
+      })
     });
 
     const datos = await resp.json();
-    if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudo registrar el retiro')); return; }
+    if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudo liquidar el retiro')); return; }
 
-    alert(`✅ Retiro registrado para ${nombre}.`);
+    alert(`✅ Retiro de utilidades liquidado para ${nombre}.`);
     await cargarRetirosPropietario(periodoNominaSeleccionadoId);
   }
 
@@ -6012,10 +6030,20 @@
           <span class="fila-historial-consecutivo">${escaparHtml(r.empleados ? r.empleados.nombre_completo : 'Propietaria')}</span>
           <span class="fila-historial-total">${formatearMoneda(r.monto_retiro)}</span>
         </div>
+
+        <div style="font-size:11px;font-weight:700;opacity:0.6;margin-top:8px;">COTIZACIÓN COMO INDEPENDIENTE</div>
         <div class="resumen-fila"><span>Base de cotización (IBC)</span><strong>${formatearMoneda(r.ibc_independiente)}</strong></div>
         <div class="resumen-fila"><span>Salud independiente (12.5%)</span><strong>${formatearMoneda(r.aporte_salud_independiente)}</strong></div>
         <div class="resumen-fila"><span>Pensión independiente (16%)</span><strong>${formatearMoneda(r.aporte_pension_independiente)}</strong></div>
+        ${r.aplica_arl ? `<div class="resumen-fila"><span>ARL independiente (voluntario, clase ${r.clase_riesgo_arl})</span><strong>${formatearMoneda(r.aporte_arl_independiente)}</strong></div>` : ''}
         <div class="resumen-fila total"><span>Total a cotizar en la PILA</span><strong>${formatearMoneda(r.total_cotizacion)}</strong></div>
+
+        <div style="font-size:11px;font-weight:700;opacity:0.6;margin-top:10px;">ADELANTO DE UTILIDADES (referencia, no es prestación legal)</div>
+        <div class="resumen-fila"><span>Equivalente a prima</span><strong>${formatearMoneda(r.provision_prima_utilidad)}</strong></div>
+        <div class="resumen-fila"><span>Equivalente a cesantías</span><strong>${formatearMoneda(r.provision_cesantias_utilidad)}</strong></div>
+        <div class="resumen-fila"><span>Equivalente a intereses de cesantías</span><strong>${formatearMoneda(r.provision_intereses_cesantias_utilidad)}</strong></div>
+        <div class="resumen-fila"><span>Equivalente a vacaciones</span><strong>${formatearMoneda(r.provision_vacaciones_utilidad)}</strong></div>
+        <div class="resumen-fila total"><span>Total adelanto de utilidades</span><strong>${formatearMoneda(r.total_provisiones_utilidad)}</strong></div>
       </div>
     `).join('');
   }
@@ -6340,14 +6368,38 @@
             <span class="fila-inventario-nombre">${inicio} — ${fin}</span>
             <span class="fila-inventario-tipo-tag">${etiquetasEstado[p.estado] || p.estado}</span>
           </div>
-          ${p.estado === 'borrador' ? `<button class="btn-mini guardar" style="margin-top:8px;" onclick="event.stopPropagation(); confirmarLiquidarPeriodo('${p.id}')">Liquidar este período</button>` : ''}
+          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+            ${p.estado === 'borrador' ? `<button class="btn-mini guardar" onclick="event.stopPropagation(); confirmarLiquidarPeriodo('${p.id}')">Liquidar este período</button>` : ''}
+            <button class="btn-mini desactivar" onclick="event.stopPropagation(); confirmarEliminarPeriodo('${p.id}', '${inicio} — ${fin}')">🗑️ Eliminar período</button>
+          </div>
         </div>
       `;
     }).join('');
   }
 
+  async function confirmarEliminarPeriodo(periodoId, etiquetaPeriodo) {
+    if (!confirm(`¿Eliminar el período ${etiquetaPeriodo}? Esto borra todas sus liquidaciones (nómina y retiros de la propietaria), revierte los gastos que se hayan generado en las cajas de los departamentos, y restaura el saldo de cualquier préstamo que se haya descontado. Esta acción no se puede deshacer.`)) return;
+
+    const resp = await fetch(WORKER_URL + '/api/pos/nomina/periodos/eliminar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ periodo_nomina_id: periodoId })
+    });
+
+    const datos = await resp.json();
+    if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudo eliminar el período')); return; }
+
+    alert('✅ Período eliminado correctamente.');
+    if (periodoNominaSeleccionadoId === periodoId) {
+      periodoNominaSeleccionadoId = null;
+      document.getElementById('listaLiquidacionesNomina').innerHTML = '<div class="cargando">Selecciona un período arriba para ver sus liquidaciones.</div>';
+      renderizarListaEmpleados();
+    }
+    await cargarPeriodosNomina();
+  }
+
   async function confirmarLiquidarPeriodo(periodoId) {
-    if (!confirm('¿Confirmas que quieres liquidar este período? Se calculará la nómina completa de todos los empleados activos y no se podrá deshacer.')) return;
+    if (!confirm('¿Confirmas que quieres liquidar este período? Se calculará la nómina completa de todos los empleados activos. (Si necesitas corregir algo después, puedes eliminar el período y volver a crearlo).')) return;
 
     const resp = await fetch(WORKER_URL + '/api/pos/nomina/liquidar', {
       method: 'POST',
