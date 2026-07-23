@@ -557,8 +557,8 @@
     <div class="sidebar-seccion" id="seccionInventario" style="display:none;">Inventario</div>
     <button class="nav-btn" id="nav-inventario" onclick="mostrarPantallaInventario()" style="display:none;"><span class="nav-icon">📊</span> Gestionar inventario</button>
     <button class="nav-btn" id="nav-ajustestock" onclick="mostrarPantallaAjusteStock()" style="display:none;"><span class="nav-icon">📥</span> Entrada mercancía</button>
-    <button class="nav-btn" id="nav-consumotaller" onclick="mostrarPantallaConsumoTaller()" style="display:none;"><span class="nav-icon">🧶</span> Consumo taller</button>
-    <button class="nav-btn" id="nav-pedidos-crm" onclick="mostrarPantallaPedidosCrm()" style="display:none;"><span class="nav-icon">🧵</span> Pedidos y material por pedido</button>
+    <button class="nav-btn" id="nav-consumotaller" onclick="mostrarPantallaPedidosCrm()" style="display:none;"><span class="nav-icon">🧶</span> Consumo taller</button>
+    <button class="nav-btn" id="nav-pedidos-crm" onclick="mostrarPantallaPedidosCrm()" style="display:none !important;"><span class="nav-icon">🧵</span> Pedidos y material por pedido</button>
 
     <div class="sidebar-seccion" id="seccionCaja">Caja</div>
     <button class="nav-btn" id="nav-turno" onclick="irATurnoActivo()"><span class="nav-icon">💵</span> Turno de caja</button>
@@ -741,6 +741,8 @@
 
     <div class="panel">
       <h2>Inventario actual</h2>
+      <button class="btn-secundario" style="margin-top:0;margin-bottom:14px;" onclick="sincronizarStockCrm(this)">🔄 Traer stock de producto terminado del CRM</button>
+      <div id="mensajeSincronizarCrm" class="mensaje"></div>
       <div class="barra-busqueda">
         <input type="text" id="inputBuscarInventario" placeholder="Buscar por nombre o SKU..." oninput="renderizarTablaInventario()">
       </div>
@@ -791,8 +793,8 @@
 <!-- ===== PANTALLA: PEDIDOS CRM Y MATERIAL POR PEDIDO ===== -->
 <div id="pantallaPedidosCrm" class="oculto contenido">
   <div class="page-header">
-    <h1>Pedidos y material por pedido</h1>
-    <div class="subtitulo">Elige un pedido activo, toma el material que vas a usar, y al terminar devuelve el sobrante. El sistema calcula solo cuánto gastaste de verdad y cuánto costó.</div>
+    <h1>Consumo de taller — por pedido</h1>
+    <div class="subtitulo">Elige el pedido en producción (código del CRM), toma el material que vas a usar de la lista del inventario del Taller, y al terminar devuelve el sobrante. Todo queda registrado bajo el número del pedido.</div>
   </div>
 
   <div class="grilla-2">
@@ -808,6 +810,12 @@
       <div id="listaConsumosEnCurso"><div class="cargando">Cargando...</div></div>
     </div>
 
+  </div>
+
+  <div class="panel" style="max-height:none;margin-top:20px;">
+    <h2>Historial de mis consumos</h2>
+    <div class="subtitulo">Todos los pedidos tejidos hasta ahora, con los insumos que se consumieron en cada uno.</div>
+    <div id="listaHistorialConsumosTaller"><div class="cargando">Cargando...</div></div>
   </div>
 </div>
 
@@ -927,8 +935,9 @@
 <div id="pantallaHistorial" class="oculto contenido">
   <div class="page-header">
     <h1>Historial de ventas</h1>
-    <div class="subtitulo">Últimas 50 ventas, más reciente primero.</div>
+    <div class="subtitulo">Últimas 50 ventas de cada departamento, más reciente primero.</div>
   </div>
+  <div class="filtro-tipo" id="filtroDeptoHistorial" style="margin-bottom:16px;"></div>
   <div class="panel" style="max-height:none;">
     <div id="listaHistorialVentas"><div class="cargando">Cargando historial...</div></div>
   </div>
@@ -1455,7 +1464,7 @@
       pantallaInventario: 'nav-inventario',
       pantallaAjustestock: 'nav-ajustestock',
       pantallaConsumoTaller: 'nav-consumotaller',
-      pantallaPedidosCrm: 'nav-pedidos-crm',
+      pantallaPedidosCrm: 'nav-consumotaller',
       pantallaTurnoActivo: 'nav-turno',
       pantallaReportes: 'nav-reportes',
       pantallaDepartamentos: 'nav-departamentos',
@@ -1542,9 +1551,9 @@
   async function despuesDeLogin() {
     mostrarPantalla('pantallaCargando');
 
-    // El rol Taller no maneja caja ni turnos: va directo a la pantalla de consumo de insumos.
+    // El rol Taller no maneja caja ni turnos: va directo al consumo de material por pedido.
     if (rolActual === 'taller') {
-      await mostrarPantallaConsumoTaller();
+      await mostrarPantallaPedidosCrm();
       return;
     }
 
@@ -2235,6 +2244,33 @@
 
   let departamentosParaInventario = [];
 
+  async function sincronizarStockCrm(btn) {
+    ocultarMensaje('mensajeSincronizarCrm');
+    btn.disabled = true;
+    btn.textContent = 'Consultando el CRM...';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/inventario/sincronizar-crm', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+
+    btn.disabled = false;
+    btn.textContent = '🔄 Traer stock de producto terminado del CRM';
+
+    const datos = await resp.json();
+    if (!resp.ok) {
+      mostrarMensaje('mensajeSincronizarCrm', datos.error || 'No se pudo sincronizar con el CRM.', 'error');
+      return;
+    }
+
+    if (datos.importados === 0) {
+      mostrarMensaje('mensajeSincronizarCrm', `No hay piezas nuevas por traer (ya estaban las ${datos.ya_existian} que había en el CRM).`, 'exito');
+    } else {
+      mostrarMensaje('mensajeSincronizarCrm', `✅ Se importaron ${datos.importados} pieza(s) nueva(s) al inventario de Tienda.${datos.ya_existian > 0 ? ' (' + datos.ya_existian + ' ya estaban importadas)' : ''}`, 'exito');
+    }
+    await cargarInventarioGestion();
+  }
+
   async function mostrarPantallaInventario() {
     mostrarPantalla('pantallaInventario');
     limpiarFormularioProducto();
@@ -2555,18 +2591,56 @@
     await cargarHistorialVentas();
   }
 
-    async function mostrarPantallaHistorial() {
+  let centrosCostoHistorialCache = [];
+  let filtroDeptoHistorialActual = null;
+
+  async function mostrarPantallaHistorial() {
     mostrarPantalla('pantallaHistorial');
+
+    const { data: centros } = await supabaseClient
+      .from('centros_costo')
+      .select('id, codigo, nombre')
+      .eq('activo', true)
+      .order('codigo', { ascending: true });
+    centrosCostoHistorialCache = centros || [];
+
+    // Cajero y Taller solo ven su propio departamento; Administrador y Contador ven los 3
+    let centrosVisibles = centrosCostoHistorialCache;
+    if (rolActual === 'cajero') {
+      centrosVisibles = centrosCostoHistorialCache.filter(c => c.id === centroCostoTiendaId);
+    } else if (rolActual === 'taller') {
+      centrosVisibles = centrosCostoHistorialCache.filter(c => c.id === centroCostoTallerId);
+    }
+
+    const filtroEl = document.getElementById('filtroDeptoHistorial');
+    filtroEl.innerHTML = centrosVisibles.map((c, i) =>
+      `<button class="chip-filtro ${i === 0 ? 'activo' : ''}" data-filtro-depto-hist="${c.id}" onclick="cambiarFiltroDeptoHistorial('${c.id}', this)">${escaparHtml(c.nombre)}</button>`
+    ).join('');
+
+    filtroDeptoHistorialActual = centrosVisibles[0] ? centrosVisibles[0].id : null;
     await cargarHistorialVentas();
+  }
+
+  function cambiarFiltroDeptoHistorial(centroCostoId, botonEl) {
+    filtroDeptoHistorialActual = centroCostoId;
+    document.querySelectorAll('[data-filtro-depto-hist]').forEach(b => b.classList.remove('activo'));
+    botonEl.classList.add('activo');
+    cargarHistorialVentas();
   }
 
   async function cargarHistorialVentas() {
     const contenedor = document.getElementById('listaHistorialVentas');
     contenedor.innerHTML = '<div class="cargando">Cargando historial...</div>';
 
+    if (!filtroDeptoHistorialActual) {
+      contenedor.innerHTML = '<div class="cargando">No tienes un departamento asignado para ver ventas.</div>';
+      return;
+    }
+
     const { data: ventas, error } = await supabaseClient
       .from('ventas_pos')
-      .select('id, consecutivo, fecha, total, estado, turno_id, cajero_user_id')
+      .select('id, consecutivo, fecha, total, estado, turno_id, cajero_user_id, area_formacion')
+      .eq('centro_costo_id', filtroDeptoHistorialActual)
       .order('fecha', { ascending: false })
       .limit(100);
 
@@ -3248,7 +3322,7 @@
   // así que su botón de "volver" debe llevarlo a su pantalla de consumo, no a abrir caja.
   function irAInicioSegunRol() {
     if (rolActual === 'taller') {
-      mostrarPantallaConsumoTaller();
+      mostrarPantallaPedidosCrm();
     } else {
       irATurnoActivo();
     }
@@ -4264,6 +4338,41 @@
     await cargarInsumosTallerCache();
     await cargarPedidosCrmActivos();
     await cargarConsumosEnCurso();
+    await cargarHistorialConsumosTaller();
+  }
+
+  async function cargarHistorialConsumosTaller() {
+    const contenedor = document.getElementById('listaHistorialConsumosTaller');
+    if (!contenedor) return;
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/crm/historial-consumos', {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+
+    const { pedidos } = await resp.json();
+    if (!pedidos || pedidos.length === 0) {
+      contenedor.innerHTML = '<div class="cargando">Todavía no se ha tejido ningún pedido con material registrado.</div>';
+      return;
+    }
+
+    contenedor.innerHTML = pedidos.map(p => {
+      const filasInsumo = p.insumos.map(i => {
+        const consumidoTexto = i.estado === 'finalizado'
+          ? `${i.cantidad_consumida} ${i.unidad_medida} consumidos (tomó ${i.cantidad_tomada}, devolvió ${i.cantidad_devuelta})`
+          : `${i.cantidad_tomada} ${i.unidad_medida} tomados — aún en uso`;
+        return `<div style="font-size:12.5px;padding:4px 0;border-bottom:1px dashed #f0e8ee;">${escaparHtml(i.nombre)}: ${consumidoTexto}</div>`;
+      }).join('');
+      return `
+        <div class="fila-historial" style="margin-bottom:10px;">
+          <div class="fila-historial-encabezado">
+            <span class="fila-historial-consecutivo">${escaparHtml(p.numero_pedido_crm || p.pedido_crm_id.slice(0,8))}</span>
+          </div>
+          <div style="margin-top:6px;">${filasInsumo}</div>
+        </div>
+      `;
+    }).join('');
   }
 
   async function cargarInsumosTallerCache() {
