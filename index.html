@@ -491,6 +491,22 @@
 
   /* ===== HISTORIAL ===== */
   .fila-historial { border: 1px solid #f0e8ee; border-radius: 10px; padding: 13px; margin-bottom: 9px; }
+
+  /* ===== VISTA DE LISTA/TABLA (historial de ventas y similares) ===== */
+  .tabla-lista { border: 1px solid #f0e8ee; border-radius: 10px; overflow: hidden; }
+  .tabla-lista-header, .tabla-lista-fila {
+    display: grid; grid-template-columns: 100px 90px 1.2fr 1.4fr 90px 90px 20px;
+    gap: 10px; padding: 10px 12px; align-items: center; font-size: 12.5px;
+  }
+  .tabla-lista-header { background: #faf7f8; font-size: 10.5px; font-weight: 700; opacity: 0.55; letter-spacing: 0.3px; }
+  .tabla-lista-fila { border-top: 1px solid #f4eef2; cursor: pointer; transition: background 0.12s; }
+  .tabla-lista-fila:hover { background: var(--rosa-suave); }
+  .tabla-lista-chevron { opacity: 0.4; font-size: 11px; text-align: center; }
+  .tabla-lista-detalle { padding: 14px; background: #fafafa; border-top: 1px solid #f4eef2; }
+  @media (max-width: 720px) {
+    .tabla-lista-header { display: none; }
+    .tabla-lista-fila { grid-template-columns: 1fr 1fr; grid-template-areas: "recibo valor" "fecha cliente" "producto producto"; row-gap: 4px; }
+  }
   .fila-historial-encabezado { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
   .fila-historial-consecutivo { font-weight: 700; font-size: 13.5px; color: var(--rosa-principal); }
   .fila-historial-total { font-weight: 700; font-size: 14px; }
@@ -2262,8 +2278,20 @@
       .eq('user_id', sesionActual.userId)
       .eq('activo', true)
       .maybeSingle();
-    if (data) {
+    if (data && data.nombre_completo) {
       miPropiaIdentidad = { numeroDocumento: data.numero_documento, nombre: data.nombre_completo };
+      return;
+    }
+
+    // Respaldo: si no hay ficha de empleado vinculada (o no tiene nombre), se usa
+    // el nombre con el que quedó registrado el usuario del sistema — nunca el correo.
+    const { data: usuario } = await supabaseClient
+      .from('usuarios_roles')
+      .select('nombre_completo')
+      .eq('user_id', sesionActual.userId)
+      .maybeSingle();
+    if (usuario && usuario.nombre_completo) {
+      miPropiaIdentidad = { numeroDocumento: miPropiaIdentidad.numeroDocumento, nombre: usuario.nombre_completo };
     }
   }
 
@@ -2848,7 +2876,7 @@
         total,
         pagos: filasPago.map(p => ({ metodo_pago: p.metodo_pago, monto: Number(p.monto) })),
         cliente: { nombre: clienteNombre, telefono: clienteTelefono, identificacion: clienteIdentificacion },
-        cajero: miPropiaIdentidad.nombre || sesionActual.email
+        cajero: miPropiaIdentidad.nombre || 'Cajero'
       };
       document.getElementById('btnImprimirRecibo').disabled = false;
       document.getElementById('btnWhatsappRecibo').disabled = false;
@@ -3978,40 +4006,53 @@
             </div>
             <div style="font-weight:700;color:var(--rosa-principal);">${formatearMoneda(totalTurno)}</div>
           </div>
+          <div class="tabla-lista" style="margin-left:8px;">
+            <div class="tabla-lista-header">
+              <span>RECIBO</span><span>FECHA</span><span>CLIENTE</span><span>PRODUCTO</span><span style="text-align:right;">VALOR</span><span>PAGO</span><span></span>
+            </div>
       `;
       for (const venta of grupo.ventas) {
         const lineasVenta = (detalles || []).filter(d => d.venta_id === venta.id);
         const pagosVenta = (pagos || []).filter(p => p.venta_id === venta.id);
         const textoLineas = lineasVenta.map(l => `${l.cantidad}x ${escaparHtml(l.descripcion)}`).join(', ');
-        const textoPagos = pagosVenta.map(p => `${etiquetasPago[p.metodo_pago] || p.metodo_pago}: ${formatearMoneda(p.monto)}`).join(' · ');
+        const textoPagos = pagosVenta.map(p => `${etiquetasPago[p.metodo_pago] || p.metodo_pago}`).join(', ');
         const fecha = new Date(venta.fecha).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
         const tagAnulada = venta.estado === 'anulada' ? ' <span class="badge-inactivo">Anulada</span>' : '';
         const puedeAnular = venta.estado === 'completada' && turnoId === turnoActivoActual?.id;
         const tercero = venta.tercero_id ? tercerosPorId[venta.tercero_id] : null;
-        const textoCliente = tercero ? `👤 ${escaparHtml(tercero.nombre_completo)}${tercero.numero_documento ? ' — Doc: ' + escaparHtml(tercero.numero_documento) : ''}` : '';
+        const textoCliente = tercero ? escaparHtml(tercero.nombre_completo) : '—';
         html += `
-          <div class="fila-historial" style="margin-left:8px;">
-            <div class="fila-historial-encabezado">
-              <span class="fila-historial-consecutivo">${venta.consecutivo}${tagAnulada}</span>
-              <span class="fila-historial-total">${formatearMoneda(venta.total)}</span>
-            </div>
-            <div class="fila-historial-fecha">${fecha}</div>
-            ${textoCliente ? `<div style="font-size:12px;color:var(--rosa-principal);font-weight:600;margin-top:2px;">${textoCliente}</div>` : ''}
-            <div class="fila-historial-detalle">${textoLineas || 'Sin detalle'}</div>
-            <div class="fila-historial-pagos">${textoPagos}</div>
-            ${puedeAnular ? `<button class="btn-mini desactivar" style="margin-top:8px;max-width:160px;" onclick="anularVenta('${venta.id}', '${venta.consecutivo}')">❌ Anular venta</button>` : ''}
-            ${venta.estado === 'completada' ? `<button class="btn-mini editar" style="margin-top:8px;max-width:160px;" onclick="abrirCambioArticulo('${venta.id}', '${venta.consecutivo}')">🔄 Cambiar artículo</button>` : ''}
-            <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
-              <button class="btn-mini editar" onclick="verReciboHistorial('${venta.id}')">🖨️ Ver / imprimir recibo</button>
-              <button class="btn-mini editar" onclick="enviarReciboHistorialWhatsapp('${venta.id}')">📱 Enviar por WhatsApp</button>
+          <div class="tabla-lista-fila" onclick="alternarFilaVentaHistorial('${venta.id}')">
+            <span style="color:var(--rosa-principal);font-weight:700;">${venta.consecutivo}${tagAnulada}</span>
+            <span style="opacity:0.75;">${fecha}</span>
+            <span>${textoCliente}</span>
+            <span style="opacity:0.75;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${textoLineas || 'Sin detalle'}</span>
+            <span style="text-align:right;font-weight:700;">${formatearMoneda(venta.total)}</span>
+            <span style="opacity:0.75;">${textoPagos}</span>
+            <span class="tabla-lista-chevron" id="chevronFilaVenta-${venta.id}">▾</span>
+          </div>
+          <div id="filaExpandidaVenta-${venta.id}" class="oculto tabla-lista-detalle">
+            ${textoCliente !== '—' && tercero ? `<div style="font-size:12px;margin-bottom:8px;">👤 <strong>${textoCliente}</strong>${tercero.numero_documento ? ' — Doc: ' + escaparHtml(tercero.numero_documento) : ''}${tercero.telefono ? ' — Tel: ' + escaparHtml(tercero.telefono) : ''}</div>` : ''}
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              ${puedeAnular ? `<button class="btn-mini desactivar" onclick="event.stopPropagation(); anularVenta('${venta.id}', '${venta.consecutivo}')">❌ Anular venta</button>` : ''}
+              ${venta.estado === 'completada' ? `<button class="btn-mini editar" onclick="event.stopPropagation(); abrirCambioArticulo('${venta.id}', '${venta.consecutivo}')">🔄 Cambiar artículo</button>` : ''}
+              <button class="btn-mini editar" onclick="event.stopPropagation(); verReciboHistorial('${venta.id}')">🖨️ Ver / imprimir recibo</button>
+              <button class="btn-mini editar" onclick="event.stopPropagation(); enviarReciboHistorialWhatsapp('${venta.id}')">📱 Enviar por WhatsApp</button>
             </div>
             <div id="panelCambioArticulo-${venta.id}" class="oculto" style="margin-top:10px;"></div>
           </div>
         `;
       }
-      html += '</div>';
+      html += '</div></div>';
     }
     contenedor.innerHTML = html;
+  }
+
+  function alternarFilaVentaHistorial(ventaId) {
+    const detalle = document.getElementById(`filaExpandidaVenta-${ventaId}`);
+    const chevron = document.getElementById(`chevronFilaVenta-${ventaId}`);
+    detalle.classList.toggle('oculto');
+    chevron.textContent = detalle.classList.contains('oculto') ? '▾' : '▴';
   }
 
   // ============================================================================
@@ -8977,7 +9018,7 @@
     if (!sesionActual) return;
     const nombreEl = document.getElementById('nombreUsuarioSidebar');
     const rolEl = document.getElementById('badgeRolSidebar');
-    if (nombreEl) nombreEl.textContent = sesionActual.email.split('@')[0];
+    if (nombreEl) nombreEl.textContent = miPropiaIdentidad.nombre || sesionActual.email.split('@')[0];
     if (rolEl) rolEl.textContent = etiquetaRol(rolActual || '');
   }
 </script>
