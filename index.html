@@ -704,6 +704,7 @@
       <h2>Productos e insumos</h2>
       <div class="barra-busqueda">
         <input type="text" id="inputBuscarProducto" placeholder="Buscar por nombre o SKU..." oninput="renderizarCatalogo()">
+        <button type="button" class="btn-mini editar" style="max-width:44px;" onclick="abrirEscanerCodigoBarras('inputBuscarProducto', buscarYAgregarPorCodigoBarras)" title="Escanear código de barras">📷</button>
       </div>
       <div class="filtro-tipo">
         <button class="chip-filtro activo" data-filtro="todos" onclick="cambiarFiltroTipo('todos', this)">Todos</button>
@@ -711,23 +712,6 @@
         <button class="chip-filtro" data-filtro="merceria" onclick="cambiarFiltroTipo('merceria', this)">Mercería</button>
       </div>
       <div id="listaCatalogo"><div class="cargando">Cargando inventario...</div></div>
-    </div>
-
-    <div class="panel">
-      <h2>Carrito</h2>
-      <div id="listaCarrito"><div class="carrito-vacio">Aún no has agregado productos</div></div>
-      <div class="resumen-total">
-        <span>Total</span>
-        <span class="valor" id="textoTotalCarrito">$0</span>
-      </div>
-      <div class="metodos-pago">
-        <h2 style="margin-top:12px;">Forma de pago</h2>
-        <div id="listaPagos"></div>
-        <button class="btn-agregar-pago" onclick="agregarFilaPago()">+ Agregar otro método de pago</button>
-        <div class="resumen-pagos" id="resumenPagos"></div>
-      </div>
-      <button class="btn-principal" id="btnConfirmarVenta" onclick="confirmarVenta()">Confirmar venta</button>
-      <div class="mensaje" id="mensajeVenta"></div>
     </div>
 
     <div class="panel">
@@ -745,6 +729,27 @@
       <label for="clienteCiudad">Ciudad <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
       <input type="text" id="clienteCiudad" placeholder="Manizales">
       <div id="mensajeAutocompletado" style="font-size:12px;color:var(--verde-exito);margin-top:6px;display:none;">✅ Cliente encontrado — datos precargados</div>
+    </div>
+
+    <div class="panel">
+      <h2>Carrito</h2>
+      <div id="listaCarrito"><div class="carrito-vacio">Aún no has agregado productos</div></div>
+      <div class="resumen-total">
+        <span>Total</span>
+        <span class="valor" id="textoTotalCarrito">$0</span>
+      </div>
+      <div class="metodos-pago">
+        <h2 style="margin-top:12px;">Forma de pago</h2>
+        <div id="listaPagos"></div>
+        <button class="btn-agregar-pago" onclick="agregarFilaPago()">+ Agregar otro método de pago</button>
+        <div class="resumen-pagos" id="resumenPagos"></div>
+      </div>
+      <button class="btn-principal" id="btnConfirmarVenta" onclick="confirmarVenta()">Confirmar venta</button>
+      <div class="mensaje" id="mensajeVenta"></div>
+      <div id="botonesReciboVenta" class="oculto" style="display:flex;gap:8px;margin-top:10px;">
+        <button class="btn-secundario" style="margin-top:0;" onclick="imprimirReciboVenta()">🖨️ Imprimir recibo</button>
+        <button class="btn-secundario" style="margin-top:0;" onclick="enviarReciboVentaWhatsapp()">📱 Enviar WhatsApp</button>
+      </div>
     </div>
 
   </div>
@@ -2070,6 +2075,8 @@
     document.querySelectorAll('.chip-filtro').forEach(c => c.classList.remove('activo'));
     document.querySelector('.chip-filtro[data-filtro="todos"]').classList.add('activo');
     ocultarMensaje('mensajeVenta');
+    document.getElementById('botonesReciboVenta').classList.add('oculto');
+    document.getElementById('botonesReciboVenta').style.display = 'none';
     renderizarCarrito();
     renderizarPagos();
     await cargarCatalogo();
@@ -2386,6 +2393,18 @@
         throw new Error(datos.error || 'No se pudo registrar la venta');
       }
 
+      // Guardamos una copia de todo para poder imprimir/enviar el recibo después
+      ultimaVentaCache = {
+        consecutivo: datos.consecutivo || datos.venta_id || '—',
+        fecha: new Date(),
+        lineas: carrito.map(l => ({ nombre: l.nombre, cantidad: l.cantidad, precio: l.precio })),
+        total,
+        pagos: filasPago.map(p => ({ metodo_pago: p.metodo_pago, monto: Number(p.monto) })),
+        cliente: { nombre: clienteNombre, telefono: clienteTelefono, identificacion: clienteIdentificacion }
+      };
+      document.getElementById('botonesReciboVenta').classList.remove('oculto');
+      document.getElementById('botonesReciboVenta').style.display = 'flex';
+
       mostrarMensaje('mensajeVenta', '✅ Venta registrada correctamente.', 'exito');
       carrito = [];
       filasPago = [{ metodo_pago: 'efectivo', monto: '', referencia: '' }];
@@ -2399,14 +2418,122 @@
       renderizarCarrito();
       renderizarPagos();
       await cargarCatalogo(); // refresca el stock mostrado
-
-      setTimeout(() => mostrarTurnoActivo(), 1800);
     } catch (err) {
       mostrarMensaje('mensajeVenta', err.message, 'error');
     } finally {
       btn.disabled = false;
       btn.textContent = 'Confirmar venta';
     }
+  }
+
+  let ultimaVentaCache = null;
+
+  async function buscarYAgregarPorCodigoBarras() {
+    const texto = document.getElementById('inputBuscarProducto').value.trim();
+    renderizarCatalogo();
+    const encontrado = catalogoCompleto.find(i => texto && (i.id === texto || (i.sku && i.sku === texto)));
+    // Si el catálogo no trae "sku" en este objeto, buscamos por nombre exacto como respaldo
+    if (encontrado) {
+      agregarAlCarrito(encontrado.id);
+      document.getElementById('inputBuscarProducto').value = '';
+      renderizarCatalogo();
+    }
+  }
+
+  function generarHtmlReciboVenta(v) {
+    const fechaTexto = v.fecha.toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
+    const etiquetasPago = { efectivo: 'Efectivo', nequi: 'Nequi', daviplata: 'Daviplata', tarjeta_debito: 'Tarjeta débito', tarjeta_credito: 'Tarjeta crédito' };
+    const filasProductos = v.lineas.map(l => `
+      <tr>
+        <td style="padding:5px 0;">${escaparHtml(l.nombre)}</td>
+        <td style="padding:5px 0;text-align:center;">${l.cantidad}</td>
+        <td style="padding:5px 0;text-align:right;">${formatearMoneda(l.precio)}</td>
+        <td style="padding:5px 0;text-align:right;">${formatearMoneda(l.precio * l.cantidad)}</td>
+      </tr>
+    `).join('');
+    const filasPago = v.pagos.map(p => `<div class="resumen-fila-recibo"><span>${etiquetasPago[p.metodo_pago] || p.metodo_pago}</span><span>${formatearMoneda(p.monto)}</span></div>`).join('');
+
+    return `
+      <html><head><title>Recibo de venta ${v.consecutivo}</title>
+      <style>
+        body{font-family:Arial,sans-serif;padding:24px;max-width:420px;margin:0 auto;color:#222;font-size:13px;}
+        h1{font-size:16px;color:#d8017c;margin-bottom:2px;}
+        table{width:100%;border-collapse:collapse;margin-top:10px;font-size:12.5px;}
+        th{text-align:left;border-bottom:1px solid #ccc;padding-bottom:4px;font-size:11px;color:#666;}
+        td{border-bottom:1px dashed #eee;}
+        .resumen-fila-recibo{display:flex;justify-content:space-between;padding:3px 0;}
+        .total-recibo{display:flex;justify-content:space-between;font-weight:bold;font-size:15px;border-top:2px solid #d8017c;margin-top:8px;padding-top:8px;}
+        .encabezado-recibo{text-align:center;border-bottom:2px dashed #d8017c;padding-bottom:10px;margin-bottom:10px;}
+        @media print { button{display:none;} }
+      </style></head>
+      <body>
+        <div class="encabezado-recibo">
+          <h1>Lana Rosa Crochet</h1>
+          <div style="font-size:11.5px;opacity:0.75;">Sara Loaiza Muñoz — Vendedora</div>
+          <div style="font-size:11px;opacity:0.6;margin-top:4px;">Manizales / Villamaría, Colombia</div>
+        </div>
+
+        <div style="font-size:12px;">
+          <strong>Recibo de venta N.° ${escaparHtml(String(v.consecutivo))}</strong><br>
+          Fecha: ${fechaTexto}
+        </div>
+
+        ${v.cliente.nombre ? `
+          <div style="margin-top:8px;font-size:12px;">
+            <strong>Cliente:</strong> ${escaparHtml(v.cliente.nombre)}${v.cliente.identificacion ? ' — Doc: ' + escaparHtml(v.cliente.identificacion) : ''}${v.cliente.telefono ? ' — Tel: ' + escaparHtml(v.cliente.telefono) : ''}
+          </div>
+        ` : ''}
+
+        <table>
+          <tr><th>Producto</th><th style="text-align:center;">Cant.</th><th style="text-align:right;">Vlr. unit.</th><th style="text-align:right;">Subtotal</th></tr>
+          ${filasProductos}
+        </table>
+
+        <div class="total-recibo"><span>TOTAL</span><span>${formatearMoneda(v.total)}</span></div>
+
+        <div style="margin-top:12px;">
+          <div style="font-size:11px;font-weight:700;opacity:0.6;margin-bottom:4px;">FORMA DE PAGO</div>
+          ${filasPago}
+        </div>
+
+        <div style="margin-top:16px;font-size:10.5px;color:#888;text-align:center;">
+          Recibo de venta — Lana Rosa Crochet no está obligada a expedir factura electrónica (persona natural, ingresos bajo el tope de la DIAN). Este documento sirve como comprobante de pago.
+        </div>
+
+        <button onclick="window.print()" style="margin-top:16px;width:100%;padding:10px;background:#d8017c;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;">🖨️ Imprimir / guardar como PDF</button>
+      </body></html>
+    `;
+  }
+
+  function imprimirReciboVenta() {
+    if (!ultimaVentaCache) { alert('Todavía no hay una venta registrada para imprimir.'); return; }
+    const ventana = window.open('', '_blank');
+    ventana.document.write(generarHtmlReciboVenta(ultimaVentaCache));
+    ventana.document.close();
+  }
+
+  function enviarReciboVentaWhatsapp() {
+    if (!ultimaVentaCache) { alert('Todavía no hay una venta registrada para enviar.'); return; }
+    const v = ultimaVentaCache;
+
+    if (!v.cliente.telefono) {
+      const numeroManual = prompt('Este cliente no tiene teléfono guardado. Escribe el número de WhatsApp (con indicativo, ej: 573001234567):');
+      if (!numeroManual) return;
+      v.cliente.telefono = numeroManual;
+    }
+
+    let numero = v.cliente.telefono.replace(/\D/g, '');
+    if (!numero.startsWith('57')) numero = '57' + numero;
+
+    const etiquetasPago = { efectivo: 'Efectivo', nequi: 'Nequi', daviplata: 'Daviplata', tarjeta_debito: 'Tarjeta débito', tarjeta_credito: 'Tarjeta crédito' };
+    let mensaje = `Hola${v.cliente.nombre ? ' ' + v.cliente.nombre : ''} 👋 Aquí está tu recibo de compra en Lana Rosa Crochet.\n\n`;
+    mensaje += `🧾 Recibo N.° ${v.consecutivo}\n📅 ${v.fecha.toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' })}\n\n`;
+    v.lineas.forEach(l => { mensaje += `• ${l.cantidad}x ${l.nombre} — ${formatearMoneda(l.precio * l.cantidad)}\n`; });
+    mensaje += `\n✅ *Total: ${formatearMoneda(v.total)}*\n`;
+    mensaje += v.pagos.map(p => `Pago (${etiquetasPago[p.metodo_pago] || p.metodo_pago}): ${formatearMoneda(p.monto)}`).join('\n');
+    mensaje += `\n\n¡Gracias por tu compra! 🐑💕`;
+
+    window.open(`https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`, '_blank');
   }
 
   // ============================================================================
