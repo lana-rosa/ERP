@@ -716,41 +716,52 @@
     <div class="subtitulo">Si una venta se está demorando, ponla en espera y atiende a otro cliente sin perder lo que ya llevabas.</div>
   </div>
   <div id="barraVentasEnEspera" style="margin-bottom:16px;"></div>
-  <div class="grilla-3">
 
-    <div class="panel">
-      <h2>Productos e insumos</h2>
-      <div class="barra-busqueda" style="position:relative;">
-        <input type="text" id="inputBuscarProducto" placeholder="Buscar por nombre o SKU..." oninput="renderizarCatalogo()" onblur="setTimeout(() => { document.getElementById('listaCatalogo').style.display = 'none'; }, 200)" onfocus="renderizarCatalogo()" autocomplete="off">
-        <button type="button" class="btn-mini editar" style="max-width:44px;" onclick="abrirEscanerCodigoBarras('inputBuscarProducto', buscarYAgregarPorCodigoBarras)" title="Escanear código de barras">📷</button>
-        <div id="listaCatalogo" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1.5px solid var(--rosa-medio);border-radius:9px;margin-top:4px;max-height:340px;overflow-y:auto;z-index:50;box-shadow:var(--sombra);"></div>
+  <!-- Barra de búsqueda de productos, arriba y compacta -->
+  <div class="panel" style="max-width:none;margin-bottom:16px;">
+    <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+      <div style="flex:1;min-width:260px;">
+        <div class="barra-busqueda" style="position:relative;margin-top:0;">
+          <input type="text" id="inputBuscarProducto" placeholder="🔍 Busca un producto o insumo por nombre o SKU..." oninput="renderizarCatalogo()" onblur="setTimeout(() => { document.getElementById('listaCatalogo').style.display = 'none'; }, 200)" onfocus="renderizarCatalogo()" autocomplete="off">
+          <button type="button" class="btn-mini editar" style="max-width:44px;" onclick="abrirEscanerCodigoBarras('inputBuscarProducto', buscarYAgregarPorCodigoBarras)" title="Escanear código de barras">📷</button>
+          <div id="listaCatalogo" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1.5px solid var(--rosa-medio);border-radius:9px;margin-top:4px;max-height:340px;overflow-y:auto;z-index:50;box-shadow:var(--sombra);"></div>
+        </div>
       </div>
-      <div class="filtro-tipo">
+      <div class="filtro-tipo" style="margin-bottom:0;padding-top:2px;">
         <button class="chip-filtro activo" data-filtro="todos" onclick="cambiarFiltroTipo('todos', this)">Todos</button>
         <button class="chip-filtro" data-filtro="producto_terminado" onclick="cambiarFiltroTipo('producto_terminado', this)">Amigurumis</button>
         <button class="chip-filtro" data-filtro="merceria" onclick="cambiarFiltroTipo('merceria', this)">Mercería</button>
       </div>
-      <div id="ultimoProductoAgregado" style="margin-top:10px;"></div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start;">
+
+    <!-- Datos del cliente: columna angosta, colapsable -->
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="alternarDatosClienteVenta()">
+        <h2 style="margin:0;">Datos del cliente <span style="font-size:11px;font-weight:400;opacity:0.6;">(opcional)</span></h2>
+        <span id="chevronDatosCliente" style="font-size:12px;transition:transform 0.15s;">▾</span>
+      </div>
+      <div id="contenidoDatosClienteVenta" class="oculto" style="margin-top:10px;">
+        <label for="clienteIdentificacion">N° de identificación <span style="font-size:10px;opacity:0.6;">(busca cliente automáticamente)</span></label>
+        <input type="text" id="clienteIdentificacion" placeholder="CC, CE, NIT..." oninput="autocompletarCliente('identificacion')">
+        <label for="clienteNombre">Nombre completo</label>
+        <input type="text" id="clienteNombre" placeholder="Nombre completo" style="text-transform:uppercase;" oninput="this.value = this.value.toUpperCase()">
+        <label for="clienteTelefono">Teléfono <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+        <input type="tel" id="clienteTelefono" placeholder="300 000 0000">
+        <label for="clienteCorreo">Correo <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+        <input type="email" id="clienteCorreo" placeholder="correo@gmail.com">
+        <label for="clienteDireccion">Dirección <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+        <input type="text" id="clienteDireccion" placeholder="Para envíos">
+        <label for="clienteCiudad">Ciudad <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+        <input type="text" id="clienteCiudad" placeholder="Manizales">
+        <div id="mensajeAutocompletado" style="font-size:12px;color:var(--verde-exito);margin-top:6px;display:none;">✅ Cliente encontrado — datos precargados</div>
+      </div>
     </div>
 
-    <div class="panel">
-      <h2>Datos del cliente <span style="font-size:11px;font-weight:400;opacity:0.6;">(opcional)</span></h2>
-      <label for="clienteIdentificacion">N° de identificación <span style="font-size:10px;opacity:0.6;">(busca cliente automáticamente)</span></label>
-      <input type="text" id="clienteIdentificacion" placeholder="CC, CE, NIT..." oninput="autocompletarCliente('identificacion')">
-      <label for="clienteNombre">Nombre completo</label>
-      <input type="text" id="clienteNombre" placeholder="Nombre completo" style="text-transform:uppercase;" oninput="this.value = this.value.toUpperCase()">
-      <label for="clienteTelefono">Teléfono <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
-      <input type="tel" id="clienteTelefono" placeholder="300 000 0000">
-      <label for="clienteCorreo">Correo <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
-      <input type="email" id="clienteCorreo" placeholder="correo@gmail.com">
-      <label for="clienteDireccion">Dirección <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
-      <input type="text" id="clienteDireccion" placeholder="Para envíos">
-      <label for="clienteCiudad">Ciudad <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
-      <input type="text" id="clienteCiudad" placeholder="Manizales">
-      <div id="mensajeAutocompletado" style="font-size:12px;color:var(--verde-exito);margin-top:6px;display:none;">✅ Cliente encontrado — datos precargados</div>
-    </div>
-
-    <div class="panel">
+    <!-- Carrito: la zona principal de trabajo -->
+    <div class="panel" style="max-width:none;">
       <h2>Carrito</h2>
       <div id="listaCarrito"><div class="carrito-vacio">Aún no has agregado productos</div></div>
       <div class="resumen-total">
@@ -2369,6 +2380,10 @@
     document.getElementById('clienteCorreo').value = venta.cliente.correo || '';
     document.getElementById('clienteDireccion').value = venta.cliente.direccion || '';
     document.getElementById('clienteCiudad').value = venta.cliente.ciudad || '';
+    if (venta.cliente.nombre || venta.cliente.identificacion) {
+      document.getElementById('contenidoDatosClienteVenta').classList.remove('oculto');
+      document.getElementById('chevronDatosCliente').style.transform = 'rotate(180deg)';
+    }
 
     ventasEnEspera = ventasEnEspera.filter(v => v.idEspera !== idEspera);
     renderizarCarrito();
@@ -2380,6 +2395,13 @@
     if (!confirm('¿Descartar esta venta en espera? Se perderá lo que llevaba en el carrito.')) return;
     ventasEnEspera = ventasEnEspera.filter(v => v.idEspera !== idEspera);
     renderizarVentasEnEspera();
+  }
+
+  function alternarDatosClienteVenta() {
+    const contenido = document.getElementById('contenidoDatosClienteVenta');
+    const chevron = document.getElementById('chevronDatosCliente');
+    contenido.classList.toggle('oculto');
+    chevron.style.transform = contenido.classList.contains('oculto') ? 'rotate(0deg)' : 'rotate(180deg)';
   }
 
   async function mostrarPantallaVentas() {
