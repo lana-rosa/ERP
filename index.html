@@ -697,7 +697,9 @@
 <div id="pantallaVentas" class="oculto contenido">
   <div class="page-header">
     <h1>Registrar venta</h1>
+    <div class="subtitulo">Si una venta se está demorando, ponla en espera y atiende a otro cliente sin perder lo que ya llevabas.</div>
   </div>
+  <div id="barraVentasEnEspera" style="margin-bottom:16px;"></div>
   <div class="grilla-3">
 
     <div class="panel">
@@ -745,6 +747,7 @@
         <div class="resumen-pagos" id="resumenPagos"></div>
       </div>
       <button class="btn-principal" id="btnConfirmarVenta" onclick="confirmarVenta()">Confirmar venta</button>
+      <button class="btn-secundario" id="btnPonerEnEspera" onclick="ponerVentaEnEspera()">🅿️ Poner en espera y atender otro cliente</button>
       <div class="mensaje" id="mensajeVenta"></div>
       <div id="botonesReciboVenta" class="oculto" style="display:flex;gap:8px;margin-top:10px;">
         <button class="btn-secundario" style="margin-top:0;" onclick="imprimirReciboVenta()">🖨️ Imprimir recibo</button>
@@ -2059,6 +2062,102 @@
   let filasPago = []; // [{ metodo_pago, monto, referencia }]
   let contadorFilaPago = 0;
 
+  // ============================================================================
+  // VENTAS EN ESPERA — para no bloquear la caja si una venta se demora
+  // ============================================================================
+  let ventasEnEspera = [];
+  let contadorVentaEspera = 0;
+
+  function ponerVentaEnEspera() {
+    if (carrito.length === 0) { alert('No hay nada en el carrito para poner en espera.'); return; }
+
+    contadorVentaEspera++;
+    ventasEnEspera.push({
+      idEspera: contadorVentaEspera,
+      carrito: JSON.parse(JSON.stringify(carrito)),
+      filasPago: JSON.parse(JSON.stringify(filasPago)),
+      cliente: {
+        identificacion: document.getElementById('clienteIdentificacion').value,
+        nombre: document.getElementById('clienteNombre').value,
+        telefono: document.getElementById('clienteTelefono').value,
+        correo: document.getElementById('clienteCorreo').value,
+        direccion: document.getElementById('clienteDireccion').value,
+        ciudad: document.getElementById('clienteCiudad').value
+      },
+      horaGuardado: new Date()
+    });
+
+    // Limpiar el carrito activo para atender al siguiente cliente
+    carrito = [];
+    filasPago = [{ metodo_pago: 'efectivo', monto: '', referencia: '' }];
+    document.getElementById('clienteNombre').value = '';
+    document.getElementById('clienteTelefono').value = '';
+    document.getElementById('clienteCorreo').value = '';
+    document.getElementById('clienteIdentificacion').value = '';
+    document.getElementById('clienteDireccion').value = '';
+    document.getElementById('clienteCiudad').value = '';
+    ocultarMensaje('mensajeVenta');
+    renderizarCarrito();
+    renderizarPagos();
+    renderizarVentasEnEspera();
+  }
+
+  function renderizarVentasEnEspera() {
+    const contenedor = document.getElementById('barraVentasEnEspera');
+    if (!contenedor) return;
+    if (ventasEnEspera.length === 0) { contenedor.innerHTML = ''; return; }
+
+    contenedor.innerHTML = `
+      <div style="background:#fff3cd;border:1.5px solid #f0d98c;border-radius:12px;padding:12px 14px;">
+        <div style="font-weight:700;font-size:12.5px;color:#856404;margin-bottom:8px;">🅿️ ${ventasEnEspera.length} venta(s) en espera</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          ${ventasEnEspera.map(v => {
+            const totalV = v.carrito.reduce((acc, l) => acc + l.precio * l.cantidad, 0);
+            const hora = v.horaGuardado.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+            const nombreCliente = v.cliente.nombre || 'Sin nombre';
+            return `
+              <div style="background:white;border-radius:8px;padding:8px 10px;font-size:12px;display:flex;align-items:center;gap:8px;border:1px solid #f0d98c;">
+                <span>${escaparHtml(nombreCliente)} — ${formatearMoneda(totalV)} <span style="opacity:0.6;">(${hora})</span></span>
+                <button class="btn-mini guardar" style="padding:5px 10px;" onclick="reanudarVentaEnEspera(${v.idEspera})">Reanudar</button>
+                <button class="btn-mini desactivar" style="padding:5px 8px;" onclick="eliminarVentaEnEspera(${v.idEspera})">✕</button>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  function reanudarVentaEnEspera(idEspera) {
+    if (carrito.length > 0) {
+      if (!confirm('Ya tienes una venta activa en el carrito. Si reanudas otra, la actual se pondrá en espera automáticamente. ¿Continuar?')) return;
+      ponerVentaEnEspera();
+    }
+
+    const venta = ventasEnEspera.find(v => v.idEspera === idEspera);
+    if (!venta) return;
+
+    carrito = venta.carrito;
+    filasPago = venta.filasPago;
+    document.getElementById('clienteIdentificacion').value = venta.cliente.identificacion || '';
+    document.getElementById('clienteNombre').value = venta.cliente.nombre || '';
+    document.getElementById('clienteTelefono').value = venta.cliente.telefono || '';
+    document.getElementById('clienteCorreo').value = venta.cliente.correo || '';
+    document.getElementById('clienteDireccion').value = venta.cliente.direccion || '';
+    document.getElementById('clienteCiudad').value = venta.cliente.ciudad || '';
+
+    ventasEnEspera = ventasEnEspera.filter(v => v.idEspera !== idEspera);
+    renderizarCarrito();
+    renderizarPagos();
+    renderizarVentasEnEspera();
+  }
+
+  function eliminarVentaEnEspera(idEspera) {
+    if (!confirm('¿Descartar esta venta en espera? Se perderá lo que llevaba en el carrito.')) return;
+    ventasEnEspera = ventasEnEspera.filter(v => v.idEspera !== idEspera);
+    renderizarVentasEnEspera();
+  }
+
   async function mostrarPantallaVentas() {
     // Guardia: verificar que hay un turno activo antes de permitir ventas
     if (!turnoActivoActual) {
@@ -2079,6 +2178,7 @@
     document.getElementById('botonesReciboVenta').style.display = 'none';
     renderizarCarrito();
     renderizarPagos();
+    renderizarVentasEnEspera();
     await cargarCatalogo();
   }
 
