@@ -2355,22 +2355,44 @@
 
   function actualizarFilaPago(indice, campo, valor) {
     filasPago[indice][campo] = valor;
-    actualizarResumenPagos();
+
+    // Calculadora de cambio: si el cajero escribe cuánto le dio el cliente en
+    // efectivo, se calcula solo cuánto cobrar de esa fila y cuánto devolver.
+    if (campo === 'recibido') {
+      const total = calcularTotalCarrito();
+      const sumaOtrasFilas = filasPago.reduce((acc, p, i) => i === indice ? acc : acc + (Number(p.monto) || 0), 0);
+      const faltantePorCubrir = Math.max(total - sumaOtrasFilas, 0);
+      const recibido = Number(valor) || 0;
+      filasPago[indice].monto = Math.min(recibido, faltantePorCubrir);
+      filasPago[indice].cambio = Math.max(recibido - faltantePorCubrir, 0);
+    }
+
+    renderizarPagos();
   }
 
   function renderizarPagos() {
     const contenedor = document.getElementById('listaPagos');
     contenedor.innerHTML = filasPago.map((pago, indice) => `
-      <div class="fila-pago">
-        <select onchange="actualizarFilaPago(${indice}, 'metodo_pago', this.value)">
-          <option value="efectivo" ${pago.metodo_pago === 'efectivo' ? 'selected' : ''}>Efectivo</option>
-          <option value="nequi" ${pago.metodo_pago === 'nequi' ? 'selected' : ''}>Nequi</option>
-          <option value="daviplata" ${pago.metodo_pago === 'daviplata' ? 'selected' : ''}>Daviplata</option>
-          <option value="tarjeta_debito" ${pago.metodo_pago === 'tarjeta_debito' ? 'selected' : ''}>Tarjeta débito</option>
-          <option value="tarjeta_credito" ${pago.metodo_pago === 'tarjeta_credito' ? 'selected' : ''}>Tarjeta crédito</option>
-        </select>
-        <input type="number" placeholder="Monto" min="0" step="1000" value="${pago.monto}" oninput="actualizarFilaPago(${indice}, 'monto', this.value)">
-        ${filasPago.length > 1 ? `<button class="btn-quitar-pago" onclick="quitarFilaPago(${indice})">✕</button>` : ''}
+      <div class="fila-pago" style="flex-direction:column;align-items:stretch;">
+        <div style="display:flex;gap:8px;">
+          <select onchange="actualizarFilaPago(${indice}, 'metodo_pago', this.value)" style="flex:1.2;">
+            <option value="efectivo" ${pago.metodo_pago === 'efectivo' ? 'selected' : ''}>Efectivo</option>
+            <option value="nequi" ${pago.metodo_pago === 'nequi' ? 'selected' : ''}>Nequi</option>
+            <option value="daviplata" ${pago.metodo_pago === 'daviplata' ? 'selected' : ''}>Daviplata</option>
+            <option value="tarjeta_debito" ${pago.metodo_pago === 'tarjeta_debito' ? 'selected' : ''}>Tarjeta débito</option>
+            <option value="tarjeta_credito" ${pago.metodo_pago === 'tarjeta_credito' ? 'selected' : ''}>Tarjeta crédito</option>
+          </select>
+          ${pago.metodo_pago === 'efectivo'
+            ? `<input type="number" placeholder="¿Cuánto te dio?" min="0" step="1000" value="${pago.recibido || ''}" oninput="actualizarFilaPago(${indice}, 'recibido', this.value)" style="flex:1;">`
+            : `<input type="number" placeholder="Monto" min="0" step="1000" value="${pago.monto}" oninput="actualizarFilaPago(${indice}, 'monto', this.value)" style="flex:1;">`
+          }
+          ${filasPago.length > 1 ? `<button class="btn-quitar-pago" onclick="quitarFilaPago(${indice})">✕</button>` : ''}
+        </div>
+        ${pago.metodo_pago === 'efectivo' && pago.recibido ? `
+          <div style="font-size:12px;margin-top:4px;padding:6px 10px;border-radius:6px;background:${pago.cambio > 0 ? '#eaf6ef' : '#fafafa'};color:${pago.cambio > 0 ? 'var(--verde-exito)' : 'var(--texto-oscuro)'};">
+            Cobrado: ${formatearMoneda(pago.monto)} ${pago.cambio > 0 ? `· 💵 Cambio a devolver: <strong>${formatearMoneda(pago.cambio)}</strong>` : ''}
+          </div>
+        ` : ''}
       </div>
     `).join('');
     actualizarResumenPagos();
@@ -2504,6 +2526,15 @@
       };
       document.getElementById('botonesReciboVenta').classList.remove('oculto');
       document.getElementById('botonesReciboVenta').style.display = 'flex';
+
+      // Si hubo pago en efectivo, intentar abrir el cajón monedero (requiere
+      // impresora/cajón compatible conectado; si no hay hardware, esto no hace nada).
+      if (filasPago.some(p => p.metodo_pago === 'efectivo')) {
+        fetch(WORKER_URL + '/api/pos/imprimir/abrir-cajon', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer ' + sesionActual.token }
+        }).catch(() => {});
+      }
 
       mostrarMensaje('mensajeVenta', '✅ Venta registrada correctamente.', 'exito');
       carrito = [];
