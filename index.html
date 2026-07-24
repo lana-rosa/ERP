@@ -629,6 +629,15 @@
         <button class="nav-btn" onclick="mostrarPantallaInventario()"><span class="nav-icon">📊</span> Inventario general (3 deptos)</button>
       </div>
     </div>
+    <div class="sidebar-depto" id="deptoFondoEmprenderGrupo" style="display:none;">
+      <button class="sidebar-depto-header" id="headerDeptoFE" onclick="toggleSidebarDepto('deptoFESubmenu', 'headerDeptoFE')">🏦 Fondo Emprender <span class="chevron">▾</span></button>
+      <div class="sidebar-depto-submenu" id="deptoFESubmenu">
+        <button class="nav-btn" onclick="mostrarPantallaFeCalendario()"><span class="nav-icon">📅</span> Calendario de entregables</button>
+        <button class="nav-btn" onclick="mostrarPantallaFeDocumentos()"><span class="nav-icon">📄</span> Validar documentos</button>
+        <button class="nav-btn" onclick="mostrarPantallaFePresupuesto()"><span class="nav-icon">💰</span> Ejecución presupuestal</button>
+        <button class="nav-btn" onclick="mostrarPantallaFeConfig()"><span class="nav-icon">⚙️</span> Configuración del proyecto</button>
+      </div>
+    </div>
   </div>
 
   <div class="sidebar-footer">
@@ -1617,6 +1626,135 @@
   </div>
 </div>
 
+<!-- ===== FONDO EMPRENDER: CONFIGURACIÓN ===== -->
+<div id="pantallaFeConfig" class="oculto contenido">
+  <div class="page-header">
+    <h1>🏦 Fondo Emprender — Configuración del proyecto</h1>
+    <div class="subtitulo">Datos base de la convocatoria. El saldo disponible se calcula automáticamente restando los compromisos ya adquiridos.</div>
+  </div>
+  <div class="grilla-2">
+    <div class="panel">
+      <h2>Datos del proyecto</h2>
+      <label for="feNombreProyecto">Nombre del proyecto</label>
+      <input type="text" id="feNombreProyecto" placeholder="Lana Rosa Crochet">
+      <label for="feMontoAsignado">Monto total asignado (COP)</label>
+      <input type="number" id="feMontoAsignado" min="0" step="1000">
+      <label for="feFechaInicio">Fecha de inicio de ejecución</label>
+      <input type="date" id="feFechaInicio">
+      <label for="feInterventorNombre">Nombre del interventor</label>
+      <input type="text" id="feInterventorNombre" placeholder="Nombre de la persona/entidad interventora">
+      <label for="feInterventorContacto">Contacto del interventor</label>
+      <input type="text" id="feInterventorContacto" placeholder="Correo o teléfono">
+      <button class="btn-principal" onclick="guardarProyectoFe()">Guardar</button>
+      <div class="mensaje" id="mensajeProyectoFe"></div>
+    </div>
+    <div class="panel">
+      <h2>Saldo de la convocatoria</h2>
+      <div id="resumenSaldoFe"><div class="cargando">Cargando...</div></div>
+      <h2 style="margin-top:20px;">Catálogo de rubros financiables</h2>
+      <div id="listaRubrosFe" style="font-size:12px;"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FONDO EMPRENDER: CALENDARIO DE ENTREGABLES ===== -->
+<div id="pantallaFeCalendario" class="oculto contenido">
+  <div class="page-header">
+    <h1>📅 Calendario de entregables</h1>
+    <div class="subtitulo">Plazos reales del Protocolo de Interventoría. Los días hábiles descuentan fines de semana y festivos colombianos automáticamente.</div>
+  </div>
+  <div class="grilla-2">
+    <div class="panel">
+      <h2>+ Nuevo entregable</h2>
+      <label for="feTipoEntregable">Tipo de entregable</label>
+      <select id="feTipoEntregable">
+        <option value="AVANCE">Avance (revisión interventor — 3 días hábiles)</option>
+        <option value="SOLICITUD_PAGO">Solicitud de pago (2 días hábiles)</option>
+        <option value="INDICADORES_GESTION">Indicadores de gestión (5 días calendario)</option>
+        <option value="RESPUESTA_REQUERIMIENTO">Respuesta a requerimiento (3 días hábiles)</option>
+        <option value="CRONOGRAMA_VISITAS">Trámites/prórrogas (10 días calendario)</option>
+        <option value="PLANILLA_SEG_SOCIAL">Planilla seguridad social (5 días calendario)</option>
+        <option value="INFORME_MENSUAL">Informe mensual (5 días calendario)</option>
+        <option value="INFORME_BIMESTRAL">Informe bimestral (5 días calendario)</option>
+        <option value="CONCEPTO_FINAL">Concepto final (5 días calendario)</option>
+      </select>
+      <label for="feDescripcionEvento">Descripción</label>
+      <input type="text" id="feDescripcionEvento" placeholder="Ej: Avance del mes de agosto">
+      <label for="feResponsableEvento">Responsable</label>
+      <select id="feResponsableEvento">
+        <option value="">(usar el responsable por defecto de este tipo)</option>
+        <option value="EMPRENDEDOR">Emprendedor (Sara)</option>
+        <option value="INTERVENTOR">Interventor</option>
+        <option value="OPERADOR">Operador</option>
+      </select>
+      <button class="btn-principal" onclick="crearEventoFe()">Crear entregable</button>
+      <div class="mensaje" id="mensajeEventoFe"></div>
+    </div>
+    <div class="panel">
+      <h2>Próximos entregables</h2>
+      <div id="listaEventosFe"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FONDO EMPRENDER: VALIDAR DOCUMENTOS ===== -->
+<div id="pantallaFeDocumentos" class="oculto contenido">
+  <div class="page-header">
+    <h1>📄 Validar cotizaciones y facturas</h1>
+    <div class="subtitulo">Revisa el documento y marca cada casilla según lo que veas. El sistema aplica automáticamente las reglas del Instructivo de Pagos y del Manual Financiero.</div>
+  </div>
+  <div class="grilla-2">
+    <div class="panel">
+      <h2>+ Validar nuevo documento</h2>
+      <label for="feDocTipo">Tipo de documento</label>
+      <select id="feDocTipo" onchange="renderizarChecklistFe()">
+        <option value="COTIZACION">Cotización</option>
+        <option value="FACTURA_ELECTRONICA">Factura electrónica</option>
+      </select>
+      <label for="feDocRubro">Rubro del plan operativo</label>
+      <select id="feDocRubro"><option value="">Cargando...</option></select>
+      <label for="feDocProveedorNit">NIT del proveedor</label>
+      <input type="text" id="feDocProveedorNit">
+      <label for="feDocProveedorNombre">Razón social del proveedor</label>
+      <input type="text" id="feDocProveedorNombre">
+      <label for="feDocRegimenIva">Régimen de IVA</label>
+      <select id="feDocRegimenIva">
+        <option value="">Sin especificar</option>
+        <option value="responsable">Responsable de IVA</option>
+        <option value="no_responsable">No responsable de IVA</option>
+      </select>
+      <label for="feDocMonto">Monto (COP)</label>
+      <input type="number" id="feDocMonto" min="0" step="1000">
+      <label for="feDocFechaExpedicion">Fecha de expedición</label>
+      <input type="date" id="feDocFechaExpedicion">
+      <div id="feChecklistContenedor" style="margin-top:10px;"></div>
+      <button class="btn-principal" onclick="validarDocumentoFe()">Validar documento</button>
+      <div class="mensaje" id="mensajeDocFe"></div>
+      <div id="resultadoValidacionFe" style="margin-top:10px;"></div>
+    </div>
+    <div class="panel">
+      <h2>Documentos validados</h2>
+      <div id="listaDocumentosFe"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FONDO EMPRENDER: EJECUCIÓN PRESUPUESTAL ===== -->
+<div id="pantallaFePresupuesto" class="oculto contenido">
+  <div class="page-header">
+    <h1>💰 Ejecución presupuestal</h1>
+    <div class="subtitulo">Libro de compromisos contra el monto asignado por la convocatoria.</div>
+  </div>
+  <div class="panel" style="max-width:none;">
+    <h2>Saldo disponible</h2>
+    <div id="resumenSaldoFe2"><div class="cargando">Cargando...</div></div>
+  </div>
+  <div class="panel" style="max-width:none;max-height:none;margin-top:20px;">
+    <h2>Compromisos presupuestales</h2>
+    <div id="listaCommitmentsFe"><div class="cargando">Cargando...</div></div>
+  </div>
+</div>
+
 <!-- ===== MODAL: ESCÁNER DE CÓDIGO DE BARRAS ===== -->
 <div id="modalEscanerCodigoBarras" class="oculto" style="position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:500;display:none;align-items:center;justify-content:center;">
   <div style="background:white;border-radius:14px;padding:20px;max-width:420px;width:90%;">
@@ -1676,7 +1814,7 @@
   // UTILIDADES
   // ============================================================================
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaDepartamentos', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaDepartamentos', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -1896,6 +2034,7 @@
     mostrar('deptoAcademiaGrupo', esAdmin);
     mostrar('deptoTalentoGrupo', esAdmin);
     mostrar('deptoReportesGrupo', esAdmin);
+    mostrar('deptoFondoEmprenderGrupo', esAdmin);
 
     // Turno de caja solo aplica a quien maneja caja física (Tienda)
     mostrar('nav-turno', esAdmin || esCajero);
@@ -7318,6 +7457,342 @@
     alert('✅ Metas guardadas correctamente.');
     await cargarInformeAcademia();
   }
+
+  // ============================================================
+  // FONDO EMPRENDER
+  // ============================================================
+  let rubrosFeCache = [];
+  const etiquetasEstadoEventoFe = { PENDIENTE: '⏳ Pendiente', EN_REVISION_INTERVENTOR: '👀 En revisión', APROBADO: '✅ Aprobado', RECHAZADO: '❌ Rechazado', VENCIDO: '🔴 Vencido' };
+  const coloresPrioridadFe = { CRITICA: '#dc2626', ALTA: '#e0922f', MEDIA: '#d8b400', BAJA: '#2e8b57', VENCIDO: '#dc2626' };
+
+  async function cargarSaldoFe(idContenedor) {
+    const contenedor = document.getElementById(idContenedor);
+    const resp = await fetch(WORKER_URL + '/api/pos/fe/proyecto', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const { proyecto, saldo } = await resp.json();
+
+    if (!proyecto) {
+      contenedor.innerHTML = '<div class="cargando">Primero configura el proyecto en "Configuración del proyecto".</div>';
+      return;
+    }
+
+    const pctUsado = saldo && saldo.monto_asignado > 0 ? Math.round((saldo.total_comprometido / saldo.monto_asignado) * 100) : 0;
+    contenedor.innerHTML = `
+      <div class="grilla-3">
+        <div style="text-align:center;padding:12px;background:var(--rosa-suave);border-radius:10px;">
+          <div style="font-size:11px;opacity:0.6;">Monto asignado</div>
+          <div style="font-size:16px;font-weight:700;">${formatearMoneda(saldo ? saldo.monto_asignado : 0)}</div>
+        </div>
+        <div style="text-align:center;padding:12px;background:var(--rosa-suave);border-radius:10px;">
+          <div style="font-size:11px;opacity:0.6;">Comprometido</div>
+          <div style="font-size:16px;font-weight:700;color:var(--rosa-principal);">${formatearMoneda(saldo ? saldo.total_comprometido : 0)}</div>
+        </div>
+        <div style="text-align:center;padding:12px;background:var(--rosa-suave);border-radius:10px;">
+          <div style="font-size:11px;opacity:0.6;">Saldo disponible</div>
+          <div style="font-size:16px;font-weight:700;color:var(--verde-exito);">${formatearMoneda(saldo ? saldo.saldo_disponible : 0)}</div>
+        </div>
+      </div>
+      <div style="background:#f0e8ee;border-radius:6px;height:10px;margin-top:12px;overflow:hidden;">
+        <div style="background:var(--rosa-principal);height:100%;width:${Math.min(pctUsado,100)}%;"></div>
+      </div>
+      <div style="font-size:11px;text-align:right;margin-top:4px;opacity:0.6;">${pctUsado}% del recurso comprometido</div>
+    `;
+  }
+
+  async function mostrarPantallaFeConfig() {
+    mostrarPantalla('pantallaFeConfig');
+    const resp = await fetch(WORKER_URL + '/api/pos/fe/proyecto', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (resp.ok) {
+      const { proyecto } = await resp.json();
+      if (proyecto) {
+        document.getElementById('feNombreProyecto').value = proyecto.nombre_proyecto || '';
+        document.getElementById('feMontoAsignado').value = proyecto.monto_asignado || '';
+        document.getElementById('feFechaInicio').value = proyecto.fecha_inicio_ejecucion || '';
+        document.getElementById('feInterventorNombre').value = proyecto.interventor_nombre || '';
+        document.getElementById('feInterventorContacto').value = proyecto.interventor_contacto || '';
+      }
+    }
+    await cargarSaldoFe('resumenSaldoFe');
+    await cargarRubrosFe();
+    renderizarListaRubrosFe();
+  }
+
+  async function guardarProyectoFe() {
+    ocultarMensaje('mensajeProyectoFe');
+    const body = {
+      nombre_proyecto: document.getElementById('feNombreProyecto').value.trim(),
+      monto_asignado: Number(document.getElementById('feMontoAsignado').value) || 0,
+      fecha_inicio_ejecucion: document.getElementById('feFechaInicio').value || null,
+      interventor_nombre: document.getElementById('feInterventorNombre').value.trim(),
+      interventor_contacto: document.getElementById('feInterventorContacto').value.trim()
+    };
+    const resp = await fetch(WORKER_URL + '/api/pos/fe/proyecto', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify(body)
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeProyectoFe', datos.error || 'No se pudo guardar.', 'error'); return; }
+    mostrarMensaje('mensajeProyectoFe', '✅ Guardado correctamente.', 'exito');
+    await cargarSaldoFe('resumenSaldoFe');
+  }
+
+  async function cargarRubrosFe() {
+    if (rubrosFeCache.length > 0) return;
+    const resp = await fetch(WORKER_URL + '/api/pos/fe/rubros', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (resp.ok) rubrosFeCache = (await resp.json()).rubros || [];
+  }
+
+  function renderizarListaRubrosFe() {
+    const contenedor = document.getElementById('listaRubrosFe');
+    if (!contenedor) return;
+    const etiquetaTipo = { FINANCIABLE_SIN_TOPE: '✅ Financiable', FINANCIABLE_CON_TOPE: '⚠️ Financiable con tope', NO_FINANCIABLE: '❌ No financiable' };
+    contenedor.innerHTML = rubrosFeCache.map(r => `
+      <div style="padding:6px 0;border-bottom:1px solid #f4eef2;">
+        <strong>${escaparHtml(r.nombre)}</strong><br>
+        <span style="opacity:0.6;">${etiquetaTipo[r.tipo]}${r.tope_pct ? ' (' + r.tope_pct + '%)' : ''}</span>
+      </div>
+    `).join('');
+  }
+
+  // --- Calendario de entregables ---
+  async function mostrarPantallaFeCalendario() {
+    mostrarPantalla('pantallaFeCalendario');
+    ocultarMensaje('mensajeEventoFe');
+    await cargarEventosFe();
+  }
+
+  async function crearEventoFe() {
+    const tipo = document.getElementById('feTipoEntregable').value;
+    const descripcion = document.getElementById('feDescripcionEvento').value.trim();
+    const responsable = document.getElementById('feResponsableEvento').value;
+    ocultarMensaje('mensajeEventoFe');
+
+    if (!descripcion) { mostrarMensaje('mensajeEventoFe', 'Escribe una descripción.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/fe/eventos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ tipo_entregable: tipo, descripcion, responsable: responsable || null })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeEventoFe', datos.error || 'No se pudo crear.', 'error'); return; }
+
+    mostrarMensaje('mensajeEventoFe', '✅ Entregable creado, con su fecha límite calculada automáticamente.', 'exito');
+    document.getElementById('feDescripcionEvento').value = '';
+    await cargarEventosFe();
+  }
+
+  async function cargarEventosFe() {
+    const contenedor = document.getElementById('listaEventosFe');
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/fe/eventos', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+
+    const { eventos } = await resp.json();
+    if (!eventos || eventos.length === 0) { contenedor.innerHTML = '<div class="cargando">No hay entregables registrados.</div>'; return; }
+
+    contenedor.innerHTML = eventos.map(ev => {
+      const color = ev.prioridad ? (coloresPrioridadFe[ev.prioridad] || '#999') : '#999';
+      const fechaLimite = new Date(ev.fecha_limite + 'T00:00:00').toLocaleDateString('es-CO');
+      const diasTexto = ev.dias_restantes === null ? '' : ev.dias_restantes < 0 ? `${Math.abs(ev.dias_restantes)} día(s) vencido` : `${ev.dias_restantes} día(s) restantes`;
+      return `
+        <div class="fila-historial" style="margin-bottom:10px;border-left:4px solid ${color};padding-left:12px;">
+          <div class="fila-historial-encabezado">
+            <span class="fila-historial-consecutivo">${escaparHtml(ev.descripcion || ev.tipo_entregable)}</span>
+            <span style="font-size:11px;font-weight:700;color:${color};">${diasTexto}</span>
+          </div>
+          <div class="fila-historial-fecha">Fecha límite: ${fechaLimite} · Responsable: ${ev.responsable} · ${etiquetasEstadoEventoFe[ev.estado]}</div>
+          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+            ${ev.estado === 'PENDIENTE' ? `<button class="btn-mini editar" onclick="actualizarEstadoEventoFe('${ev.event_id}', 'EN_REVISION_INTERVENTOR')">Enviar a revisión</button>` : ''}
+            ${ev.estado === 'EN_REVISION_INTERVENTOR' ? `<button class="btn-mini guardar" onclick="actualizarEstadoEventoFe('${ev.event_id}', 'APROBADO')">Marcar aprobado</button><button class="btn-mini desactivar" onclick="actualizarEstadoEventoFe('${ev.event_id}', 'RECHAZADO')">Marcar rechazado</button>` : ''}
+            ${ev.estado === 'RECHAZADO' ? `<button class="btn-mini editar" onclick="actualizarEstadoEventoFe('${ev.event_id}', 'PENDIENTE')">Reabrir (nueva versión)</button>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function actualizarEstadoEventoFe(eventId, estado) {
+    const resp = await fetch(WORKER_URL + '/api/pos/fe/eventos/actualizar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ event_id: eventId, estado })
+    });
+    if (!resp.ok) { alert('No se pudo actualizar.'); return; }
+    await cargarEventosFe();
+  }
+
+  // --- Validación de documentos ---
+  const camposChecklistCotizacion = [
+    { campo: 'precio_unitario', label: 'Incluye precio unitario' },
+    { campo: 'descripcion_producto_servicio', label: 'Describe el producto/servicio' },
+    { campo: 'forma_pago', label: 'Indica forma de pago' },
+    { campo: 'tiempos_entrega', label: 'Indica tiempos de entrega' },
+    { campo: 'garantias', label: 'Indica garantías' },
+    { campo: 'plazo_vigencia_oferta', label: 'Indica plazo de vigencia de la oferta' },
+    { campo: 'firma_proveedor', label: 'Tiene firma del proveedor' },
+    { campo: 'dirigida_a_empresa_correcta', label: 'Está dirigida a la empresa correcta' },
+    { campo: 'declara_proveedor_unico', label: '¿Declara proveedor único?' },
+    { campo: 'certificado_exclusividad', label: 'Si aplica, ¿tiene certificado de exclusividad?' },
+  ];
+  const camposChecklistFactura = [
+    { campo: 'denominada_factura_venta', label: "Está denominada 'Factura de Venta'" },
+    { campo: 'numero_consecutivo', label: 'Tiene numeración consecutiva' },
+    { campo: 'cufe_presente', label: 'Tiene CUFE (código único de factura electrónica)' },
+    { campo: 'qr_code_presente', label: 'Tiene código QR de validación DIAN' },
+    { campo: 'autorizacion_dian_vigente', label: 'El rango de autorización DIAN está vigente' },
+    { campo: 'sin_tachaduras', label: 'No tiene tachaduras ni enmendaduras' },
+    { campo: 'iva_correcto', label: 'El IVA está liquidado correctamente' },
+    { campo: 'nit_coincide_cotizacion', label: 'El NIT coincide con la cotización aprobada' },
+    { campo: 'dirigida_a_empresa_correcta', label: 'Está dirigida a la empresa correcta' },
+  ];
+
+  function renderizarChecklistFe() {
+    const tipo = document.getElementById('feDocTipo').value;
+    const campos = tipo === 'COTIZACION' ? camposChecklistCotizacion : camposChecklistFactura;
+    document.getElementById('feChecklistContenedor').innerHTML = `
+      <div style="font-size:11px;font-weight:700;opacity:0.6;margin-bottom:6px;">Checklist (revisa el documento y marca lo que cumple)</div>
+      ${campos.map(c => `
+        <label style="display:flex;align-items:center;gap:8px;margin-top:6px;font-size:12.5px;font-weight:400;">
+          <input type="checkbox" id="chk-${c.campo}" style="width:auto;">
+          <span>${c.label}</span>
+        </label>
+      `).join('')}
+    `;
+  }
+
+  async function mostrarPantallaFeDocumentos() {
+    mostrarPantalla('pantallaFeDocumentos');
+    ocultarMensaje('mensajeDocFe');
+    document.getElementById('resultadoValidacionFe').innerHTML = '';
+    await cargarRubrosFe();
+    document.getElementById('feDocRubro').innerHTML = rubrosFeCache.map(r => `<option value="${r.id}">${escaparHtml(r.nombre)}</option>`).join('');
+    renderizarChecklistFe();
+    await cargarDocumentosFe();
+  }
+
+  async function validarDocumentoFe() {
+    ocultarMensaje('mensajeDocFe');
+    const tipo = document.getElementById('feDocTipo').value;
+    const rubroId = document.getElementById('feDocRubro').value;
+    const monto = Number(document.getElementById('feDocMonto').value);
+    const fechaExpedicion = document.getElementById('feDocFechaExpedicion').value;
+
+    if (!rubroId || !monto || !fechaExpedicion) {
+      mostrarMensaje('mensajeDocFe', 'Completa rubro, monto y fecha de expedición.', 'error');
+      return;
+    }
+
+    const campos = tipo === 'COTIZACION' ? camposChecklistCotizacion : camposChecklistFactura;
+    const checklist = {};
+    campos.forEach(c => { checklist[c.campo] = document.getElementById(`chk-${c.campo}`).checked; });
+
+    const resp = await fetch(WORKER_URL + '/api/pos/fe/documentos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({
+        tipo_documento: tipo,
+        rubro_id: rubroId,
+        proveedor_nit: document.getElementById('feDocProveedorNit').value.trim(),
+        proveedor_razon_social: document.getElementById('feDocProveedorNombre').value.trim(),
+        proveedor_regimen_iva: document.getElementById('feDocRegimenIva').value || null,
+        monto,
+        fecha_expedicion: fechaExpedicion,
+        checklist
+      })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeDocFe', datos.error || 'No se pudo validar.', 'error'); return; }
+
+    const v = datos.validacion;
+    const colorEstado = v.estado_validacion === 'CUMPLE' ? 'var(--verde-exito)' : v.estado_validacion === 'RECHAZADO' ? 'var(--rojo-error)' : '#e0922f';
+    document.getElementById('resultadoValidacionFe').innerHTML = `
+      <div style="padding:12px;border-radius:9px;background:${colorEstado}15;border:1.5px solid ${colorEstado};">
+        <div style="font-weight:700;color:${colorEstado};">${v.estado_validacion.replace(/_/g,' ')}</div>
+        ${v.resultado.length > 0 ? v.resultado.map(r => `<div style="font-size:12px;margin-top:4px;">⚠️ ${escaparHtml(r.observacion)}</div>`).join('') : '<div style="font-size:12px;margin-top:4px;">Sin observaciones.</div>'}
+        ${v.estado_validacion === 'CUMPLE' ? `<button class="btn-mini guardar" style="width:100%;margin-top:10px;" onclick="comprometerPresupuestoFe('${datos.doc_id}')">💰 Comprometer presupuesto</button>` : ''}
+      </div>
+    `;
+    mostrarMensaje('mensajeDocFe', '✅ Documento validado.', 'exito');
+    await cargarDocumentosFe();
+  }
+
+  async function comprometerPresupuestoFe(docId) {
+    if (!confirm('¿Confirmas comprometer el presupuesto por este documento? Esto descuenta del saldo disponible de la convocatoria.')) return;
+    const resp = await fetch(WORKER_URL + '/api/pos/fe/comprometer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ doc_id: docId })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { alert('No se pudo comprometer: ' + (datos.error || 'Error desconocido')); return; }
+    alert('✅ Presupuesto comprometido. Se creó automáticamente el entregable de "Solicitud de pago" en el calendario.');
+    document.getElementById('resultadoValidacionFe').innerHTML = '';
+  }
+
+  async function cargarDocumentosFe() {
+    const contenedor = document.getElementById('listaDocumentosFe');
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+    const resp = await fetch(WORKER_URL + '/api/pos/fe/documentos', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const { documentos } = await resp.json();
+    if (!documentos || documentos.length === 0) { contenedor.innerHTML = '<div class="cargando">Sin documentos validados todavía.</div>'; return; }
+
+    const colorEstado = { CUMPLE: 'var(--verde-exito)', RECHAZADO: 'var(--rojo-error)', NO_CUMPLE_CON_OBSERVACIONES: '#e0922f' };
+    contenedor.innerHTML = documentos.map(d => `
+      <div class="fila-historial" style="margin-bottom:9px;">
+        <div class="fila-historial-encabezado">
+          <span class="fila-historial-consecutivo">${d.tipo_documento === 'COTIZACION' ? 'Cotización' : 'Factura'} — ${escaparHtml(d.proveedor_razon_social || 'Sin proveedor')}</span>
+          <span class="fila-historial-total">${formatearMoneda(d.monto)}</span>
+        </div>
+        <div class="fila-historial-fecha">${d.fe_catalogo_rubros ? escaparHtml(d.fe_catalogo_rubros.nombre) : ''} · <span style="color:${colorEstado[d.estado_validacion] || '#999'};font-weight:700;">${(d.estado_validacion || 'Pendiente').replace(/_/g,' ')}</span></div>
+      </div>
+    `).join('');
+  }
+
+  // --- Ejecución presupuestal ---
+  async function mostrarPantallaFePresupuesto() {
+    mostrarPantalla('pantallaFePresupuesto');
+    await cargarSaldoFe('resumenSaldoFe2');
+    await cargarCommitmentsFe();
+  }
+
+  async function cargarCommitmentsFe() {
+    const contenedor = document.getElementById('listaCommitmentsFe');
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+    const resp = await fetch(WORKER_URL + '/api/pos/fe/commitments', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const { commitments } = await resp.json();
+    if (!commitments || commitments.length === 0) { contenedor.innerHTML = '<div class="cargando">Sin compromisos registrados todavía.</div>'; return; }
+
+    const etiquetaEstado = { PRESUPUESTO_COMPROMISORIO: '🔵 Comprometido', EJECUTADO: '✅ Ejecutado (pagado)', LIBERADO: '⚪ Liberado' };
+    contenedor.innerHTML = commitments.map(c => `
+      <div class="fila-historial" style="margin-bottom:9px;">
+        <div class="fila-historial-encabezado">
+          <span class="fila-historial-consecutivo">${escaparHtml(c.fe_catalogo_rubros ? c.fe_catalogo_rubros.nombre : 'Rubro')}</span>
+          <span class="fila-historial-total">${formatearMoneda(c.monto_comprometido)}</span>
+        </div>
+        <div class="fila-historial-fecha">${escaparHtml(c.descripcion || '')} · ${etiquetaEstado[c.estado]}</div>
+        <div style="display:flex;gap:6px;margin-top:8px;">
+          ${c.estado === 'PRESUPUESTO_COMPROMISORIO' ? `<button class="btn-mini guardar" onclick="cambiarEstadoCommitmentFe('${c.commitment_id}', 'EJECUTADO')">Marcar pagado</button><button class="btn-mini desactivar" onclick="cambiarEstadoCommitmentFe('${c.commitment_id}', 'LIBERADO')">Liberar</button>` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function cambiarEstadoCommitmentFe(commitmentId, estado) {
+    const resp = await fetch(WORKER_URL + '/api/pos/fe/commitments/estado', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ commitment_id: commitmentId, estado })
+    });
+    if (!resp.ok) { alert('No se pudo actualizar.'); return; }
+    await cargarCommitmentsFe();
+    await cargarSaldoFe('resumenSaldoFe2');
+  }
+
 
   async function mostrarPantallaCalendario() {
     mostrarPantalla('pantallaCalendario');
