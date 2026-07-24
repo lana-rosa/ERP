@@ -596,7 +596,7 @@
         <button class="nav-btn" id="nav-ventas" onclick="mostrarPantallaVentas()"><span class="nav-icon">🛒</span> Registrar venta</button>
         <button class="nav-btn" id="nav-historial" onclick="mostrarPantallaHistorial('01')"><span class="nav-icon">📋</span> Historial ventas</button>
         <button class="nav-btn" id="nav-pedidos-canal" onclick="mostrarPantallaPedidosCanal()"><span class="nav-icon">📱</span> Pedidos WhatsApp/Redes</button>
-        <button class="nav-btn" id="nav-solicitudes-tienda" onclick="mostrarPantallaSolicitudes()"><span class="nav-icon">📦</span> Solicitud de insumos del Taller</button>
+        <button class="nav-btn" id="nav-solicitudes-tienda" onclick="mostrarPantallaSolicitudes('tienda')"><span class="nav-icon">📦</span> Solicitud de insumos del Taller</button>
         <button class="nav-btn" id="nav-inventario-tienda" onclick="mostrarPantallaInventario('01')"><span class="nav-icon">📊</span> Inventario</button>
         <button class="nav-btn" id="nav-ajustestock" onclick="mostrarPantallaAjusteStock()"><span class="nav-icon">📥</span> Entrada mercancía</button>
         <button class="nav-btn" id="nav-turno" onclick="irATurnoActivo()"><span class="nav-icon">💵</span> Turno de caja</button>
@@ -611,7 +611,7 @@
         <button class="nav-btn" id="nav-consumotaller" onclick="mostrarPantallaPedidosCrm()"><span class="nav-icon">🧶</span> Consumo de material</button>
         <button class="nav-btn" onclick="mostrarPantallaHistorial('03')"><span class="nav-icon">📋</span> Historial ventas</button>
         <button class="nav-btn" id="nav-inventario-taller" onclick="mostrarPantallaInventario('03')"><span class="nav-icon">📊</span> Inventario</button>
-        <button class="nav-btn" id="nav-solicitudes-taller" onclick="mostrarPantallaSolicitudes()"><span class="nav-icon">📦</span> Solicitud de insumos a la Tienda</button>
+        <button class="nav-btn" id="nav-solicitudes-taller" onclick="mostrarPantallaSolicitudes('taller')"><span class="nav-icon">📦</span> Solicitud de insumos a la Tienda</button>
         <button class="nav-btn" id="nav-pagos-pendientes" onclick="mostrarPantallaPagosPendientes('03')"><span class="nav-icon">🏬</span> Caja, gastos y presupuesto</button>
       </div>
     </div>
@@ -4321,20 +4321,31 @@
   let catalogoSolicitudesCompleto = [];
   let itemSolicitudAbiertoId = null;
 
-  async function mostrarPantallaSolicitudes() {
+  async function mostrarPantallaSolicitudes(modoForzado) {
     mostrarPantalla('pantallaSolicitudes');
     document.getElementById('badgeRolSolicitudes').textContent = etiquetaRol(rolActual || '');
     ocultarMensaje('mensajeSolicitudInsumo');
 
+    // Cajero siempre ve la vista de la Tienda (aprobar/despachar); Taller siempre
+    // ve la vista de crear solicitud. Administradora ve una u otra según desde
+    // qué menú entró (Tienda o Taller), porque tiene acceso a las dos.
+    let modo = modoForzado;
+    if (rolActual === 'cajero') modo = 'tienda';
+    if (rolActual === 'taller') modo = 'taller';
+    if (!modo) modo = 'taller';
+
     const tituloPendientes = document.getElementById('tituloPanelSolicitudesPendientes');
-    if (rolActual === 'taller' || rolActual === 'administrador') {
+    document.getElementById('tituloPanelSolicitudes').textContent = modo === 'tienda' ? 'Solicitud de insumos del Taller' : 'Solicitud de insumos a la Tienda';
+
+    if (modo === 'taller') {
       document.getElementById('panelCrearSolicitud').style.display = '';
       await cargarPedidosParaSolicitudInsumo();
       await cargarInsumosSolicitudTaller();
+      tituloPendientes.textContent = 'Mis solicitudes enviadas a la Tienda';
     } else {
       document.getElementById('panelCrearSolicitud').style.display = 'none';
+      tituloPendientes.textContent = 'Solicitudes pendientes por aprobar y despachar';
     }
-    tituloPendientes.textContent = 'Solicitudes pendientes por despachar';
     await cargarSolicitudesPendientesInsumo();
     await cargarHistorialSolicitudesInsumo();
   }
