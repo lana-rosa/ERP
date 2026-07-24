@@ -574,12 +574,12 @@
     <button class="nav-btn" id="nav-calendario" onclick="mostrarPantallaCalendario()"><span class="nav-icon">📅</span> Calendario del equipo</button>
 
     <div class="sidebar-depto" id="deptoTiendaGrupo" style="display:none;">
-      <button class="sidebar-depto-header" id="headerDeptoTienda" onclick="toggleSidebarDepto('deptoTiendaSubmenu', 'headerDeptoTienda')">🏬 Tienda Física <span class="chevron">▾</span></button>
+      <button class="sidebar-depto-header" id="headerDeptoTienda" onclick="toggleSidebarDepto('deptoTiendaSubmenu', 'headerDeptoTienda')">🏬 Tienda/Mercería <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoTiendaSubmenu">
         <button class="nav-btn" id="nav-ventas" onclick="mostrarPantallaVentas()"><span class="nav-icon">🛒</span> Registrar venta</button>
         <button class="nav-btn" id="nav-historial" onclick="mostrarPantallaHistorial('01')"><span class="nav-icon">📋</span> Historial ventas</button>
         <button class="nav-btn" id="nav-pedidos-canal" onclick="mostrarPantallaPedidosCanal()"><span class="nav-icon">📱</span> Pedidos WhatsApp/Redes</button>
-        <button class="nav-btn" id="nav-solicitudes-tienda" onclick="mostrarPantallaSolicitudes()"><span class="nav-icon">📦</span> Compras a la Tienda</button>
+        <button class="nav-btn" id="nav-solicitudes-tienda" onclick="mostrarPantallaSolicitudes()"><span class="nav-icon">📦</span> Solicitudes de Taller</button>
         <button class="nav-btn" id="nav-inventario-tienda" onclick="mostrarPantallaInventario('01')"><span class="nav-icon">📊</span> Inventario</button>
         <button class="nav-btn" id="nav-ajustestock" onclick="mostrarPantallaAjusteStock()"><span class="nav-icon">📥</span> Entrada mercancía</button>
         <button class="nav-btn" id="nav-turno" onclick="irATurnoActivo()"><span class="nav-icon">💵</span> Turno de caja</button>
@@ -592,6 +592,7 @@
       <button class="sidebar-depto-header" id="headerDeptoTaller" onclick="toggleSidebarDepto('deptoTallerSubmenu', 'headerDeptoTaller')">🧶 Taller <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoTallerSubmenu">
         <button class="nav-btn" id="nav-consumotaller" onclick="mostrarPantallaPedidosCrm()"><span class="nav-icon">🧶</span> Consumo de material</button>
+        <button class="nav-btn" onclick="mostrarPantallaHistorial('03')"><span class="nav-icon">📋</span> Historial ventas</button>
         <button class="nav-btn" id="nav-inventario-taller" onclick="mostrarPantallaInventario('03')"><span class="nav-icon">📊</span> Inventario</button>
         <button class="nav-btn" id="nav-solicitudes-taller" onclick="mostrarPantallaSolicitudes()"><span class="nav-icon">📦</span> Compras a la Tienda</button>
         <button class="nav-btn" id="nav-pagos-pendientes" onclick="mostrarPantallaPagosPendientes('03')"><span class="nav-icon">🏬</span> Caja, gastos y presupuesto</button>
@@ -602,9 +603,11 @@
       <button class="sidebar-depto-header" id="headerDeptoAcademia" onclick="toggleSidebarDepto('deptoAcademiaSubmenu', 'headerDeptoAcademia')">🎓 Lana Rosa Academy <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoAcademiaSubmenu">
         <button class="nav-btn" onclick="mostrarPantallaAcademia()"><span class="nav-icon">💰</span> Registrar venta</button>
+        <button class="nav-btn" onclick="mostrarPantallaHistorial('04')"><span class="nav-icon">📋</span> Historial ventas</button>
         <button class="nav-btn" onclick="mostrarPantallaAcademiaKits()"><span class="nav-icon">🧶</span> Kits de tejido</button>
         <button class="nav-btn" onclick="mostrarPantallaInventario('04')"><span class="nav-icon">📊</span> Inventario</button>
         <button class="nav-btn" onclick="mostrarPantallaAcademiaInforme()"><span class="nav-icon">📈</span> Informe y metas</button>
+        <button class="nav-btn" onclick="mostrarPantallaDepartamentos()"><span class="nav-icon">📦</span> Compras a la Tienda</button>
         <button class="nav-btn" onclick="mostrarPantallaPagosPendientes('04')"><span class="nav-icon">🏬</span> Caja, gastos y presupuesto</button>
       </div>
     </div>
@@ -622,6 +625,8 @@
       <div class="sidebar-depto-submenu" id="deptoReportesSubmenu">
         <button class="nav-btn" id="nav-departamentos" onclick="mostrarPantallaDepartamentos()"><span class="nav-icon">🏢</span> Cajas y ventas internas</button>
         <button class="nav-btn" id="nav-reportes-financieros" onclick="mostrarPantallaReportesFinancieros()"><span class="nav-icon">📊</span> Por departamento y global</button>
+        <button class="nav-btn" onclick="mostrarPantallaHistorial()"><span class="nav-icon">📋</span> Consolidado de ventas (3 deptos)</button>
+        <button class="nav-btn" onclick="mostrarPantallaInventario()"><span class="nav-icon">📊</span> Inventario general (3 deptos)</button>
       </div>
     </div>
   </div>
@@ -906,11 +911,17 @@
     </div>
 
     <div class="panel">
-      <h2>Compras pendientes de aprobar</h2>
+      <h2 id="tituloPanelSolicitudesPendientes">Compras pendientes de aprobar</h2>
       <div id="listaSolicitudesPendientes"><div class="cargando">Cargando solicitudes...</div></div>
       <button class="btn-secundario" onclick="irAInicioSegunRol()" style="margin-top:14px;">Volver</button>
     </div>
 
+  </div>
+
+  <div class="panel" id="panelPagosSolicitudes" style="max-height:none;margin-top:20px;display:none;">
+    <h2>💵 Pagos pendientes a la Tienda</h2>
+    <div class="subtitulo">Compras ya aprobadas y entregadas: confirma aquí cuando ya se haya pagado.</div>
+    <div id="listaPagosPendientesSolicitudes"><div class="cargando">Cargando...</div></div>
   </div>
 </div>
 
@@ -1634,6 +1645,7 @@
     <button class="btn-principal" id="btnCerrarTurno" onclick="cerrarTurno()">Confirmar cierre</button>
     <button class="btn-secundario" onclick="irATurnoActivo()">Cancelar</button>
     <div id="resumenCierre" class="resumen-cierre oculto"></div>
+    <div id="arqueoDetallado" style="margin-top:14px;"></div>
     <div class="mensaje" id="mensajeCerrarTurno"></div>
   </div>
 </div>
@@ -1920,6 +1932,7 @@
       return;
     }
     document.getElementById('resumenCierre').classList.add('oculto');
+    document.getElementById('arqueoDetallado').innerHTML = '';
     document.getElementById('inputMontoDeclarado').value = '';
     document.getElementById('inputObservaciones').value = '';
     ocultarMensaje('mensajeCerrarTurno');
@@ -1970,14 +1983,51 @@
         throw new Error(datos.error || 'No se pudo cerrar el turno');
       }
 
+      const turnoIdCerrado = turnoActivoActual.id;
       mostrarResumenCierre(datos);
       turnoActivoActual = null;
+
+      // Arqueo detallado (Tienda física vs. WhatsApp/redes, efectivo vs. otros
+      // medios, base) — solo lo ve la administradora.
+      if (rolActual === 'administrador') {
+        await mostrarArqueoDetallado(turnoIdCerrado);
+      }
     } catch (err) {
       mostrarMensaje('mensajeCerrarTurno', err.message, 'error');
     } finally {
       btn.disabled = false;
       btn.textContent = 'Confirmar cierre';
     }
+  }
+
+  async function mostrarArqueoDetallado(turnoId) {
+    const contenedor = document.getElementById('arqueoDetallado');
+    contenedor.innerHTML = '<div class="cargando">Calculando arqueo detallado...</div>';
+
+    const resp = await fetch(`${WORKER_URL}/api/pos/turnos/arqueo-detallado?turno_id=${turnoId}`, {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+    if (!resp.ok) { contenedor.innerHTML = ''; return; }
+
+    const { detalle: d } = await resp.json();
+
+    contenedor.innerHTML = `
+      <div style="background:var(--rosa-suave);border-radius:12px;padding:16px;margin-top:6px;">
+        <div style="font-weight:700;font-size:13px;margin-bottom:10px;">📊 Arqueo detallado del turno</div>
+
+        <div style="font-size:11px;font-weight:700;opacity:0.6;margin-bottom:4px;">VENTAS POR CANAL</div>
+        <div class="resumen-fila"><span>🏬 Ventas Tienda/Mercería</span><strong>${formatearMoneda(d.tienda_total)}</strong></div>
+        <div class="resumen-fila"><span>📱 Ventas WhatsApp/Redes sociales</span><strong>${formatearMoneda(d.whatsapp_total)}</strong></div>
+        <div class="resumen-fila total"><span>Total vendido en el turno</span><strong>${formatearMoneda(d.tienda_total + d.whatsapp_total)}</strong></div>
+
+        <div style="font-size:11px;font-weight:700;opacity:0.6;margin-top:12px;margin-bottom:4px;">DEBE HABER EN CAJA</div>
+        <div class="resumen-fila"><span>Base de apertura</span><strong>${formatearMoneda(d.base_apertura)}</strong></div>
+        <div class="resumen-fila"><span>+ Efectivo Tienda</span><strong>${formatearMoneda(d.tienda_efectivo)}</strong></div>
+        <div class="resumen-fila"><span>+ Efectivo WhatsApp/Redes</span><strong>${formatearMoneda(d.whatsapp_efectivo)}</strong></div>
+        <div class="resumen-fila total"><span>💵 Total efectivo esperado</span><strong>${formatearMoneda(d.total_efectivo_esperado)}</strong></div>
+        <div class="resumen-fila"><span>💳 Total en otros medios de pago (no está en caja física)</span><strong>${formatearMoneda(d.total_otros_medios)}</strong></div>
+      </div>
+    `;
   }
 
   function mostrarResumenCierre(datos) {
@@ -2925,11 +2975,18 @@
     const deptoObjetivo = codigoDeptoForzado ? visibles.find(d => d.codigo === codigoDeptoForzado) : null;
 
     const tabsEl = document.getElementById('filtroDeptoInventarioTabs');
-    tabsEl.innerHTML = visibles.map((d) =>
-      `<button class="chip-filtro ${(deptoObjetivo ? d.id === deptoObjetivo.id : d === visibles[0]) ? 'activo' : ''}" data-filtro-depto-inv="${d.id}" onclick="cambiarDeptoInventario('${d.id}', this)">${escaparHtml(d.nombre)}</button>`
-    ).join('');
-
-    inventarioDeptoActivo = deptoObjetivo ? deptoObjetivo.id : (visibles[0] ? visibles[0].id : null);
+    if (deptoObjetivo) {
+      // Accedido desde el menú de un departamento específico: se bloquea a ese
+      // departamento, sin poder ver ni cambiar a los otros.
+      tabsEl.innerHTML = '';
+      inventarioDeptoActivo = deptoObjetivo.id;
+    } else {
+      // Accedido desde "Inventario general" en Reportes financieros: los 3 con pestañas (solo admin llega aquí)
+      tabsEl.innerHTML = visibles.map((d, i) =>
+        `<button class="chip-filtro ${i === 0 ? 'activo' : ''}" data-filtro-depto-inv="${d.id}" onclick="cambiarDeptoInventario('${d.id}', this)">${escaparHtml(d.nombre)}</button>`
+      ).join('');
+      inventarioDeptoActivo = visibles[0] ? visibles[0].id : null;
+    }
   }
 
   function actualizarVisibilidadSincronizarCrm() {
@@ -3458,11 +3515,19 @@
     const deptoObjetivo = codigoDeptoForzado ? centrosVisibles.find(c => c.codigo === codigoDeptoForzado) : null;
 
     const filtroEl = document.getElementById('filtroDeptoHistorial');
-    filtroEl.innerHTML = centrosVisibles.map((c) =>
-      `<button class="chip-filtro ${(deptoObjetivo ? c.id === deptoObjetivo.id : c === centrosVisibles[0]) ? 'activo' : ''}" data-filtro-depto-hist="${c.id}" onclick="cambiarFiltroDeptoHistorial('${c.id}', this)">${escaparHtml(c.nombre)}</button>`
-    ).join('');
+    if (deptoObjetivo) {
+      // Accedido desde el menú de un departamento específico: se bloquea a ese
+      // departamento únicamente, sin poder cambiar a ver los otros.
+      filtroEl.innerHTML = '';
+      filtroDeptoHistorialActual = deptoObjetivo.id;
+    } else {
+      // Accedido desde "Consolidado de ventas" en Reportes financieros: se ven los 3 con pestañas
+      filtroEl.innerHTML = centrosVisibles.map((c, i) =>
+        `<button class="chip-filtro ${i === 0 ? 'activo' : ''}" data-filtro-depto-hist="${c.id}" onclick="cambiarFiltroDeptoHistorial('${c.id}', this)">${escaparHtml(c.nombre)}</button>`
+      ).join('');
+      filtroDeptoHistorialActual = centrosVisibles[0] ? centrosVisibles[0].id : null;
+    }
 
-    filtroDeptoHistorialActual = deptoObjetivo ? deptoObjetivo.id : (centrosVisibles[0] ? centrosVisibles[0].id : null);
     await cargarHistorialVentas();
   }
 
@@ -3825,12 +3890,24 @@
     document.getElementById('badgeRolSolicitudes').textContent = etiquetaRol(rolActual || '');
 
     // Cajero ve las solicitudes pendientes para aprobar (sin formulario de crear)
-    // Taller puede crear solicitudes y ver las suyas
+    // Taller puede crear solicitudes, ver las suyas, y pagar las que ya se aprobaron
+    const panelPagos = document.getElementById('panelPagosSolicitudes');
+    const tituloPendientes = document.getElementById('tituloPanelSolicitudesPendientes');
     if (rolActual === 'cajero') {
       document.getElementById('panelCrearSolicitud').style.display = 'none';
+      panelPagos.style.display = 'none';
+      tituloPendientes.textContent = 'Compras pendientes de aprobar';
     } else {
       document.getElementById('panelCrearSolicitud').style.display = '';
       await cargarCatalogoSolicitudes();
+      if (rolActual === 'taller') {
+        panelPagos.style.display = '';
+        tituloPendientes.textContent = 'Mis solicitudes (esperando aprobación de la Tienda)';
+        await cargarPagosPendientesPropios('listaPagosPendientesSolicitudes');
+      } else {
+        panelPagos.style.display = 'none';
+        tituloPendientes.textContent = 'Compras pendientes de aprobar';
+      }
     }
     await cargarSolicitudesPendientes();
   }
@@ -4502,7 +4579,8 @@
     }
     await cargarVentasInternas();
     if (typeof cargarPagosPendientesPropios === 'function') {
-      await cargarPagosPendientesPropios();
+      await cargarPagosPendientesPropios('listaPagosPendientesPropios');
+      await cargarPagosPendientesPropios('listaPagosPendientesSolicitudes');
     }
   }
 
@@ -4731,8 +4809,8 @@
     }).join('');
   }
 
-  async function cargarPagosPendientesPropios() {
-    const contenedor = document.getElementById('listaPagosPendientesPropios');
+  async function cargarPagosPendientesPropios(idContenedor) {
+    const contenedor = document.getElementById(idContenedor || 'listaPagosPendientesPropios');
     if (!contenedor) return;
     contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
 
@@ -6250,10 +6328,12 @@
   }
 
   async function verLiquidacionesEmpleado(empleadoId, nombreEmpleado) {
+    const ventana = window.open('', '_blank');
+    if (ventana) ventana.document.write('<p style="font-family:Arial,sans-serif;padding:20px;">Cargando...</p>');
     const resp = await fetch(`${WORKER_URL}/api/pos/nomina/liquidaciones-empleado?empleado_id=${empleadoId}`, {
       headers: { Authorization: 'Bearer ' + sesionActual.token }
     });
-    if (!resp.ok) { alert('No se pudieron cargar las liquidaciones.'); return; }
+    if (!resp.ok) { if (ventana) ventana.close(); alert('No se pudieron cargar las liquidaciones.'); return; }
 
     const { liquidaciones } = await resp.json();
 
@@ -6296,9 +6376,13 @@
         ${filasHtml}
       </body></html>
     `;
-    const ventana = window.open('', '_blank');
-    ventana.document.write(html);
-    ventana.document.close();
+    if (ventana) {
+      ventana.document.open();
+      ventana.document.write(html);
+      ventana.document.close();
+    } else {
+      window.open('', '_blank').document.write(html);
+    }
   }
 
   // ============================================================
@@ -6514,10 +6598,12 @@
   }
 
   async function verRetirosPropietariaEmpleado(empleadoId, nombreEmpleado) {
+    const ventanaRetiros = window.open('', '_blank');
+    if (ventanaRetiros) ventanaRetiros.document.write('<p style="font-family:Arial,sans-serif;padding:20px;">Cargando...</p>');
     const resp = await fetch(`${WORKER_URL}/api/pos/nomina/retiros-propietario-empleado?empleado_id=${empleadoId}`, {
       headers: { Authorization: 'Bearer ' + sesionActual.token }
     });
-    if (!resp.ok) { alert('No se pudieron cargar los retiros.'); return; }
+    if (!resp.ok) { if (ventanaRetiros) ventanaRetiros.close(); alert('No se pudieron cargar los retiros.'); return; }
 
     const { retiros } = await resp.json();
     let filas = '<p style="opacity:0.6;">Sin retiros registrados todavía.</p>';
@@ -6553,9 +6639,13 @@
       </head><body><h1>Historial de retiros — ${escaparHtml(nombreEmpleado)}</h1>${filas}
       <p style="font-size:11px;color:#888;margin-top:20px;">Esta información es solo de referencia (retiros + cotización como independiente). No es nómina formal.</p>
       </body></html>`;
-    const ventana = window.open('', '_blank');
-    ventana.document.write(html);
-    ventana.document.close();
+    if (ventanaRetiros) {
+      ventanaRetiros.document.open();
+      ventanaRetiros.document.write(html);
+      ventanaRetiros.document.close();
+    } else {
+      window.open('', '_blank').document.write(html);
+    }
   }
 
   // ============================================================
@@ -6667,12 +6757,14 @@
   }
 
   async function verDocumentoRh(documentoId) {
+    const ventanaDoc = window.open('', '_blank');
     const resp = await fetch(`${WORKER_URL}/api/pos/rh/documentos/url?documento_id=${documentoId}`, {
       headers: { Authorization: 'Bearer ' + sesionActual.token }
     });
-    if (!resp.ok) { alert('No se pudo generar el enlace del documento.'); return; }
+    if (!resp.ok) { if (ventanaDoc) ventanaDoc.close(); alert('No se pudo generar el enlace del documento.'); return; }
     const { url } = await resp.json();
-    window.open(url, '_blank');
+    if (ventanaDoc) ventanaDoc.location.href = url;
+    else window.open(url, '_blank');
   }
 
   async function eliminarDocumentoRh(documentoId, empleadoId) {
@@ -7721,10 +7813,12 @@
   let liquidacionRetiroCache = null;
 
   async function verLiquidacionRetiro(liquidacionRetiroId) {
+    const ventanaRetiro = window.open('', '_blank');
+    if (ventanaRetiro) ventanaRetiro.document.write('<p style="font-family:Arial,sans-serif;padding:20px;">Cargando...</p>');
     const resp = await fetch(`${WORKER_URL}/api/pos/nomina/liquidacion-retiro?liquidacion_retiro_id=${liquidacionRetiroId}`, {
       headers: { Authorization: 'Bearer ' + sesionActual.token }
     });
-    if (!resp.ok) { alert('No se pudo cargar la liquidación de retiro.'); return; }
+    if (!resp.ok) { if (ventanaRetiro) ventanaRetiro.close(); alert('No se pudo cargar la liquidación de retiro.'); return; }
 
     const { liquidacion: l, empleador } = await resp.json();
     liquidacionRetiroCache = { l, empleador };
@@ -7781,9 +7875,13 @@
         </div>
       </body></html>
     `;
-    const ventana = window.open('', '_blank');
-    ventana.document.write(html);
-    ventana.document.close();
+    if (ventanaRetiro) {
+      ventanaRetiro.document.open();
+      ventanaRetiro.document.write(html);
+      ventanaRetiro.document.close();
+    } else {
+      window.open('', '_blank').document.write(html);
+    }
 
     exportarLiquidacionRetiroExcel(l, emp, empleador);
   }
@@ -7995,10 +8093,12 @@
   // DESPRENDIBLE DE PAGO — vista imprimible con datos del empleador y la liquidación
   // ============================================================
   async function verDesprendible(liquidacionId) {
+    const ventanaDesp = window.open('', '_blank');
+    if (ventanaDesp) ventanaDesp.document.write('<p style="font-family:Arial,sans-serif;padding:20px;">Cargando...</p>');
     const resp = await fetch(`${WORKER_URL}/api/pos/nomina/desprendible?liquidacion_id=${liquidacionId}`, {
       headers: { Authorization: 'Bearer ' + sesionActual.token }
     });
-    if (!resp.ok) { alert('No se pudo cargar el desprendible.'); return; }
+    if (!resp.ok) { if (ventanaDesp) ventanaDesp.close(); alert('No se pudo cargar el desprendible.'); return; }
 
     const { liquidacion: l, empleador } = await resp.json();
     const emp = l.empleados || {};
@@ -8081,9 +8181,13 @@
       </body></html>
     `;
 
-    const ventana = window.open('', '_blank');
-    ventana.document.write(html);
-    ventana.document.close();
+    if (ventanaDesp) {
+      ventanaDesp.document.open();
+      ventanaDesp.document.write(html);
+      ventanaDesp.document.close();
+    } else {
+      window.open('', '_blank').document.write(html);
+    }
   }
 
   // ============================================================
