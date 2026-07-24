@@ -724,7 +724,6 @@
         <div class="barra-busqueda" style="position:relative;margin-top:0;">
           <input type="text" id="inputBuscarProducto" placeholder="🔍 Busca un producto o insumo por nombre o SKU..." oninput="renderizarCatalogo()" onblur="setTimeout(() => { document.getElementById('listaCatalogo').style.display = 'none'; }, 200)" onfocus="renderizarCatalogo()" autocomplete="off">
           <button type="button" class="btn-mini editar" style="max-width:44px;" onclick="abrirEscanerCodigoBarras('inputBuscarProducto', buscarYAgregarPorCodigoBarras)" title="Escanear código de barras">📷</button>
-          <div id="listaCatalogo" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1.5px solid var(--rosa-medio);border-radius:9px;margin-top:4px;max-height:340px;overflow-y:auto;z-index:50;box-shadow:var(--sombra);"></div>
         </div>
       </div>
       <div class="filtro-tipo" style="margin-bottom:0;padding-top:2px;">
@@ -1766,6 +1765,11 @@
   </div>
 </div>
 
+<!-- Lista desplegable de "Buscar producto" — vive fuera de cualquier panel con
+     scroll propio, y se posiciona con JS, para que siempre se vea completa por
+     encima de todo, sin necesidad de desplazar la barra lateral del panel. -->
+<div id="listaCatalogo" style="display:none;position:fixed;background:white;border:1.5px solid var(--rosa-medio);border-radius:9px;max-height:min(420px, 60vh);overflow-y:auto;z-index:500;box-shadow:var(--sombra);"></div>
+
 <!-- ===== MODAL: ESCÁNER DE CÓDIGO DE BARRAS ===== -->
 <div id="modalEscanerCodigoBarras" class="oculto" style="position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:500;display:none;align-items:center;justify-content:center;">
   <div style="background:white;border-radius:14px;padding:20px;max-width:420px;width:90%;">
@@ -2478,13 +2482,21 @@
 
   function renderizarCatalogo() {
     const contenedor = document.getElementById('listaCatalogo');
-    const textoBusqueda = document.getElementById('inputBuscarProducto').value.trim().toLowerCase();
+    const inputBusqueda = document.getElementById('inputBuscarProducto');
+    const textoBusqueda = inputBusqueda.value.trim().toLowerCase();
 
     if (!textoBusqueda) {
       contenedor.style.display = 'none';
       contenedor.innerHTML = '';
       return;
     }
+
+    // Posicionar justo debajo del campo de búsqueda, sin importar dónde esté
+    // en la página (así nunca queda "atrapada" dentro del scroll de un panel).
+    const rect = inputBusqueda.getBoundingClientRect();
+    contenedor.style.top = (rect.bottom + 4) + 'px';
+    contenedor.style.left = rect.left + 'px';
+    contenedor.style.width = rect.width + 'px';
 
     let items = catalogoCompleto;
     if (filtroTipoActual !== 'todos') {
