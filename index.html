@@ -723,7 +723,7 @@
       <label for="clienteIdentificacion">N° de identificación <span style="font-size:10px;opacity:0.6;">(busca cliente automáticamente)</span></label>
       <input type="text" id="clienteIdentificacion" placeholder="CC, CE, NIT..." oninput="autocompletarCliente('identificacion')">
       <label for="clienteNombre">Nombre completo</label>
-      <input type="text" id="clienteNombre" placeholder="Nombre completo">
+      <input type="text" id="clienteNombre" placeholder="Nombre completo" style="text-transform:uppercase;" oninput="this.value = this.value.toUpperCase()">
       <label for="clienteTelefono">Teléfono <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
       <input type="tel" id="clienteTelefono" placeholder="300 000 0000">
       <label for="clienteCorreo">Correo <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
@@ -963,7 +963,7 @@
       <label for="pedidoIdentificacionCliente">N° de identificación del cliente <span style="font-size:10px;opacity:0.6;">(busca autom.)</span></label>
       <input type="text" id="pedidoIdentificacionCliente" placeholder="CC, CE, NIT..." oninput="autocompletarClientePedido()">
       <label for="pedidoNombreCliente">Nombre completo</label>
-      <input type="text" id="pedidoNombreCliente" placeholder="Nombre del cliente">
+      <input type="text" id="pedidoNombreCliente" placeholder="Nombre del cliente" style="text-transform:uppercase;" oninput="this.value = this.value.toUpperCase()">
       <label for="pedidoTelefonoCliente">Teléfono</label>
       <input type="tel" id="pedidoTelefonoCliente" placeholder="300 000 0000">
       <div id="mensajeAutocompletadoPedido" style="font-size:12px;color:var(--verde-exito);margin-top:4px;display:none;">✅ Cliente encontrado</div>
@@ -2259,13 +2259,16 @@
     const contenedor = document.getElementById('listaCatalogo');
     const textoBusqueda = document.getElementById('inputBuscarProducto').value.trim().toLowerCase();
 
+    if (!textoBusqueda) {
+      contenedor.innerHTML = '<div class="cargando">Escribe el nombre del producto para buscarlo...</div>';
+      return;
+    }
+
     let items = catalogoCompleto;
     if (filtroTipoActual !== 'todos') {
       items = items.filter(i => i.tipo === filtroTipoActual);
     }
-    if (textoBusqueda) {
-      items = items.filter(i => i.nombre.toLowerCase().includes(textoBusqueda));
-    }
+    items = items.filter(i => i.nombre.toLowerCase().includes(textoBusqueda));
 
     if (items.length === 0) {
       contenedor.innerHTML = '<div class="cargando">' + (catalogoCompleto.length === 0 ? 'No hay productos cargados en el inventario todavía.' : 'No se encontraron resultados.') + '</div>';
@@ -2352,9 +2355,9 @@
       contenedor.innerHTML = '<div class="carrito-vacio">Aún no has agregado productos</div>';
     } else {
       contenedor.innerHTML = carrito.map(linea => `
-        <div class="fila-carrito">
-          <div class="fila-carrito-info">
-            <div class="fila-carrito-nombre">${escaparHtml(linea.nombre)}</div>
+        <div class="fila-carrito" style="flex-wrap:wrap;">
+          <div class="fila-carrito-info" style="flex-basis:100%;min-width:100%;margin-bottom:6px;">
+            <div class="fila-carrito-nombre" style="white-space:normal;">${escaparHtml(linea.nombre)}</div>
             <div class="fila-carrito-precio">${formatearMoneda(linea.precio)} c/u</div>
           </div>
           <div class="control-cantidad">
@@ -2399,6 +2402,22 @@
       const recibido = Number(valor) || 0;
       filasPago[indice].monto = Math.min(recibido, faltantePorCubrir);
       filasPago[indice].cambio = Math.max(recibido - faltantePorCubrir, 0);
+
+      // No reconstruimos todo el listado (eso le quitaría el foco al campo mientras
+      // escribe); solo actualizamos el textito de cambio y el resumen del total.
+      const cajaCambio = document.getElementById(`cajaCambio-${indice}`);
+      if (cajaCambio) {
+        if (filasPago[indice].recibido) {
+          cajaCambio.style.display = 'block';
+          cajaCambio.style.background = filasPago[indice].cambio > 0 ? '#eaf6ef' : '#fafafa';
+          cajaCambio.style.color = filasPago[indice].cambio > 0 ? 'var(--verde-exito)' : 'var(--texto-oscuro)';
+          cajaCambio.innerHTML = `Cobrado: ${formatearMoneda(filasPago[indice].monto)} ${filasPago[indice].cambio > 0 ? `· 💵 Cambio a devolver: <strong>${formatearMoneda(filasPago[indice].cambio)}</strong>` : ''}`;
+        } else {
+          cajaCambio.style.display = 'none';
+        }
+      }
+      actualizarResumenPagos();
+      return;
     }
 
     renderizarPagos();
@@ -2422,11 +2441,9 @@
           }
           ${filasPago.length > 1 ? `<button class="btn-quitar-pago" onclick="quitarFilaPago(${indice})">✕</button>` : ''}
         </div>
-        ${pago.metodo_pago === 'efectivo' && pago.recibido ? `
-          <div style="font-size:12px;margin-top:4px;padding:6px 10px;border-radius:6px;background:${pago.cambio > 0 ? '#eaf6ef' : '#fafafa'};color:${pago.cambio > 0 ? 'var(--verde-exito)' : 'var(--texto-oscuro)'};">
-            Cobrado: ${formatearMoneda(pago.monto)} ${pago.cambio > 0 ? `· 💵 Cambio a devolver: <strong>${formatearMoneda(pago.cambio)}</strong>` : ''}
-          </div>
-        ` : ''}
+        <div id="cajaCambio-${indice}" style="font-size:12px;margin-top:4px;padding:6px 10px;border-radius:6px;display:${pago.metodo_pago === 'efectivo' && pago.recibido ? 'block' : 'none'};background:${pago.cambio > 0 ? '#eaf6ef' : '#fafafa'};color:${pago.cambio > 0 ? 'var(--verde-exito)' : 'var(--texto-oscuro)'};">
+          Cobrado: ${formatearMoneda(pago.monto)} ${pago.cambio > 0 ? `· 💵 Cambio a devolver: <strong>${formatearMoneda(pago.cambio)}</strong>` : ''}
+        </div>
       </div>
     `).join('');
     actualizarResumenPagos();
@@ -2583,7 +2600,8 @@
         lineas: carrito.map(l => ({ nombre: l.nombre, cantidad: l.cantidad, precio: l.precio })),
         total,
         pagos: filasPago.map(p => ({ metodo_pago: p.metodo_pago, monto: Number(p.monto) })),
-        cliente: { nombre: clienteNombre, telefono: clienteTelefono, identificacion: clienteIdentificacion }
+        cliente: { nombre: clienteNombre, telefono: clienteTelefono, identificacion: clienteIdentificacion },
+        cajero: miPropiaIdentidad.nombre || sesionActual.email
       };
       document.getElementById('btnImprimirRecibo').disabled = false;
       document.getElementById('btnWhatsappRecibo').disabled = false;
@@ -2661,13 +2679,18 @@
       <body>
         <div class="encabezado-recibo">
           <h1>Lana Rosa Crochet</h1>
-          <div style="font-size:11.5px;opacity:0.75;">Sara Loaiza Muñoz — Vendedora</div>
-          <div style="font-size:11px;opacity:0.6;margin-top:4px;">Manizales / Villamaría, Colombia</div>
+          <div style="font-size:11.5px;opacity:0.8;">Sara Loaiza Muñoz — NIT 1.055.359.694-4</div>
+          <div style="font-size:11px;opacity:0.65;margin-top:2px;">Calle 10 No. 5-37, Villamaría, Caldas</div>
+          <div style="font-size:11px;opacity:0.65;">Teléfono: 3205072801</div>
         </div>
 
         <div style="font-size:12px;">
           <strong>Recibo de venta N.° ${escaparHtml(String(v.consecutivo))}</strong><br>
           Fecha: ${fechaTexto}
+        </div>
+
+        <div style="margin-top:8px;font-size:12px;">
+          <strong>Cajero:</strong> ${escaparHtml(v.cajero || '—')}
         </div>
 
         ${v.cliente.nombre ? `
