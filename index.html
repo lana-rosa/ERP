@@ -995,6 +995,7 @@
   <div class="filtro-tipo" style="margin-bottom:20px;">
     <button class="chip-filtro activo" data-subtab-btn="pedidosCanal" onclick="mostrarSubTabGrupo('pedidosCanal', 'subtabCanalActivos', this)">📋 Pedidos activos</button>
     <button class="chip-filtro" data-subtab-btn="pedidosCanal" onclick="mostrarSubTabGrupo('pedidosCanal', 'subtabCanalNuevo', this)">+ Nuevo pedido</button>
+    <button class="chip-filtro" data-subtab-btn="pedidosCanal" onclick="mostrarSubTabGrupo('pedidosCanal', 'subtabCanalEnvios', this); cargarEnvios();">📮 Envíos</button>
   </div>
 
   <div id="subtabCanalNuevo" data-subtab-grupo="pedidosCanal" class="oculto">
@@ -1014,6 +1015,12 @@
       <input type="text" id="pedidoNombreCliente" placeholder="Nombre del cliente" style="text-transform:uppercase;" oninput="this.value = this.value.toUpperCase()">
       <label for="pedidoTelefonoCliente">Teléfono</label>
       <input type="tel" id="pedidoTelefonoCliente" placeholder="300 000 0000">
+      <label for="pedidoCorreoCliente">Correo electrónico <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <input type="email" id="pedidoCorreoCliente" placeholder="correo@gmail.com">
+      <label for="pedidoDireccionCliente">Dirección de envío <span style="font-size:10px;opacity:0.6;">(si el pedido se despacha)</span></label>
+      <input type="text" id="pedidoDireccionCliente" placeholder="Calle, carrera, número, barrio...">
+      <label for="pedidoMunicipioCliente">Municipio</label>
+      <input type="text" id="pedidoMunicipioCliente" placeholder="Ej: Manizales, Villamaría...">
       <div id="mensajeAutocompletadoPedido" style="font-size:12px;color:var(--verde-exito);margin-top:4px;display:none;">✅ Cliente encontrado</div>
 
       <label for="pedidoBuscarProducto">Buscar producto en el inventario de Tienda <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
@@ -1049,6 +1056,18 @@
         <button class="chip-filtro" data-filtro-pedido="listo_despacho" onclick="cambiarFiltroPedidos('listo_despacho', this)">Listo despacho</button>
       </div>
       <div id="listaPedidosCanal"><div class="cargando">Cargando pedidos...</div></div>
+    </div>
+  </div>
+
+  <div id="subtabCanalEnvios" data-subtab-grupo="pedidosCanal" class="oculto">
+    <div class="panel" style="max-width:none;">
+      <h2>Pedidos listos para generar guía</h2>
+      <div class="subtitulo">Pedidos en estado "Listo despacho" que todavía no tienen guía de envío.</div>
+      <div id="listaPedidosParaEnvio"><div class="cargando">Cargando...</div></div>
+    </div>
+    <div class="panel" style="max-width:none;max-height:none;margin-top:20px;">
+      <h2>Guías de envío</h2>
+      <div id="listaEnvios"><div class="cargando">Cargando...</div></div>
     </div>
   </div>
 </div>
@@ -5349,6 +5368,9 @@
     document.getElementById('pedidoIdentificacionCliente').value = '';
     document.getElementById('pedidoNombreCliente').value = '';
     document.getElementById('pedidoTelefonoCliente').value = '';
+    document.getElementById('pedidoCorreoCliente').value = '';
+    document.getElementById('pedidoDireccionCliente').value = '';
+    document.getElementById('pedidoMunicipioCliente').value = '';
     document.getElementById('mensajeAutocompletadoPedido').style.display = 'none';
     document.getElementById('pedidoBuscarProducto').value = '';
     document.getElementById('sugerenciasPedidoProducto').style.display = 'none';
@@ -5371,7 +5393,7 @@
 
       const { data, error } = await supabaseClient
         .from('terceros')
-        .select('nombre_completo, telefono')
+        .select('nombre_completo, telefono, direccion, ciudad, email')
         .eq('numero_documento', identificacion)
         .limit(1)
         .single();
@@ -5380,6 +5402,9 @@
 
       document.getElementById('pedidoNombreCliente').value = data.nombre_completo || '';
       document.getElementById('pedidoTelefonoCliente').value = data.telefono || '';
+      document.getElementById('pedidoDireccionCliente').value = data.direccion || '';
+      document.getElementById('pedidoMunicipioCliente').value = data.ciudad || '';
+      document.getElementById('pedidoCorreoCliente').value = data.email || '';
       msgEl.style.display = 'block';
     }, 400);
   }
@@ -5505,6 +5530,17 @@
         });
         const clienteDatos = await clienteResp.json();
         if (clienteResp.ok) terceroId = clienteDatos.tercero_id;
+
+        const direccionCliente = document.getElementById('pedidoDireccionCliente').value.trim();
+        const municipioCliente = document.getElementById('pedidoMunicipioCliente').value.trim();
+        const correoCliente = document.getElementById('pedidoCorreoCliente').value.trim();
+        if (terceroId && (direccionCliente || municipioCliente || correoCliente)) {
+          await fetch(WORKER_URL + '/api/pos/clientes/datos-envio', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+            body: JSON.stringify({ tercero_id: terceroId, direccion: direccionCliente || null, ciudad: municipioCliente || null, email: correoCliente || null })
+          });
+        }
       }
 
       const resp = await fetch(WORKER_URL + '/api/pos/pedidos-canal', {
@@ -5543,6 +5579,118 @@
     document.querySelectorAll('[data-filtro-pedido]').forEach(c => c.classList.remove('activo'));
     botonEl.classList.add('activo');
     cargarPedidosCanal();
+  }
+
+  // ============================================================
+  // ENVÍOS
+  // ============================================================
+  const etiquetasEstadoEnvio = { pendiente: '⏳ Pendiente', enviado: '🚚 Enviado', entregado: '✅ Entregado', devuelto: '↩️ Devuelto' };
+
+  async function cargarEnvios() {
+    await Promise.all([cargarPedidosParaEnvio(), cargarListaEnvios()]);
+  }
+
+  async function cargarPedidosParaEnvio() {
+    const contenedor = document.getElementById('listaPedidosParaEnvio');
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+
+    const { data: pedidos, error } = await supabaseClient
+      .from('pedidos_canal_venta')
+      .select('id, consecutivo, descripcion_producto, cantidad, total_pedido, tercero_id')
+      .eq('estado', 'listo_despacho')
+      .order('created_at', { ascending: false });
+
+    if (error) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+
+    const { data: enviosExistentes } = await supabaseClient.from('envios').select('pedido_canal_id');
+    const idsConEnvio = new Set((enviosExistentes || []).map(e => e.pedido_canal_id));
+    const pendientes = (pedidos || []).filter(p => !idsConEnvio.has(p.id));
+
+    if (pendientes.length === 0) {
+      contenedor.innerHTML = '<div class="cargando">No hay pedidos pendientes de generar guía.</div>';
+      return;
+    }
+
+    contenedor.innerHTML = pendientes.map(p => `
+      <div class="fila-inventario-editable">
+        <div class="fila-inventario-titulo">
+          <span class="fila-inventario-nombre">${escaparHtml(p.consecutivo)} — ${p.cantidad}x ${escaparHtml(p.descripcion_producto)}</span>
+        </div>
+        <button class="btn-mini guardar" style="margin-top:8px;" onclick="generarGuiaEnvio('${p.id}')">📮 Generar guía de envío</button>
+      </div>
+    `).join('');
+  }
+
+  async function generarGuiaEnvio(pedidoCanalId) {
+    const resp = await fetch(WORKER_URL + '/api/pos/envios', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ pedido_canal_id: pedidoCanalId })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { alert('No se pudo generar la guía: ' + (datos.error || 'Error desconocido')); return; }
+    alert('✅ Guía de envío generada.');
+    await cargarEnvios();
+  }
+
+  async function cargarListaEnvios() {
+    const contenedor = document.getElementById('listaEnvios');
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/envios', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+
+    const { envios } = await resp.json();
+    if (!envios || envios.length === 0) { contenedor.innerHTML = '<div class="cargando">Todavía no hay guías generadas.</div>'; return; }
+
+    contenedor.innerHTML = envios.map(e => `
+      <div class="fila-historial" style="margin-bottom:10px;">
+        <div class="fila-historial-encabezado">
+          <span class="fila-historial-consecutivo">${escaparHtml(e.consecutivo)}</span>
+          <span style="font-size:11px;font-weight:700;">${etiquetasEstadoEnvio[e.estado]}</span>
+        </div>
+        <div class="fila-historial-fecha">
+          ${e.pedidos_canal_venta ? escaparHtml(e.pedidos_canal_venta.consecutivo) + ' — ' + e.pedidos_canal_venta.cantidad + 'x ' + escaparHtml(e.pedidos_canal_venta.descripcion_producto) : ''}
+        </div>
+        <div style="font-size:12.5px;margin-top:6px;">
+          👤 ${escaparHtml(e.destinatario_nombre || 'Sin nombre')}<br>
+          📍 ${escaparHtml(e.direccion_envio || 'Sin dirección')}${e.municipio ? ' — ' + escaparHtml(e.municipio) : ''}<br>
+          📞 ${escaparHtml(e.telefono_contacto || '—')}${e.correo_electronico ? ' · ' + escaparHtml(e.correo_electronico) : ''}
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center;">
+          <input type="text" placeholder="Transportadora" value="${escaparHtml(e.transportadora || '')}" id="transportadora-${e.id}" style="flex:1;min-width:120px;padding:8px 10px;font-size:12.5px;">
+          <input type="text" placeholder="N° de guía" value="${escaparHtml(e.numero_guia || '')}" id="guia-${e.id}" style="flex:1;min-width:120px;padding:8px 10px;font-size:12.5px;">
+          <button class="btn-mini editar" onclick="guardarDatosGuia('${e.id}')">Guardar</button>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+          ${e.estado === 'pendiente' ? `<button class="btn-mini guardar" onclick="cambiarEstadoEnvio('${e.id}', 'enviado')">🚚 Marcar enviado</button>` : ''}
+          ${e.estado === 'enviado' ? `<button class="btn-mini guardar" onclick="cambiarEstadoEnvio('${e.id}', 'entregado')">✅ Marcar entregado</button>` : ''}
+          ${(e.estado === 'pendiente' || e.estado === 'enviado') ? `<button class="btn-mini desactivar" onclick="cambiarEstadoEnvio('${e.id}', 'devuelto')">↩️ Marcar devuelto</button>` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function guardarDatosGuia(envioId) {
+    const transportadora = document.getElementById(`transportadora-${envioId}`).value.trim();
+    const numeroGuia = document.getElementById(`guia-${envioId}`).value.trim();
+    const resp = await fetch(WORKER_URL + '/api/pos/envios/actualizar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ envio_id: envioId, transportadora, numero_guia: numeroGuia })
+    });
+    if (!resp.ok) { alert('No se pudo guardar.'); return; }
+    alert('✅ Datos de la guía guardados.');
+  }
+
+  async function cambiarEstadoEnvio(envioId, estado) {
+    const resp = await fetch(WORKER_URL + '/api/pos/envios/actualizar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ envio_id: envioId, estado })
+    });
+    if (!resp.ok) { alert('No se pudo actualizar.'); return; }
+    await cargarListaEnvios();
   }
 
   async function cargarPedidosCanal() {
