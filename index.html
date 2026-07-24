@@ -2250,7 +2250,16 @@
       mostrarPantallaAbrirTurno();
       return;
     }
+
+    // Si ya estás en esta pantalla con productos en el carrito (ej. volviste a
+    // hacer clic en "Registrar venta" por costumbre), no se pierde lo que llevabas.
+    const yaEstabaAqui = !document.getElementById('pantallaVentas').classList.contains('oculto');
     mostrarPantalla('pantallaVentas');
+    if (yaEstabaAqui && carrito.length > 0) {
+      renderizarVentasEnEspera();
+      return;
+    }
+
     carrito = [];
     filasPago = [{ metodo_pago: 'efectivo', monto: '', referencia: '' }];
     contadorFilaPago = 1;
@@ -2374,13 +2383,11 @@
     }
     ocultarMensaje('mensajeVenta');
 
-    // Cerrar la lista de búsqueda y limpiar el campo, mostrando una confirmación breve
+    // Cerrar la lista de búsqueda y limpiar el campo — el carrito de la derecha
+    // (que se queda visible hasta que termines la venta) es la confirmación.
     document.getElementById('inputBuscarProducto').value = '';
     document.getElementById('listaCatalogo').style.display = 'none';
     document.getElementById('listaCatalogo').innerHTML = '';
-    const confirmacion = document.getElementById('ultimoProductoAgregado');
-    confirmacion.innerHTML = `<div style="font-size:12.5px;padding:8px 10px;background:var(--rosa-suave);border-radius:8px;color:var(--rosa-principal);">✅ Agregado: <strong>${escaparHtml(item.nombre)}</strong></div>`;
-    setTimeout(() => { confirmacion.innerHTML = ''; }, 3000);
 
     renderizarCarrito();
   }
