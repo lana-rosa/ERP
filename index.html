@@ -806,14 +806,39 @@
 <div id="pantallaInventario" class="oculto contenido">
   <div class="page-header">
     <h1>Gestionar inventario</h1>
-    <div class="subtitulo">Cada departamento tiene su propio inventario. Solo el Administrador puede agregar o modificar productos.</div>
+    <div class="subtitulo">Cada departamento tiene su propio inventario. Solo la administradora puede editar productos ya existentes.</div>
   </div>
 
   <div class="filtro-tipo" id="filtroDeptoInventarioTabs" style="margin-bottom:16px;"></div>
 
-  <div class="grilla-2">
+  <div class="filtro-tipo" style="margin-bottom:20px;">
+    <button class="chip-filtro activo" data-subtab-btn="invPantalla" onclick="mostrarSubTabGrupo('invPantalla', 'subtabInvActual', this)">📊 Inventario actual</button>
+    <button class="chip-filtro" data-subtab-btn="invPantalla" onclick="mostrarSubTabGrupo('invPantalla', 'subtabInvAgregar', this)">+ Agregar producto o insumo</button>
+  </div>
 
-    <div class="panel">
+  <div id="subtabInvActual" data-subtab-grupo="invPantalla">
+    <div class="panel" style="max-width:none;max-height:none;">
+      <h2>Inventario actual</h2>
+      <div id="contenedorSincronizarCrm" style="margin-bottom:14px;">
+        <button class="btn-secundario" style="margin-top:0;" onclick="sincronizarStockCrm(this)">🔄 Volver a traer stock del CRM</button>
+      </div>
+      <div id="mensajeSincronizarCrm" class="mensaje"></div>
+      <div class="barra-busqueda">
+        <input type="text" id="inputBuscarInventario" placeholder="Buscar por nombre o SKU..." oninput="renderizarTablaInventario()">
+      </div>
+      <div class="filtro-tipo">
+        <button class="chip-filtro activo" data-filtro-inv="todos" onclick="cambiarFiltroInventario('todos', this)">Todos</button>
+        <button class="chip-filtro" data-filtro-inv="producto_terminado" onclick="cambiarFiltroInventario('producto_terminado', this)">Producto tejido</button>
+        <button class="chip-filtro" data-filtro-inv="merceria" onclick="cambiarFiltroInventario('merceria', this)">Mercería</button>
+      </div>
+      <label for="filtroCategoriaInv" style="margin-top:10px;">Categoría</label>
+      <select id="filtroCategoriaInv" onchange="cambiarFiltroCategoriaInvSelect(this.value)" style="max-width:320px;"></select>
+      <div id="listaInventarioGestion" style="margin-top:14px;"><div class="cargando">Cargando inventario...</div></div>
+    </div>
+  </div>
+
+  <div id="subtabInvAgregar" data-subtab-grupo="invPantalla" class="oculto">
+    <div class="panel" style="max-width:520px;">
       <h2>Agregar producto o insumo</h2>
       <label for="invNombre">Nombre</label>
       <input type="text" id="invNombre" placeholder="Ej: Amigurumi conejo personalizado">
@@ -849,25 +874,6 @@
       <button class="btn-principal" id="btnGuardarProducto" onclick="guardarNuevoProducto()">Agregar al inventario</button>
       <div class="mensaje" id="mensajeInventarioForm"></div>
     </div>
-
-    <div class="panel">
-      <h2>Inventario actual</h2>
-      <div id="contenedorSincronizarCrm" style="margin-bottom:14px;">
-        <button class="btn-secundario" style="margin-top:0;" onclick="sincronizarStockCrm(this)">🔄 Volver a traer stock del CRM</button>
-      </div>
-      <div id="mensajeSincronizarCrm" class="mensaje"></div>
-      <div class="barra-busqueda">
-        <input type="text" id="inputBuscarInventario" placeholder="Buscar por nombre o SKU..." oninput="renderizarTablaInventario()">
-      </div>
-      <div class="filtro-tipo">
-        <button class="chip-filtro activo" data-filtro-inv="todos" onclick="cambiarFiltroInventario('todos', this)">Todos</button>
-        <button class="chip-filtro" data-filtro-inv="producto_terminado" onclick="cambiarFiltroInventario('producto_terminado', this)">Producto tejido</button>
-        <button class="chip-filtro" data-filtro-inv="merceria" onclick="cambiarFiltroInventario('merceria', this)">Mercería</button>
-      </div>
-      <div class="filtro-tipo" id="filtroCategoriaInv"></div>
-      <div id="listaInventarioGestion"><div class="cargando">Cargando inventario...</div></div>
-    </div>
-
   </div>
 </div>
 
@@ -3307,6 +3313,7 @@
 
   async function mostrarPantallaInventario(codigoDeptoForzado) {
     mostrarPantalla('pantallaInventario');
+    mostrarSubTabGrupo('invPantalla', 'subtabInvActual', document.querySelector('[data-subtab-btn="invPantalla"]'));
     limpiarFormularioProducto();
     document.getElementById('inputBuscarInventario').value = '';
     await cargarDepartamentosParaInventario(codigoDeptoForzado);
@@ -3460,19 +3467,29 @@
   }
 
   function renderizarFiltroCategoriaInv() {
-    const contenedor = document.getElementById('filtroCategoriaInv');
-    if (!contenedor) return;
-    const todasCategorias = [...categoriasInventarioCache.merceria, ...categoriasInventarioCache.producto_terminado];
-    if (todasCategorias.length === 0) { contenedor.innerHTML = ''; return; }
-    contenedor.innerHTML = `<button class="chip-filtro activo" data-filtro-cat="todas" onclick="cambiarFiltroCategoriaInv('todas', this)">Todas las categorías</button>` +
-      todasCategorias.map(c => `<button class="chip-filtro" data-filtro-cat="${c.id}" onclick="cambiarFiltroCategoriaInv('${c.id}', this)">${escaparHtml(c.nombre)}</button>`).join('');
+    const select = document.getElementById('filtroCategoriaInv');
+    if (!select) return;
+
+    // La lista de categorías depende de qué tipo esté activo (Todos / Producto
+    // tejido / Mercería) — así nunca se mezclan ni se ven iguales entre pestañas.
+    let categorias;
+    if (filtroInventarioActual === 'merceria') categorias = categoriasInventarioCache.merceria;
+    else if (filtroInventarioActual === 'producto_terminado') categorias = categoriasInventarioCache.producto_terminado;
+    else categorias = [...categoriasInventarioCache.merceria, ...categoriasInventarioCache.producto_terminado];
+
+    if (categorias.length === 0) {
+      select.innerHTML = '<option value="todas">Sin categorías todavía</option>';
+      filtroCategoriaInvActual = 'todas';
+      return;
+    }
+
+    select.innerHTML = '<option value="todas">Todas las categorías</option>' +
+      categorias.map(c => `<option value="${c.id}">${escaparHtml(c.nombre)}</option>`).join('');
     filtroCategoriaInvActual = 'todas';
   }
 
-  function cambiarFiltroCategoriaInv(categoriaId, botonEl) {
+  function cambiarFiltroCategoriaInvSelect(categoriaId) {
     filtroCategoriaInvActual = categoriaId;
-    document.querySelectorAll('[data-filtro-cat]').forEach(b => b.classList.remove('activo'));
-    botonEl.classList.add('activo');
     renderizarTablaInventario();
   }
 
@@ -3574,6 +3591,7 @@
     filtroInventarioActual = filtro;
     document.querySelectorAll('[data-filtro-inv]').forEach(c => c.classList.remove('activo'));
     botonEl.classList.add('activo');
+    renderizarFiltroCategoriaInv();
     renderizarTablaInventario();
   }
 
@@ -3623,7 +3641,7 @@
     const tagInactivo = !item.activo ? '<span class="badge-inactivo">Inactivo</span>' : '';
     const skuTexto = item.sku ? `<span style="opacity:0.5;font-size:11px;margin-left:6px;">SKU: ${escaparHtml(item.sku)}</span>` : '';
     const nombreCategoria = item.categoria_id ? (nombreCategoriaMap[item.categoria_id] || '') : '';
-    const estaEditando = itemInventarioEditandoId === item.id;
+    const estaEditando = itemInventarioEditandoId === item.id && rolActual === 'administrador';
 
     if (estaEditando) {
       const categoriasDelTipo = categoriasInventarioCache[item.tipo] || [];
@@ -3678,13 +3696,14 @@
           <span>Mínimo: <strong>${item.stock_minimo} und</strong></span>
         </div>
         <div class="fila-inventario-acciones" style="margin-top:10px;">
-          <button class="btn-mini editar" onclick="activarEdicionProducto('${item.id}')">✏️ Editar</button>
+          ${rolActual === 'administrador' ? `<button class="btn-mini editar" onclick="activarEdicionProducto('${item.id}')">✏️ Editar</button>` : ''}
         </div>
       </div>
     `;
   }
 
   function activarEdicionProducto(itemId) {
+    if (rolActual !== 'administrador') return;
     itemInventarioEditandoId = itemId;
     renderizarTablaInventario();
   }
