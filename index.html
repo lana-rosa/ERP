@@ -1049,6 +1049,8 @@
   <div id="subtabCanalActivos" data-subtab-grupo="pedidosCanal">
     <div class="panel" style="max-width:none;max-height:none;">
       <h2>Pedidos activos</h2>
+      <button class="btn-secundario" style="margin-top:0;margin-bottom:14px;" onclick="sincronizarPedidosCrm(this)">🔄 Cargar pedidos nuevos del CRM</button>
+      <div id="mensajeSincronizarPedidosCrm" class="mensaje"></div>
       <div class="filtro-tipo">
         <button class="chip-filtro activo" data-filtro-pedido="todos" onclick="cambiarFiltroPedidos('todos', this)">Todos</button>
         <button class="chip-filtro" data-filtro-pedido="esperando_pago" onclick="cambiarFiltroPedidos('esperando_pago', this)">Esperando pago</button>
@@ -5361,6 +5363,32 @@
     mostrarSubTabGrupo('pedidosCanal', 'subtabCanalActivos', document.querySelector('[data-subtab-btn="pedidosCanal"]'));
     limpiarFormularioPedidoCanal();
     await cargarPedidosCanal();
+    await sincronizarPedidosCrm(null, true); // silencioso, automático al entrar
+  }
+
+  async function sincronizarPedidosCrm(btn, silencioso) {
+    ocultarMensaje('mensajeSincronizarPedidosCrm');
+    if (btn) { btn.disabled = true; btn.textContent = 'Consultando el CRM...'; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/pedidos-canal/sincronizar-crm', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+
+    if (btn) { btn.disabled = false; btn.textContent = '🔄 Cargar pedidos nuevos del CRM'; }
+
+    const datos = await resp.json();
+    if (!resp.ok) {
+      if (!silencioso) mostrarMensaje('mensajeSincronizarPedidosCrm', datos.error || 'No se pudo sincronizar con el CRM.', 'error');
+      return;
+    }
+
+    if (datos.importados === 0) {
+      if (!silencioso) mostrarMensaje('mensajeSincronizarPedidosCrm', `No hay pedidos nuevos por traer (ya estaban los ${datos.ya_existian} que había en el CRM).`, 'exito');
+    } else {
+      mostrarMensaje('mensajeSincronizarPedidosCrm', `✅ Se importaron ${datos.importados} pedido(s) nuevo(s) desde el CRM.`, 'exito');
+      await cargarPedidosCanal();
+    }
   }
 
   function limpiarFormularioPedidoCanal() {
