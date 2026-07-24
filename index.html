@@ -926,6 +926,12 @@
   </div>
 
   <div class="panel" style="max-height:none;margin-top:20px;">
+    <h2>🧵 Pedidos de Tienda/WhatsApp por elaborar</h2>
+    <div class="subtitulo">Estos llegan automáticamente cuando un pedido (por WhatsApp/redes o del CRM) no tiene el producto disponible en stock.</div>
+    <div id="listaSolicitudesElaboracion"><div class="cargando">Cargando...</div></div>
+  </div>
+
+  <div class="panel" style="max-height:none;margin-top:20px;">
     <h2>Historial de mis consumos</h2>
     <div class="subtitulo">Todos los pedidos tejidos hasta ahora, con los insumos que se consumieron en cada uno.</div>
     <div id="listaHistorialConsumosTaller"><div class="cargando">Cargando...</div></div>
@@ -5847,6 +5853,56 @@
     await cargarPedidosCrmActivos();
     await cargarConsumosEnCurso();
     await cargarHistorialConsumosTaller();
+    await cargarSolicitudesElaboracion();
+  }
+
+  const etiquetasEstadoElaboracion = { pendiente: '⏳ Pendiente', en_proceso: '🧶 En proceso', terminado: '✅ Terminado' };
+  const etiquetasCanalPedido = { whatsapp: 'WhatsApp', instagram: 'Instagram', facebook: 'Facebook', tienda_virtual: 'Tienda virtual' };
+
+  async function cargarSolicitudesElaboracion() {
+    const contenedor = document.getElementById('listaSolicitudesElaboracion');
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/elaboracion/solicitudes', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+
+    const { solicitudes } = await resp.json();
+    const pendientes = (solicitudes || []).filter(s => s.estado !== 'terminado');
+
+    if (pendientes.length === 0) {
+      contenedor.innerHTML = '<div class="cargando">No hay pedidos pendientes de elaborar en este momento.</div>';
+      return;
+    }
+
+    contenedor.innerHTML = pendientes.map(s => {
+      const pedido = s.pedidos_canal_venta || {};
+      return `
+        <div class="fila-historial" style="margin-bottom:10px;">
+          <div class="fila-historial-encabezado">
+            <span class="fila-historial-consecutivo">${escaparHtml(pedido.consecutivo || '—')}</span>
+            <span style="font-size:11px;font-weight:700;">${etiquetasEstadoElaboracion[s.estado]}</span>
+          </div>
+          <div class="fila-historial-fecha">${etiquetasCanalPedido[pedido.canal] || pedido.canal || ''} — ${s.cantidad || 1}x ${escaparHtml(s.descripcion || '')}</div>
+          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+            ${s.estado === 'pendiente' ? `<button class="btn-mini editar" onclick="actualizarEstadoElaboracion('${s.id}', 'en_proceso')">🧶 Empezar a tejer</button>` : ''}
+            ${s.estado === 'en_proceso' ? `<button class="btn-mini guardar" onclick="actualizarEstadoElaboracion('${s.id}', 'terminado')">✅ Marcar terminado</button>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function actualizarEstadoElaboracion(solicitudId, estado) {
+    const resp = await fetch(WORKER_URL + '/api/pos/elaboracion/actualizar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ solicitud_id: solicitudId, estado })
+    });
+    if (!resp.ok) { alert('No se pudo actualizar.'); return; }
+    if (estado === 'terminado') {
+      alert('✅ Marcado como terminado. El pedido ya queda disponible en stock, y si el saldo estaba pagado, pasa directo a "Listo despacho".');
+    }
+    await cargarSolicitudesElaboracion();
   }
 
   async function cargarHistorialConsumosTaller() {
