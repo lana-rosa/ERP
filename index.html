@@ -1040,9 +1040,12 @@
 <div id="pantallaHistorial" class="oculto contenido">
   <div class="page-header">
     <h1>Historial de ventas</h1>
-    <div class="subtitulo">Últimas 50 ventas de cada departamento, más reciente primero.</div>
+    <div class="subtitulo">Se muestran las últimas 100 ventas, más reciente primero. Si buscas por cliente o N° de recibo, la búsqueda revisa todo el historial del departamento, no solo lo más reciente.</div>
   </div>
   <div class="filtro-tipo" id="filtroDeptoHistorial" style="margin-bottom:16px;"></div>
+  <div class="barra-busqueda" style="margin-bottom:16px;">
+    <input type="text" id="inputBuscarHistorialVentas" placeholder="🔍 Buscar por nombre del cliente, cédula, teléfono o N° de recibo..." oninput="debounceBusquedaHistorial()">
+  </div>
   <div class="panel" style="max-height:none;">
     <div id="listaHistorialVentas"><div class="cargando">Cargando historial...</div></div>
   </div>
@@ -2963,6 +2966,40 @@
     `;
   }
 
+  function construirReciboDesdeHistorial(ventaId) {
+    const { ventas, detalles, pagos, tercerosPorId, cajerosPorId } = historialVentasDetalleCache;
+    const venta = (ventas || []).find(v => v.id === ventaId);
+    if (!venta) return null;
+
+    const lineasVenta = detalles.filter(d => d.venta_id === ventaId);
+    const pagosVenta = pagos.filter(p => p.venta_id === ventaId);
+    const tercero = venta.tercero_id ? tercerosPorId[venta.tercero_id] : null;
+
+    return {
+      consecutivo: venta.consecutivo,
+      fecha: new Date(venta.fecha),
+      lineas: lineasVenta.map(l => ({ nombre: l.descripcion, cantidad: l.cantidad, precio: l.cantidad > 0 ? l.subtotal_linea / l.cantidad : l.subtotal_linea })),
+      total: Number(venta.total),
+      pagos: pagosVenta.map(p => ({ metodo_pago: p.metodo_pago, monto: Number(p.monto) })),
+      cliente: { nombre: tercero ? tercero.nombre_completo : '', telefono: tercero ? tercero.telefono : '', identificacion: tercero ? tercero.numero_documento : '' },
+      cajero: cajerosPorId[venta.cajero_user_id] || 'Cajero'
+    };
+  }
+
+  function verReciboHistorial(ventaId) {
+    const recibo = construirReciboDesdeHistorial(ventaId);
+    if (!recibo) { alert('No se pudo generar el recibo.'); return; }
+    ultimaVentaCache = recibo;
+    imprimirReciboVenta();
+  }
+
+  function enviarReciboHistorialWhatsapp(ventaId) {
+    const recibo = construirReciboDesdeHistorial(ventaId);
+    if (!recibo) { alert('No se pudo generar el recibo.'); return; }
+    ultimaVentaCache = recibo;
+    enviarReciboVentaWhatsapp();
+  }
+
   function imprimirReciboVenta() {
     if (!ultimaVentaCache) { alert('Todavía no hay una venta registrada para imprimir.'); return; }
     const ventana = window.open('', '_blank');
@@ -3568,6 +3605,11 @@
   let panelCambioAbiertoVentaId = null;
   let catalogoCambioArticuloCache = [];
 
+  function cerrarPanelCambioArticulo(ventaId) {
+    document.getElementById(`panelCambioArticulo-${ventaId}`).classList.add('oculto');
+    if (panelCambioAbiertoVentaId === ventaId) panelCambioAbiertoVentaId = null;
+  }
+
   async function abrirCambioArticulo(ventaId, consecutivo) {
     if (panelCambioAbiertoVentaId === ventaId) {
       document.getElementById(`panelCambioArticulo-${ventaId}`).classList.add('oculto');
@@ -3609,7 +3651,10 @@
           <input type="checkbox" id="cambioDanado-${ventaId}" style="width:auto;">
           <span>El artículo devuelto está dañado (no lo regreses al inventario para la venta)</span>
         </label>
-        <button class="btn-mini guardar" style="width:100%;margin-top:10px;" onclick="confirmarCambioArticulo('${ventaId}')">Confirmar cambio</button>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <button class="btn-mini guardar" style="flex:1;" onclick="confirmarCambioArticulo('${ventaId}')">Confirmar cambio</button>
+          <button class="btn-mini desactivar" style="flex:1;" onclick="cerrarPanelCambioArticulo('${ventaId}')">Cancelar</button>
+        </div>
         <div style="font-size:10.5px;opacity:0.6;margin-top:6px;">Se restaura el stock del artículo devuelto y se descuenta el nuevo. El recibo original se actualiza para reflejar lo que realmente se entregó.</div>
       </div>
     `;
@@ -3723,6 +3768,14 @@
     cargarHistorialVentas();
   }
 
+  let timeoutBusquedaHistorial = null;
+  function debounceBusquedaHistorial() {
+    clearTimeout(timeoutBusquedaHistorial);
+    timeoutBusquedaHistorial = setTimeout(() => cargarHistorialVentas(), 400);
+  }
+
+  let historialVentasDetalleCache = { detalles: [], pagos: [], tercerosPorId: {}, cajerosPorId: {} };
+
   async function cargarHistorialVentas() {
     const contenedor = document.getElementById('listaHistorialVentas');
     contenedor.innerHTML = '<div class="cargando">Cargando historial...</div>';
@@ -3732,12 +3785,34 @@
       return;
     }
 
-    const { data: ventas, error } = await supabaseClient
+    const termino = (document.getElementById('inputBuscarHistorialVentas')?.value || '').trim();
+
+    let query = supabaseClient
       .from('ventas_pos')
-      .select('id, consecutivo, fecha, total, estado, turno_id, cajero_user_id, area_formacion')
+      .select('id, consecutivo, fecha, total, estado, turno_id, cajero_user_id, area_formacion, tercero_id')
       .eq('centro_costo_id', filtroDeptoHistorialActual)
-      .order('fecha', { ascending: false })
-      .limit(100);
+      .order('fecha', { ascending: false });
+
+    if (termino) {
+      // Buscando: no se limita a las últimas ventas — se busca en todo el
+      // historial del departamento por consecutivo del recibo o cliente.
+      const { data: tercerosCoinciden } = await supabaseClient
+        .from('terceros')
+        .select('id')
+        .or(`nombre_completo.ilike.%${termino}%,numero_documento.ilike.%${termino}%,telefono.ilike.%${termino}%`);
+      const idsTerceros = (tercerosCoinciden || []).map(t => t.id);
+
+      if (idsTerceros.length > 0) {
+        query = query.or(`consecutivo.ilike.%${termino}%,tercero_id.in.(${idsTerceros.join(',')})`);
+      } else {
+        query = query.ilike('consecutivo', `%${termino}%`);
+      }
+      query = query.limit(200);
+    } else {
+      query = query.limit(100);
+    }
+
+    const { data: ventas, error } = await query;
 
     if (error) {
       contenedor.innerHTML = '<div class="cargando">No se pudo cargar el historial: ' + error.message + '</div>';
@@ -3745,13 +3820,14 @@
     }
 
     if (!ventas || ventas.length === 0) {
-      contenedor.innerHTML = '<div class="cargando">Todavía no hay ventas registradas.</div>';
+      contenedor.innerHTML = `<div class="cargando">${termino ? 'No se encontraron ventas que coincidan con "' + escaparHtml(termino) + '".' : 'Todavía no hay ventas registradas.'}</div>`;
       return;
     }
 
     const ventaIds = ventas.map(v => v.id);
     const turnoIds = [...new Set(ventas.map(v => v.turno_id).filter(Boolean))];
     const cajeroIds = [...new Set(ventas.map(v => v.cajero_user_id).filter(Boolean))];
+    const terceroIds = [...new Set(ventas.map(v => v.tercero_id).filter(Boolean))];
 
     const { data: detalles } = await supabaseClient
       .from('ventas_pos_detalle')
@@ -3762,6 +3838,16 @@
       .from('ventas_pos_pagos')
       .select('venta_id, metodo_pago, monto')
       .in('venta_id', ventaIds);
+
+    let tercerosData = [];
+    if (terceroIds.length > 0) {
+      const { data } = await supabaseClient
+        .from('terceros')
+        .select('id, nombre_completo, numero_documento, telefono')
+        .in('id', terceroIds);
+      tercerosData = data || [];
+    }
+    const tercerosPorId = Object.fromEntries(tercerosData.map(t => [t.id, t]));
 
     // Resolver turnos y cajeros por separado (sin depender de joins automáticos)
     let turnosData = [];
@@ -3784,6 +3870,8 @@
 
     const turnosPorId = Object.fromEntries(turnosData.map(t => [t.id, t]));
     const cajerosPorId = Object.fromEntries(cajerosData.map(c => [c.user_id, c.nombre_completo]));
+
+    historialVentasDetalleCache = { ventas, detalles: detalles || [], pagos: pagos || [], tercerosPorId, cajerosPorId };
 
     const etiquetasPago = { efectivo: 'Efectivo', nequi: 'Nequi', daviplata: 'Daviplata', tarjeta_debito: 'Tarjeta débito', tarjeta_credito: 'Tarjeta crédito' };
 
@@ -3822,6 +3910,8 @@
         const fecha = new Date(venta.fecha).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
         const tagAnulada = venta.estado === 'anulada' ? ' <span class="badge-inactivo">Anulada</span>' : '';
         const puedeAnular = venta.estado === 'completada' && turnoId === turnoActivoActual?.id;
+        const tercero = venta.tercero_id ? tercerosPorId[venta.tercero_id] : null;
+        const textoCliente = tercero ? `👤 ${escaparHtml(tercero.nombre_completo)}${tercero.numero_documento ? ' — Doc: ' + escaparHtml(tercero.numero_documento) : ''}` : '';
         html += `
           <div class="fila-historial" style="margin-left:8px;">
             <div class="fila-historial-encabezado">
@@ -3829,10 +3919,15 @@
               <span class="fila-historial-total">${formatearMoneda(venta.total)}</span>
             </div>
             <div class="fila-historial-fecha">${fecha}</div>
+            ${textoCliente ? `<div style="font-size:12px;color:var(--rosa-principal);font-weight:600;margin-top:2px;">${textoCliente}</div>` : ''}
             <div class="fila-historial-detalle">${textoLineas || 'Sin detalle'}</div>
             <div class="fila-historial-pagos">${textoPagos}</div>
             ${puedeAnular ? `<button class="btn-mini desactivar" style="margin-top:8px;max-width:160px;" onclick="anularVenta('${venta.id}', '${venta.consecutivo}')">❌ Anular venta</button>` : ''}
             ${venta.estado === 'completada' ? `<button class="btn-mini editar" style="margin-top:8px;max-width:160px;" onclick="abrirCambioArticulo('${venta.id}', '${venta.consecutivo}')">🔄 Cambiar artículo</button>` : ''}
+            <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+              <button class="btn-mini editar" onclick="verReciboHistorial('${venta.id}')">🖨️ Ver / imprimir recibo</button>
+              <button class="btn-mini editar" onclick="enviarReciboHistorialWhatsapp('${venta.id}')">📱 Enviar por WhatsApp</button>
+            </div>
             <div id="panelCambioArticulo-${venta.id}" class="oculto" style="margin-top:10px;"></div>
           </div>
         `;
