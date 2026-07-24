@@ -339,6 +339,8 @@
   }
 
   .btn-secundario:hover { background: var(--rosa-suave); }
+  .btn-secundario:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-secundario:disabled:hover { background: white; }
 
   .btn-mini {
     flex: 1; padding: 8px;
@@ -749,9 +751,9 @@
       <button class="btn-principal" id="btnConfirmarVenta" onclick="confirmarVenta()">Confirmar venta</button>
       <button class="btn-secundario" id="btnPonerEnEspera" onclick="ponerVentaEnEspera()">🅿️ Poner en espera y atender otro cliente</button>
       <div class="mensaje" id="mensajeVenta"></div>
-      <div id="botonesReciboVenta" class="oculto" style="display:flex;gap:8px;margin-top:10px;">
-        <button class="btn-secundario" style="margin-top:0;" onclick="imprimirReciboVenta()">🖨️ Imprimir recibo</button>
-        <button class="btn-secundario" style="margin-top:0;" onclick="enviarReciboVentaWhatsapp()">📱 Enviar WhatsApp</button>
+      <div id="botonesReciboVenta" style="display:flex;gap:8px;margin-top:10px;">
+        <button class="btn-secundario" style="margin-top:0;" onclick="imprimirReciboVenta()" id="btnImprimirRecibo" disabled title="Se activa después de confirmar una venta">🖨️ Imprimir recibo</button>
+        <button class="btn-secundario" style="margin-top:0;" onclick="enviarReciboVentaWhatsapp()" id="btnWhatsappRecibo" disabled title="Se activa después de confirmar una venta">📱 Enviar WhatsApp</button>
       </div>
     </div>
 
@@ -2206,8 +2208,8 @@
     document.querySelectorAll('.chip-filtro').forEach(c => c.classList.remove('activo'));
     document.querySelector('.chip-filtro[data-filtro="todos"]').classList.add('activo');
     ocultarMensaje('mensajeVenta');
-    document.getElementById('botonesReciboVenta').classList.add('oculto');
-    document.getElementById('botonesReciboVenta').style.display = 'none';
+    document.getElementById('btnImprimirRecibo').disabled = true;
+    document.getElementById('btnWhatsappRecibo').disabled = true;
     renderizarCarrito();
     renderizarPagos();
     renderizarVentasEnEspera();
@@ -2583,8 +2585,8 @@
         pagos: filasPago.map(p => ({ metodo_pago: p.metodo_pago, monto: Number(p.monto) })),
         cliente: { nombre: clienteNombre, telefono: clienteTelefono, identificacion: clienteIdentificacion }
       };
-      document.getElementById('botonesReciboVenta').classList.remove('oculto');
-      document.getElementById('botonesReciboVenta').style.display = 'flex';
+      document.getElementById('btnImprimirRecibo').disabled = false;
+      document.getElementById('btnWhatsappRecibo').disabled = false;
 
       // Si hubo pago en efectivo, intentar abrir el cajón monedero (requiere
       // impresora/cajón compatible conectado; si no hay hardware, esto no hace nada).
@@ -3287,6 +3289,90 @@
   // ============================================================
   // ANULACIÓN DE VENTAS
   // ============================================================
+  // ============================================================
+  // CAMBIO DE ARTÍCULO EN UNA VENTA YA REGISTRADA
+  // ============================================================
+  let panelCambioAbiertoVentaId = null;
+  let catalogoCambioArticuloCache = [];
+
+  async function abrirCambioArticulo(ventaId, consecutivo) {
+    if (panelCambioAbiertoVentaId === ventaId) {
+      document.getElementById(`panelCambioArticulo-${ventaId}`).classList.add('oculto');
+      panelCambioAbiertoVentaId = null;
+      return;
+    }
+    if (panelCambioAbiertoVentaId) {
+      const anterior = document.getElementById(`panelCambioArticulo-${panelCambioAbiertoVentaId}`);
+      if (anterior) anterior.classList.add('oculto');
+    }
+    panelCambioAbiertoVentaId = ventaId;
+
+    const panel = document.getElementById(`panelCambioArticulo-${ventaId}`);
+    panel.classList.remove('oculto');
+    panel.innerHTML = '<div class="cargando">Cargando artículos de la venta...</div>';
+
+    const [respDetalle, respCatalogo] = await Promise.all([
+      fetch(`${WORKER_URL}/api/pos/ventas/detalle?venta_id=${ventaId}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } }),
+      supabaseClient.from('inventario_items').select('id, nombre, precio_venta, stock_actual, activo').eq('centro_costo_id', filtroDeptoHistorialActual).eq('activo', true).order('nombre', { ascending: true })
+    ]);
+
+    const { lineas } = respDetalle.ok ? await respDetalle.json() : { lineas: [] };
+    catalogoCambioArticuloCache = respCatalogo.data || [];
+
+    const opcionesProducto = catalogoCambioArticuloCache.map(i => `<option value="${i.id}">${escaparHtml(i.nombre)} — ${formatearMoneda(i.precio_venta)} (stock: ${i.stock_actual})</option>`).join('');
+
+    panel.innerHTML = `
+      <div style="background:var(--rosa-suave);border-radius:10px;padding:12px;">
+        <div style="font-size:12.5px;font-weight:700;margin-bottom:8px;">🔄 Cambiar un artículo de ${escaparHtml(consecutivo)}</div>
+        <label style="margin-top:0;font-size:11px;">Artículo a devolver</label>
+        <select id="cambioDetalleId-${ventaId}">
+          ${lineas.map(l => `<option value="${l.id}">${l.cantidad}x ${escaparHtml(l.descripcion)} (${formatearMoneda(l.subtotal_linea)})</option>`).join('')}
+        </select>
+        <label style="margin-top:8px;font-size:11px;">Artículo nuevo a entregar</label>
+        <select id="cambioNuevoItemId-${ventaId}">${opcionesProducto}</select>
+        <label style="margin-top:8px;font-size:11px;">Cantidad del artículo nuevo</label>
+        <input type="number" min="1" step="1" value="1" id="cambioNuevaCantidad-${ventaId}">
+        <button class="btn-mini guardar" style="width:100%;margin-top:10px;" onclick="confirmarCambioArticulo('${ventaId}')">Confirmar cambio</button>
+        <div style="font-size:10.5px;opacity:0.6;margin-top:6px;">Se restaura el stock del artículo devuelto y se descuenta el nuevo. El recibo original se actualiza para reflejar lo que realmente se entregó.</div>
+      </div>
+    `;
+  }
+
+  async function confirmarCambioArticulo(ventaId) {
+    const detalleId = document.getElementById(`cambioDetalleId-${ventaId}`).value;
+    const nuevoItemId = document.getElementById(`cambioNuevoItemId-${ventaId}`).value;
+    const nuevaCantidad = Number(document.getElementById(`cambioNuevaCantidad-${ventaId}`).value);
+
+    if (!nuevaCantidad || nuevaCantidad <= 0) { alert('Escribe una cantidad válida.'); return; }
+
+    let codigoAutorizacion = null;
+    if (rolActual !== 'administrador') {
+      codigoAutorizacion = prompt('Cambiar un artículo de una venta ya registrada requiere autorización. Pídele a Sara (o a quien ella autorice) que ingrese su código:');
+      if (!codigoAutorizacion) return;
+    }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/ventas/cambiar-articulo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ detalle_id: detalleId, nuevo_item_id: nuevoItemId, nueva_cantidad: nuevaCantidad, codigo_autorizacion: codigoAutorizacion })
+    });
+
+    const datos = await resp.json();
+    if (!resp.ok) { alert('No se pudo hacer el cambio: ' + (datos.error || 'Error desconocido')); return; }
+
+    const diferencia = datos.diferencia;
+    if (Math.abs(diferencia) < 1) {
+      alert('✅ Cambio realizado. El nuevo artículo cuesta lo mismo, no hay diferencia que cobrar ni devolver.');
+    } else if (diferencia > 0) {
+      alert(`✅ Cambio realizado. El cliente debe pagar ${formatearMoneda(diferencia)} adicionales por la diferencia.`);
+    } else {
+      alert(`✅ Cambio realizado. Debes devolverle al cliente ${formatearMoneda(Math.abs(diferencia))} de diferencia.`);
+    }
+
+    panelCambioAbiertoVentaId = null;
+    await cargarHistorialVentas();
+  }
+
   async function anularVenta(ventaId, consecutivo) {
     if (!confirm(`¿Estás segura de que quieres anular la venta ${consecutivo}? Esta acción no se puede deshacer.`)) return;
 
@@ -3460,6 +3546,8 @@
             <div class="fila-historial-detalle">${textoLineas || 'Sin detalle'}</div>
             <div class="fila-historial-pagos">${textoPagos}</div>
             ${puedeAnular ? `<button class="btn-mini desactivar" style="margin-top:8px;max-width:160px;" onclick="anularVenta('${venta.id}', '${venta.consecutivo}')">❌ Anular venta</button>` : ''}
+            ${venta.estado === 'completada' ? `<button class="btn-mini editar" style="margin-top:8px;max-width:160px;" onclick="abrirCambioArticulo('${venta.id}', '${venta.consecutivo}')">🔄 Cambiar artículo</button>` : ''}
+            <div id="panelCambioArticulo-${venta.id}" class="oculto" style="margin-top:10px;"></div>
           </div>
         `;
       }
