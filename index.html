@@ -706,16 +706,17 @@
 
     <div class="panel">
       <h2>Productos e insumos</h2>
-      <div class="barra-busqueda">
-        <input type="text" id="inputBuscarProducto" placeholder="Buscar por nombre o SKU..." oninput="renderizarCatalogo()">
+      <div class="barra-busqueda" style="position:relative;">
+        <input type="text" id="inputBuscarProducto" placeholder="Buscar por nombre o SKU..." oninput="renderizarCatalogo()" onblur="setTimeout(() => { document.getElementById('listaCatalogo').style.display = 'none'; }, 200)" onfocus="renderizarCatalogo()" autocomplete="off">
         <button type="button" class="btn-mini editar" style="max-width:44px;" onclick="abrirEscanerCodigoBarras('inputBuscarProducto', buscarYAgregarPorCodigoBarras)" title="Escanear código de barras">📷</button>
+        <div id="listaCatalogo" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1.5px solid var(--rosa-medio);border-radius:9px;margin-top:4px;max-height:340px;overflow-y:auto;z-index:50;box-shadow:var(--sombra);"></div>
       </div>
       <div class="filtro-tipo">
         <button class="chip-filtro activo" data-filtro="todos" onclick="cambiarFiltroTipo('todos', this)">Todos</button>
         <button class="chip-filtro" data-filtro="producto_terminado" onclick="cambiarFiltroTipo('producto_terminado', this)">Amigurumis</button>
         <button class="chip-filtro" data-filtro="merceria" onclick="cambiarFiltroTipo('merceria', this)">Mercería</button>
       </div>
-      <div id="listaCatalogo"><div class="cargando">Cargando inventario...</div></div>
+      <div id="ultimoProductoAgregado" style="margin-top:10px;"></div>
     </div>
 
     <div class="panel">
@@ -2260,7 +2261,8 @@
     const textoBusqueda = document.getElementById('inputBuscarProducto').value.trim().toLowerCase();
 
     if (!textoBusqueda) {
-      contenedor.innerHTML = '<div class="cargando">Escribe el nombre del producto para buscarlo...</div>';
+      contenedor.style.display = 'none';
+      contenedor.innerHTML = '';
       return;
     }
 
@@ -2270,8 +2272,10 @@
     }
     items = items.filter(i => i.nombre.toLowerCase().includes(textoBusqueda));
 
+    contenedor.style.display = 'block';
+
     if (items.length === 0) {
-      contenedor.innerHTML = '<div class="cargando">' + (catalogoCompleto.length === 0 ? 'No hay productos cargados en el inventario todavía.' : 'No se encontraron resultados.') + '</div>';
+      contenedor.innerHTML = '<div class="cargando" style="padding:14px;">' + (catalogoCompleto.length === 0 ? 'No hay productos cargados en el inventario todavía.' : 'No se encontraron resultados.') + '</div>';
       return;
     }
 
@@ -2281,7 +2285,7 @@
       const sinStockTag = sinStock ? '<span class="stock-bajo-tag">Sin stock</span>' : '';
       const etiquetaTipo = item.tipo === 'merceria' ? 'Mercería' : 'Amigurumi';
       return `
-        <div class="item-producto" style="${sinStock ? 'opacity:0.45;cursor:not-allowed;' : ''}" onclick="${sinStock ? '' : `agregarAlCarrito('${item.id}')`}">
+        <div class="item-producto" style="border-radius:0;margin-bottom:0;border:none;border-bottom:1px solid #f4eef2;${sinStock ? 'opacity:0.45;cursor:not-allowed;' : ''}" onclick="${sinStock ? '' : `agregarAlCarrito('${item.id}')`}">
           <div class="item-producto-info">
             <div class="item-producto-nombre">${escaparHtml(item.nombre)}${stockBajoTag}${sinStockTag}</div>
             <div class="item-producto-meta">${etiquetaTipo} · Stock: ${item.stock_actual} ${item.unidad_medida}</div>
@@ -2319,6 +2323,15 @@
       carrito.push({ id: item.id, nombre: item.nombre, precio: item.precio, stock_actual: item.stock_actual, cantidad: 1 });
     }
     ocultarMensaje('mensajeVenta');
+
+    // Cerrar la lista de búsqueda y limpiar el campo, mostrando una confirmación breve
+    document.getElementById('inputBuscarProducto').value = '';
+    document.getElementById('listaCatalogo').style.display = 'none';
+    document.getElementById('listaCatalogo').innerHTML = '';
+    const confirmacion = document.getElementById('ultimoProductoAgregado');
+    confirmacion.innerHTML = `<div style="font-size:12.5px;padding:8px 10px;background:var(--rosa-suave);border-radius:8px;color:var(--rosa-principal);">✅ Agregado: <strong>${escaparHtml(item.nombre)}</strong></div>`;
+    setTimeout(() => { confirmacion.innerHTML = ''; }, 3000);
+
     renderizarCarrito();
   }
 
