@@ -596,7 +596,7 @@
         <button class="nav-btn" id="nav-ventas" onclick="mostrarPantallaVentas()"><span class="nav-icon">🛒</span> Registrar venta</button>
         <button class="nav-btn" id="nav-historial" onclick="mostrarPantallaHistorial('01')"><span class="nav-icon">📋</span> Historial ventas</button>
         <button class="nav-btn" id="nav-pedidos-canal" onclick="mostrarPantallaPedidosCanal()"><span class="nav-icon">📱</span> Pedidos WhatsApp/Redes</button>
-        <button class="nav-btn" id="nav-solicitudes-tienda" onclick="mostrarPantallaSolicitudes()"><span class="nav-icon">📦</span> Solicitudes de Taller</button>
+        <button class="nav-btn" id="nav-solicitudes-tienda" onclick="mostrarPantallaSolicitudes()"><span class="nav-icon">📦</span> Solicitud de insumos del Taller</button>
         <button class="nav-btn" id="nav-inventario-tienda" onclick="mostrarPantallaInventario('01')"><span class="nav-icon">📊</span> Inventario</button>
         <button class="nav-btn" id="nav-ajustestock" onclick="mostrarPantallaAjusteStock()"><span class="nav-icon">📥</span> Entrada mercancía</button>
         <button class="nav-btn" id="nav-turno" onclick="irATurnoActivo()"><span class="nav-icon">💵</span> Turno de caja</button>
@@ -611,7 +611,7 @@
         <button class="nav-btn" id="nav-consumotaller" onclick="mostrarPantallaPedidosCrm()"><span class="nav-icon">🧶</span> Consumo de material</button>
         <button class="nav-btn" onclick="mostrarPantallaHistorial('03')"><span class="nav-icon">📋</span> Historial ventas</button>
         <button class="nav-btn" id="nav-inventario-taller" onclick="mostrarPantallaInventario('03')"><span class="nav-icon">📊</span> Inventario</button>
-        <button class="nav-btn" id="nav-solicitudes-taller" onclick="mostrarPantallaSolicitudes()"><span class="nav-icon">📦</span> Compras a la Tienda</button>
+        <button class="nav-btn" id="nav-solicitudes-taller" onclick="mostrarPantallaSolicitudes()"><span class="nav-icon">📦</span> Solicitud de insumos a la Tienda</button>
         <button class="nav-btn" id="nav-pagos-pendientes" onclick="mostrarPantallaPagosPendientes('03')"><span class="nav-icon">🏬</span> Caja, gastos y presupuesto</button>
       </div>
     </div>
@@ -942,28 +942,39 @@
 <div id="pantallaSolicitudes" class="oculto contenido">
   <div class="page-header">
     <span class="badge-rol" id="badgeRolSolicitudes"></span>
-    <h1 id="tituloPanelSolicitudes">Compras a la Tienda</h1>
+    <h1 id="tituloPanelSolicitudes">Solicitud de insumos a la Tienda</h1>
+    <div class="subtitulo">Toda solicitud queda ligada al pedido que se está tejiendo.</div>
   </div>
   <div class="grilla-2">
 
     <div class="panel" id="panelCrearSolicitud">
-      <h2>Comprar insumo a la Tienda</h2>
-      <div class="subtitulo" id="subtituloPanelSolicitudes">Busca el insumo en el inventario de la Tienda. El cajero debe aprobar la compra antes de que pase al Taller.</div>
-      <div id="listaSolicitudInsumos"><div class="cargando">Cargando insumos...</div></div>
+      <h2>+ Solicitar insumo para un pedido</h2>
+      <label for="solInsumoPedido">Pedido que se va a tejer</label>
+      <select id="solInsumoPedido"><option value="">Cargando pedidos...</option></select>
+      <label for="solInsumoOrigen">¿De dónde sale el insumo?</label>
+      <select id="solInsumoOrigen" onchange="cambiarOrigenSolicitudInsumo()">
+        <option value="tienda">Solicitar a la Tienda (requiere que lo despachen)</option>
+        <option value="taller_propio">Tomar del inventario del Taller (inmediato)</option>
+      </select>
+      <label for="solInsumoItem">Insumo</label>
+      <select id="solInsumoItem"><option value="">Cargando insumos...</option></select>
+      <label for="solInsumoCantidad">Cantidad (gramos o unidades)</label>
+      <input type="number" id="solInsumoCantidad" min="0.1" step="0.1">
+      <button class="btn-principal" id="btnSolicitarInsumo" onclick="confirmarSolicitudInsumoPedido()">Solicitar</button>
+      <div class="mensaje" id="mensajeSolicitudInsumo"></div>
     </div>
 
     <div class="panel">
-      <h2 id="tituloPanelSolicitudesPendientes">Compras pendientes de aprobar</h2>
+      <h2 id="tituloPanelSolicitudesPendientes">Solicitudes pendientes por despachar</h2>
       <div id="listaSolicitudesPendientes"><div class="cargando">Cargando solicitudes...</div></div>
       <button class="btn-secundario" onclick="irAInicioSegunRol()" style="margin-top:14px;">Volver</button>
     </div>
 
   </div>
 
-  <div class="panel" id="panelPagosSolicitudes" style="max-height:none;margin-top:20px;display:none;">
-    <h2>💵 Pagos pendientes a la Tienda</h2>
-    <div class="subtitulo">Compras ya aprobadas y entregadas: confirma aquí cuando ya se haya pagado.</div>
-    <div id="listaPagosPendientesSolicitudes"><div class="cargando">Cargando...</div></div>
+  <div class="panel" style="max-width:none;max-height:none;margin-top:20px;">
+    <h2>Historial de solicitudes</h2>
+    <div id="listaHistorialSolicitudesInsumo"><div class="cargando">Cargando...</div></div>
   </div>
 </div>
 
@@ -4313,152 +4324,126 @@
   async function mostrarPantallaSolicitudes() {
     mostrarPantalla('pantallaSolicitudes');
     document.getElementById('badgeRolSolicitudes').textContent = etiquetaRol(rolActual || '');
+    ocultarMensaje('mensajeSolicitudInsumo');
 
-    // Cajero ve las solicitudes pendientes para aprobar (sin formulario de crear)
-    // Taller puede crear solicitudes, ver las suyas, y pagar las que ya se aprobaron
-    const panelPagos = document.getElementById('panelPagosSolicitudes');
     const tituloPendientes = document.getElementById('tituloPanelSolicitudesPendientes');
-    if (rolActual === 'cajero') {
-      document.getElementById('panelCrearSolicitud').style.display = 'none';
-      panelPagos.style.display = 'none';
-      tituloPendientes.textContent = 'Compras pendientes de aprobar';
-    } else {
+    if (rolActual === 'taller' || rolActual === 'administrador') {
       document.getElementById('panelCrearSolicitud').style.display = '';
-      await cargarCatalogoSolicitudes();
-      if (rolActual === 'taller') {
-        panelPagos.style.display = '';
-        tituloPendientes.textContent = 'Mis solicitudes (esperando aprobación de la Tienda)';
-        await cargarPagosPendientesPropios('listaPagosPendientesSolicitudes');
-      } else {
-        panelPagos.style.display = 'none';
-        tituloPendientes.textContent = 'Compras pendientes de aprobar';
-      }
+      await cargarPedidosParaSolicitudInsumo();
+      await cargarInsumosSolicitudTaller();
+    } else {
+      document.getElementById('panelCrearSolicitud').style.display = 'none';
     }
-    await cargarSolicitudesPendientes();
+    tituloPendientes.textContent = 'Solicitudes pendientes por despachar';
+    await cargarSolicitudesPendientesInsumo();
+    await cargarHistorialSolicitudesInsumo();
   }
 
-  async function cargarCatalogoSolicitudes() {
-    const contenedor = document.getElementById('listaSolicitudInsumos');
-    contenedor.innerHTML = '<div class="cargando">Cargando insumos de la Tienda...</div>';
+  let insumosTiendaSolicitudCache = [];
+  let insumosTallerPropioCache = [];
 
-    const { data, error } = await supabaseClient
-      .from('inventario_items')
-      .select('id, nombre, stock_actual, unidad_medida')
-      .eq('tipo', 'merceria')
-      .eq('activo', true)
-      .eq('centro_costo_id', centroCostoTiendaId)
-      .order('nombre', { ascending: true });
-
-    if (error) {
-      contenedor.innerHTML = '<div class="cargando">No se pudo cargar: ' + error.message + '</div>';
-      return;
-    }
-
-    catalogoSolicitudesCompleto = data;
-    renderizarCatalogoSolicitudes();
+  async function cargarPedidosParaSolicitudInsumo() {
+    const select = document.getElementById('solInsumoPedido');
+    const resp = await fetch(WORKER_URL + '/api/pos/crm/pedidos-activos', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { select.innerHTML = '<option value="">No se pudieron cargar los pedidos</option>'; return; }
+    const { pedidos } = await resp.json();
+    const enProduccion = (pedidos || []).filter(p => p.estado === 'en produccion');
+    if (enProduccion.length === 0) { select.innerHTML = '<option value="">No hay pedidos en producción</option>'; return; }
+    select.innerHTML = enProduccion.map(p => `<option value="${p.id}" data-numero="${escaparHtml(p.numero_pedido || p.id)}">${escaparHtml(p.numero_pedido || p.id)} — ${escaparHtml(p.descripcion || '')}</option>`).join('');
   }
 
-  function renderizarCatalogoSolicitudes() {
-    const contenedor = document.getElementById('listaSolicitudInsumos');
-    if (!catalogoSolicitudesCompleto.length) {
-      contenedor.innerHTML = '<div class="cargando">No hay insumos de mercería disponibles.</div>';
-      return;
-    }
-
-    contenedor.innerHTML = catalogoSolicitudesCompleto.map(item => `
-      <div class="item-consumo">
-        <div class="item-consumo-fila" style="cursor:pointer;" onclick="alternarFormularioSolicitud('${item.id}')">
-          <div class="item-producto-info">
-            <div class="item-producto-nombre">${escaparHtml(item.nombre)}</div>
-            <div class="item-producto-meta">Stock disponible: ${item.stock_actual} ${item.unidad_medida}</div>
-          </div>
-        </div>
-        <div class="item-consumo-acciones ${itemSolicitudAbiertoId === item.id ? 'abierto' : ''}" style="flex-direction:column;align-items:stretch;">
-          <div style="display:flex;gap:8px;">
-            <input type="number" min="0.1" step="0.1" placeholder="Cantidad" id="cant-sol-${item.id}" style="flex:1;">
-          </div>
-          <input type="text" placeholder="Nota (para qué pedido o pieza)" id="nota-sol-${item.id}" style="margin-top:6px;">
-          <button onclick="enviarSolicitud('${item.id}')" style="margin-top:6px;padding:8px;border-radius:8px;border:none;background:var(--rosa-principal);color:white;font-family:'Poppins',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;">Solicitar compra</button>
-        </div>
-      </div>
-    `).join('');
+  async function cargarInsumosSolicitudTaller() {
+    const [respTienda, respTaller] = await Promise.all([
+      supabaseClient.from('inventario_items').select('id, nombre, stock_actual, unidad_medida').eq('tipo', 'merceria').eq('activo', true).eq('centro_costo_id', centroCostoTiendaId).order('nombre', { ascending: true }),
+      supabaseClient.from('inventario_items').select('id, nombre, stock_actual, unidad_medida').eq('tipo', 'merceria').eq('activo', true).eq('centro_costo_id', centroCostoTallerId).order('nombre', { ascending: true })
+    ]);
+    insumosTiendaSolicitudCache = respTienda.data || [];
+    insumosTallerPropioCache = respTaller.data || [];
+    cambiarOrigenSolicitudInsumo();
   }
 
-  function alternarFormularioSolicitud(itemId) {
-    itemSolicitudAbiertoId = itemSolicitudAbiertoId === itemId ? null : itemId;
-    renderizarCatalogoSolicitudes();
+  function cambiarOrigenSolicitudInsumo() {
+    const origen = document.getElementById('solInsumoOrigen').value;
+    const lista = origen === 'tienda' ? insumosTiendaSolicitudCache : insumosTallerPropioCache;
+    const select = document.getElementById('solInsumoItem');
+    select.innerHTML = lista.length
+      ? lista.map(i => `<option value="${i.id}">${escaparHtml(i.nombre)} (stock: ${i.stock_actual} ${i.unidad_medida})</option>`).join('')
+      : '<option value="">No hay insumos disponibles</option>';
+    document.getElementById('btnSolicitarInsumo').textContent = origen === 'tienda' ? 'Solicitar' : 'Tomar del inventario del Taller';
   }
 
-  async function enviarSolicitud(itemId) {
-    const cantidad = Number(document.getElementById(`cant-sol-${itemId}`).value);
-    const nota = document.getElementById(`nota-sol-${itemId}`).value.trim();
+  async function confirmarSolicitudInsumoPedido() {
+    const selectPedido = document.getElementById('solInsumoPedido');
+    const pedidoId = selectPedido.value;
+    const numeroPedido = selectPedido.selectedOptions[0] ? selectPedido.selectedOptions[0].dataset.numero : '';
+    const origen = document.getElementById('solInsumoOrigen').value;
+    const insumoId = document.getElementById('solInsumoItem').value;
+    const cantidad = Number(document.getElementById('solInsumoCantidad').value);
+    ocultarMensaje('mensajeSolicitudInsumo');
 
-    if (!cantidad || cantidad <= 0) {
-      alert('Escribe una cantidad válida.');
-      return;
+    if (!pedidoId) { mostrarMensaje('mensajeSolicitudInsumo', 'Selecciona el pedido que se va a tejer.', 'error'); return; }
+    if (!insumoId) { mostrarMensaje('mensajeSolicitudInsumo', 'Selecciona un insumo.', 'error'); return; }
+    if (!cantidad || cantidad <= 0) { mostrarMensaje('mensajeSolicitudInsumo', 'Escribe una cantidad válida.', 'error'); return; }
+
+    const btn = document.getElementById('btnSolicitarInsumo');
+    btn.disabled = true;
+
+    if (origen === 'taller_propio') {
+      // Toma inmediata del inventario propio del Taller (mismo mecanismo que "Consumo de material")
+      const resp = await fetch(WORKER_URL + '/api/pos/crm/tomar-material', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+        body: JSON.stringify({ pedido_crm_id: pedidoId, numero_pedido_crm: numeroPedido, inventario_item_id: insumoId, cantidad_tomada: cantidad })
+      });
+      const datos = await resp.json();
+      btn.disabled = false;
+      if (!resp.ok) { mostrarMensaje('mensajeSolicitudInsumo', datos.error || 'No se pudo tomar el insumo.', 'error'); return; }
+      mostrarMensaje('mensajeSolicitudInsumo', `✅ Insumo tomado del inventario del Taller para el pedido ${numeroPedido}.`, 'exito');
+    } else {
+      const resp = await fetch(WORKER_URL + '/api/pos/insumo-pedido/solicitar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+        body: JSON.stringify({ pedido_crm_id: pedidoId, numero_pedido_crm: numeroPedido, inventario_item_id: insumoId, cantidad })
+      });
+      const datos = await resp.json();
+      btn.disabled = false;
+      if (!resp.ok) { mostrarMensaje('mensajeSolicitudInsumo', datos.error || 'No se pudo enviar la solicitud.', 'error'); return; }
+      mostrarMensaje('mensajeSolicitudInsumo', `✅ Solicitud enviada a la Tienda para el pedido ${numeroPedido}.`, 'exito');
     }
 
-    const resp = await fetch(WORKER_URL + '/api/pos/solicitudes', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ inventario_item_id: itemId, cantidad_solicitada: cantidad, observaciones: nota || null })
-    });
-
-    if (!resp.ok) {
-      const err = await resp.json();
-      alert('Error: ' + (err.error || 'No se pudo enviar la solicitud'));
-      return;
-    }
-
-    itemSolicitudAbiertoId = null;
-    renderizarCatalogoSolicitudes();
-    await cargarSolicitudesPendientes();
+    document.getElementById('solInsumoCantidad').value = '';
+    await cargarSolicitudesPendientesInsumo();
+    await cargarHistorialSolicitudesInsumo();
   }
 
-  async function cargarSolicitudesPendientes() {
+  async function cargarSolicitudesPendientesInsumo() {
     const contenedor = document.getElementById('listaSolicitudesPendientes');
     contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
 
-    const resp = await fetch(WORKER_URL + '/api/pos/solicitudes?estado=pendiente', {
-      headers: { Authorization: 'Bearer ' + sesionActual.token }
-    });
-
-    if (!resp.ok) {
-      contenedor.innerHTML = '<div class="cargando">No se pudieron cargar las solicitudes.</div>';
-      return;
-    }
+    const resp = await fetch(WORKER_URL + '/api/pos/insumo-pedido/solicitudes?estado=pendiente', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
 
     const { solicitudes } = await resp.json();
+    if (!solicitudes || solicitudes.length === 0) { contenedor.innerHTML = '<div class="cargando">No hay solicitudes pendientes por despachar.</div>'; return; }
 
-    if (!solicitudes || solicitudes.length === 0) {
-      contenedor.innerHTML = '<div class="cargando">No hay compras pendientes de aprobar.</div>';
-      return;
-    }
+    const puedeEnviar = rolActual === 'cajero' || rolActual === 'administrador';
 
-    const puedeAprobar = rolActual === 'cajero' || rolActual === 'administrador';
-
-    contenedor.innerHTML = solicitudes.map(sol => {
-      const fecha = new Date(sol.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
-      const nombreInsumo = sol.inventario_items ? sol.inventario_items.nombre : 'Insumo';
-      const unidad = sol.inventario_items ? sol.inventario_items.unidad_medida : '';
-      const solicitante = sol.nombre_solicitante || 'Tejedora';
-      const nota = sol.observaciones ? `<div style="font-style:italic;font-size:12px;opacity:0.65;margin-top:3px;">"${escaparHtml(sol.observaciones)}"</div>` : '';
-
+    contenedor.innerHTML = solicitudes.map(s => {
+      const item = s.inventario_items || {};
+      const fecha = new Date(s.fecha_solicitud).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
       return `
         <div class="fila-inventario-editable" style="margin-bottom:10px;">
           <div class="fila-inventario-titulo">
-            <span class="fila-inventario-nombre">${escaparHtml(nombreInsumo)}</span>
+            <span class="fila-inventario-nombre">${escaparHtml(item.nombre || 'Insumo')}</span>
             <span class="fila-inventario-tipo-tag" style="background:#fff3cd;color:#856404;">Pendiente</span>
           </div>
           <div style="font-size:13px;margin-top:4px;">
-            <strong>${sol.cantidad_solicitada} ${unidad}</strong> — Solicitado por ${escaparHtml(solicitante)}<br>
-            <span style="opacity:0.6;font-size:12px;">${fecha}</span>
-            ${nota}
+            <strong>${s.cantidad} ${item.unidad_medida || ''}</strong> para el pedido <strong>${escaparHtml(s.numero_pedido_crm)}</strong><br>
+            <span style="opacity:0.6;font-size:12px;">${fecha} · Stock actual en Tienda: ${item.stock_actual ?? '—'}</span>
           </div>
-          ${puedeAprobar ? `
+          ${puedeEnviar ? `
             <div class="fila-inventario-acciones" style="margin-top:10px;">
-              <button class="btn-mini guardar" onclick="responderSolicitud('${sol.id}', 'aprobar')">✅ Aprobar compra</button>
-              <button class="btn-mini desactivar" onclick="responderSolicitud('${sol.id}', 'rechazar')">❌ Rechazar</button>
+              <button class="btn-mini guardar" onclick="confirmarEnviarInsumoATaller('${s.id}')">✅ Enviado al taller</button>
             </div>
           ` : ''}
         </div>
@@ -4466,26 +4451,43 @@
     }).join('');
   }
 
-  async function responderSolicitud(solicitudId, accion) {
-    const endpoint = accion === 'aprobar' ? '/api/pos/solicitudes/aprobar' : '/api/pos/solicitudes/rechazar';
-    const resp = await fetch(WORKER_URL + endpoint, {
+  async function confirmarEnviarInsumoATaller(solicitudId) {
+    const resp = await fetch(WORKER_URL + '/api/pos/insumo-pedido/enviar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ solicitud_id: solicitudId })
     });
+    const datos = await resp.json();
+    if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudo despachar')); return; }
+    alert('✅ Insumo descontado de la Tienda y enviado al Taller. Ya aparece en "Material que tengo en uso ahora" de ese pedido.');
+    await cargarSolicitudesPendientesInsumo();
+    await cargarHistorialSolicitudesInsumo();
+  }
 
-    if (!resp.ok) {
-      const err = await resp.json();
-      alert('Error: ' + (err.error || 'No se pudo procesar la solicitud'));
-      return;
-    }
+  async function cargarHistorialSolicitudesInsumo() {
+    const contenedor = document.getElementById('listaHistorialSolicitudesInsumo');
+    if (!contenedor) return;
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
 
-    if (accion === 'aprobar') {
-      alert('✅ Compra aprobada. El insumo ya se movió al inventario del Taller. El pago queda pendiente de confirmación en "Mi departamento".');
-    }
+    const resp = await fetch(WORKER_URL + '/api/pos/insumo-pedido/solicitudes?estado=enviado', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
 
-    await cargarSolicitudesPendientes();
-    if (accion === 'aprobar') await cargarCatalogoSolicitudes();
+    const { solicitudes } = await resp.json();
+    if (!solicitudes || solicitudes.length === 0) { contenedor.innerHTML = '<div class="cargando">Sin solicitudes despachadas todavía.</div>'; return; }
+
+    contenedor.innerHTML = solicitudes.map(s => {
+      const item = s.inventario_items || {};
+      const fecha = s.fecha_envio ? new Date(s.fecha_envio).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }) : '';
+      return `
+        <div class="fila-historial" style="margin-bottom:9px;">
+          <div class="fila-historial-encabezado">
+            <span class="fila-historial-consecutivo">${escaparHtml(s.numero_pedido_crm)}</span>
+            <span style="font-size:11px;font-weight:700;color:var(--verde-exito);">✅ Solicitud aprobada y despachada al taller</span>
+          </div>
+          <div class="fila-historial-fecha">${escaparHtml(item.nombre || 'Insumo')} — ${s.cantidad} ${item.unidad_medida || ''} · ${fecha}</div>
+        </div>
+      `;
+    }).join('');
   }
 
   // ============================================================================
