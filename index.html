@@ -569,7 +569,6 @@
   </div>
 
   <div class="sidebar-nav">
-    <button class="nav-btn" id="nav-turno" onclick="irATurnoActivo()"><span class="nav-icon">💵</span> Turno de caja</button>
     <button class="nav-btn" id="nav-calendario" onclick="mostrarPantallaCalendario()"><span class="nav-icon">📅</span> Calendario del equipo</button>
 
     <div class="sidebar-depto" id="deptoTiendaGrupo" style="display:none;">
@@ -581,7 +580,9 @@
         <button class="nav-btn" id="nav-solicitudes-tienda" onclick="mostrarPantallaSolicitudes()"><span class="nav-icon">📦</span> Compras a la Tienda</button>
         <button class="nav-btn" id="nav-inventario-tienda" onclick="mostrarPantallaInventario('01')"><span class="nav-icon">📊</span> Inventario</button>
         <button class="nav-btn" id="nav-ajustestock" onclick="mostrarPantallaAjusteStock()"><span class="nav-icon">📥</span> Entrada mercancía</button>
+        <button class="nav-btn" id="nav-turno" onclick="irATurnoActivo()"><span class="nav-icon">💵</span> Turno de caja</button>
         <button class="nav-btn" id="nav-reportes" onclick="mostrarPantallaReportes()"><span class="nav-icon">📈</span> Reportes de turno</button>
+        <button class="nav-btn" onclick="mostrarPantallaPagosPendientes('01')"><span class="nav-icon">📈</span> Caja, gastos y presupuesto</button>
       </div>
     </div>
 
@@ -591,7 +592,7 @@
         <button class="nav-btn" id="nav-consumotaller" onclick="mostrarPantallaPedidosCrm()"><span class="nav-icon">🧶</span> Consumo de material</button>
         <button class="nav-btn" id="nav-inventario-taller" onclick="mostrarPantallaInventario('03')"><span class="nav-icon">📊</span> Inventario</button>
         <button class="nav-btn" id="nav-solicitudes-taller" onclick="mostrarPantallaSolicitudes()"><span class="nav-icon">📦</span> Compras a la Tienda</button>
-        <button class="nav-btn" id="nav-pagos-pendientes" onclick="mostrarPantallaPagosPendientes()"><span class="nav-icon">🏬</span> Mi departamento (caja, gastos, indicadores)</button>
+        <button class="nav-btn" id="nav-pagos-pendientes" onclick="mostrarPantallaPagosPendientes('03')"><span class="nav-icon">🏬</span> Caja, gastos y presupuesto</button>
       </div>
     </div>
 
@@ -602,6 +603,7 @@
         <button class="nav-btn" onclick="mostrarPantallaAcademiaKits()"><span class="nav-icon">🧶</span> Kits de tejido</button>
         <button class="nav-btn" onclick="mostrarPantallaInventario('04')"><span class="nav-icon">📊</span> Inventario</button>
         <button class="nav-btn" onclick="mostrarPantallaAcademiaInforme()"><span class="nav-icon">📈</span> Informe y metas</button>
+        <button class="nav-btn" onclick="mostrarPantallaPagosPendientes('04')"><span class="nav-icon">🏬</span> Caja, gastos y presupuesto</button>
       </div>
     </div>
 
@@ -1628,6 +1630,7 @@
   let turnoActivoActual = null;
   let centroCostoTiendaId = null;
   let centroCostoTallerId = null;
+  let centroCostoAcademiaId = null;
 
   // ============================================================================
   // UTILIDADES
@@ -2015,16 +2018,18 @@
 
   // Carga los IDs de Tienda y Taller una sola vez, para filtrar catálogos por departamento
   async function cargarIdsDepartamentosClave() {
-    if (centroCostoTiendaId && centroCostoTallerId) return; // ya cargados
+    if (centroCostoTiendaId && centroCostoTallerId && centroCostoAcademiaId) return; // ya cargados
     const { data } = await supabaseClient
       .from('centros_costo')
       .select('id, codigo')
-      .in('codigo', ['01', '03']);
+      .in('codigo', ['01', '03', '04']);
     if (data) {
       const tienda = data.find(c => c.codigo === '01');
       const taller = data.find(c => c.codigo === '03');
+      const academia = data.find(c => c.codigo === '04');
       if (tienda) centroCostoTiendaId = tienda.id;
       if (taller) centroCostoTallerId = taller.id;
+      if (academia) centroCostoAcademiaId = academia.id;
     }
   }
 
@@ -4057,14 +4062,23 @@
   // ============================================================================
   // MI DEPARTAMENTO (vista simple para Cajero y Taller)
   // ============================================================================
+  let centroCostoForzadoMiDepartamento = null;
+
   function obtenerCentroCostoPropio() {
+    if (centroCostoForzadoMiDepartamento) return centroCostoForzadoMiDepartamento;
     if (rolActual === 'cajero') return centroCostoTiendaId;
     if (rolActual === 'taller') return centroCostoTallerId;
     return null;
   }
 
-  async function mostrarPantallaPagosPendientes() {
+  async function mostrarPantallaPagosPendientes(codigoDeptoForzado) {
     mostrarPantalla('pantallaPagosPendientes');
+    await cargarIdsDepartamentosClave();
+    if (codigoDeptoForzado === '01') centroCostoForzadoMiDepartamento = centroCostoTiendaId;
+    else if (codigoDeptoForzado === '03') centroCostoForzadoMiDepartamento = centroCostoTallerId;
+    else if (codigoDeptoForzado === '04') centroCostoForzadoMiDepartamento = centroCostoAcademiaId;
+    else centroCostoForzadoMiDepartamento = null;
+
     mostrarSubTabGrupo('pagosPendientes', 'subtabPagosResumen', document.querySelector('[data-subtab-btn="pagosPendientes"]'));
     ocultarMensaje('mensajeGasto');
     document.getElementById('gastoDescripcion').value = '';
