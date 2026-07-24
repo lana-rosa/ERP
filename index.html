@@ -1411,6 +1411,7 @@
   <div class="filtro-tipo" style="margin-bottom:20px;">
     <button class="chip-filtro activo" data-subtab-btn="talentoHumano" onclick="mostrarSubTabGrupo('talentoHumano', 'subtabRhDocumentos', this)">📁 Documentos</button>
     <button class="chip-filtro" data-subtab-btn="talentoHumano" onclick="mostrarSubTabGrupo('talentoHumano', 'subtabRhAutorizados', this)">📅 Autorizados del calendario</button>
+    <button class="chip-filtro" data-subtab-btn="talentoHumano" onclick="mostrarSubTabGrupo('talentoHumano', 'subtabRhCodigos', this); cargarCodigosAutorizacion();">🔐 Códigos de autorización</button>
   </div>
 
   <div id="subtabRhDocumentos" data-subtab-grupo="talentoHumano">
@@ -1425,6 +1426,22 @@
       <h2>¿Quién puede programar eventos en el calendario?</h2>
       <div class="subtitulo">Además de la administradora, puedes autorizar a otras personas del equipo a crear reuniones, capacitaciones, juntas o salidas.</div>
       <div id="listaAutorizadosCalendario"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+
+  <div id="subtabRhCodigos" data-subtab-grupo="talentoHumano" class="oculto">
+    <div class="panel">
+      <h2>🔐 Códigos de autorización de supervisor</h2>
+      <div class="subtitulo">Estos códigos los usa un cajero cuando necesita anular una venta ya registrada, o cuando la venta es para él/ella mismo/a. Solo tú puedes crearlos o quitarlos. Nunca se guardan en texto plano — ni siquiera tú podrás volver a verlos después de crearlos.</div>
+      <div id="listaCodigosAutorizacion"><div class="cargando">Cargando...</div></div>
+      <div style="margin-top:14px;padding:12px;background:var(--rosa-suave);border-radius:9px;">
+        <label style="margin-top:0;">Nombre de quien tendrá este código</label>
+        <input type="text" id="codigoNombreAutorizador" placeholder="Ej: Sara Loaiza Muñoz">
+        <label style="margin-top:8px;">Código secreto (mínimo 4 caracteres)</label>
+        <input type="text" id="codigoValorNuevo" placeholder="Ej: un PIN o palabra clave">
+        <button class="btn-mini guardar" style="width:100%;margin-top:8px;" onclick="crearCodigoAutorizacion()">+ Crear código</button>
+        <div class="mensaje" id="mensajeCodigoAutorizacion"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -2022,6 +2039,21 @@
     }
     rolActual = data.rol;
     await cargarIdsDepartamentosClave();
+    await cargarIdentidadPropiaEmpleado();
+  }
+
+  let miPropiaIdentidad = { numeroDocumento: null, nombre: null };
+
+  async function cargarIdentidadPropiaEmpleado() {
+    const { data } = await supabaseClient
+      .from('empleados')
+      .select('numero_documento, nombre_completo')
+      .eq('user_id', sesionActual.userId)
+      .eq('activo', true)
+      .maybeSingle();
+    if (data) {
+      miPropiaIdentidad = { numeroDocumento: data.numero_documento, nombre: data.nombre_completo };
+    }
   }
 
   // Carga los IDs de Tienda y Taller una sola vez, para filtrar catálogos por departamento
@@ -2442,6 +2474,33 @@
       if (!Number(pago.monto) || Number(pago.monto) <= 0) {
         mostrarMensaje('mensajeVenta', 'Cada método de pago debe tener un monto mayor a cero, o elimínalo.', 'error');
         return;
+      }
+    }
+
+    // Un cajero no puede venderse a sí mismo sin autorización de un supervisor
+    if (rolActual !== 'administrador') {
+      const idCliente = document.getElementById('clienteIdentificacion').value.trim();
+      const nombreCliente = document.getElementById('clienteNombre').value.trim().toLowerCase();
+      const esVentaPropia =
+        (miPropiaIdentidad.numeroDocumento && idCliente && idCliente === miPropiaIdentidad.numeroDocumento) ||
+        (miPropiaIdentidad.nombre && nombreCliente && nombreCliente === miPropiaIdentidad.nombre.toLowerCase());
+
+      if (esVentaPropia) {
+        const codigo = prompt('⚠️ Esta venta parece ser para ti mismo/a. Por seguridad, un cajero no puede venderse a sí mismo sin autorización.\n\nPídele a Sara (o a quien ella autorice) que ingrese su código de autorización para continuar:');
+        if (!codigo) {
+          mostrarMensaje('mensajeVenta', 'Venta cancelada: se necesita autorización de un supervisor.', 'error');
+          return;
+        }
+        const respVerif = await fetch(WORKER_URL + '/api/pos/autorizaciones/verificar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+          body: JSON.stringify({ codigo, tipo_accion: 'venta_propia_cajero', referencia_id: nombreCliente || idCliente })
+        });
+        const datosVerif = await respVerif.json();
+        if (!datosVerif.valido) {
+          mostrarMensaje('mensajeVenta', 'Código de autorización inválido. La venta no se registró.', 'error');
+          return;
+        }
       }
     }
 
@@ -3231,10 +3290,16 @@
   async function anularVenta(ventaId, consecutivo) {
     if (!confirm(`¿Estás segura de que quieres anular la venta ${consecutivo}? Esta acción no se puede deshacer.`)) return;
 
+    let codigoAutorizacion = null;
+    if (rolActual !== 'administrador') {
+      codigoAutorizacion = prompt('Esta acción requiere autorización. Pídele a Sara (o a quien ella autorice) que ingrese su código de autorización:');
+      if (!codigoAutorizacion) return;
+    }
+
     const resp = await fetch(WORKER_URL + '/api/pos/ventas/anular', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ venta_id: ventaId })
+      body: JSON.stringify({ venta_id: ventaId, codigo_autorizacion: codigoAutorizacion })
     });
 
     const datos = await resp.json();
@@ -6505,6 +6570,66 @@
     mostrarSubTabGrupo('talentoHumano', 'subtabRhDocumentos', document.querySelector('[data-subtab-btn="talentoHumano"]'));
     await cargarEmpleadosParaRh();
     await cargarAutorizadosCalendario();
+  }
+
+  // ============================================================
+  // CÓDIGOS DE AUTORIZACIÓN DE SUPERVISOR
+  // ============================================================
+  async function cargarCodigosAutorizacion() {
+    const contenedor = document.getElementById('listaCodigosAutorizacion');
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/autorizaciones/codigos', {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+
+    const { codigos } = await resp.json();
+    if (!codigos || codigos.length === 0) {
+      contenedor.innerHTML = '<div class="cargando">Todavía no has creado ningún código. Crea uno abajo.</div>';
+      return;
+    }
+
+    contenedor.innerHTML = codigos.map(c => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f4eef2;font-size:13px;">
+        <span>🔐 ${escaparHtml(c.nombre_autorizador)} <span style="opacity:0.5;font-size:11px;">(creado ${new Date(c.created_at).toLocaleDateString('es-CO')})</span></span>
+        <button class="btn-mini desactivar" onclick="eliminarCodigoAutorizacion('${c.id}')">Quitar</button>
+      </div>
+    `).join('');
+  }
+
+  async function crearCodigoAutorizacion() {
+    const nombre = document.getElementById('codigoNombreAutorizador').value.trim();
+    const codigo = document.getElementById('codigoValorNuevo').value.trim();
+    ocultarMensaje('mensajeCodigoAutorizacion');
+
+    if (!nombre) { mostrarMensaje('mensajeCodigoAutorizacion', 'Escribe el nombre de quien tendrá este código.', 'error'); return; }
+    if (!codigo || codigo.length < 4) { mostrarMensaje('mensajeCodigoAutorizacion', 'El código debe tener al menos 4 caracteres.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/autorizaciones/codigos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ nombre_autorizador: nombre, codigo })
+    });
+
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeCodigoAutorizacion', datos.error || 'No se pudo crear el código.', 'error'); return; }
+
+    mostrarMensaje('mensajeCodigoAutorizacion', `✅ Código creado para ${nombre}. Guárdalo en un lugar seguro — no se puede volver a ver.`, 'exito');
+    document.getElementById('codigoNombreAutorizador').value = '';
+    document.getElementById('codigoValorNuevo').value = '';
+    await cargarCodigosAutorizacion();
+  }
+
+  async function eliminarCodigoAutorizacion(id) {
+    if (!confirm('¿Quitar este código? Esa persona ya no podrá usarlo para autorizar acciones.')) return;
+    const resp = await fetch(WORKER_URL + '/api/pos/autorizaciones/codigos/eliminar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ id })
+    });
+    if (!resp.ok) { alert('No se pudo quitar el código.'); return; }
+    await cargarCodigosAutorizacion();
   }
 
   let empleadosRhCache = [];
