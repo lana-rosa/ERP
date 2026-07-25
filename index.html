@@ -584,7 +584,7 @@
 <nav id="sidebar">
   <div class="sidebar-marca">
     <div class="sidebar-oveja">🐑</div>
-    <div class="sidebar-nombre">Lana Rosa OS<span>Punto de venta</span></div>
+    <div class="sidebar-nombre">Lana Rosa OS<span id="sidebarSubtitulo">Punto de venta</span></div>
   </div>
 
   <div class="sidebar-nav">
@@ -1604,6 +1604,18 @@
         <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:400;"><input type="checkbox" value="taller" class="chkRolAdicionalNuevo" style="width:auto;"> Taller</label>
         <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:400;"><input type="checkbox" value="administrador" class="chkRolAdicionalNuevo" style="width:auto;"> Administrador</label>
       </div>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-weight:400;">
+        <input type="checkbox" id="nuevoUsuarioEsLider" style="width:auto;" onchange="document.getElementById('bloqueDeptoLiderado').classList.toggle('oculto', !this.checked)">
+        <span>Es líder/jefe de un departamento (no un operario/asistente)</span>
+      </label>
+      <div id="bloqueDeptoLiderado" class="oculto" style="margin-top:8px;">
+        <label>¿De cuál departamento?</label>
+        <select id="nuevoUsuarioDeptoLiderado">
+          <option value="01">Tienda/Mercería</option>
+          <option value="03">Taller</option>
+          <option value="04">Lana Rosa Academy</option>
+        </select>
+      </div>
       <button class="btn-principal" id="btnCrearUsuario" onclick="confirmarCrearUsuario()">Crear usuario</button>
       <div class="mensaje" id="mensajeCrearUsuario"></div>
     </div>
@@ -2474,7 +2486,7 @@
   async function obtenerRolUsuario() {
     const { data, error } = await supabaseClient
       .from('usuarios_roles')
-      .select('rol')
+      .select('rol, es_jefe_departamento, centro_costo_liderado_id, centros_costo(nombre)')
       .eq('user_id', sesionActual.userId)
       .eq('activo', true)
       .single();
@@ -2487,6 +2499,26 @@
     await cargarIdsDepartamentosClave();
     await cargarIdentidadPropiaEmpleado();
     await cargarRolesYPermisosPropios();
+    actualizarTituloSidebar(data);
+  }
+
+  function actualizarTituloSidebar(datosRol) {
+    const el = document.getElementById('sidebarSubtitulo');
+    if (!el) return;
+
+    let titulo = 'Punto de venta';
+    if (rolActual === 'administrador') {
+      titulo = 'Administradora';
+    } else if (datosRol.es_jefe_departamento && datosRol.centros_costo) {
+      titulo = 'Líder de ' + datosRol.centros_costo.nombre;
+    } else if (rolActual === 'cajero') {
+      titulo = 'Asistente de Tienda';
+    } else if (rolActual === 'taller') {
+      titulo = 'Asistente de Taller';
+    } else if (rolActual === 'contador') {
+      titulo = 'Contador';
+    }
+    el.textContent = titulo;
   }
 
   async function cargarRolesYPermisosPropios() {
@@ -5703,6 +5735,17 @@
             </label>
           `).join('')}
         </div>
+        <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:11px;">
+          <label style="display:flex;align-items:center;gap:4px;font-weight:400;margin:0;">
+            <input type="checkbox" style="width:auto;" ${u.es_jefe_departamento ? 'checked' : ''} onchange="toggleLiderazgoUsuario('${u.user_id}', this.checked, this)"> Es líder/jefe de departamento
+          </label>
+          <select class="selectDeptoLiderado-${u.user_id}" onchange="toggleLiderazgoUsuario('${u.user_id}', true, null, this.value)" style="width:auto;padding:5px 7px;font-size:11px;${u.es_jefe_departamento ? '' : 'display:none;'}">
+            <option value="01" ${u.centro_costo_liderado_id && u.centros_costo && u.centros_costo.nombre === 'Tienda/Mercería' ? 'selected' : ''}>Tienda/Mercería</option>
+            <option value="03" ${u.centros_costo && u.centros_costo.nombre === 'Taller de Tejido' ? 'selected' : ''}>Taller</option>
+            <option value="04" ${u.centros_costo && u.centros_costo.nombre === 'Lana Rosa Academy' ? 'selected' : ''}>Lana Rosa Academy</option>
+          </select>
+          ${u.es_jefe_departamento && u.centros_costo ? `<span style="opacity:0.6;">→ Líder de ${escaparHtml(u.centros_costo.nombre)}</span>` : ''}
+        </div>
         <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
           <button class="btn-mini editar" onclick="abrirPermisosUsuario('${u.user_id}', '${escaparHtml(u.nombre_completo || '')}')">⚙️ Permisos</button>
           <button class="btn-mini editar" onclick="resetearPasswordUsuario('${u.user_id}', '${escaparHtml(u.nombre_completo || '')}')">🔑 Resetear contraseña</button>
@@ -5718,6 +5761,8 @@
     const password = document.getElementById('nuevoUsuarioPassword').value;
     const rol = document.getElementById('nuevoUsuarioRol').value;
     const rolesAdicionales = Array.from(document.querySelectorAll('.chkRolAdicionalNuevo:checked')).map(c => c.value);
+    const esLider = document.getElementById('nuevoUsuarioEsLider').checked;
+    const deptoLiderado = document.getElementById('nuevoUsuarioDeptoLiderado').value;
     ocultarMensaje('mensajeCrearUsuario');
 
     if (!nombre || !correo || !password) { mostrarMensaje('mensajeCrearUsuario', 'Completa nombre, correo y contraseña temporal.', 'error'); return; }
@@ -5729,7 +5774,10 @@
     const resp = await fetch(WORKER_URL + '/api/pos/usuarios', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ nombre_completo: nombre, correo, contrasena_temporal: password, rol, roles_adicionales: rolesAdicionales })
+      body: JSON.stringify({
+        nombre_completo: nombre, correo, contrasena_temporal: password, rol, roles_adicionales: rolesAdicionales,
+        es_jefe_departamento: esLider, codigo_centro_costo_liderado: esLider ? deptoLiderado : null
+      })
     });
     btn.disabled = false;
 
@@ -5741,6 +5789,8 @@
     document.getElementById('nuevoUsuarioCorreo').value = '';
     document.getElementById('nuevoUsuarioPassword').value = '';
     document.querySelectorAll('.chkRolAdicionalNuevo').forEach(c => c.checked = false);
+    document.getElementById('nuevoUsuarioEsLider').checked = false;
+    document.getElementById('bloqueDeptoLiderado').classList.add('oculto');
     await cargarListaUsuarios();
   }
 
@@ -5762,6 +5812,20 @@
       body: JSON.stringify({ user_id: userId, rol })
     });
     if (!resp.ok) { alert('No se pudo actualizar el rol adicional.'); }
+    await cargarListaUsuarios();
+  }
+
+  async function toggleLiderazgoUsuario(userId, esLider, checkboxEl, deptoDesdeSelect) {
+    const selectEl = document.querySelector(`.selectDeptoLiderado-${userId}`);
+    if (checkboxEl) selectEl.style.display = esLider ? '' : 'none';
+    const codigoDepto = deptoDesdeSelect || (selectEl ? selectEl.value : '01');
+
+    const resp = await fetch(WORKER_URL + '/api/pos/usuarios/liderazgo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ user_id: userId, es_jefe_departamento: esLider, codigo_centro_costo: esLider ? codigoDepto : null })
+    });
+    if (!resp.ok) { alert('No se pudo actualizar el liderazgo.'); }
     await cargarListaUsuarios();
   }
 
