@@ -618,6 +618,7 @@
         <button class="nav-btn" id="nav-historial" onclick="mostrarPantallaHistorial('01')"><span class="nav-icon">📋</span> Historial ventas</button>
         <button class="nav-btn" id="nav-pedidos-canal" onclick="mostrarPantallaPedidosCanal()"><span class="nav-icon">📱</span> Pedidos WhatsApp/Redes</button>
         <button class="nav-btn" id="nav-solicitudes-tienda" onclick="mostrarPantallaSolicitudes()"><span class="nav-icon">📦</span> Solicitud de insumos del Taller</button>
+        <button class="nav-btn" onclick="mostrarPantallaAcademiaKits()"><span class="nav-icon">🧶</span> Kits de tejido</button>
         <button class="nav-btn" id="nav-inventario-tienda" onclick="mostrarPantallaInventario('01')"><span class="nav-icon">📊</span> Inventario</button>
         <button class="nav-btn" id="nav-ajustestock" onclick="mostrarPantallaAjusteStock()"><span class="nav-icon">📥</span> Entrada mercancía</button>
         <button class="nav-btn" id="nav-turno" onclick="irATurnoActivo()"><span class="nav-icon">💵</span> Turno de caja</button>
@@ -630,10 +631,8 @@
       <button class="sidebar-depto-header" id="headerDeptoTaller" onclick="toggleSidebarDepto('deptoTallerSubmenu', 'headerDeptoTaller')">🧶 Taller <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoTallerSubmenu">
         <button class="nav-btn" id="nav-consumotaller" onclick="mostrarPantallaPedidosCrm()"><span class="nav-icon">🧶</span> Consumo de material</button>
-        <button class="nav-btn" onclick="mostrarPantallaHistorial('03')"><span class="nav-icon">📋</span> Historial ventas</button>
         <button class="nav-btn" id="nav-inventario-taller" onclick="mostrarPantallaInventario('03')"><span class="nav-icon">📊</span> Inventario</button>
         <!-- La solicitud de insumos a la Tienda ahora vive dentro de "Consumo de material", por pedido -->
-        <button class="nav-btn" id="nav-pagos-pendientes" onclick="mostrarPantallaPagosPendientes('03')"><span class="nav-icon">🏬</span> Caja, gastos y presupuesto</button>
       </div>
     </div>
 
@@ -642,7 +641,6 @@
       <div class="sidebar-depto-submenu" id="deptoAcademiaSubmenu">
         <button class="nav-btn" onclick="irARegistrarVentaAcademiaDesdeTienda()"><span class="nav-icon">💰</span> Registrar venta</button>
         <button class="nav-btn" onclick="mostrarPantallaHistorial('04')"><span class="nav-icon">📋</span> Historial ventas</button>
-        <button class="nav-btn" onclick="mostrarPantallaAcademiaKits()"><span class="nav-icon">🧶</span> Kits de tejido</button>
         <button class="nav-btn" onclick="mostrarPantallaAcademiaInforme()"><span class="nav-icon">📈</span> Informe y metas</button>
         <button class="nav-btn" onclick="mostrarPantallaDepartamentos()"><span class="nav-icon">📦</span> Compras a la Tienda</button>
       </div>
@@ -981,7 +979,7 @@
       </div>
       <div class="filtro-tipo">
         <button class="chip-filtro activo" data-filtro-inv="todos" onclick="cambiarFiltroInventario('todos', this)">Todos</button>
-        <button class="chip-filtro" data-filtro-inv="producto_terminado" onclick="cambiarFiltroInventario('producto_terminado', this)">Producto tejido</button>
+        <button class="chip-filtro" id="chipFiltroProductoTejido" data-filtro-inv="producto_terminado" onclick="cambiarFiltroInventario('producto_terminado', this)">Producto tejido</button>
         <button class="chip-filtro" data-filtro-inv="merceria" onclick="cambiarFiltroInventario('merceria', this)">Mercería</button>
       </div>
       <label for="filtroCategoriaInv" style="margin-top:10px;">Categoría</label>
@@ -1002,7 +1000,7 @@
       </div>
       <label for="invTipo">Tipo</label>
       <select id="invTipo" onchange="cargarCategoriasParaFormulario()">
-        <option value="producto_terminado">Producto tejido</option>
+        <option value="producto_terminado" id="opcionInvTipoProductoTerminado">Producto tejido</option>
         <option value="merceria">Mercería / Insumo</option>
       </select>
       <label for="invCategoria">Categoría</label>
@@ -2107,8 +2105,8 @@
 <!-- ===== PANTALLA: LANA ROSA ACADEMY ===== -->
 <div id="pantallaAcademia" class="oculto contenido">
   <div class="page-header">
-    <h1>🎓 Lana Rosa Academy</h1>
-    <div class="subtitulo">Clases presenciales, cursos virtuales, YouTube, patrones de tejido, libros y mini apps. Presupuesto y caja compartidos; resultados por subárea.</div>
+    <h1 id="tituloPantallaAcademia">🧶 Kits de tejido</h1>
+    <div class="subtitulo" id="subtituloPantallaAcademia">Los kits ahora se elaboran directamente en la Tienda, listos para agregarse a la venta de una clase.</div>
   </div>
 
   <div class="filtro-tipo" style="margin-bottom:20px;">
@@ -2645,7 +2643,7 @@
     mostrar('nav-turno', esAdmin || esCajero);
 
     // Botones específicos dentro de Taller que no aplican a Cajero/Admin visitando ahí
-    mostrar('nav-pagos-pendientes', esCajero || esTaller);
+    mostrar('nav-pagos-pendientes', esCajero);
 
     // Ítems individuales — visibles por defecto si su grupo lo está, pero se
     // pueden apagar uno por uno desde los permisos manuales.
@@ -4001,6 +3999,23 @@
     await cargarCategoriasInventario();
     cargarCategoriasParaFormulario();
     await cargarProveedoresParaSelectorInventario();
+
+    // El Taller ya no maneja inventario de producto terminado — solo insumos/mercería.
+    const esTallerForzado = codigoDeptoForzado === '03';
+    document.getElementById('chipFiltroProductoTejido').classList.toggle('oculto', esTallerForzado);
+    document.getElementById('opcionInvTipoProductoTerminado').classList.toggle('oculto', esTallerForzado);
+    if (esTallerForzado) {
+      document.getElementById('invTipo').value = 'merceria';
+      cargarCategoriasParaFormulario();
+      filtroInventarioActual = 'merceria';
+      document.querySelectorAll('[data-filtro-inv]').forEach(c => c.classList.remove('activo'));
+      document.querySelector('[data-filtro-inv="merceria"]').classList.add('activo');
+    } else {
+      filtroInventarioActual = 'todos';
+      document.querySelectorAll('[data-filtro-inv]').forEach(c => c.classList.remove('activo'));
+      document.querySelector('[data-filtro-inv="todos"]').classList.add('activo');
+    }
+
     await cargarInventarioGestion();
     actualizarVisibilidadSincronizarCrm();
     if (inventarioDeptoActivo === centroCostoTiendaId) {
@@ -9508,9 +9523,7 @@
   }
 
   async function mostrarPantallaAcademia() {
-    mostrarPantalla('pantallaAcademia');
-    mostrarSubTabGrupo('academia', 'subtabAcademiaKits', document.querySelectorAll('[data-subtab-btn="academia"]')[0]);
-    await cargarRadicadosKit();
+    await mostrarPantallaAcademiaKits();
   }
 
   // Las ventas de Academy se centralizaron en la caja de Tienda — este acceso
@@ -9524,12 +9537,16 @@
 
   async function mostrarPantallaAcademiaKits() {
     mostrarPantalla('pantallaAcademia');
+    document.getElementById('tituloPantallaAcademia').textContent = '🧶 Kits de tejido';
+    document.getElementById('subtituloPantallaAcademia').textContent = 'Los kits se elaboran directamente en la Tienda, listos para agregarse a la venta de una clase.';
     mostrarSubTabGrupo('academia', 'subtabAcademiaKits', document.querySelectorAll('[data-subtab-btn="academia"]')[0]);
     await cargarRadicadosKit();
   }
 
   async function mostrarPantallaAcademiaInforme() {
     mostrarPantalla('pantallaAcademia');
+    document.getElementById('tituloPantallaAcademia').textContent = '📊 Informe y metas — Lana Rosa Academy';
+    document.getElementById('subtituloPantallaAcademia').textContent = 'Resultados por subárea: clases, cursos, YouTube, patrones, libros y mini apps.';
     document.getElementById('academiaPeriodoInforme').value = new Date().toISOString().slice(0, 7);
     mostrarSubTabGrupo('academia', 'subtabAcademiaInforme', document.querySelectorAll('[data-subtab-btn="academia"]')[1]);
     await cargarInformeAcademia();
