@@ -23,7 +23,26 @@
     --sidebar-width: 220px;
     --sidebar-bg: #2d1a26;
     --sidebar-texto: #f0e0ec;
+    --fondo-panel: #ffffff;
+    --fondo-input: #fdfbfd;
+    --borde-input: #e4d9e2;
   }
+
+  /* ===== MODO OSCURO =====
+     Reutiliza las mismas variables que ya usa casi toda la app (--blanco-hueso
+     como fondo general, --texto-oscuro como texto general), así que este
+     bloque cambia la mayoría de la interfaz sin tener que tocar cada regla. */
+  html[data-tema="oscuro"] {
+    --blanco-hueso: #1c1620;
+    --texto-oscuro: #ecdfe8;
+    --rosa-suave: #3a2a38;
+    --fondo-panel: #2a2130;
+    --fondo-input: #352b3d;
+    --borde-input: #4a3d54;
+    --sombra: 0 2px 14px rgba(0, 0, 0, 0.4);
+  }
+  html[data-tema="oscuro"] .cargando { color: #b8a8bc; }
+  html[data-tema="oscuro"] .subtitulo { opacity: 0.75; }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -164,7 +183,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 20px 32px;
-    background: white;
+    background: var(--fondo-panel);
     border-bottom: 1px solid #f0e8ee;
   }
 
@@ -211,7 +230,7 @@
 
   /* ===== TARJETAS ===== */
   .tarjeta {
-    background: white;
+    background: var(--fondo-panel);
     border-radius: 14px;
     box-shadow: var(--sombra);
     padding: 24px;
@@ -242,7 +261,8 @@
   }
 
   .panel {
-    background: white;
+    background: var(--fondo-panel);
+    color: var(--texto-oscuro);
     border-radius: 14px;
     box-shadow: var(--sombra);
     padding: 20px;
@@ -262,7 +282,7 @@
   }
 
   .login-card {
-    background: white;
+    background: var(--fondo-panel);
     border-radius: 16px;
     box-shadow: var(--sombra);
     padding: 36px 32px;
@@ -301,11 +321,12 @@
 
   input, select {
     width: 100%; padding: 11px 13px;
-    border: 1.5px solid #e4d9e2;
+    border: 1.5px solid var(--borde-input);
     border-radius: 9px;
     font-family: 'Poppins', sans-serif;
     font-size: 14px;
-    background: #fdfbfd;
+    background: var(--fondo-input);
+    color: var(--texto-oscuro);
     transition: border-color 0.15s ease;
   }
 
@@ -331,7 +352,7 @@
   .btn-secundario {
     width: 100%; padding: 12px;
     margin-top: 10px;
-    background: white; color: var(--rosa-principal);
+    background: var(--fondo-panel); color: var(--rosa-principal);
     border: 1.5px solid var(--rosa-principal);
     border-radius: 9px;
     font-family: 'Poppins', sans-serif;
@@ -341,7 +362,7 @@
 
   .btn-secundario:hover { background: var(--rosa-suave); }
   .btn-secundario:disabled { opacity: 0.4; cursor: not-allowed; }
-  .btn-secundario:disabled:hover { background: white; }
+  .btn-secundario:disabled:hover { background: var(--fondo-panel); }
 
   .btn-mini {
     flex: 1; padding: 8px;
@@ -413,7 +434,7 @@
   .chip-filtro {
     padding: 5px 14px; border-radius: 20px;
     border: 1.5px solid var(--rosa-suave);
-    background: white; color: var(--texto-oscuro);
+    background: var(--fondo-panel); color: var(--texto-oscuro);
     font-size: 12px; font-family: 'Poppins', sans-serif;
     cursor: pointer; font-weight: 500;
   }
@@ -449,7 +470,7 @@
   .btn-cantidad {
     width: 26px; height: 26px; border-radius: 50%;
     border: 1.5px solid var(--rosa-medio);
-    background: white; color: var(--rosa-principal);
+    background: var(--fondo-panel); color: var(--rosa-principal);
     font-weight: 700; font-size: 14px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
   }
@@ -561,14 +582,14 @@
   /* ===== CALENDARIO ESTILO GOOGLE ===== */
   .gcal-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
   .gcal-toolbar-izq { display: flex; align-items: center; gap: 10px; }
-  .gcal-btn-hoy { padding: 7px 16px; border-radius: 20px; border: 1px solid #dadce0; background: white; font-family: 'Poppins', sans-serif; font-size: 12.5px; font-weight: 600; color: var(--texto-oscuro); cursor: pointer; }
+  .gcal-btn-hoy { padding: 7px 16px; border-radius: 20px; border: 1px solid #dadce0; background: var(--fondo-panel); font-family: 'Poppins', sans-serif; font-size: 12.5px; font-weight: 600; color: var(--texto-oscuro); cursor: pointer; }
   .gcal-btn-hoy:hover { background: #f4eef2; }
   .gcal-nav-flecha { width: 32px; height: 32px; border-radius: 50%; border: none; background: none; font-size: 15px; cursor: pointer; color: var(--texto-oscuro); }
   .gcal-nav-flecha:hover { background: #f0e8ee; }
   .gcal-titulo { font-size: 16px; font-weight: 500; color: var(--texto-oscuro); text-transform: capitalize; }
   .gcal-grid { display: grid; grid-template-columns: repeat(7, 1fr); border-top: 1px solid #e4d9e2; border-left: 1px solid #e4d9e2; }
   .gcal-dia-nombre { text-align: center; font-size: 10.5px; font-weight: 600; color: #70757a; padding: 6px 0; text-transform: uppercase; letter-spacing: 0.5px; }
-  .gcal-celda { min-height: 84px; border-right: 1px solid #e4d9e2; border-bottom: 1px solid #e4d9e2; padding: 4px; cursor: pointer; position: relative; background: white; }
+  .gcal-celda { min-height: 84px; border-right: 1px solid #e4d9e2; border-bottom: 1px solid #e4d9e2; padding: 4px; cursor: pointer; position: relative; background: var(--fondo-panel); }
   .gcal-celda:hover { background: #f8f5f7; }
   .gcal-celda.vacia { background: #fbf9fa; cursor: default; }
   .gcal-celda .gcal-num-dia { width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 12.5px; font-weight: 500; }
@@ -645,7 +666,6 @@
         <button class="nav-btn" id="nav-reportes-financieros" onclick="mostrarPantallaReportesFinancieros()"><span class="nav-icon">📊</span> Por departamento y global</button>
         <button class="nav-btn" onclick="mostrarPantallaHistorial()"><span class="nav-icon">📋</span> Consolidado de ventas (3 deptos)</button>
         <button class="nav-btn" onclick="mostrarPantallaInventario()"><span class="nav-icon">📊</span> Inventario general (3 deptos)</button>
-        <button class="nav-btn" id="nav-gestion-usuarios" onclick="mostrarPantallaUsuarios()"><span class="nav-icon">👥</span> Usuarios y permisos</button>
       </div>
     </div>
     <div class="sidebar-depto" id="deptoFondoEmprenderGrupo" style="display:none;">
@@ -655,6 +675,16 @@
         <button class="nav-btn" onclick="mostrarPantallaFeDocumentos()"><span class="nav-icon">📄</span> Validar documentos</button>
         <button class="nav-btn" onclick="mostrarPantallaFePresupuesto()"><span class="nav-icon">💰</span> Ejecución presupuestal</button>
         <button class="nav-btn" onclick="mostrarPantallaFeConfig()"><span class="nav-icon">⚙️</span> Configuración del proyecto</button>
+      </div>
+    </div>
+
+    <div class="sidebar-depto" id="deptoConfiguracionGrupo" style="display:none;">
+      <button class="sidebar-depto-header" id="headerDeptoConfig" onclick="toggleSidebarDepto('deptoConfigSubmenu', 'headerDeptoConfig')">⚙️ Configuración <span class="chevron">▾</span></button>
+      <div class="sidebar-depto-submenu" id="deptoConfigSubmenu">
+        <button class="nav-btn" id="nav-gestion-usuarios" onclick="mostrarPantallaUsuarios()"><span class="nav-icon">👥</span> Usuarios y permisos</button>
+        <button class="nav-btn" onclick="mostrarPantallaMiPerfil()"><span class="nav-icon">👤</span> Mi perfil</button>
+        <button class="nav-btn" onclick="mostrarPantallaCederPermisos()"><span class="nav-icon">🔑</span> Ceder permisos de administrador</button>
+        <button class="nav-btn" onclick="mostrarPantallaApariencia()"><span class="nav-icon">🎨</span> Apariencia</button>
       </div>
     </div>
   </div>
@@ -1011,7 +1041,7 @@
     <div style="display:flex;gap:8px;">
       <div style="position:relative;flex:1;">
         <input type="text" id="inputSkuAjuste" placeholder="Escanea el código o escribe el nombre..." oninput="buscarProductoEntrada()" autocomplete="off">
-        <div id="sugerenciasEntrada" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1.5px solid var(--rosa-medio);border-radius:9px;margin-top:4px;max-height:220px;overflow-y:auto;z-index:50;box-shadow:var(--sombra);"></div>
+        <div id="sugerenciasEntrada" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--fondo-panel);border:1.5px solid var(--rosa-medio);border-radius:9px;margin-top:4px;max-height:220px;overflow-y:auto;z-index:50;box-shadow:var(--sombra);"></div>
       </div>
       <button type="button" class="btn-mini editar" style="max-width:90px;" onclick="abrirEscanerCodigoBarras('inputSkuAjuste', buscarProductoEntrada)">📷 Escanear</button>
     </div>
@@ -1065,7 +1095,7 @@
       <label for="pedidoBuscarProducto">Buscar producto en el inventario de Tienda <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
       <div style="position:relative;">
         <input type="text" id="pedidoBuscarProducto" placeholder="Si ya existe en stock, búscalo aquí..." oninput="buscarProductoPedido()" autocomplete="off">
-        <div id="sugerenciasPedidoProducto" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1.5px solid var(--rosa-medio);border-radius:9px;margin-top:4px;max-height:200px;overflow-y:auto;z-index:50;box-shadow:var(--sombra);"></div>
+        <div id="sugerenciasPedidoProducto" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--fondo-panel);border:1.5px solid var(--rosa-medio);border-radius:9px;margin-top:4px;max-height:200px;overflow-y:auto;z-index:50;box-shadow:var(--sombra);"></div>
       </div>
       <div id="pedidoProductoInfo" style="display:none;margin-top:8px;padding:9px 11px;background:var(--rosa-suave);border-radius:9px;font-size:12.5px;"></div>
 
@@ -1263,7 +1293,7 @@
       <label for="ventaInternaBuscar">Buscar producto en el inventario del vendedor</label>
       <div style="position:relative;">
         <input type="text" id="ventaInternaBuscar" placeholder="Escribe el nombre del producto..." oninput="buscarProductoVentaInterna()" autocomplete="off" disabled>
-        <div id="sugerenciasVentaInterna" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1.5px solid var(--rosa-medio);border-radius:9px;margin-top:4px;max-height:220px;overflow-y:auto;z-index:50;box-shadow:var(--sombra);"></div>
+        <div id="sugerenciasVentaInterna" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--fondo-panel);border:1.5px solid var(--rosa-medio);border-radius:9px;margin-top:4px;max-height:220px;overflow-y:auto;z-index:50;box-shadow:var(--sombra);"></div>
       </div>
       <div id="productoVentaInternaInfo" style="display:none;margin-top:10px;padding:10px 12px;background:var(--rosa-suave);border-radius:9px;font-size:13px;"></div>
 
@@ -1638,6 +1668,78 @@
   </div>
 </div>
 
+<!-- ===== PANTALLA: APARIENCIA ===== -->
+<div id="pantallaApariencia" class="oculto contenido">
+  <div class="page-header">
+    <h1>🎨 Apariencia</h1>
+    <div class="subtitulo">Elige cómo se ve el sistema para ti. Se guarda en este dispositivo.</div>
+  </div>
+  <div class="panel" style="max-width:420px;">
+    <label style="margin-top:0;">Modo de visualización</label>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn-secundario" id="btnTemaClaro" style="margin-top:0;flex:1;" onclick="cambiarTema('claro')">☀️ Claro</button>
+      <button class="btn-secundario" id="btnTemaOscuro" style="margin-top:0;flex:1;" onclick="cambiarTema('oscuro')">🌙 Oscuro</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PANTALLA: MI PERFIL ===== -->
+<div id="pantallaMiPerfil" class="oculto contenido">
+  <div class="page-header">
+    <h1>👤 Mi perfil</h1>
+    <div class="subtitulo">Actualiza tu nombre, correo o contraseña.</div>
+  </div>
+  <div class="panel" style="max-width:420px;">
+    <label for="miPerfilNombre">Nombre completo</label>
+    <input type="text" id="miPerfilNombre">
+    <label for="miPerfilCorreo">Correo</label>
+    <input type="email" id="miPerfilCorreo">
+    <button class="btn-principal" onclick="guardarMiPerfil()">Guardar cambios</button>
+    <div class="mensaje" id="mensajeMiPerfil"></div>
+
+    <label for="miPerfilPasswordActual" style="margin-top:24px;">Contraseña actual <span style="font-size:10px;opacity:0.6;">(para cambiar tu contraseña)</span></label>
+    <input type="password" id="miPerfilPasswordActual">
+    <label for="miPerfilPasswordNueva">Nueva contraseña</label>
+    <input type="password" id="miPerfilPasswordNueva">
+    <button class="btn-secundario" onclick="cambiarMiPassword()">Cambiar contraseña</button>
+    <div class="mensaje" id="mensajeMiPassword"></div>
+  </div>
+</div>
+
+<!-- ===== PANTALLA: CEDER PERMISOS DE ADMINISTRADOR ===== -->
+<div id="pantallaCederPermisos" class="oculto contenido">
+  <div class="page-header">
+    <h1>🔑 Ceder permisos de administrador</h1>
+    <div class="subtitulo">Para incapacidad, licencia, vacaciones (temporal) o renuncia (permanente). Por seguridad, esto exige tu contraseña.</div>
+  </div>
+  <div class="panel" style="max-width:480px;">
+    <label for="cederUsuarioDestino">¿A quién le cedes los permisos?</label>
+    <select id="cederUsuarioDestino"><option value="">Cargando usuarios...</option></select>
+
+    <label for="cederTipo" style="margin-top:14px;">Tipo de cesión</label>
+    <select id="cederTipo" onchange="cambiarTipoCesionPermisos()">
+      <option value="temporal">Temporal (incapacidad, licencia, vacaciones)</option>
+      <option value="permanente">Permanente (renuncia)</option>
+    </select>
+
+    <div id="bloqueCederFecha">
+      <label for="cederFechaFin">¿Hasta qué fecha?</label>
+      <input type="date" id="cederFechaFin">
+    </div>
+
+    <label id="labelCederDesactivar" class="oculto" style="display:flex;align-items:center;gap:8px;margin-top:14px;font-weight:400;">
+      <input type="checkbox" id="cederDesactivarMiCuenta" style="width:auto;">
+      <span>Además, desactivar mi propia cuenta (marca esto solo si ya no vas a seguir trabajando aquí)</span>
+    </label>
+
+    <label for="cederPasswordConfirmacion" style="margin-top:14px;">Tu contraseña <span style="font-size:10px;opacity:0.6;">(obligatoria para confirmar)</span></label>
+    <input type="password" id="cederPasswordConfirmacion" placeholder="Escribe tu contraseña actual">
+
+    <button class="btn-principal" style="background:var(--rojo-error);" onclick="confirmarCederPermisos()">Ceder permisos de administrador</button>
+    <div class="mensaje" id="mensajeCederPermisos"></div>
+  </div>
+</div>
+
 <!-- ===== PANTALLA: CALENDARIO DEL EQUIPO ===== -->
 <div id="pantallaCalendario" class="oculto contenido">
   <div class="page-header">
@@ -1989,11 +2091,11 @@
 <!-- Lista desplegable de "Buscar producto" — vive fuera de cualquier panel con
      scroll propio, y se posiciona con JS, para que siempre se vea completa por
      encima de todo, sin necesidad de desplazar la barra lateral del panel. -->
-<div id="listaCatalogo" style="display:none;position:fixed;background:white;border:1.5px solid var(--rosa-medio);border-radius:9px;min-height:170px;max-height:min(420px, 60vh);overflow-y:auto;z-index:500;box-shadow:var(--sombra);"></div>
+<div id="listaCatalogo" style="display:none;position:fixed;background:var(--fondo-panel);border:1.5px solid var(--rosa-medio);border-radius:9px;min-height:170px;max-height:min(420px, 60vh);overflow-y:auto;z-index:500;box-shadow:var(--sombra);"></div>
 
 <!-- ===== MODAL: ESCÁNER DE CÓDIGO DE BARRAS ===== -->
 <div id="modalEscanerCodigoBarras" class="oculto" style="position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:500;display:none;align-items:center;justify-content:center;">
-  <div style="background:white;border-radius:14px;padding:20px;max-width:420px;width:90%;">
+  <div style="background:var(--fondo-panel);border-radius:14px;padding:20px;max-width:420px;width:90%;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
       <h2 style="font-size:16px;">📷 Escanear código de barras</h2>
       <button onclick="cerrarEscanerCodigoBarras()" style="background:none;border:none;font-size:20px;cursor:pointer;">✕</button>
@@ -2039,6 +2141,13 @@
 
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+  // Aplicar el tema guardado desde el primer momento (incluso antes de iniciar sesión)
+  function aplicarTema(tema) {
+    document.documentElement.setAttribute('data-tema', tema);
+    localStorage.setItem('lanarosa_tema', tema);
+  }
+  aplicarTema(localStorage.getItem('lanarosa_tema') || 'claro');
+
   let sesionActual = null; // { token, userId, email }
   let rolActual = null;
   let turnoActivoActual = null;
@@ -2050,7 +2159,7 @@
   // UTILIDADES
   // ============================================================================
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaDepartamentos', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaAbrirTurnoAcademia', 'pantallaTurnoActivoAcademia', 'pantallaCerrarTurnoAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaUsuarios', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaDepartamentos', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaAbrirTurnoAcademia', 'pantallaTurnoActivoAcademia', 'pantallaCerrarTurnoAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -2282,6 +2391,7 @@
     mostrar('deptoTalentoGrupo', esAdmin);
     mostrar('deptoReportesGrupo', esAdmin);
     mostrar('deptoFondoEmprenderGrupo', esAdmin);
+    mostrar('deptoConfiguracionGrupo', esAdmin);
 
     // Turno de caja solo aplica a quien maneja caja física (Tienda)
     mostrar('nav-turno', esAdmin || esCajero);
@@ -2524,9 +2634,12 @@
   async function cargarRolesYPermisosPropios() {
     const { data: adicionales } = await supabaseClient
       .from('roles_adicionales_usuario')
-      .select('rol')
+      .select('rol, fecha_expiracion')
       .eq('user_id', sesionActual.userId);
-    rolesAdicionalesActual = (adicionales || []).map(r => r.rol);
+    const ahora = new Date();
+    rolesAdicionalesActual = (adicionales || [])
+      .filter(r => !r.fecha_expiracion || new Date(r.fecha_expiracion) > ahora)
+      .map(r => r.rol);
 
     const resp = await fetch(WORKER_URL + '/api/pos/usuarios/permisos', {
       headers: { Authorization: 'Bearer ' + sesionActual.token }
@@ -2656,7 +2769,7 @@
             const hora = v.horaGuardado.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
             const nombreCliente = v.cliente.nombre || 'Sin nombre';
             return `
-              <div style="background:white;border-radius:8px;padding:8px 10px;font-size:12px;display:flex;align-items:center;gap:8px;border:1px solid #f0d98c;">
+              <div style="background:var(--fondo-panel);border-radius:8px;padding:8px 10px;font-size:12px;display:flex;align-items:center;gap:8px;border:1px solid #f0d98c;">
                 <span>${escaparHtml(nombreCliente)} — ${formatearMoneda(totalV)} <span style="opacity:0.6;">(${hora})</span></span>
                 <button class="btn-mini guardar" style="padding:5px 10px;" onclick="reanudarVentaEnEspera(${v.idEspera})">Reanudar</button>
                 <button class="btn-mini desactivar" style="padding:5px 8px;" onclick="eliminarVentaEnEspera(${v.idEspera})">✕</button>
@@ -5468,7 +5581,7 @@
             <span>Presupuesto: ${formatearMoneda(c.monto_presupuestado)}</span>
           </div>
           ${c.monto_presupuestado > 0 ? `
-            <div style="background:white;border-radius:6px;height:8px;margin-top:8px;overflow:hidden;">
+            <div style="background:var(--fondo-panel);border-radius:6px;height:8px;margin-top:8px;overflow:hidden;">
               <div style="background:${color.texto};height:100%;width:${porcentajeVisual}%;"></div>
             </div>
             <div style="font-size:11px;text-align:right;margin-top:3px;opacity:0.6;">${c.porcentaje_ejecutado}% usado</div>
@@ -5901,6 +6014,149 @@
     if (!resp.ok) { mostrarMensaje('mensajePermisosUsuario', 'No se pudo restablecer.', 'error'); return; }
     document.querySelectorAll('.chkPermisoModulo').forEach(chk => chk.checked = true);
     mostrarMensaje('mensajePermisosUsuario', '✅ Permisos personalizados eliminados. Ahora se rige solo por su rol.', 'exito');
+  }
+
+  // ============================================================
+  // APARIENCIA (modo claro/oscuro)
+  // ============================================================
+  function mostrarPantallaApariencia() {
+    mostrarPantalla('pantallaApariencia');
+    actualizarBotonesTema();
+  }
+
+  function cambiarTema(tema) {
+    aplicarTema(tema);
+    actualizarBotonesTema();
+  }
+
+  function actualizarBotonesTema() {
+    const actual = localStorage.getItem('lanarosa_tema') || 'claro';
+    const btnClaro = document.getElementById('btnTemaClaro');
+    const btnOscuro = document.getElementById('btnTemaOscuro');
+    if (!btnClaro || !btnOscuro) return;
+    btnClaro.style.background = actual === 'claro' ? 'var(--rosa-suave)' : '';
+    btnOscuro.style.background = actual === 'oscuro' ? 'var(--rosa-suave)' : '';
+  }
+
+  // ============================================================
+  // MI PERFIL
+  // ============================================================
+  function mostrarPantallaMiPerfil() {
+    mostrarPantalla('pantallaMiPerfil');
+    ocultarMensaje('mensajeMiPerfil');
+    ocultarMensaje('mensajeMiPassword');
+    document.getElementById('miPerfilNombre').value = miPropiaIdentidad.nombre || '';
+    document.getElementById('miPerfilCorreo').value = sesionActual.email || '';
+    document.getElementById('miPerfilPasswordActual').value = '';
+    document.getElementById('miPerfilPasswordNueva').value = '';
+  }
+
+  async function guardarMiPerfil() {
+    const nombre = document.getElementById('miPerfilNombre').value.trim();
+    const correo = document.getElementById('miPerfilCorreo').value.trim();
+    ocultarMensaje('mensajeMiPerfil');
+
+    if (!nombre) { mostrarMensaje('mensajeMiPerfil', 'Escribe tu nombre completo.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/mi-perfil', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ nombre_completo: nombre, correo: correo !== sesionActual.email ? correo : undefined })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeMiPerfil', datos.error || 'No se pudo guardar.', 'error'); return; }
+
+    mostrarMensaje('mensajeMiPerfil', '✅ Datos actualizados.', 'exito');
+    miPropiaIdentidad.nombre = nombre;
+    if (correo !== sesionActual.email) sesionActual.email = correo;
+    actualizarSidebar();
+  }
+
+  async function cambiarMiPassword() {
+    const actual = document.getElementById('miPerfilPasswordActual').value;
+    const nueva = document.getElementById('miPerfilPasswordNueva').value;
+    ocultarMensaje('mensajeMiPassword');
+
+    if (!actual || !nueva) { mostrarMensaje('mensajeMiPassword', 'Escribe tu contraseña actual y la nueva.', 'error'); return; }
+    if (nueva.length < 6) { mostrarMensaje('mensajeMiPassword', 'La nueva contraseña debe tener al menos 6 caracteres.', 'error'); return; }
+
+    // Verificar la contraseña actual reautenticando antes de cambiarla
+    const { error: errorReauth } = await supabaseClient.auth.signInWithPassword({ email: sesionActual.email, password: actual });
+    if (errorReauth) { mostrarMensaje('mensajeMiPassword', 'Tu contraseña actual no es correcta.', 'error'); return; }
+
+    const { error: errorCambio } = await supabaseClient.auth.updateUser({ password: nueva });
+    if (errorCambio) { mostrarMensaje('mensajeMiPassword', 'No se pudo cambiar la contraseña: ' + errorCambio.message, 'error'); return; }
+
+    mostrarMensaje('mensajeMiPassword', '✅ Contraseña actualizada.', 'exito');
+    document.getElementById('miPerfilPasswordActual').value = '';
+    document.getElementById('miPerfilPasswordNueva').value = '';
+  }
+
+  // ============================================================
+  // CEDER PERMISOS DE ADMINISTRADOR
+  // ============================================================
+  async function mostrarPantallaCederPermisos() {
+    mostrarPantalla('pantallaCederPermisos');
+    ocultarMensaje('mensajeCederPermisos');
+    document.getElementById('cederPasswordConfirmacion').value = '';
+    document.getElementById('cederTipo').value = 'temporal';
+    cambiarTipoCesionPermisos();
+
+    const select = document.getElementById('cederUsuarioDestino');
+    select.innerHTML = '<option value="">Cargando...</option>';
+    const resp = await fetch(WORKER_URL + '/api/pos/usuarios', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { select.innerHTML = '<option value="">No se pudo cargar</option>'; return; }
+    const { usuarios } = await resp.json();
+    const otros = (usuarios || []).filter(u => u.user_id !== sesionActual.userId && u.activo);
+    select.innerHTML = otros.length
+      ? otros.map(u => `<option value="${u.user_id}">${escaparHtml(u.nombre_completo || 'Sin nombre')} (${escaparHtml(u.correo || '')})</option>`).join('')
+      : '<option value="">No hay otros usuarios activos</option>';
+  }
+
+  function cambiarTipoCesionPermisos() {
+    const tipo = document.getElementById('cederTipo').value;
+    document.getElementById('bloqueCederFecha').classList.toggle('oculto', tipo !== 'temporal');
+    document.getElementById('labelCederDesactivar').classList.toggle('oculto', tipo !== 'permanente');
+  }
+
+  async function confirmarCederPermisos() {
+    const userIdDestino = document.getElementById('cederUsuarioDestino').value;
+    const tipo = document.getElementById('cederTipo').value;
+    const fechaFin = document.getElementById('cederFechaFin').value;
+    const desactivarPropia = document.getElementById('cederDesactivarMiCuenta').checked;
+    const password = document.getElementById('cederPasswordConfirmacion').value;
+    ocultarMensaje('mensajeCederPermisos');
+
+    if (!userIdDestino) { mostrarMensaje('mensajeCederPermisos', 'Elige a quién le cedes los permisos.', 'error'); return; }
+    if (tipo === 'temporal' && !fechaFin) { mostrarMensaje('mensajeCederPermisos', 'Escribe hasta qué fecha dura la cesión.', 'error'); return; }
+    if (!password) { mostrarMensaje('mensajeCederPermisos', 'Debes escribir tu contraseña para confirmar.', 'error'); return; }
+
+    const nombreDestino = document.getElementById('cederUsuarioDestino').selectedOptions[0]?.textContent || 'esta persona';
+    const mensajeConfirmacion = tipo === 'temporal'
+      ? `¿Confirmas ceder los permisos de administrador a ${nombreDestino} hasta el ${fechaFin}?`
+      : `¿Confirmas ceder PERMANENTEMENTE los permisos de administrador a ${nombreDestino}? Esta acción no se revierte sola.`;
+    if (!confirm(mensajeConfirmacion)) return;
+
+    // Verificación obligatoria de la contraseña antes de ejecutar la cesión
+    const { error: errorReauth } = await supabaseClient.auth.signInWithPassword({ email: sesionActual.email, password });
+    if (errorReauth) { mostrarMensaje('mensajeCederPermisos', 'Tu contraseña no es correcta. No se hizo ningún cambio.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/usuarios/ceder-permisos-admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ user_id_destino: userIdDestino, tipo, fecha_fin: fechaFin || null, desactivar_propia_cuenta: desactivarPropia })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeCederPermisos', datos.error || 'No se pudo completar la cesión.', 'error'); return; }
+
+    if (datos.cuenta_propia_desactivada) {
+      alert('✅ Permisos cedidos correctamente. Tu propia cuenta quedó desactivada, como marcaste. Se cerrará tu sesión ahora.');
+      await cerrarSesion();
+      return;
+    }
+
+    mostrarMensaje('mensajeCederPermisos', '✅ Permisos cedidos correctamente.', 'exito');
+    document.getElementById('cederPasswordConfirmacion').value = '';
   }
 
   async function mostrarPantallaReportesFinancieros() {
