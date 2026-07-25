@@ -641,7 +641,7 @@
       <button class="sidebar-depto-header" id="headerDeptoAcademia" onclick="toggleSidebarDepto('deptoAcademiaSubmenu', 'headerDeptoAcademia')">🎓 Lana Rosa Academy <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoAcademiaSubmenu">
         <button class="nav-btn" onclick="irATurnoActivoAcademia()"><span class="nav-icon">💵</span> Turno de caja</button>
-        <button class="nav-btn" onclick="mostrarPantallaAcademia()"><span class="nav-icon">💰</span> Registrar venta</button>
+        <button class="nav-btn" onclick="irARegistrarVentaAcademiaDesdeTienda()"><span class="nav-icon">💰</span> Registrar venta</button>
         <button class="nav-btn" onclick="mostrarPantallaHistorial('04')"><span class="nav-icon">📋</span> Historial ventas</button>
         <button class="nav-btn" onclick="mostrarPantallaAcademiaKits()"><span class="nav-icon">🧶</span> Kits de tejido</button>
         <button class="nav-btn" onclick="mostrarPantallaInventario('04')"><span class="nav-icon">📊</span> Inventario</button>
@@ -772,10 +772,17 @@
 <div id="pantallaVentas" class="oculto contenido">
   <div class="page-header">
     <h1>Registrar venta</h1>
-    <div class="subtitulo">Si una venta se está demorando, ponla en espera y atiende a otro cliente sin perder lo que ya llevabas.</div>
+    <div class="subtitulo">Todas las ventas del negocio (Tienda, WhatsApp/Redes, y cursos/clases de Academy) se registran aquí y quedan en la caja de la Tienda.</div>
   </div>
   <div id="barraVentasEnEspera" style="margin-bottom:16px;"></div>
 
+  <div class="filtro-tipo" style="margin-bottom:20px;">
+    <button class="chip-filtro activo" data-subtab-btn="registrarVenta" onclick="mostrarSubTabGrupo('registrarVenta', 'subtabVentaProductos', this)">🛒 Productos</button>
+    <button class="chip-filtro" data-subtab-btn="registrarVenta" onclick="mostrarSubTabGrupo('registrarVenta', 'subtabVentaWhatsapp', this)">📱 WhatsApp/Redes</button>
+    <button class="chip-filtro" data-subtab-btn="registrarVenta" onclick="mostrarSubTabGrupo('registrarVenta', 'subtabVentaAcademia', this); cargarVentasAcademia();">🎓 Cursos y clases</button>
+  </div>
+
+  <div id="subtabVentaProductos" data-subtab-grupo="registrarVenta">
   <!-- Barra de búsqueda de productos, arriba y compacta -->
   <div class="panel" style="max-width:none;margin-bottom:16px;">
     <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
@@ -853,6 +860,101 @@
       </div>
     </div>
 
+  </div>
+  </div>
+  <!-- fin subtabVentaProductos -->
+
+  <div id="subtabVentaWhatsapp" data-subtab-grupo="registrarVenta" class="oculto">
+    <div class="panel" style="max-width:520px;">
+      <h2>Nuevo pedido por WhatsApp/Redes</h2>
+      <label for="pedidoCanal">Canal</label>
+      <select id="pedidoCanal" onchange="actualizarResumenAnticipoPedido()">
+        <option value="whatsapp">WhatsApp</option>
+        <option value="instagram">Instagram</option>
+        <option value="facebook">Facebook</option>
+        <option value="tienda_virtual">Tienda virtual</option>
+      </select>
+
+      <label for="pedidoIdentificacionCliente">N° de identificación del cliente</label>
+      <input type="text" id="pedidoIdentificacionCliente" placeholder="CC, CE, NIT..." oninput="autocompletarClientePedido()">
+      <label for="pedidoNombreCliente">Nombre completo</label>
+      <input type="text" id="pedidoNombreCliente" placeholder="Nombre del cliente" style="text-transform:uppercase;" oninput="this.value = this.value.toUpperCase()">
+      <label for="pedidoTelefonoCliente">Teléfono</label>
+      <input type="tel" id="pedidoTelefonoCliente" placeholder="300 000 0000">
+      <label for="pedidoCorreoCliente">Correo electrónico <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <input type="email" id="pedidoCorreoCliente" placeholder="correo@gmail.com">
+      <label for="pedidoDireccionCliente">Dirección de envío</label>
+      <input type="text" id="pedidoDireccionCliente" placeholder="Calle, carrera, número, barrio...">
+      <label for="pedidoMunicipioCliente">Municipio</label>
+      <input type="text" id="pedidoMunicipioCliente" placeholder="Ej: Manizales, Villamaría...">
+      <div id="mensajeAutocompletadoPedido" style="font-size:12px;color:var(--verde-exito);margin-top:4px;display:none;">✅ Cliente encontrado</div>
+
+      <label for="pedidoBuscarProducto">Buscar producto en el inventario de Tienda <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <div style="position:relative;">
+        <input type="text" id="pedidoBuscarProducto" placeholder="Si ya existe en stock, búscalo aquí..." oninput="buscarProductoPedido()" autocomplete="off">
+        <div id="sugerenciasPedidoProducto" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--fondo-panel);border:1.5px solid var(--rosa-medio);border-radius:9px;margin-top:4px;max-height:200px;overflow-y:auto;z-index:50;box-shadow:var(--sombra);"></div>
+      </div>
+      <div id="pedidoProductoInfo" style="display:none;margin-top:8px;padding:9px 11px;background:var(--rosa-suave);border-radius:9px;font-size:12.5px;"></div>
+
+      <label for="pedidoDescripcionProducto">Descripción del producto</label>
+      <input type="text" id="pedidoDescripcionProducto" placeholder="Ej: Amigurumi personalizado conejo azul">
+      <label for="pedidoCantidad">Cantidad</label>
+      <input type="number" id="pedidoCantidad" placeholder="1" min="1" step="1" value="1">
+      <label for="pedidoValorProducto">Valor del producto, sin envío (COP)</label>
+      <input type="number" id="pedidoValorProducto" placeholder="0" min="0" step="1000" oninput="actualizarResumenAnticipoPedido()">
+      <label for="pedidoValorEnvio">Valor del envío (COP)</label>
+      <input type="number" id="pedidoValorEnvio" placeholder="0" min="0" step="1000" oninput="actualizarResumenAnticipoPedido()">
+
+      <div id="resumenAnticipoPedido" class="resumen-cierre" style="margin-top:12px;"></div>
+
+      <button class="btn-principal" id="btnCrearPedido" onclick="confirmarCrearPedidoCanal()">Crear pedido</button>
+      <div class="mensaje" id="mensajePedidoCanal"></div>
+      <div style="font-size:11.5px;opacity:0.6;margin-top:10px;">Para ver o gestionar pedidos ya creados, ve a "Pedidos WhatsApp/Redes" en el menú.</div>
+    </div>
+  </div>
+
+  <div id="subtabVentaAcademia" data-subtab-grupo="registrarVenta" class="oculto">
+    <div class="grilla-2">
+      <div class="panel">
+        <h2>Registrar venta de curso/clase</h2>
+        <label for="academiaSubarea">Subárea</label>
+        <select id="academiaSubarea">
+          <option value="clase_presencial">Clase presencial</option>
+          <option value="curso_virtual">Curso virtual</option>
+          <option value="youtube">YouTube</option>
+          <option value="patron_tejido">Patrón de tejido</option>
+          <option value="libro_digital">Libro digital</option>
+          <option value="libro_fisico">Libro físico</option>
+          <option value="mini_app">Mini app</option>
+          <option value="otro">Otro</option>
+        </select>
+        <label for="academiaDescripcion">Descripción</label>
+        <input type="text" id="academiaDescripcion" placeholder="Ej: Curso de amigurumis nivel 1 — María P.">
+        <label for="academiaCliente">Cliente <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+        <input type="text" id="academiaCliente" placeholder="Nombre del cliente">
+        <label for="academiaMonto">Monto (COP)</label>
+        <input type="number" id="academiaMonto" placeholder="0" min="1" step="1000">
+        <label for="academiaMetodoPago">Método de pago</label>
+        <select id="academiaMetodoPago">
+          <option value="efectivo">Efectivo</option>
+          <option value="nequi">Nequi</option>
+          <option value="daviplata">Daviplata</option>
+          <option value="transferencia">Transferencia</option>
+          <option value="tarjeta_debito">Tarjeta débito</option>
+          <option value="tarjeta_credito">Tarjeta crédito</option>
+          <option value="hotmart">Hotmart</option>
+          <option value="youtube_adsense">YouTube AdSense</option>
+          <option value="otro">Otro</option>
+        </select>
+        <button class="btn-principal" id="btnRegistrarVentaAcademia" onclick="confirmarRegistrarVentaAcademia()">Registrar venta</button>
+        <div class="mensaje" id="mensajeVentaAcademia"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Ventas recientes de Academy</h2>
+        <div id="listaVentasAcademia"><div class="cargando">Cargando...</div></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1073,56 +1175,11 @@
 
   <div class="filtro-tipo" style="margin-bottom:20px;">
     <button class="chip-filtro activo" data-subtab-btn="pedidosCanal" onclick="mostrarSubTabGrupo('pedidosCanal', 'subtabCanalActivos', this)">📋 Pedidos activos</button>
-    <button class="chip-filtro" data-subtab-btn="pedidosCanal" onclick="mostrarSubTabGrupo('pedidosCanal', 'subtabCanalNuevo', this)">+ Nuevo pedido</button>
     <button class="chip-filtro" data-subtab-btn="pedidosCanal" onclick="mostrarSubTabGrupo('pedidosCanal', 'subtabCanalEnvios', this); cargarEnvios();">📮 Envíos</button>
   </div>
 
-  <div id="subtabCanalNuevo" data-subtab-grupo="pedidosCanal" class="oculto">
-    <div class="panel" style="max-width:520px;">
-      <h2>Nuevo pedido</h2>
-      <label for="pedidoCanal">Canal</label>
-      <select id="pedidoCanal" onchange="actualizarResumenAnticipoPedido()">
-        <option value="whatsapp">WhatsApp</option>
-        <option value="instagram">Instagram</option>
-        <option value="facebook">Facebook</option>
-        <option value="tienda_virtual">Tienda virtual</option>
-      </select>
-
-      <label for="pedidoIdentificacionCliente">N° de identificación del cliente <span style="font-size:10px;opacity:0.6;">(busca autom.)</span></label>
-      <input type="text" id="pedidoIdentificacionCliente" placeholder="CC, CE, NIT..." oninput="autocompletarClientePedido()">
-      <label for="pedidoNombreCliente">Nombre completo</label>
-      <input type="text" id="pedidoNombreCliente" placeholder="Nombre del cliente" style="text-transform:uppercase;" oninput="this.value = this.value.toUpperCase()">
-      <label for="pedidoTelefonoCliente">Teléfono</label>
-      <input type="tel" id="pedidoTelefonoCliente" placeholder="300 000 0000">
-      <label for="pedidoCorreoCliente">Correo electrónico <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
-      <input type="email" id="pedidoCorreoCliente" placeholder="correo@gmail.com">
-      <label for="pedidoDireccionCliente">Dirección de envío <span style="font-size:10px;opacity:0.6;">(si el pedido se despacha)</span></label>
-      <input type="text" id="pedidoDireccionCliente" placeholder="Calle, carrera, número, barrio...">
-      <label for="pedidoMunicipioCliente">Municipio</label>
-      <input type="text" id="pedidoMunicipioCliente" placeholder="Ej: Manizales, Villamaría...">
-      <div id="mensajeAutocompletadoPedido" style="font-size:12px;color:var(--verde-exito);margin-top:4px;display:none;">✅ Cliente encontrado</div>
-
-      <label for="pedidoBuscarProducto">Buscar producto en el inventario de Tienda <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
-      <div style="position:relative;">
-        <input type="text" id="pedidoBuscarProducto" placeholder="Si ya existe en stock, búscalo aquí..." oninput="buscarProductoPedido()" autocomplete="off">
-        <div id="sugerenciasPedidoProducto" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--fondo-panel);border:1.5px solid var(--rosa-medio);border-radius:9px;margin-top:4px;max-height:200px;overflow-y:auto;z-index:50;box-shadow:var(--sombra);"></div>
-      </div>
-      <div id="pedidoProductoInfo" style="display:none;margin-top:8px;padding:9px 11px;background:var(--rosa-suave);border-radius:9px;font-size:12.5px;"></div>
-
-      <label for="pedidoDescripcionProducto">Descripción del producto</label>
-      <input type="text" id="pedidoDescripcionProducto" placeholder="Ej: Amigurumi personalizado conejo azul">
-      <label for="pedidoCantidad">Cantidad</label>
-      <input type="number" id="pedidoCantidad" placeholder="1" min="1" step="1" value="1">
-      <label for="pedidoValorProducto">Valor del producto, sin envío (COP)</label>
-      <input type="number" id="pedidoValorProducto" placeholder="0" min="0" step="1000" oninput="actualizarResumenAnticipoPedido()">
-      <label for="pedidoValorEnvio">Valor del envío (COP)</label>
-      <input type="number" id="pedidoValorEnvio" placeholder="0" min="0" step="1000" oninput="actualizarResumenAnticipoPedido()">
-
-      <div id="resumenAnticipoPedido" class="resumen-cierre" style="margin-top:12px;"></div>
-
-      <button class="btn-principal" id="btnCrearPedido" onclick="confirmarCrearPedidoCanal()">Crear pedido</button>
-      <div class="mensaje" id="mensajePedidoCanal"></div>
-    </div>
+  <div style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;">
+    ℹ️ Para crear un pedido nuevo, ve a <strong>Registrar venta → 📱 WhatsApp/Redes</strong>. Aquí solo se gestionan los que ya existen.
   </div>
 
   <div id="subtabCanalActivos" data-subtab-grupo="pedidosCanal">
@@ -2058,57 +2115,15 @@
   </div>
 
   <div class="filtro-tipo" style="margin-bottom:20px;">
-    <button class="chip-filtro activo" data-subtab-btn="academia" onclick="mostrarSubTabGrupo('academia', 'subtabAcademiaRegistrar', this)">+ Registrar venta</button>
-    <button class="chip-filtro" data-subtab-btn="academia" onclick="mostrarSubTabGrupo('academia', 'subtabAcademiaKits', this); cargarRadicadosKit();">🧶 Kits de tejido</button>
+    <button class="chip-filtro activo" data-subtab-btn="academia" onclick="mostrarSubTabGrupo('academia', 'subtabAcademiaKits', this); cargarRadicadosKit();">🧶 Kits de tejido</button>
     <button class="chip-filtro" data-subtab-btn="academia" onclick="mostrarSubTabGrupo('academia', 'subtabAcademiaInforme', this); cargarInformeAcademia();">📊 Informe y metas</button>
   </div>
 
-  <div id="subtabAcademiaRegistrar" data-subtab-grupo="academia">
-    <div class="grilla-2">
-      <div class="panel">
-        <h2>Registrar venta</h2>
-        <div class="subtitulo">Por ahora se registra manualmente.</div>
-        <label for="academiaSubarea">Subárea</label>
-        <select id="academiaSubarea">
-          <option value="clase_presencial">Clase presencial</option>
-          <option value="curso_virtual">Curso virtual</option>
-          <option value="youtube">YouTube</option>
-          <option value="patron_tejido">Patrón de tejido</option>
-          <option value="libro_digital">Libro digital</option>
-          <option value="libro_fisico">Libro físico</option>
-          <option value="mini_app">Mini app</option>
-          <option value="otro">Otro</option>
-        </select>
-        <label for="academiaDescripcion">Descripción</label>
-        <input type="text" id="academiaDescripcion" placeholder="Ej: Curso de amigurumis nivel 1 — María P.">
-        <label for="academiaCliente">Cliente <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
-        <input type="text" id="academiaCliente" placeholder="Nombre del cliente">
-        <label for="academiaMonto">Monto (COP)</label>
-        <input type="number" id="academiaMonto" placeholder="0" min="1" step="1000">
-        <label for="academiaMetodoPago">Método de pago</label>
-        <select id="academiaMetodoPago">
-          <option value="efectivo">Efectivo</option>
-          <option value="nequi">Nequi</option>
-          <option value="daviplata">Daviplata</option>
-          <option value="transferencia">Transferencia</option>
-          <option value="tarjeta_debito">Tarjeta débito</option>
-          <option value="tarjeta_credito">Tarjeta crédito</option>
-          <option value="hotmart">Hotmart</option>
-          <option value="youtube_adsense">YouTube AdSense</option>
-          <option value="otro">Otro</option>
-        </select>
-        <button class="btn-principal" id="btnRegistrarVentaAcademia" onclick="confirmarRegistrarVentaAcademia()">Registrar venta</button>
-        <div class="mensaje" id="mensajeVentaAcademia"></div>
-      </div>
-
-      <div class="panel">
-        <h2>Ventas recientes</h2>
-        <div id="listaVentasAcademia"><div class="cargando">Cargando...</div></div>
-      </div>
-    </div>
+  <div style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;">
+    ℹ️ Para registrar una venta de curso o clase, ve a <strong>Registrar venta → 🎓 Cursos y clases</strong> (en el menú de Tienda). Aquí solo se gestionan los kits y el informe.
   </div>
 
-  <div id="subtabAcademiaKits" data-subtab-grupo="academia" class="oculto">
+  <div id="subtabAcademiaKits" data-subtab-grupo="academia">
     <div class="grilla-2">
       <div class="panel">
         <h2>+ Nuevo radicado de kit</h2>
@@ -9496,29 +9511,30 @@
   }
 
   async function mostrarPantallaAcademia() {
-    await cargarTurnoActivoAcademia();
-    if (!turnoActivoAcademia) {
-      alert('Debes abrir un turno de caja de Academy antes de registrar ventas.');
-      await irATurnoActivoAcademia();
-      return;
-    }
     mostrarPantalla('pantallaAcademia');
-    mostrarSubTabGrupo('academia', 'subtabAcademiaRegistrar', document.querySelectorAll('[data-subtab-btn="academia"]')[0]);
-    ocultarMensaje('mensajeVentaAcademia');
-    document.getElementById('academiaPeriodoInforme').value = new Date().toISOString().slice(0, 7);
+    mostrarSubTabGrupo('academia', 'subtabAcademiaKits', document.querySelectorAll('[data-subtab-btn="academia"]')[0]);
+    await cargarRadicadosKit();
+  }
+
+  // Las ventas de Academy se centralizaron en la caja de Tienda — este acceso
+  // lleva directo a la pestaña correspondiente dentro de Registrar venta.
+  async function irARegistrarVentaAcademiaDesdeTienda() {
+    await mostrarPantallaVentas();
+    if (!turnoActivoActual) return; // mostrarPantallaVentas ya redirigió a abrir turno
+    mostrarSubTabGrupo('registrarVenta', 'subtabVentaAcademia', document.querySelectorAll('[data-subtab-btn="registrarVenta"]')[2]);
     await cargarVentasAcademia();
   }
 
   async function mostrarPantallaAcademiaKits() {
     mostrarPantalla('pantallaAcademia');
-    mostrarSubTabGrupo('academia', 'subtabAcademiaKits', document.querySelectorAll('[data-subtab-btn="academia"]')[1]);
+    mostrarSubTabGrupo('academia', 'subtabAcademiaKits', document.querySelectorAll('[data-subtab-btn="academia"]')[0]);
     await cargarRadicadosKit();
   }
 
   async function mostrarPantallaAcademiaInforme() {
     mostrarPantalla('pantallaAcademia');
     document.getElementById('academiaPeriodoInforme').value = new Date().toISOString().slice(0, 7);
-    mostrarSubTabGrupo('academia', 'subtabAcademiaInforme', document.querySelectorAll('[data-subtab-btn="academia"]')[2]);
+    mostrarSubTabGrupo('academia', 'subtabAcademiaInforme', document.querySelectorAll('[data-subtab-btn="academia"]')[1]);
     await cargarInformeAcademia();
   }
 
@@ -9532,7 +9548,7 @@
 
     if (!descripcion) { mostrarMensaje('mensajeVentaAcademia', 'Escribe una descripción.', 'error'); return; }
     if (!monto || monto <= 0) { mostrarMensaje('mensajeVentaAcademia', 'Escribe un monto válido.', 'error'); return; }
-    if (!turnoActivoAcademia) { mostrarMensaje('mensajeVentaAcademia', 'No hay un turno de caja abierto.', 'error'); return; }
+    if (!turnoActivoActual) { mostrarMensaje('mensajeVentaAcademia', 'No hay un turno de caja de Tienda abierto.', 'error'); return; }
 
     const btn = document.getElementById('btnRegistrarVentaAcademia');
     btn.disabled = true;
@@ -9547,7 +9563,7 @@
         cliente_nombre: cliente || null,
         monto,
         metodo_pago: metodoPago,
-        turno_id: turnoActivoAcademia.id
+        turno_id: turnoActivoActual.id
       })
     });
 
