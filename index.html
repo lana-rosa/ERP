@@ -1119,8 +1119,24 @@
     <div class="subtitulo">Se muestran las últimas 100 ventas, más reciente primero. Si buscas por cliente o N° de recibo, la búsqueda revisa todo el historial del departamento, no solo lo más reciente.</div>
   </div>
   <div class="filtro-tipo" id="filtroDeptoHistorial" style="margin-bottom:16px;"></div>
-  <div class="barra-busqueda" style="margin-bottom:16px;">
+  <div class="barra-busqueda" style="margin-bottom:12px;">
     <input type="text" id="inputBuscarHistorialVentas" placeholder="🔍 Buscar por nombre del cliente, cédula, teléfono o N° de recibo..." oninput="debounceBusquedaHistorial()">
+  </div>
+  <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+    <div>
+      <label for="fechaDesdeHistorial" style="font-size:11px;">Desde</label>
+      <input type="date" id="fechaDesdeHistorial" onchange="cargarHistorialVentas()" style="padding:9px 10px;">
+    </div>
+    <div>
+      <label for="fechaHastaHistorial" style="font-size:11px;">Hasta</label>
+      <input type="date" id="fechaHastaHistorial" onchange="cargarHistorialVentas()" style="padding:9px 10px;">
+    </div>
+    <button class="btn-mini desactivar" onclick="limpiarFechasHistorial()" style="margin-bottom:1px;">Quitar filtro de fecha</button>
+  </div>
+  <div class="filtro-tipo" style="margin-bottom:16px;">
+    <button class="chip-filtro activo" data-vista-historial="turno" onclick="cambiarVistaHistorial('turno', this)">Por turno</button>
+    <button class="chip-filtro" data-vista-historial="dia" onclick="cambiarVistaHistorial('dia', this)">Por día</button>
+    <button class="chip-filtro" data-vista-historial="mes" onclick="cambiarVistaHistorial('mes', this)">Por mes</button>
   </div>
   <div class="panel" style="max-height:none;">
     <div id="listaHistorialVentas"><div class="cargando">Cargando historial...</div></div>
@@ -4077,12 +4093,17 @@
     }
 
     const termino = (document.getElementById('inputBuscarHistorialVentas')?.value || '').trim();
+    const fechaDesde = document.getElementById('fechaDesdeHistorial')?.value || '';
+    const fechaHasta = document.getElementById('fechaHastaHistorial')?.value || '';
 
     let query = supabaseClient
       .from('ventas_pos')
       .select('id, consecutivo, fecha, total, estado, turno_id, cajero_user_id, area_formacion, tercero_id')
       .eq('centro_costo_id', filtroDeptoHistorialActual)
       .order('fecha', { ascending: false });
+
+    if (fechaDesde) query = query.gte('fecha', fechaDesde + 'T00:00:00');
+    if (fechaHasta) query = query.lte('fecha', fechaHasta + 'T23:59:59');
 
     if (termino) {
       // Buscando: no se limita a las últimas ventas — se busca en todo el
@@ -4099,6 +4120,8 @@
         query = query.ilike('consecutivo', `%${termino}%`);
       }
       query = query.limit(200);
+    } else if (fechaDesde || fechaHasta) {
+      query = query.limit(500);
     } else {
       query = query.limit(100);
     }
@@ -4166,6 +4189,52 @@
 
     const etiquetasPago = { efectivo: 'Efectivo', nequi: 'Nequi', daviplata: 'Daviplata', tarjeta_debito: 'Tarjeta débito', tarjeta_credito: 'Tarjeta crédito' };
 
+    if (vistaHistorialActual === 'dia') {
+      renderizarHistorialAgrupado(ventas, detalles, pagos, tercerosPorId, etiquetasPago, v => new Date(v.fecha).toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }), v => new Date(v.fecha).toISOString().slice(0, 10));
+    } else if (vistaHistorialActual === 'mes') {
+      const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+      renderizarHistorialAgrupado(ventas, detalles, pagos, tercerosPorId, etiquetasPago, v => { const f = new Date(v.fecha); return meses[f.getMonth()] + ' de ' + f.getFullYear(); }, v => new Date(v.fecha).toISOString().slice(0, 7));
+    } else {
+      renderizarHistorialPorTurno(ventas, detalles, pagos, tercerosPorId, cajerosPorId, turnosPorId, etiquetasPago);
+    }
+  }
+
+  function renderizarFilaVentaHistorial(venta, detalles, pagos, tercerosPorId, etiquetasPago) {
+    const lineasVenta = (detalles || []).filter(d => d.venta_id === venta.id);
+    const pagosVenta = (pagos || []).filter(p => p.venta_id === venta.id);
+    const textoLineas = lineasVenta.map(l => `${l.cantidad}x ${escaparHtml(l.descripcion)}`).join(', ');
+    const textoPagos = pagosVenta.map(p => `${etiquetasPago[p.metodo_pago] || p.metodo_pago}`).join(', ');
+    const fecha = new Date(venta.fecha).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
+    const tagAnulada = venta.estado === 'anulada' ? ' <span class="badge-inactivo">Anulada</span>' : '';
+    const puedeAnular = venta.estado === 'completada' && venta.turno_id === turnoActivoActual?.id;
+    const tercero = venta.tercero_id ? tercerosPorId[venta.tercero_id] : null;
+    const textoCliente = tercero ? escaparHtml(tercero.nombre_completo) : '—';
+    return `
+      <div class="tabla-lista-fila" onclick="alternarFilaVentaHistorial('${venta.id}')">
+        <span style="color:var(--rosa-principal);font-weight:700;">${venta.consecutivo}${tagAnulada}</span>
+        <span style="opacity:0.75;">${fecha}</span>
+        <span>${textoCliente}</span>
+        <span style="opacity:0.75;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${textoLineas || 'Sin detalle'}</span>
+        <span style="text-align:right;font-weight:700;">${formatearMoneda(venta.total)}</span>
+        <span style="opacity:0.75;">${textoPagos}</span>
+        <span class="tabla-lista-chevron" id="chevronFilaVenta-${venta.id}">▾</span>
+      </div>
+      <div id="filaExpandidaVenta-${venta.id}" class="oculto tabla-lista-detalle">
+        ${textoCliente !== '—' && tercero ? `<div style="font-size:12px;margin-bottom:8px;">👤 <strong>${textoCliente}</strong>${tercero.numero_documento ? ' — Doc: ' + escaparHtml(tercero.numero_documento) : ''}${tercero.telefono ? ' — Tel: ' + escaparHtml(tercero.telefono) : ''}</div>` : ''}
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          ${puedeAnular ? `<button class="btn-mini desactivar" onclick="event.stopPropagation(); anularVenta('${venta.id}', '${venta.consecutivo}')">❌ Anular venta</button>` : ''}
+          ${venta.estado === 'completada' ? `<button class="btn-mini editar" onclick="event.stopPropagation(); abrirCambioArticulo('${venta.id}', '${venta.consecutivo}')">🔄 Cambiar artículo</button>` : ''}
+          <button class="btn-mini editar" onclick="event.stopPropagation(); verReciboHistorial('${venta.id}')">🖨️ Ver / imprimir recibo</button>
+          <button class="btn-mini editar" onclick="event.stopPropagation(); enviarReciboHistorialWhatsapp('${venta.id}')">📱 Enviar por WhatsApp</button>
+        </div>
+        <div id="panelCambioArticulo-${venta.id}" class="oculto" style="margin-top:10px;"></div>
+      </div>
+    `;
+  }
+
+  function renderizarHistorialPorTurno(ventas, detalles, pagos, tercerosPorId, cajerosPorId, turnosPorId, etiquetasPago) {
+    const contenedor = document.getElementById('listaHistorialVentas');
+
     // Agrupar ventas por turno
     const turnosMap = new Map();
     ventas.forEach(venta => {
@@ -4198,40 +4267,64 @@
             </div>
       `;
       for (const venta of grupo.ventas) {
-        const lineasVenta = (detalles || []).filter(d => d.venta_id === venta.id);
-        const pagosVenta = (pagos || []).filter(p => p.venta_id === venta.id);
-        const textoLineas = lineasVenta.map(l => `${l.cantidad}x ${escaparHtml(l.descripcion)}`).join(', ');
-        const textoPagos = pagosVenta.map(p => `${etiquetasPago[p.metodo_pago] || p.metodo_pago}`).join(', ');
-        const fecha = new Date(venta.fecha).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
-        const tagAnulada = venta.estado === 'anulada' ? ' <span class="badge-inactivo">Anulada</span>' : '';
-        const puedeAnular = venta.estado === 'completada' && turnoId === turnoActivoActual?.id;
-        const tercero = venta.tercero_id ? tercerosPorId[venta.tercero_id] : null;
-        const textoCliente = tercero ? escaparHtml(tercero.nombre_completo) : '—';
-        html += `
-          <div class="tabla-lista-fila" onclick="alternarFilaVentaHistorial('${venta.id}')">
-            <span style="color:var(--rosa-principal);font-weight:700;">${venta.consecutivo}${tagAnulada}</span>
-            <span style="opacity:0.75;">${fecha}</span>
-            <span>${textoCliente}</span>
-            <span style="opacity:0.75;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${textoLineas || 'Sin detalle'}</span>
-            <span style="text-align:right;font-weight:700;">${formatearMoneda(venta.total)}</span>
-            <span style="opacity:0.75;">${textoPagos}</span>
-            <span class="tabla-lista-chevron" id="chevronFilaVenta-${venta.id}">▾</span>
-          </div>
-          <div id="filaExpandidaVenta-${venta.id}" class="oculto tabla-lista-detalle">
-            ${textoCliente !== '—' && tercero ? `<div style="font-size:12px;margin-bottom:8px;">👤 <strong>${textoCliente}</strong>${tercero.numero_documento ? ' — Doc: ' + escaparHtml(tercero.numero_documento) : ''}${tercero.telefono ? ' — Tel: ' + escaparHtml(tercero.telefono) : ''}</div>` : ''}
-            <div style="display:flex;gap:6px;flex-wrap:wrap;">
-              ${puedeAnular ? `<button class="btn-mini desactivar" onclick="event.stopPropagation(); anularVenta('${venta.id}', '${venta.consecutivo}')">❌ Anular venta</button>` : ''}
-              ${venta.estado === 'completada' ? `<button class="btn-mini editar" onclick="event.stopPropagation(); abrirCambioArticulo('${venta.id}', '${venta.consecutivo}')">🔄 Cambiar artículo</button>` : ''}
-              <button class="btn-mini editar" onclick="event.stopPropagation(); verReciboHistorial('${venta.id}')">🖨️ Ver / imprimir recibo</button>
-              <button class="btn-mini editar" onclick="event.stopPropagation(); enviarReciboHistorialWhatsapp('${venta.id}')">📱 Enviar por WhatsApp</button>
-            </div>
-            <div id="panelCambioArticulo-${venta.id}" class="oculto" style="margin-top:10px;"></div>
-          </div>
-        `;
+        html += renderizarFilaVentaHistorial(venta, detalles, pagos, tercerosPorId, etiquetasPago);
       }
       html += '</div></div>';
     }
     contenedor.innerHTML = html;
+  }
+
+  function renderizarHistorialAgrupado(ventas, detalles, pagos, tercerosPorId, etiquetasPago, fnEtiquetaGrupo, fnClaveGrupo) {
+    const contenedor = document.getElementById('listaHistorialVentas');
+
+    const grupos = new Map();
+    ventas.forEach(venta => {
+      const clave = fnClaveGrupo(venta);
+      if (!grupos.has(clave)) grupos.set(clave, { etiqueta: fnEtiquetaGrupo(venta), ventas: [] });
+      grupos.get(clave).ventas.push(venta);
+    });
+
+    // Ya vienen ordenadas por fecha desc desde la consulta, así que los grupos
+    // salen en orden cronológico descendente de forma natural.
+    let html = '';
+    for (const [clave, grupo] of grupos) {
+      const totalGrupo = grupo.ventas.reduce((acc, v) => acc + (v.estado !== 'anulada' ? Number(v.total) : 0), 0);
+      const numVentas = grupo.ventas.filter(v => v.estado !== 'anulada').length;
+      html += `
+        <div style="margin-bottom:20px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--rosa-suave);border-radius:10px;margin-bottom:10px;">
+            <div>
+              <div style="font-weight:700;font-size:13.5px;text-transform:capitalize;">📅 ${escaparHtml(grupo.etiqueta)}</div>
+              <div style="font-size:11px;opacity:0.65;">${numVentas} venta(s)</div>
+            </div>
+            <div style="font-weight:700;color:var(--rosa-principal);">${formatearMoneda(totalGrupo)}</div>
+          </div>
+          <div class="tabla-lista" style="margin-left:8px;">
+            <div class="tabla-lista-header">
+              <span>RECIBO</span><span>FECHA</span><span>CLIENTE</span><span>PRODUCTO</span><span style="text-align:right;">VALOR</span><span>PAGO</span><span></span>
+            </div>
+      `;
+      for (const venta of grupo.ventas) {
+        html += renderizarFilaVentaHistorial(venta, detalles, pagos, tercerosPorId, etiquetasPago);
+      }
+      html += '</div></div>';
+    }
+    contenedor.innerHTML = html;
+  }
+
+  let vistaHistorialActual = 'turno';
+
+  function cambiarVistaHistorial(vista, botonEl) {
+    vistaHistorialActual = vista;
+    document.querySelectorAll('[data-vista-historial]').forEach(b => b.classList.remove('activo'));
+    botonEl.classList.add('activo');
+    cargarHistorialVentas();
+  }
+
+  function limpiarFechasHistorial() {
+    document.getElementById('fechaDesdeHistorial').value = '';
+    document.getElementById('fechaHastaHistorial').value = '';
+    cargarHistorialVentas();
   }
 
   function alternarFilaVentaHistorial(ventaId) {
