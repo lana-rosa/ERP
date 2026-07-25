@@ -605,7 +605,7 @@
 <nav id="sidebar">
   <div class="sidebar-marca">
     <div class="sidebar-oveja">🐑</div>
-    <div class="sidebar-nombre">Lana Rosa OS<span id="sidebarSubtitulo">Punto de venta</span></div>
+    <div class="sidebar-nombre">Lana Rosa OS<span id="sidebarSubtitulo">Punto de venta</span><span id="sidebarNombreUsuarioTop" style="font-weight:600;opacity:0.85;"></span></div>
   </div>
 
   <div class="sidebar-nav">
@@ -1725,22 +1725,45 @@
 <div id="pantallaMiPerfil" class="oculto contenido">
   <div class="page-header">
     <h1>👤 Mi perfil</h1>
-    <div class="subtitulo">Actualiza tu nombre, correo o contraseña.</div>
+    <div class="subtitulo">Actualiza tus datos personales, tu correo o tu contraseña.</div>
   </div>
-  <div class="panel" style="max-width:420px;">
-    <label for="miPerfilNombre">Nombre completo</label>
-    <input type="text" id="miPerfilNombre">
-    <label for="miPerfilCorreo">Correo</label>
-    <input type="email" id="miPerfilCorreo">
-    <button class="btn-principal" onclick="guardarMiPerfil()">Guardar cambios</button>
-    <div class="mensaje" id="mensajeMiPerfil"></div>
 
-    <label for="miPerfilPasswordActual" style="margin-top:24px;">Contraseña actual <span style="font-size:10px;opacity:0.6;">(para cambiar tu contraseña)</span></label>
-    <input type="password" id="miPerfilPasswordActual">
-    <label for="miPerfilPasswordNueva">Nueva contraseña</label>
-    <input type="password" id="miPerfilPasswordNueva">
-    <button class="btn-secundario" onclick="cambiarMiPassword()">Cambiar contraseña</button>
-    <div class="mensaje" id="mensajeMiPassword"></div>
+  <div class="filtro-tipo" style="margin-bottom:20px;">
+    <button class="chip-filtro activo" data-subtab-btn="miPerfil" onclick="mostrarSubTabGrupo('miPerfil', 'subtabPerfilDatos', this)">👤 Datos personales</button>
+    <button class="chip-filtro" data-subtab-btn="miPerfil" onclick="mostrarSubTabGrupo('miPerfil', 'subtabPerfilCuenta', this)">🔐 Cuenta y seguridad</button>
+  </div>
+
+  <div id="subtabPerfilDatos" data-subtab-grupo="miPerfil">
+    <div class="panel" style="max-width:420px;">
+      <h2>Datos personales</h2>
+      <label for="miPerfilNombre">Nombre completo</label>
+      <input type="text" id="miPerfilNombre">
+      <label for="miPerfilTelefono">Teléfono</label>
+      <input type="tel" id="miPerfilTelefono" placeholder="300 000 0000">
+      <label for="miPerfilDocumento">N.° de documento</label>
+      <input type="text" id="miPerfilDocumento" placeholder="Cédula de ciudadanía">
+      <label for="miPerfilDireccion">Dirección</label>
+      <input type="text" id="miPerfilDireccion" placeholder="Dirección de residencia">
+      <button class="btn-principal" onclick="guardarMiPerfil()">Guardar datos personales</button>
+      <div class="mensaje" id="mensajeMiPerfil"></div>
+    </div>
+  </div>
+
+  <div id="subtabPerfilCuenta" data-subtab-grupo="miPerfil" class="oculto">
+    <div class="panel" style="max-width:420px;">
+      <h2>Correo de acceso</h2>
+      <label for="miPerfilCorreo">Correo</label>
+      <input type="email" id="miPerfilCorreo">
+      <button class="btn-principal" onclick="guardarMiCorreo()">Guardar correo</button>
+      <div class="mensaje" id="mensajeMiCorreo"></div>
+
+      <label for="miPerfilPasswordActual" style="margin-top:24px;">Contraseña actual <span style="font-size:10px;opacity:0.6;">(para cambiar tu contraseña)</span></label>
+      <input type="password" id="miPerfilPasswordActual">
+      <label for="miPerfilPasswordNueva">Nueva contraseña</label>
+      <input type="password" id="miPerfilPasswordNueva">
+      <button class="btn-secundario" onclick="cambiarMiPassword()">Cambiar contraseña</button>
+      <div class="mensaje" id="mensajeMiPassword"></div>
+    </div>
   </div>
 </div>
 
@@ -2729,6 +2752,9 @@
       titulo = 'Contador';
     }
     el.textContent = titulo;
+
+    const elNombre = document.getElementById('sidebarNombreUsuarioTop');
+    if (elNombre) elNombre.textContent = miPropiaIdentidad.nombre || '';
   }
 
   async function cargarRolesYPermisosPropios() {
@@ -6325,19 +6351,34 @@
   // ============================================================
   // MI PERFIL
   // ============================================================
-  function mostrarPantallaMiPerfil() {
+  async function mostrarPantallaMiPerfil() {
     mostrarPantalla('pantallaMiPerfil');
+    mostrarSubTabGrupo('miPerfil', 'subtabPerfilDatos', document.querySelector('[data-subtab-btn="miPerfil"]'));
     ocultarMensaje('mensajeMiPerfil');
+    ocultarMensaje('mensajeMiCorreo');
     ocultarMensaje('mensajeMiPassword');
-    document.getElementById('miPerfilNombre').value = miPropiaIdentidad.nombre || '';
+
     document.getElementById('miPerfilCorreo').value = sesionActual.email || '';
     document.getElementById('miPerfilPasswordActual').value = '';
     document.getElementById('miPerfilPasswordNueva').value = '';
+
+    const { data } = await supabaseClient
+      .from('usuarios_roles')
+      .select('nombre_completo, telefono, numero_documento, direccion')
+      .eq('user_id', sesionActual.userId)
+      .single();
+
+    document.getElementById('miPerfilNombre').value = (data && data.nombre_completo) || miPropiaIdentidad.nombre || '';
+    document.getElementById('miPerfilTelefono').value = (data && data.telefono) || '';
+    document.getElementById('miPerfilDocumento').value = (data && data.numero_documento) || '';
+    document.getElementById('miPerfilDireccion').value = (data && data.direccion) || '';
   }
 
   async function guardarMiPerfil() {
     const nombre = document.getElementById('miPerfilNombre').value.trim();
-    const correo = document.getElementById('miPerfilCorreo').value.trim();
+    const telefono = document.getElementById('miPerfilTelefono').value.trim();
+    const documento = document.getElementById('miPerfilDocumento').value.trim();
+    const direccion = document.getElementById('miPerfilDireccion').value.trim();
     ocultarMensaje('mensajeMiPerfil');
 
     if (!nombre) { mostrarMensaje('mensajeMiPerfil', 'Escribe tu nombre completo.', 'error'); return; }
@@ -6345,15 +6386,33 @@
     const resp = await fetch(WORKER_URL + '/api/pos/mi-perfil', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ nombre_completo: nombre, correo: correo !== sesionActual.email ? correo : undefined })
+      body: JSON.stringify({ nombre_completo: nombre, telefono, numero_documento: documento, direccion })
     });
     const datos = await resp.json();
     if (!resp.ok) { mostrarMensaje('mensajeMiPerfil', datos.error || 'No se pudo guardar.', 'error'); return; }
 
-    mostrarMensaje('mensajeMiPerfil', '✅ Datos actualizados.', 'exito');
+    mostrarMensaje('mensajeMiPerfil', '✅ Datos personales actualizados.', 'exito');
     miPropiaIdentidad.nombre = nombre;
-    if (correo !== sesionActual.email) sesionActual.email = correo;
     actualizarSidebar();
+    const elNombre = document.getElementById('sidebarNombreUsuarioTop');
+    if (elNombre) elNombre.textContent = nombre;
+  }
+
+  async function guardarMiCorreo() {
+    const correo = document.getElementById('miPerfilCorreo').value.trim();
+    ocultarMensaje('mensajeMiCorreo');
+    if (!correo) { mostrarMensaje('mensajeMiCorreo', 'Escribe un correo válido.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/mi-perfil', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ correo: correo !== sesionActual.email ? correo : undefined })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeMiCorreo', datos.error || 'No se pudo guardar.', 'error'); return; }
+
+    mostrarMensaje('mensajeMiCorreo', '✅ Correo actualizado.', 'exito');
+    sesionActual.email = correo;
   }
 
   async function cambiarMiPassword() {
