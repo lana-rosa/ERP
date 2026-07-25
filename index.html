@@ -9820,7 +9820,7 @@
             <div class="fila-historial-fecha">${inicio} — ${fin}${ev.ubicacion ? ' · ' + escaparHtml(ev.ubicacion) : ''}</div>
             ${ev.descripcion ? `<div style="font-size:12.5px;opacity:0.75;margin-top:4px;">${escaparHtml(ev.descripcion)}</div>` : ''}
             ${ev.recordatorio_minutos_antes ? `<div style="font-size:11px;opacity:0.6;margin-top:4px;">🔔 Recordatorio ${ev.recordatorio_minutos_antes >= 1440 ? (ev.recordatorio_minutos_antes / 1440) + ' día(s)' : ev.recordatorio_minutos_antes + ' min'} antes</div>` : ''}
-            ${ev.origen === 'fe' ? '<div style="font-size:11px;opacity:0.5;margin-top:6px;">Se gestiona desde Fondo Emprender</div>' : `<button class="btn-mini desactivar" style="margin-top:8px;max-width:100px;" onclick="${ev.origen === 'personal' ? `eliminarTareaPersonal('${ev.id}')` : `eliminarEventoCalendario('${ev.id}')`}">Eliminar</button>`}
+            ${ev.origen === 'fe' ? '<div style="font-size:11px;opacity:0.5;margin-top:6px;">Se gestiona desde Fondo Emprender</div>' : (ev.origen === 'personal' || rolActual === 'administrador' || esLiderDepartamentoActual) ? `<button class="btn-mini desactivar" style="margin-top:8px;max-width:140px;" onclick="${ev.origen === 'personal' ? `eliminarTareaPersonal('${ev.id}')` : `eliminarEventoCalendario('${ev.id}')`}">${ev.origen === 'personal' ? 'Eliminar' : '❌ Cancelar evento'}</button>` : ''}
           </div>
         `;
       }).join('');
@@ -9923,7 +9923,7 @@
   }
 
   async function eliminarEventoCalendario(eventoId) {
-    if (!confirm('¿Eliminar este evento?')) return;
+    if (!confirm('¿Cancelar este evento? Se quitará del calendario para todo el equipo.')) return;
     const resp = await fetch(WORKER_URL + '/api/pos/rh/calendario/eventos/eliminar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
