@@ -684,6 +684,7 @@
         <button class="nav-btn" id="nav-gestion-usuarios" onclick="mostrarPantallaUsuarios()"><span class="nav-icon">👥</span> Usuarios y permisos</button>
         <button class="nav-btn" onclick="mostrarPantallaMiPerfil()"><span class="nav-icon">👤</span> Mi perfil</button>
         <button class="nav-btn" onclick="mostrarPantallaCederPermisos()"><span class="nav-icon">🔑</span> Ceder permisos de administrador</button>
+        <button class="nav-btn" onclick="mostrarPantallaTrazabilidad()"><span class="nav-icon">🕵️</span> Trazabilidad del sistema</button>
         <button class="nav-btn" onclick="mostrarPantallaApariencia()"><span class="nav-icon">🎨</span> Apariencia</button>
       </div>
     </div>
@@ -1740,6 +1741,50 @@
   </div>
 </div>
 
+<!-- ===== PANTALLA: TRAZABILIDAD DEL SISTEMA ===== -->
+<div id="pantallaTrazabilidad" class="oculto contenido">
+  <div class="page-header">
+    <h1>🕵️ Trazabilidad del sistema</h1>
+    <div class="subtitulo">Quién hizo qué y cuándo — ventas, nómina, inventario, calendario, envíos y más, todo en una sola línea de tiempo.</div>
+  </div>
+  <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+    <div>
+      <label for="trazaFechaDesde" style="font-size:11px;">Desde</label>
+      <input type="date" id="trazaFechaDesde" onchange="cargarTrazabilidad()" style="padding:9px 10px;">
+    </div>
+    <div>
+      <label for="trazaFechaHasta" style="font-size:11px;">Hasta</label>
+      <input type="date" id="trazaFechaHasta" onchange="cargarTrazabilidad()" style="padding:9px 10px;">
+    </div>
+    <div>
+      <label for="trazaUsuario" style="font-size:11px;">Usuario</label>
+      <select id="trazaUsuario" onchange="cargarTrazabilidad()" style="width:auto;"><option value="">Todos</option></select>
+    </div>
+    <div>
+      <label for="trazaModulo" style="font-size:11px;">Módulo</label>
+      <select id="trazaModulo" onchange="cargarTrazabilidad()" style="width:auto;">
+        <option value="">Todos</option>
+        <option value="Tienda/Mercería">Tienda/Mercería</option>
+        <option value="Lana Rosa Academy">Lana Rosa Academy</option>
+        <option value="Calendario">Calendario</option>
+        <option value="Nómina">Nómina</option>
+        <option value="Inventario">Inventario</option>
+        <option value="Taller → Tienda">Taller → Tienda</option>
+        <option value="Tienda → Taller">Tienda → Taller</option>
+        <option value="Envíos">Envíos</option>
+        <option value="Caja">Caja</option>
+        <option value="Finanzas">Finanzas</option>
+        <option value="Ventas">Ventas</option>
+        <option value="Traslados internos">Traslados internos</option>
+      </select>
+    </div>
+    <button class="btn-mini desactivar" onclick="limpiarFiltrosTrazabilidad()" style="margin-bottom:1px;">Quitar filtros</button>
+  </div>
+  <div class="panel" style="max-width:none;max-height:none;">
+    <div id="listaTrazabilidad"><div class="cargando">Cargando...</div></div>
+  </div>
+</div>
+
 <!-- ===== PANTALLA: CALENDARIO DEL EQUIPO ===== -->
 <div id="pantallaCalendario" class="oculto contenido">
   <div class="page-header">
@@ -2159,7 +2204,7 @@
   // UTILIDADES
   // ============================================================================
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaDepartamentos', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaAbrirTurnoAcademia', 'pantallaTurnoActivoAcademia', 'pantallaCerrarTurnoAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaDepartamentos', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaAbrirTurnoAcademia', 'pantallaTurnoActivoAcademia', 'pantallaCerrarTurnoAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -6157,6 +6202,78 @@
 
     mostrarMensaje('mensajeCederPermisos', '✅ Permisos cedidos correctamente.', 'exito');
     document.getElementById('cederPasswordConfirmacion').value = '';
+  }
+
+  // ============================================================
+  // TRAZABILIDAD DEL SISTEMA
+  // ============================================================
+  const iconosAccionTrazabilidad = {
+    venta_pos: '💰', venta_academia: '💰', evento_calendario: '📅', pago_nomina: '💵',
+    periodo_nomina: '📋', movimiento_inventario: '📦', solicitud_insumo: '📮',
+    insumo_despachado: '🚚', guia_envio: '📮', turno_abierto: '🔓', gasto: '💸',
+    cambio_articulo: '🔄', kit_tejido: '🧶', traslado_departamentos: '🔁', presupuesto: '📊',
+  };
+
+  async function mostrarPantallaTrazabilidad() {
+    mostrarPantalla('pantallaTrazabilidad');
+    document.getElementById('trazaFechaDesde').value = '';
+    document.getElementById('trazaFechaHasta').value = '';
+    document.getElementById('trazaModulo').value = '';
+
+    const selectUsuario = document.getElementById('trazaUsuario');
+    selectUsuario.innerHTML = '<option value="">Todos</option>';
+    if (usuariosCache.length === 0) {
+      const resp = await fetch(WORKER_URL + '/api/pos/usuarios', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+      if (resp.ok) usuariosCache = (await resp.json()).usuarios || [];
+    }
+    selectUsuario.innerHTML += usuariosCache.map(u => `<option value="${u.user_id}">${escaparHtml(u.nombre_completo || 'Sin nombre')}</option>`).join('');
+
+    await cargarTrazabilidad();
+  }
+
+  function limpiarFiltrosTrazabilidad() {
+    document.getElementById('trazaFechaDesde').value = '';
+    document.getElementById('trazaFechaHasta').value = '';
+    document.getElementById('trazaUsuario').value = '';
+    document.getElementById('trazaModulo').value = '';
+    cargarTrazabilidad();
+  }
+
+  async function cargarTrazabilidad() {
+    const contenedor = document.getElementById('listaTrazabilidad');
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+
+    const params = new URLSearchParams();
+    const fechaDesde = document.getElementById('trazaFechaDesde').value;
+    const fechaHasta = document.getElementById('trazaFechaHasta').value;
+    const usuario = document.getElementById('trazaUsuario').value;
+    const modulo = document.getElementById('trazaModulo').value;
+    if (fechaDesde) params.set('fecha_desde', fechaDesde + 'T00:00:00');
+    if (fechaHasta) params.set('fecha_hasta', fechaHasta + 'T23:59:59');
+    if (usuario) params.set('usuario_id', usuario);
+    if (modulo) params.set('modulo', modulo);
+
+    const resp = await fetch(WORKER_URL + '/api/pos/trazabilidad?' + params.toString(), { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+
+    const { registros } = await resp.json();
+    if (!registros || registros.length === 0) { contenedor.innerHTML = '<div class="cargando">No hay actividad registrada con estos filtros.</div>'; return; }
+
+    contenedor.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:90px 130px 150px 1fr;">
+          <span>FECHA</span><span>USUARIO</span><span>MÓDULO</span><span>DETALLE</span>
+        </div>
+        ${registros.map(r => `
+          <div class="tabla-lista-fila" style="grid-template-columns:90px 130px 150px 1fr;cursor:default;">
+            <span style="opacity:0.7;">${new Date(r.fecha).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}</span>
+            <span style="font-weight:600;">${escaparHtml(r.usuario_nombre)}</span>
+            <span style="opacity:0.75;">${iconosAccionTrazabilidad[r.accion] || '📌'} ${escaparHtml(r.modulo)}</span>
+            <span>${escaparHtml(r.detalle)}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
   }
 
   async function mostrarPantallaReportesFinancieros() {
