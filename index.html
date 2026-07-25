@@ -645,6 +645,7 @@
         <button class="nav-btn" id="nav-reportes-financieros" onclick="mostrarPantallaReportesFinancieros()"><span class="nav-icon">📊</span> Por departamento y global</button>
         <button class="nav-btn" onclick="mostrarPantallaHistorial()"><span class="nav-icon">📋</span> Consolidado de ventas (3 deptos)</button>
         <button class="nav-btn" onclick="mostrarPantallaInventario()"><span class="nav-icon">📊</span> Inventario general (3 deptos)</button>
+        <button class="nav-btn" id="nav-gestion-usuarios" onclick="mostrarPantallaUsuarios()"><span class="nav-icon">👥</span> Usuarios y permisos</button>
       </div>
     </div>
     <div class="sidebar-depto" id="deptoFondoEmprenderGrupo" style="display:none;">
@@ -1574,6 +1575,57 @@
   </div>
 </div>
 
+<!-- ===== PANTALLA: USUARIOS Y PERMISOS ===== -->
+<div id="pantallaUsuarios" class="oculto contenido">
+  <div class="page-header">
+    <h1>👥 Usuarios y permisos</h1>
+    <div class="subtitulo">Crea usuarios, asigna rol(es) y ajusta manualmente qué módulos ve cada quien.</div>
+  </div>
+
+  <div class="grilla-2">
+    <div class="panel">
+      <h2>+ Crear usuario nuevo</h2>
+      <label for="nuevoUsuarioNombre">Nombre completo</label>
+      <input type="text" id="nuevoUsuarioNombre" placeholder="Nombre completo">
+      <label for="nuevoUsuarioCorreo">Correo</label>
+      <input type="email" id="nuevoUsuarioCorreo" placeholder="correo@ejemplo.com">
+      <label for="nuevoUsuarioPassword">Contraseña temporal <span style="font-size:10px;opacity:0.6;">(mínimo 6 caracteres — pídele que la cambie al entrar)</span></label>
+      <input type="text" id="nuevoUsuarioPassword" placeholder="Ej: LanaRosa2026">
+      <label for="nuevoUsuarioRol">Rol principal</label>
+      <select id="nuevoUsuarioRol">
+        <option value="cajero">Cajero (Tienda)</option>
+        <option value="taller">Taller</option>
+        <option value="administrador">Administrador</option>
+        <option value="contador">Contador</option>
+      </select>
+      <label style="margin-top:10px;">Roles adicionales <span style="font-size:10px;opacity:0.6;">(opcional — para quien apoya en más de un área)</span></label>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:4px;">
+        <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:400;"><input type="checkbox" value="cajero" class="chkRolAdicionalNuevo" style="width:auto;"> Cajero</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:400;"><input type="checkbox" value="taller" class="chkRolAdicionalNuevo" style="width:auto;"> Taller</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:400;"><input type="checkbox" value="administrador" class="chkRolAdicionalNuevo" style="width:auto;"> Administrador</label>
+      </div>
+      <button class="btn-principal" id="btnCrearUsuario" onclick="confirmarCrearUsuario()">Crear usuario</button>
+      <div class="mensaje" id="mensajeCrearUsuario"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Usuarios del sistema</h2>
+      <div id="listaUsuarios"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+
+  <div class="panel oculto" id="panelPermisosUsuario" style="max-width:none;max-height:none;margin-top:20px;">
+    <h2 id="tituloPermisosUsuario">Permisos personalizados</h2>
+    <div class="subtitulo">Marca solo lo que este usuario debe poder ver. Lo que dejes sin marcar quedará oculto para él/ella, sin importar su rol. Si prefieres que se rija solo por su rol, usa "Restablecer al valor por defecto del rol".</div>
+    <div id="listaPermisosModulos"></div>
+    <div style="display:flex;gap:10px;margin-top:14px;">
+      <button class="btn-principal" style="margin-top:0;" onclick="guardarPermisosUsuarioActual()">Guardar permisos</button>
+      <button class="btn-secundario" style="margin-top:0;" onclick="restablecerPermisosUsuarioActual()">Restablecer al valor por defecto del rol</button>
+    </div>
+    <div class="mensaje" id="mensajePermisosUsuario"></div>
+  </div>
+</div>
+
 <!-- ===== PANTALLA: CALENDARIO DEL EQUIPO ===== -->
 <div id="pantallaCalendario" class="oculto contenido">
   <div class="page-header">
@@ -1986,7 +2038,7 @@
   // UTILIDADES
   // ============================================================================
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaDepartamentos', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaAbrirTurnoAcademia', 'pantallaTurnoActivoAcademia', 'pantallaCerrarTurnoAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaDepartamentos', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaAbrirTurnoAcademia', 'pantallaTurnoActivoAcademia', 'pantallaCerrarTurnoAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaUsuarios', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -2195,14 +2247,20 @@
     mostrarPantalla('pantallaTurnoActivo');
   }
 
+  let permisosOverrideActual = {};
+
   function configurarSidebarPorRol() {
-    const esAdmin = rolActual === 'administrador';
-    const esCajero = rolActual === 'cajero';
-    const esTaller = rolActual === 'taller';
+    const rolesUsuario = [rolActual, ...rolesAdicionalesActual];
+    const esAdmin = rolesUsuario.includes('administrador');
+    const esCajero = rolesUsuario.includes('cajero');
+    const esTaller = rolesUsuario.includes('taller');
 
     const mostrar = (id, visible) => {
+      // Un permiso manual otorgado por la administradora siempre tiene la
+      // última palabra, sin importar lo que le tocaría por su(s) rol(es).
+      const visibleFinal = permisosOverrideActual.hasOwnProperty(id) ? permisosOverrideActual[id] : visible;
       const el = document.getElementById(id);
-      if (el) el.style.display = visible ? '' : 'none';
+      if (el) el.style.display = visibleFinal ? '' : 'none';
     };
 
     // Grupos de departamento completos (acordeón)
@@ -2218,6 +2276,23 @@
 
     // Botones específicos dentro de Taller que no aplican a Cajero/Admin visitando ahí
     mostrar('nav-pagos-pendientes', esCajero || esTaller);
+
+    // Ítems individuales — visibles por defecto si su grupo lo está, pero se
+    // pueden apagar uno por uno desde los permisos manuales.
+    mostrar('nav-ventas', esAdmin || esCajero);
+    mostrar('nav-historial', esAdmin || esCajero);
+    mostrar('nav-inventario-tienda', esAdmin || esCajero);
+    mostrar('nav-ajustestock', esAdmin || esCajero);
+    mostrar('nav-reportes', esAdmin || esCajero);
+    mostrar('nav-pedidos-canal', esAdmin || esCajero);
+    mostrar('nav-solicitudes-tienda', esAdmin || esCajero);
+    mostrar('nav-consumotaller', esAdmin || esTaller);
+    mostrar('nav-inventario-taller', esAdmin || esTaller);
+    mostrar('nav-nomina', esAdmin);
+    mostrar('nav-talento-humano', esAdmin);
+    mostrar('nav-departamentos', esAdmin);
+    mostrar('nav-reportes-financieros', esAdmin);
+    mostrar('nav-calendario', true);
 
     // Si el usuario solo tiene un departamento, se abre expandido automáticamente
     if (esCajero) abrirSidebarDepto('deptoTiendaSubmenu', 'headerDeptoTienda');
@@ -2394,6 +2469,8 @@
   // ============================================================================
   // OBTENER ROL DEL USUARIO (consulta directa a Supabase, solo lectura)
   // ============================================================================
+  let rolesAdicionalesActual = [];
+
   async function obtenerRolUsuario() {
     const { data, error } = await supabaseClient
       .from('usuarios_roles')
@@ -2409,6 +2486,23 @@
     rolActual = data.rol;
     await cargarIdsDepartamentosClave();
     await cargarIdentidadPropiaEmpleado();
+    await cargarRolesYPermisosPropios();
+  }
+
+  async function cargarRolesYPermisosPropios() {
+    const { data: adicionales } = await supabaseClient
+      .from('roles_adicionales_usuario')
+      .select('rol')
+      .eq('user_id', sesionActual.userId);
+    rolesAdicionalesActual = (adicionales || []).map(r => r.rol);
+
+    const resp = await fetch(WORKER_URL + '/api/pos/usuarios/permisos', {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+    if (resp.ok) {
+      const { permisos } = await resp.json();
+      permisosOverrideActual = Object.fromEntries((permisos || []).map(p => [p.modulo_clave, p.otorgado]));
+    }
   }
 
   let miPropiaIdentidad = { numeroDocumento: null, nombre: null };
@@ -5538,6 +5632,213 @@
   // ============================================================================
   // REPORTES FINANCIEROS CONSOLIDADOS (solo Admin)
   // ============================================================================
+  // ============================================================
+  // USUARIOS Y PERMISOS
+  // ============================================================
+  const CATALOGO_MODULOS = [
+    { clave: 'deptoTiendaGrupo', etiqueta: '🏬 Tienda/Mercería (grupo completo)' },
+    { clave: 'nav-ventas', etiqueta: '　　Registrar venta' },
+    { clave: 'nav-historial', etiqueta: '　　Historial de ventas' },
+    { clave: 'nav-inventario-tienda', etiqueta: '　　Inventario' },
+    { clave: 'nav-ajustestock', etiqueta: '　　Entrada de mercancía' },
+    { clave: 'nav-turno', etiqueta: '　　Turno de caja' },
+    { clave: 'nav-reportes', etiqueta: '　　Reportes de turno' },
+    { clave: 'nav-pedidos-canal', etiqueta: '　　Pedidos WhatsApp/Redes' },
+    { clave: 'nav-solicitudes-tienda', etiqueta: '　　Solicitud de insumos del Taller' },
+    { clave: 'deptoTallerGrupo', etiqueta: '🧶 Taller (grupo completo)' },
+    { clave: 'nav-consumotaller', etiqueta: '　　Consumo de material' },
+    { clave: 'nav-inventario-taller', etiqueta: '　　Inventario' },
+    { clave: 'nav-pagos-pendientes', etiqueta: '　　Caja, gastos y presupuesto' },
+    { clave: 'deptoAcademiaGrupo', etiqueta: '🎓 Lana Rosa Academy (grupo completo)' },
+    { clave: 'deptoTalentoGrupo', etiqueta: '🗂️ Talento Humano (grupo completo)' },
+    { clave: 'nav-nomina', etiqueta: '　　Nómina' },
+    { clave: 'nav-talento-humano', etiqueta: '　　Carpetas por empleado' },
+    { clave: 'deptoReportesGrupo', etiqueta: '📊 Reportes financieros (grupo completo)' },
+    { clave: 'nav-departamentos', etiqueta: '　　Cajas y ventas internas' },
+    { clave: 'nav-reportes-financieros', etiqueta: '　　Por departamento y global' },
+    { clave: 'deptoFondoEmprenderGrupo', etiqueta: '🏦 Fondo Emprender (grupo completo)' },
+    { clave: 'nav-calendario', etiqueta: '📅 Calendario del equipo' },
+  ];
+
+  let usuariosCache = [];
+  let usuarioPermisosAbiertoId = null;
+
+  async function mostrarPantallaUsuarios() {
+    mostrarPantalla('pantallaUsuarios');
+    document.getElementById('panelPermisosUsuario').classList.add('oculto');
+    usuarioPermisosAbiertoId = null;
+    ocultarMensaje('mensajeCrearUsuario');
+    await cargarListaUsuarios();
+  }
+
+  async function cargarListaUsuarios() {
+    const contenedor = document.getElementById('listaUsuarios');
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/usuarios', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+
+    const { usuarios } = await resp.json();
+    usuariosCache = usuarios || [];
+
+    const etiquetasRol = { administrador: 'Administrador', cajero: 'Cajero', taller: 'Taller', contador: 'Contador' };
+
+    contenedor.innerHTML = usuariosCache.map(u => `
+      <div class="fila-inventario-editable" style="margin-bottom:10px;${u.activo ? '' : 'opacity:0.5;'}">
+        <div class="fila-inventario-titulo">
+          <span class="fila-inventario-nombre">${escaparHtml(u.nombre_completo || 'Sin nombre')} ${!u.activo ? '<span class="badge-inactivo">Inactivo</span>' : ''}</span>
+        </div>
+        <div style="font-size:12px;opacity:0.65;margin-top:2px;">${escaparHtml(u.correo || 'Sin correo')}</div>
+        <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <label style="margin:0;font-size:11px;">Rol principal:</label>
+          <select onchange="cambiarRolPrincipalUsuario('${u.user_id}', this.value)" style="width:auto;padding:6px 8px;font-size:12px;">
+            ${Object.keys(etiquetasRol).map(r => `<option value="${r}" ${u.rol === r ? 'selected' : ''}>${etiquetasRol[r]}</option>`).join('')}
+          </select>
+        </div>
+        <div style="margin-top:6px;font-size:11px;">
+          Roles adicionales:
+          ${Object.keys(etiquetasRol).filter(r => r !== u.rol).map(r => `
+            <label style="display:inline-flex;align-items:center;gap:4px;font-weight:400;margin-right:10px;">
+              <input type="checkbox" style="width:auto;" ${u.roles_adicionales.includes(r) ? 'checked' : ''} onchange="toggleRolAdicionalUsuario('${u.user_id}', '${r}', this.checked)"> ${etiquetasRol[r]}
+            </label>
+          `).join('')}
+        </div>
+        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
+          <button class="btn-mini editar" onclick="abrirPermisosUsuario('${u.user_id}', '${escaparHtml(u.nombre_completo || '')}')">⚙️ Permisos</button>
+          <button class="btn-mini editar" onclick="resetearPasswordUsuario('${u.user_id}', '${escaparHtml(u.nombre_completo || '')}')">🔑 Resetear contraseña</button>
+          <button class="btn-mini ${u.activo ? 'desactivar' : 'guardar'}" onclick="activarDesactivarUsuario('${u.user_id}', ${!u.activo})">${u.activo ? '🚫 Desactivar' : '✅ Activar'}</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function confirmarCrearUsuario() {
+    const nombre = document.getElementById('nuevoUsuarioNombre').value.trim();
+    const correo = document.getElementById('nuevoUsuarioCorreo').value.trim();
+    const password = document.getElementById('nuevoUsuarioPassword').value;
+    const rol = document.getElementById('nuevoUsuarioRol').value;
+    const rolesAdicionales = Array.from(document.querySelectorAll('.chkRolAdicionalNuevo:checked')).map(c => c.value);
+    ocultarMensaje('mensajeCrearUsuario');
+
+    if (!nombre || !correo || !password) { mostrarMensaje('mensajeCrearUsuario', 'Completa nombre, correo y contraseña temporal.', 'error'); return; }
+    if (password.length < 6) { mostrarMensaje('mensajeCrearUsuario', 'La contraseña debe tener al menos 6 caracteres.', 'error'); return; }
+
+    const btn = document.getElementById('btnCrearUsuario');
+    btn.disabled = true;
+
+    const resp = await fetch(WORKER_URL + '/api/pos/usuarios', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ nombre_completo: nombre, correo, contrasena_temporal: password, rol, roles_adicionales: rolesAdicionales })
+    });
+    btn.disabled = false;
+
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeCrearUsuario', datos.error || 'No se pudo crear el usuario.', 'error'); return; }
+
+    mostrarMensaje('mensajeCrearUsuario', `✅ Usuario creado. Correo: ${correo} — Contraseña temporal: ${password}. Compártesela de forma segura.`, 'exito');
+    document.getElementById('nuevoUsuarioNombre').value = '';
+    document.getElementById('nuevoUsuarioCorreo').value = '';
+    document.getElementById('nuevoUsuarioPassword').value = '';
+    document.querySelectorAll('.chkRolAdicionalNuevo').forEach(c => c.checked = false);
+    await cargarListaUsuarios();
+  }
+
+  async function cambiarRolPrincipalUsuario(userId, rol) {
+    const resp = await fetch(WORKER_URL + '/api/pos/usuarios/rol-principal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ user_id: userId, rol })
+    });
+    if (!resp.ok) { alert('No se pudo cambiar el rol.'); await cargarListaUsuarios(); return; }
+    await cargarListaUsuarios();
+  }
+
+  async function toggleRolAdicionalUsuario(userId, rol, otorgar) {
+    const endpoint = otorgar ? '/api/pos/usuarios/rol-adicional' : '/api/pos/usuarios/rol-adicional/quitar';
+    const resp = await fetch(WORKER_URL + endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ user_id: userId, rol })
+    });
+    if (!resp.ok) { alert('No se pudo actualizar el rol adicional.'); }
+    await cargarListaUsuarios();
+  }
+
+  async function resetearPasswordUsuario(userId, nombre) {
+    const nueva = prompt(`Escribe la nueva contraseña temporal para ${nombre} (mínimo 6 caracteres):`);
+    if (!nueva) return;
+    if (nueva.length < 6) { alert('Debe tener al menos 6 caracteres.'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/usuarios/resetear-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ user_id: userId, nueva_contrasena_temporal: nueva })
+    });
+    if (!resp.ok) { alert('No se pudo resetear la contraseña.'); return; }
+    alert(`✅ Contraseña actualizada. Nueva contraseña temporal: ${nueva}`);
+  }
+
+  async function activarDesactivarUsuario(userId, activo) {
+    if (!confirm(activo ? '¿Reactivar este usuario?' : '¿Desactivar este usuario? No podrá iniciar sesión.')) return;
+    const resp = await fetch(WORKER_URL + '/api/pos/usuarios/activar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ user_id: userId, activo })
+    });
+    if (!resp.ok) { alert('No se pudo actualizar.'); return; }
+    await cargarListaUsuarios();
+  }
+
+  async function abrirPermisosUsuario(userId, nombre) {
+    usuarioPermisosAbiertoId = userId;
+    document.getElementById('tituloPermisosUsuario').textContent = `⚙️ Permisos personalizados — ${nombre}`;
+    document.getElementById('panelPermisosUsuario').classList.remove('oculto');
+    ocultarMensaje('mensajePermisosUsuario');
+
+    const resp = await fetch(WORKER_URL + '/api/pos/usuarios/permisos?user_id=' + userId, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    const permisosActuales = resp.ok ? Object.fromEntries((await resp.json()).permisos.map(p => [p.modulo_clave, p.otorgado])) : {};
+
+    document.getElementById('listaPermisosModulos').innerHTML = CATALOGO_MODULOS.map(m => `
+      <label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:12.5px;font-weight:400;border-bottom:1px solid #f4eef2;">
+        <input type="checkbox" class="chkPermisoModulo" data-clave="${m.clave}" style="width:auto;" ${permisosActuales[m.clave] === false ? '' : 'checked'}>
+        <span style="white-space:pre;">${m.etiqueta}</span>
+      </label>
+    `).join('');
+
+    document.getElementById('panelPermisosUsuario').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  async function guardarPermisosUsuarioActual() {
+    if (!usuarioPermisosAbiertoId) return;
+    const permisos = Array.from(document.querySelectorAll('.chkPermisoModulo')).map(chk => ({
+      modulo_clave: chk.dataset.clave,
+      otorgado: chk.checked
+    }));
+
+    const resp = await fetch(WORKER_URL + '/api/pos/usuarios/permisos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ user_id: usuarioPermisosAbiertoId, permisos })
+    });
+    if (!resp.ok) { mostrarMensaje('mensajePermisosUsuario', 'No se pudieron guardar los permisos.', 'error'); return; }
+    mostrarMensaje('mensajePermisosUsuario', '✅ Permisos guardados. Se aplicarán la próxima vez que esa persona inicie sesión (o si ya tiene una sesión abierta, al recargar la página).', 'exito');
+  }
+
+  async function restablecerPermisosUsuarioActual() {
+    if (!usuarioPermisosAbiertoId) return;
+    if (!confirm('¿Quitar todos los permisos personalizados? Esta persona volverá a regirse solo por su rol.')) return;
+
+    const resp = await fetch(WORKER_URL + '/api/pos/usuarios/permisos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ user_id: usuarioPermisosAbiertoId, permisos: [] })
+    });
+    if (!resp.ok) { mostrarMensaje('mensajePermisosUsuario', 'No se pudo restablecer.', 'error'); return; }
+    document.querySelectorAll('.chkPermisoModulo').forEach(chk => chk.checked = true);
+    mostrarMensaje('mensajePermisosUsuario', '✅ Permisos personalizados eliminados. Ahora se rige solo por su rol.', 'exito');
+  }
+
   async function mostrarPantallaReportesFinancieros() {
     mostrarPantalla('pantallaReportesFinancieros');
     mostrarSubTabGrupo('reportesFin', 'subtabFinPresupuestos', document.querySelector('[data-subtab-btn="reportesFin"]'));
