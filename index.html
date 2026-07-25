@@ -619,6 +619,7 @@
     <div class="sidebar-depto" id="deptoAcademiaGrupo" style="display:none;">
       <button class="sidebar-depto-header" id="headerDeptoAcademia" onclick="toggleSidebarDepto('deptoAcademiaSubmenu', 'headerDeptoAcademia')">🎓 Lana Rosa Academy <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoAcademiaSubmenu">
+        <button class="nav-btn" onclick="irATurnoActivoAcademia()"><span class="nav-icon">💵</span> Turno de caja</button>
         <button class="nav-btn" onclick="mostrarPantallaAcademia()"><span class="nav-icon">💰</span> Registrar venta</button>
         <button class="nav-btn" onclick="mostrarPantallaHistorial('04')"><span class="nav-icon">📋</span> Historial ventas</button>
         <button class="nav-btn" onclick="mostrarPantallaAcademiaKits()"><span class="nav-icon">🧶</span> Kits de tejido</button>
@@ -1700,6 +1701,47 @@
   </div>
 </div>
 
+<!-- ===== TURNO DE CAJA — LANA ROSA ACADEMY ===== -->
+<div id="pantallaAbrirTurnoAcademia" class="oculto contenido">
+  <div class="page-header">
+    <h1>🎓 Abrir turno — Lana Rosa Academy</h1>
+    <div class="subtitulo">Antes de registrar ventas en Academy, abre el turno con la base inicial de efectivo.</div>
+  </div>
+  <div class="panel" style="max-width:420px;">
+    <label for="academiaMontoApertura">Base de apertura (efectivo en caja)</label>
+    <input type="number" id="academiaMontoApertura" min="0" step="1000" value="0">
+    <button class="btn-principal" id="btnAbrirTurnoAcademia" onclick="confirmarAbrirTurnoAcademia()">Abrir turno</button>
+    <div class="mensaje" id="mensajeAbrirTurnoAcademia"></div>
+  </div>
+</div>
+
+<div id="pantallaTurnoActivoAcademia" class="oculto contenido">
+  <div class="page-header">
+    <h1>🎓 Turno activo — Lana Rosa Academy</h1>
+  </div>
+  <div class="panel" style="max-width:420px;">
+    <div id="resumenTurnoActivoAcademia"><div class="cargando">Cargando...</div></div>
+    <button class="btn-principal" onclick="mostrarPantallaAcademia()" style="margin-top:14px;">💰 Ir a registrar ventas</button>
+    <button class="btn-secundario" onclick="mostrarPantallaCerrarTurnoAcademia()">🔒 Cerrar turno</button>
+  </div>
+</div>
+
+<div id="pantallaCerrarTurnoAcademia" class="oculto contenido">
+  <div class="page-header">
+    <h1>🔒 Cerrar turno — Lana Rosa Academy</h1>
+    <div class="subtitulo">Cuenta el efectivo físico que hay en caja y regístralo abajo.</div>
+  </div>
+  <div class="panel" style="max-width:480px;">
+    <label for="academiaMontoDeclarado">Efectivo contado en caja</label>
+    <input type="number" id="academiaMontoDeclarado" min="0" step="1000">
+    <label for="academiaObservacionesCierre">Observaciones (opcional)</label>
+    <input type="text" id="academiaObservacionesCierre" placeholder="Ej: faltó $2.000 por vuelto mal dado">
+    <button class="btn-principal" onclick="confirmarCerrarTurnoAcademia()">Cerrar turno</button>
+    <div class="mensaje" id="mensajeCerrarTurnoAcademia"></div>
+    <div id="resumenCierreAcademia" class="oculto" style="margin-top:16px;"></div>
+  </div>
+</div>
+
 <!-- ===== FONDO EMPRENDER: CONFIGURACIÓN ===== -->
 <div id="pantallaFeConfig" class="oculto contenido">
   <div class="page-header">
@@ -1893,7 +1935,7 @@
   // UTILIDADES
   // ============================================================================
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaDepartamentos', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaDepartamentos', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaAbrirTurnoAcademia', 'pantallaTurnoActivoAcademia', 'pantallaCerrarTurnoAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -7687,7 +7729,106 @@
     mini_app: 'Mini app', otro: 'Otro'
   };
 
+  let turnoActivoAcademia = null;
+
+  async function cargarTurnoActivoAcademia() {
+    const resp = await fetch(WORKER_URL + '/api/pos/academia/turno/activo', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { turnoActivoAcademia = null; return; }
+    const { turno } = await resp.json();
+    turnoActivoAcademia = turno;
+  }
+
+  async function irATurnoActivoAcademia() {
+    await cargarTurnoActivoAcademia();
+    if (!turnoActivoAcademia) {
+      mostrarPantalla('pantallaAbrirTurnoAcademia');
+      document.getElementById('academiaMontoApertura').value = '0';
+      ocultarMensaje('mensajeAbrirTurnoAcademia');
+      return;
+    }
+    mostrarPantalla('pantallaTurnoActivoAcademia');
+    const fechaAp = new Date(turnoActivoAcademia.fecha_apertura).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
+    document.getElementById('resumenTurnoActivoAcademia').innerHTML = `
+      <div class="resumen-fila"><span>Base de apertura</span><strong>${formatearMoneda(turnoActivoAcademia.monto_apertura)}</strong></div>
+      <div class="resumen-fila"><span>Abierto desde</span><strong>${fechaAp}</strong></div>
+    `;
+  }
+
+  async function confirmarAbrirTurnoAcademia() {
+    const monto = Number(document.getElementById('academiaMontoApertura').value);
+    ocultarMensaje('mensajeAbrirTurnoAcademia');
+    if (monto === null || monto === undefined || isNaN(monto) || monto < 0) {
+      mostrarMensaje('mensajeAbrirTurnoAcademia', 'Escribe una base de apertura válida.', 'error');
+      return;
+    }
+    const btn = document.getElementById('btnAbrirTurnoAcademia');
+    btn.disabled = true;
+    const resp = await fetch(WORKER_URL + '/api/pos/academia/turno/abrir', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ monto_apertura: monto })
+    });
+    btn.disabled = false;
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeAbrirTurnoAcademia', datos.error || 'No se pudo abrir el turno.', 'error'); return; }
+    await irATurnoActivoAcademia();
+  }
+
+  async function mostrarPantallaCerrarTurnoAcademia() {
+    if (!turnoActivoAcademia) { alert('No hay un turno activo.'); return; }
+    mostrarPantalla('pantallaCerrarTurnoAcademia');
+    document.getElementById('academiaMontoDeclarado').value = '';
+    document.getElementById('academiaObservacionesCierre').value = '';
+    ocultarMensaje('mensajeCerrarTurnoAcademia');
+    document.getElementById('resumenCierreAcademia').classList.add('oculto');
+  }
+
+  async function confirmarCerrarTurnoAcademia() {
+    const montoDeclarado = Number(document.getElementById('academiaMontoDeclarado').value);
+    const observaciones = document.getElementById('academiaObservacionesCierre').value.trim();
+    ocultarMensaje('mensajeCerrarTurnoAcademia');
+
+    if (isNaN(montoDeclarado) || montoDeclarado < 0) {
+      mostrarMensaje('mensajeCerrarTurnoAcademia', 'Escribe el efectivo contado en caja.', 'error');
+      return;
+    }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/academia/turno/cerrar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ turno_id: turnoActivoAcademia.id, monto_declarado: montoDeclarado, observaciones: observaciones || null })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeCerrarTurnoAcademia', datos.error || 'No se pudo cerrar el turno.', 'error'); return; }
+
+    const r = datos.resumen;
+    const colorDif = r.diferencia === 0 ? 'var(--verde-exito)' : (r.diferencia > 0 ? '#2e8b57' : 'var(--rojo-error)');
+    const etiquetasPago = { efectivo: 'Efectivo', nequi: 'Nequi', daviplata: 'Daviplata', tarjeta_debito: 'Tarjeta débito', tarjeta_credito: 'Tarjeta crédito' };
+    const resumenMetodos = (r.resumen_por_metodo || []).map(m => `<div class="resumen-fila"><span>${etiquetasPago[m.metodo_pago] || m.metodo_pago}</span><strong>${formatearMoneda(m.monto)}</strong></div>`).join('');
+
+    document.getElementById('resumenCierreAcademia').classList.remove('oculto');
+    document.getElementById('resumenCierreAcademia').innerHTML = `
+      <div style="background:var(--rosa-suave);border-radius:12px;padding:16px;">
+        <div style="font-weight:700;margin-bottom:8px;">✅ Turno cerrado</div>
+        <div class="resumen-fila"><span>N.° de ventas</span><strong>${r.num_ventas_turno}</strong></div>
+        <div class="resumen-fila"><span>Total vendido</span><strong>${formatearMoneda(r.total_ventas_turno)}</strong></div>
+        ${resumenMetodos}
+        <div class="resumen-fila total"><span>Efectivo esperado</span><strong>${formatearMoneda(r.monto_esperado)}</strong></div>
+        <div class="resumen-fila total"><span>Efectivo contado</span><strong>${formatearMoneda(r.monto_declarado)}</strong></div>
+        <div class="resumen-fila total"><span>Diferencia</span><strong style="color:${colorDif};">${formatearMoneda(r.diferencia)}</strong></div>
+      </div>
+    `;
+    mostrarMensaje('mensajeCerrarTurnoAcademia', '✅ Turno cerrado correctamente.', 'exito');
+    turnoActivoAcademia = null;
+  }
+
   async function mostrarPantallaAcademia() {
+    await cargarTurnoActivoAcademia();
+    if (!turnoActivoAcademia) {
+      alert('Debes abrir un turno de caja de Academy antes de registrar ventas.');
+      await irATurnoActivoAcademia();
+      return;
+    }
     mostrarPantalla('pantallaAcademia');
     mostrarSubTabGrupo('academia', 'subtabAcademiaRegistrar', document.querySelectorAll('[data-subtab-btn="academia"]')[0]);
     ocultarMensaje('mensajeVentaAcademia');
@@ -7718,6 +7859,7 @@
 
     if (!descripcion) { mostrarMensaje('mensajeVentaAcademia', 'Escribe una descripción.', 'error'); return; }
     if (!monto || monto <= 0) { mostrarMensaje('mensajeVentaAcademia', 'Escribe un monto válido.', 'error'); return; }
+    if (!turnoActivoAcademia) { mostrarMensaje('mensajeVentaAcademia', 'No hay un turno de caja abierto.', 'error'); return; }
 
     const btn = document.getElementById('btnRegistrarVentaAcademia');
     btn.disabled = true;
@@ -7731,7 +7873,8 @@
         descripcion,
         cliente_nombre: cliente || null,
         monto,
-        metodo_pago: metodoPago
+        metodo_pago: metodoPago,
+        turno_id: turnoActivoAcademia.id
       })
     });
 
