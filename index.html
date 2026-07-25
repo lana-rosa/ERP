@@ -596,7 +596,7 @@
         <button class="nav-btn" id="nav-ventas" onclick="mostrarPantallaVentas()"><span class="nav-icon">🛒</span> Registrar venta</button>
         <button class="nav-btn" id="nav-historial" onclick="mostrarPantallaHistorial('01')"><span class="nav-icon">📋</span> Historial ventas</button>
         <button class="nav-btn" id="nav-pedidos-canal" onclick="mostrarPantallaPedidosCanal()"><span class="nav-icon">📱</span> Pedidos WhatsApp/Redes</button>
-        <button class="nav-btn" id="nav-solicitudes-tienda" onclick="mostrarPantallaSolicitudes('tienda')"><span class="nav-icon">📦</span> Solicitud de insumos del Taller</button>
+        <button class="nav-btn" id="nav-solicitudes-tienda" onclick="mostrarPantallaSolicitudes()"><span class="nav-icon">📦</span> Solicitud de insumos del Taller</button>
         <button class="nav-btn" id="nav-inventario-tienda" onclick="mostrarPantallaInventario('01')"><span class="nav-icon">📊</span> Inventario</button>
         <button class="nav-btn" id="nav-ajustestock" onclick="mostrarPantallaAjusteStock()"><span class="nav-icon">📥</span> Entrada mercancía</button>
         <button class="nav-btn" id="nav-turno" onclick="irATurnoActivo()"><span class="nav-icon">💵</span> Turno de caja</button>
@@ -611,7 +611,7 @@
         <button class="nav-btn" id="nav-consumotaller" onclick="mostrarPantallaPedidosCrm()"><span class="nav-icon">🧶</span> Consumo de material</button>
         <button class="nav-btn" onclick="mostrarPantallaHistorial('03')"><span class="nav-icon">📋</span> Historial ventas</button>
         <button class="nav-btn" id="nav-inventario-taller" onclick="mostrarPantallaInventario('03')"><span class="nav-icon">📊</span> Inventario</button>
-        <button class="nav-btn" id="nav-solicitudes-taller" onclick="mostrarPantallaSolicitudes('taller')"><span class="nav-icon">📦</span> Solicitud de insumos a la Tienda</button>
+        <!-- La solicitud de insumos a la Tienda ahora vive dentro de "Consumo de material", por pedido -->
         <button class="nav-btn" id="nav-pagos-pendientes" onclick="mostrarPantallaPagosPendientes('03')"><span class="nav-icon">🏬</span> Caja, gastos y presupuesto</button>
       </div>
     </div>
@@ -948,12 +948,12 @@
 <div id="pantallaSolicitudes" class="oculto contenido">
   <div class="page-header">
     <span class="badge-rol" id="badgeRolSolicitudes"></span>
-    <h1 id="tituloPanelSolicitudes">Solicitud de insumos a la Tienda</h1>
-    <div class="subtitulo">Toda solicitud queda ligada al pedido que se está tejiendo.</div>
+    <h1 id="tituloPanelSolicitudes">Solicitud de insumos del Taller</h1>
+    <div class="subtitulo">El Taller solicita insumos desde "Consumo de material", ligados al pedido que está tejiendo. Aquí la Tienda revisa y despacha.</div>
   </div>
   <div class="grilla-2">
 
-    <div class="panel" id="panelCrearSolicitud">
+    <div class="panel oculto" id="panelCrearSolicitud">
       <h2>+ Solicitar insumo para un pedido</h2>
       <label for="solInsumoPedido">Pedido que se va a tejer</label>
       <select id="solInsumoPedido"><option value="">Cargando pedidos...</option></select>
@@ -970,8 +970,8 @@
       <div class="mensaje" id="mensajeSolicitudInsumo"></div>
     </div>
 
-    <div class="panel">
-      <h2 id="tituloPanelSolicitudesPendientes">Solicitudes pendientes por despachar</h2>
+    <div class="panel" style="max-width:none;">
+      <h2 id="tituloPanelSolicitudesPendientes">Solicitudes pendientes por aprobar y despachar</h2>
       <div id="listaSolicitudesPendientes"><div class="cargando">Cargando solicitudes...</div></div>
       <button class="btn-secundario" onclick="irAInicioSegunRol()" style="margin-top:14px;">Volver</button>
     </div>
@@ -4340,31 +4340,10 @@
   let catalogoSolicitudesCompleto = [];
   let itemSolicitudAbiertoId = null;
 
-  async function mostrarPantallaSolicitudes(modoForzado) {
+  async function mostrarPantallaSolicitudes() {
     mostrarPantalla('pantallaSolicitudes');
     document.getElementById('badgeRolSolicitudes').textContent = etiquetaRol(rolActual || '');
-    ocultarMensaje('mensajeSolicitudInsumo');
-
-    // Cajero siempre ve la vista de la Tienda (aprobar/despachar); Taller siempre
-    // ve la vista de crear solicitud. Administradora ve una u otra según desde
-    // qué menú entró (Tienda o Taller), porque tiene acceso a las dos.
-    let modo = modoForzado;
-    if (rolActual === 'cajero') modo = 'tienda';
-    if (rolActual === 'taller') modo = 'taller';
-    if (!modo) modo = 'taller';
-
-    const tituloPendientes = document.getElementById('tituloPanelSolicitudesPendientes');
-    document.getElementById('tituloPanelSolicitudes').textContent = modo === 'tienda' ? 'Solicitud de insumos del Taller' : 'Solicitud de insumos a la Tienda';
-
-    if (modo === 'taller') {
-      document.getElementById('panelCrearSolicitud').style.display = '';
-      await cargarPedidosParaSolicitudInsumo();
-      await cargarInsumosSolicitudTaller();
-      tituloPendientes.textContent = 'Mis solicitudes enviadas a la Tienda';
-    } else {
-      document.getElementById('panelCrearSolicitud').style.display = 'none';
-      tituloPendientes.textContent = 'Solicitudes pendientes por aprobar y despachar';
-    }
+    document.getElementById('tituloPanelSolicitudesPendientes').textContent = 'Solicitudes pendientes por aprobar y despachar';
     await cargarSolicitudesPendientesInsumo();
     await cargarHistorialSolicitudesInsumo();
   }
@@ -5882,6 +5861,9 @@
     mostrarPantalla('pantallaPedidosCrm');
     pedidoCrmAbiertoId = null;
     await cargarInsumosTallerCache();
+    await cargarInsumosTiendaParaSolicitar();
+    await cargarSolicitudesInsumoTiendaCache();
+    await cargarHistorialConsumosPedidoCache();
     await cargarPedidosCrmActivos();
     await cargarConsumosEnCurso();
     await cargarHistorialConsumosTaller();
@@ -6012,10 +5994,11 @@
       const abierto = pedidoCrmAbiertoId === p.id;
 
       const opcionesInsumo = insumosTallerCache.map(i => `<option value="${i.id}">${escaparHtml(i.nombre)} (stock: ${i.stock_actual} ${i.unidad_medida})</option>`).join('');
+      const opcionesInsumoTienda = insumosTiendaParaSolicitarCache.map(i => `<option value="${i.id}">${escaparHtml(i.nombre)} (stock: ${i.stock_actual} ${i.unidad_medida})</option>`).join('');
 
       return `
         <div class="item-consumo">
-          <div class="item-consumo-fila" style="cursor:pointer;" onclick="alternarTomaMaterial('${p.id}')">
+          <div class="item-consumo-fila" style="cursor:pointer;" onclick="alternarTomaMaterial('${p.id}', '${escaparHtml(numeroPedido)}')">
             <div class="item-producto-info">
               <div class="item-producto-nombre">${escaparHtml(numeroPedido)} — ${escaparHtml(p.tipo || 'Amigurumi')}</div>
               <div class="item-producto-meta">${escaparHtml(p.nombre_cliente || 'Sin cliente')} · Entrega: ${entrega} · <span class="badge-inactivo" style="background:var(--rosa-suave);color:var(--rosa-principal);">${etiquetasEstado[p.estado] || p.estado}</span></div>
@@ -6023,18 +6006,107 @@
           </div>
           ${p.descripcion ? `<div style="font-size:12px;opacity:0.65;margin-top:4px;padding-left:2px;">${escaparHtml(p.descripcion)}</div>` : ''}
           <div class="item-consumo-acciones ${abierto ? 'abierto' : ''}" style="flex-direction:column;align-items:stretch;">
-            <label style="margin-top:8px;font-size:11px;">Insumo a tomar</label>
+            <label style="margin-top:8px;font-size:11px;">Insumo a tomar (del inventario del Taller)</label>
             <select id="insumo-tomar-${p.id}">${opcionesInsumo || '<option value="">No hay insumos cargados en el Taller</option>'}</select>
             <label style="margin-top:6px;font-size:11px;">Cantidad</label>
             <input type="number" min="0.1" step="0.1" placeholder="Ej: 50 (gramos)" id="cantidad-tomar-${p.id}">
             <button onclick="confirmarTomaMaterial('${p.id}', '${escaparHtml(numeroPedido)}')" style="margin-top:8px;padding:8px;border-radius:8px;border:none;background:var(--rosa-principal);color:white;font-family:'Poppins',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;">Tomar material</button>
+
+            <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--rosa-medio);">
+              <label style="margin-top:0;font-size:11px;">📦 O solicitar insumo a la Tienda (si no hay en el Taller)</label>
+              <select id="insumo-solicitar-tienda-${p.id}">${opcionesInsumoTienda || '<option value="">No hay insumos de mercería en la Tienda</option>'}</select>
+              <label style="margin-top:6px;font-size:11px;">Cantidad</label>
+              <input type="number" min="0.1" step="0.1" placeholder="Ej: 50 (gramos)" id="cantidad-solicitar-tienda-${p.id}">
+              <button onclick="confirmarSolicitarInsumoTienda('${p.id}', '${escaparHtml(numeroPedido)}')" style="margin-top:8px;padding:8px;border-radius:8px;border:none;background:var(--azul-acero);color:white;font-family:'Poppins',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;">Solicitar a la Tienda</button>
+              <div id="mensaje-solicitar-tienda-${p.id}" class="mensaje"></div>
+            </div>
+
+            <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--rosa-medio);">
+              <div style="font-size:11px;font-weight:700;opacity:0.6;margin-bottom:6px;">🧾 Trazabilidad — insumos de este pedido</div>
+              <div id="trazabilidad-pedido-${p.id}">${renderizarTrazabilidadPedido(numeroPedido)}</div>
+            </div>
           </div>
         </div>
       `;
     }).join('');
   }
 
-  function alternarTomaMaterial(pedidoId) {
+  function renderizarTrazabilidadPedido(numeroPedido) {
+    const consumos = (historialConsumosPedidoCache[numeroPedido] || []);
+    const pendientesTienda = solicitudesInsumoTiendaCache.filter(s => s.numero_pedido_crm === numeroPedido && s.estado === 'pendiente');
+
+    if (consumos.length === 0 && pendientesTienda.length === 0) {
+      return '<div style="font-size:12px;opacity:0.5;">Todavía no se ha tomado ningún insumo para este pedido.</div>';
+    }
+
+    let html = consumos.map(c => {
+      const texto = c.estado === 'finalizado'
+        ? `${c.cantidad_consumida} ${c.unidad_medida} consumidos (tomó ${c.cantidad_tomada}, devolvió ${c.cantidad_devuelta})`
+        : `${c.cantidad_tomada} ${c.unidad_medida} — en uso`;
+      return `<div style="font-size:12px;padding:4px 0;border-bottom:1px dashed #f0e8ee;">${escaparHtml(c.nombre)}: ${texto}</div>`;
+    }).join('');
+
+    html += pendientesTienda.map(s => `
+      <div style="font-size:12px;padding:4px 0;border-bottom:1px dashed #f0e8ee;color:#856404;">
+        ${escaparHtml(s.inventario_items ? s.inventario_items.nombre : 'Insumo')}: ${s.cantidad} — ⏳ Pendiente en la Tienda
+      </div>
+    `).join('');
+
+    return html;
+  }
+
+  async function confirmarSolicitarInsumoTienda(pedidoId, numeroPedido) {
+    const insumoId = document.getElementById(`insumo-solicitar-tienda-${pedidoId}`).value;
+    const cantidad = Number(document.getElementById(`cantidad-solicitar-tienda-${pedidoId}`).value);
+    const msgEl = document.getElementById(`mensaje-solicitar-tienda-${pedidoId}`);
+    ocultarMensaje(`mensaje-solicitar-tienda-${pedidoId}`);
+
+    if (!insumoId) { mostrarMensaje(`mensaje-solicitar-tienda-${pedidoId}`, 'Selecciona un insumo.', 'error'); return; }
+    if (!cantidad || cantidad <= 0) { mostrarMensaje(`mensaje-solicitar-tienda-${pedidoId}`, 'Escribe una cantidad válida.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/insumo-pedido/solicitar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ pedido_crm_id: pedidoId, numero_pedido_crm: numeroPedido, inventario_item_id: insumoId, cantidad })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje(`mensaje-solicitar-tienda-${pedidoId}`, datos.error || 'No se pudo enviar la solicitud.', 'error'); return; }
+
+    mostrarMensaje(`mensaje-solicitar-tienda-${pedidoId}`, '✅ Solicitud enviada a la Tienda.', 'exito');
+    document.getElementById(`cantidad-solicitar-tienda-${pedidoId}`).value = '';
+    await cargarSolicitudesInsumoTiendaCache();
+    document.getElementById(`trazabilidad-pedido-${pedidoId}`).innerHTML = renderizarTrazabilidadPedido(numeroPedido);
+  }
+
+  let historialConsumosPedidoCache = {};
+  let solicitudesInsumoTiendaCache = [];
+  let insumosTiendaParaSolicitarCache = [];
+
+  async function cargarSolicitudesInsumoTiendaCache() {
+    const resp = await fetch(WORKER_URL + '/api/pos/insumo-pedido/solicitudes', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    solicitudesInsumoTiendaCache = resp.ok ? (await resp.json()).solicitudes || [] : [];
+  }
+
+  async function cargarInsumosTiendaParaSolicitar() {
+    const { data } = await supabaseClient
+      .from('inventario_items')
+      .select('id, nombre, stock_actual, unidad_medida')
+      .eq('tipo', 'merceria')
+      .eq('activo', true)
+      .eq('centro_costo_id', centroCostoTiendaId)
+      .order('nombre', { ascending: true });
+    insumosTiendaParaSolicitarCache = data || [];
+  }
+
+  async function cargarHistorialConsumosPedidoCache() {
+    const resp = await fetch(WORKER_URL + '/api/pos/crm/historial-consumos', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) return;
+    const { pedidos } = await resp.json();
+    historialConsumosPedidoCache = {};
+    (pedidos || []).forEach(p => { historialConsumosPedidoCache[p.numero_pedido_crm] = p.insumos; });
+  }
+
+  function alternarTomaMaterial(pedidoId, numeroPedido) {
     pedidoCrmAbiertoId = pedidoCrmAbiertoId === pedidoId ? null : pedidoId;
     cargarPedidosCrmActivos();
   }
