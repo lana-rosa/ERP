@@ -781,6 +781,20 @@
     <div class="panel" style="max-width:none;">
       <h2>Carrito</h2>
       <div id="listaCarrito"><div class="carrito-vacio">Aún no has agregado productos</div></div>
+
+      <div id="bloqueDescuento" style="margin-top:10px;">
+        <button type="button" class="btn-mini editar" id="btnMostrarDescuento" onclick="alternarDescuentoVenta()">🏷️ Aplicar descuento</button>
+        <div id="formDescuento" class="oculto" style="margin-top:8px;display:flex;gap:8px;align-items:center;">
+          <select id="descuentoTipo" onchange="recalcularDescuento()" style="flex:0 0 90px;">
+            <option value="porcentaje">%</option>
+            <option value="valor">$</option>
+          </select>
+          <input type="number" id="descuentoValorInput" min="0" step="1" placeholder="0" oninput="recalcularDescuento()" style="flex:1;">
+          <button type="button" class="btn-quitar-pago" onclick="quitarDescuentoVenta()" title="Quitar descuento">✕</button>
+        </div>
+        <div id="textoDescuentoAplicado" class="oculto" style="font-size:12.5px;color:var(--rosa-principal);font-weight:600;margin-top:6px;"></div>
+      </div>
+
       <div class="resumen-total">
         <span>Total</span>
         <span class="valor" id="textoTotalCarrito">$0</span>
@@ -2446,6 +2460,7 @@
 
     // Limpiar el carrito activo para atender al siguiente cliente
     carrito = [];
+    descuentoVentaActual = { tipo: 'porcentaje', valor: 0 };
     filasPago = [{ metodo_pago: 'efectivo', monto: '', referencia: '' }];
     document.getElementById('clienteNombre').value = '';
     document.getElementById('clienteTelefono').value = '';
@@ -2544,12 +2559,17 @@
     }
 
     carrito = [];
+    descuentoVentaActual = { tipo: 'porcentaje', valor: 0 };
     filasPago = [{ metodo_pago: 'efectivo', monto: '', referencia: '' }];
-    contadorFilaPago = 1;
     document.getElementById('inputBuscarProducto').value = '';
     filtroTipoActual = 'todos';
     document.querySelectorAll('.chip-filtro').forEach(c => c.classList.remove('activo'));
     document.querySelector('.chip-filtro[data-filtro="todos"]').classList.add('activo');
+    document.getElementById('descuentoTipo').value = 'porcentaje';
+    document.getElementById('descuentoValorInput').value = '';
+    document.getElementById('formDescuento').classList.add('oculto');
+    document.getElementById('btnMostrarDescuento').classList.remove('oculto');
+    document.getElementById('textoDescuentoAplicado').classList.add('oculto');
     ocultarMensaje('mensajeVenta');
     document.getElementById('btnImprimirRecibo').disabled = true;
     document.getElementById('btnWhatsappRecibo').disabled = true;
@@ -2705,8 +2725,56 @@
     renderizarCarrito();
   }
 
-  function calcularTotalCarrito() {
+  let descuentoVentaActual = { tipo: 'porcentaje', valor: 0 };
+
+  function calcularSubtotalCarrito() {
     return carrito.reduce((acc, linea) => acc + (linea.precio * linea.cantidad), 0);
+  }
+
+  function calcularValorDescuento() {
+    const subtotal = calcularSubtotalCarrito();
+    if (!descuentoVentaActual.valor || descuentoVentaActual.valor <= 0) return 0;
+    let valor = descuentoVentaActual.tipo === 'porcentaje'
+      ? subtotal * (descuentoVentaActual.valor / 100)
+      : descuentoVentaActual.valor;
+    return Math.min(Math.max(valor, 0), subtotal); // nunca negativo ni mayor al subtotal
+  }
+
+  function calcularTotalCarrito() {
+    return Math.max(calcularSubtotalCarrito() - calcularValorDescuento(), 0);
+  }
+
+  function alternarDescuentoVenta() {
+    document.getElementById('formDescuento').classList.remove('oculto');
+    document.getElementById('btnMostrarDescuento').classList.add('oculto');
+    document.getElementById('descuentoValorInput').focus();
+  }
+
+  function quitarDescuentoVenta() {
+    descuentoVentaActual = { tipo: 'porcentaje', valor: 0 };
+    document.getElementById('descuentoTipo').value = 'porcentaje';
+    document.getElementById('descuentoValorInput').value = '';
+    document.getElementById('formDescuento').classList.add('oculto');
+    document.getElementById('btnMostrarDescuento').classList.remove('oculto');
+    document.getElementById('textoDescuentoAplicado').classList.add('oculto');
+    renderizarCarrito();
+  }
+
+  function recalcularDescuento() {
+    descuentoVentaActual.tipo = document.getElementById('descuentoTipo').value;
+    descuentoVentaActual.valor = Number(document.getElementById('descuentoValorInput').value) || 0;
+
+    const textoEl = document.getElementById('textoDescuentoAplicado');
+    const valorDescuento = calcularValorDescuento();
+    if (valorDescuento > 0) {
+      textoEl.classList.remove('oculto');
+      textoEl.textContent = `Descuento aplicado: -${formatearMoneda(valorDescuento)}`;
+    } else {
+      textoEl.classList.add('oculto');
+    }
+
+    document.getElementById('textoTotalCarrito').textContent = formatearMoneda(calcularTotalCarrito());
+    renderizarPagos();
   }
 
   function renderizarCarrito() {
@@ -2927,6 +2995,13 @@
         throw new Error('No se encontró el centro de costo de Tienda Física.');
       }
 
+      // Si hay descuento, se reparte proporcionalmente entre las líneas — así el
+      // total que se envía, se cobra y se imprime en el recibo ya viene cuadrado,
+      // sin necesidad de tocar el Worker.
+      const subtotalOriginal = calcularSubtotalCarrito();
+      const valorDescuento = calcularValorDescuento();
+      const factorDescuento = valorDescuento > 0 && subtotalOriginal > 0 ? (subtotalOriginal - valorDescuento) / subtotalOriginal : 1;
+
       const resp = await fetch(WORKER_URL + '/api/pos/ventas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
@@ -2938,7 +3013,7 @@
             inventario_item_id: linea.id,
             descripcion: linea.nombre,
             cantidad: linea.cantidad,
-            precio_unitario: linea.precio
+            precio_unitario: Math.round(linea.precio * factorDescuento)
           })),
           pagos: filasPago.map(p => ({
             metodo_pago: p.metodo_pago,
@@ -2959,6 +3034,8 @@
         consecutivo: datos.consecutivo || datos.venta_id || '—',
         fecha: new Date(),
         lineas: carrito.map(l => ({ nombre: l.nombre, cantidad: l.cantidad, precio: l.precio })),
+        subtotal: subtotalOriginal,
+        descuento: valorDescuento,
         total,
         pagos: filasPago.map(p => ({ metodo_pago: p.metodo_pago, monto: Number(p.monto) })),
         cliente: { nombre: clienteNombre, telefono: clienteTelefono, identificacion: clienteIdentificacion },
@@ -3051,6 +3128,11 @@
         <tr><th>Producto</th><th style="text-align:center;">Cant.</th><th style="text-align:right;">Vlr. unit.</th><th style="text-align:right;">Subtotal</th></tr>
         ${filasProductos}
       </table>
+
+      ${v.descuento > 0 ? `
+        <div class="resumen-fila-recibo" style="margin-top:8px;"><span>Subtotal</span><span>${formatearMoneda(v.subtotal)}</span></div>
+        <div class="resumen-fila-recibo" style="color:var(--rosa-principal, #d8017c);"><span>Descuento</span><span>-${formatearMoneda(v.descuento)}</span></div>
+      ` : ''}
 
       <div class="total-recibo"><span>TOTAL</span><span>${formatearMoneda(v.total)}</span></div>
 
