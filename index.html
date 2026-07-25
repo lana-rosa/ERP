@@ -693,6 +693,7 @@
         <button class="nav-btn" onclick="mostrarPantallaMiPerfil()"><span class="nav-icon">👤</span> Mi perfil</button>
         <button class="nav-btn" id="nav-ceder-permisos" onclick="mostrarPantallaCederPermisos()"><span class="nav-icon">🔑</span> Ceder permisos de administrador</button>
         <button class="nav-btn" id="nav-trazabilidad" onclick="mostrarPantallaTrazabilidad()"><span class="nav-icon">🕵️</span> Trazabilidad del sistema</button>
+        <button class="nav-btn" id="nav-codigos-descuento" onclick="mostrarPantallaCodigosDescuento()"><span class="nav-icon">🏷️</span> Códigos de descuento</button>
         <button class="nav-btn" onclick="mostrarPantallaApariencia()"><span class="nav-icon">🎨</span> Apariencia</button>
       </div>
     </div>
@@ -823,16 +824,14 @@
       <div id="listaCarrito"><div class="carrito-vacio">Aún no has agregado productos</div></div>
 
       <div id="bloqueDescuento" style="margin-top:10px;">
-        <button type="button" class="btn-mini editar" id="btnMostrarDescuento" onclick="alternarDescuentoVenta()">🏷️ Aplicar descuento</button>
+        <button type="button" class="btn-mini editar" id="btnMostrarDescuento" onclick="alternarDescuentoVenta()">🏷️ Aplicar código de descuento</button>
         <div id="formDescuento" class="oculto" style="margin-top:8px;display:flex;gap:8px;align-items:center;">
-          <select id="descuentoTipo" onchange="recalcularDescuento()" style="flex:0 0 90px;">
-            <option value="porcentaje">%</option>
-            <option value="valor">$</option>
-          </select>
-          <input type="number" id="descuentoValorInput" min="0" step="1" placeholder="0" oninput="recalcularDescuento()" style="flex:1;">
+          <input type="text" id="codigoDescuentoInput" placeholder="Código de descuento" style="flex:1;text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
+          <button type="button" class="btn-mini editar" onclick="aplicarCodigoDescuento()">Aplicar</button>
           <button type="button" class="btn-quitar-pago" onclick="quitarDescuentoVenta()" title="Quitar descuento">✕</button>
         </div>
         <div id="textoDescuentoAplicado" class="oculto" style="font-size:12.5px;color:var(--rosa-principal);font-weight:600;margin-top:6px;"></div>
+        <div id="mensajeCodigoDescuento" style="font-size:11.5px;margin-top:4px;"></div>
       </div>
 
       <div class="resumen-total">
@@ -926,6 +925,8 @@
       <input type="number" id="invStockInicial" placeholder="0" min="0" step="1">
       <label for="invStockMinimo">Stock mínimo (para alertas)</label>
       <input type="number" id="invStockMinimo" placeholder="0" min="0" step="1">
+      <label for="invProveedor">Proveedor <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <select id="invProveedor"><option value="">Sin proveedor asignado</option></select>
       <button class="btn-principal" id="btnGuardarProducto" onclick="guardarNuevoProducto()">Agregar al inventario</button>
       <div class="mensaje" id="mensajeInventarioForm"></div>
     </div>
@@ -1778,6 +1779,40 @@
   </div>
 </div>
 
+<!-- ===== PANTALLA: CÓDIGOS DE DESCUENTO ===== -->
+<div id="pantallaCodigosDescuento" class="oculto contenido">
+  <div class="page-header">
+    <h1>🏷️ Códigos de descuento</h1>
+    <div class="subtitulo">El descuento en el carrito ya no se escribe a mano — el cajero solo ingresa el código que tú configures aquí.</div>
+  </div>
+  <div class="grilla-2">
+    <div class="panel">
+      <h2>+ Crear código</h2>
+      <label for="nuevoCodigoDescuento">Código</label>
+      <input type="text" id="nuevoCodigoDescuento" placeholder="Ej: CLIENTEFRECUENTE" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
+      <label for="nuevoCodigoTipo">Tipo</label>
+      <select id="nuevoCodigoTipo">
+        <option value="porcentaje">% Porcentaje</option>
+        <option value="valor">$ Valor fijo</option>
+      </select>
+      <label for="nuevoCodigoValor">Valor</label>
+      <input type="number" id="nuevoCodigoValor" min="0" step="1" placeholder="Ej: 10">
+      <label for="nuevoCodigoDescripcion">Descripción <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <input type="text" id="nuevoCodigoDescripcion" placeholder="Para qué se usa">
+      <label for="nuevoCodigoFechaFin">Vence el <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <input type="date" id="nuevoCodigoFechaFin">
+      <label for="nuevoCodigoUsosMax">Usos máximos <span style="font-size:10px;opacity:0.6;">(opcional, sin límite si se deja vacío)</span></label>
+      <input type="number" id="nuevoCodigoUsosMax" min="1" step="1">
+      <button class="btn-principal" onclick="confirmarCrearCodigoDescuento()">Crear código</button>
+      <div class="mensaje" id="mensajeCrearCodigo"></div>
+    </div>
+    <div class="panel">
+      <h2>Códigos existentes</h2>
+      <div id="listaCodigosDescuento"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+</div>
+
 <!-- ===== PANTALLA: APARIENCIA ===== -->
 <div id="pantallaApariencia" class="oculto contenido">
   <div class="page-header">
@@ -1790,6 +1825,15 @@
       <button class="btn-secundario" id="btnTemaClaro" style="margin-top:0;flex:1;" onclick="cambiarTema('claro')">☀️ Claro</button>
       <button class="btn-secundario" id="btnTemaOscuro" style="margin-top:0;flex:1;" onclick="cambiarTema('oscuro')">🌙 Oscuro</button>
     </div>
+  </div>
+
+  <div class="panel oculto" id="panelLogoEmpresa" style="max-width:420px;margin-top:20px;">
+    <h2>Logo de la empresa</h2>
+    <div class="subtitulo">Se usa en los recibos de venta, desprendibles de pago e informes. Máximo 1MB.</div>
+    <div id="previsualizacionLogo" style="margin:10px 0;"></div>
+    <input type="file" id="inputLogoEmpresa" accept="image/*" onchange="previsualizarLogo(event)">
+    <button class="btn-principal" onclick="guardarLogoEmpresa()">Guardar logo</button>
+    <div class="mensaje" id="mensajeLogoEmpresa"></div>
   </div>
 </div>
 
@@ -2343,7 +2387,7 @@
   // UTILIDADES
   // ============================================================================
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaDepartamentos', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaAbrirTurnoAcademia', 'pantallaTurnoActivoAcademia', 'pantallaCerrarTurnoAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaDepartamentos', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaAbrirTurnoAcademia', 'pantallaTurnoActivoAcademia', 'pantallaCerrarTurnoAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -2455,6 +2499,7 @@
     // aparece completo, sin depender de si ya se abrió un turno o no.
     configurarSidebarPorRol();
     actualizarSidebar();
+    cargarLogoEmpresa();
 
     // El rol Taller no maneja caja ni turnos: va directo al consumo de material por pedido.
     if (rolActual === 'taller') {
@@ -2582,6 +2627,7 @@
     mostrar('nav-gestion-usuarios', esAdmin);
     mostrar('nav-ceder-permisos', esAdmin);
     mostrar('nav-trazabilidad', esAdmin);
+    mostrar('nav-codigos-descuento', esAdmin);
 
     // Turno de caja solo aplica a quien maneja caja física (Tienda)
     mostrar('nav-turno', esAdmin || esCajero);
@@ -2782,6 +2828,14 @@
   // OBTENER ROL DEL USUARIO (consulta directa a Supabase, solo lectura)
   // ============================================================================
   let rolesAdicionalesActual = [];
+  let logoEmpresaCache = null;
+
+  async function cargarLogoEmpresa() {
+    try {
+      const resp = await fetch(WORKER_URL + '/api/pos/config-empresa', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+      if (resp.ok) { const datos = await resp.json(); logoEmpresaCache = datos.logo_url || null; }
+    } catch { /* si falla, el recibo simplemente sale sin logo */ }
+  }
 
   async function obtenerRolUsuario() {
     const { data, error } = await supabaseClient
@@ -2937,7 +2991,7 @@
 
     // Limpiar el carrito activo para atender al siguiente cliente
     carrito = [];
-    descuentoVentaActual = { tipo: 'porcentaje', valor: 0 };
+    descuentoVentaActual = { valorDescuento: 0, codigo: null, codigoId: null };
     filasPago = [{ metodo_pago: 'efectivo', monto: '', referencia: '' }];
     document.getElementById('clienteNombre').value = '';
     document.getElementById('clienteTelefono').value = '';
@@ -3036,17 +3090,17 @@
     }
 
     carrito = [];
-    descuentoVentaActual = { tipo: 'porcentaje', valor: 0 };
+    descuentoVentaActual = { valorDescuento: 0, codigo: null, codigoId: null };
     filasPago = [{ metodo_pago: 'efectivo', monto: '', referencia: '' }];
     document.getElementById('inputBuscarProducto').value = '';
     filtroTipoActual = 'todos';
     document.querySelectorAll('.chip-filtro').forEach(c => c.classList.remove('activo'));
     document.querySelector('.chip-filtro[data-filtro="todos"]').classList.add('activo');
-    document.getElementById('descuentoTipo').value = 'porcentaje';
-    document.getElementById('descuentoValorInput').value = '';
+    document.getElementById('codigoDescuentoInput').value = '';
     document.getElementById('formDescuento').classList.add('oculto');
     document.getElementById('btnMostrarDescuento').classList.remove('oculto');
     document.getElementById('textoDescuentoAplicado').classList.add('oculto');
+    ocultarMensaje('mensajeCodigoDescuento');
     ocultarMensaje('mensajeVenta');
     document.getElementById('btnImprimirRecibo').disabled = true;
     document.getElementById('btnWhatsappRecibo').disabled = true;
@@ -3202,7 +3256,7 @@
     renderizarCarrito();
   }
 
-  let descuentoVentaActual = { tipo: 'porcentaje', valor: 0 };
+  let descuentoVentaActual = { valorDescuento: 0, codigo: null, codigoId: null };
 
   function calcularSubtotalCarrito() {
     return carrito.reduce((acc, linea) => acc + (linea.precio * linea.cantidad), 0);
@@ -3210,11 +3264,8 @@
 
   function calcularValorDescuento() {
     const subtotal = calcularSubtotalCarrito();
-    if (!descuentoVentaActual.valor || descuentoVentaActual.valor <= 0) return 0;
-    let valor = descuentoVentaActual.tipo === 'porcentaje'
-      ? subtotal * (descuentoVentaActual.valor / 100)
-      : descuentoVentaActual.valor;
-    return Math.min(Math.max(valor, 0), subtotal); // nunca negativo ni mayor al subtotal
+    if (!descuentoVentaActual.valorDescuento) return 0;
+    return Math.min(descuentoVentaActual.valorDescuento, subtotal); // nunca mayor al subtotal, aunque cambie el carrito
   }
 
   function calcularTotalCarrito() {
@@ -3224,31 +3275,46 @@
   function alternarDescuentoVenta() {
     document.getElementById('formDescuento').classList.remove('oculto');
     document.getElementById('btnMostrarDescuento').classList.add('oculto');
-    document.getElementById('descuentoValorInput').focus();
+    document.getElementById('codigoDescuentoInput').focus();
   }
 
   function quitarDescuentoVenta() {
-    descuentoVentaActual = { tipo: 'porcentaje', valor: 0 };
-    document.getElementById('descuentoTipo').value = 'porcentaje';
-    document.getElementById('descuentoValorInput').value = '';
+    descuentoVentaActual = { valorDescuento: 0, codigo: null, codigoId: null };
+    document.getElementById('codigoDescuentoInput').value = '';
     document.getElementById('formDescuento').classList.add('oculto');
     document.getElementById('btnMostrarDescuento').classList.remove('oculto');
     document.getElementById('textoDescuentoAplicado').classList.add('oculto');
-    renderizarCarrito();
+    ocultarMensaje('mensajeCodigoDescuento');
+    document.getElementById('textoTotalCarrito').textContent = formatearMoneda(calcularTotalCarrito());
+    renderizarPagos();
   }
 
-  function recalcularDescuento() {
-    descuentoVentaActual.tipo = document.getElementById('descuentoTipo').value;
-    descuentoVentaActual.valor = Number(document.getElementById('descuentoValorInput').value) || 0;
+  async function aplicarCodigoDescuento() {
+    const codigo = document.getElementById('codigoDescuentoInput').value.trim();
+    ocultarMensaje('mensajeCodigoDescuento');
+    if (!codigo) { mostrarMensaje('mensajeCodigoDescuento', 'Escribe un código.', 'error'); return; }
+
+    const subtotal = calcularSubtotalCarrito();
+    if (subtotal <= 0) { mostrarMensaje('mensajeCodigoDescuento', 'Agrega productos al carrito primero.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/descuentos/validar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ codigo, subtotal })
+    });
+    const resultado = await resp.json();
+
+    if (!resp.ok || !resultado.valido) {
+      mostrarMensaje('mensajeCodigoDescuento', resultado.mensaje || 'Código no válido.', 'error');
+      return;
+    }
+
+    descuentoVentaActual = { valorDescuento: resultado.valor_descuento, codigo, codigoId: resultado.codigo_id };
 
     const textoEl = document.getElementById('textoDescuentoAplicado');
-    const valorDescuento = calcularValorDescuento();
-    if (valorDescuento > 0) {
-      textoEl.classList.remove('oculto');
-      textoEl.textContent = `Descuento aplicado: -${formatearMoneda(valorDescuento)}`;
-    } else {
-      textoEl.classList.add('oculto');
-    }
+    textoEl.classList.remove('oculto');
+    textoEl.textContent = `✅ Código "${codigo}" aplicado — Descuento: -${formatearMoneda(resultado.valor_descuento)}`;
+    ocultarMensaje('mensajeCodigoDescuento');
 
     document.getElementById('textoTotalCarrito').textContent = formatearMoneda(calcularTotalCarrito());
     renderizarPagos();
@@ -3580,6 +3646,7 @@
 
     return `
       <div class="encabezado-recibo">
+        ${logoEmpresaCache ? `<img src="${logoEmpresaCache}" style="max-width:120px;max-height:70px;margin-bottom:8px;">` : ''}
         <h1>Lana Rosa Crochet</h1>
         <div style="font-size:11.5px;opacity:0.8;">Sara Loaiza Muñoz — NIT 1.055.359.694-4</div>
         <div style="font-size:11px;opacity:0.65;margin-top:2px;">Calle 10 No. 5-37, Villamaría, Caldas</div>
@@ -3595,11 +3662,12 @@
         <strong>Cajero:</strong> ${escaparHtml(v.cajero || '—')}
       </div>
 
-      ${v.cliente.nombre ? `
-        <div style="margin-top:8px;font-size:12px;">
-          <strong>Cliente:</strong> ${escaparHtml(v.cliente.nombre)}${v.cliente.identificacion ? ' — Doc: ' + escaparHtml(v.cliente.identificacion) : ''}${v.cliente.telefono ? ' — Tel: ' + escaparHtml(v.cliente.telefono) : ''}
-        </div>
-      ` : ''}
+      <div style="margin-top:8px;font-size:12px;">
+        ${v.cliente.nombre
+          ? `<strong>Cliente:</strong> ${escaparHtml(v.cliente.nombre)}${v.cliente.identificacion ? ' — Doc: ' + escaparHtml(v.cliente.identificacion) : ''}${v.cliente.telefono ? ' — Tel: ' + escaparHtml(v.cliente.telefono) : ''}`
+          : `<strong>Cliente:</strong> Consumidor final`
+        }
+      </div>
 
       <table>
         <tr><th>Producto</th><th style="text-align:center;">Cant.</th><th style="text-align:right;">Vlr. unit.</th><th style="text-align:right;">Subtotal</th></tr>
@@ -3920,11 +3988,23 @@
     await cargarDepartamentosParaInventario(codigoDeptoForzado);
     await cargarCategoriasInventario();
     cargarCategoriasParaFormulario();
+    await cargarProveedoresParaSelectorInventario();
     await cargarInventarioGestion();
     actualizarVisibilidadSincronizarCrm();
     if (inventarioDeptoActivo === centroCostoTiendaId) {
       await sincronizarStockCrm(null, true); // silencioso, automático al entrar
     }
+  }
+
+  async function cargarProveedoresParaSelectorInventario() {
+    const resp = await fetch(WORKER_URL + '/api/pos/terceros?tipo=proveedor', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    const select = document.getElementById('invProveedor');
+    if (!select) return;
+    if (!resp.ok) return;
+    const { terceros } = await resp.json();
+    proveedoresParaEdicionCache = terceros || [];
+    select.innerHTML = '<option value="">Sin proveedor asignado</option>' +
+      (terceros || []).map(p => `<option value="${p.id}">${escaparHtml(p.nombre_completo)}</option>`).join('');
   }
 
   async function cargarDepartamentosParaInventario(codigoDeptoForzado) {
@@ -4119,6 +4199,7 @@
     const costo = Number(document.getElementById('invCostoPromedio').value) || 0;
     const stockInicial = Number(document.getElementById('invStockInicial').value) || 0;
     const stockMinimo = Number(document.getElementById('invStockMinimo').value) || 0;
+    const proveedorId = document.getElementById('invProveedor').value || null;
 
     ocultarMensaje('mensajeInventarioForm');
 
@@ -4150,6 +4231,7 @@
       costo_promedio_ponderado: costo,
       stock_actual: stockInicial,
       stock_minimo: stockMinimo,
+      proveedor_tercero_id: proveedorId,
       activo: true
     });
 
@@ -4172,7 +4254,7 @@
 
     const { data, error } = await supabaseClient
       .from('inventario_items')
-      .select('id, tipo, nombre, sku, stock_actual, stock_minimo, precio_venta, costo_promedio_ponderado, unidad_medida, activo, centro_costo_id, categoria_id')
+      .select('id, tipo, nombre, sku, stock_actual, stock_minimo, precio_venta, costo_promedio_ponderado, unidad_medida, activo, centro_costo_id, categoria_id, proveedor_tercero_id, proveedor:proveedor_tercero_id(nombre_completo)')
       .order('nombre', { ascending: true });
 
     if (error) {
@@ -4213,6 +4295,17 @@
       return;
     }
 
+    // Alerta de stock mínimo, arriba de la tabla
+    const enStockBajo = items.filter(i => i.activo && i.stock_actual <= i.stock_minimo);
+    let html = '';
+    if (enStockBajo.length > 0) {
+      html += `
+        <div style="background:#fff3cd;color:#856404;border-radius:9px;padding:10px 14px;margin-bottom:14px;font-size:13px;">
+          ⚠️ <strong>${enStockBajo.length} producto(s)</strong> en o por debajo del stock mínimo: ${enStockBajo.map(i => escaparHtml(i.nombre)).join(', ')}
+        </div>
+      `;
+    }
+
     // Siempre se separan por tipo, con encabezado propio, para que nunca se mezclen
     // visualmente Mercería y Productos tejidos — aunque el filtro esté en "Todos".
     const grupos = [
@@ -4220,59 +4313,54 @@
       { tipo: 'producto_terminado', titulo: '🧶 Productos tejidos', icono: '🧶' },
     ];
 
-    let html = '';
     for (const grupo of grupos) {
       if (filtroInventarioActual !== 'todos' && filtroInventarioActual !== grupo.tipo) continue;
       const itemsGrupo = items.filter(i => i.tipo === grupo.tipo);
       html += `<div style="font-size:13px;font-weight:700;color:var(--rosa-principal);margin:14px 0 8px;padding-bottom:6px;border-bottom:2px solid var(--rosa-suave);">${grupo.titulo} (${itemsGrupo.length})</div>`;
-      html += itemsGrupo.length === 0
-        ? `<div class="cargando" style="padding:10px 0;">Sin productos en ${grupo.titulo.replace(/^\S+\s/, '')} todavía.</div>`
-        : itemsGrupo.map(item => renderizarFilaInventarioItem(item)).join('');
+      if (itemsGrupo.length === 0) {
+        html += `<div class="cargando" style="padding:10px 0;">Sin productos en ${grupo.titulo.replace(/^\S+\s/, '')} todavía.</div>`;
+        continue;
+      }
+      html += `
+        <div class="tabla-lista">
+          <div class="tabla-lista-header" style="grid-template-columns:1fr 90px 110px 140px 70px;">
+            <span>PRODUCTO</span><span style="text-align:center;">CANTIDAD</span><span style="text-align:right;">PRECIO</span><span>PROVEEDOR</span><span></span>
+          </div>
+          ${itemsGrupo.map(item => renderizarFilaInventarioItem(item)).join('')}
+        </div>
+      `;
     }
 
     contenedor.innerHTML = html;
   }
 
   function renderizarFilaInventarioItem(item) {
-    const etiquetaTipoMap = { merceria: 'Mercería', producto_terminado: 'Producto tejido' };
-    const todasCategorias = [...categoriasInventarioCache.merceria, ...categoriasInventarioCache.producto_terminado];
-    const nombreCategoriaMap = Object.fromEntries(todasCategorias.map(c => [c.id, c.nombre]));
-
-    const etiquetaTipo = etiquetaTipoMap[item.tipo] || item.tipo;
-    const tagInactivo = !item.activo ? '<span class="badge-inactivo">Inactivo</span>' : '';
-    const skuTexto = item.sku ? `<span style="opacity:0.5;font-size:11px;margin-left:6px;">SKU: ${escaparHtml(item.sku)}</span>` : '';
-    const nombreCategoria = item.categoria_id ? (nombreCategoriaMap[item.categoria_id] || '') : '';
+    const stockBajo = item.activo && item.stock_actual <= item.stock_minimo;
+    const tagInactivo = !item.activo ? ' <span class="badge-inactivo">Inactivo</span>' : '';
+    const skuTexto = item.sku ? ` <span style="opacity:0.5;font-size:10.5px;">(${escaparHtml(item.sku)})</span>` : '';
+    const nombreProveedor = item.proveedor ? item.proveedor.nombre_completo : '—';
     const estaEditando = itemInventarioEditandoId === item.id && rolActual === 'administrador';
 
+    let filaDetalle = '';
     if (estaEditando) {
+      const todasCategorias = [...categoriasInventarioCache.merceria, ...categoriasInventarioCache.producto_terminado];
+      const nombreCategoriaMap = Object.fromEntries(todasCategorias.map(c => [c.id, c.nombre]));
       const categoriasDelTipo = categoriasInventarioCache[item.tipo] || [];
       const opcionesCategoria = '<option value="">Sin categoría específica</option>' +
         categoriasDelTipo.map(c => `<option value="${c.id}" ${c.id === item.categoria_id ? 'selected' : ''}>${escaparHtml(c.nombre)}</option>`).join('');
-      return `
-        <div class="fila-inventario-editable" style="border-color:var(--rosa-medio);" data-id="${item.id}">
-          <div class="fila-inventario-titulo">
-            <span class="fila-inventario-nombre">${escaparHtml(item.nombre)}${tagInactivo}</span>
-            <span class="fila-inventario-tipo-tag">${etiquetaTipo}</span>
-          </div>
-          <label style="margin-top:8px;">Categoría</label>
+      const opcionesProveedor = '<option value="">Sin proveedor asignado</option>' +
+        (proveedoresParaEdicionCache || []).map(p => `<option value="${p.id}" ${p.id === item.proveedor_tercero_id ? 'selected' : ''}>${escaparHtml(p.nombre_completo)}</option>`).join('');
+      filaDetalle = `
+        <div class="tabla-lista-detalle">
+          <label style="margin-top:0;">Categoría</label>
           <select id="edit-categoria-${item.id}">${opcionesCategoria}</select>
+          <label>Proveedor</label>
+          <select id="edit-proveedor-${item.id}">${opcionesProveedor}</select>
           <div class="grid-campos-inventario">
-            <div class="campo-mini">
-              <label>Precio de venta</label>
-              <input type="number" min="0" step="1000" value="${item.precio_venta}" id="edit-precio-${item.id}">
-            </div>
-            <div class="campo-mini">
-              <label>Costo aproximado</label>
-              <input type="number" min="0" step="1000" value="${item.costo_promedio_ponderado}" id="edit-costo-${item.id}">
-            </div>
-            <div class="campo-mini">
-              <label>Stock actual</label>
-              <input type="number" min="0" step="1" value="${item.stock_actual}" id="edit-stock-${item.id}">
-            </div>
-            <div class="campo-mini">
-              <label>Stock mínimo</label>
-              <input type="number" min="0" step="1" value="${item.stock_minimo}" id="edit-stockmin-${item.id}">
-            </div>
+            <div class="campo-mini"><label>Precio de venta</label><input type="number" min="0" step="1000" value="${item.precio_venta}" id="edit-precio-${item.id}"></div>
+            <div class="campo-mini"><label>Costo aproximado</label><input type="number" min="0" step="1000" value="${item.costo_promedio_ponderado}" id="edit-costo-${item.id}"></div>
+            <div class="campo-mini"><label>Stock actual</label><input type="number" min="0" step="1" value="${item.stock_actual}" id="edit-stock-${item.id}"></div>
+            <div class="campo-mini"><label>Stock mínimo</label><input type="number" min="0" step="1" value="${item.stock_minimo}" id="edit-stockmin-${item.id}"></div>
           </div>
           <div class="fila-inventario-acciones">
             <button class="btn-mini guardar" onclick="guardarEdicionProducto('${item.id}')">Guardar cambios</button>
@@ -4284,28 +4372,22 @@
     }
 
     return `
-      <div class="fila-inventario-editable" data-id="${item.id}">
-        <div class="fila-inventario-titulo">
-          <span class="fila-inventario-nombre">${escaparHtml(item.nombre)}${tagInactivo}${skuTexto}</span>
-          <span class="fila-inventario-tipo-tag">${etiquetaTipo}</span>
-        </div>
-        ${nombreCategoria ? `<div style="font-size:11px;color:var(--rosa-principal);font-weight:600;margin-top:2px;">🏷️ ${escaparHtml(nombreCategoria)}</div>` : ''}
-        <div class="fila-inventario-lectura">
-          <span>Precio: <strong>${formatearMoneda(item.precio_venta)}</strong></span>
-          <span>Costo: <strong>${formatearMoneda(item.costo_promedio_ponderado)}</strong></span>
-          <span>Stock: <strong>${item.stock_actual} und</strong></span>
-          <span>Mínimo: <strong>${item.stock_minimo} und</strong></span>
-        </div>
-        <div class="fila-inventario-acciones" style="margin-top:10px;">
-          ${rolActual === 'administrador' ? `<button class="btn-mini editar" onclick="activarEdicionProducto('${item.id}')">✏️ Editar</button>` : ''}
-        </div>
+      <div class="tabla-lista-fila" style="grid-template-columns:1fr 90px 110px 140px 70px;${rolActual === 'administrador' ? 'cursor:pointer;' : ''}" ${rolActual === 'administrador' ? `onclick="activarEdicionProducto('${item.id}')"` : ''}>
+        <span>${stockBajo ? '⚠️ ' : ''}${escaparHtml(item.nombre)}${tagInactivo}${skuTexto}</span>
+        <span style="text-align:center;${stockBajo ? 'color:var(--rojo-error);font-weight:700;' : ''}">${item.stock_actual} ${item.unidad_medida}</span>
+        <span style="text-align:right;">${formatearMoneda(item.precio_venta)}</span>
+        <span style="opacity:0.75;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escaparHtml(nombreProveedor)}</span>
+        <span style="text-align:right;">${rolActual === 'administrador' ? '✏️' : ''}</span>
       </div>
+      ${filaDetalle}
     `;
   }
 
+  let proveedoresParaEdicionCache = [];
+
   function activarEdicionProducto(itemId) {
     if (rolActual !== 'administrador') return;
-    itemInventarioEditandoId = itemId;
+    itemInventarioEditandoId = itemInventarioEditandoId === itemId ? null : itemId;
     renderizarTablaInventario();
   }
 
@@ -4320,6 +4402,7 @@
     const stock = Number(document.getElementById(`edit-stock-${itemId}`).value);
     const stockMinimo = Number(document.getElementById(`edit-stockmin-${itemId}`).value);
     const categoriaEl = document.getElementById(`edit-categoria-${itemId}`);
+    const proveedorEl = document.getElementById(`edit-proveedor-${itemId}`);
 
     const cambios = {
       precio_venta: precioVenta,
@@ -4327,6 +4410,7 @@
       stock_actual: stock,
       stock_minimo: stockMinimo,
       categoria_id: categoriaEl ? (categoriaEl.value || null) : null,
+      proveedor_tercero_id: proveedorEl ? (proveedorEl.value || null) : null,
       updated_at: new Date().toISOString()
     };
 
@@ -6106,6 +6190,81 @@
   let usuariosCache = [];
   let usuarioPermisosAbiertoId = null;
 
+  // ============================================================
+  // CÓDIGOS DE DESCUENTO (administración)
+  // ============================================================
+  async function mostrarPantallaCodigosDescuento() {
+    mostrarPantalla('pantallaCodigosDescuento');
+    ocultarMensaje('mensajeCrearCodigo');
+    await cargarCodigosDescuento();
+  }
+
+  async function confirmarCrearCodigoDescuento() {
+    const codigo = document.getElementById('nuevoCodigoDescuento').value.trim();
+    const tipo = document.getElementById('nuevoCodigoTipo').value;
+    const valor = Number(document.getElementById('nuevoCodigoValor').value);
+    const descripcion = document.getElementById('nuevoCodigoDescripcion').value.trim();
+    const fechaFin = document.getElementById('nuevoCodigoFechaFin').value;
+    const usosMax = document.getElementById('nuevoCodigoUsosMax').value;
+    ocultarMensaje('mensajeCrearCodigo');
+
+    if (!codigo) { mostrarMensaje('mensajeCrearCodigo', 'Escribe un código.', 'error'); return; }
+    if (!valor || valor <= 0) { mostrarMensaje('mensajeCrearCodigo', 'Escribe un valor mayor a cero.', 'error'); return; }
+    if (tipo === 'porcentaje' && valor > 100) { mostrarMensaje('mensajeCrearCodigo', 'Un porcentaje no puede ser mayor a 100.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/descuentos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({
+        codigo, tipo, valor, descripcion: descripcion || null,
+        fecha_fin: fechaFin || null, usos_maximos: usosMax ? Number(usosMax) : null
+      })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeCrearCodigo', datos.error || 'No se pudo crear el código.', 'error'); return; }
+
+    mostrarMensaje('mensajeCrearCodigo', `✅ Código "${codigo}" creado.`, 'exito');
+    ['nuevoCodigoDescuento','nuevoCodigoValor','nuevoCodigoDescripcion','nuevoCodigoFechaFin','nuevoCodigoUsosMax'].forEach(id => document.getElementById(id).value = '');
+    await cargarCodigosDescuento();
+  }
+
+  async function cargarCodigosDescuento() {
+    const contenedor = document.getElementById('listaCodigosDescuento');
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/descuentos', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const { codigos } = await resp.json();
+    if (!codigos || codigos.length === 0) { contenedor.innerHTML = '<div class="cargando">Todavía no has creado ningún código.</div>'; return; }
+
+    contenedor.innerHTML = codigos.map(c => `
+      <div class="fila-inventario-editable" style="margin-bottom:8px;${c.activo ? '' : 'opacity:0.5;'}">
+        <div class="fila-inventario-titulo">
+          <span class="fila-inventario-nombre">${escaparHtml(c.codigo)} ${!c.activo ? '<span class="badge-inactivo">Inactivo</span>' : ''}</span>
+          <span class="fila-inventario-tipo-tag">${c.tipo === 'porcentaje' ? c.valor + '%' : formatearMoneda(c.valor)}</span>
+        </div>
+        <div style="font-size:12px;opacity:0.65;margin-top:2px;">
+          ${c.descripcion ? escaparHtml(c.descripcion) + ' · ' : ''}
+          Usado ${c.usos_actuales}${c.usos_maximos ? ' de ' + c.usos_maximos : ''} vez(es)
+          ${c.fecha_fin ? ' · Vence: ' + new Date(c.fecha_fin + 'T00:00:00').toLocaleDateString('es-CO') : ''}
+        </div>
+        <div class="fila-inventario-acciones" style="margin-top:8px;">
+          <button class="btn-mini ${c.activo ? 'desactivar' : 'guardar'}" onclick="toggleCodigoDescuento('${c.id}', ${!c.activo})">${c.activo ? 'Desactivar' : 'Reactivar'}</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function toggleCodigoDescuento(id, activo) {
+    const resp = await fetch(WORKER_URL + '/api/pos/descuentos/estado', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ id, activo })
+    });
+    if (!resp.ok) { alert('No se pudo actualizar.'); return; }
+    await cargarCodigosDescuento();
+  }
+
   async function mostrarPantallaUsuarios() {
     mostrarPantalla('pantallaUsuarios');
     document.getElementById('panelPermisosUsuario').classList.add('oculto');
@@ -6402,6 +6561,40 @@
   function mostrarPantallaApariencia() {
     mostrarPantalla('pantallaApariencia');
     actualizarBotonesTema();
+    document.getElementById('panelLogoEmpresa').classList.toggle('oculto', rolActual !== 'administrador');
+    ocultarMensaje('mensajeLogoEmpresa');
+    document.getElementById('previsualizacionLogo').innerHTML = logoEmpresaCache
+      ? `<img src="${logoEmpresaCache}" style="max-width:180px;max-height:100px;border-radius:8px;">`
+      : '<div style="font-size:12px;opacity:0.6;">Todavía no se ha subido ningún logo.</div>';
+  }
+
+  let logoNuevoBase64 = null;
+  function previsualizarLogo(evento) {
+    const archivo = evento.target.files[0];
+    if (!archivo) return;
+    if (archivo.size > 1_000_000) { mostrarMensaje('mensajeLogoEmpresa', 'La imagen pesa más de 1MB, usa una más liviana.', 'error'); return; }
+    const lector = new FileReader();
+    lector.onload = () => {
+      logoNuevoBase64 = lector.result;
+      document.getElementById('previsualizacionLogo').innerHTML = `<img src="${logoNuevoBase64}" style="max-width:180px;max-height:100px;border-radius:8px;">`;
+    };
+    lector.readAsDataURL(archivo);
+  }
+
+  async function guardarLogoEmpresa() {
+    ocultarMensaje('mensajeLogoEmpresa');
+    if (!logoNuevoBase64) { mostrarMensaje('mensajeLogoEmpresa', 'Selecciona una imagen primero.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/config-empresa/logo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ logo_base64: logoNuevoBase64 })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeLogoEmpresa', datos.error || 'No se pudo guardar el logo.', 'error'); return; }
+
+    logoEmpresaCache = logoNuevoBase64;
+    mostrarMensaje('mensajeLogoEmpresa', '✅ Logo guardado. Ya se usará en los recibos y desprendibles.', 'exito');
   }
 
   function cambiarTema(tema) {
@@ -10470,7 +10663,10 @@
 
     return `
       <div class="encabezado">
-        <div><h1>Desprendible de pago de nómina</h1><div>Período: ${fechaInicio} — ${fechaFin}</div></div>
+        <div>
+          ${logoEmpresaCache ? `<img src="${logoEmpresaCache}" style="max-width:100px;max-height:60px;margin-bottom:6px;display:block;">` : ''}
+          <h1>Desprendible de pago de nómina</h1><div>Período: ${fechaInicio} — ${fechaFin}</div>
+        </div>
         <div style="text-align:right;font-size:12px;">
           <strong>${escaparHtml(empleador.razon_social || 'Lana Rosa Crochet')}</strong><br>
           ${empleador.nit ? 'NIT/Doc: ' + escaparHtml(empleador.nit) + '<br>' : ''}
