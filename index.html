@@ -2057,6 +2057,11 @@
   async function despuesDeLogin() {
     mostrarPantalla('pantallaCargando');
 
+    // El menú lateral se configura aquí, apenas se sabe el rol — así siempre
+    // aparece completo, sin depender de si ya se abrió un turno o no.
+    configurarSidebarPorRol();
+    actualizarSidebar();
+
     // El rol Taller no maneja caja ni turnos: va directo al consumo de material por pedido.
     if (rolActual === 'taller') {
       await mostrarPantallaPedidosCrm();
