@@ -683,8 +683,8 @@
       <div class="sidebar-depto-submenu" id="deptoConfigSubmenu">
         <button class="nav-btn" id="nav-gestion-usuarios" onclick="mostrarPantallaUsuarios()"><span class="nav-icon">👥</span> Usuarios y permisos</button>
         <button class="nav-btn" onclick="mostrarPantallaMiPerfil()"><span class="nav-icon">👤</span> Mi perfil</button>
-        <button class="nav-btn" onclick="mostrarPantallaCederPermisos()"><span class="nav-icon">🔑</span> Ceder permisos de administrador</button>
-        <button class="nav-btn" onclick="mostrarPantallaTrazabilidad()"><span class="nav-icon">🕵️</span> Trazabilidad del sistema</button>
+        <button class="nav-btn" id="nav-ceder-permisos" onclick="mostrarPantallaCederPermisos()"><span class="nav-icon">🔑</span> Ceder permisos de administrador</button>
+        <button class="nav-btn" id="nav-trazabilidad" onclick="mostrarPantallaTrazabilidad()"><span class="nav-icon">🕵️</span> Trazabilidad del sistema</button>
         <button class="nav-btn" onclick="mostrarPantallaApariencia()"><span class="nav-icon">🎨</span> Apariencia</button>
       </div>
     </div>
@@ -1180,6 +1180,20 @@
   <div class="page-header">
     <h1>Reportes de turno</h1>
     <div class="subtitulo">Resumen financiero de cada turno cerrado. Solo visible para Administrador.</div>
+  </div>
+  <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+    <div>
+      <label for="repTurnoFechaDesde" style="font-size:11px;">Desde</label>
+      <input type="date" id="repTurnoFechaDesde" onchange="renderizarListaReportesTurno()" style="padding:9px 10px;">
+    </div>
+    <div>
+      <label for="repTurnoFechaHasta" style="font-size:11px;">Hasta</label>
+      <input type="date" id="repTurnoFechaHasta" onchange="renderizarListaReportesTurno()" style="padding:9px 10px;">
+    </div>
+    <button class="btn-mini desactivar" onclick="limpiarFiltroReportesTurno()" style="margin-bottom:1px;">Quitar filtro</button>
+    <div style="flex:1;"></div>
+    <button class="btn-mini guardar" onclick="exportarReportesTurnoExcel()" style="margin-bottom:1px;">📊 Exportar a Excel</button>
+    <button class="btn-mini editar" onclick="imprimirReportesTurno()" style="margin-bottom:1px;">🖨️ Imprimir / PDF</button>
   </div>
   <div class="panel" style="max-height:none;">
     <div id="listaReportesTurno"><div class="cargando">Cargando reportes...</div></div>
@@ -2476,7 +2490,12 @@
     mostrar('deptoTalentoGrupo', esAdmin);
     mostrar('deptoReportesGrupo', esAdmin);
     mostrar('deptoFondoEmprenderGrupo', esAdmin);
-    mostrar('deptoConfiguracionGrupo', esAdmin);
+    // Configuración es visible para todos (Apariencia y Mi perfil son de
+    // cualquiera), pero los ítems sensibles adentro quedan solo para admin.
+    mostrar('deptoConfiguracionGrupo', true);
+    mostrar('nav-gestion-usuarios', esAdmin);
+    mostrar('nav-ceder-permisos', esAdmin);
+    mostrar('nav-trazabilidad', esAdmin);
 
     // Turno de caja solo aplica a quien maneja caja física (Tienda)
     mostrar('nav-turno', esAdmin || esCajero);
@@ -5184,59 +5203,162 @@
   // ============================================================================
   async function mostrarPantallaReportes() {
     mostrarPantalla('pantallaReportes');
+    document.getElementById('repTurnoFechaDesde').value = '';
+    document.getElementById('repTurnoFechaHasta').value = '';
     await cargarReportesTurno();
   }
+
+  let reportesTurnoCache = [];
+  let reporteTurnoAbiertoId = null;
+  const etiquetasPagoTurno = { efectivo: 'Efectivo', nequi: 'Nequi', daviplata: 'Daviplata', tarjeta_debito: 'T. débito', tarjeta_credito: 'T. crédito' };
+  const etiquetaNovedadTurno = { cuadrado: '✅ Cuadrada', sobrante: '🔺 Sobrante', faltante: '🔻 Faltante' };
 
   async function cargarReportesTurno() {
     const contenedor = document.getElementById('listaReportesTurno');
     contenedor.innerHTML = '<div class="cargando">Cargando reportes...</div>';
 
-    const resp = await fetch(WORKER_URL + '/api/pos/reportes/turnos', {
-      headers: { Authorization: 'Bearer ' + sesionActual.token }
-    });
-
-    if (!resp.ok) {
-      contenedor.innerHTML = '<div class="cargando">No se pudieron cargar los reportes.</div>';
-      return;
-    }
+    const resp = await fetch(WORKER_URL + '/api/pos/reportes/turnos', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudieron cargar los reportes.</div>'; return; }
 
     const { reportes } = await resp.json();
+    reportesTurnoCache = (reportes || []).sort((a, b) => new Date(b.fecha_cierre) - new Date(a.fecha_cierre));
+    reporteTurnoAbiertoId = null;
+    renderizarListaReportesTurno();
+  }
 
-    if (!reportes || reportes.length === 0) {
-      contenedor.innerHTML = '<div class="cargando">Todavía no hay turnos cerrados registrados.</div>';
+  function limpiarFiltroReportesTurno() {
+    document.getElementById('repTurnoFechaDesde').value = '';
+    document.getElementById('repTurnoFechaHasta').value = '';
+    renderizarListaReportesTurno();
+  }
+
+  function reportesTurnoFiltrados() {
+    const desde = document.getElementById('repTurnoFechaDesde').value;
+    const hasta = document.getElementById('repTurnoFechaHasta').value;
+    return reportesTurnoCache.filter(r => {
+      const fechaCierre = r.fecha_cierre.slice(0, 10);
+      if (desde && fechaCierre < desde) return false;
+      if (hasta && fechaCierre > hasta) return false;
+      return true;
+    });
+  }
+
+  function renderizarListaReportesTurno() {
+    const contenedor = document.getElementById('listaReportesTurno');
+    const reportes = reportesTurnoFiltrados();
+
+    if (reportes.length === 0) {
+      contenedor.innerHTML = `<div class="cargando">${reportesTurnoCache.length === 0 ? 'Todavía no hay turnos cerrados registrados.' : 'No hay turnos cerrados en ese rango de fechas.'}</div>`;
       return;
     }
 
-    const etiquetasPago = { efectivo: 'Efectivo', nequi: 'Nequi', daviplata: 'Daviplata', tarjeta_debito: 'T. débito', tarjeta_credito: 'T. crédito' };
-    const etiquetaNovedad = { cuadrado: '✅ Cuadrada', sobrante: '🔺 Sobrante', faltante: '🔻 Faltante' };
-
-    contenedor.innerHTML = reportes.map(rep => {
-      const fechaAp = new Date(rep.fecha_apertura).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
-      const fechaCi = new Date(rep.fecha_cierre).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
-      const cajero = rep.nombre_cajero || 'Cajero';
-      const resumen = Array.isArray(rep.resumen_por_metodo) ? rep.resumen_por_metodo.map(m =>
-        `${etiquetasPago[m.metodo_pago] || m.metodo_pago}: ${formatearMoneda(m.total_cobrado)}`
-      ).join(' · ') : '';
-
-      return `
-        <div class="fila-historial" style="margin-bottom:12px;">
-          <div class="fila-historial-encabezado">
-            <span class="fila-historial-consecutivo">${escaparHtml(cajero)}</span>
-            <span class="fila-historial-total">${formatearMoneda(rep.total_ventas_turno)}</span>
-          </div>
-          <div class="fila-historial-fecha">Apertura: ${fechaAp} · Cierre: ${fechaCi}</div>
-          <div class="fila-historial-detalle" style="margin-top:6px;">
-            <div class="resumen-fila"><span>Efectivo apertura</span><strong>${formatearMoneda(rep.monto_apertura)}</strong></div>
-            <div class="resumen-fila"><span>Ventas en efectivo</span><strong>${formatearMoneda(rep.ventas_efectivo)}</strong></div>
-            <div class="resumen-fila"><span>Efectivo esperado</span><strong>${formatearMoneda(rep.monto_esperado)}</strong></div>
-            <div class="resumen-fila"><span>Efectivo declarado</span><strong>${formatearMoneda(rep.monto_declarado)}</strong></div>
-            <div class="resumen-fila total"><span>${etiquetaNovedad[rep.tipo_novedad] || rep.tipo_novedad}</span><strong>${formatearMoneda(Math.abs(rep.diferencia))}</strong></div>
-          </div>
-          ${resumen ? `<div class="fila-historial-pagos" style="margin-top:8px;">${resumen}</div>` : ''}
-          <div style="font-size:11.5px;opacity:0.6;margin-top:4px;">${rep.num_ventas_turno} venta(s) en el turno</div>
+    contenedor.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:100px 130px 1fr 110px 110px 20px;">
+          <span>CIERRE</span><span>CAJERO</span><span>N.° VENTAS</span><span style="text-align:right;">TOTAL</span><span style="text-align:right;">NOVEDAD</span><span></span>
         </div>
-      `;
-    }).join('');
+        ${reportes.map(rep => {
+          const abierto = reporteTurnoAbiertoId === rep.id;
+          const fechaCi = new Date(rep.fecha_cierre).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
+          const colorNovedad = rep.tipo_novedad === 'cuadrado' ? 'var(--verde-exito)' : rep.tipo_novedad === 'faltante' ? 'var(--rojo-error)' : '#e0922f';
+          return `
+            <div class="tabla-lista-fila" style="grid-template-columns:100px 130px 1fr 110px 110px 20px;" onclick="alternarReporteTurno('${rep.id}')">
+              <span style="opacity:0.75;">${fechaCi}</span>
+              <span style="font-weight:600;">${escaparHtml(rep.nombre_cajero || 'Cajero')}</span>
+              <span style="opacity:0.75;">${rep.num_ventas_turno} venta(s)</span>
+              <span style="text-align:right;font-weight:700;">${formatearMoneda(rep.total_ventas_turno)}</span>
+              <span style="text-align:right;color:${colorNovedad};font-weight:600;">${etiquetaNovedadTurno[rep.tipo_novedad] || rep.tipo_novedad}</span>
+              <span class="tabla-lista-chevron">${abierto ? '▴' : '▾'}</span>
+            </div>
+            ${abierto ? `
+              <div class="tabla-lista-detalle">
+                <div class="resumen-fila"><span>Apertura</span><strong>${new Date(rep.fecha_apertura).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}</strong></div>
+                <div class="resumen-fila"><span>Efectivo de apertura</span><strong>${formatearMoneda(rep.monto_apertura)}</strong></div>
+                <div class="resumen-fila"><span>Ventas en efectivo</span><strong>${formatearMoneda(rep.ventas_efectivo)}</strong></div>
+                <div class="resumen-fila"><span>Efectivo esperado</span><strong>${formatearMoneda(rep.monto_esperado)}</strong></div>
+                <div class="resumen-fila"><span>Efectivo declarado</span><strong>${formatearMoneda(rep.monto_declarado)}</strong></div>
+                <div class="resumen-fila total"><span>${etiquetaNovedadTurno[rep.tipo_novedad] || rep.tipo_novedad}</span><strong>${formatearMoneda(Math.abs(rep.diferencia))}</strong></div>
+                ${Array.isArray(rep.resumen_por_metodo) && rep.resumen_por_metodo.length ? `
+                  <div style="font-size:11px;font-weight:700;opacity:0.6;margin-top:10px;margin-bottom:4px;">POR MÉTODO DE PAGO</div>
+                  ${rep.resumen_por_metodo.map(m => `<div class="resumen-fila"><span>${etiquetasPagoTurno[m.metodo_pago] || m.metodo_pago}</span><strong>${formatearMoneda(m.total_cobrado)}</strong></div>`).join('')}
+                ` : ''}
+              </div>
+            ` : ''}
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  function alternarReporteTurno(id) {
+    reporteTurnoAbiertoId = reporteTurnoAbiertoId === id ? null : id;
+    renderizarListaReportesTurno();
+  }
+
+  function exportarReportesTurnoExcel() {
+    const reportes = reportesTurnoFiltrados();
+    if (reportes.length === 0) { alert('No hay reportes para exportar con este filtro.'); return; }
+
+    const filas = reportes.map(rep => ({
+      'Fecha apertura': new Date(rep.fecha_apertura).toLocaleString('es-CO'),
+      'Fecha cierre': new Date(rep.fecha_cierre).toLocaleString('es-CO'),
+      'Cajero': rep.nombre_cajero || 'Cajero',
+      'N.° ventas': rep.num_ventas_turno,
+      'Efectivo apertura': rep.monto_apertura,
+      'Ventas en efectivo': rep.ventas_efectivo,
+      'Total del turno': rep.total_ventas_turno,
+      'Efectivo esperado': rep.monto_esperado,
+      'Efectivo declarado': rep.monto_declarado,
+      'Diferencia': rep.diferencia,
+      'Novedad': etiquetaNovedadTurno[rep.tipo_novedad] || rep.tipo_novedad
+    }));
+
+    const hoja = XLSX.utils.json_to_sheet(filas);
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Reportes de turno');
+    XLSX.writeFile(libro, `Reportes_turno_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  }
+
+  function imprimirReportesTurno() {
+    const reportes = reportesTurnoFiltrados();
+    if (reportes.length === 0) { alert('No hay reportes para imprimir con este filtro.'); return; }
+
+    const filas = reportes.map(rep => `
+      <tr>
+        <td>${new Date(rep.fecha_cierre).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}</td>
+        <td>${escaparHtml(rep.nombre_cajero || 'Cajero')}</td>
+        <td style="text-align:center;">${rep.num_ventas_turno}</td>
+        <td style="text-align:right;">${formatearMoneda(rep.monto_apertura)}</td>
+        <td style="text-align:right;">${formatearMoneda(rep.ventas_efectivo)}</td>
+        <td style="text-align:right;">${formatearMoneda(rep.total_ventas_turno)}</td>
+        <td style="text-align:right;">${formatearMoneda(rep.monto_declarado)}</td>
+        <td style="text-align:right;">${etiquetaNovedadTurno[rep.tipo_novedad] || rep.tipo_novedad}: ${formatearMoneda(Math.abs(rep.diferencia))}</td>
+      </tr>
+    `).join('');
+
+    const html = `
+      <html><head><title>Reportes de turno</title>
+      <style>
+        body{font-family:Arial,sans-serif;padding:24px;color:#222;}
+        h1{font-size:16px;color:#d8017c;}
+        table{width:100%;border-collapse:collapse;margin-top:14px;font-size:11.5px;}
+        th{text-align:left;border-bottom:2px solid #d8017c;padding:6px 4px;font-size:10.5px;}
+        td{padding:6px 4px;border-bottom:1px solid #eee;}
+        @media print { button{display:none;} }
+      </style></head>
+      <body>
+        <h1>Lana Rosa Crochet — Reportes de turno</h1>
+        <div style="font-size:11px;opacity:0.7;">Generado: ${new Date().toLocaleString('es-CO')}</div>
+        <table>
+          <tr><th>Cierre</th><th>Cajero</th><th>N.° ventas</th><th>Apertura</th><th>Efvo. ventas</th><th>Total</th><th>Efvo. declarado</th><th>Novedad</th></tr>
+          ${filas}
+        </table>
+        <button onclick="window.print()" style="margin-top:20px;width:100%;padding:10px;background:#d8017c;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;">🖨️ Imprimir / guardar como PDF</button>
+      </body></html>
+    `;
+
+    const ventana = window.open('', '_blank');
+    if (ventana) { ventana.document.write(html); ventana.document.close(); }
   }
 
   // Función de navegación al turno activo desde cualquier pantalla
