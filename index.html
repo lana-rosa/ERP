@@ -1204,7 +1204,7 @@
 <div id="pantallaPagosPendientes" class="oculto contenido">
   <div class="page-header">
     <h1>Mi departamento</h1>
-    <div class="subtitulo">Presupuesto asignado este mes, gastos, y los pagos internos pendientes.</div>
+    <div class="subtitulo">Presupuesto asignado este mes, y tus gastos registrados.</div>
   </div>
 
   <div class="filtro-tipo" style="margin-bottom:20px;">
@@ -1214,16 +1214,9 @@
   </div>
 
   <div id="subtabPagosResumen" data-subtab-grupo="pagosPendientes">
-    <div class="grilla-2">
-      <div class="panel">
-        <h2>Resumen de mi departamento</h2>
-        <div id="resumenMiDepartamento"><div class="cargando">Cargando...</div></div>
-      </div>
-      <div class="panel">
-        <h2>Pagos internos pendientes</h2>
-        <div class="subtitulo">Ventas a otros departamentos donde vendiste, y todavía falta el pago real.</div>
-        <div id="listaPagosPendientesPropios"><div class="cargando">Cargando...</div></div>
-      </div>
+    <div class="panel" style="max-width:600px;">
+      <h2>Resumen de mi departamento</h2>
+      <div id="resumenMiDepartamento"><div class="cargando">Cargando...</div></div>
     </div>
   </div>
 
@@ -2509,7 +2502,7 @@
     mostrar('nav-historial', esAdmin || esCajero);
     mostrar('nav-inventario-tienda', esAdmin || esCajero);
     mostrar('nav-ajustestock', esAdmin || esCajero);
-    mostrar('nav-reportes', esAdmin || esCajero);
+    mostrar('nav-reportes', esAdmin);
     mostrar('nav-pedidos-canal', esAdmin || esCajero);
     mostrar('nav-solicitudes-tienda', esAdmin || esCajero);
     mostrar('nav-consumotaller', esAdmin || esTaller);
@@ -5737,7 +5730,6 @@
     document.getElementById('gastoDescripcion').value = '';
     document.getElementById('gastoMonto').value = '';
     await cargarResumenMiDepartamento();
-    await cargarPagosPendientesPropios();
     await cargarHistorialGastosPropios();
     await cargarPresupuestoMio();
   }
