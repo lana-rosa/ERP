@@ -1819,14 +1819,36 @@
 <div id="pantallaCalendario" class="oculto contenido">
   <div class="page-header">
     <h1>Calendario del equipo</h1>
-    <div class="subtitulo">Los eventos de equipo (reuniones, capacitaciones, juntas, salidas) son visibles para todos, pero solo la administradora o quien ella autorice puede programarlos. Cada quien puede agendar sus propias tareas personales, visibles solo para sí mismo/a. La sincronización con Google Calendar de cada empleado está pendiente de configurar.</div>
+    <div class="subtitulo">Los eventos de equipo (reuniones, capacitaciones, juntas, salidas) son visibles para todos, pero solo la administradora o los líderes de cada área pueden programarlos. Cada quien puede agendar sus propias tareas personales, visibles solo para sí mismo/a.</div>
   </div>
 
   <div id="bannerRecordatoriosCalendario"></div>
 
-  <div class="grilla-2">
-    <div class="panel" id="panelNuevoEvento">
-      <h2>+ Nuevo evento</h2>
+  <div class="panel" style="max-width:none;">
+    <div class="gcal-toolbar">
+      <div class="gcal-toolbar-izq">
+        <button class="gcal-btn-hoy" onclick="irAHoyCalendario()">Hoy</button>
+        <button class="gcal-nav-flecha" onclick="cambiarMesCalendario(-1)">‹</button>
+        <button class="gcal-nav-flecha" onclick="cambiarMesCalendario(1)">›</button>
+        <div class="gcal-titulo" id="tituloMesCalendario"></div>
+      </div>
+      <div class="filtro-tipo" style="margin-bottom:0;">
+        <button class="chip-filtro activo" data-vista-calendario="mes" onclick="cambiarVistaCalendario('mes', this)">Mes</button>
+        <button class="chip-filtro" data-vista-calendario="dia" onclick="cambiarVistaCalendario('dia', this)">Día</button>
+      </div>
+    </div>
+    <div id="gridCalendario" class="gcal-grid"></div>
+    <div id="listaEventosDelDia" style="margin-top:16px;"></div>
+  </div>
+
+  <div class="filtro-tipo" style="margin-top:20px;margin-bottom:16px;">
+    <button class="chip-filtro activo" data-subtab-btn="calendarioForms" id="btnTabNuevoEvento" onclick="mostrarSubTabGrupo('calendarioForms', 'subtabNuevoEvento', this)">+ Agendar nuevo evento</button>
+    <button class="chip-filtro" data-subtab-btn="calendarioForms" onclick="mostrarSubTabGrupo('calendarioForms', 'subtabTareaPersonal', this)">📝 Agendar mi tarea personal</button>
+  </div>
+
+  <div id="subtabNuevoEvento" data-subtab-grupo="calendarioForms">
+    <div class="panel" id="panelNuevoEvento" style="max-width:520px;">
+      <h2>+ Nuevo evento de equipo</h2>
       <label for="eventoTitulo">Título</label>
       <input type="text" id="eventoTitulo" placeholder="Ej: Reunión de equipo">
       <label for="eventoTipo">Tipo</label>
@@ -1856,9 +1878,14 @@
       <button class="btn-principal" id="btnCrearEvento" onclick="confirmarCrearEvento()">Programar evento</button>
       <div class="mensaje" id="mensajeEvento"></div>
     </div>
+    <div class="panel oculto" id="panelSinPermisoEvento" style="max-width:520px;">
+      <div class="cargando">Solo la administradora o los líderes de cada área pueden programar eventos de equipo. Puedes agendar tu propia tarea personal en la otra pestaña.</div>
+    </div>
+  </div>
 
-    <div class="panel" id="panelNuevaTareaPersonal">
-      <h2>📝 + Mi tarea personal</h2>
+  <div id="subtabTareaPersonal" data-subtab-grupo="calendarioForms" class="oculto">
+    <div class="panel" id="panelNuevaTareaPersonal" style="max-width:520px;">
+      <h2>📝 Mi tarea personal</h2>
       <div class="subtitulo">Solo la ves tú — para organizar tus propias responsabilidades.</div>
       <label for="tareaTitulo">¿Qué tienes que hacer?</label>
       <input type="text" id="tareaTitulo" placeholder="Ej: Entregar pedido LR-2026-015">
@@ -1876,23 +1903,6 @@
       </select>
       <button class="btn-principal" id="btnCrearTareaPersonal" onclick="confirmarCrearTareaPersonal()">Agendar tarea</button>
       <div class="mensaje" id="mensajeTareaPersonal"></div>
-    </div>
-
-    <div class="panel">
-      <div class="gcal-toolbar">
-        <div class="gcal-toolbar-izq">
-          <button class="gcal-btn-hoy" onclick="irAHoyCalendario()">Hoy</button>
-          <button class="gcal-nav-flecha" onclick="cambiarMesCalendario(-1)">‹</button>
-          <button class="gcal-nav-flecha" onclick="cambiarMesCalendario(1)">›</button>
-          <div class="gcal-titulo" id="tituloMesCalendario"></div>
-        </div>
-        <div class="filtro-tipo" style="margin-bottom:0;">
-          <button class="chip-filtro activo" data-vista-calendario="mes" onclick="cambiarVistaCalendario('mes', this)">Mes</button>
-          <button class="chip-filtro" data-vista-calendario="dia" onclick="cambiarVistaCalendario('dia', this)">Día</button>
-        </div>
-      </div>
-      <div id="gridCalendario" class="gcal-grid"></div>
-      <div id="listaEventosDelDia" style="margin-top:16px;"></div>
     </div>
   </div>
 </div>
@@ -2687,7 +2697,10 @@
     actualizarTituloSidebar(data);
   }
 
+  let esLiderDepartamentoActual = false;
+
   function actualizarTituloSidebar(datosRol) {
+    esLiderDepartamentoActual = !!datosRol.es_jefe_departamento;
     const el = document.getElementById('sidebarSubtitulo');
     if (!el) return;
 
@@ -9578,7 +9591,15 @@
 
   async function mostrarPantallaCalendario() {
     mostrarPantalla('pantallaCalendario');
+    mostrarSubTabGrupo('calendarioForms', 'subtabNuevoEvento', document.getElementById('btnTabNuevoEvento'));
     ocultarMensaje('mensajeEvento');
+
+    // Solo la administradora o los líderes de cada área pueden programar
+    // eventos de equipo — quien no cumpla ve un aviso en vez del formulario.
+    const puedeCrearEventoEquipo = rolActual === 'administrador' || esLiderDepartamentoActual;
+    document.getElementById('panelNuevoEvento').classList.toggle('oculto', !puedeCrearEventoEquipo);
+    document.getElementById('panelSinPermisoEvento').classList.toggle('oculto', puedeCrearEventoEquipo);
+
     const hoy = new Date();
     mesCalendarioActual = hoy.getMonth();
     anioCalendarioActual = hoy.getFullYear();
