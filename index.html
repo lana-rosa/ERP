@@ -659,6 +659,14 @@
       </div>
     </div>
 
+    <div class="sidebar-depto" id="deptoDirectorioGrupo" style="display:none;">
+      <button class="sidebar-depto-header" id="headerDeptoDirectorio" onclick="toggleSidebarDepto('deptoDirectorioSubmenu', 'headerDeptoDirectorio')">📇 Directorio <span class="chevron">▾</span></button>
+      <div class="sidebar-depto-submenu" id="deptoDirectorioSubmenu">
+        <button class="nav-btn" onclick="mostrarPantallaClientes()"><span class="nav-icon">👤</span> Clientes</button>
+        <button class="nav-btn" onclick="mostrarPantallaProveedores()"><span class="nav-icon">🏭</span> Proveedores</button>
+      </div>
+    </div>
+
     <div class="sidebar-depto" id="deptoReportesGrupo" style="display:none;">
       <button class="sidebar-depto-header" id="headerDeptoReportes" onclick="toggleSidebarDepto('deptoReportesSubmenu', 'headerDeptoReportes')">📊 Reportes financieros <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoReportesSubmenu">
@@ -1613,6 +1621,70 @@
   </div>
 </div>
 
+<!-- ===== PANTALLA: CLIENTES ===== -->
+<div id="pantallaClientes" class="oculto contenido">
+  <div class="page-header">
+    <h1>👤 Clientes</h1>
+    <div class="subtitulo">Directorio de clientes con su historial completo de compras (Tienda, WhatsApp/Redes).</div>
+  </div>
+  <div class="grilla-2">
+    <div class="panel">
+      <h2>+ Agregar cliente</h2>
+      <label for="clienteDirNombre">Nombre completo</label>
+      <input type="text" id="clienteDirNombre" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
+      <label for="clienteDirDocumento">N.° de documento</label>
+      <input type="text" id="clienteDirDocumento">
+      <label for="clienteDirTelefono">Teléfono</label>
+      <input type="tel" id="clienteDirTelefono">
+      <label for="clienteDirCorreo">Correo <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <input type="email" id="clienteDirCorreo">
+      <label for="clienteDirDireccion">Dirección <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <input type="text" id="clienteDirDireccion">
+      <label for="clienteDirCiudad">Ciudad <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <input type="text" id="clienteDirCiudad">
+      <button class="btn-principal" onclick="confirmarCrearCliente()">Agregar cliente</button>
+      <div class="mensaje" id="mensajeCrearCliente"></div>
+    </div>
+    <div class="panel">
+      <h2>Buscar cliente</h2>
+      <div class="barra-busqueda"><input type="text" id="buscarClienteDir" placeholder="🔍 Nombre, cédula o teléfono..." oninput="debounceBuscarClientes()"></div>
+      <div id="listaClientesDir" style="margin-top:10px;"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PANTALLA: PROVEEDORES ===== -->
+<div id="pantallaProveedores" class="oculto contenido">
+  <div class="page-header">
+    <h1>🏭 Proveedores</h1>
+    <div class="subtitulo">Directorio de proveedores con lo que se les ha comprado (gastos registrados).</div>
+  </div>
+  <div class="grilla-2">
+    <div class="panel">
+      <h2>+ Agregar proveedor</h2>
+      <label for="proveedorDirNombre">Nombre / Razón social</label>
+      <input type="text" id="proveedorDirNombre">
+      <label for="proveedorDirDocumento">NIT / Documento</label>
+      <input type="text" id="proveedorDirDocumento">
+      <label for="proveedorDirTelefono">Teléfono</label>
+      <input type="tel" id="proveedorDirTelefono">
+      <label for="proveedorDirCorreo">Correo <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <input type="email" id="proveedorDirCorreo">
+      <label for="proveedorDirDireccion">Dirección <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <input type="text" id="proveedorDirDireccion">
+      <label for="proveedorDirCiudad">Ciudad <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <input type="text" id="proveedorDirCiudad">
+      <button class="btn-principal" onclick="confirmarCrearProveedor()">Agregar proveedor</button>
+      <div class="mensaje" id="mensajeCrearProveedor"></div>
+    </div>
+    <div class="panel">
+      <h2>Buscar proveedor</h2>
+      <div class="barra-busqueda"><input type="text" id="buscarProveedorDir" placeholder="🔍 Nombre, NIT o teléfono..." oninput="debounceBuscarProveedores()"></div>
+      <div id="listaProveedoresDir" style="margin-top:10px;"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+</div>
+
 <!-- ===== PANTALLA: USUARIOS Y PERMISOS ===== -->
 <div id="pantallaUsuarios" class="oculto contenido">
   <div class="page-header">
@@ -1740,10 +1812,12 @@
       <input type="text" id="miPerfilNombre">
       <label for="miPerfilTelefono">Teléfono</label>
       <input type="tel" id="miPerfilTelefono" placeholder="300 000 0000">
-      <label for="miPerfilDocumento">N.° de documento</label>
-      <input type="text" id="miPerfilDocumento" placeholder="Cédula de ciudadanía">
       <label for="miPerfilDireccion">Dirección</label>
       <input type="text" id="miPerfilDireccion" placeholder="Dirección de residencia">
+      <label for="miPerfilCorreo">Correo electrónico</label>
+      <input type="email" id="miPerfilCorreo">
+      <label for="miPerfilDocumento">N.° de documento</label>
+      <input type="text" id="miPerfilDocumento" placeholder="Cédula de ciudadanía">
       <button class="btn-principal" onclick="guardarMiPerfil()">Guardar datos personales</button>
       <div class="mensaje" id="mensajeMiPerfil"></div>
     </div>
@@ -1751,13 +1825,8 @@
 
   <div id="subtabPerfilCuenta" data-subtab-grupo="miPerfil" class="oculto">
     <div class="panel" style="max-width:420px;">
-      <h2>Correo de acceso</h2>
-      <label for="miPerfilCorreo">Correo</label>
-      <input type="email" id="miPerfilCorreo">
-      <button class="btn-principal" onclick="guardarMiCorreo()">Guardar correo</button>
-      <div class="mensaje" id="mensajeMiCorreo"></div>
-
-      <label for="miPerfilPasswordActual" style="margin-top:24px;">Contraseña actual <span style="font-size:10px;opacity:0.6;">(para cambiar tu contraseña)</span></label>
+      <h2>Seguridad</h2>
+      <label for="miPerfilPasswordActual" style="margin-top:0;">Contraseña actual <span style="font-size:10px;opacity:0.6;">(para cambiar tu contraseña)</span></label>
       <input type="password" id="miPerfilPasswordActual">
       <label for="miPerfilPasswordNueva">Nueva contraseña</label>
       <input type="password" id="miPerfilPasswordNueva">
@@ -2274,7 +2343,7 @@
   // UTILIDADES
   // ============================================================================
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaDepartamentos', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaAbrirTurnoAcademia', 'pantallaTurnoActivoAcademia', 'pantallaCerrarTurnoAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaDepartamentos', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaAbrirTurnoAcademia', 'pantallaTurnoActivoAcademia', 'pantallaCerrarTurnoAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -2502,6 +2571,7 @@
     // Grupos de departamento completos (acordeón)
     mostrar('deptoTiendaGrupo', esAdmin || esCajero);
     mostrar('deptoTallerGrupo', esAdmin || esTaller);
+    mostrar('deptoDirectorioGrupo', esAdmin || esCajero);
     mostrar('deptoAcademiaGrupo', esAdmin);
     mostrar('deptoTalentoGrupo', esAdmin);
     mostrar('deptoReportesGrupo', esAdmin);
@@ -6377,8 +6447,9 @@
   async function guardarMiPerfil() {
     const nombre = document.getElementById('miPerfilNombre').value.trim();
     const telefono = document.getElementById('miPerfilTelefono').value.trim();
-    const documento = document.getElementById('miPerfilDocumento').value.trim();
     const direccion = document.getElementById('miPerfilDireccion').value.trim();
+    const correo = document.getElementById('miPerfilCorreo').value.trim();
+    const documento = document.getElementById('miPerfilDocumento').value.trim();
     ocultarMensaje('mensajeMiPerfil');
 
     if (!nombre) { mostrarMensaje('mensajeMiPerfil', 'Escribe tu nombre completo.', 'error'); return; }
@@ -6386,13 +6457,17 @@
     const resp = await fetch(WORKER_URL + '/api/pos/mi-perfil', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ nombre_completo: nombre, telefono, numero_documento: documento, direccion })
+      body: JSON.stringify({
+        nombre_completo: nombre, telefono, direccion, numero_documento: documento,
+        correo: correo && correo !== sesionActual.email ? correo : undefined
+      })
     });
     const datos = await resp.json();
     if (!resp.ok) { mostrarMensaje('mensajeMiPerfil', datos.error || 'No se pudo guardar.', 'error'); return; }
 
     mostrarMensaje('mensajeMiPerfil', '✅ Datos personales actualizados.', 'exito');
     miPropiaIdentidad.nombre = nombre;
+    if (correo) sesionActual.email = correo;
     actualizarSidebar();
     const elNombre = document.getElementById('sidebarNombreUsuarioTop');
     if (elNombre) elNombre.textContent = nombre;
@@ -6572,6 +6647,174 @@
         `).join('')}
       </div>
     `;
+  }
+
+  // ============================================================
+  // DIRECTORIO — CLIENTES
+  // ============================================================
+  let clienteDirAbiertoId = null;
+
+  async function mostrarPantallaClientes() {
+    mostrarPantalla('pantallaClientes');
+    document.getElementById('buscarClienteDir').value = '';
+    ocultarMensaje('mensajeCrearCliente');
+    await cargarClientesDir();
+  }
+
+  let timeoutBuscarClientesDir = null;
+  function debounceBuscarClientes() {
+    clearTimeout(timeoutBuscarClientesDir);
+    timeoutBuscarClientesDir = setTimeout(cargarClientesDir, 350);
+  }
+
+  async function cargarClientesDir() {
+    const contenedor = document.getElementById('listaClientesDir');
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+    const q = document.getElementById('buscarClienteDir').value.trim();
+    const resp = await fetch(WORKER_URL + '/api/pos/terceros?tipo=cliente' + (q ? '&q=' + encodeURIComponent(q) : ''), { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const { terceros } = await resp.json();
+    if (!terceros || terceros.length === 0) { contenedor.innerHTML = '<div class="cargando">No se encontraron clientes.</div>'; return; }
+
+    contenedor.innerHTML = terceros.map(c => `
+      <div class="fila-inventario-editable" style="margin-bottom:8px;">
+        <div class="fila-inventario-titulo" style="cursor:pointer;" onclick="alternarHistorialCliente('${c.id}')">
+          <span class="fila-inventario-nombre">${escaparHtml(c.nombre_completo)}</span>
+        </div>
+        <div style="font-size:12px;opacity:0.65;">${escaparHtml(c.numero_documento || 'Sin documento')} · ${escaparHtml(c.telefono || 'Sin teléfono')}</div>
+        <div id="historialCliente-${c.id}" class="oculto" style="margin-top:8px;"></div>
+      </div>
+    `).join('');
+  }
+
+  async function alternarHistorialCliente(id) {
+    const contenedor = document.getElementById(`historialCliente-${id}`);
+    if (clienteDirAbiertoId === id) { contenedor.classList.add('oculto'); clienteDirAbiertoId = null; return; }
+    if (clienteDirAbiertoId) { const anterior = document.getElementById(`historialCliente-${clienteDirAbiertoId}`); if (anterior) anterior.classList.add('oculto'); }
+    clienteDirAbiertoId = id;
+    contenedor.classList.remove('oculto');
+    contenedor.innerHTML = '<div class="cargando">Cargando historial...</div>';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/terceros/historial-cliente?tercero_id=' + id, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const { compras, resumen } = await resp.json();
+
+    contenedor.innerHTML = `
+      <div style="background:var(--rosa-suave);border-radius:9px;padding:10px;">
+        <div class="resumen-fila"><span>Total de compras</span><strong>${resumen.total_compras}</strong></div>
+        <div class="resumen-fila total"><span>Total gastado</span><strong>${formatearMoneda(resumen.total_gastado)}</strong></div>
+        ${compras.length === 0 ? '<div style="font-size:12px;opacity:0.6;margin-top:6px;">Sin compras registradas todavía.</div>' :
+          compras.map(c => `<div style="font-size:12px;padding:3px 0;border-top:1px dashed #f0e0ec;">${escaparHtml(c.tipo)} — ${escaparHtml(c.referencia || '')} — ${new Date(c.fecha).toLocaleDateString('es-CO')} — ${formatearMoneda(c.total)}</div>`).join('')}
+      </div>
+    `;
+  }
+
+  async function confirmarCrearCliente() {
+    const nombre = document.getElementById('clienteDirNombre').value.trim();
+    const documento = document.getElementById('clienteDirDocumento').value.trim();
+    const telefono = document.getElementById('clienteDirTelefono').value.trim();
+    const correo = document.getElementById('clienteDirCorreo').value.trim();
+    const direccion = document.getElementById('clienteDirDireccion').value.trim();
+    const ciudad = document.getElementById('clienteDirCiudad').value.trim();
+    ocultarMensaje('mensajeCrearCliente');
+
+    if (!nombre) { mostrarMensaje('mensajeCrearCliente', 'Escribe el nombre del cliente.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/terceros', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ tipo: 'cliente', nombre_completo: nombre, tipo_documento: documento ? 'CC' : null, numero_documento: documento || null, telefono: telefono || null, email: correo || null, direccion: direccion || null, ciudad: ciudad || null })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeCrearCliente', datos.error || 'No se pudo crear.', 'error'); return; }
+
+    mostrarMensaje('mensajeCrearCliente', '✅ Cliente agregado.', 'exito');
+    ['clienteDirNombre','clienteDirDocumento','clienteDirTelefono','clienteDirCorreo','clienteDirDireccion','clienteDirCiudad'].forEach(id => document.getElementById(id).value = '');
+    await cargarClientesDir();
+  }
+
+  // ============================================================
+  // DIRECTORIO — PROVEEDORES
+  // ============================================================
+  let proveedorDirAbiertoId = null;
+
+  async function mostrarPantallaProveedores() {
+    mostrarPantalla('pantallaProveedores');
+    document.getElementById('buscarProveedorDir').value = '';
+    ocultarMensaje('mensajeCrearProveedor');
+    await cargarProveedoresDir();
+  }
+
+  let timeoutBuscarProveedoresDir = null;
+  function debounceBuscarProveedores() {
+    clearTimeout(timeoutBuscarProveedoresDir);
+    timeoutBuscarProveedoresDir = setTimeout(cargarProveedoresDir, 350);
+  }
+
+  async function cargarProveedoresDir() {
+    const contenedor = document.getElementById('listaProveedoresDir');
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+    const q = document.getElementById('buscarProveedorDir').value.trim();
+    const resp = await fetch(WORKER_URL + '/api/pos/terceros?tipo=proveedor' + (q ? '&q=' + encodeURIComponent(q) : ''), { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const { terceros } = await resp.json();
+    if (!terceros || terceros.length === 0) { contenedor.innerHTML = '<div class="cargando">No se encontraron proveedores.</div>'; return; }
+
+    contenedor.innerHTML = terceros.map(p => `
+      <div class="fila-inventario-editable" style="margin-bottom:8px;">
+        <div class="fila-inventario-titulo" style="cursor:pointer;" onclick="alternarHistorialProveedor('${p.id}')">
+          <span class="fila-inventario-nombre">${escaparHtml(p.nombre_completo)}</span>
+        </div>
+        <div style="font-size:12px;opacity:0.65;">${escaparHtml(p.numero_documento || 'Sin NIT')} · ${escaparHtml(p.telefono || 'Sin teléfono')}</div>
+        <div id="historialProveedor-${p.id}" class="oculto" style="margin-top:8px;"></div>
+      </div>
+    `).join('');
+  }
+
+  async function alternarHistorialProveedor(id) {
+    const contenedor = document.getElementById(`historialProveedor-${id}`);
+    if (proveedorDirAbiertoId === id) { contenedor.classList.add('oculto'); proveedorDirAbiertoId = null; return; }
+    if (proveedorDirAbiertoId) { const anterior = document.getElementById(`historialProveedor-${proveedorDirAbiertoId}`); if (anterior) anterior.classList.add('oculto'); }
+    proveedorDirAbiertoId = id;
+    contenedor.classList.remove('oculto');
+    contenedor.innerHTML = '<div class="cargando">Cargando historial...</div>';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/terceros/historial-proveedor?tercero_id=' + id, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const { gastos, resumen } = await resp.json();
+
+    contenedor.innerHTML = `
+      <div style="background:var(--rosa-suave);border-radius:9px;padding:10px;">
+        <div class="resumen-fila"><span>Compras registradas</span><strong>${resumen.total_gastos}</strong></div>
+        <div class="resumen-fila total"><span>Total comprado</span><strong>${formatearMoneda(resumen.total_comprado)}</strong></div>
+        ${gastos.length === 0 ? '<div style="font-size:12px;opacity:0.6;margin-top:6px;">Sin compras registradas todavía.</div>' :
+          gastos.map(g => `<div style="font-size:12px;padding:3px 0;border-top:1px dashed #f0e0ec;">${escaparHtml(g.descripcion)} — ${new Date(g.created_at).toLocaleDateString('es-CO')} — ${formatearMoneda(g.monto)}</div>`).join('')}
+      </div>
+    `;
+  }
+
+  async function confirmarCrearProveedor() {
+    const nombre = document.getElementById('proveedorDirNombre').value.trim();
+    const documento = document.getElementById('proveedorDirDocumento').value.trim();
+    const telefono = document.getElementById('proveedorDirTelefono').value.trim();
+    const correo = document.getElementById('proveedorDirCorreo').value.trim();
+    const direccion = document.getElementById('proveedorDirDireccion').value.trim();
+    const ciudad = document.getElementById('proveedorDirCiudad').value.trim();
+    ocultarMensaje('mensajeCrearProveedor');
+
+    if (!nombre) { mostrarMensaje('mensajeCrearProveedor', 'Escribe el nombre del proveedor.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/terceros', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ tipo: 'proveedor', nombre_completo: nombre, tipo_documento: documento ? 'NIT' : null, numero_documento: documento || null, telefono: telefono || null, email: correo || null, direccion: direccion || null, ciudad: ciudad || null })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeCrearProveedor', datos.error || 'No se pudo crear.', 'error'); return; }
+
+    mostrarMensaje('mensajeCrearProveedor', '✅ Proveedor agregado.', 'exito');
+    ['proveedorDirNombre','proveedorDirDocumento','proveedorDirTelefono','proveedorDirCorreo','proveedorDirDireccion','proveedorDirCiudad'].forEach(id => document.getElementById(id).value = '');
+    await cargarProveedoresDir();
   }
 
   async function mostrarPantallaReportesFinancieros() {
