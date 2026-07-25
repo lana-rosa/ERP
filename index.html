@@ -1624,10 +1624,13 @@
       <input type="text" id="nuevoUsuarioPassword" placeholder="Ej: LanaRosa2026">
       <label for="nuevoUsuarioRol">Rol principal</label>
       <select id="nuevoUsuarioRol">
-        <option value="cajero">Cajero (Tienda)</option>
-        <option value="taller">Taller</option>
-        <option value="administrador">Administrador</option>
-        <option value="contador">Contador</option>
+        <optgroup label="Roles básicos">
+          <option value="base:cajero">Cajero (Tienda)</option>
+          <option value="base:taller">Taller</option>
+          <option value="base:administrador">Administrador</option>
+          <option value="base:contador">Contador</option>
+        </optgroup>
+        <optgroup label="Roles personalizados" id="grupoRolesPersonalizadosSelect"></optgroup>
       </select>
       <label style="margin-top:10px;">Roles adicionales <span style="font-size:10px;opacity:0.6;">(opcional — para quien apoya en más de un área)</span></label>
       <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:4px;">
@@ -1655,6 +1658,33 @@
       <h2>Usuarios del sistema</h2>
       <div id="listaUsuarios"><div class="cargando">Cargando...</div></div>
     </div>
+  </div>
+
+  <div class="panel" style="max-width:none;margin-top:20px;">
+    <h2>🎭 Roles personalizados</h2>
+    <div class="subtitulo">Crea un rol con nombre propio (ej: "Vendedora Junior", "Auxiliar de Taller") con los módulos que verá por defecto cualquier persona a la que se lo asignes. Al crear un usuario, elige este rol y los permisos quedan aplicados automáticamente — sin tener que marcar cada casilla otra vez.</div>
+
+    <button class="btn-secundario" id="btnMostrarFormRol" style="margin-top:0;" onclick="alternarFormRolPersonalizado()">+ Crear rol nuevo</button>
+
+    <div id="formRolPersonalizado" class="oculto" style="margin-top:14px;padding:14px;background:var(--rosa-suave);border-radius:10px;">
+      <label style="margin-top:0;">Nombre del rol</label>
+      <input type="text" id="nuevoRolNombre" placeholder="Ej: Vendedora Junior">
+      <label>Se basa en <span style="font-size:10px;opacity:0.6;">(define las reglas de negocio finas que ya existen, como quién puede editar inventario)</span></label>
+      <select id="nuevoRolBase">
+        <option value="cajero">Cajero (Tienda)</option>
+        <option value="taller">Taller</option>
+        <option value="administrador">Administrador</option>
+        <option value="contador">Contador</option>
+      </select>
+      <label>Descripción <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <input type="text" id="nuevoRolDescripcion" placeholder="Para qué se usa este rol">
+      <label style="margin-top:10px;">Módulos que verá por defecto</label>
+      <div id="listaPermisosNuevoRol" style="margin-top:6px;"></div>
+      <button class="btn-principal" style="margin-top:12px;" onclick="confirmarCrearRolPersonalizado()">Crear rol</button>
+      <div class="mensaje" id="mensajeCrearRol"></div>
+    </div>
+
+    <div id="listaRolesPersonalizados" style="margin-top:16px;"></div>
   </div>
 
   <div class="panel oculto" id="panelPermisosUsuario" style="max-width:none;max-height:none;margin-top:20px;">
@@ -5858,6 +5888,82 @@
     document.getElementById('panelPermisosUsuario').classList.add('oculto');
     usuarioPermisosAbiertoId = null;
     ocultarMensaje('mensajeCrearUsuario');
+    await cargarRolesPersonalizados();
+    await cargarListaUsuarios();
+  }
+
+  let rolesPersonalizadosCache = [];
+
+  async function cargarRolesPersonalizados() {
+    const resp = await fetch(WORKER_URL + '/api/pos/roles-personalizados', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    rolesPersonalizadosCache = resp.ok ? (await resp.json()).roles || [] : [];
+
+    const grupoSelect = document.getElementById('grupoRolesPersonalizadosSelect');
+    grupoSelect.innerHTML = rolesPersonalizadosCache.map(r => `<option value="custom:${r.id}">${escaparHtml(r.nombre)} (basado en ${escaparHtml(r.rol_base)})</option>`).join('');
+
+    const contenedorLista = document.getElementById('listaRolesPersonalizados');
+    if (rolesPersonalizadosCache.length === 0) {
+      contenedorLista.innerHTML = '<div class="cargando">Todavía no has creado ningún rol personalizado.</div>';
+      return;
+    }
+    contenedorLista.innerHTML = rolesPersonalizadosCache.map(r => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f4eef2;font-size:13px;">
+        <span><strong>${escaparHtml(r.nombre)}</strong> <span style="opacity:0.6;font-size:11px;">— basado en ${escaparHtml(r.rol_base)}${r.descripcion ? ' · ' + escaparHtml(r.descripcion) : ''}</span></span>
+        <button class="btn-mini desactivar" onclick="eliminarRolPersonalizado('${r.id}', '${escaparHtml(r.nombre)}')">Eliminar</button>
+      </div>
+    `).join('');
+  }
+
+  function alternarFormRolPersonalizado() {
+    const form = document.getElementById('formRolPersonalizado');
+    form.classList.toggle('oculto');
+    if (!form.classList.contains('oculto')) {
+      document.getElementById('listaPermisosNuevoRol').innerHTML = CATALOGO_MODULOS.map(m => `
+        <label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12.5px;font-weight:400;">
+          <input type="checkbox" class="chkPermisoNuevoRol" data-clave="${m.clave}" style="width:auto;" checked>
+          <span style="white-space:pre;">${m.etiqueta}</span>
+        </label>
+      `).join('');
+    }
+  }
+
+  async function confirmarCrearRolPersonalizado() {
+    const nombre = document.getElementById('nuevoRolNombre').value.trim();
+    const rolBase = document.getElementById('nuevoRolBase').value;
+    const descripcion = document.getElementById('nuevoRolDescripcion').value.trim();
+    ocultarMensaje('mensajeCrearRol');
+
+    if (!nombre) { mostrarMensaje('mensajeCrearRol', 'Escribe un nombre para el rol.', 'error'); return; }
+
+    const permisos = Array.from(document.querySelectorAll('.chkPermisoNuevoRol')).map(chk => ({
+      modulo_clave: chk.dataset.clave,
+      otorgado: chk.checked
+    }));
+
+    const resp = await fetch(WORKER_URL + '/api/pos/roles-personalizados', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ nombre, rol_base: rolBase, descripcion: descripcion || null, permisos })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeCrearRol', datos.error || 'No se pudo crear el rol.', 'error'); return; }
+
+    mostrarMensaje('mensajeCrearRol', `✅ Rol "${nombre}" creado.`, 'exito');
+    document.getElementById('nuevoRolNombre').value = '';
+    document.getElementById('nuevoRolDescripcion').value = '';
+    document.getElementById('formRolPersonalizado').classList.add('oculto');
+    await cargarRolesPersonalizados();
+  }
+
+  async function eliminarRolPersonalizado(id, nombre) {
+    if (!confirm(`¿Eliminar el rol "${nombre}"? Los usuarios que lo tengan asignado quedarán con su rol base normal.`)) return;
+    const resp = await fetch(WORKER_URL + '/api/pos/roles-personalizados/eliminar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ id })
+    });
+    if (!resp.ok) { alert('No se pudo eliminar.'); return; }
+    await cargarRolesPersonalizados();
     await cargarListaUsuarios();
   }
 
@@ -5879,6 +5985,7 @@
           <span class="fila-inventario-nombre">${escaparHtml(u.nombre_completo || 'Sin nombre')} ${!u.activo ? '<span class="badge-inactivo">Inactivo</span>' : ''}</span>
         </div>
         <div style="font-size:12px;opacity:0.65;margin-top:2px;">${escaparHtml(u.correo || 'Sin correo')}</div>
+        ${u.roles_personalizados ? `<div style="font-size:11.5px;margin-top:4px;color:var(--rosa-principal);font-weight:600;">🎭 ${escaparHtml(u.roles_personalizados.nombre)}</div>` : ''}
         <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
           <label style="margin:0;font-size:11px;">Rol principal:</label>
           <select onchange="cambiarRolPrincipalUsuario('${u.user_id}', this.value)" style="width:auto;padding:6px 8px;font-size:12px;">
@@ -5917,7 +6024,8 @@
     const nombre = document.getElementById('nuevoUsuarioNombre').value.trim();
     const correo = document.getElementById('nuevoUsuarioCorreo').value.trim();
     const password = document.getElementById('nuevoUsuarioPassword').value;
-    const rol = document.getElementById('nuevoUsuarioRol').value;
+    const valorRol = document.getElementById('nuevoUsuarioRol').value; // "base:cajero" o "custom:UUID"
+    const [tipoRol, valorRolPuro] = valorRol.split(':');
     const rolesAdicionales = Array.from(document.querySelectorAll('.chkRolAdicionalNuevo:checked')).map(c => c.value);
     const esLider = document.getElementById('nuevoUsuarioEsLider').checked;
     const deptoLiderado = document.getElementById('nuevoUsuarioDeptoLiderado').value;
@@ -5929,13 +6037,17 @@
     const btn = document.getElementById('btnCrearUsuario');
     btn.disabled = true;
 
+    const cuerpo = {
+      nombre_completo: nombre, correo, contrasena_temporal: password, roles_adicionales: rolesAdicionales,
+      es_jefe_departamento: esLider, codigo_centro_costo_liderado: esLider ? deptoLiderado : null
+    };
+    if (tipoRol === 'custom') { cuerpo.rol_personalizado_id = valorRolPuro; cuerpo.rol = 'cajero'; /* se ignora, el backend usa el base del rol personalizado */ }
+    else { cuerpo.rol = valorRolPuro; }
+
     const resp = await fetch(WORKER_URL + '/api/pos/usuarios', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({
-        nombre_completo: nombre, correo, contrasena_temporal: password, rol, roles_adicionales: rolesAdicionales,
-        es_jefe_departamento: esLider, codigo_centro_costo_liderado: esLider ? deptoLiderado : null
-      })
+      body: JSON.stringify(cuerpo)
     });
     btn.disabled = false;
 
