@@ -772,7 +772,7 @@
       <div style="flex:1;min-width:260px;">
         <div class="barra-busqueda" style="position:relative;margin-top:0;">
           <input type="text" id="inputBuscarProducto" placeholder="🔍 Busca un producto o insumo por nombre o SKU..." oninput="renderizarCatalogo()" onblur="setTimeout(() => { document.getElementById('listaCatalogo').style.display = 'none'; }, 200)" onfocus="renderizarCatalogo()" autocomplete="off">
-          <button type="button" class="btn-mini editar" style="max-width:44px;" onclick="abrirEscanerCodigoBarras('inputBuscarProducto', buscarYAgregarPorCodigoBarras)" title="Escanear código de barras">📷</button>
+          <button type="button" class="btn-mini editar" style="max-width:44px;" onclick="abrirEscanerCodigoBarras('inputBuscarProducto', buscarYAgregarPorCodigoBarras, true)" title="Escanear varios productos seguidos">📷</button>
         </div>
       </div>
       <div class="filtro-tipo" style="margin-bottom:0;padding-top:2px;">
@@ -908,7 +908,7 @@
   <div id="subtabVentaAcademia" data-subtab-grupo="registrarVenta" class="oculto">
     <div class="grilla-2">
       <div class="panel">
-        <h2>Registrar venta de curso/clase</h2>
+        <h2>+ Agregar clase/curso a la venta</h2>
         <label for="academiaSubarea">Subárea</label>
         <select id="academiaSubarea">
           <option value="clase_presencial">Clase presencial</option>
@@ -922,27 +922,38 @@
         </select>
         <label for="academiaDescripcion">Descripción</label>
         <input type="text" id="academiaDescripcion" placeholder="Ej: Curso de amigurumis nivel 1 — María P.">
-        <label for="academiaCliente">Cliente <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+        <label for="academiaMonto">Valor (COP)</label>
+        <input type="number" id="academiaMonto" placeholder="0" min="1" step="1000">
+        <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-weight:400;">
+          <input type="checkbox" id="chkAgendarClase" style="width:auto;" onchange="document.getElementById('bloqueAgendarClase').classList.toggle('oculto', !this.checked)">
+          <span>📅 Agendar esta clase en el calendario</span>
+        </label>
+        <div id="bloqueAgendarClase" class="oculto">
+          <label for="claseFechaInicio">Fecha y hora de la clase</label>
+          <input type="datetime-local" id="claseFechaInicio">
+        </div>
+        <button type="button" class="btn-secundario" style="margin-top:8px;" onclick="agregarClaseALaVenta()">+ Agregar a la lista</button>
+
+        <h2 style="margin-top:20px;">+ Agregar kit de tejido a la venta</h2>
+        <label for="academiaKitSeleccionado">¿Cuál kit?</label>
+        <select id="academiaKitSeleccionado"><option value="">Cargando...</option></select>
+        <label for="academiaKitCantidad">Cantidad</label>
+        <input type="number" id="academiaKitCantidad" min="1" step="1" value="1">
+        <button type="button" class="btn-secundario" style="margin-top:8px;" onclick="agregarKitALaVenta()">+ Agregar a la lista</button>
+
+        <div style="margin-top:16px;">
+          <div style="font-size:12.5px;font-weight:600;opacity:0.7;margin-bottom:6px;">En esta venta</div>
+          <div id="listaCarritoAcademia"><div style="font-size:11.5px;opacity:0.5;">Todavía no has agregado nada.</div></div>
+        </div>
+        <div id="totalVentaAcademiaResumen" class="resumen-cierre oculto" style="margin-top:12px;"></div>
+
+        <label for="academiaCliente" style="margin-top:14px;">Cliente <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
         <input type="text" id="academiaCliente" placeholder="Nombre del cliente">
         <label for="academiaTelefono">Teléfono <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
         <input type="tel" id="academiaTelefono" placeholder="300 000 0000">
         <label for="academiaCorreo">Correo electrónico <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
         <input type="email" id="academiaCorreo" placeholder="correo@gmail.com">
-        <label for="academiaMonto">Valor de la clase/curso (COP)</label>
-        <input type="number" id="academiaMonto" placeholder="0" min="1" step="1000" oninput="actualizarTotalVentaAcademia()">
-
-        <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-weight:400;">
-          <input type="checkbox" id="chkAgregarKitClase" style="width:auto;" onchange="document.getElementById('bloqueKitClase').classList.toggle('oculto', !this.checked); actualizarTotalVentaAcademia();">
-          <span>🧶 Agregar kit de tejido a esta venta</span>
-        </label>
-        <div id="bloqueKitClase" class="oculto">
-          <label for="academiaKitSeleccionado">¿Cuál kit?</label>
-          <select id="academiaKitSeleccionado" onchange="actualizarTotalVentaAcademia()"><option value="">Cargando...</option></select>
-        </div>
-
-        <div id="totalVentaAcademiaResumen" class="resumen-cierre oculto" style="margin-top:12px;"></div>
-
-        <label for="academiaMetodoPago" style="margin-top:14px;">Método de pago</label>
+        <label for="academiaMetodoPago" style="margin-top:8px;">Método de pago</label>
         <select id="academiaMetodoPago">
           <option value="efectivo">Efectivo</option>
           <option value="nequi">Nequi</option>
@@ -963,16 +974,8 @@
       </div>
 
       <div class="panel">
-        <h2>📅 Agendar la clase</h2>
-        <div class="subtitulo" id="subtituloLiderAcademia">Calendario de <span id="nombreLiderAcademia">quien lidera Academy</span> — para que quede agendada de una vez.</div>
-        <label style="display:flex;align-items:center;gap:8px;margin-top:0;font-weight:400;">
-          <input type="checkbox" id="chkAgendarClase" style="width:auto;" onchange="document.getElementById('bloqueAgendarClase').classList.toggle('oculto', !this.checked)">
-          <span>Agendar esta clase en el calendario</span>
-        </label>
-        <div id="bloqueAgendarClase" class="oculto">
-          <label for="claseFechaInicio">Fecha y hora de la clase</label>
-          <input type="datetime-local" id="claseFechaInicio">
-        </div>
+        <h2>📅 Calendario</h2>
+        <div class="subtitulo" id="subtituloLiderAcademia">Calendario de <span id="nombreLiderAcademia">quien lidera Academy</span> — las clases que marques arriba quedan agendadas al confirmar la venta.</div>
 
         <div style="margin-top:16px;">
           <div style="font-size:12.5px;font-weight:600;opacity:0.7;margin-bottom:6px;">Próximas clases ya agendadas</div>
@@ -2371,6 +2374,9 @@
       <button onclick="cerrarEscanerCodigoBarras()" style="background:none;border:none;font-size:20px;cursor:pointer;">✕</button>
     </div>
     <video id="videoEscanerCodigoBarras" style="width:100%;border-radius:10px;background:#000;" autoplay playsinline muted></video>
+    <div id="avisoEscanerContinuo" class="oculto" style="font-size:11.5px;background:var(--rosa-suave);color:var(--rosa-principal);border-radius:8px;padding:7px 10px;margin-top:8px;font-weight:600;">
+      🔄 Modo escaneo seguido: cada producto se agrega solo, la cámara sigue encendida. Cierra esta ventana cuando termines, o simplemente presiona "Confirmar venta" y se cerrará sola.
+    </div>
     <div id="mensajeEscanerCodigoBarras" style="font-size:12.5px;margin-top:10px;text-align:center;color:var(--texto-oscuro);opacity:0.7;">Apunta la cámara al código de barras...</div>
     <button class="btn-secundario" onclick="cerrarEscanerCodigoBarras()">Cancelar y escribir manualmente</button>
   </div>
@@ -3487,6 +3493,7 @@
   // CONFIRMAR VENTA
   // ============================================================================
   async function confirmarVenta() {
+    if (escanerModoContinuo) cerrarEscanerCodigoBarras();
     ocultarMensaje('mensajeVenta');
 
     if (carrito.length === 0) {
@@ -3947,13 +3954,20 @@
   let escanerCallbackDespues = null;
   let escanerIntervalId = null;
 
-  async function abrirEscanerCodigoBarras(inputId, callbackDespues) {
+  let escanerModoContinuo = false;
+  let escanerUltimoCodigo = null;
+  let escanerUltimoCodigoTimeout = null;
+
+  async function abrirEscanerCodigoBarras(inputId, callbackDespues, modoContinuo) {
     escanerInputDestino = inputId;
     escanerCallbackDespues = callbackDespues || null;
+    escanerModoContinuo = !!modoContinuo;
+    escanerUltimoCodigo = null;
     const modal = document.getElementById('modalEscanerCodigoBarras');
     const mensaje = document.getElementById('mensajeEscanerCodigoBarras');
     modal.style.display = 'flex';
     modal.classList.remove('oculto');
+    document.getElementById('avisoEscanerContinuo').classList.toggle('oculto', !escanerModoContinuo);
 
     if (!('BarcodeDetector' in window)) {
       mensaje.textContent = '⚠️ Este navegador no soporta el escáner de cámara. Escribe el código manualmente y cierra esta ventana.';
@@ -3972,10 +3986,24 @@
           const codigos = await detector.detect(video);
           if (codigos.length > 0) {
             const valor = codigos[0].rawValue;
-            document.getElementById(escanerInputDestino).value = valor;
-            mensaje.textContent = `✅ Código detectado: ${valor}`;
-            cerrarEscanerCodigoBarras();
-            if (escanerCallbackDespues) escanerCallbackDespues();
+
+            if (escanerModoContinuo) {
+              // Evita agregar el mismo código dos veces si la cámara sigue
+              // enfocándolo un momento después de haberlo procesado.
+              if (valor === escanerUltimoCodigo) return;
+              escanerUltimoCodigo = valor;
+              clearTimeout(escanerUltimoCodigoTimeout);
+              escanerUltimoCodigoTimeout = setTimeout(() => { escanerUltimoCodigo = null; }, 1800);
+
+              document.getElementById(escanerInputDestino).value = valor;
+              mensaje.textContent = `✅ Agregado: ${valor} — sigue escaneando o presiona "Confirmar venta" cuando termines.`;
+              if (escanerCallbackDespues) await escanerCallbackDespues();
+            } else {
+              document.getElementById(escanerInputDestino).value = valor;
+              mensaje.textContent = `✅ Código detectado: ${valor}`;
+              cerrarEscanerCodigoBarras();
+              if (escanerCallbackDespues) escanerCallbackDespues();
+            }
           }
         } catch (e) { /* frame sin código legible, seguir intentando */ }
       }, 400);
@@ -3988,6 +4016,7 @@
     const modal = document.getElementById('modalEscanerCodigoBarras');
     modal.style.display = 'none';
     modal.classList.add('oculto');
+    escanerModoContinuo = false;
     if (escanerIntervalId) { clearInterval(escanerIntervalId); escanerIntervalId = null; }
     if (escanerStreamActivo) {
       escanerStreamActivo.getTracks().forEach(t => t.stop());
@@ -9381,16 +9410,18 @@
     await cargarRadicadosKit();
   }
 
+
   let liderAcademiaCache = null;
   let kitsDisponiblesCache = [];
+  let carritoAcademia = []; // [{ tipo:'clase', subarea, descripcion, monto, agendar, fechaInicio } | { tipo:'kit', kitId, nombre, cantidad, precioUnitario }]
 
   async function prepararPestanaVentaAcademia() {
-    document.getElementById('chkAgregarKitClase').checked = false;
-    document.getElementById('bloqueKitClase').classList.add('oculto');
+    carritoAcademia = [];
     document.getElementById('chkAgendarClase').checked = false;
     document.getElementById('bloqueAgendarClase').classList.add('oculto');
     document.getElementById('claseFechaInicio').value = '';
-    document.getElementById('totalVentaAcademiaResumen').classList.add('oculto');
+    document.getElementById('academiaKitCantidad').value = '1';
+    renderizarCarritoAcademia();
 
     await Promise.all([cargarVentasAcademia(), cargarLiderAcademiaParaVenta(), cargarKitsParaVenta(), cargarProximasClasesAcademia()]);
   }
@@ -9429,50 +9460,98 @@
     `).join('');
   }
 
-  function actualizarTotalVentaAcademia() {
-    const montoClase = Number(document.getElementById('academiaMonto').value) || 0;
-    const incluyeKit = document.getElementById('chkAgregarKitClase').checked;
-    const kitId = document.getElementById('academiaKitSeleccionado').value;
-    const kit = kitsDisponiblesCache.find(k => k.id === kitId);
-    const precioKit = (incluyeKit && kit) ? Number(kit.precio_venta) : 0;
-    const total = montoClase + precioKit;
+  function agregarClaseALaVenta() {
+    const subarea = document.getElementById('academiaSubarea').value;
+    const descripcion = document.getElementById('academiaDescripcion').value.trim();
+    const monto = Number(document.getElementById('academiaMonto').value);
+    const agendar = document.getElementById('chkAgendarClase').checked;
+    const fechaInicio = document.getElementById('claseFechaInicio').value;
 
+    if (!descripcion) { alert('Escribe una descripción para la clase/curso.'); return; }
+    if (!monto || monto <= 0) { alert('Escribe un monto válido.'); return; }
+    if (agendar && !fechaInicio) { alert('Escribe la fecha y hora de la clase, o desmarca "Agendar".'); return; }
+
+    carritoAcademia.push({ tipo: 'clase', subarea, descripcion, monto, agendar, fechaInicio });
+
+    document.getElementById('academiaDescripcion').value = '';
+    document.getElementById('academiaMonto').value = '';
+    document.getElementById('chkAgendarClase').checked = false;
+    document.getElementById('bloqueAgendarClase').classList.add('oculto');
+    document.getElementById('claseFechaInicio').value = '';
+    renderizarCarritoAcademia();
+  }
+
+  function agregarKitALaVenta() {
+    const kitId = document.getElementById('academiaKitSeleccionado').value;
+    const cantidad = Number(document.getElementById('academiaKitCantidad').value);
+    const kit = kitsDisponiblesCache.find(k => k.id === kitId);
+
+    if (!kit) { alert('Selecciona un kit válido.'); return; }
+    if (!cantidad || cantidad <= 0) { alert('Escribe una cantidad válida.'); return; }
+    if (cantidad > kit.stock_actual) { alert(`Solo hay ${kit.stock_actual} de este kit en stock.`); return; }
+
+    const yaEnCarrito = carritoAcademia.find(i => i.tipo === 'kit' && i.kitId === kitId);
+    if (yaEnCarrito) { yaEnCarrito.cantidad += cantidad; }
+    else { carritoAcademia.push({ tipo: 'kit', kitId, nombre: kit.nombre, cantidad, precioUnitario: Number(kit.precio_venta) }); }
+
+    document.getElementById('academiaKitCantidad').value = '1';
+    renderizarCarritoAcademia();
+  }
+
+  function quitarItemCarritoAcademia(indice) {
+    carritoAcademia.splice(indice, 1);
+    renderizarCarritoAcademia();
+  }
+
+  function renderizarCarritoAcademia() {
+    const contenedor = document.getElementById('listaCarritoAcademia');
+    if (carritoAcademia.length === 0) {
+      contenedor.innerHTML = '<div style="font-size:11.5px;opacity:0.5;">Todavía no has agregado nada.</div>';
+    } else {
+      contenedor.innerHTML = carritoAcademia.map((item, i) => {
+        const etiqueta = item.tipo === 'clase'
+          ? `🎓 ${escaparHtml(item.descripcion)}${item.agendar ? ' · 📅 ' + new Date(item.fechaInicio).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }) : ''}`
+          : `🧶 ${item.cantidad}x ${escaparHtml(item.nombre)}`;
+        const valor = item.tipo === 'clase' ? item.monto : item.cantidad * item.precioUnitario;
+        return `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f4eef2;font-size:12.5px;">
+            <span>${etiqueta}</span>
+            <span style="display:flex;align-items:center;gap:8px;">
+              ${formatearMoneda(valor)}
+              <button type="button" class="btn-quitar-pago" onclick="quitarItemCarritoAcademia(${i})">✕</button>
+            </span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    const total = carritoAcademia.reduce((acc, i) => acc + (i.tipo === 'clase' ? i.monto : i.cantidad * i.precioUnitario), 0);
     const resumen = document.getElementById('totalVentaAcademiaResumen');
-    if (precioKit > 0) {
+    if (carritoAcademia.length > 0) {
       resumen.classList.remove('oculto');
-      resumen.innerHTML = `
-        <div class="resumen-fila"><span>Clase/curso</span><strong>${formatearMoneda(montoClase)}</strong></div>
-        <div class="resumen-fila"><span>Kit de tejido</span><strong>${formatearMoneda(precioKit)}</strong></div>
-        <div class="resumen-fila total"><span>TOTAL A COBRAR</span><strong>${formatearMoneda(total)}</strong></div>
-      `;
+      resumen.innerHTML = `<div class="resumen-fila total"><span>TOTAL A COBRAR</span><strong>${formatearMoneda(total)}</strong></div>`;
     } else {
       resumen.classList.add('oculto');
     }
   }
 
   async function confirmarRegistrarVentaAcademia() {
-    const areaFormacion = document.getElementById('academiaSubarea').value;
-    const descripcion = document.getElementById('academiaDescripcion').value.trim();
     const cliente = document.getElementById('academiaCliente').value.trim();
     const telefono = document.getElementById('academiaTelefono').value.trim();
-    const correo = document.getElementById('academiaCorreo').value.trim();
-    const montoClase = Number(document.getElementById('academiaMonto').value);
     const metodoPago = document.getElementById('academiaMetodoPago').value;
-    const incluyeKit = document.getElementById('chkAgregarKitClase').checked;
-    const kitId = document.getElementById('academiaKitSeleccionado').value;
-    const kit = kitsDisponiblesCache.find(k => k.id === kitId);
-    const agendarClase = document.getElementById('chkAgendarClase').checked;
-    const fechaClase = document.getElementById('claseFechaInicio').value;
     ocultarMensaje('mensajeVentaAcademia');
 
-    if (!descripcion) { mostrarMensaje('mensajeVentaAcademia', 'Escribe una descripción.', 'error'); return; }
-    if (!montoClase || montoClase <= 0) { mostrarMensaje('mensajeVentaAcademia', 'Escribe un monto válido.', 'error'); return; }
+    if (carritoAcademia.length === 0) { mostrarMensaje('mensajeVentaAcademia', 'Agrega al menos una clase o un kit a la lista.', 'error'); return; }
     if (!turnoActivoActual) { mostrarMensaje('mensajeVentaAcademia', 'No hay un turno de caja de Tienda abierto.', 'error'); return; }
-    if (incluyeKit && !kitId) { mostrarMensaje('mensajeVentaAcademia', 'Selecciona cuál kit vas a incluir.', 'error'); return; }
-    if (agendarClase && !fechaClase) { mostrarMensaje('mensajeVentaAcademia', 'Escribe la fecha y hora de la clase.', 'error'); return; }
 
-    const precioKit = (incluyeKit && kit) ? Number(kit.precio_venta) : 0;
-    const montoTotal = montoClase + precioKit;
+    const clases = carritoAcademia.filter(i => i.tipo === 'clase');
+    const kits = carritoAcademia.filter(i => i.tipo === 'kit');
+    const montoTotal = carritoAcademia.reduce((acc, i) => acc + (i.tipo === 'clase' ? i.monto : i.cantidad * i.precioUnitario), 0);
+    const descripcionCombinada = [
+      ...clases.map(c => c.descripcion),
+      ...kits.map(k => `${k.cantidad}x kit ${k.nombre}`)
+    ].join(' + ');
+    const areaFormacion = clases.length > 0 ? clases[0].subarea : 'otro';
 
     const btn = document.getElementById('btnRegistrarVentaAcademia');
     btn.disabled = true;
@@ -9483,7 +9562,7 @@
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({
         area_formacion: areaFormacion,
-        descripcion: descripcion + (incluyeKit && kit ? ' + kit: ' + kit.nombre : ''),
+        descripcion: descripcionCombinada,
         cliente_nombre: cliente || null,
         monto: montoTotal,
         metodo_pago: metodoPago,
@@ -9499,39 +9578,41 @@
       return;
     }
 
-    // Descontar el kit del inventario, si se incluyó
-    if (incluyeKit && kitId) {
+    // Descontar cada kit del inventario
+    for (const kit of kits) {
       await fetch(WORKER_URL + '/api/pos/academia/kit/descontar-stock', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-        body: JSON.stringify({ kit_id: kitId, cantidad: 1 })
+        body: JSON.stringify({ kit_id: kit.kitId, cantidad: kit.cantidad })
       });
     }
 
-    // Agendar la clase en el calendario, si se marcó
-    if (agendarClase && fechaClase) {
+    // Agendar cada clase marcada
+    let clasesAgendadas = 0;
+    for (const clase of clases) {
+      if (!clase.agendar || !clase.fechaInicio) continue;
       await fetch(WORKER_URL + '/api/pos/academia/agendar-clase', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
         body: JSON.stringify({
-          titulo: descripcion + (cliente ? ' — ' + cliente : ''),
+          titulo: clase.descripcion + (cliente ? ' — ' + cliente : ''),
           descripcion: `Cliente: ${cliente || 'Sin nombre'}${telefono ? ' · Tel: ' + telefono : ''}`,
-          fecha_inicio: new Date(fechaClase).toISOString()
+          fecha_inicio: new Date(clase.fechaInicio).toISOString()
         })
       });
+      clasesAgendadas++;
     }
 
     btn.disabled = false;
     btn.textContent = 'Registrar venta';
-    mostrarMensaje('mensajeVentaAcademia', '✅ Venta registrada correctamente.' + (agendarClase ? ' Clase agendada en el calendario.' : ''), 'exito');
+    mostrarMensaje('mensajeVentaAcademia', `✅ Venta registrada correctamente.${clasesAgendadas > 0 ? ` ${clasesAgendadas} clase(s) agendada(s) en el calendario.` : ''}`, 'exito');
 
     ultimaVentaCache = {
       consecutivo: datos.venta_id ? String(datos.venta_id).slice(0, 8).toUpperCase() : 'ACADEMY',
       fecha: new Date(),
-      lineas: [
-        { nombre: descripcion, cantidad: 1, precio: montoClase },
-        ...(precioKit > 0 ? [{ nombre: 'Kit de tejido: ' + kit.nombre, cantidad: 1, precio: precioKit }] : [])
-      ],
+      lineas: carritoAcademia.map(i => i.tipo === 'clase'
+        ? { nombre: i.descripcion, cantidad: 1, precio: i.monto }
+        : { nombre: 'Kit de tejido: ' + i.nombre, cantidad: i.cantidad, precio: i.precioUnitario }),
       subtotal: montoTotal,
       descuento: 0,
       total: montoTotal,
@@ -9542,17 +9623,9 @@
     document.getElementById('btnImprimirReciboAcademia').disabled = false;
     document.getElementById('btnWhatsappReciboAcademia').disabled = false;
 
-    document.getElementById('academiaDescripcion').value = '';
     document.getElementById('academiaCliente').value = '';
     document.getElementById('academiaTelefono').value = '';
     document.getElementById('academiaCorreo').value = '';
-    document.getElementById('academiaMonto').value = '';
-    document.getElementById('chkAgregarKitClase').checked = false;
-    document.getElementById('bloqueKitClase').classList.add('oculto');
-    document.getElementById('chkAgendarClase').checked = false;
-    document.getElementById('bloqueAgendarClase').classList.add('oculto');
-    document.getElementById('claseFechaInicio').value = '';
-    document.getElementById('totalVentaAcademiaResumen').classList.add('oculto');
 
     await prepararPestanaVentaAcademia();
   }
