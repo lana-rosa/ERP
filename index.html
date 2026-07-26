@@ -636,15 +636,6 @@
       </div>
     </div>
 
-    <div class="sidebar-depto" id="deptoAcademiaGrupo" style="display:none;">
-      <button class="sidebar-depto-header" id="headerDeptoAcademia" onclick="toggleSidebarDepto('deptoAcademiaSubmenu', 'headerDeptoAcademia')">🎓 Lana Rosa Academy <span class="chevron">▾</span></button>
-      <div class="sidebar-depto-submenu" id="deptoAcademiaSubmenu">
-        <button class="nav-btn" onclick="irARegistrarVentaAcademiaDesdeTienda()"><span class="nav-icon">💰</span> Registrar venta</button>
-        <button class="nav-btn" onclick="mostrarPantallaHistorial('04')"><span class="nav-icon">📋</span> Historial ventas</button>
-        <button class="nav-btn" onclick="mostrarPantallaAcademiaInforme()"><span class="nav-icon">📈</span> Informe y metas</button>
-      </div>
-    </div>
-
     <div class="sidebar-depto" id="deptoTalentoGrupo" style="display:none;">
       <button class="sidebar-depto-header" id="headerDeptoTalento" onclick="toggleSidebarDepto('deptoTalentoSubmenu', 'headerDeptoTalento')">🗂️ Talento Humano <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoTalentoSubmenu">
@@ -1429,6 +1420,23 @@
   <div class="filtro-tipo" style="margin-bottom:20px;">
     <button class="chip-filtro activo" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinPresupuestos', this)">💵 Presupuestos</button>
     <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinReportes', this)">📊 Reportes por departamento</button>
+    <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinAcademia', this); cargarInformeAcademia();">🎓 Academy: ventas y metas</button>
+  </div>
+
+  <div id="subtabFinAcademia" data-subtab-grupo="reportesFin" class="oculto">
+    <div class="panel" style="max-width:none;">
+      <h2>Informe por subárea</h2>
+      <label for="academiaPeriodoInforme">Mes</label>
+      <input type="month" id="academiaPeriodoInforme" onchange="cargarInformeAcademia()" style="max-width:220px;">
+      <div id="resumenInformeAcademia" style="margin-top:14px;"></div>
+      <div id="listaInformeAcademia" style="margin-top:14px;"></div>
+    </div>
+
+    <div class="panel" style="max-width:none;margin-top:20px;">
+      <h2>Fijar metas del mes</h2>
+      <div class="subtitulo">Escribe la meta de ventas de cada subárea para el mes seleccionado arriba.</div>
+      <div id="formMetasAcademia"></div>
+    </div>
   </div>
 
   <div id="subtabFinPresupuestos" data-subtab-grupo="reportesFin">
@@ -2169,11 +2177,10 @@
 
   <div class="filtro-tipo" style="margin-bottom:20px;">
     <button class="chip-filtro activo" data-subtab-btn="academia" onclick="mostrarSubTabGrupo('academia', 'subtabAcademiaKits', this); cargarRadicadosKit();">🧶 Kits de tejido</button>
-    <button class="chip-filtro" data-subtab-btn="academia" onclick="mostrarSubTabGrupo('academia', 'subtabAcademiaInforme', this); cargarInformeAcademia();">📊 Informe y metas</button>
   </div>
 
   <div style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;">
-    ℹ️ Para registrar una venta de curso o clase, ve a <strong>Registrar venta → 🎓 Cursos y clases</strong> (en el menú de Tienda). Aquí solo se gestionan los kits y el informe.
+    ℹ️ Para registrar una venta de curso o clase, ve a <strong>Registrar venta → 🎓 Cursos y clases</strong>. El informe de ventas de Academy y las metas se ven desde <strong>Reportes financieros</strong>.
   </div>
 
   <div id="subtabAcademiaKits" data-subtab-grupo="academia">
@@ -2194,22 +2201,6 @@
 
     <div class="panel" style="max-height:none;margin-top:20px;" id="panelDetalleRadicadoKit">
       <h2>Selecciona un radicado arriba para tomar material</h2>
-    </div>
-  </div>
-
-  <div id="subtabAcademiaInforme" data-subtab-grupo="academia" class="oculto">
-    <div class="panel" style="max-width:none;">
-      <h2>Informe por subárea</h2>
-      <label for="academiaPeriodoInforme">Mes</label>
-      <input type="month" id="academiaPeriodoInforme" onchange="cargarInformeAcademia()" style="max-width:220px;">
-      <div id="resumenInformeAcademia" style="margin-top:14px;"></div>
-      <div id="listaInformeAcademia" style="margin-top:14px;"></div>
-    </div>
-
-    <div class="panel" style="max-width:none;margin-top:20px;">
-      <h2>Fijar metas del mes</h2>
-      <div class="subtitulo">Escribe la meta de ventas de cada subárea para el mes seleccionado arriba.</div>
-      <div id="formMetasAcademia"></div>
     </div>
   </div>
 </div>
@@ -2685,7 +2676,6 @@
     mostrar('deptoTiendaGrupo', esAdmin || esCajero);
     mostrar('deptoTallerGrupo', esAdmin || esTaller);
     mostrar('deptoDirectorioGrupo', esAdmin || esCajero);
-    mostrar('deptoAcademiaGrupo', esAdmin);
     mostrar('deptoTalentoGrupo', esAdmin);
     mostrar('deptoReportesGrupo', esAdmin);
     mostrar('deptoFondoEmprenderGrupo', esAdmin);
@@ -6320,8 +6310,7 @@
     { clave: 'deptoTallerGrupo', etiqueta: '🧶 Taller (grupo completo)' },
     { clave: 'nav-consumotaller', etiqueta: '　　Consumo de material' },
     { clave: 'nav-inventario-taller', etiqueta: '　　Inventario' },
-    { clave: 'nav-pagos-pendientes', etiqueta: '　　Caja, gastos y presupuesto' },
-    { clave: 'deptoAcademiaGrupo', etiqueta: '🎓 Lana Rosa Academy (grupo completo)' },
+    { clave: 'nav-pagos-pendientes', etiqueta: '　　Compras' },
     { clave: 'deptoTalentoGrupo', etiqueta: '🗂️ Talento Humano (grupo completo)' },
     { clave: 'nav-nomina', etiqueta: '　　Nómina' },
     { clave: 'nav-talento-humano', etiqueta: '　　Carpetas por empleado' },
@@ -7220,6 +7209,7 @@
     mostrarPantalla('pantallaReportesFinancieros');
     mostrarSubTabGrupo('reportesFin', 'subtabFinPresupuestos', document.querySelector('[data-subtab-btn="reportesFin"]'));
     document.getElementById('presupuestoPeriodo').value = new Date().toISOString().slice(0, 7);
+    document.getElementById('academiaPeriodoInforme').value = new Date().toISOString().slice(0, 7);
     ocultarMensaje('mensajePresupuesto');
     await cargarDepartamentosParaPresupuesto();
     await cargarPresupuestoConsolidado();
