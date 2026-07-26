@@ -9589,9 +9589,10 @@
 
     // Agendar cada clase marcada
     let clasesAgendadas = 0;
+    let clasesFallidas = 0;
     for (const clase of clases) {
       if (!clase.agendar || !clase.fechaInicio) continue;
-      await fetch(WORKER_URL + '/api/pos/academia/agendar-clase', {
+      const respAgendar = await fetch(WORKER_URL + '/api/pos/academia/agendar-clase', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
         body: JSON.stringify({
@@ -9600,12 +9601,12 @@
           fecha_inicio: new Date(clase.fechaInicio).toISOString()
         })
       });
-      clasesAgendadas++;
+      if (respAgendar.ok) clasesAgendadas++; else clasesFallidas++;
     }
 
     btn.disabled = false;
     btn.textContent = 'Registrar venta';
-    mostrarMensaje('mensajeVentaAcademia', `✅ Venta registrada correctamente.${clasesAgendadas > 0 ? ` ${clasesAgendadas} clase(s) agendada(s) en el calendario.` : ''}`, 'exito');
+    mostrarMensaje('mensajeVentaAcademia', `✅ Venta registrada correctamente.${clasesAgendadas > 0 ? ` ${clasesAgendadas} clase(s) agendada(s) en el calendario.` : ''}${clasesFallidas > 0 ? ` ⚠️ ${clasesFallidas} clase(s) no se pudieron agendar — revisa el calendario manualmente.` : ''}`, clasesFallidas > 0 ? 'error' : 'exito');
 
     ultimaVentaCache = {
       consecutivo: datos.venta_id ? String(datos.venta_id).slice(0, 8).toUpperCase() : 'ACADEMY',
@@ -10212,8 +10213,8 @@
   let diaSeleccionadoCalendario = new Date().toISOString().slice(0, 10);
   let vistaCalendarioActual = 'mes';
 
-  const etiquetasTipoEvento = { reunion: '🗓️ Reunión', capacitacion: '🎓 Capacitación', junta: '🤝 Junta', salida: '🚗 Salida', otro: '📌 Otro', personal: '📝 Tarea personal', fondo_emprender: '🏦 Fondo Emprender' };
-  const coloresTipoEvento = { reunion: '#4a90d9', capacitacion: '#2e8b57', junta: '#e0922f', salida: '#8a5fc4', otro: '#999999', personal: '#d8017c', fondo_emprender: '#1a5f3f' };
+  const etiquetasTipoEvento = { reunion: '🗓️ Reunión', capacitacion: '🎓 Capacitación', junta: '🤝 Junta', salida: '🚗 Salida', otro: '📌 Otro', personal: '📝 Tarea personal', fondo_emprender: '🏦 Fondo Emprender', alerta_nomina: '💰 Alerta de nómina', clase_academia: '🧶 Clase de Academy' };
+  const coloresTipoEvento = { reunion: '#4a90d9', capacitacion: '#2e8b57', junta: '#e0922f', salida: '#8a5fc4', otro: '#999999', personal: '#d8017c', fondo_emprender: '#1a5f3f', alerta_nomina: '#c0392b', clase_academia: '#e0922f' };
 
   async function cargarEventosCalendario() {
     const [respEventos, respTareas] = await Promise.all([
