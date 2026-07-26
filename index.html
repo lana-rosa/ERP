@@ -689,6 +689,7 @@
         <button class="nav-btn" id="nav-ceder-permisos" onclick="mostrarPantallaCederPermisos()"><span class="nav-icon">🔑</span> Ceder permisos de administrador</button>
         <button class="nav-btn" id="nav-trazabilidad" onclick="mostrarPantallaTrazabilidad()"><span class="nav-icon">🕵️</span> Trazabilidad del sistema</button>
         <button class="nav-btn" id="nav-codigos-descuento" onclick="mostrarPantallaCodigosDescuento()"><span class="nav-icon">🏷️</span> Códigos de descuento</button>
+        <button class="nav-btn" id="nav-tarifas-envio" onclick="mostrarPantallaTarifasEnvio()"><span class="nav-icon">🚚</span> Tarifas de envío</button>
         <button class="nav-btn" onclick="mostrarPantallaApariencia()"><span class="nav-icon">🎨</span> Apariencia</button>
       </div>
     </div>
@@ -773,7 +774,7 @@
 
   <div class="filtro-tipo" style="margin-bottom:20px;">
     <button class="chip-filtro activo" data-subtab-btn="registrarVenta" onclick="mostrarSubTabGrupo('registrarVenta', 'subtabVentaProductos', this)">🛒 Productos</button>
-    <button class="chip-filtro" data-subtab-btn="registrarVenta" onclick="mostrarSubTabGrupo('registrarVenta', 'subtabVentaWhatsapp', this)">📱 WhatsApp/Redes</button>
+    <button class="chip-filtro" data-subtab-btn="registrarVenta" onclick="mostrarSubTabGrupo('registrarVenta', 'subtabVentaWhatsapp', this); cargarTarifasEnvioParaPedido();">📱 WhatsApp/Redes</button>
     <button class="chip-filtro" data-subtab-btn="registrarVenta" onclick="mostrarSubTabGrupo('registrarVenta', 'subtabVentaAcademia', this); cargarVentasAcademia();">🎓 Cursos y clases</button>
   </div>
 
@@ -870,19 +871,20 @@
         <option value="tienda_virtual">Tienda virtual</option>
       </select>
 
-      <label for="pedidoIdentificacionCliente">N° de identificación del cliente</label>
+      <label for="pedidoIdentificacionCliente">N° de identificación del cliente *</label>
       <input type="text" id="pedidoIdentificacionCliente" placeholder="CC, CE, NIT..." oninput="autocompletarClientePedido()">
-      <label for="pedidoNombreCliente">Nombre completo</label>
+      <label for="pedidoNombreCliente">Nombre completo *</label>
       <input type="text" id="pedidoNombreCliente" placeholder="Nombre del cliente" style="text-transform:uppercase;" oninput="this.value = this.value.toUpperCase()">
-      <label for="pedidoTelefonoCliente">Teléfono</label>
+      <label for="pedidoTelefonoCliente">Teléfono *</label>
       <input type="tel" id="pedidoTelefonoCliente" placeholder="300 000 0000">
       <label for="pedidoCorreoCliente">Correo electrónico <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
       <input type="email" id="pedidoCorreoCliente" placeholder="correo@gmail.com">
-      <label for="pedidoDireccionCliente">Dirección de envío</label>
+      <label for="pedidoDireccionCliente">Dirección de envío *</label>
       <input type="text" id="pedidoDireccionCliente" placeholder="Calle, carrera, número, barrio...">
-      <label for="pedidoMunicipioCliente">Municipio</label>
-      <input type="text" id="pedidoMunicipioCliente" placeholder="Ej: Manizales, Villamaría...">
+      <label for="pedidoMunicipioCliente">Ciudad / Municipio *</label>
+      <select id="pedidoMunicipioCliente" onchange="calcularEnvioAutomatico()"><option value="">Selecciona...</option></select>
       <div id="mensajeAutocompletadoPedido" style="font-size:12px;color:var(--verde-exito);margin-top:4px;display:none;">✅ Cliente encontrado</div>
+      <div style="font-size:11px;opacity:0.55;margin-top:2px;">* Estos datos son obligatorios: los pedidos se envían por correo certificado.</div>
 
       <label for="pedidoBuscarProducto">Buscar producto en el inventario de Tienda <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
       <div style="position:relative;">
@@ -897,7 +899,7 @@
       <input type="number" id="pedidoCantidad" placeholder="1" min="1" step="1" value="1">
       <label for="pedidoValorProducto">Valor del producto, sin envío (COP)</label>
       <input type="number" id="pedidoValorProducto" placeholder="0" min="0" step="1000" oninput="actualizarResumenAnticipoPedido()">
-      <label for="pedidoValorEnvio">Valor del envío (COP)</label>
+      <label for="pedidoValorEnvio">Valor del envío (COP) <span style="font-size:10px;opacity:0.6;">(se calcula solo según la ciudad, pero puedes ajustarlo)</span></label>
       <input type="number" id="pedidoValorEnvio" placeholder="0" min="0" step="1000" oninput="actualizarResumenAnticipoPedido()">
 
       <div id="resumenAnticipoPedido" class="resumen-cierre" style="margin-top:12px;"></div>
@@ -1857,6 +1859,29 @@
   </div>
 </div>
 
+<!-- ===== PANTALLA: TARIFAS DE ENVÍO ===== -->
+<div id="pantallaTarifasEnvio" class="oculto contenido">
+  <div class="page-header">
+    <h1>🚚 Tarifas de envío</h1>
+    <div class="subtitulo">El valor del envío se calcula solo según la ciudad que elija el cajero al crear un pedido.</div>
+  </div>
+  <div class="grilla-2">
+    <div class="panel">
+      <h2>+ Agregar / actualizar ciudad</h2>
+      <label for="nuevaTarifaCiudad">Ciudad</label>
+      <input type="text" id="nuevaTarifaCiudad" placeholder="Ej: Manizales">
+      <label for="nuevaTarifaValor">Valor del envío (COP)</label>
+      <input type="number" id="nuevaTarifaValor" min="0" step="500" placeholder="0">
+      <button class="btn-principal" onclick="confirmarGuardarTarifaEnvio()">Guardar</button>
+      <div class="mensaje" id="mensajeTarifaEnvio"></div>
+    </div>
+    <div class="panel">
+      <h2>Ciudades configuradas</h2>
+      <div id="listaTarifasEnvio"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+</div>
+
 <!-- ===== PANTALLA: CÓDIGOS DE DESCUENTO ===== -->
 <div id="pantallaCodigosDescuento" class="oculto contenido">
   <div class="page-header">
@@ -2423,7 +2448,7 @@
   // UTILIDADES
   // ============================================================================
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaDepartamentos', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaAbrirTurnoAcademia', 'pantallaTurnoActivoAcademia', 'pantallaCerrarTurnoAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaDepartamentos', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaAbrirTurnoAcademia', 'pantallaTurnoActivoAcademia', 'pantallaCerrarTurnoAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -2664,6 +2689,7 @@
     mostrar('nav-ceder-permisos', esAdmin);
     mostrar('nav-trazabilidad', esAdmin);
     mostrar('nav-codigos-descuento', esAdmin);
+    mostrar('nav-tarifas-envio', esAdmin);
 
     // Turno de caja solo aplica a quien maneja caja física (Tienda)
     mostrar('nav-turno', esAdmin || esCajero);
@@ -6302,6 +6328,67 @@
   // ============================================================
   // CÓDIGOS DE DESCUENTO (administración)
   // ============================================================
+  // ============================================================
+  // TARIFAS DE ENVÍO (administración)
+  // ============================================================
+  async function mostrarPantallaTarifasEnvio() {
+    mostrarPantalla('pantallaTarifasEnvio');
+    ocultarMensaje('mensajeTarifaEnvio');
+    await cargarListaTarifasEnvioAdmin();
+  }
+
+  async function confirmarGuardarTarifaEnvio() {
+    const ciudad = document.getElementById('nuevaTarifaCiudad').value.trim();
+    const valor = Number(document.getElementById('nuevaTarifaValor').value);
+    ocultarMensaje('mensajeTarifaEnvio');
+
+    if (!ciudad) { mostrarMensaje('mensajeTarifaEnvio', 'Escribe el nombre de la ciudad.', 'error'); return; }
+    if (valor === null || isNaN(valor) || valor < 0) { mostrarMensaje('mensajeTarifaEnvio', 'Escribe un valor válido.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/tarifas-envio', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ ciudad, valor })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeTarifaEnvio', datos.error || 'No se pudo guardar.', 'error'); return; }
+
+    mostrarMensaje('mensajeTarifaEnvio', `✅ Tarifa de ${ciudad} guardada.`, 'exito');
+    document.getElementById('nuevaTarifaCiudad').value = '';
+    document.getElementById('nuevaTarifaValor').value = '';
+    await cargarListaTarifasEnvioAdmin();
+  }
+
+  async function cargarListaTarifasEnvioAdmin() {
+    const contenedor = document.getElementById('listaTarifasEnvio');
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+    const resp = await fetch(WORKER_URL + '/api/pos/tarifas-envio', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const { tarifas } = await resp.json();
+    if (!tarifas || tarifas.length === 0) { contenedor.innerHTML = '<div class="cargando">Todavía no hay ciudades configuradas.</div>'; return; }
+
+    contenedor.innerHTML = tarifas.map(t => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f4eef2;font-size:13px;">
+        <span><strong>${escaparHtml(t.ciudad)}</strong></span>
+        <span style="display:flex;align-items:center;gap:10px;">
+          ${formatearMoneda(t.valor)}
+          <button class="btn-mini desactivar" onclick="eliminarTarifaEnvio('${t.id}', '${escaparHtml(t.ciudad)}')">Eliminar</button>
+        </span>
+      </div>
+    `).join('');
+  }
+
+  async function eliminarTarifaEnvio(id, ciudad) {
+    if (!confirm(`¿Eliminar la tarifa de ${ciudad}?`)) return;
+    const resp = await fetch(WORKER_URL + '/api/pos/tarifas-envio/eliminar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ id })
+    });
+    if (!resp.ok) { alert('No se pudo eliminar.'); return; }
+    await cargarListaTarifasEnvioAdmin();
+  }
+
   async function mostrarPantallaCodigosDescuento() {
     mostrarPantalla('pantallaCodigosDescuento');
     ocultarMensaje('mensajeCrearCodigo');
@@ -7360,6 +7447,29 @@
     `;
   }
 
+  let tarifasEnvioCache = [];
+
+  async function cargarTarifasEnvioParaPedido() {
+    const resp = await fetch(WORKER_URL + '/api/pos/tarifas-envio', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) return;
+    const { tarifas } = await resp.json();
+    tarifasEnvioCache = (tarifas || []).filter(t => t.activo);
+    const select = document.getElementById('pedidoMunicipioCliente');
+    if (!select) return;
+    const valorActual = select.value;
+    select.innerHTML = '<option value="">Selecciona...</option>' + tarifasEnvioCache.map(t => `<option value="${escaparHtml(t.ciudad)}">${escaparHtml(t.ciudad)}</option>`).join('');
+    if (valorActual) select.value = valorActual;
+  }
+
+  function calcularEnvioAutomatico() {
+    const ciudad = document.getElementById('pedidoMunicipioCliente').value;
+    const tarifa = tarifasEnvioCache.find(t => t.ciudad === ciudad);
+    if (tarifa) {
+      document.getElementById('pedidoValorEnvio').value = tarifa.valor;
+      actualizarResumenAnticipoPedido();
+    }
+  }
+
   async function confirmarCrearPedidoCanal() {
     const canal = document.getElementById('pedidoCanal').value;
     const identificacion = document.getElementById('pedidoIdentificacionCliente').value.trim();
@@ -7369,8 +7479,15 @@
     const cantidad = Number(document.getElementById('pedidoCantidad').value);
     const valorProducto = Number(document.getElementById('pedidoValorProducto').value);
     const valorEnvio = Number(document.getElementById('pedidoValorEnvio').value) || 0;
+    const direccionCliente = document.getElementById('pedidoDireccionCliente').value.trim();
+    const municipioCliente = document.getElementById('pedidoMunicipioCliente').value.trim();
     ocultarMensaje('mensajePedidoCanal');
 
+    if (!identificacion) { mostrarMensaje('mensajePedidoCanal', 'Falta el número de identificación del cliente.', 'error'); return; }
+    if (!nombreCliente) { mostrarMensaje('mensajePedidoCanal', 'Falta el nombre del cliente.', 'error'); return; }
+    if (!telefonoCliente) { mostrarMensaje('mensajePedidoCanal', 'Falta el teléfono del cliente.', 'error'); return; }
+    if (!direccionCliente) { mostrarMensaje('mensajePedidoCanal', 'Falta la dirección de envío.', 'error'); return; }
+    if (!municipioCliente) { mostrarMensaje('mensajePedidoCanal', 'Selecciona la ciudad/municipio de envío.', 'error'); return; }
     if (!descripcion) {
       mostrarMensaje('mensajePedidoCanal', 'Describe el producto del pedido.', 'error');
       return;
@@ -7400,8 +7517,6 @@
         const clienteDatos = await clienteResp.json();
         if (clienteResp.ok) terceroId = clienteDatos.tercero_id;
 
-        const direccionCliente = document.getElementById('pedidoDireccionCliente').value.trim();
-        const municipioCliente = document.getElementById('pedidoMunicipioCliente').value.trim();
         const correoCliente = document.getElementById('pedidoCorreoCliente').value.trim();
         if (terceroId && (direccionCliente || municipioCliente || correoCliente)) {
           await fetch(WORKER_URL + '/api/pos/clientes/datos-envio', {
