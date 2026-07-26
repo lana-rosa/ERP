@@ -1430,6 +1430,7 @@
     <button class="chip-filtro activo" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinPresupuestos', this)">💰 Presupuesto global</button>
     <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinConsolidado', this); cargarConsolidadoVentas();">📊 Consolidado de ventas</button>
     <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinAcademia', this); cargarInformeAcademia();">🎓 Academy: ventas y metas</button>
+    <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinProvisiones', this); cargarProvisionesNomina();">📦 Provisiones de nómina</button>
   </div>
 
   <div id="subtabFinConsolidado" data-subtab-grupo="reportesFin" class="oculto">
@@ -1461,6 +1462,13 @@
       <div class="subtitulo">Escribe la meta de ventas de cada subárea para el mes seleccionado arriba.</div>
       <div id="formMetasAcademia"></div>
     </div>
+  </div>
+
+  <div id="subtabFinProvisiones" data-subtab-grupo="reportesFin" class="oculto">
+    <div style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;">
+      ℹ️ Calculado con las fórmulas legales colombianas al día de hoy: cesantías y vacaciones desde el 1 de enero (o la fecha de ingreso si es después), prima desde el inicio del semestre actual. No incluye a Sara como propietaria, porque esas prestaciones son solo para empleados con contrato laboral.
+    </div>
+    <div id="listaProvisionesNomina"><div class="cargando">Calculando...</div></div>
   </div>
 
   <div id="subtabFinPresupuestos" data-subtab-grupo="reportesFin">
@@ -6967,6 +6975,53 @@
     document.getElementById('consolidadoFechaDesde').value = '';
     document.getElementById('consolidadoFechaHasta').value = '';
     cargarConsolidadoVentas();
+  }
+
+  async function cargarProvisionesNomina() {
+    const contenedor = document.getElementById('listaProvisionesNomina');
+    contenedor.innerHTML = '<div class="cargando">Calculando...</div>';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/nomina/provisiones', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo calcular.</div>'; return; }
+    const { provisiones, totales } = await resp.json();
+
+    if (!provisiones || provisiones.length === 0) {
+      contenedor.innerHTML = '<div class="cargando">No hay empleados activos con contrato laboral para provisionar.</div>';
+      return;
+    }
+
+    contenedor.innerHTML = `
+      <div class="grilla-2" style="margin-bottom:20px;">
+        <div class="panel" style="max-height:none;text-align:center;">
+          <div style="font-size:12px;opacity:0.7;">Total provisionado a hoy</div>
+          <div style="font-size:26px;font-weight:700;color:var(--rosa-principal);margin-top:4px;">${formatearMoneda(totales.total_provisionado)}</div>
+        </div>
+        <div class="panel" style="max-height:none;">
+          <div class="resumen-fila"><span>Cesantías</span><strong>${formatearMoneda(totales.cesantias)}</strong></div>
+          <div class="resumen-fila"><span>Intereses sobre cesantías</span><strong>${formatearMoneda(totales.intereses_cesantias)}</strong></div>
+          <div class="resumen-fila"><span>Prima de servicios</span><strong>${formatearMoneda(totales.prima_servicios)}</strong></div>
+          <div class="resumen-fila"><span>Vacaciones</span><strong>${formatearMoneda(totales.vacaciones)}</strong></div>
+        </div>
+      </div>
+      <div class="panel" style="max-width:none;max-height:none;">
+        <h2>Por empleado</h2>
+        <div class="tabla-lista">
+          <div class="tabla-lista-header" style="grid-template-columns:1fr 110px 110px 110px 110px 120px;">
+            <span>EMPLEADO</span><span style="text-align:right;">CESANTÍAS</span><span style="text-align:right;">INTERESES</span><span style="text-align:right;">PRIMA</span><span style="text-align:right;">VACACIONES</span><span style="text-align:right;">TOTAL</span>
+          </div>
+          ${provisiones.map(p => `
+            <div class="tabla-lista-fila" style="grid-template-columns:1fr 110px 110px 110px 110px 120px;cursor:default;">
+              <span>${escaparHtml(p.nombre_completo)}</span>
+              <span style="text-align:right;">${formatearMoneda(p.cesantias)}</span>
+              <span style="text-align:right;">${formatearMoneda(p.intereses_cesantias)}</span>
+              <span style="text-align:right;">${formatearMoneda(p.prima_servicios)}</span>
+              <span style="text-align:right;">${formatearMoneda(p.vacaciones)}</span>
+              <span style="text-align:right;font-weight:700;">${formatearMoneda(p.total_provisionado)}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
   }
 
   async function cargarConsolidadoVentas() {
