@@ -884,9 +884,13 @@
       <input type="text" id="pedidoDescripcionProducto" placeholder="Ej: Amigurumi personalizado conejo azul">
       <label for="pedidoCantidad">Cantidad</label>
       <input type="number" id="pedidoCantidad" placeholder="1" min="1" step="1" value="1">
-      <label for="pedidoValorProducto">Valor del producto, sin envío (COP)</label>
-      <input type="number" id="pedidoValorProducto" placeholder="0" min="0" step="1000" oninput="actualizarResumenAnticipoPedido()">
-      <label for="pedidoValorEnvio">Valor del envío (COP) <span style="font-size:10px;opacity:0.6;">(se calcula solo según la ciudad, pero puedes ajustarlo)</span></label>
+      <label for="pedidoValorProducto">Valor de este producto (COP)</label>
+      <input type="number" id="pedidoValorProducto" placeholder="0" min="0" step="1000">
+      <button type="button" class="btn-secundario" style="margin-top:8px;" onclick="agregarProductoAPedido()">+ Agregar producto a la lista</button>
+
+      <div id="listaProductosPedido" style="margin-top:10px;"></div>
+
+      <label for="pedidoValorEnvio" style="margin-top:14px;">Valor del envío (COP) <span style="font-size:10px;opacity:0.6;">(se calcula solo según la ciudad, pero puedes ajustarlo)</span></label>
       <input type="number" id="pedidoValorEnvio" placeholder="0" min="0" step="1000" oninput="actualizarResumenAnticipoPedido()">
 
       <div id="resumenAnticipoPedido" class="resumen-cierre" style="margin-top:12px;"></div>
@@ -5900,10 +5904,17 @@
         <span><strong>${escaparHtml(t.ciudad)}</strong></span>
         <span style="display:flex;align-items:center;gap:10px;">
           ${formatearMoneda(t.valor)}
+          <button class="btn-mini editar" onclick="editarTarifaEnvio('${escaparHtml(t.ciudad)}', ${t.valor})">Editar</button>
           <button class="btn-mini desactivar" onclick="eliminarTarifaEnvio('${t.id}', '${escaparHtml(t.ciudad)}')">Eliminar</button>
         </span>
       </div>
     `).join('');
+  }
+
+  function editarTarifaEnvio(ciudad, valor) {
+    document.getElementById('nuevaTarifaCiudad').value = ciudad;
+    document.getElementById('nuevaTarifaValor').value = valor;
+    document.getElementById('nuevaTarifaCiudad').scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   async function eliminarTarifaEnvio(id, ciudad) {
@@ -6941,7 +6952,8 @@
     document.getElementById('pedidoValorProducto').value = '';
     document.getElementById('pedidoValorEnvio').value = '';
     productoPedidoSeleccionado = null;
-    actualizarResumenAnticipoPedido();
+    carritoPedidoCanal = [];
+    renderizarListaProductosPedido();
   }
 
   async function autocompletarClientePedido() {
@@ -7023,9 +7035,50 @@
     }
   }
 
+  let carritoPedidoCanal = [];
+
+  function agregarProductoAPedido() {
+    const descripcion = document.getElementById('pedidoDescripcionProducto').value.trim();
+    const cantidad = Number(document.getElementById('pedidoCantidad').value);
+    const valor = Number(document.getElementById('pedidoValorProducto').value);
+
+    if (!descripcion) { alert('Describe el producto.'); return; }
+    if (!cantidad || cantidad <= 0) { alert('Escribe una cantidad válida.'); return; }
+    if (!valor || valor <= 0) { alert('Escribe el valor de este producto.'); return; }
+
+    carritoPedidoCanal.push({ descripcion, cantidad, valor });
+    document.getElementById('pedidoDescripcionProducto').value = '';
+    document.getElementById('pedidoCantidad').value = '1';
+    document.getElementById('pedidoValorProducto').value = '';
+    renderizarListaProductosPedido();
+  }
+
+  function quitarProductoPedido(indice) {
+    carritoPedidoCanal.splice(indice, 1);
+    renderizarListaProductosPedido();
+  }
+
+  function renderizarListaProductosPedido() {
+    const contenedor = document.getElementById('listaProductosPedido');
+    if (carritoPedidoCanal.length === 0) {
+      contenedor.innerHTML = '<div style="font-size:11.5px;opacity:0.5;">Todavía no has agregado ningún producto a este pedido.</div>';
+    } else {
+      contenedor.innerHTML = carritoPedidoCanal.map((p, i) => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f4eef2;font-size:12.5px;">
+          <span>${p.cantidad}x ${escaparHtml(p.descripcion)}</span>
+          <span style="display:flex;align-items:center;gap:8px;">
+            ${formatearMoneda(p.valor)}
+            <button type="button" class="btn-quitar-pago" onclick="quitarProductoPedido(${i})">✕</button>
+          </span>
+        </div>
+      `).join('');
+    }
+    actualizarResumenAnticipoPedido();
+  }
+
   function actualizarResumenAnticipoPedido() {
     const canal = document.getElementById('pedidoCanal').value;
-    const valorProducto = Number(document.getElementById('pedidoValorProducto').value) || 0;
+    const valorProducto = carritoPedidoCanal.reduce((acc, p) => acc + p.valor, 0);
     const valorEnvio = Number(document.getElementById('pedidoValorEnvio').value) || 0;
     const total = valorProducto + valorEnvio;
 
@@ -7042,7 +7095,7 @@
 
     const el = document.getElementById('resumenAnticipoPedido');
     el.innerHTML = `
-      <div class="resumen-fila"><span>Valor producto</span><strong>${formatearMoneda(valorProducto)}</strong></div>
+      <div class="resumen-fila"><span>Valor productos (${carritoPedidoCanal.length})</span><strong>${formatearMoneda(valorProducto)}</strong></div>
       <div class="resumen-fila"><span>Valor envío</span><strong>${formatearMoneda(valorEnvio)}</strong></div>
       <div class="resumen-fila total"><span>Total pedido</span><strong>${formatearMoneda(total)}</strong></div>
       <div class="resumen-fila" style="margin-top:8px;color:var(--rosa-principal);"><span>Anticipo a cobrar ahora</span><strong>${formatearMoneda(anticipo)}</strong></div>
@@ -7079,9 +7132,6 @@
     const identificacion = document.getElementById('pedidoIdentificacionCliente').value.trim();
     const nombreCliente = document.getElementById('pedidoNombreCliente').value.trim();
     const telefonoCliente = document.getElementById('pedidoTelefonoCliente').value.trim();
-    const descripcion = document.getElementById('pedidoDescripcionProducto').value.trim();
-    const cantidad = Number(document.getElementById('pedidoCantidad').value);
-    const valorProducto = Number(document.getElementById('pedidoValorProducto').value);
     const valorEnvio = Number(document.getElementById('pedidoValorEnvio').value) || 0;
     const direccionCliente = document.getElementById('pedidoDireccionCliente').value.trim();
     const municipioCliente = document.getElementById('pedidoMunicipioCliente').value.trim();
@@ -7092,18 +7142,14 @@
     if (!telefonoCliente) { mostrarMensaje('mensajePedidoCanal', 'Falta el teléfono del cliente.', 'error'); return; }
     if (!direccionCliente) { mostrarMensaje('mensajePedidoCanal', 'Falta la dirección de envío.', 'error'); return; }
     if (!municipioCliente) { mostrarMensaje('mensajePedidoCanal', 'Selecciona la ciudad/municipio de envío.', 'error'); return; }
-    if (!descripcion) {
-      mostrarMensaje('mensajePedidoCanal', 'Describe el producto del pedido.', 'error');
+    if (carritoPedidoCanal.length === 0) {
+      mostrarMensaje('mensajePedidoCanal', 'Agrega al menos un producto a la lista.', 'error');
       return;
     }
-    if (!cantidad || cantidad <= 0) {
-      mostrarMensaje('mensajePedidoCanal', 'Escribe una cantidad válida.', 'error');
-      return;
-    }
-    if (!valorProducto || valorProducto <= 0) {
-      mostrarMensaje('mensajePedidoCanal', 'Escribe el valor del producto.', 'error');
-      return;
-    }
+
+    const descripcion = carritoPedidoCanal.map(p => `${p.cantidad}x ${p.descripcion}`).join(', ');
+    const cantidad = carritoPedidoCanal.reduce((acc, p) => acc + p.cantidad, 0);
+    const valorProducto = carritoPedidoCanal.reduce((acc, p) => acc + p.valor, 0);
 
     const btn = document.getElementById('btnCrearPedido');
     btn.disabled = true;
@@ -7157,7 +7203,7 @@
       ultimaVentaCache = {
         consecutivo: datos.consecutivo || 'PEDIDO',
         fecha: new Date(),
-        lineas: [{ nombre: descripcion, cantidad, precio: valorProducto / cantidad }, ...(valorEnvio > 0 ? [{ nombre: 'Envío', cantidad: 1, precio: valorEnvio }] : [])],
+        lineas: [...carritoPedidoCanal.map(p => ({ nombre: p.descripcion, cantidad: p.cantidad, precio: p.valor / p.cantidad })), ...(valorEnvio > 0 ? [{ nombre: 'Envío', cantidad: 1, precio: valorEnvio }] : [])],
         subtotal: valorProducto + valorEnvio,
         descuento: 0,
         total: valorProducto + valorEnvio,
