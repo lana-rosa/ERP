@@ -6553,6 +6553,7 @@
   // DIRECTORIO — CLIENTES
   // ============================================================
   let clienteDirAbiertoId = null;
+  let clientesDirCache = [];
 
   async function mostrarPantallaClientes() {
     mostrarPantalla('pantallaClientes');
@@ -6578,13 +6579,66 @@
 
     contenedor.innerHTML = terceros.map(c => `
       <div class="fila-inventario-editable" style="margin-bottom:8px;">
-        <div class="fila-inventario-titulo" style="cursor:pointer;" onclick="alternarHistorialCliente('${c.id}')">
-          <span class="fila-inventario-nombre">${escaparHtml(c.nombre_completo)}</span>
+        <div class="fila-inventario-titulo">
+          <span class="fila-inventario-nombre" style="cursor:pointer;" onclick="alternarHistorialCliente('${c.id}')">${escaparHtml(c.nombre_completo)}</span>
+          <button class="btn-mini editar" onclick="event.stopPropagation(); abrirEdicionCliente('${c.id}')">✏️ Editar</button>
         </div>
         <div style="font-size:12px;opacity:0.65;">${escaparHtml(c.numero_documento || 'Sin documento')} · ${escaparHtml(c.telefono || 'Sin teléfono')}</div>
+        <div id="edicionCliente-${c.id}" class="oculto" style="margin-top:8px;padding:10px;background:var(--rosa-suave);border-radius:9px;"></div>
         <div id="historialCliente-${c.id}" class="oculto" style="margin-top:8px;"></div>
       </div>
     `).join('');
+    clientesDirCache = terceros;
+  }
+
+  function abrirEdicionCliente(id) {
+    const c = clientesDirCache.find(t => t.id === id);
+    if (!c) return;
+    const contenedor = document.getElementById(`edicionCliente-${id}`);
+    const abrir = contenedor.classList.contains('oculto');
+    document.querySelectorAll('[id^="edicionCliente-"]').forEach(el => el.classList.add('oculto'));
+    if (!abrir) return;
+    contenedor.classList.remove('oculto');
+    contenedor.innerHTML = `
+      <label style="margin-top:0;">Nombre completo</label>
+      <input type="text" id="editClienteNombre-${id}" value="${escaparHtml(c.nombre_completo || '')}" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
+      <label>N.° de documento</label>
+      <input type="text" id="editClienteDocumento-${id}" value="${escaparHtml(c.numero_documento || '')}">
+      <label>Teléfono</label>
+      <input type="tel" id="editClienteTelefono-${id}" value="${escaparHtml(c.telefono || '')}">
+      <label>Correo</label>
+      <input type="email" id="editClienteCorreo-${id}" value="${escaparHtml(c.email || '')}">
+      <label>Dirección</label>
+      <input type="text" id="editClienteDireccion-${id}" value="${escaparHtml(c.direccion || '')}">
+      <label>Ciudad</label>
+      <input type="text" id="editClienteCiudad-${id}" value="${escaparHtml(c.ciudad || '')}">
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button class="btn-mini guardar" onclick="guardarEdicionCliente('${id}')">Guardar cambios</button>
+        <button class="btn-mini desactivar" onclick="document.getElementById('edicionCliente-${id}').classList.add('oculto')">Cancelar</button>
+      </div>
+      <div class="mensaje" id="mensajeEditarCliente-${id}"></div>
+    `;
+  }
+
+  async function guardarEdicionCliente(id) {
+    const cuerpo = {
+      id,
+      nombre_completo: document.getElementById(`editClienteNombre-${id}`).value.trim(),
+      numero_documento: document.getElementById(`editClienteDocumento-${id}`).value.trim() || null,
+      telefono: document.getElementById(`editClienteTelefono-${id}`).value.trim() || null,
+      email: document.getElementById(`editClienteCorreo-${id}`).value.trim() || null,
+      direccion: document.getElementById(`editClienteDireccion-${id}`).value.trim() || null,
+      ciudad: document.getElementById(`editClienteCiudad-${id}`).value.trim() || null,
+    };
+    if (!cuerpo.nombre_completo) { mostrarMensaje(`mensajeEditarCliente-${id}`, 'El nombre no puede quedar vacío.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/terceros/actualizar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify(cuerpo)
+    });
+    if (!resp.ok) { mostrarMensaje(`mensajeEditarCliente-${id}`, 'No se pudo guardar.', 'error'); return; }
+    await cargarClientesDir();
   }
 
   async function alternarHistorialCliente(id) {
@@ -6651,6 +6705,8 @@
     timeoutBuscarProveedoresDir = setTimeout(cargarProveedoresDir, 350);
   }
 
+  let proveedoresDirCache = [];
+
   async function cargarProveedoresDir() {
     const contenedor = document.getElementById('listaProveedoresDir');
     contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
@@ -6662,13 +6718,66 @@
 
     contenedor.innerHTML = terceros.map(p => `
       <div class="fila-inventario-editable" style="margin-bottom:8px;">
-        <div class="fila-inventario-titulo" style="cursor:pointer;" onclick="alternarHistorialProveedor('${p.id}')">
-          <span class="fila-inventario-nombre">${escaparHtml(p.nombre_completo)}</span>
+        <div class="fila-inventario-titulo">
+          <span class="fila-inventario-nombre" style="cursor:pointer;" onclick="alternarHistorialProveedor('${p.id}')">${escaparHtml(p.nombre_completo)}</span>
+          <button class="btn-mini editar" onclick="event.stopPropagation(); abrirEdicionProveedor('${p.id}')">✏️ Editar</button>
         </div>
         <div style="font-size:12px;opacity:0.65;">${escaparHtml(p.numero_documento || 'Sin NIT')} · ${escaparHtml(p.telefono || 'Sin teléfono')}</div>
+        <div id="edicionProveedor-${p.id}" class="oculto" style="margin-top:8px;padding:10px;background:var(--rosa-suave);border-radius:9px;"></div>
         <div id="historialProveedor-${p.id}" class="oculto" style="margin-top:8px;"></div>
       </div>
     `).join('');
+    proveedoresDirCache = terceros;
+  }
+
+  function abrirEdicionProveedor(id) {
+    const p = proveedoresDirCache.find(t => t.id === id);
+    if (!p) return;
+    const contenedor = document.getElementById(`edicionProveedor-${id}`);
+    const abrir = contenedor.classList.contains('oculto');
+    document.querySelectorAll('[id^="edicionProveedor-"]').forEach(el => el.classList.add('oculto'));
+    if (!abrir) return;
+    contenedor.classList.remove('oculto');
+    contenedor.innerHTML = `
+      <label style="margin-top:0;">Nombre / Razón social</label>
+      <input type="text" id="editProveedorNombre-${id}" value="${escaparHtml(p.nombre_completo || '')}">
+      <label>NIT / Documento</label>
+      <input type="text" id="editProveedorNit-${id}" value="${escaparHtml(p.numero_documento || '')}">
+      <label>Teléfono</label>
+      <input type="tel" id="editProveedorTelefono-${id}" value="${escaparHtml(p.telefono || '')}">
+      <label>Correo</label>
+      <input type="email" id="editProveedorCorreo-${id}" value="${escaparHtml(p.email || '')}">
+      <label>Dirección</label>
+      <input type="text" id="editProveedorDireccion-${id}" value="${escaparHtml(p.direccion || '')}">
+      <label>Ciudad</label>
+      <input type="text" id="editProveedorCiudad-${id}" value="${escaparHtml(p.ciudad || '')}">
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button class="btn-mini guardar" onclick="guardarEdicionProveedor('${id}')">Guardar cambios</button>
+        <button class="btn-mini desactivar" onclick="document.getElementById('edicionProveedor-${id}').classList.add('oculto')">Cancelar</button>
+      </div>
+      <div class="mensaje" id="mensajeEditarProveedor-${id}"></div>
+    `;
+  }
+
+  async function guardarEdicionProveedor(id) {
+    const cuerpo = {
+      id,
+      nombre_completo: document.getElementById(`editProveedorNombre-${id}`).value.trim(),
+      numero_documento: document.getElementById(`editProveedorNit-${id}`).value.trim() || null,
+      telefono: document.getElementById(`editProveedorTelefono-${id}`).value.trim() || null,
+      email: document.getElementById(`editProveedorCorreo-${id}`).value.trim() || null,
+      direccion: document.getElementById(`editProveedorDireccion-${id}`).value.trim() || null,
+      ciudad: document.getElementById(`editProveedorCiudad-${id}`).value.trim() || null,
+    };
+    if (!cuerpo.nombre_completo) { mostrarMensaje(`mensajeEditarProveedor-${id}`, 'El nombre no puede quedar vacío.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/terceros/actualizar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify(cuerpo)
+    });
+    if (!resp.ok) { mostrarMensaje(`mensajeEditarProveedor-${id}`, 'No se pudo guardar.', 'error'); return; }
+    await cargarProveedoresDir();
   }
 
   async function alternarHistorialProveedor(id) {
