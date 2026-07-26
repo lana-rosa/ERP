@@ -1264,13 +1264,13 @@
 <!-- ===== PANTALLA: PAGOS INTERNOS PENDIENTES (Cajero / Taller) ===== -->
 <div id="pantallaPagosPendientes" class="oculto contenido">
   <div class="page-header">
-    <h1>Mi departamento</h1>
-    <div class="subtitulo">Presupuesto asignado este mes, y tus gastos registrados.</div>
+    <h1>🧾 Compras</h1>
+    <div class="subtitulo">Registra las compras y pagos a proveedores. Los pagos en efectivo se descuentan automáticamente del arqueo del turno.</div>
   </div>
 
   <div class="filtro-tipo" style="margin-bottom:20px;">
     <button class="chip-filtro activo" data-subtab-btn="pagosPendientes" onclick="mostrarSubTabGrupo('pagosPendientes', 'subtabPagosResumen', this)">📊 Resumen</button>
-    <button class="chip-filtro" data-subtab-btn="pagosPendientes" onclick="mostrarSubTabGrupo('pagosPendientes', 'subtabPagosGastos', this)">💸 Gastos</button>
+    <button class="chip-filtro" data-subtab-btn="pagosPendientes" onclick="mostrarSubTabGrupo('pagosPendientes', 'subtabPagosGastos', this)">🧾 Compras</button>
     <button class="chip-filtro" data-subtab-btn="pagosPendientes" onclick="mostrarSubTabGrupo('pagosPendientes', 'subtabPagosPresupuesto', this)">📋 Presupuesto</button>
   </div>
 
@@ -1284,23 +1284,49 @@
   <div id="subtabPagosGastos" data-subtab-grupo="pagosPendientes" class="oculto">
     <div class="grilla-2">
       <div class="panel">
-        <h2>Registrar un gasto</h2>
-        <div class="subtitulo">Ej: compraste insumos a un proveedor, pagaste mano de obra, u otro gasto.</div>
-        <label for="gastoCategoria">Categoría</label>
+        <h2>Registrar compra / pago a proveedor</h2>
+        <div class="subtitulo">Los datos del proveedor quedan guardados en el directorio de proveedores.</div>
+
+        <label for="gastoProveedorBuscar">Proveedor <span style="font-size:10px;opacity:0.6;">(busca uno ya existente, o completa los datos de uno nuevo abajo)</span></label>
+        <input type="text" id="gastoProveedorBuscar" placeholder="🔍 Buscar proveedor por nombre o NIT..." oninput="buscarProveedorParaGasto()" autocomplete="off">
+        <div id="sugerenciasProveedorGasto" style="display:none;position:relative;background:var(--fondo-panel);border:1.5px solid var(--rosa-medio);border-radius:9px;margin-top:4px;max-height:180px;overflow-y:auto;z-index:20;"></div>
+        <div id="proveedorGastoSeleccionado" class="oculto" style="margin-top:8px;padding:9px 11px;background:var(--rosa-suave);border-radius:9px;font-size:12.5px;"></div>
+
+        <div id="bloqueNuevoProveedorGasto">
+          <label for="gastoProveedorNombre">Nombre / Razón social</label>
+          <input type="text" id="gastoProveedorNombre" placeholder="Nombre del proveedor">
+          <label for="gastoProveedorNit">NIT / Documento</label>
+          <input type="text" id="gastoProveedorNit">
+          <label for="gastoProveedorTelefono">Teléfono</label>
+          <input type="tel" id="gastoProveedorTelefono">
+          <label for="gastoProveedorDireccion">Dirección <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+          <input type="text" id="gastoProveedorDireccion">
+        </div>
+
+        <label for="gastoCategoria" style="margin-top:14px;">Categoría</label>
         <select id="gastoCategoria">
           <option value="insumos">Insumos</option>
           <option value="mano_obra">Mano de obra</option>
           <option value="otros_gastos">Otros gastos</option>
         </select>
         <label for="gastoDescripcion">¿En qué se gastó?</label>
-        <input type="text" id="gastoDescripcion" placeholder="Ej: Compra de lana a proveedor X">
+        <input type="text" id="gastoDescripcion" placeholder="Ej: Compra de lana">
         <label for="gastoMonto">Monto (COP)</label>
         <input type="number" id="gastoMonto" placeholder="0" min="1" step="1000">
-        <button class="btn-principal" id="btnRegistrarGasto" onclick="confirmarRegistrarGasto()">Registrar gasto</button>
+        <label for="gastoMetodoPago">Método de pago</label>
+        <select id="gastoMetodoPago">
+          <option value="efectivo">Efectivo (se descuenta del arqueo de caja)</option>
+          <option value="nequi">Nequi</option>
+          <option value="daviplata">Daviplata</option>
+          <option value="transferencia">Transferencia</option>
+          <option value="tarjeta_debito">Tarjeta débito</option>
+          <option value="tarjeta_credito">Tarjeta crédito</option>
+        </select>
+        <button class="btn-principal" id="btnRegistrarGasto" onclick="confirmarRegistrarGasto()">Registrar compra</button>
         <div class="mensaje" id="mensajeGasto"></div>
       </div>
       <div class="panel">
-        <h2>Historial de mis gastos</h2>
+        <h2>Historial de compras</h2>
         <div id="listaHistorialGastosPropios"><div class="cargando">Cargando...</div></div>
       </div>
     </div>
@@ -6049,48 +6075,104 @@
     `;
   }
 
+  let proveedorGastoSeleccionadoId = null;
+  let timeoutBuscarProveedorGasto = null;
+
+  function buscarProveedorParaGasto() {
+    clearTimeout(timeoutBuscarProveedorGasto);
+    proveedorGastoSeleccionadoId = null;
+    document.getElementById('proveedorGastoSeleccionado').classList.add('oculto');
+    document.getElementById('bloqueNuevoProveedorGasto').classList.remove('oculto');
+
+    const termino = document.getElementById('gastoProveedorBuscar').value.trim();
+    const sugerencias = document.getElementById('sugerenciasProveedorGasto');
+    if (!termino) { sugerencias.style.display = 'none'; return; }
+
+    timeoutBuscarProveedorGasto = setTimeout(async () => {
+      const resp = await fetch(WORKER_URL + '/api/pos/terceros?tipo=proveedor&q=' + encodeURIComponent(termino), { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+      if (!resp.ok) return;
+      const { terceros } = await resp.json();
+      if (!terceros || terceros.length === 0) { sugerencias.style.display = 'none'; return; }
+      sugerencias.innerHTML = terceros.map(p => `
+        <div style="padding:8px 11px;cursor:pointer;font-size:13px;border-bottom:1px solid #f4eef2;" onclick="seleccionarProveedorGasto('${p.id}', '${escaparHtml(p.nombre_completo)}')">
+          ${escaparHtml(p.nombre_completo)} <span style="opacity:0.6;font-size:11px;">${p.numero_documento ? '· ' + escaparHtml(p.numero_documento) : ''}</span>
+        </div>
+      `).join('');
+      sugerencias.style.display = 'block';
+    }, 300);
+  }
+
+  function seleccionarProveedorGasto(id, nombre) {
+    proveedorGastoSeleccionadoId = id;
+    document.getElementById('sugerenciasProveedorGasto').style.display = 'none';
+    document.getElementById('gastoProveedorBuscar').value = '';
+    document.getElementById('proveedorGastoSeleccionado').classList.remove('oculto');
+    document.getElementById('proveedorGastoSeleccionado').innerHTML = `✅ Proveedor: <strong>${escaparHtml(nombre)}</strong> <button type="button" class="btn-mini desactivar" style="display:inline;margin-left:8px;" onclick="quitarProveedorGastoSeleccionado()">Cambiar</button>`;
+    document.getElementById('bloqueNuevoProveedorGasto').classList.add('oculto');
+  }
+
+  function quitarProveedorGastoSeleccionado() {
+    proveedorGastoSeleccionadoId = null;
+    document.getElementById('proveedorGastoSeleccionado').classList.add('oculto');
+    document.getElementById('bloqueNuevoProveedorGasto').classList.remove('oculto');
+  }
+
   async function confirmarRegistrarGasto() {
     const centroCostoId = obtenerCentroCostoPropio();
     const categoria = document.getElementById('gastoCategoria').value;
     const descripcion = document.getElementById('gastoDescripcion').value.trim();
     const monto = Number(document.getElementById('gastoMonto').value);
+    const metodoPago = document.getElementById('gastoMetodoPago').value;
     ocultarMensaje('mensajeGasto');
 
-    if (!centroCostoId) {
-      mostrarMensaje('mensajeGasto', 'No se pudo determinar tu departamento.', 'error');
-      return;
-    }
-    if (!descripcion) {
-      mostrarMensaje('mensajeGasto', 'Describe en qué se gastó.', 'error');
-      return;
-    }
-    if (!monto || monto <= 0) {
-      mostrarMensaje('mensajeGasto', 'Escribe un monto válido mayor a cero.', 'error');
-      return;
+    if (!centroCostoId) { mostrarMensaje('mensajeGasto', 'No se pudo determinar tu departamento.', 'error'); return; }
+    if (!descripcion) { mostrarMensaje('mensajeGasto', 'Describe en qué se gastó.', 'error'); return; }
+    if (!monto || monto <= 0) { mostrarMensaje('mensajeGasto', 'Escribe un monto válido mayor a cero.', 'error'); return; }
+
+    const cuerpo = {
+      centro_costo_id: centroCostoId, categoria, descripcion, monto, metodo_pago: metodoPago,
+      turno_id: turnoActivoActual ? turnoActivoActual.id : null
+    };
+
+    if (proveedorGastoSeleccionadoId) {
+      cuerpo.proveedor_tercero_id = proveedorGastoSeleccionadoId;
+    } else {
+      const nombreProveedor = document.getElementById('gastoProveedorNombre').value.trim();
+      if (!nombreProveedor) { mostrarMensaje('mensajeGasto', 'Busca un proveedor existente o escribe el nombre de uno nuevo.', 'error'); return; }
+      cuerpo.proveedor_nombre = nombreProveedor;
+      cuerpo.proveedor_nit = document.getElementById('gastoProveedorNit').value.trim();
+      cuerpo.proveedor_telefono = document.getElementById('gastoProveedorTelefono').value.trim();
+      cuerpo.proveedor_direccion = document.getElementById('gastoProveedorDireccion').value.trim();
     }
 
     const btn = document.getElementById('btnRegistrarGasto');
     btn.disabled = true;
     btn.textContent = 'Registrando...';
 
-    const resp = await fetch(WORKER_URL + '/api/pos/departamentos/gastos', {
+    const resp = await fetch(WORKER_URL + '/api/pos/compras', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ centro_costo_id: centroCostoId, categoria, descripcion, monto })
+      body: JSON.stringify(cuerpo)
     });
 
     btn.disabled = false;
-    btn.textContent = 'Registrar gasto';
+    btn.textContent = 'Registrar compra';
 
     const datos = await resp.json();
     if (!resp.ok) {
-      mostrarMensaje('mensajeGasto', datos.error || 'No se pudo registrar el gasto.', 'error');
+      mostrarMensaje('mensajeGasto', datos.error || 'No se pudo registrar la compra.', 'error');
       return;
     }
 
-    mostrarMensaje('mensajeGasto', '✅ Gasto registrado correctamente.', 'exito');
+    mostrarMensaje('mensajeGasto', '✅ Compra registrada correctamente.', 'exito');
     document.getElementById('gastoDescripcion').value = '';
     document.getElementById('gastoMonto').value = '';
+    document.getElementById('gastoProveedorNombre').value = '';
+    document.getElementById('gastoProveedorNit').value = '';
+    document.getElementById('gastoProveedorTelefono').value = '';
+    document.getElementById('gastoProveedorDireccion').value = '';
+    document.getElementById('gastoProveedorBuscar').value = '';
+    quitarProveedorGastoSeleccionado();
     await cargarResumenMiDepartamento();
     await cargarHistorialGastosPropios();
   }
