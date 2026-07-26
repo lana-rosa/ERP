@@ -655,10 +655,7 @@
     <div class="sidebar-depto" id="deptoReportesGrupo" style="display:none;">
       <button class="sidebar-depto-header" id="headerDeptoReportes" onclick="toggleSidebarDepto('deptoReportesSubmenu', 'headerDeptoReportes')">📊 Reportes financieros <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoReportesSubmenu">
-        <button class="nav-btn" id="nav-departamentos" onclick="mostrarPantallaDepartamentos()"><span class="nav-icon">🏢</span> Cajas y ventas internas</button>
-        <button class="nav-btn" id="nav-reportes-financieros" onclick="mostrarPantallaReportesFinancieros()"><span class="nav-icon">📊</span> Por departamento y global</button>
-        <button class="nav-btn" onclick="mostrarPantallaHistorial()"><span class="nav-icon">📋</span> Consolidado de ventas (3 deptos)</button>
-        <button class="nav-btn" onclick="mostrarPantallaInventario()"><span class="nav-icon">📊</span> Inventario general (3 deptos)</button>
+        <button class="nav-btn" id="nav-reportes-financieros" onclick="mostrarPantallaReportesFinancieros()"><span class="nav-icon">📊</span> Presupuesto y consolidado</button>
       </div>
     </div>
     <div class="sidebar-depto" id="deptoFondoEmprenderGrupo" style="display:none;">
@@ -1410,17 +1407,32 @@
   </div>
 </div>
 
-<!-- ===== PANTALLA: REPORTES FINANCIEROS POR DEPARTAMENTO (solo Admin) ===== -->
+<!-- ===== PANTALLA: REPORTES FINANCIEROS (solo Admin) ===== -->
 <div id="pantallaReportesFinancieros" class="oculto contenido">
   <div class="page-header">
-    <h1>Reportes financieros por departamento</h1>
-    <div class="subtitulo">Presupuesto mensual vs gasto real de cada departamento, con alertas, más el resumen financiero general.</div>
+    <h1>Reportes financieros</h1>
+    <div class="subtitulo">Presupuesto global del negocio y consolidado de ventas por canal.</div>
   </div>
 
   <div class="filtro-tipo" style="margin-bottom:20px;">
-    <button class="chip-filtro activo" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinPresupuestos', this)">💵 Presupuestos</button>
-    <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinReportes', this)">📊 Reportes por departamento</button>
+    <button class="chip-filtro activo" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinPresupuestos', this)">💰 Presupuesto global</button>
+    <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinConsolidado', this); cargarConsolidadoVentas();">📊 Consolidado de ventas</button>
     <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinAcademia', this); cargarInformeAcademia();">🎓 Academy: ventas y metas</button>
+  </div>
+
+  <div id="subtabFinConsolidado" data-subtab-grupo="reportesFin" class="oculto">
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+      <div>
+        <label for="consolidadoFechaDesde" style="font-size:11px;">Desde</label>
+        <input type="date" id="consolidadoFechaDesde" onchange="cargarConsolidadoVentas()" style="padding:9px 10px;">
+      </div>
+      <div>
+        <label for="consolidadoFechaHasta" style="font-size:11px;">Hasta</label>
+        <input type="date" id="consolidadoFechaHasta" onchange="cargarConsolidadoVentas()" style="padding:9px 10px;">
+      </div>
+      <button class="btn-mini desactivar" onclick="limpiarFiltroConsolidado()" style="margin-bottom:1px;">Quitar filtro</button>
+    </div>
+    <div id="listaConsolidadoVentas"><div class="cargando">Cargando...</div></div>
   </div>
 
   <div id="subtabFinAcademia" data-subtab-grupo="reportesFin" class="oculto">
@@ -1442,9 +1454,7 @@
   <div id="subtabFinPresupuestos" data-subtab-grupo="reportesFin">
     <div class="grilla-2">
       <div class="panel">
-        <h2>Asignar presupuesto del mes</h2>
-        <label for="presupuestoDepartamento">Departamento</label>
-        <select id="presupuestoDepartamento"><option value="">Cargando...</option></select>
+        <h2>Asignar presupuesto global del mes</h2>
         <label for="presupuestoPeriodo">Mes</label>
         <input type="month" id="presupuestoPeriodo" onchange="cargarPresupuestoConsolidado()">
         <label for="presupuestoCategoria">Categoría</label>
@@ -1459,14 +1469,10 @@
         <div class="mensaje" id="mensajePresupuesto"></div>
       </div>
       <div class="panel">
-        <h2>Presupuesto vs gasto — todos los departamentos</h2>
+        <h2>Presupuesto global vs gasto real</h2>
         <div id="listaPresupuestoConsolidado"><div class="cargando">Cargando...</div></div>
       </div>
     </div>
-  </div>
-
-  <div id="subtabFinReportes" data-subtab-grupo="reportesFin" class="oculto">
-    <div id="listaReportesFinancieros"><div class="cargando">Cargando reportes...</div></div>
   </div>
 </div>
 
@@ -2707,7 +2713,6 @@
     mostrar('nav-inventario-taller', esAdmin || esTaller);
     mostrar('nav-nomina', esAdmin);
     mostrar('nav-talento-humano', esAdmin);
-    mostrar('nav-departamentos', esAdmin);
     mostrar('nav-reportes-financieros', esAdmin);
     mostrar('nav-calendario', true);
 
@@ -6315,8 +6320,7 @@
     { clave: 'nav-nomina', etiqueta: '　　Nómina' },
     { clave: 'nav-talento-humano', etiqueta: '　　Carpetas por empleado' },
     { clave: 'deptoReportesGrupo', etiqueta: '📊 Reportes financieros (grupo completo)' },
-    { clave: 'nav-departamentos', etiqueta: '　　Cajas y ventas internas' },
-    { clave: 'nav-reportes-financieros', etiqueta: '　　Por departamento y global' },
+    { clave: 'nav-reportes-financieros', etiqueta: '　　Presupuesto y consolidado' },
     { clave: 'deptoFondoEmprenderGrupo', etiqueta: '🏦 Fondo Emprender (grupo completo)' },
     { clave: 'nav-calendario', etiqueta: '📅 Calendario del equipo' },
   ];
@@ -7210,72 +7214,55 @@
     mostrarSubTabGrupo('reportesFin', 'subtabFinPresupuestos', document.querySelector('[data-subtab-btn="reportesFin"]'));
     document.getElementById('presupuestoPeriodo').value = new Date().toISOString().slice(0, 7);
     document.getElementById('academiaPeriodoInforme').value = new Date().toISOString().slice(0, 7);
+    document.getElementById('consolidadoFechaDesde').value = '';
+    document.getElementById('consolidadoFechaHasta').value = '';
     ocultarMensaje('mensajePresupuesto');
-    await cargarDepartamentosParaPresupuesto();
     await cargarPresupuestoConsolidado();
+  }
 
-    const contenedor = document.getElementById('listaReportesFinancieros');
-    contenedor.innerHTML = '<div class="cargando">Cargando reportes...</div>';
+  function limpiarFiltroConsolidado() {
+    document.getElementById('consolidadoFechaDesde').value = '';
+    document.getElementById('consolidadoFechaHasta').value = '';
+    cargarConsolidadoVentas();
+  }
 
-    const resp = await fetch(WORKER_URL + '/api/pos/departamentos/reporte-consolidado', {
+  async function cargarConsolidadoVentas() {
+    const contenedor = document.getElementById('listaConsolidadoVentas');
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+
+    const desde = document.getElementById('consolidadoFechaDesde').value;
+    const hasta = document.getElementById('consolidadoFechaHasta').value;
+    const params = new URLSearchParams();
+    if (desde) params.set('fecha_desde', desde);
+    if (hasta) params.set('fecha_hasta', hasta);
+
+    const resp = await fetch(WORKER_URL + '/api/pos/reportes/consolidado-ventas?' + params.toString(), {
       headers: { Authorization: 'Bearer ' + sesionActual.token }
     });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
 
-    if (!resp.ok) {
-      contenedor.innerHTML = '<div class="cargando">No se pudieron cargar los reportes.</div>';
-      return;
-    }
+    const datos = await resp.json();
+    const filas = [
+      { etiqueta: '🧵 Ventas de mercería (Tienda física)', datos: datos.merceria, color: 'var(--rosa-principal)' },
+      { etiqueta: '📱 Ventas en redes (WhatsApp/Redes)', datos: datos.redes, color: '#4a90d9' },
+      { etiqueta: '🎓 Ventas de clases (Academy)', datos: datos.clases, color: '#2e8b57' },
+    ];
 
-    const { reportes } = await resp.json();
-
-    if (!reportes || reportes.length === 0) {
-      contenedor.innerHTML = '<div class="cargando">No hay departamentos con datos todavía.</div>';
-      return;
-    }
-
-    // Totales consolidados de toda la empresa
-    const totalIngresos = reportes.reduce((acc, r) => acc + Number(r.total_ingresos_operativos), 0);
-    const totalEgresos = reportes.reduce((acc, r) => acc + Number(r.total_egresos_operativos), 0);
-    const totalSaldo = reportes.reduce((acc, r) => acc + Number(r.saldo_actual), 0);
-    const resultadoTotal = totalIngresos - totalEgresos;
-    const empresaPositiva = resultadoTotal >= 0;
-
-    let html = `
-      <div class="tarjeta" style="max-width:none;margin-bottom:20px;background:${empresaPositiva ? '#eaf6ef' : '#fdecea'};">
-        <h1 style="font-size:16px;">Resumen de toda la empresa</h1>
-        <div class="grilla-3" style="margin-top:14px;">
-          <div style="text-align:center;">
-            <div style="font-size:11px;opacity:0.6;">Saldo total en cajas</div>
-            <div style="font-size:22px;font-weight:700;color:var(--rosa-principal);">${formatearMoneda(totalSaldo)}</div>
+    contenedor.innerHTML = `
+      <div class="grilla-3" style="margin-bottom:20px;">
+        ${filas.map(f => `
+          <div class="panel" style="max-height:none;text-align:center;">
+            <div style="font-size:12.5px;font-weight:600;opacity:0.75;margin-bottom:8px;">${f.etiqueta}</div>
+            <div style="font-size:24px;font-weight:700;color:${f.color};">${formatearMoneda(f.datos.total)}</div>
+            <div style="font-size:11.5px;opacity:0.6;margin-top:4px;">${f.datos.num_ventas} venta(s)</div>
           </div>
-          <div style="text-align:center;">
-            <div style="font-size:11px;opacity:0.6;">Ingresos totales</div>
-            <div style="font-size:22px;font-weight:700;color:var(--verde-exito);">${formatearMoneda(totalIngresos)}</div>
-          </div>
-          <div style="text-align:center;">
-            <div style="font-size:11px;opacity:0.6;">Gastos totales</div>
-            <div style="font-size:22px;font-weight:700;color:var(--rojo-error);">${formatearMoneda(totalEgresos)}</div>
-          </div>
-        </div>
-        <div style="text-align:center;margin-top:14px;">
-          <div style="font-size:13px;font-weight:600;color:${empresaPositiva ? 'var(--verde-exito)' : 'var(--rojo-error)'};">
-            ${empresaPositiva ? '✅ La empresa está generando más de lo que gasta' : '⚠️ La empresa está gastando más de lo que genera'}
-          </div>
-          <div style="font-size:24px;font-weight:700;color:${empresaPositiva ? 'var(--verde-exito)' : 'var(--rojo-error)'};margin-top:4px;">${formatearMoneda(Math.abs(resultadoTotal))}</div>
-        </div>
+        `).join('')}
       </div>
-      <div class="grilla-3">
+      <div class="panel" style="max-height:none;text-align:center;background:var(--rosa-suave);">
+        <div style="font-size:13px;font-weight:600;opacity:0.75;">TOTAL GENERAL</div>
+        <div style="font-size:30px;font-weight:700;color:var(--rosa-principal);margin-top:4px;">${formatearMoneda(datos.total_general)}</div>
+      </div>
     `;
-
-    html += reportes.map(reporte => `
-      <div class="panel" style="max-height:none;">
-        <h2>${escaparHtml(reporte.nombre_departamento)}</h2>
-        ${renderizarResumenDepartamento(reporte)}
-      </div>
-    `).join('');
-
-    html += '</div>';
-    contenedor.innerHTML = html;
   }
 
   // ============================================================================
@@ -8153,28 +8140,17 @@
   }
 
   // ============================================================================
-  // GESTIÓN DE PRESUPUESTOS (Admin)
+  // GESTIÓN DE PRESUPUESTO GLOBAL (Admin) — se maneja con el centro de costo de
+  // Tienda, que es la única caja operativa real del negocio ahora.
   // ============================================================================
-  async function cargarDepartamentosParaPresupuesto() {
-    const { data } = await supabaseClient
-      .from('centros_costo')
-      .select('id, nombre')
-      .eq('activo', true)
-      .order('codigo', { ascending: true });
-
-    const select = document.getElementById('presupuestoDepartamento');
-    select.innerHTML = (data || []).map(d => `<option value="${d.id}">${escaparHtml(d.nombre)}</option>`).join('');
-  }
-
   async function confirmarAsignarPresupuesto() {
-    const centroCostoId = document.getElementById('presupuestoDepartamento').value;
     const periodo = document.getElementById('presupuestoPeriodo').value;
     const categoria = document.getElementById('presupuestoCategoria').value;
     const monto = Number(document.getElementById('presupuestoMonto').value);
     ocultarMensaje('mensajePresupuesto');
 
-    if (!centroCostoId || !periodo) {
-      mostrarMensaje('mensajePresupuesto', 'Selecciona departamento y mes.', 'error');
+    if (!periodo) {
+      mostrarMensaje('mensajePresupuesto', 'Selecciona el mes.', 'error');
       return;
     }
     if (monto === undefined || monto < 0 || isNaN(monto)) {
@@ -8189,7 +8165,7 @@
     const resp = await fetch(WORKER_URL + '/api/pos/presupuestos/asignar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ centro_costo_id: centroCostoId, periodo, categoria, monto })
+      body: JSON.stringify({ centro_costo_id: centroCostoTiendaId, periodo, categoria, monto })
     });
 
     btn.disabled = false;
@@ -8210,7 +8186,7 @@
     const contenedor = document.getElementById('listaPresupuestoConsolidado');
     const periodo = document.getElementById('presupuestoPeriodo').value || new Date().toISOString().slice(0, 7);
 
-    const resp = await fetch(`${WORKER_URL}/api/pos/presupuestos/reporte-consolidado?periodo=${periodo}`, {
+    const resp = await fetch(`${WORKER_URL}/api/pos/presupuestos/reporte?centro_costo_id=${centroCostoTiendaId}&periodo=${periodo}`, {
       headers: { Authorization: 'Bearer ' + sesionActual.token }
     });
 
@@ -8219,19 +8195,14 @@
       return;
     }
 
-    const { departamentos } = await resp.json();
+    const { categorias } = await resp.json();
 
-    if (!departamentos || departamentos.length === 0) {
-      contenedor.innerHTML = '<div class="cargando">Sin datos todavía.</div>';
+    if (!categorias || categorias.length === 0) {
+      contenedor.innerHTML = '<div class="cargando">Sin datos todavía para este mes.</div>';
       return;
     }
 
-    contenedor.innerHTML = departamentos.map(d => `
-      <div style="margin-bottom:14px;">
-        <div style="font-weight:700;font-size:13px;margin-bottom:6px;">${escaparHtml(d.nombre_departamento)}</div>
-        ${renderizarCategoriasPresupuesto(d.categorias)}
-      </div>
-    `).join('');
+    contenedor.innerHTML = renderizarCategoriasPresupuesto(categorias);
   }
 
   // ============================================================================
