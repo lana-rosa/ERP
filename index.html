@@ -1431,6 +1431,7 @@
     <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinConsolidado', this); cargarConsolidadoVentas();">📊 Consolidado de ventas</button>
     <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinAcademia', this); cargarInformeAcademia();">🎓 Academy: ventas y metas</button>
     <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinProvisiones', this); cargarProvisionesNomina();">📦 Provisiones de nómina</button>
+    <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinIndicadores', this); cargarIndicadoresVentas();">📈 Indicadores de ventas</button>
   </div>
 
   <div id="subtabFinConsolidado" data-subtab-grupo="reportesFin" class="oculto">
@@ -1469,6 +1470,27 @@
       ℹ️ Calculado con las fórmulas legales colombianas al día de hoy: cesantías y vacaciones desde el 1 de enero (o la fecha de ingreso si es después), prima desde el inicio del semestre actual. No incluye a Sara como propietaria, porque esas prestaciones son solo para empleados con contrato laboral.
     </div>
     <div id="listaProvisionesNomina"><div class="cargando">Calculando...</div></div>
+  </div>
+
+  <div id="subtabFinIndicadores" data-subtab-grupo="reportesFin" class="oculto">
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+      <div class="filtro-tipo" style="margin-bottom:0;">
+        <button class="chip-filtro activo" data-canal-indicador="tienda" onclick="cambiarCanalIndicadores('tienda', this)">🧵 Tienda</button>
+        <button class="chip-filtro" data-canal-indicador="clases" onclick="cambiarCanalIndicadores('clases', this)">🎓 Cursos/clases</button>
+        <button class="chip-filtro" data-canal-indicador="redes" onclick="cambiarCanalIndicadores('redes', this)">📱 WhatsApp/Redes</button>
+      </div>
+      <div>
+        <label for="indicadoresDias" style="font-size:11px;">Período</label>
+        <select id="indicadoresDias" onchange="cargarIndicadoresVentas()">
+          <option value="30">Últimos 30 días</option>
+          <option value="90" selected>Últimos 90 días</option>
+          <option value="180">Últimos 180 días</option>
+          <option value="365">Último año</option>
+        </select>
+      </div>
+    </div>
+    <div id="notaIndicadoresVentas" class="oculto" style="background:#fff3cd;color:#856404;border-radius:9px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;"></div>
+    <div id="listaIndicadoresVentas"><div class="cargando">Cargando...</div></div>
   </div>
 
   <div id="subtabFinPresupuestos" data-subtab-grupo="reportesFin">
@@ -7022,6 +7044,73 @@
         </div>
       </div>
     `;
+  }
+
+  let canalIndicadorActual = 'tienda';
+
+  function cambiarCanalIndicadores(canal, botonEl) {
+    canalIndicadorActual = canal;
+    document.querySelectorAll('[data-canal-indicador]').forEach(b => b.classList.remove('activo'));
+    botonEl.classList.add('activo');
+    cargarIndicadoresVentas();
+  }
+
+  async function cargarIndicadoresVentas() {
+    const contenedor = document.getElementById('listaIndicadoresVentas');
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+    document.getElementById('notaIndicadoresVentas').classList.add('oculto');
+
+    const dias = document.getElementById('indicadoresDias').value;
+    const resp = await fetch(`${WORKER_URL}/api/pos/reportes/indicadores-ventas?canal=${canalIndicadorActual}&dias=${dias}`, {
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const datos = await resp.json();
+
+    if (datos.nota) {
+      document.getElementById('notaIndicadoresVentas').classList.remove('oculto');
+      document.getElementById('notaIndicadoresVentas').textContent = 'ℹ️ ' + datos.nota;
+    }
+
+    const tablaSimple = (titulo, filas, columnas) => `
+      <div class="panel" style="max-width:none;max-height:none;margin-bottom:20px;">
+        <h2>${titulo}</h2>
+        ${filas.length === 0 ? '<div class="cargando">Sin datos en este período.</div>' : `
+        <div class="tabla-lista">
+          <div class="tabla-lista-header" style="grid-template-columns:${columnas.map(() => '1fr').join(' ')};">
+            ${columnas.map(c => `<span${c.derecha ? ' style="text-align:right;"' : ''}>${c.titulo}</span>`).join('')}
+          </div>
+          ${filas.map(f => `
+            <div class="tabla-lista-fila" style="grid-template-columns:${columnas.map(() => '1fr').join(' ')};cursor:default;">
+              ${columnas.map(c => `<span${c.derecha ? ' style="text-align:right;"' : ''}>${c.render(f)}</span>`).join('')}
+            </div>
+          `).join('')}
+        </div>`}
+      </div>
+    `;
+
+    let html = tablaSimple('🔥 Productos que más rotan', datos.mas_rotan, [
+      { titulo: 'PRODUCTO', render: f => escaparHtml(f.nombre) },
+      { titulo: 'UNIDADES VENDIDAS', derecha: true, render: f => f.unidades_vendidas },
+      { titulo: 'INGRESOS', derecha: true, render: f => formatearMoneda(f.ingresos) },
+    ]);
+
+    if (canalIndicadorActual === 'tienda') {
+      html += tablaSimple('💰 Mejor margen de utilidad', datos.mejor_margen, [
+        { titulo: 'PRODUCTO', render: f => escaparHtml(f.nombre) },
+        { titulo: 'PRECIO VENTA', derecha: true, render: f => formatearMoneda(f.precio_venta) },
+        { titulo: 'COSTO', derecha: true, render: f => formatearMoneda(f.costo) },
+        { titulo: 'MARGEN', derecha: true, render: f => f.margen_pct + '%' },
+        { titulo: 'UTILIDAD GENERADA', derecha: true, render: f => formatearMoneda(f.utilidad_generada) },
+      ]);
+      html += tablaSimple('🐌 Productos que no están rotando (con stock disponible)', datos.sin_rotar, [
+        { titulo: 'PRODUCTO', render: f => escaparHtml(f.nombre) },
+        { titulo: 'STOCK ACTUAL', derecha: true, render: f => f.stock_actual },
+        { titulo: 'PRECIO VENTA', derecha: true, render: f => formatearMoneda(f.precio_venta) },
+      ]);
+    }
+
+    contenedor.innerHTML = html;
   }
 
   async function cargarConsolidadoVentas() {
