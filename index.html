@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   :root {
@@ -621,6 +622,7 @@
         <button class="nav-btn" onclick="mostrarPantallaAcademiaKits()"><span class="nav-icon">🧶</span> Kits de tejido</button>
         <button class="nav-btn" id="nav-inventario-tienda" onclick="mostrarPantallaInventario('01')"><span class="nav-icon">📊</span> Inventario</button>
         <button class="nav-btn" id="nav-ajustestock" onclick="mostrarPantallaAjusteStock()"><span class="nav-icon">📥</span> Entrada mercancía</button>
+        <button class="nav-btn" id="nav-etiquetas" onclick="mostrarPantallaEtiquetas()"><span class="nav-icon">🏷️</span> Imprimir etiquetas</button>
         <button class="nav-btn" id="nav-turno" onclick="irATurnoActivo()"><span class="nav-icon">💵</span> Turno de caja</button>
         <button class="nav-btn" id="nav-reportes" onclick="mostrarPantallaReportes()"><span class="nav-icon">📈</span> Reportes de turno</button>
         <button class="nav-btn" onclick="mostrarPantallaPagosPendientes('01')"><span class="nav-icon">📈</span> Caja, gastos y presupuesto</button>
@@ -985,6 +987,46 @@
         <h2 style="margin-top:24px;">Ventas recientes de Academy</h2>
         <div id="listaVentasAcademia"><div class="cargando">Cargando...</div></div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PANTALLA: IMPRIMIR ETIQUETAS ===== -->
+<div id="pantallaEtiquetas" class="oculto contenido">
+  <div class="page-header">
+    <h1>🏷️ Imprimir etiquetas</h1>
+    <div class="subtitulo">Cada etiqueta trae el código de barras, el nombre y el precio del producto.</div>
+  </div>
+  <div class="grilla-2">
+    <div class="panel">
+      <h2>Buscar y seleccionar productos</h2>
+      <div class="barra-busqueda"><input type="text" id="buscarProductoEtiqueta" placeholder="🔍 Nombre o SKU..." oninput="buscarProductosParaEtiqueta()"></div>
+      <div id="listaProductosEtiqueta" style="margin-top:10px;max-height:400px;overflow-y:auto;"><div class="cargando">Busca un producto arriba...</div></div>
+    </div>
+    <div class="panel">
+      <h2>Etiquetas a imprimir</h2>
+      <div id="listaEtiquetasSeleccionadas"><div style="font-size:12px;opacity:0.5;">No has agregado ningún producto todavía.</div></div>
+
+      <label for="etiquetaTamano" style="margin-top:14px;">Tamaño de etiqueta</label>
+      <select id="etiquetaTamano" onchange="document.getElementById('bloqueTamanoPersonalizado').classList.toggle('oculto', this.value !== 'personalizado')">
+        <option value="30x20">Pequeña — 30 x 20 mm</option>
+        <option value="40x30" selected>Mediana — 40 x 30 mm</option>
+        <option value="50x30">Grande — 50 x 30 mm</option>
+        <option value="60x40">Extra grande — 60 x 40 mm</option>
+        <option value="personalizado">Personalizado...</option>
+      </select>
+      <div id="bloqueTamanoPersonalizado" class="oculto" style="display:flex;gap:8px;">
+        <div style="flex:1;">
+          <label for="etiquetaAnchoPersonalizado">Ancho (mm)</label>
+          <input type="number" id="etiquetaAnchoPersonalizado" min="10" step="1" value="40">
+        </div>
+        <div style="flex:1;">
+          <label for="etiquetaAltoPersonalizado">Alto (mm)</label>
+          <input type="number" id="etiquetaAltoPersonalizado" min="10" step="1" value="30">
+        </div>
+      </div>
+
+      <button class="btn-principal" id="btnGenerarEtiquetas" onclick="generarEtiquetasParaImprimir()" disabled>🖨️ Generar e imprimir</button>
     </div>
   </div>
 </div>
@@ -2465,7 +2507,7 @@
   // UTILIDADES
   // ============================================================================
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -2718,6 +2760,7 @@
     mostrar('nav-historial', esAdmin || esCajero);
     mostrar('nav-inventario-tienda', esAdmin || esCajero);
     mostrar('nav-ajustestock', esAdmin || esCajero);
+    mostrar('nav-etiquetas', esAdmin || esCajero);
     mostrar('nav-reportes', esAdmin);
     mostrar('nav-pedidos-canal', esAdmin || esCajero);
     mostrar('nav-solicitudes-tienda', esAdmin || esCajero);
@@ -5385,6 +5428,154 @@
   // ============================================================================
   let productoEntradaSeleccionado = null; // { id, nombre, stock_actual }
   let timeoutBusquedaEntrada = null;
+
+  // ============================================================
+  // IMPRIMIR ETIQUETAS CON CÓDIGO DE BARRAS
+  // ============================================================
+  let etiquetasSeleccionadas = []; // [{ id, nombre, sku, precio_venta, cantidad }]
+
+  async function mostrarPantallaEtiquetas() {
+    mostrarPantalla('pantallaEtiquetas');
+    document.getElementById('buscarProductoEtiqueta').value = '';
+    document.getElementById('listaProductosEtiqueta').innerHTML = '<div class="cargando">Busca un producto arriba...</div>';
+    etiquetasSeleccionadas = [];
+    renderizarEtiquetasSeleccionadas();
+  }
+
+  let timeoutBuscarProductoEtiqueta = null;
+  function buscarProductosParaEtiqueta() {
+    clearTimeout(timeoutBuscarProductoEtiqueta);
+    timeoutBuscarProductoEtiqueta = setTimeout(async () => {
+      const q = document.getElementById('buscarProductoEtiqueta').value.trim();
+      const contenedor = document.getElementById('listaProductosEtiqueta');
+      if (!q) { contenedor.innerHTML = '<div class="cargando">Busca un producto arriba...</div>'; return; }
+
+      const { data } = await supabaseClient
+        .from('inventario_items')
+        .select('id, nombre, sku, precio_venta')
+        .eq('activo', true)
+        .or(`nombre.ilike.%${q}%,sku.ilike.%${q}%`)
+        .limit(20);
+
+      if (!data || data.length === 0) { contenedor.innerHTML = '<div class="cargando">No se encontraron productos.</div>'; return; }
+
+      contenedor.innerHTML = data.map(p => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f4eef2;font-size:12.5px;">
+          <span>${escaparHtml(p.nombre)}${p.sku ? ' <span style="opacity:0.5;">(' + escaparHtml(p.sku) + ')</span>' : ' <span style="color:var(--rojo-error);">— sin SKU</span>'}</span>
+          <button class="btn-mini editar" onclick='agregarProductoAEtiquetas(${JSON.stringify(p).replace(/'/g, "&#39;")})'>+ Agregar</button>
+        </div>
+      `).join('');
+    }, 300);
+  }
+
+  function agregarProductoAEtiquetas(producto) {
+    if (!producto.sku) {
+      const nuevoSku = prompt(`"${producto.nombre}" todavía no tiene código de barras (SKU). Escríbelo para asignárselo:`);
+      if (!nuevoSku) return;
+      producto.sku = nuevoSku.trim();
+      supabaseClient.from('inventario_items').update({ sku: producto.sku }).eq('id', producto.id).then(() => {});
+    }
+    const yaEsta = etiquetasSeleccionadas.find(e => e.id === producto.id);
+    if (yaEsta) { yaEsta.cantidad += 1; }
+    else { etiquetasSeleccionadas.push({ ...producto, cantidad: 1 }); }
+    renderizarEtiquetasSeleccionadas();
+  }
+
+  function quitarProductoDeEtiquetas(id) {
+    etiquetasSeleccionadas = etiquetasSeleccionadas.filter(e => e.id !== id);
+    renderizarEtiquetasSeleccionadas();
+  }
+
+  function cambiarCantidadEtiqueta(id, cantidad) {
+    const item = etiquetasSeleccionadas.find(e => e.id === id);
+    if (item) item.cantidad = Math.max(1, Number(cantidad) || 1);
+  }
+
+  function renderizarEtiquetasSeleccionadas() {
+    const contenedor = document.getElementById('listaEtiquetasSeleccionadas');
+    document.getElementById('btnGenerarEtiquetas').disabled = etiquetasSeleccionadas.length === 0;
+
+    if (etiquetasSeleccionadas.length === 0) {
+      contenedor.innerHTML = '<div style="font-size:12px;opacity:0.5;">No has agregado ningún producto todavía.</div>';
+      return;
+    }
+    contenedor.innerHTML = etiquetasSeleccionadas.map(e => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f4eef2;font-size:12.5px;">
+        <span>${escaparHtml(e.nombre)}</span>
+        <span style="display:flex;align-items:center;gap:8px;">
+          <input type="number" min="1" step="1" value="${e.cantidad}" style="width:60px;padding:5px;" onchange="cambiarCantidadEtiqueta('${e.id}', this.value)">
+          <button class="btn-quitar-pago" onclick="quitarProductoDeEtiquetas('${e.id}')">✕</button>
+        </span>
+      </div>
+    `).join('');
+  }
+
+  function generarEtiquetasParaImprimir() {
+    if (etiquetasSeleccionadas.length === 0) return;
+
+    const tamanoSeleccionado = document.getElementById('etiquetaTamano').value;
+    let anchoMm, altoMm;
+    if (tamanoSeleccionado === 'personalizado') {
+      anchoMm = Number(document.getElementById('etiquetaAnchoPersonalizado').value) || 40;
+      altoMm = Number(document.getElementById('etiquetaAltoPersonalizado').value) || 30;
+    } else {
+      [anchoMm, altoMm] = tamanoSeleccionado.split('x').map(Number);
+    }
+
+    let etiquetasHtml = '';
+    let contadorSvg = 0;
+    for (const item of etiquetasSeleccionadas) {
+      for (let i = 0; i < item.cantidad; i++) {
+        etiquetasHtml += `
+          <div class="etiqueta-producto">
+            <div class="etiqueta-nombre">${escaparHtml(item.nombre)}</div>
+            <svg id="svgEtiqueta${contadorSvg}"></svg>
+            <div class="etiqueta-precio">${formatearMoneda(item.precio_venta)}</div>
+          </div>
+        `;
+        contadorSvg++;
+      }
+    }
+
+    const ventana = window.open('', '_blank');
+    ventana.document.write(`
+      <html><head><title>Etiquetas</title>
+      <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 5mm; }
+        .hoja-etiquetas { display: flex; flex-wrap: wrap; gap: 2mm; }
+        .etiqueta-producto {
+          width: ${anchoMm}mm; height: ${altoMm}mm;
+          border: 1px dashed #999; border-radius: 2px; padding: 1.5mm;
+          text-align: center; page-break-inside: avoid;
+          display: flex; flex-direction: column; justify-content: center; align-items: center; box-sizing: border-box;
+        }
+        .etiqueta-nombre { font-size: ${Math.max(altoMm * 0.28, 7)}pt; font-weight: 700; margin-bottom: 1mm; line-height: 1.1; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .etiqueta-precio { font-size: ${Math.max(altoMm * 0.32, 8)}pt; font-weight: 700; color: #d8017c; margin-top: 1mm; }
+        svg { width: 90%; height: ${Math.max(altoMm * 0.4, 8)}mm; }
+        @media print { .etiqueta-producto { border: none; } button { display: none; } @page { margin: 5mm; } }
+      </style>
+      <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></scr` + `ipt>
+      </head>
+      <body>
+        <button onclick="window.print()" style="margin-bottom:12px;padding:10px 20px;background:#d8017c;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;">🖨️ Imprimir</button>
+        <div class="hoja-etiquetas">${etiquetasHtml}</div>
+      </body></html>
+    `);
+    ventana.document.close();
+
+    // Esperar a que cargue JsBarcode en la ventana nueva antes de generar los códigos
+    ventana.onload = () => {
+      let idx = 0;
+      for (const item of etiquetasSeleccionadas) {
+        for (let i = 0; i < item.cantidad; i++) {
+          try {
+            ventana.JsBarcode(`#svgEtiqueta${idx}`, item.sku, { format: 'CODE128', width: 1.3, height: Math.max(altoMm * 0.4, 8) * 3.78, fontSize: Math.max(altoMm * 0.22, 6) * 3.78, margin: 0 });
+          } catch (e) { /* SKU no válido para código de barras */ }
+          idx++;
+        }
+      }
+    };
+  }
 
   async function mostrarPantallaAjusteStock() {
     mostrarPantalla('pantallaAjusteStock');
