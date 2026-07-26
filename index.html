@@ -762,7 +762,7 @@
   <div class="filtro-tipo" style="margin-bottom:20px;">
     <button class="chip-filtro activo" data-subtab-btn="registrarVenta" onclick="mostrarSubTabGrupo('registrarVenta', 'subtabVentaProductos', this)">🛒 Productos</button>
     <button class="chip-filtro" data-subtab-btn="registrarVenta" onclick="mostrarSubTabGrupo('registrarVenta', 'subtabVentaWhatsapp', this); cargarTarifasEnvioParaPedido();">📱 WhatsApp/Redes</button>
-    <button class="chip-filtro" data-subtab-btn="registrarVenta" onclick="mostrarSubTabGrupo('registrarVenta', 'subtabVentaAcademia', this); cargarVentasAcademia();">🎓 Cursos y clases</button>
+    <button class="chip-filtro" data-subtab-btn="registrarVenta" onclick="mostrarSubTabGrupo('registrarVenta', 'subtabVentaAcademia', this); prepararPestanaVentaAcademia();">🎓 Cursos y clases</button>
   </div>
 
   <div id="subtabVentaProductos" data-subtab-grupo="registrarVenta">
@@ -920,9 +920,25 @@
         <input type="text" id="academiaDescripcion" placeholder="Ej: Curso de amigurumis nivel 1 — María P.">
         <label for="academiaCliente">Cliente <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
         <input type="text" id="academiaCliente" placeholder="Nombre del cliente">
-        <label for="academiaMonto">Monto (COP)</label>
-        <input type="number" id="academiaMonto" placeholder="0" min="1" step="1000">
-        <label for="academiaMetodoPago">Método de pago</label>
+        <label for="academiaTelefono">Teléfono <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+        <input type="tel" id="academiaTelefono" placeholder="300 000 0000">
+        <label for="academiaCorreo">Correo electrónico <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+        <input type="email" id="academiaCorreo" placeholder="correo@gmail.com">
+        <label for="academiaMonto">Valor de la clase/curso (COP)</label>
+        <input type="number" id="academiaMonto" placeholder="0" min="1" step="1000" oninput="actualizarTotalVentaAcademia()">
+
+        <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-weight:400;">
+          <input type="checkbox" id="chkAgregarKitClase" style="width:auto;" onchange="document.getElementById('bloqueKitClase').classList.toggle('oculto', !this.checked); actualizarTotalVentaAcademia();">
+          <span>🧶 Agregar kit de tejido a esta venta</span>
+        </label>
+        <div id="bloqueKitClase" class="oculto">
+          <label for="academiaKitSeleccionado">¿Cuál kit?</label>
+          <select id="academiaKitSeleccionado" onchange="actualizarTotalVentaAcademia()"><option value="">Cargando...</option></select>
+        </div>
+
+        <div id="totalVentaAcademiaResumen" class="resumen-cierre oculto" style="margin-top:12px;"></div>
+
+        <label for="academiaMetodoPago" style="margin-top:14px;">Método de pago</label>
         <select id="academiaMetodoPago">
           <option value="efectivo">Efectivo</option>
           <option value="nequi">Nequi</option>
@@ -943,7 +959,23 @@
       </div>
 
       <div class="panel">
-        <h2>Ventas recientes de Academy</h2>
+        <h2>📅 Agendar la clase</h2>
+        <div class="subtitulo" id="subtituloLiderAcademia">Calendario de <span id="nombreLiderAcademia">quien lidera Academy</span> — para que quede agendada de una vez.</div>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:0;font-weight:400;">
+          <input type="checkbox" id="chkAgendarClase" style="width:auto;" onchange="document.getElementById('bloqueAgendarClase').classList.toggle('oculto', !this.checked)">
+          <span>Agendar esta clase en el calendario</span>
+        </label>
+        <div id="bloqueAgendarClase" class="oculto">
+          <label for="claseFechaInicio">Fecha y hora de la clase</label>
+          <input type="datetime-local" id="claseFechaInicio">
+        </div>
+
+        <div style="margin-top:16px;">
+          <div style="font-size:12.5px;font-weight:600;opacity:0.7;margin-bottom:6px;">Próximas clases ya agendadas</div>
+          <div id="listaProximasClasesAcademia" style="max-height:280px;overflow-y:auto;"><div class="cargando">Cargando...</div></div>
+        </div>
+
+        <h2 style="margin-top:24px;">Ventas recientes de Academy</h2>
         <div id="listaVentasAcademia"><div class="cargando">Cargando...</div></div>
       </div>
     </div>
@@ -2125,21 +2157,23 @@
   <div id="subtabAcademiaKits" data-subtab-grupo="academia">
     <div class="grilla-2">
       <div class="panel">
-        <h2>+ Nuevo radicado de kit</h2>
-        <div class="subtitulo">Para una clase presencial específica. Se genera un código automático (KIT-año-###).</div>
-        <label for="kitDescripcion">¿Para qué clase o kit es?</label>
-        <input type="text" id="kitDescripcion" placeholder="Ej: Clase presencial amigurumi básico — Sábado 25">
-        <button class="btn-principal" id="btnCrearRadicadoKit" onclick="confirmarCrearRadicadoKit()">Crear radicado</button>
-        <div class="mensaje" id="mensajeRadicadoKit"></div>
+        <h2>+ Armar kit de tejido</h2>
+        <div class="subtitulo">Elige los insumos y la cantidad de cada uno que lleva UN kit — se descuentan del inventario de Tienda y el kit queda listo para vender.</div>
+        <label for="kitNombre">Nombre del kit</label>
+        <input type="text" id="kitNombre" placeholder="Ej: Kit amigurumi básico">
+        <label for="kitPrecioVenta">Precio de venta (por kit)</label>
+        <input type="number" id="kitPrecioVenta" min="0" step="1000" placeholder="0">
+        <label for="kitCantidadKits">¿Cuántos kits vas a armar?</label>
+        <input type="number" id="kitCantidadKits" min="1" step="1" value="1">
+        <label style="margin-top:10px;">Insumos que lleva cada kit</label>
+        <div id="listaInsumosParaKit" style="margin-top:6px;"><div class="cargando">Cargando insumos de Tienda...</div></div>
+        <button class="btn-principal" id="btnArmarKit" onclick="confirmarArmarKit()">Armar kit</button>
+        <div class="mensaje" id="mensajeArmarKit"></div>
       </div>
       <div class="panel">
-        <h2>Radicados en proceso</h2>
-        <div id="listaRadicadosKit"><div class="cargando">Cargando...</div></div>
+        <h2>Kits ya armados</h2>
+        <div id="listaKitsArmados"><div class="cargando">Cargando...</div></div>
       </div>
-    </div>
-
-    <div class="panel" style="max-height:none;margin-top:20px;" id="panelDetalleRadicadoKit">
-      <h2>Selecciona un radicado arriba para tomar material</h2>
     </div>
   </div>
 </div>
@@ -9116,7 +9150,7 @@
     await mostrarPantallaVentas();
     if (!turnoActivoActual) return; // mostrarPantallaVentas ya redirigió a abrir turno
     mostrarSubTabGrupo('registrarVenta', 'subtabVentaAcademia', document.querySelectorAll('[data-subtab-btn="registrarVenta"]')[2]);
-    await cargarVentasAcademia();
+    await prepararPestanaVentaAcademia();
   }
 
   async function mostrarPantallaAcademiaKits() {
@@ -9127,17 +9161,98 @@
     await cargarRadicadosKit();
   }
 
+  let liderAcademiaCache = null;
+  let kitsDisponiblesCache = [];
+
+  async function prepararPestanaVentaAcademia() {
+    document.getElementById('chkAgregarKitClase').checked = false;
+    document.getElementById('bloqueKitClase').classList.add('oculto');
+    document.getElementById('chkAgendarClase').checked = false;
+    document.getElementById('bloqueAgendarClase').classList.add('oculto');
+    document.getElementById('claseFechaInicio').value = '';
+    document.getElementById('totalVentaAcademiaResumen').classList.add('oculto');
+
+    await Promise.all([cargarVentasAcademia(), cargarLiderAcademiaParaVenta(), cargarKitsParaVenta(), cargarProximasClasesAcademia()]);
+  }
+
+  async function cargarLiderAcademiaParaVenta() {
+    const resp = await fetch(WORKER_URL + '/api/pos/academia/lider', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) return;
+    const { lider } = await resp.json();
+    liderAcademiaCache = lider;
+    document.getElementById('nombreLiderAcademia').textContent = lider ? lider.nombre_completo : 'quien lidere Academy (todavía no asignado)';
+  }
+
+  async function cargarKitsParaVenta() {
+    const resp = await fetch(WORKER_URL + '/api/pos/academia/kit/listar', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    const select = document.getElementById('academiaKitSeleccionado');
+    if (!resp.ok) { select.innerHTML = '<option value="">No se pudo cargar</option>'; return; }
+    const { kits } = await resp.json();
+    kitsDisponiblesCache = (kits || []).filter(k => k.activo && k.stock_actual > 0);
+    select.innerHTML = kitsDisponiblesCache.length
+      ? kitsDisponiblesCache.map(k => `<option value="${k.id}">${escaparHtml(k.nombre)} — ${formatearMoneda(k.precio_venta)} (stock: ${k.stock_actual})</option>`).join('')
+      : '<option value="">No hay kits armados con stock disponible</option>';
+  }
+
+  async function cargarProximasClasesAcademia() {
+    const contenedor = document.getElementById('listaProximasClasesAcademia');
+    const resp = await fetch(WORKER_URL + '/api/pos/academia/proximas-clases', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const { clases } = await resp.json();
+    if (!clases || clases.length === 0) { contenedor.innerHTML = '<div class="cargando">No hay clases agendadas próximamente.</div>'; return; }
+
+    contenedor.innerHTML = clases.map(c => `
+      <div style="padding:7px 0;border-bottom:1px solid #f4eef2;font-size:12px;">
+        <strong>${new Date(c.fecha_inicio).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}</strong><br>
+        ${escaparHtml(c.titulo)}
+      </div>
+    `).join('');
+  }
+
+  function actualizarTotalVentaAcademia() {
+    const montoClase = Number(document.getElementById('academiaMonto').value) || 0;
+    const incluyeKit = document.getElementById('chkAgregarKitClase').checked;
+    const kitId = document.getElementById('academiaKitSeleccionado').value;
+    const kit = kitsDisponiblesCache.find(k => k.id === kitId);
+    const precioKit = (incluyeKit && kit) ? Number(kit.precio_venta) : 0;
+    const total = montoClase + precioKit;
+
+    const resumen = document.getElementById('totalVentaAcademiaResumen');
+    if (precioKit > 0) {
+      resumen.classList.remove('oculto');
+      resumen.innerHTML = `
+        <div class="resumen-fila"><span>Clase/curso</span><strong>${formatearMoneda(montoClase)}</strong></div>
+        <div class="resumen-fila"><span>Kit de tejido</span><strong>${formatearMoneda(precioKit)}</strong></div>
+        <div class="resumen-fila total"><span>TOTAL A COBRAR</span><strong>${formatearMoneda(total)}</strong></div>
+      `;
+    } else {
+      resumen.classList.add('oculto');
+    }
+  }
+
   async function confirmarRegistrarVentaAcademia() {
     const areaFormacion = document.getElementById('academiaSubarea').value;
     const descripcion = document.getElementById('academiaDescripcion').value.trim();
     const cliente = document.getElementById('academiaCliente').value.trim();
-    const monto = Number(document.getElementById('academiaMonto').value);
+    const telefono = document.getElementById('academiaTelefono').value.trim();
+    const correo = document.getElementById('academiaCorreo').value.trim();
+    const montoClase = Number(document.getElementById('academiaMonto').value);
     const metodoPago = document.getElementById('academiaMetodoPago').value;
+    const incluyeKit = document.getElementById('chkAgregarKitClase').checked;
+    const kitId = document.getElementById('academiaKitSeleccionado').value;
+    const kit = kitsDisponiblesCache.find(k => k.id === kitId);
+    const agendarClase = document.getElementById('chkAgendarClase').checked;
+    const fechaClase = document.getElementById('claseFechaInicio').value;
     ocultarMensaje('mensajeVentaAcademia');
 
     if (!descripcion) { mostrarMensaje('mensajeVentaAcademia', 'Escribe una descripción.', 'error'); return; }
-    if (!monto || monto <= 0) { mostrarMensaje('mensajeVentaAcademia', 'Escribe un monto válido.', 'error'); return; }
+    if (!montoClase || montoClase <= 0) { mostrarMensaje('mensajeVentaAcademia', 'Escribe un monto válido.', 'error'); return; }
     if (!turnoActivoActual) { mostrarMensaje('mensajeVentaAcademia', 'No hay un turno de caja de Tienda abierto.', 'error'); return; }
+    if (incluyeKit && !kitId) { mostrarMensaje('mensajeVentaAcademia', 'Selecciona cuál kit vas a incluir.', 'error'); return; }
+    if (agendarClase && !fechaClase) { mostrarMensaje('mensajeVentaAcademia', 'Escribe la fecha y hora de la clase.', 'error'); return; }
+
+    const precioKit = (incluyeKit && kit) ? Number(kit.precio_venta) : 0;
+    const montoTotal = montoClase + precioKit;
 
     const btn = document.getElementById('btnRegistrarVentaAcademia');
     btn.disabled = true;
@@ -9148,31 +9263,60 @@
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({
         area_formacion: areaFormacion,
-        descripcion,
+        descripcion: descripcion + (incluyeKit && kit ? ' + kit: ' + kit.nombre : ''),
         cliente_nombre: cliente || null,
-        monto,
+        monto: montoTotal,
         metodo_pago: metodoPago,
         turno_id: turnoActivoActual.id
       })
     });
 
+    const datos = await resp.json();
+    if (!resp.ok) {
+      btn.disabled = false;
+      btn.textContent = 'Registrar venta';
+      mostrarMensaje('mensajeVentaAcademia', datos.error || 'No se pudo registrar la venta.', 'error');
+      return;
+    }
+
+    // Descontar el kit del inventario, si se incluyó
+    if (incluyeKit && kitId) {
+      await fetch(WORKER_URL + '/api/pos/academia/kit/descontar-stock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+        body: JSON.stringify({ kit_id: kitId, cantidad: 1 })
+      });
+    }
+
+    // Agendar la clase en el calendario, si se marcó
+    if (agendarClase && fechaClase) {
+      await fetch(WORKER_URL + '/api/pos/academia/agendar-clase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+        body: JSON.stringify({
+          titulo: descripcion + (cliente ? ' — ' + cliente : ''),
+          descripcion: `Cliente: ${cliente || 'Sin nombre'}${telefono ? ' · Tel: ' + telefono : ''}`,
+          fecha_inicio: new Date(fechaClase).toISOString()
+        })
+      });
+    }
+
     btn.disabled = false;
     btn.textContent = 'Registrar venta';
-
-    const datos = await resp.json();
-    if (!resp.ok) { mostrarMensaje('mensajeVentaAcademia', datos.error || 'No se pudo registrar la venta.', 'error'); return; }
-
-    mostrarMensaje('mensajeVentaAcademia', '✅ Venta registrada correctamente.', 'exito');
+    mostrarMensaje('mensajeVentaAcademia', '✅ Venta registrada correctamente.' + (agendarClase ? ' Clase agendada en el calendario.' : ''), 'exito');
 
     ultimaVentaCache = {
       consecutivo: datos.venta_id ? String(datos.venta_id).slice(0, 8).toUpperCase() : 'ACADEMY',
       fecha: new Date(),
-      lineas: [{ nombre: descripcion, cantidad: 1, precio: monto }],
-      subtotal: monto,
+      lineas: [
+        { nombre: descripcion, cantidad: 1, precio: montoClase },
+        ...(precioKit > 0 ? [{ nombre: 'Kit de tejido: ' + kit.nombre, cantidad: 1, precio: precioKit }] : [])
+      ],
+      subtotal: montoTotal,
       descuento: 0,
-      total: monto,
-      pagos: [{ metodo_pago: metodoPago, monto }],
-      cliente: { nombre: cliente || null, telefono: null, identificacion: null },
+      total: montoTotal,
+      pagos: [{ metodo_pago: metodoPago, monto: montoTotal }],
+      cliente: { nombre: cliente || null, telefono: telefono || null, identificacion: null },
       cajero: miPropiaIdentidad.nombre || 'Cajero'
     };
     document.getElementById('btnImprimirReciboAcademia').disabled = false;
@@ -9180,8 +9324,17 @@
 
     document.getElementById('academiaDescripcion').value = '';
     document.getElementById('academiaCliente').value = '';
+    document.getElementById('academiaTelefono').value = '';
+    document.getElementById('academiaCorreo').value = '';
     document.getElementById('academiaMonto').value = '';
-    await cargarVentasAcademia();
+    document.getElementById('chkAgregarKitClase').checked = false;
+    document.getElementById('bloqueKitClase').classList.add('oculto');
+    document.getElementById('chkAgendarClase').checked = false;
+    document.getElementById('bloqueAgendarClase').classList.add('oculto');
+    document.getElementById('claseFechaInicio').value = '';
+    document.getElementById('totalVentaAcademiaResumen').classList.add('oculto');
+
+    await prepararPestanaVentaAcademia();
   }
 
   async function cargarVentasAcademia() {
@@ -9277,191 +9430,100 @@
   }
 
   // ============================================================
-  // KITS DE TEJIDO (Lana Rosa Academy)
+  // KITS DE TEJIDO — proceso simplificado (se arman con insumos de Tienda)
   // ============================================================
-  let radicadosKitCache = [];
-  let radicadoKitSeleccionadoId = null;
-  let insumosAcademiaCache = [];
-
-  async function confirmarCrearRadicadoKit() {
-    const descripcion = document.getElementById('kitDescripcion').value.trim();
-    ocultarMensaje('mensajeRadicadoKit');
-    if (!descripcion) { mostrarMensaje('mensajeRadicadoKit', 'Escribe para qué clase o kit es.', 'error'); return; }
-
-    const btn = document.getElementById('btnCrearRadicadoKit');
-    btn.disabled = true;
-    btn.textContent = 'Creando...';
-
-    const resp = await fetch(WORKER_URL + '/api/pos/academia/radicados-kit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ descripcion })
-    });
-
-    btn.disabled = false;
-    btn.textContent = 'Crear radicado';
-
-    const datos = await resp.json();
-    if (!resp.ok) { mostrarMensaje('mensajeRadicadoKit', datos.error || 'No se pudo crear el radicado.', 'error'); return; }
-
-    mostrarMensaje('mensajeRadicadoKit', `✅ Radicado ${datos.codigo} creado.`, 'exito');
-    document.getElementById('kitDescripcion').value = '';
-    await cargarRadicadosKit();
-  }
+  let insumosParaKitCache = [];
+  let kitsArmadosCache = [];
 
   async function cargarRadicadosKit() {
-    const contenedor = document.getElementById('listaRadicadosKit');
-    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+    await Promise.all([cargarInsumosParaKit(), cargarKitsArmados()]);
+  }
 
-    const resp = await fetch(WORKER_URL + '/api/pos/academia/radicados-kit?estado=en_proceso', {
-      headers: { Authorization: 'Bearer ' + sesionActual.token }
-    });
+  async function cargarInsumosParaKit() {
+    const contenedor = document.getElementById('listaInsumosParaKit');
+    const resp = await fetch(WORKER_URL + '/api/pos/academia/insumos', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
     if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const { insumos } = await resp.json();
+    insumosParaKitCache = insumos || [];
 
-    const { radicados } = await resp.json();
-    radicadosKitCache = radicados || [];
-
-    if (radicadosKitCache.length === 0) {
-      contenedor.innerHTML = '<div class="cargando">No hay radicados en proceso.</div>';
+    if (insumosParaKitCache.length === 0) {
+      contenedor.innerHTML = '<div class="cargando">No hay insumos de mercería en el inventario de Tienda todavía.</div>';
       return;
     }
 
-    contenedor.innerHTML = radicadosKitCache.map(r => `
-      <div class="fila-inventario-editable" style="cursor:pointer;" onclick="seleccionarRadicadoKit('${r.id}')">
-        <div class="fila-inventario-titulo">
-          <span class="fila-inventario-nombre">${escaparHtml(r.codigo)}</span>
-        </div>
-        <div style="font-size:12.5px;opacity:0.75;margin-top:4px;">${escaparHtml(r.descripcion)}</div>
+    contenedor.innerHTML = insumosParaKitCache.map(i => `
+      <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f4eef2;">
+        <input type="checkbox" class="chkInsumoKit" data-id="${i.id}" data-nombre="${escaparHtml(i.nombre)}" style="width:auto;" onchange="document.getElementById('cantInsumoKit-${i.id}').disabled = !this.checked">
+        <span style="flex:1;font-size:12.5px;">${escaparHtml(i.nombre)} <span style="opacity:0.5;">(stock: ${i.stock_actual} ${i.unidad_medida})</span></span>
+        <input type="number" id="cantInsumoKit-${i.id}" min="0.01" step="0.01" placeholder="Cant./kit" style="width:90px;padding:5px 7px;" disabled>
       </div>
     `).join('');
   }
 
-  async function seleccionarRadicadoKit(radicadoId) {
-    radicadoKitSeleccionadoId = radicadoId;
-    if (insumosAcademiaCache.length === 0) await cargarInsumosAcademia();
-    await renderizarDetalleRadicadoKit();
-  }
+  async function cargarKitsArmados() {
+    const contenedor = document.getElementById('listaKitsArmados');
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+    const resp = await fetch(WORKER_URL + '/api/pos/academia/kit/listar', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const { kits } = await resp.json();
+    kitsArmadosCache = kits || [];
 
-  async function cargarInsumosAcademia() {
-    const resp = await fetch(WORKER_URL + '/api/pos/academia/insumos', {
-      headers: { Authorization: 'Bearer ' + sesionActual.token }
-    });
-    insumosAcademiaCache = resp.ok ? (await resp.json()).insumos || [] : [];
-  }
-
-  async function renderizarDetalleRadicadoKit() {
-    const radicado = radicadosKitCache.find(r => r.id === radicadoKitSeleccionadoId);
-    const contenedor = document.getElementById('panelDetalleRadicadoKit');
-    if (!radicado) { contenedor.innerHTML = '<h2>Selecciona un radicado arriba para tomar material</h2>'; return; }
-
-    const respConsumos = await fetch(`${WORKER_URL}/api/pos/academia/kit/consumos-en-curso?radicado_kit_id=${radicadoKitSeleccionadoId}`, {
-      headers: { Authorization: 'Bearer ' + sesionActual.token }
-    });
-    const consumosEnCurso = respConsumos.ok ? (await respConsumos.json()).consumos || [] : [];
-
-    const opcionesInsumo = insumosAcademiaCache.map(i => `<option value="${i.id}">${escaparHtml(i.nombre)} (stock: ${i.stock_actual} ${i.unidad_medida})</option>`).join('');
-
-    contenedor.innerHTML = `
-      <h2>${escaparHtml(radicado.codigo)} — ${escaparHtml(radicado.descripcion)}</h2>
-
-      <div style="margin-top:12px;padding:12px;background:var(--rosa-suave);border-radius:10px;">
-        <div style="font-size:12.5px;font-weight:700;margin-bottom:8px;">Tomar insumo del inventario de Academy</div>
-        <select id="kitInsumoSelect">${opcionesInsumo || '<option value="">No hay insumos de mercería en el inventario de Academy</option>'}</select>
-        <input type="number" min="0.1" step="0.1" placeholder="Cantidad (gramos o unidades)" id="kitCantidadTomar" style="margin-top:8px;">
-        <button class="btn-mini guardar" style="width:100%;margin-top:8px;" onclick="confirmarTomarMaterialKit()">Tomar material</button>
-      </div>
-
-      <div style="margin-top:16px;">
-        <div style="font-size:12.5px;font-weight:700;margin-bottom:8px;">Material tomado (sin devolver sobrante)</div>
-        ${consumosEnCurso.length === 0 ? '<div style="font-size:12px;opacity:0.6;">Nada pendiente.</div>' : consumosEnCurso.map(c => `
-          <div class="fila-consumo-historial" style="padding:10px 0;">
-            <div><strong>${c.cantidad_tomada} ${c.inventario_items ? c.inventario_items.unidad_medida : ''}</strong> de ${escaparHtml(c.inventario_items ? c.inventario_items.nombre : 'Insumo')}</div>
-            <div style="display:flex;gap:8px;margin-top:6px;align-items:center;">
-              <input type="number" min="0" step="0.1" placeholder="¿Cuánto sobró?" id="devolver-kit-${c.id}" style="flex:1;padding:7px 9px;font-size:12.5px;">
-              <button onclick="confirmarDevolverMaterialKit('${c.id}')" style="padding:7px 12px;border-radius:8px;border:none;background:var(--verde-exito);color:white;font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">Devolver sobrante</button>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-
-      <div style="margin-top:16px;padding-top:14px;border-top:2px solid var(--rosa-suave);">
-        <div style="font-size:12.5px;font-weight:700;margin-bottom:8px;">🎁 Finalizar y crear el kit terminado</div>
-        <div style="font-size:11px;opacity:0.6;margin-bottom:8px;">${consumosEnCurso.length > 0 ? '⚠️ Primero devuelve el sobrante de todos los insumos.' : 'Todos los insumos ya están cerrados — listo para finalizar.'}</div>
-        <label style="margin-top:0;">Nombre del kit</label>
-        <input type="text" id="kitNombreFinal" placeholder="Ej: Kit amigurumi básico">
-        <label style="margin-top:8px;">Cuántos kits salieron</label>
-        <input type="number" min="1" step="1" value="1" id="kitCantidadFinal">
-        <label style="margin-top:8px;">Precio de venta por kit (COP)</label>
-        <input type="number" min="0" step="1000" id="kitPrecioFinal">
-        <button class="btn-principal" ${consumosEnCurso.length > 0 ? 'disabled' : ''} onclick="confirmarFinalizarKit()">Finalizar kit</button>
-      </div>
-    `;
-  }
-
-  async function confirmarTomarMaterialKit() {
-    const insumoId = document.getElementById('kitInsumoSelect').value;
-    const cantidad = Number(document.getElementById('kitCantidadTomar').value);
-    if (!insumoId) { alert('Selecciona un insumo.'); return; }
-    if (!cantidad || cantidad <= 0) { alert('Escribe una cantidad válida.'); return; }
-
-    const resp = await fetch(WORKER_URL + '/api/pos/academia/kit/tomar-material', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ radicado_kit_id: radicadoKitSeleccionadoId, inventario_item_id: insumoId, cantidad })
-    });
-    const datos = await resp.json();
-    if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudo tomar el material')); return; }
-
-    await cargarInsumosAcademia();
-    await renderizarDetalleRadicadoKit();
-  }
-
-  async function confirmarDevolverMaterialKit(consumoId) {
-    const inputEl = document.getElementById(`devolver-kit-${consumoId}`);
-    const cantidadDevuelta = Number(inputEl.value);
-    if (inputEl.value === '' || isNaN(cantidadDevuelta) || cantidadDevuelta < 0) {
-      alert('Escribe cuánto sobró (puede ser 0 si no sobró nada).');
+    if (kitsArmadosCache.length === 0) {
+      contenedor.innerHTML = '<div class="cargando">Todavía no has armado ningún kit.</div>';
       return;
     }
 
-    const resp = await fetch(WORKER_URL + '/api/pos/academia/kit/devolver-material', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ consumo_id: consumoId, cantidad_devuelta: cantidadDevuelta })
-    });
-    const datos = await resp.json();
-    if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudo registrar la devolución')); return; }
-
-    await cargarInsumosAcademia();
-    await renderizarDetalleRadicadoKit();
+    contenedor.innerHTML = kitsArmadosCache.map(k => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f4eef2;font-size:13px;">
+        <span><strong>${escaparHtml(k.nombre)}</strong></span>
+        <span>${formatearMoneda(k.precio_venta)} · Stock: ${k.stock_actual}</span>
+      </div>
+    `).join('');
   }
 
-  async function confirmarFinalizarKit() {
-    const nombreKit = document.getElementById('kitNombreFinal').value.trim();
-    const cantidadKits = Number(document.getElementById('kitCantidadFinal').value);
-    const precioVenta = Number(document.getElementById('kitPrecioFinal').value) || 0;
+  async function confirmarArmarKit() {
+    const nombreKit = document.getElementById('kitNombre').value.trim();
+    const precioVenta = Number(document.getElementById('kitPrecioVenta').value);
+    const cantidadKits = Number(document.getElementById('kitCantidadKits').value);
+    ocultarMensaje('mensajeArmarKit');
 
-    if (!nombreKit) { alert('Escribe el nombre del kit.'); return; }
-    if (!cantidadKits || cantidadKits <= 0) { alert('Escribe cuántos kits salieron.'); return; }
+    if (!nombreKit) { mostrarMensaje('mensajeArmarKit', 'Escribe el nombre del kit.', 'error'); return; }
+    if (!precioVenta || precioVenta < 0) { mostrarMensaje('mensajeArmarKit', 'Escribe un precio de venta válido.', 'error'); return; }
+    if (!cantidadKits || cantidadKits <= 0) { mostrarMensaje('mensajeArmarKit', 'Escribe cuántos kits vas a armar.', 'error'); return; }
 
-    if (!confirm(`¿Confirmas finalizar este radicado y agregar ${cantidadKits} unidad(es) de "${nombreKit}" al inventario de Academy?`)) return;
+    const insumosSeleccionados = Array.from(document.querySelectorAll('.chkInsumoKit:checked')).map(chk => {
+      const id = chk.dataset.id;
+      const cantidad = Number(document.getElementById(`cantInsumoKit-${id}`).value);
+      return { inventario_item_id: id, cantidad_por_kit: cantidad, nombre: chk.dataset.nombre };
+    });
 
-    const resp = await fetch(WORKER_URL + '/api/pos/academia/kit/finalizar', {
+    if (insumosSeleccionados.length === 0) { mostrarMensaje('mensajeArmarKit', 'Selecciona al menos un insumo.', 'error'); return; }
+    const conCantidadInvalida = insumosSeleccionados.find(i => !i.cantidad || i.cantidad <= 0);
+    if (conCantidadInvalida) { mostrarMensaje('mensajeArmarKit', `Escribe la cantidad de "${conCantidadInvalida.nombre}" que lleva cada kit.`, 'error'); return; }
+
+    const btn = document.getElementById('btnArmarKit');
+    btn.disabled = true;
+    btn.textContent = 'Armando...';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/academia/kit/armar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({
-        radicado_kit_id: radicadoKitSeleccionadoId,
-        nombre_kit: nombreKit,
-        precio_venta: precioVenta,
-        cantidad_kits: cantidadKits
+        nombre_kit: nombreKit, precio_venta: precioVenta, cantidad_kits: cantidadKits,
+        insumos: insumosSeleccionados.map(i => ({ inventario_item_id: i.inventario_item_id, cantidad_por_kit: i.cantidad_por_kit }))
       })
     });
-    const datos = await resp.json();
-    if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudo finalizar el kit')); return; }
 
-    alert(`✅ Kit "${nombreKit}" agregado al inventario de Lana Rosa Academy.`);
-    radicadoKitSeleccionadoId = null;
-    document.getElementById('panelDetalleRadicadoKit').innerHTML = '<h2>Selecciona un radicado arriba para tomar material</h2>';
+    btn.disabled = false;
+    btn.textContent = 'Armar kit';
+
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeArmarKit', datos.error || 'No se pudo armar el kit.', 'error'); return; }
+
+    mostrarMensaje('mensajeArmarKit', `✅ Se armaron ${cantidadKits} kit(s) de "${nombreKit}". Ya están en el inventario de Tienda.`, 'exito');
+    document.getElementById('kitNombre').value = '';
+    document.getElementById('kitPrecioVenta').value = '';
+    document.getElementById('kitCantidadKits').value = '1';
     await cargarRadicadosKit();
   }
 
