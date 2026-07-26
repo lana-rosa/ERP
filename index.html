@@ -2873,6 +2873,7 @@
       resumen.innerHTML = `
         <div class="resumen-fila"><span>Efectivo apertura</span><strong>${formatearMoneda(datos.monto_apertura)}</strong></div>
         <div class="resumen-fila"><span>+ Ventas en efectivo</span><strong>${formatearMoneda(datos.ventas_efectivo)}</strong></div>
+        ${datos.pagos_proveedores_efectivo > 0 ? `<div class="resumen-fila"><span>− Pagos a proveedores en efectivo</span><strong>${formatearMoneda(datos.pagos_proveedores_efectivo)}</strong></div>` : ''}
         <div class="resumen-fila"><span>= Efectivo esperado en caja</span><strong>${formatearMoneda(datos.monto_esperado)}</strong></div>
         <div class="resumen-fila"><span>Efectivo contado físicamente</span><strong>${formatearMoneda(datos.monto_declarado)}</strong></div>
         <div class="resumen-fila total"><span>${etiquetaNovedad[datos.tipo_novedad]}</span><strong>${formatearMoneda(Math.abs(datos.diferencia))}</strong></div>
