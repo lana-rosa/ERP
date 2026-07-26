@@ -905,6 +905,10 @@
 
       <button class="btn-principal" id="btnCrearPedido" onclick="confirmarCrearPedidoCanal()">Crear pedido</button>
       <div class="mensaje" id="mensajePedidoCanal"></div>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button class="btn-secundario" style="margin-top:0;" onclick="imprimirReciboVenta()" id="btnImprimirReciboPedido" disabled title="Se activa después de crear un pedido">🖨️ Imprimir recibo</button>
+        <button class="btn-secundario" style="margin-top:0;" onclick="enviarReciboVentaWhatsapp()" id="btnWhatsappReciboPedido" disabled title="Se activa después de crear un pedido">📱 Enviar WhatsApp</button>
+      </div>
       <div style="font-size:11.5px;opacity:0.6;margin-top:10px;">Para ver o gestionar pedidos ya creados, ve a "Pedidos WhatsApp/Redes" en el menú.</div>
     </div>
   </div>
@@ -944,6 +948,10 @@
         </select>
         <button class="btn-principal" id="btnRegistrarVentaAcademia" onclick="confirmarRegistrarVentaAcademia()">Registrar venta</button>
         <div class="mensaje" id="mensajeVentaAcademia"></div>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <button class="btn-secundario" style="margin-top:0;" onclick="imprimirReciboVenta()" id="btnImprimirReciboAcademia" disabled title="Se activa después de confirmar una venta">🖨️ Imprimir recibo</button>
+          <button class="btn-secundario" style="margin-top:0;" onclick="enviarReciboVentaWhatsapp()" id="btnWhatsappReciboAcademia" disabled title="Se activa después de confirmar una venta">📱 Enviar WhatsApp</button>
+        </div>
       </div>
 
       <div class="panel">
@@ -3703,7 +3711,9 @@
         <td style="padding:5px 0;text-align:right;">${formatearMoneda(l.precio * l.cantidad)}</td>
       </tr>
     `).join('');
-    const filasPago = v.pagos.map(p => `<div class="resumen-fila-recibo"><span>${etiquetasPago[p.metodo_pago] || p.metodo_pago}</span><span>${formatearMoneda(p.monto)}</span></div>`).join('');
+    const filasPago = v.pagos.length > 0
+      ? v.pagos.map(p => `<div class="resumen-fila-recibo"><span>${etiquetasPago[p.metodo_pago] || p.metodo_pago}</span><span>${formatearMoneda(p.monto)}</span></div>`).join('')
+      : `<div class="resumen-fila-recibo"><span>Pendiente de pago</span><span>—</span></div>`;
 
     return `
       <div class="encabezado-recibo">
@@ -7289,6 +7299,7 @@
     mostrarPantalla('pantallaPedidosCanal');
     mostrarSubTabGrupo('pedidosCanal', 'subtabCanalActivos', document.querySelector('[data-subtab-btn="pedidosCanal"]'));
     limpiarFormularioPedidoCanal();
+    ocultarMensaje('mensajePedidoCanal');
     await cargarPedidosCanal();
     await sincronizarPedidosCrm(null, true); // silencioso, automático al entrar
   }
@@ -7335,7 +7346,6 @@
     document.getElementById('pedidoValorProducto').value = '';
     document.getElementById('pedidoValorEnvio').value = '';
     productoPedidoSeleccionado = null;
-    ocultarMensaje('mensajePedidoCanal');
     actualizarResumenAnticipoPedido();
   }
 
@@ -7548,9 +7558,23 @@
       }
 
       mostrarMensaje('mensajePedidoCanal', '✅ Pedido creado. Ahora regístrale el anticipo cuando el cliente pague.', 'exito');
+
+      ultimaVentaCache = {
+        consecutivo: datos.consecutivo || 'PEDIDO',
+        fecha: new Date(),
+        lineas: [{ nombre: descripcion, cantidad, precio: valorProducto / cantidad }, ...(valorEnvio > 0 ? [{ nombre: 'Envío', cantidad: 1, precio: valorEnvio }] : [])],
+        subtotal: valorProducto + valorEnvio,
+        descuento: 0,
+        total: valorProducto + valorEnvio,
+        pagos: [],
+        cliente: { nombre: nombreCliente, telefono: telefonoCliente, identificacion },
+        cajero: miPropiaIdentidad.nombre || 'Cajero'
+      };
+      document.getElementById('btnImprimirReciboPedido').disabled = false;
+      document.getElementById('btnWhatsappReciboPedido').disabled = false;
+
       limpiarFormularioPedidoCanal();
       await cargarPedidosCanal();
-      setTimeout(() => mostrarSubTabGrupo('pedidosCanal', 'subtabCanalActivos', document.querySelector('[data-subtab-btn="pedidosCanal"]')), 1200);
     } finally {
       btn.disabled = false;
       btn.textContent = 'Crear pedido';
@@ -9784,6 +9808,21 @@
     if (!resp.ok) { mostrarMensaje('mensajeVentaAcademia', datos.error || 'No se pudo registrar la venta.', 'error'); return; }
 
     mostrarMensaje('mensajeVentaAcademia', '✅ Venta registrada correctamente.', 'exito');
+
+    ultimaVentaCache = {
+      consecutivo: datos.venta_id ? String(datos.venta_id).slice(0, 8).toUpperCase() : 'ACADEMY',
+      fecha: new Date(),
+      lineas: [{ nombre: descripcion, cantidad: 1, precio: monto }],
+      subtotal: monto,
+      descuento: 0,
+      total: monto,
+      pagos: [{ metodo_pago: metodoPago, monto }],
+      cliente: { nombre: cliente || null, telefono: null, identificacion: null },
+      cajero: miPropiaIdentidad.nombre || 'Cajero'
+    };
+    document.getElementById('btnImprimirReciboAcademia').disabled = false;
+    document.getElementById('btnWhatsappReciboAcademia').disabled = false;
+
     document.getElementById('academiaDescripcion').value = '';
     document.getElementById('academiaCliente').value = '';
     document.getElementById('academiaMonto').value = '';
