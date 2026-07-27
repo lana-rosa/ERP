@@ -685,6 +685,7 @@
         <button class="nav-btn" onclick="mostrarPantallaMiPerfil()"><span class="nav-icon">👤</span> Mi perfil</button>
         <button class="nav-btn" id="nav-ceder-permisos" onclick="mostrarPantallaCederPermisos()"><span class="nav-icon">🔑</span> Ceder permisos de administrador</button>
         <button class="nav-btn" id="nav-trazabilidad" onclick="mostrarPantallaTrazabilidad()"><span class="nav-icon">🕵️</span> Trazabilidad del sistema</button>
+        <button class="nav-btn" id="nav-reinicio-produccion" onclick="mostrarPantallaReinicioProduccion()"><span class="nav-icon">🧹</span> Reinicio antes de producción</button>
         <button class="nav-btn" id="nav-codigos-descuento" onclick="mostrarPantallaCodigosDescuento()"><span class="nav-icon">🏷️</span> Códigos de descuento</button>
         <button class="nav-btn" id="nav-tarifas-envio" onclick="mostrarPantallaTarifasEnvio()"><span class="nav-icon">🚚</span> Tarifas de envío</button>
         <button class="nav-btn" onclick="mostrarPantallaApariencia()"><span class="nav-icon">🎨</span> Apariencia</button>
@@ -2197,6 +2198,27 @@
 </div>
 
 <!-- ===== PANTALLA: TRAZABILIDAD DEL SISTEMA ===== -->
+<!-- ===== PANTALLA: REINICIO ANTES DE PRODUCCIÓN ===== -->
+<div id="pantallaReinicioProduccion" class="oculto contenido">
+  <div class="page-header">
+    <h1>🧹 Reinicio antes de producción</h1>
+    <div class="subtitulo">Borra las ventas, pedidos y turnos de prueba para arrancar en ceros. No toca empleados, nómina, clientes/proveedores, ni el inventario (haz el conteo físico real por separado).</div>
+  </div>
+  <div class="panel" style="max-width:520px;">
+    <h2>Lo que se va a borrar</h2>
+    <div id="resumenDatosPrueba"><div class="cargando">Cargando...</div></div>
+
+    <div style="background:#fdecea;border-radius:9px;padding:12px;margin-top:16px;font-size:12.5px;">
+      ⚠️ Esta acción <strong>no se puede deshacer</strong>. Úsala solo una vez, justo antes de que el negocio empiece a operar de verdad con este sistema.
+    </div>
+
+    <label for="confirmacionReinicioTexto" style="margin-top:14px;">Para confirmar, escribe exactamente: <strong>BORRAR VENTAS DE PRUEBA</strong></label>
+    <input type="text" id="confirmacionReinicioTexto" placeholder="Escribe la frase aquí">
+    <button class="btn-principal" id="btnReiniciarDatosPrueba" onclick="confirmarReinicioProduccion()" style="background:var(--rojo-error);" disabled>Borrar todas las ventas de prueba</button>
+    <div class="mensaje" id="mensajeReinicioProduccion"></div>
+  </div>
+</div>
+
 <div id="pantallaTrazabilidad" class="oculto contenido">
   <div class="page-header">
     <h1>🕵️ Trazabilidad del sistema</h1>
@@ -2599,7 +2621,7 @@
   // UTILIDADES
   // ============================================================================
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -2837,6 +2859,7 @@
     mostrar('nav-gestion-usuarios', esAdmin);
     mostrar('nav-ceder-permisos', esAdmin);
     mostrar('nav-trazabilidad', esAdmin);
+    mostrar('nav-reinicio-produccion', esAdmin);
     mostrar('nav-codigos-descuento', esAdmin);
     mostrar('nav-tarifas-envio', esAdmin);
 
@@ -7177,6 +7200,61 @@
     insumo_despachado: '🚚', guia_envio: '📮', turno_abierto: '🔓', gasto: '💸',
     cambio_articulo: '🔄', kit_tejido: '🧶', traslado_departamentos: '🔁', presupuesto: '📊',
   };
+
+  async function mostrarPantallaReinicioProduccion() {
+    mostrarPantalla('pantallaReinicioProduccion');
+    document.getElementById('confirmacionReinicioTexto').value = '';
+    document.getElementById('btnReiniciarDatosPrueba').disabled = true;
+    ocultarMensaje('mensajeReinicioProduccion');
+
+    const contenedor = document.getElementById('resumenDatosPrueba');
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+    const resp = await fetch(WORKER_URL + '/api/pos/admin/resumen-datos-prueba', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const datos = await resp.json();
+    contenedor.innerHTML = `
+      <div class="resumen-fila"><span>Ventas de Tienda (POS)</span><strong>${datos.ventas_pos}</strong></div>
+      <div class="resumen-fila"><span>Pedidos de WhatsApp/Redes</span><strong>${datos.pedidos_canal_venta}</strong></div>
+      <div class="resumen-fila"><span>Ventas de Cursos/clases</span><strong>${datos.ventas_academia}</strong></div>
+      <div class="resumen-fila"><span>Turnos de caja</span><strong>${datos.turnos_caja}</strong></div>
+    `;
+  }
+
+  document.addEventListener('input', (e) => {
+    if (e.target && e.target.id === 'confirmacionReinicioTexto') {
+      document.getElementById('btnReiniciarDatosPrueba').disabled = e.target.value.trim() !== 'BORRAR VENTAS DE PRUEBA';
+    }
+  });
+
+  async function confirmarReinicioProduccion() {
+    const texto = document.getElementById('confirmacionReinicioTexto').value.trim();
+    if (texto !== 'BORRAR VENTAS DE PRUEBA') return;
+
+    if (!confirm('Esta es tu última oportunidad de cancelar. Se van a borrar TODAS las ventas, pedidos y turnos de prueba, sin poder deshacerlo. ¿Confirmas?')) return;
+
+    const btn = document.getElementById('btnReiniciarDatosPrueba');
+    btn.disabled = true;
+    btn.textContent = 'Borrando...';
+    ocultarMensaje('mensajeReinicioProduccion');
+
+    const resp = await fetch(WORKER_URL + '/api/pos/admin/reiniciar-datos-prueba', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ confirmacion: texto })
+    });
+
+    btn.textContent = 'Borrar todas las ventas de prueba';
+    const datos = await resp.json();
+    if (!resp.ok) {
+      mostrarMensaje('mensajeReinicioProduccion', datos.error || 'No se pudo reiniciar.', 'error');
+      btn.disabled = false;
+      return;
+    }
+
+    mostrarMensaje('mensajeReinicioProduccion', '✅ Listo. El sistema quedó en ceros — ya puedes empezar a operar de verdad.', 'exito');
+    document.getElementById('confirmacionReinicioTexto').value = '';
+    await mostrarPantallaReinicioProduccion();
+  }
 
   async function mostrarPantallaTrazabilidad() {
     mostrarPantalla('pantallaTrazabilidad');
