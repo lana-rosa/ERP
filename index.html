@@ -1516,7 +1516,6 @@
     <button class="chip-filtro activo" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinPresupuestos', this)">💰 Presupuesto global</button>
     <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinConsolidado', this); cargarConsolidadoVentas();">📊 Consolidado de ventas</button>
     <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinAcademia', this); cargarInformeAcademia();">🎓 Academy: ventas y metas</button>
-    <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinProvisiones', this); cargarProvisionesNomina();">📦 Provisiones de nómina</button>
     <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinIndicadores', this); cargarIndicadoresVentas();">📈 Indicadores de ventas</button>
     <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinCosteo', this); cargarCosteoReal();">🧮 Costeo real (materiales + mano de obra)</button>
   </div>
@@ -1550,13 +1549,6 @@
       <div class="subtitulo">Escribe la meta de ventas de cada subárea para el mes seleccionado arriba.</div>
       <div id="formMetasAcademia"></div>
     </div>
-  </div>
-
-  <div id="subtabFinProvisiones" data-subtab-grupo="reportesFin" class="oculto">
-    <div style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;">
-      ℹ️ Calculado con las fórmulas legales colombianas al día de hoy: cesantías y vacaciones desde el 1 de enero (o la fecha de ingreso si es después), prima desde el inicio del semestre actual. La dotación (obligatoria para quien gana hasta 2 SMLMV) se provisiona con un estimado anual editable. Sara se calcula igual que cualquier empleada, pero sus pagos se contabilizan como <strong>anticipo de utilidades</strong>, no como nómina.
-    </div>
-    <div id="listaProvisionesNomina"><div class="cargando">Calculando...</div></div>
   </div>
 
   <div id="subtabFinIndicadores" data-subtab-grupo="reportesFin" class="oculto">
@@ -1635,6 +1627,7 @@
     <button class="chip-filtro activo" data-subtab-nomina="empleados" onclick="mostrarSubTabNomina('empleados', this)">👥 Empleados</button>
     <button class="chip-filtro" data-subtab-nomina="periodos" onclick="mostrarSubTabNomina('periodos', this)">📅 Períodos y liquidación</button>
     <button class="chip-filtro" data-subtab-nomina="reportes" onclick="mostrarSubTabNomina('reportes', this)">📊 Reportes</button>
+    <button class="chip-filtro" data-subtab-nomina="provisiones" onclick="mostrarSubTabNomina('provisiones', this)">📦 Provisiones</button>
     <button class="chip-filtro" data-subtab-nomina="config" onclick="mostrarSubTabNomina('config', this)">⚙️ Configuración</button>
   </div>
 
@@ -1789,6 +1782,14 @@
       <div id="resumenConsolidadoNomina"></div>
       <div id="listaConsolidadoNomina" style="margin-top:14px;"><div class="cargando">Cargando...</div></div>
     </div>
+  </div>
+
+  <!-- ===== SUBTAB: PROVISIONES ===== -->
+  <div id="subtabNominaProvisiones" class="subtab-nomina oculto">
+    <div style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;">
+      ℹ️ Calculado con las fórmulas legales colombianas al día de hoy: cesantías y vacaciones desde el 1 de enero (o la fecha de ingreso si es después), prima desde el inicio del semestre actual. La dotación (obligatoria para quien gana hasta 2 SMLMV) se provisiona con un estimado anual editable. Sara se calcula igual que cualquier empleada, pero sus pagos se contabilizan como <strong>anticipo de utilidades</strong>, no como nómina.
+    </div>
+    <div id="listaProvisionesNomina"><div class="cargando">Calculando...</div></div>
   </div>
 
   <!-- ===== SUBTAB: CONFIGURACIÓN ===== -->
@@ -9089,11 +9090,12 @@
 
   function mostrarSubTabNomina(tab, botonEl) {
     document.querySelectorAll('.subtab-nomina').forEach(el => el.classList.add('oculto'));
-    const mapa = { empleados: 'subtabNominaEmpleados', periodos: 'subtabNominaPeriodos', reportes: 'subtabNominaReportes', config: 'subtabNominaConfig' };
+    const mapa = { empleados: 'subtabNominaEmpleados', periodos: 'subtabNominaPeriodos', reportes: 'subtabNominaReportes', provisiones: 'subtabNominaProvisiones', config: 'subtabNominaConfig' };
     document.getElementById(mapa[tab]).classList.remove('oculto');
     document.querySelectorAll('[data-subtab-nomina]').forEach(b => b.classList.remove('activo'));
     if (botonEl) botonEl.classList.add('activo');
     if (tab === 'reportes') cargarConsolidadoNomina();
+    if (tab === 'provisiones') cargarProvisionesNomina();
   }
 
   function alternarNovedades(empleadoId) {
