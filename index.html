@@ -813,6 +813,15 @@
         <label for="clienteCiudad">Ciudad <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
         <input type="text" id="clienteCiudad" placeholder="Manizales">
         <div id="mensajeAutocompletado" style="font-size:12px;color:var(--verde-exito);margin-top:6px;display:none;">✅ Cliente encontrado — datos precargados</div>
+
+        <div id="bloquePuntosCliente" class="oculto" style="margin-top:10px;background:var(--rosa-suave);border-radius:9px;padding:10px 12px;">
+          <div id="textoPuntosClienteVenta" style="font-size:12.5px;font-weight:600;"></div>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
+            <input type="number" id="inputCanjearPuntos" placeholder="Puntos a canjear" min="1" style="flex:1;">
+            <button type="button" class="btn-mini editar" onclick="canjearPuntosEnVenta()">Canjear</button>
+          </div>
+          <div id="textoPuntosCanjeados" style="font-size:11.5px;color:var(--rosa-principal);font-weight:600;margin-top:6px;"></div>
+        </div>
       </div>
     </div>
 
@@ -3490,6 +3499,8 @@
   }
 
   let descuentoVentaActual = { valorDescuento: 0, codigo: null, codigoId: null };
+  let clienteVentaTerceroId = null;
+  let puntosCanjeadosActual = { puntos: 0, valorDescuento: 0 };
 
   function calcularSubtotalCarrito() {
     return carrito.reduce((acc, linea) => acc + (linea.precio * linea.cantidad), 0);
@@ -3497,12 +3508,32 @@
 
   function calcularValorDescuento() {
     const subtotal = calcularSubtotalCarrito();
-    if (!descuentoVentaActual.valorDescuento) return 0;
-    return Math.min(descuentoVentaActual.valorDescuento, subtotal); // nunca mayor al subtotal, aunque cambie el carrito
+    const descuentoTotal = (descuentoVentaActual.valorDescuento || 0) + (puntosCanjeadosActual.valorDescuento || 0);
+    if (!descuentoTotal) return 0;
+    return Math.min(descuentoTotal, subtotal); // nunca mayor al subtotal, aunque cambie el carrito
   }
 
   function calcularTotalCarrito() {
     return Math.max(calcularSubtotalCarrito() - calcularValorDescuento(), 0);
+  }
+
+  async function canjearPuntosEnVenta() {
+    const puntos = Number(document.getElementById('inputCanjearPuntos').value);
+    if (!clienteVentaTerceroId) { alert('Primero busca al cliente por su identificación.'); return; }
+    if (!puntos || puntos <= 0) { alert('Escribe una cantidad de puntos válida.'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/fidelizacion/canjear', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ tercero_id: clienteVentaTerceroId, puntos })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { alert(datos.error || 'No se pudo canjear.'); return; }
+
+    puntosCanjeadosActual = { puntos, valorDescuento: datos.valor_descuento };
+    document.getElementById('textoPuntosCanjeados').textContent = `✅ ${puntos} puntos canjeados = -${formatearMoneda(datos.valor_descuento)} de descuento`;
+    document.getElementById('textoTotalCarrito').textContent = formatearMoneda(calcularTotalCarrito());
+    renderizarPagos();
   }
 
   function alternarDescuentoVenta() {
@@ -3830,8 +3861,13 @@
         }).catch(() => {});
       }
 
-      mostrarMensaje('mensajeVenta', '✅ Venta registrada correctamente.', 'exito');
+      mostrarMensaje('mensajeVenta', `✅ Venta registrada correctamente.${datos.puntos_ganados > 0 ? ` ⭐ El cliente ganó ${datos.puntos_ganados} puntos.` : ''}`, 'exito');
       carrito = [];
+      clienteVentaTerceroId = null;
+      puntosCanjeadosActual = { puntos: 0, valorDescuento: 0 };
+      document.getElementById('bloquePuntosCliente').classList.add('oculto');
+      document.getElementById('inputCanjearPuntos').value = '';
+      document.getElementById('textoPuntosCanjeados').textContent = '';
       filasPago = [{ metodo_pago: 'efectivo', monto: '', referencia: '' }];
       document.getElementById('clienteNombre').value = '';
       document.getElementById('clienteTelefono').value = '';
@@ -4104,13 +4140,15 @@
 
       const { data, error } = await supabaseClient
         .from('terceros')
-        .select('nombre_completo, telefono, email, numero_documento, direccion, ciudad')
+        .select('id, nombre_completo, telefono, email, numero_documento, direccion, ciudad, puntos_fidelizacion')
         .eq('numero_documento', identificacion)
         .limit(1)
         .single();
 
       if (error || !data) {
         msgEl.style.display = 'none';
+        clienteVentaTerceroId = null;
+        document.getElementById('bloquePuntosCliente').classList.add('oculto');
         return;
       }
 
@@ -4122,6 +4160,17 @@
       document.getElementById('clienteCiudad').value = data.ciudad || '';
 
       msgEl.style.display = 'block';
+
+      clienteVentaTerceroId = data.id;
+      const puntos = data.puntos_fidelizacion || 0;
+      const bloquePuntos = document.getElementById('bloquePuntosCliente');
+      if (puntos > 0) {
+        bloquePuntos.classList.remove('oculto');
+        document.getElementById('textoPuntosClienteVenta').textContent = `⭐ Este cliente tiene ${puntos} puntos acumulados.`;
+        document.getElementById('inputCanjearPuntos').max = puntos;
+      } else {
+        bloquePuntos.classList.add('oculto');
+      }
     }, 400);
   }
 
@@ -7349,7 +7398,7 @@
           <span class="fila-inventario-nombre" style="cursor:pointer;" onclick="alternarHistorialCliente('${c.id}')">${escaparHtml(c.nombre_completo)}</span>
           <button class="btn-mini editar" onclick="event.stopPropagation(); abrirEdicionCliente('${c.id}')">✏️ Editar</button>
         </div>
-        <div style="font-size:12px;opacity:0.65;">${escaparHtml(c.numero_documento || 'Sin documento')} · ${escaparHtml(c.telefono || 'Sin teléfono')}</div>
+        <div style="font-size:12px;opacity:0.65;">${escaparHtml(c.numero_documento || 'Sin documento')} · ${escaparHtml(c.telefono || 'Sin teléfono')}${c.puntos_fidelizacion > 0 ? ` · ⭐ ${c.puntos_fidelizacion} puntos` : ''}</div>
         <div id="edicionCliente-${c.id}" class="oculto" style="margin-top:8px;padding:10px;background:var(--rosa-suave);border-radius:9px;"></div>
         <div id="historialCliente-${c.id}" class="oculto" style="margin-top:8px;"></div>
       </div>
