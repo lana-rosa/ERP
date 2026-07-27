@@ -625,7 +625,7 @@
         <button class="nav-btn" id="nav-etiquetas" onclick="mostrarPantallaEtiquetas()"><span class="nav-icon">🏷️</span> Imprimir etiquetas</button>
         <button class="nav-btn" id="nav-turno" onclick="irATurnoActivo()"><span class="nav-icon">💵</span> Turno de caja</button>
         <button class="nav-btn" id="nav-reportes" onclick="mostrarPantallaReportes()"><span class="nav-icon">📈</span> Reportes de turno</button>
-        <button class="nav-btn" onclick="mostrarPantallaPagosPendientes('01')"><span class="nav-icon">📈</span> Caja, gastos y presupuesto</button>
+        <button class="nav-btn" onclick="mostrarPantallaPagosPendientes('01')"><span class="nav-icon">📈</span> Registro de compras y gastos</button>
       </div>
     </div>
 
@@ -892,6 +892,17 @@
 
       <div id="listaProductosPedido" style="margin-top:10px;"></div>
 
+      <div id="bloqueDescuentoPedido" style="margin-top:10px;">
+        <button type="button" class="btn-mini editar" id="btnMostrarDescuentoPedido" onclick="alternarDescuentoPedido()">🏷️ Aplicar código de descuento</button>
+        <div id="formDescuentoPedido" class="oculto" style="margin-top:8px;display:flex;gap:8px;align-items:center;">
+          <input type="text" id="codigoDescuentoPedidoInput" placeholder="Código de descuento" style="flex:1;text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
+          <button type="button" class="btn-mini editar" onclick="aplicarCodigoDescuentoPedido()">Aplicar</button>
+          <button type="button" class="btn-quitar-pago" onclick="quitarDescuentoPedido()" title="Quitar descuento">✕</button>
+        </div>
+        <div id="textoDescuentoPedidoAplicado" class="oculto" style="font-size:12.5px;color:var(--rosa-principal);font-weight:600;margin-top:6px;"></div>
+        <div id="mensajeCodigoDescuentoPedido" style="font-size:11.5px;margin-top:4px;"></div>
+      </div>
+
       <label for="pedidoValorEnvio" style="margin-top:14px;">Valor del envío (COP) <span style="font-size:10px;opacity:0.6;">(se calcula solo según la ciudad, pero puedes ajustarlo)</span></label>
       <input type="number" id="pedidoValorEnvio" placeholder="0" min="0" step="1000" oninput="actualizarResumenAnticipoPedido()">
 
@@ -949,6 +960,18 @@
           <div style="font-size:12.5px;font-weight:600;opacity:0.7;margin-bottom:6px;">En esta venta</div>
           <div id="listaCarritoAcademia"><div style="font-size:11.5px;opacity:0.5;">Todavía no has agregado nada.</div></div>
         </div>
+
+        <div id="bloqueDescuentoAcademia" style="margin-top:10px;">
+          <button type="button" class="btn-mini editar" id="btnMostrarDescuentoAcademia" onclick="alternarDescuentoAcademia()">🏷️ Aplicar código de descuento</button>
+          <div id="formDescuentoAcademia" class="oculto" style="margin-top:8px;display:flex;gap:8px;align-items:center;">
+            <input type="text" id="codigoDescuentoAcademiaInput" placeholder="Código de descuento" style="flex:1;text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
+            <button type="button" class="btn-mini editar" onclick="aplicarCodigoDescuentoAcademia()">Aplicar</button>
+            <button type="button" class="btn-quitar-pago" onclick="quitarDescuentoAcademia()" title="Quitar descuento">✕</button>
+          </div>
+          <div id="textoDescuentoAcademiaAplicado" class="oculto" style="font-size:12.5px;color:var(--rosa-principal);font-weight:600;margin-top:6px;"></div>
+          <div id="mensajeCodigoDescuentoAcademia" style="font-size:11.5px;margin-top:4px;"></div>
+        </div>
+
         <div id="totalVentaAcademiaResumen" class="resumen-cierre oculto" style="margin-top:12px;"></div>
 
         <label for="academiaCliente" style="margin-top:14px;">Cliente <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
@@ -2475,6 +2498,24 @@
   </div>
 </div>
 
+<!-- ===== ASISTENTE DE IA — botón flotante ===== -->
+<button id="btnAbrirAsistenteIA" onclick="toggleChatAsistenteIA()" style="position:fixed;bottom:22px;right:22px;width:58px;height:58px;border-radius:50%;background:var(--rosa-principal);color:white;border:none;font-size:26px;box-shadow:0 4px 14px rgba(0,0,0,0.25);cursor:pointer;z-index:400;display:none;align-items:center;justify-content:center;">🐑</button>
+
+<div id="panelChatAsistenteIA" class="oculto" style="position:fixed;bottom:22px;right:22px;width:380px;max-width:92vw;height:520px;max-height:80vh;background:var(--fondo-panel);border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,0.3);z-index:401;display:flex;flex-direction:column;overflow:hidden;">
+  <div style="background:var(--rosa-principal);color:white;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;">
+    <strong style="font-size:14px;">🐑 Asistente Lana Rosa</strong>
+    <button onclick="toggleChatAsistenteIA()" style="background:none;border:none;color:white;font-size:18px;cursor:pointer;">✕</button>
+  </div>
+  <div id="mensajesChatAsistenteIA" style="flex:1;overflow-y:auto;padding:12px;font-size:13px;"></div>
+  <div id="previsualizacionAdjuntoIA" class="oculto" style="padding:0 12px;"></div>
+  <div style="padding:10px 12px;border-top:1px solid #f0e5ec;display:flex;gap:6px;align-items:flex-end;">
+    <button onclick="document.getElementById('inputAdjuntoIA').click()" title="Adjuntar foto o PDF de cotización" style="background:var(--rosa-suave);border:none;border-radius:8px;width:36px;height:36px;font-size:16px;cursor:pointer;flex-shrink:0;">📎</button>
+    <input type="file" id="inputAdjuntoIA" accept="image/*,.pdf" style="display:none;" onchange="previsualizarAdjuntoIA(event)">
+    <textarea id="inputChatAsistenteIA" placeholder="Pregúntame algo..." rows="1" style="flex:1;resize:none;border-radius:8px;padding:8px 10px;font-size:13px;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();enviarMensajeAsistenteIA();}"></textarea>
+    <button onclick="enviarMensajeAsistenteIA()" id="btnEnviarChatIA" style="background:var(--rosa-principal);color:white;border:none;border-radius:8px;width:36px;height:36px;font-size:15px;cursor:pointer;flex-shrink:0;">➤</button>
+  </div>
+</div>
+
 <!-- ===== PANTALLA: CERRAR TURNO ===== -->
 
 <div id="pantallaCerrarTurno" class="oculto contenido">
@@ -2790,6 +2831,7 @@
     mostrar('nav-nomina', esAdmin);
     mostrar('nav-talento-humano', esAdmin);
     mostrar('nav-reportes-financieros', esAdmin);
+    document.getElementById('btnAbrirAsistenteIA').style.display = esAdmin ? 'flex' : 'none';
     mostrar('nav-calendario', true);
 
     // Si el usuario solo tiene un departamento, se abre expandido automáticamente
@@ -6197,7 +6239,7 @@
     { clave: 'deptoTallerGrupo', etiqueta: '🧶 Taller (grupo completo)' },
     { clave: 'nav-consumotaller', etiqueta: '　　Consumo de material' },
     { clave: 'nav-inventario-taller', etiqueta: '　　Inventario' },
-    { clave: 'nav-pagos-pendientes', etiqueta: '　　Compras' },
+    { clave: 'nav-pagos-pendientes', etiqueta: '　　Registro de compras y gastos' },
     { clave: 'deptoTalentoGrupo', etiqueta: '🗂️ Talento Humano (grupo completo)' },
     { clave: 'nav-nomina', etiqueta: '　　Nómina' },
     { clave: 'nav-talento-humano', etiqueta: '　　Carpetas por empleado' },
@@ -6488,6 +6530,85 @@
         </div>
       </div>
     `).join('');
+  }
+
+  // ============================================================
+  // ASISTENTE DE IA — botón flotante
+  // ============================================================
+  let historialChatIA = [];
+  let adjuntoIABase64 = null;
+
+  function toggleChatAsistenteIA() {
+    const panel = document.getElementById('panelChatAsistenteIA');
+    const abrir = panel.classList.contains('oculto');
+    panel.classList.toggle('oculto', !abrir);
+    if (abrir && historialChatIA.length === 0) {
+      agregarBurbujaChatIA('assistant', '¡Hola! 🐑 Soy el asistente de Lana Rosa. Puedo contarte cómo van tus números, comparar cotizaciones de proveedores (adjunta la foto o el PDF) o asesorarte sobre Fondo Emprender. ¿En qué te ayudo?');
+    }
+  }
+
+  function previsualizarAdjuntoIA(evento) {
+    const archivo = evento.target.files[0];
+    if (!archivo) return;
+    const lector = new FileReader();
+    lector.onload = () => {
+      adjuntoIABase64 = lector.result;
+      const cont = document.getElementById('previsualizacionAdjuntoIA');
+      cont.classList.remove('oculto');
+      cont.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:11.5px;">📎 ${escaparHtml(archivo.name)} <button onclick="quitarAdjuntoIA()" style="background:none;border:none;cursor:pointer;">✕</button></div>`;
+    };
+    lector.readAsDataURL(archivo);
+  }
+
+  function quitarAdjuntoIA() {
+    adjuntoIABase64 = null;
+    document.getElementById('inputAdjuntoIA').value = '';
+    document.getElementById('previsualizacionAdjuntoIA').classList.add('oculto');
+  }
+
+  function agregarBurbujaChatIA(rol, texto) {
+    const cont = document.getElementById('mensajesChatAsistenteIA');
+    const esUsuario = rol === 'user';
+    const burbuja = document.createElement('div');
+    burbuja.style.cssText = `margin-bottom:10px;display:flex;justify-content:${esUsuario ? 'flex-end' : 'flex-start'};`;
+    burbuja.innerHTML = `<div style="max-width:85%;padding:8px 11px;border-radius:12px;white-space:pre-wrap;background:${esUsuario ? 'var(--rosa-principal)' : 'var(--rosa-suave)'};color:${esUsuario ? 'white' : 'var(--texto-oscuro)'};">${escaparHtml(texto)}</div>`;
+    cont.appendChild(burbuja);
+    cont.scrollTop = cont.scrollHeight;
+    return burbuja;
+  }
+
+  async function enviarMensajeAsistenteIA() {
+    const input = document.getElementById('inputChatAsistenteIA');
+    const texto = input.value.trim();
+    if (!texto && !adjuntoIABase64) return;
+
+    agregarBurbujaChatIA('user', texto || '(archivo adjunto)');
+    historialChatIA.push({ role: 'user', content: texto || 'Analiza este archivo adjunto.' });
+    input.value = '';
+    const adjuntoEnviar = adjuntoIABase64;
+    quitarAdjuntoIA();
+
+    const btn = document.getElementById('btnEnviarChatIA');
+    btn.disabled = true;
+    const burbujaCargando = agregarBurbujaChatIA('assistant', 'Pensando...');
+
+    const resp = await fetch(WORKER_URL + '/api/pos/asistente-ia/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ mensajes: historialChatIA, imagen_base64: adjuntoEnviar || undefined })
+    });
+
+    btn.disabled = false;
+    burbujaCargando.remove();
+
+    const datos = await resp.json();
+    if (!resp.ok) {
+      agregarBurbujaChatIA('assistant', '⚠️ ' + (datos.error || 'No pude responder en este momento.'));
+      return;
+    }
+
+    agregarBurbujaChatIA('assistant', datos.respuesta);
+    historialChatIA.push({ role: 'assistant', content: datos.respuesta });
   }
 
   function abrirWhatsAppTexto(numeroTelefono, mensaje) {
@@ -7497,6 +7618,7 @@
     document.getElementById('pedidoValorEnvio').value = '';
     productoPedidoSeleccionado = null;
     carritoPedidoCanal = [];
+    quitarDescuentoPedido();
     renderizarListaProductosPedido();
   }
 
@@ -7620,9 +7742,57 @@
     actualizarResumenAnticipoPedido();
   }
 
+  let descuentoPedidoActual = { valorDescuento: 0, codigo: null, codigoId: null };
+
+  function alternarDescuentoPedido() {
+    document.getElementById('formDescuentoPedido').classList.remove('oculto');
+    document.getElementById('btnMostrarDescuentoPedido').classList.add('oculto');
+    document.getElementById('codigoDescuentoPedidoInput').focus();
+  }
+
+  function quitarDescuentoPedido() {
+    descuentoPedidoActual = { valorDescuento: 0, codigo: null, codigoId: null };
+    document.getElementById('codigoDescuentoPedidoInput').value = '';
+    document.getElementById('formDescuentoPedido').classList.add('oculto');
+    document.getElementById('btnMostrarDescuentoPedido').classList.remove('oculto');
+    document.getElementById('textoDescuentoPedidoAplicado').classList.add('oculto');
+    ocultarMensaje('mensajeCodigoDescuentoPedido');
+    actualizarResumenAnticipoPedido();
+  }
+
+  async function aplicarCodigoDescuentoPedido() {
+    const codigo = document.getElementById('codigoDescuentoPedidoInput').value.trim();
+    ocultarMensaje('mensajeCodigoDescuentoPedido');
+    if (!codigo) { mostrarMensaje('mensajeCodigoDescuentoPedido', 'Escribe un código.', 'error'); return; }
+
+    const subtotal = carritoPedidoCanal.reduce((acc, p) => acc + p.valor, 0);
+    if (subtotal <= 0) { mostrarMensaje('mensajeCodigoDescuentoPedido', 'Agrega productos a la lista primero.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/descuentos/validar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ codigo, subtotal })
+    });
+    const resultado = await resp.json();
+
+    if (!resp.ok || !resultado.valido) {
+      mostrarMensaje('mensajeCodigoDescuentoPedido', resultado.mensaje || 'Código no válido.', 'error');
+      return;
+    }
+
+    descuentoPedidoActual = { valorDescuento: resultado.valor_descuento, codigo, codigoId: resultado.codigo_id };
+    const textoEl = document.getElementById('textoDescuentoPedidoAplicado');
+    textoEl.classList.remove('oculto');
+    textoEl.textContent = `✅ Código "${codigo}" aplicado — Descuento: -${formatearMoneda(resultado.valor_descuento)}`;
+    ocultarMensaje('mensajeCodigoDescuentoPedido');
+    actualizarResumenAnticipoPedido();
+  }
+
   function actualizarResumenAnticipoPedido() {
     const canal = document.getElementById('pedidoCanal').value;
-    const valorProducto = carritoPedidoCanal.reduce((acc, p) => acc + p.valor, 0);
+    const valorProductoBruto = carritoPedidoCanal.reduce((acc, p) => acc + p.valor, 0);
+    const valorDescuento = Math.min(descuentoPedidoActual.valorDescuento || 0, valorProductoBruto);
+    const valorProducto = Math.max(valorProductoBruto - valorDescuento, 0);
     const valorEnvio = Number(document.getElementById('pedidoValorEnvio').value) || 0;
     const total = valorProducto + valorEnvio;
 
@@ -7639,7 +7809,8 @@
 
     const el = document.getElementById('resumenAnticipoPedido');
     el.innerHTML = `
-      <div class="resumen-fila"><span>Valor productos (${carritoPedidoCanal.length})</span><strong>${formatearMoneda(valorProducto)}</strong></div>
+      <div class="resumen-fila"><span>Valor productos (${carritoPedidoCanal.length})</span><strong>${formatearMoneda(valorProductoBruto)}</strong></div>
+      ${valorDescuento > 0 ? `<div class="resumen-fila"><span>Descuento</span><strong>-${formatearMoneda(valorDescuento)}</strong></div>` : ''}
       <div class="resumen-fila"><span>Valor envío</span><strong>${formatearMoneda(valorEnvio)}</strong></div>
       <div class="resumen-fila total"><span>Total pedido</span><strong>${formatearMoneda(total)}</strong></div>
       <div class="resumen-fila" style="margin-top:8px;color:var(--rosa-principal);"><span>Anticipo a cobrar ahora</span><strong>${formatearMoneda(anticipo)}</strong></div>
@@ -7693,7 +7864,9 @@
 
     const descripcion = carritoPedidoCanal.map(p => `${p.cantidad}x ${p.descripcion}`).join(', ');
     const cantidad = carritoPedidoCanal.reduce((acc, p) => acc + p.cantidad, 0);
-    const valorProducto = carritoPedidoCanal.reduce((acc, p) => acc + p.valor, 0);
+    const valorProductoBruto = carritoPedidoCanal.reduce((acc, p) => acc + p.valor, 0);
+    const valorDescuentoPedido = Math.min(descuentoPedidoActual.valorDescuento || 0, valorProductoBruto);
+    const valorProducto = Math.max(valorProductoBruto - valorDescuentoPedido, 0);
 
     const btn = document.getElementById('btnCrearPedido');
     btn.disabled = true;
@@ -9846,6 +10019,11 @@
 
   async function prepararPestanaVentaAcademia() {
     carritoAcademia = [];
+    descuentoAcademiaActual = { valorDescuento: 0, codigo: null, codigoId: null };
+    document.getElementById('formDescuentoAcademia').classList.add('oculto');
+    document.getElementById('btnMostrarDescuentoAcademia').classList.remove('oculto');
+    document.getElementById('codigoDescuentoAcademiaInput').value = '';
+    document.getElementById('textoDescuentoAcademiaAplicado').classList.add('oculto');
     document.getElementById('chkAgendarClase').checked = false;
     document.getElementById('bloqueAgendarClase').classList.add('oculto');
     document.getElementById('claseFechaInicio').value = '';
@@ -9934,6 +10112,52 @@
     renderizarCarritoAcademia();
   }
 
+  let descuentoAcademiaActual = { valorDescuento: 0, codigo: null, codigoId: null };
+
+  function alternarDescuentoAcademia() {
+    document.getElementById('formDescuentoAcademia').classList.remove('oculto');
+    document.getElementById('btnMostrarDescuentoAcademia').classList.add('oculto');
+    document.getElementById('codigoDescuentoAcademiaInput').focus();
+  }
+
+  function quitarDescuentoAcademia() {
+    descuentoAcademiaActual = { valorDescuento: 0, codigo: null, codigoId: null };
+    document.getElementById('codigoDescuentoAcademiaInput').value = '';
+    document.getElementById('formDescuentoAcademia').classList.add('oculto');
+    document.getElementById('btnMostrarDescuentoAcademia').classList.remove('oculto');
+    document.getElementById('textoDescuentoAcademiaAplicado').classList.add('oculto');
+    ocultarMensaje('mensajeCodigoDescuentoAcademia');
+    renderizarCarritoAcademia();
+  }
+
+  async function aplicarCodigoDescuentoAcademia() {
+    const codigo = document.getElementById('codigoDescuentoAcademiaInput').value.trim();
+    ocultarMensaje('mensajeCodigoDescuentoAcademia');
+    if (!codigo) { mostrarMensaje('mensajeCodigoDescuentoAcademia', 'Escribe un código.', 'error'); return; }
+
+    const subtotal = carritoAcademia.reduce((acc, i) => acc + (i.tipo === 'clase' ? i.monto : i.cantidad * i.precioUnitario), 0);
+    if (subtotal <= 0) { mostrarMensaje('mensajeCodigoDescuentoAcademia', 'Agrega una clase o un kit a la lista primero.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/descuentos/validar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ codigo, subtotal })
+    });
+    const resultado = await resp.json();
+
+    if (!resp.ok || !resultado.valido) {
+      mostrarMensaje('mensajeCodigoDescuentoAcademia', resultado.mensaje || 'Código no válido.', 'error');
+      return;
+    }
+
+    descuentoAcademiaActual = { valorDescuento: resultado.valor_descuento, codigo, codigoId: resultado.codigo_id };
+    const textoEl = document.getElementById('textoDescuentoAcademiaAplicado');
+    textoEl.classList.remove('oculto');
+    textoEl.textContent = `✅ Código "${codigo}" aplicado — Descuento: -${formatearMoneda(resultado.valor_descuento)}`;
+    ocultarMensaje('mensajeCodigoDescuentoAcademia');
+    renderizarCarritoAcademia();
+  }
+
   function renderizarCarritoAcademia() {
     const contenedor = document.getElementById('listaCarritoAcademia');
     if (carritoAcademia.length === 0) {
@@ -9956,11 +10180,16 @@
       }).join('');
     }
 
-    const total = carritoAcademia.reduce((acc, i) => acc + (i.tipo === 'clase' ? i.monto : i.cantidad * i.precioUnitario), 0);
+    const subtotal = carritoAcademia.reduce((acc, i) => acc + (i.tipo === 'clase' ? i.monto : i.cantidad * i.precioUnitario), 0);
+    const valorDescuento = Math.min(descuentoAcademiaActual.valorDescuento || 0, subtotal);
+    const total = Math.max(subtotal - valorDescuento, 0);
     const resumen = document.getElementById('totalVentaAcademiaResumen');
     if (carritoAcademia.length > 0) {
       resumen.classList.remove('oculto');
-      resumen.innerHTML = `<div class="resumen-fila total"><span>TOTAL A COBRAR</span><strong>${formatearMoneda(total)}</strong></div>`;
+      resumen.innerHTML = `
+        ${valorDescuento > 0 ? `<div class="resumen-fila"><span>Subtotal</span><strong>${formatearMoneda(subtotal)}</strong></div><div class="resumen-fila"><span>Descuento</span><strong>-${formatearMoneda(valorDescuento)}</strong></div>` : ''}
+        <div class="resumen-fila total"><span>TOTAL A COBRAR</span><strong>${formatearMoneda(total)}</strong></div>
+      `;
     } else {
       resumen.classList.add('oculto');
     }
@@ -9977,7 +10206,9 @@
 
     const clases = carritoAcademia.filter(i => i.tipo === 'clase');
     const kits = carritoAcademia.filter(i => i.tipo === 'kit');
-    const montoTotal = carritoAcademia.reduce((acc, i) => acc + (i.tipo === 'clase' ? i.monto : i.cantidad * i.precioUnitario), 0);
+    const montoBruto = carritoAcademia.reduce((acc, i) => acc + (i.tipo === 'clase' ? i.monto : i.cantidad * i.precioUnitario), 0);
+    const valorDescuentoAcademia = Math.min(descuentoAcademiaActual.valorDescuento || 0, montoBruto);
+    const montoTotal = Math.max(montoBruto - valorDescuentoAcademia, 0);
     const descripcionCombinada = [
       ...clases.map(c => c.descripcion),
       ...kits.map(k => `${k.cantidad}x kit ${k.nombre}`)
