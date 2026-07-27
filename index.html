@@ -926,6 +926,8 @@
         <input type="text" id="academiaDescripcion" placeholder="Ej: Curso de amigurumis nivel 1 — María P.">
         <label for="academiaMonto">Valor (COP)</label>
         <input type="number" id="academiaMonto" placeholder="0" min="1" step="1000">
+        <label for="academiaDuracionHoras">Duración de la clase (horas) <span style="font-size:10px;opacity:0.6;">(para calcular el margen de utilidad)</span></label>
+        <input type="number" id="academiaDuracionHoras" placeholder="2" min="0.5" step="0.5" value="2">
         <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-weight:400;">
           <input type="checkbox" id="chkAgendarClase" style="width:auto;" onchange="document.getElementById('bloqueAgendarClase').classList.toggle('oculto', !this.checked)">
           <span>📅 Agendar esta clase en el calendario</span>
@@ -1474,6 +1476,7 @@
     <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinAcademia', this); cargarInformeAcademia();">🎓 Academy: ventas y metas</button>
     <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinProvisiones', this); cargarProvisionesNomina();">📦 Provisiones de nómina</button>
     <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinIndicadores', this); cargarIndicadoresVentas();">📈 Indicadores de ventas</button>
+    <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinCosteo', this); cargarCosteoReal();">🧮 Costeo real (materiales + mano de obra)</button>
   </div>
 
   <div id="subtabFinConsolidado" data-subtab-grupo="reportesFin" class="oculto">
@@ -1533,6 +1536,22 @@
     </div>
     <div id="notaIndicadoresVentas" class="oculto" style="background:#fff3cd;color:#856404;border-radius:9px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;"></div>
     <div id="listaIndicadoresVentas"><div class="cargando">Cargando...</div></div>
+  </div>
+
+  <div id="subtabFinCosteo" data-subtab-grupo="reportesFin" class="oculto">
+    <div id="valorHoraManoObra" style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;font-weight:600;"></div>
+
+    <div class="panel" style="max-width:none;max-height:none;margin-bottom:20px;">
+      <h2>🧶 Amigurumis y productos tejidos (del CRM)</h2>
+      <div class="subtitulo">Costo de mano de obra = horas de tejido registradas en el CRM × valor de la hora (SMLV + prestaciones + ARL + parafiscales). Costo de materiales = lo consumido del inventario para ese pedido.</div>
+      <div id="listaCosteoAmigurumis" style="margin-top:10px;"><div class="cargando">Cargando...</div></div>
+    </div>
+
+    <div class="panel" style="max-width:none;max-height:none;">
+      <h2>🎓 Cursos y clases</h2>
+      <div class="subtitulo">Margen = valor de la clase − costo de mano de obra (según la duración registrada al vender la clase).</div>
+      <div id="listaCosteoClases" style="margin-top:10px;"><div class="cargando">Cargando...</div></div>
+    </div>
   </div>
 
   <div id="subtabFinPresupuestos" data-subtab-grupo="reportesFin">
@@ -7237,6 +7256,61 @@
     `;
   }
 
+  async function cargarCosteoReal() {
+    const [respAmigurumis, respClases] = await Promise.all([
+      fetch(WORKER_URL + '/api/pos/crm/costos-productos', { headers: { Authorization: 'Bearer ' + sesionActual.token } }),
+      fetch(WORKER_URL + '/api/pos/academia/margen-clases', { headers: { Authorization: 'Bearer ' + sesionActual.token } })
+    ]);
+
+    if (respAmigurumis.ok) {
+      const { valor_hora_mano_obra, productos } = await respAmigurumis.json();
+      document.getElementById('valorHoraManoObra').textContent = `💰 Valor de la hora de mano de obra (SMLV + prestaciones + ARL + parafiscales): ${formatearMoneda(valor_hora_mano_obra)}`;
+
+      const contA = document.getElementById('listaCosteoAmigurumis');
+      contA.innerHTML = productos.length === 0 ? '<div class="cargando">Sin pedidos con precio registrado en el CRM.</div>' : `
+        <div class="tabla-lista">
+          <div class="tabla-lista-header" style="grid-template-columns:1fr 90px 100px 100px 100px 100px 90px 90px;">
+            <span>PRODUCTO</span><span style="text-align:right;">HORAS</span><span style="text-align:right;">MANO DE OBRA</span><span style="text-align:right;">MATERIALES</span><span style="text-align:right;">COSTO TOTAL</span><span style="text-align:right;">PRECIO VENTA</span><span style="text-align:right;">MARGEN</span><span style="text-align:right;">%</span>
+          </div>
+          ${productos.map(p => `
+            <div class="tabla-lista-fila" style="grid-template-columns:1fr 90px 100px 100px 100px 100px 90px 90px;cursor:default;">
+              <span>${escaparHtml(p.descripcion || 'Sin descripción')}${p.numero_pedido ? ' <span style="opacity:0.5;">#' + escaparHtml(p.numero_pedido) + '</span>' : ''}</span>
+              <span style="text-align:right;">${p.horas_tejido}</span>
+              <span style="text-align:right;">${formatearMoneda(p.mano_obra)}</span>
+              <span style="text-align:right;">${formatearMoneda(p.materiales)}</span>
+              <span style="text-align:right;font-weight:700;">${formatearMoneda(p.costo_total)}</span>
+              <span style="text-align:right;">${formatearMoneda(p.precio_venta)}</span>
+              <span style="text-align:right;color:${p.margen >= 0 ? 'var(--verde-exito)' : 'var(--rojo-error)'};font-weight:700;">${formatearMoneda(p.margen)}</span>
+              <span style="text-align:right;">${p.margen_pct}%</span>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    if (respClases.ok) {
+      const { clases } = await respClases.json();
+      const contC = document.getElementById('listaCosteoClases');
+      contC.innerHTML = clases.length === 0 ? '<div class="cargando">Sin clases registradas.</div>' : `
+        <div class="tabla-lista">
+          <div class="tabla-lista-header" style="grid-template-columns:1fr 90px 110px 110px 100px 90px;">
+            <span>CLASE/CURSO</span><span style="text-align:right;">HORAS</span><span style="text-align:right;">MANO DE OBRA</span><span style="text-align:right;">VALOR CLASE</span><span style="text-align:right;">MARGEN</span><span style="text-align:right;">%</span>
+          </div>
+          ${clases.map(c => `
+            <div class="tabla-lista-fila" style="grid-template-columns:1fr 90px 110px 110px 100px 90px;cursor:default;">
+              <span>${escaparHtml(c.descripcion)}</span>
+              <span style="text-align:right;">${c.duracion_horas}</span>
+              <span style="text-align:right;">${formatearMoneda(c.mano_obra)}</span>
+              <span style="text-align:right;">${formatearMoneda(c.valor_clase)}</span>
+              <span style="text-align:right;color:${c.margen >= 0 ? 'var(--verde-exito)' : 'var(--rojo-error)'};font-weight:700;">${formatearMoneda(c.margen)}</span>
+              <span style="text-align:right;">${c.margen_pct}%</span>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+  }
+
   let canalIndicadorActual = 'tienda';
 
   function cambiarCanalIndicadores(canal, botonEl) {
@@ -9799,6 +9873,7 @@
     const subarea = document.getElementById('academiaSubarea').value;
     const descripcion = document.getElementById('academiaDescripcion').value.trim();
     const monto = Number(document.getElementById('academiaMonto').value);
+    const duracionHoras = Number(document.getElementById('academiaDuracionHoras').value) || 2;
     const agendar = document.getElementById('chkAgendarClase').checked;
     const fechaInicio = document.getElementById('claseFechaInicio').value;
 
@@ -9806,10 +9881,11 @@
     if (!monto || monto <= 0) { alert('Escribe un monto válido.'); return; }
     if (agendar && !fechaInicio) { alert('Escribe la fecha y hora de la clase, o desmarca "Agendar".'); return; }
 
-    carritoAcademia.push({ tipo: 'clase', subarea, descripcion, monto, agendar, fechaInicio });
+    carritoAcademia.push({ tipo: 'clase', subarea, descripcion, monto, duracionHoras, agendar, fechaInicio });
 
     document.getElementById('academiaDescripcion').value = '';
     document.getElementById('academiaMonto').value = '';
+    document.getElementById('academiaDuracionHoras').value = '2';
     document.getElementById('chkAgendarClase').checked = false;
     document.getElementById('bloqueAgendarClase').classList.add('oculto');
     document.getElementById('claseFechaInicio').value = '';
@@ -9887,6 +9963,7 @@
       ...kits.map(k => `${k.cantidad}x kit ${k.nombre}`)
     ].join(' + ');
     const areaFormacion = clases.length > 0 ? clases[0].subarea : 'otro';
+    const duracionTotalHoras = clases.reduce((acc, c) => acc + (c.duracionHoras || 2), 0);
 
     const btn = document.getElementById('btnRegistrarVentaAcademia');
     btn.disabled = true;
@@ -9901,7 +9978,8 @@
         cliente_nombre: cliente || null,
         monto: montoTotal,
         metodo_pago: metodoPago,
-        turno_id: turnoActivoActual.id
+        turno_id: turnoActivoActual.id,
+        duracion_horas: duracionTotalHoras > 0 ? duracionTotalHoras : null
       })
     });
 
