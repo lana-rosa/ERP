@@ -685,6 +685,7 @@
         <button class="nav-btn" id="nav-trazabilidad" onclick="mostrarPantallaTrazabilidad()"><span class="nav-icon">🕵️</span> Trazabilidad del sistema</button>
         <button class="nav-btn" id="nav-reinicio-produccion" onclick="mostrarPantallaReinicioProduccion()"><span class="nav-icon">🧹</span> Reinicio antes de producción</button>
         <button class="nav-btn" id="nav-codigos-descuento" onclick="mostrarPantallaCodigosDescuento()"><span class="nav-icon">🏷️</span> Códigos de descuento</button>
+        <button class="nav-btn" id="nav-fidelizacion" onclick="mostrarPantallaFidelizacion()"><span class="nav-icon">⭐</span> Programa de fidelización</button>
         <button class="nav-btn" id="nav-tarifas-envio" onclick="mostrarPantallaTarifasEnvio()"><span class="nav-icon">🚚</span> Tarifas de envío</button>
         <button class="nav-btn" onclick="mostrarPantallaApariencia()"><span class="nav-icon">🎨</span> Apariencia</button>
       </div>
@@ -692,6 +693,7 @@
   </div>
 
   <div class="sidebar-footer">
+    <div id="widgetHorasTrabajadas" class="oculto" style="padding:10px 16px;border-top:1px solid rgba(255,255,255,0.08);"></div>
     <div class="sidebar-usuario">
       <div id="nombreUsuarioSidebar">—</div>
       <div id="badgeRolSidebar"></div>
@@ -1851,6 +1853,7 @@
     <button class="chip-filtro activo" data-subtab-btn="talentoHumano" onclick="mostrarSubTabGrupo('talentoHumano', 'subtabRhDocumentos', this)">📁 Documentos</button>
     <button class="chip-filtro" data-subtab-btn="talentoHumano" onclick="mostrarSubTabGrupo('talentoHumano', 'subtabRhAutorizados', this)">📅 Autorizados del calendario</button>
     <button class="chip-filtro" data-subtab-btn="talentoHumano" onclick="mostrarSubTabGrupo('talentoHumano', 'subtabRhCodigos', this); cargarCodigosAutorizacion();">🔐 Códigos de autorización</button>
+    <button class="chip-filtro" data-subtab-btn="talentoHumano" onclick="mostrarSubTabGrupo('talentoHumano', 'subtabRhHoras', this); cargarRegistroHorasAdmin();">⏱️ Horas trabajadas</button>
   </div>
 
   <div id="subtabRhDocumentos" data-subtab-grupo="talentoHumano">
@@ -1881,6 +1884,23 @@
         <button class="btn-mini guardar" style="width:100%;margin-top:8px;" onclick="crearCodigoAutorizacion()">+ Crear código</button>
         <div class="mensaje" id="mensajeCodigoAutorizacion"></div>
       </div>
+    </div>
+  </div>
+
+  <div id="subtabRhHoras" data-subtab-grupo="talentoHumano" class="oculto">
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+      <div>
+        <label for="horasFechaDesde" style="font-size:11px;">Desde</label>
+        <input type="date" id="horasFechaDesde" onchange="cargarRegistroHorasAdmin()" style="padding:9px 10px;">
+      </div>
+      <div>
+        <label for="horasFechaHasta" style="font-size:11px;">Hasta</label>
+        <input type="date" id="horasFechaHasta" onchange="cargarRegistroHorasAdmin()" style="padding:9px 10px;">
+      </div>
+    </div>
+    <div id="resumenHorasPorEmpleado" style="margin-bottom:16px;"></div>
+    <div class="panel" style="max-width:none;max-height:none;">
+      <div id="listaRegistroHoras"><div class="cargando">Cargando...</div></div>
     </div>
   </div>
 </div>
@@ -2070,6 +2090,22 @@
 </div>
 
 <!-- ===== PANTALLA: CÓDIGOS DE DESCUENTO ===== -->
+<!-- ===== PANTALLA: FIDELIZACIÓN — PUNTOS ===== -->
+<div id="pantallaFidelizacion" class="oculto contenido">
+  <div class="page-header">
+    <h1>⭐ Programa de fidelización</h1>
+    <div class="subtitulo">Configura cuánto vale cada punto, tanto para ganarlo como para canjearlo. Aplica hoy a las ventas de Tienda.</div>
+  </div>
+  <div class="panel" style="max-width:420px;">
+    <label for="fidelizacionPesosPorPunto">El cliente gana 1 punto por cada... (COP gastados)</label>
+    <input type="number" id="fidelizacionPesosPorPunto" min="1" step="100">
+    <label for="fidelizacionValorPunto">Cada punto vale al canjear (COP de descuento)</label>
+    <input type="number" id="fidelizacionValorPunto" min="0" step="10">
+    <button class="btn-principal" onclick="confirmarGuardarParametrosFidelizacion()">Guardar</button>
+    <div class="mensaje" id="mensajeFidelizacion"></div>
+  </div>
+</div>
+
 <div id="pantallaCodigosDescuento" class="oculto contenido">
   <div class="page-header">
     <h1>🏷️ Códigos de descuento</h1>
@@ -2628,7 +2664,7 @@
   // UTILIDADES
   // ============================================================================
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -2868,6 +2904,7 @@
     mostrar('nav-trazabilidad', esAdmin);
     mostrar('nav-reinicio-produccion', esAdmin);
     mostrar('nav-codigos-descuento', esAdmin);
+    mostrar('nav-fidelizacion', esAdmin);
     mostrar('nav-tarifas-envio', esAdmin);
 
     // Turno de caja solo aplica a quien maneja caja física (Tienda)
@@ -3122,6 +3159,46 @@
 
     const elNombre = document.getElementById('sidebarNombreUsuarioTop');
     if (elNombre) elNombre.textContent = miPropiaIdentidad.nombre || '';
+
+    cargarWidgetHorasTrabajadas();
+  }
+
+  async function cargarWidgetHorasTrabajadas() {
+    const cont = document.getElementById('widgetHorasTrabajadas');
+    const resp = await fetch(WORKER_URL + '/api/pos/horas/mi-estado', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { cont.classList.add('oculto'); return; }
+    const { es_empleado, turno_abierto } = await resp.json();
+    if (!es_empleado) { cont.classList.add('oculto'); return; }
+
+    cont.classList.remove('oculto');
+    if (turno_abierto) {
+      const desde = new Date(turno_abierto.hora_entrada).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+      cont.innerHTML = `
+        <div style="font-size:11px;color:rgba(255,255,255,0.7);margin-bottom:6px;">🟢 Entrada marcada: ${desde}</div>
+        <button class="nav-btn" style="background:rgba(255,255,255,0.08);" onclick="marcarSalidaHorasClick()">⏱️ Marcar salida</button>
+      `;
+    } else {
+      cont.innerHTML = `<button class="nav-btn" style="background:rgba(255,255,255,0.08);" onclick="marcarEntradaHorasClick()">⏱️ Marcar entrada</button>`;
+    }
+  }
+
+  async function marcarEntradaHorasClick() {
+    const resp = await fetch(WORKER_URL + '/api/pos/horas/marcar-entrada', { method: 'POST', headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    const datos = await resp.json();
+    if (!resp.ok) { alert(datos.error || 'No se pudo marcar la entrada.'); return; }
+    await cargarWidgetHorasTrabajadas();
+  }
+
+  async function marcarSalidaHorasClick() {
+    const resp = await fetch(WORKER_URL + '/api/pos/horas/marcar-salida', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({})
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { alert(datos.error || 'No se pudo marcar la salida.'); return; }
+    alert(`✅ Salida marcada. Trabajaste ${datos.horas_trabajadas} horas.`);
+    await cargarWidgetHorasTrabajadas();
   }
 
   async function cargarRolesYPermisosPropios() {
@@ -6542,6 +6619,84 @@
     });
     if (!resp.ok) { alert('No se pudo eliminar.'); return; }
     await cargarListaTarifasEnvioAdmin();
+  }
+
+  async function cargarRegistroHorasAdmin() {
+    const contenedor = document.getElementById('listaRegistroHoras');
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+
+    const params = new URLSearchParams();
+    const desde = document.getElementById('horasFechaDesde').value;
+    const hasta = document.getElementById('horasFechaHasta').value;
+    if (desde) params.set('fecha_desde', desde);
+    if (hasta) params.set('fecha_hasta', hasta);
+
+    const resp = await fetch(WORKER_URL + '/api/pos/horas/listar?' + params.toString(), { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const { registros, totales_por_empleado } = await resp.json();
+
+    const resumen = document.getElementById('resumenHorasPorEmpleado');
+    const nombres = Object.keys(totales_por_empleado || {});
+    resumen.innerHTML = nombres.length === 0 ? '' : `
+      <div class="grilla-3">
+        ${nombres.map(n => `
+          <div class="panel" style="max-height:none;text-align:center;">
+            <div style="font-size:12px;opacity:0.7;">${escaparHtml(n)}</div>
+            <div style="font-size:22px;font-weight:700;color:var(--rosa-principal);margin-top:4px;">${totales_por_empleado[n].toFixed(1)} h</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+
+    if (!registros || registros.length === 0) { contenedor.innerHTML = '<div class="cargando">Sin registros en este período.</div>'; return; }
+
+    contenedor.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:1fr 90px 90px 90px 90px;">
+          <span>EMPLEADO</span><span>FECHA</span><span>ENTRADA</span><span>SALIDA</span><span style="text-align:right;">HORAS</span>
+        </div>
+        ${registros.map(r => `
+          <div class="tabla-lista-fila" style="grid-template-columns:1fr 90px 90px 90px 90px;cursor:default;">
+            <span>${escaparHtml(r.empleados ? r.empleados.nombre_completo : 'Empleado')}</span>
+            <span>${new Date(r.fecha + 'T00:00:00').toLocaleDateString('es-CO')}</span>
+            <span>${new Date(r.hora_entrada).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}</span>
+            <span>${r.hora_salida ? new Date(r.hora_salida).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) : '⏳ En curso'}</span>
+            <span style="text-align:right;font-weight:700;">${r.horas_trabajadas ? r.horas_trabajadas.toFixed(1) : '—'}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  async function mostrarPantallaFidelizacion() {
+    mostrarPantalla('pantallaFidelizacion');
+    ocultarMensaje('mensajeFidelizacion');
+    const resp = await fetch(WORKER_URL + '/api/pos/fidelizacion/parametros', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (resp.ok) {
+      const { parametros } = await resp.json();
+      if (parametros) {
+        document.getElementById('fidelizacionPesosPorPunto').value = parametros.pesos_por_punto;
+        document.getElementById('fidelizacionValorPunto').value = parametros.valor_punto_redimir;
+      }
+    }
+  }
+
+  async function confirmarGuardarParametrosFidelizacion() {
+    const pesosPorPunto = Number(document.getElementById('fidelizacionPesosPorPunto').value);
+    const valorPunto = Number(document.getElementById('fidelizacionValorPunto').value);
+    ocultarMensaje('mensajeFidelizacion');
+
+    if (!pesosPorPunto || pesosPorPunto <= 0) { mostrarMensaje('mensajeFidelizacion', 'Escribe cuántos pesos equivalen a 1 punto.', 'error'); return; }
+    if (valorPunto === undefined || valorPunto < 0 || isNaN(valorPunto)) { mostrarMensaje('mensajeFidelizacion', 'Escribe el valor de cada punto al canjear.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/fidelizacion/parametros', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ pesos_por_punto: pesosPorPunto, valor_punto_redimir: valorPunto })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeFidelizacion', datos.error || 'No se pudo guardar.', 'error'); return; }
+    mostrarMensaje('mensajeFidelizacion', '✅ Guardado correctamente.', 'exito');
   }
 
   async function mostrarPantallaCodigosDescuento() {
