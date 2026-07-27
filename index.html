@@ -10548,8 +10548,8 @@
   let diaSeleccionadoCalendario = new Date().toISOString().slice(0, 10);
   let vistaCalendarioActual = 'mes';
 
-  const etiquetasTipoEvento = { reunion: '🗓️ Reunión', capacitacion: '🎓 Capacitación', junta: '🤝 Junta', salida: '🚗 Salida', otro: '📌 Otro', personal: '📝 Tarea personal', fondo_emprender: '🏦 Fondo Emprender', alerta_nomina: '💰 Alerta de nómina', clase_academia: '🧶 Clase de Academy' };
-  const coloresTipoEvento = { reunion: '#4a90d9', capacitacion: '#2e8b57', junta: '#e0922f', salida: '#8a5fc4', otro: '#999999', personal: '#d8017c', fondo_emprender: '#1a5f3f', alerta_nomina: '#c0392b', clase_academia: '#e0922f' };
+  const etiquetasTipoEvento = { reunion: '🗓️ Reunión', capacitacion: '🎓 Capacitación', junta: '🤝 Junta', salida: '🚗 Salida', otro: '📌 Otro', personal: '📝 Tarea personal', fondo_emprender: '🏦 Fondo Emprender', alerta_nomina: '💰 Alerta de nómina', clase_academia: '🧶 Clase de Academy', pedido_tejedora: '🧶 Entrega de pedido (CRM)' };
+  const coloresTipoEvento = { reunion: '#4a90d9', capacitacion: '#2e8b57', junta: '#e0922f', salida: '#8a5fc4', otro: '#999999', personal: '#d8017c', fondo_emprender: '#1a5f3f', alerta_nomina: '#c0392b', clase_academia: '#e0922f', pedido_tejedora: '#9b59b6' };
 
   async function cargarEventosCalendario() {
     const [respEventos, respTareas] = await Promise.all([
@@ -10592,6 +10592,26 @@
             origen: 'fe'
           }));
         todosLosEventosCalendario = [...todosLosEventosCalendario, ...feNormalizados];
+      }
+    }
+
+    // Pedidos del CRM asignados a tejedoras (Sara/Jennifer), con su fecha de
+    // entrega — solo lectura, se gestionan desde el CRM.
+    if (rolActual === 'administrador' || rolActual === 'taller') {
+      const respTejedoras = await fetch(WORKER_URL + '/api/pos/crm/pedidos-tejedoras', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+      if (respTejedoras.ok) {
+        const { pedidos: pedidosTejedoras } = await respTejedoras.json();
+        const tejedorasNormalizados = (pedidosTejedoras || []).map(p => ({
+          id: p.id,
+          titulo: `🧶 ${p.tejedora_nombre}: ${p.descripcion}${p.numero_pedido ? ' (#' + p.numero_pedido + ')' : ''}`,
+          tipo: 'pedido_tejedora',
+          fecha_inicio: p.fecha_entrega + 'T09:00:00',
+          fecha_fin: p.fecha_entrega + 'T09:00:00',
+          descripcion: `Estado en el CRM: ${p.estado}. Se gestiona desde el CRM de pedidos.`,
+          recordatorio_minutos_antes: null,
+          origen: 'crm_tejedora'
+        }));
+        todosLosEventosCalendario = [...todosLosEventosCalendario, ...tejedorasNormalizados];
       }
     }
 
