@@ -1008,9 +1008,6 @@
           <div style="font-size:12.5px;font-weight:600;opacity:0.7;margin-bottom:6px;">Próximas clases ya agendadas</div>
           <div id="listaProximasClasesAcademia" style="max-height:280px;overflow-y:auto;"><div class="cargando">Cargando...</div></div>
         </div>
-
-        <h2 style="margin-top:24px;">Ventas recientes de Academy</h2>
-        <div id="listaVentasAcademia"><div class="cargando">Cargando...</div></div>
       </div>
     </div>
   </div>
@@ -1312,30 +1309,52 @@
 <div id="pantallaHistorial" class="oculto contenido">
   <div class="page-header">
     <h1>Historial de ventas</h1>
-    <div class="subtitulo">Se muestran las últimas 100 ventas, más reciente primero. Si buscas por cliente o N° de recibo, la búsqueda revisa todo el historial del departamento, no solo lo más reciente.</div>
+    <div class="subtitulo">Se muestran las últimas 100 ventas, más reciente primero.</div>
   </div>
-  <div class="filtro-tipo" id="filtroDeptoHistorial" style="margin-bottom:16px;"></div>
-  <div class="barra-busqueda" style="margin-bottom:12px;">
-    <input type="text" id="inputBuscarHistorialVentas" placeholder="🔍 Buscar por nombre del cliente, cédula, teléfono o N° de recibo..." oninput="debounceBusquedaHistorial()">
-  </div>
-  <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
-    <div>
-      <label for="fechaDesdeHistorial" style="font-size:11px;">Desde</label>
-      <input type="date" id="fechaDesdeHistorial" onchange="cargarHistorialVentas()" style="padding:9px 10px;">
-    </div>
-    <div>
-      <label for="fechaHastaHistorial" style="font-size:11px;">Hasta</label>
-      <input type="date" id="fechaHastaHistorial" onchange="cargarHistorialVentas()" style="padding:9px 10px;">
-    </div>
-    <button class="btn-mini desactivar" onclick="limpiarFechasHistorial()" style="margin-bottom:1px;">Quitar filtro de fecha</button>
-  </div>
+
   <div class="filtro-tipo" style="margin-bottom:16px;">
-    <button class="chip-filtro activo" data-vista-historial="turno" onclick="cambiarVistaHistorial('turno', this)">Por turno</button>
-    <button class="chip-filtro" data-vista-historial="dia" onclick="cambiarVistaHistorial('dia', this)">Por día</button>
-    <button class="chip-filtro" data-vista-historial="mes" onclick="cambiarVistaHistorial('mes', this)">Por mes</button>
+    <button class="chip-filtro activo" data-canal-historial="tienda" onclick="cambiarCanalHistorial('tienda', this)">🧵 Tienda</button>
+    <button class="chip-filtro" data-canal-historial="redes" onclick="cambiarCanalHistorial('redes', this)">📱 WhatsApp/Redes</button>
+    <button class="chip-filtro" data-canal-historial="clases" onclick="cambiarCanalHistorial('clases', this)">🎓 Cursos/clases</button>
   </div>
-  <div class="panel" style="max-height:none;">
-    <div id="listaHistorialVentas"><div class="cargando">Cargando historial...</div></div>
+
+  <div id="subhistorialTienda">
+    <div class="subtitulo" style="margin-bottom:12px;">Si buscas por cliente o N° de recibo, la búsqueda revisa todo el historial del departamento, no solo lo más reciente.</div>
+    <div class="filtro-tipo" id="filtroDeptoHistorial" style="margin-bottom:16px;"></div>
+    <div class="barra-busqueda" style="margin-bottom:12px;">
+      <input type="text" id="inputBuscarHistorialVentas" placeholder="🔍 Buscar por nombre del cliente, cédula, teléfono o N° de recibo..." oninput="debounceBusquedaHistorial()">
+    </div>
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+      <div>
+        <label for="fechaDesdeHistorial" style="font-size:11px;">Desde</label>
+        <input type="date" id="fechaDesdeHistorial" onchange="cargarHistorialVentas()" style="padding:9px 10px;">
+      </div>
+      <div>
+        <label for="fechaHastaHistorial" style="font-size:11px;">Hasta</label>
+        <input type="date" id="fechaHastaHistorial" onchange="cargarHistorialVentas()" style="padding:9px 10px;">
+      </div>
+      <button class="btn-mini desactivar" onclick="limpiarFechasHistorial()" style="margin-bottom:1px;">Quitar filtro de fecha</button>
+    </div>
+    <div class="filtro-tipo" style="margin-bottom:16px;">
+      <button class="chip-filtro activo" data-vista-historial="turno" onclick="cambiarVistaHistorial('turno', this)">Por turno</button>
+      <button class="chip-filtro" data-vista-historial="dia" onclick="cambiarVistaHistorial('dia', this)">Por día</button>
+      <button class="chip-filtro" data-vista-historial="mes" onclick="cambiarVistaHistorial('mes', this)">Por mes</button>
+    </div>
+    <div class="panel" style="max-height:none;">
+      <div id="listaHistorialVentas"><div class="cargando">Cargando historial...</div></div>
+    </div>
+  </div>
+
+  <div id="subhistorialRedes" class="oculto">
+    <div class="panel" style="max-height:none;max-width:none;">
+      <div id="listaHistorialRedes"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+
+  <div id="subhistorialClases" class="oculto">
+    <div class="panel" style="max-height:none;max-width:none;">
+      <div id="listaHistorialClases"><div class="cargando">Cargando...</div></div>
+    </div>
   </div>
 </div>
 
@@ -4798,8 +4817,52 @@
   let centrosCostoHistorialCache = [];
   let filtroDeptoHistorialActual = null;
 
+  function cambiarCanalHistorial(canal, botonEl) {
+    document.querySelectorAll('[data-canal-historial]').forEach(b => b.classList.remove('activo'));
+    botonEl.classList.add('activo');
+    document.getElementById('subhistorialTienda').classList.toggle('oculto', canal !== 'tienda');
+    document.getElementById('subhistorialRedes').classList.toggle('oculto', canal !== 'redes');
+    document.getElementById('subhistorialClases').classList.toggle('oculto', canal !== 'clases');
+
+    if (canal === 'redes') cargarHistorialRedes();
+    if (canal === 'clases') cargarVentasAcademia();
+  }
+
+  async function cargarHistorialRedes() {
+    const contenedor = document.getElementById('listaHistorialRedes');
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/pedidos-canal', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const { pedidos } = await resp.json();
+
+    if (!pedidos || pedidos.length === 0) {
+      contenedor.innerHTML = '<div class="cargando">Todavía no hay pedidos registrados.</div>';
+      return;
+    }
+
+    const etiquetasCanalHist = { whatsapp: '💬 WhatsApp', instagram: '📷 Instagram', facebook: '👍 Facebook', tienda_virtual: '🛍️ Tienda virtual' };
+    const etiquetasEstadoHist = { esperando_pago: '⏳ Esperando pago', en_preparacion: '🧵 En preparación', listo_despacho: '📦 Listo despacho', entregado: '✅ Entregado' };
+
+    contenedor.innerHTML = pedidos.map(p => `
+      <div class="fila-historial" style="margin-bottom:9px;">
+        <div class="fila-historial-encabezado">
+          <span class="fila-historial-consecutivo">${etiquetasCanalHist[p.canal] || p.canal} — ${escaparHtml(p.consecutivo || '')}</span>
+          <span class="fila-historial-total">${formatearMoneda(p.total_pedido)}</span>
+        </div>
+        <div class="fila-historial-fecha">${new Date(p.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })} · ${escaparHtml(p.nombre_cliente || 'Sin datos de cliente')}</div>
+        <div class="fila-historial-detalle">${escaparHtml(p.descripcion_producto || '')} — ${etiquetasEstadoHist[p.estado] || p.estado}</div>
+      </div>
+    `).join('');
+  }
+
   async function mostrarPantallaHistorial(codigoDeptoForzado) {
     mostrarPantalla('pantallaHistorial');
+    document.querySelectorAll('[data-canal-historial]').forEach(b => b.classList.remove('activo'));
+    document.querySelector('[data-canal-historial="tienda"]').classList.add('activo');
+    document.getElementById('subhistorialTienda').classList.remove('oculto');
+    document.getElementById('subhistorialRedes').classList.add('oculto');
+    document.getElementById('subhistorialClases').classList.add('oculto');
 
     const { data: centros } = await supabaseClient
       .from('centros_costo')
@@ -10032,7 +10095,7 @@
     document.getElementById('academiaKitCantidad').value = '1';
     renderizarCarritoAcademia();
 
-    await Promise.all([cargarVentasAcademia(), cargarLiderAcademiaParaVenta(), cargarKitsParaVenta(), cargarProximasClasesAcademia()]);
+    await Promise.all([cargarLiderAcademiaParaVenta(), cargarKitsParaVenta(), cargarProximasClasesAcademia()]);
   }
 
   async function cargarLiderAcademiaParaVenta() {
@@ -10298,7 +10361,8 @@
   }
 
   async function cargarVentasAcademia() {
-    const contenedor = document.getElementById('listaVentasAcademia');
+    const contenedor = document.getElementById('listaHistorialClases');
+    if (!contenedor) return;
     contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
 
     const resp = await fetch(WORKER_URL + '/api/pos/academia/ventas', {
