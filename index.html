@@ -1906,6 +1906,8 @@
       <input type="text" id="nuevoUsuarioNombre" placeholder="Nombre completo">
       <label for="nuevoUsuarioCorreo">Correo</label>
       <input type="email" id="nuevoUsuarioCorreo" placeholder="correo@ejemplo.com">
+      <label for="nuevoUsuarioTelefono">WhatsApp <span style="font-size:10px;opacity:0.6;">(para enviarle el aviso de su cuenta nueva)</span></label>
+      <input type="tel" id="nuevoUsuarioTelefono" placeholder="300 000 0000">
       <label for="nuevoUsuarioPassword">Contraseña temporal <span style="font-size:10px;opacity:0.6;">(mínimo 6 caracteres — pídele que la cambie al entrar)</span></label>
       <input type="text" id="nuevoUsuarioPassword" placeholder="Ej: LanaRosa2026">
       <label for="nuevoUsuarioRol">Rol principal</label>
@@ -6488,9 +6490,18 @@
     `).join('');
   }
 
+  function abrirWhatsAppTexto(numeroTelefono, mensaje) {
+    let numero = (numeroTelefono || '').replace(/\D/g, '');
+    if (!numero) return false;
+    if (!numero.startsWith('57')) numero = '57' + numero;
+    window.open(`https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`, '_blank');
+    return true;
+  }
+
   async function confirmarCrearUsuario() {
     const nombre = document.getElementById('nuevoUsuarioNombre').value.trim();
     const correo = document.getElementById('nuevoUsuarioCorreo').value.trim();
+    const telefono = document.getElementById('nuevoUsuarioTelefono').value.trim();
     const password = document.getElementById('nuevoUsuarioPassword').value;
     const valorRol = document.getElementById('nuevoUsuarioRol').value; // "base:cajero" o "custom:UUID"
     const [tipoRol, valorRolPuro] = valorRol.split(':');
@@ -6523,8 +6534,15 @@
     if (!resp.ok) { mostrarMensaje('mensajeCrearUsuario', datos.error || 'No se pudo crear el usuario.', 'error'); return; }
 
     mostrarMensaje('mensajeCrearUsuario', `✅ Usuario creado. Correo: ${correo} — Contraseña temporal: ${password}. Compártesela de forma segura.`, 'exito');
+
+    if (telefono) {
+      const mensajeBienvenida = `¡Hola ${nombre}! 👋 Ya tienes tu usuario nuevo en el sistema de Lana Rosa Crochet.\n\n📧 Correo: ${correo}\n🔑 Contraseña temporal: ${password}\n\n⚠️ Por seguridad, cámbiala apenas ingreses (en "Mi perfil → Seguridad"). Cualquier duda me escribes. 🐑💕`;
+      abrirWhatsAppTexto(telefono, mensajeBienvenida);
+    }
+
     document.getElementById('nuevoUsuarioNombre').value = '';
     document.getElementById('nuevoUsuarioCorreo').value = '';
+    document.getElementById('nuevoUsuarioTelefono').value = '';
     document.getElementById('nuevoUsuarioPassword').value = '';
     document.querySelectorAll('.chkRolAdicionalNuevo').forEach(c => c.checked = false);
     document.getElementById('nuevoUsuarioEsLider').checked = false;
