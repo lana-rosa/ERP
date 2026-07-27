@@ -4762,6 +4762,82 @@
     `;
   }
 
+  async function abrirDevolucionSimple(ventaId, consecutivo) {
+    if (panelCambioAbiertoVentaId === ventaId) {
+      document.getElementById(`panelCambioArticulo-${ventaId}`).classList.add('oculto');
+      panelCambioAbiertoVentaId = null;
+      return;
+    }
+    if (panelCambioAbiertoVentaId) {
+      const anterior = document.getElementById(`panelCambioArticulo-${panelCambioAbiertoVentaId}`);
+      if (anterior) anterior.classList.add('oculto');
+    }
+    panelCambioAbiertoVentaId = ventaId;
+
+    const panel = document.getElementById(`panelCambioArticulo-${ventaId}`);
+    panel.classList.remove('oculto');
+    panel.innerHTML = '<div class="cargando">Cargando artículos de la venta...</div>';
+
+    const respDetalle = await fetch(`${WORKER_URL}/api/pos/ventas/detalle?venta_id=${ventaId}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    const { lineas } = respDetalle.ok ? await respDetalle.json() : { lineas: [] };
+    const lineasConValor = (lineas || []).filter(l => l.cantidad > 0);
+
+    panel.innerHTML = `
+      <div style="background:#fdecea;border-radius:10px;padding:12px;">
+        <div style="font-size:12.5px;font-weight:700;margin-bottom:8px;">💵 Devolver dinero de ${escaparHtml(consecutivo)}</div>
+        <label style="margin-top:0;font-size:11px;">¿Qué artículo se devuelve?</label>
+        <select id="devolucionDetalleId-${ventaId}">
+          ${lineasConValor.map(l => `<option value="${l.id}">${l.cantidad}x ${escaparHtml(l.descripcion)} (${formatearMoneda(l.subtotal_linea)})</option>`).join('')}
+        </select>
+        <label style="margin-top:8px;font-size:11px;">¿Cómo se le devuelve el dinero al cliente?</label>
+        <select id="devolucionMetodoPago-${ventaId}">
+          <option value="efectivo">Efectivo (se descuenta del arqueo de caja)</option>
+          <option value="nequi">Nequi</option>
+          <option value="daviplata">Daviplata</option>
+          <option value="transferencia">Transferencia</option>
+          <option value="tarjeta_debito">Tarjeta débito</option>
+          <option value="tarjeta_credito">Tarjeta crédito</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12px;font-weight:400;">
+          <input type="checkbox" id="devolucionReintegrar-${ventaId}" style="width:auto;" checked>
+          <span>El producto está en buen estado (regresarlo al inventario)</span>
+        </label>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <button class="btn-mini guardar" style="flex:1;" onclick="confirmarDevolucionSimple('${ventaId}')">Confirmar devolución</button>
+          <button class="btn-mini desactivar" style="flex:1;" onclick="cerrarPanelCambioArticulo('${ventaId}')">Cancelar</button>
+        </div>
+        <div style="font-size:10.5px;opacity:0.6;margin-top:6px;">Se descuenta el valor de este artículo del total de la venta y, si marcas la casilla, se regresa al inventario. No se cambia por otro producto.</div>
+      </div>
+    `;
+  }
+
+  async function confirmarDevolucionSimple(ventaId) {
+    const detalleId = document.getElementById(`devolucionDetalleId-${ventaId}`).value;
+    const metodoPago = document.getElementById(`devolucionMetodoPago-${ventaId}`).value;
+    const reintegrar = document.getElementById(`devolucionReintegrar-${ventaId}`).checked;
+
+    if (!detalleId) { alert('Selecciona qué artículo se devuelve.'); return; }
+
+    let codigoAutorizacion = null;
+    if (rolActual !== 'administrador') {
+      codigoAutorizacion = prompt('Devolver dinero de una venta ya registrada requiere autorización. Pídele a Sara (o a quien ella autorice) que ingrese su código:');
+      if (!codigoAutorizacion) return;
+    }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/ventas/devolver', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ detalle_id: detalleId, metodo_pago_reembolso: metodoPago, reintegrar_stock: reintegrar, codigo_autorizacion: codigoAutorizacion })
+    });
+
+    const datos = await resp.json();
+    if (!resp.ok) { alert('No se pudo procesar la devolución: ' + (datos.error || 'Error desconocido')); return; }
+
+    alert(`✅ Devolución realizada. Se devolvieron ${formatearMoneda(datos.monto_devuelto)}.`);
+    cerrarPanelCambioArticulo(ventaId);
+    await cargarHistorialVentas();
+  }
+
   async function confirmarCambioArticulo(ventaId) {
     const detalleId = document.getElementById(`cambioDetalleId-${ventaId}`).value;
     const nuevoItemId = document.getElementById(`cambioNuevoItemId-${ventaId}`).value;
@@ -5063,6 +5139,7 @@
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
           ${puedeAnular ? `<button class="btn-mini desactivar" onclick="event.stopPropagation(); anularVenta('${venta.id}', '${venta.consecutivo}')">❌ Anular venta</button>` : ''}
           ${venta.estado === 'completada' ? `<button class="btn-mini editar" onclick="event.stopPropagation(); abrirCambioArticulo('${venta.id}', '${venta.consecutivo}')">🔄 Cambiar artículo</button>` : ''}
+          ${venta.estado === 'completada' ? `<button class="btn-mini desactivar" onclick="event.stopPropagation(); abrirDevolucionSimple('${venta.id}', '${venta.consecutivo}')">💵 Devolver dinero</button>` : ''}
           <button class="btn-mini editar" onclick="event.stopPropagation(); verReciboHistorial('${venta.id}')">🖨️ Ver / imprimir recibo</button>
           <button class="btn-mini editar" onclick="event.stopPropagation(); enviarReciboHistorialWhatsapp('${venta.id}')">📱 Enviar por WhatsApp</button>
         </div>
