@@ -6617,8 +6617,47 @@
     const abrir = panel.classList.contains('oculto');
     panel.classList.toggle('oculto', !abrir);
     if (abrir && historialChatIA.length === 0) {
-      agregarBurbujaChatIA('assistant', '¡Hola! 🐑 Soy el asistente de Lana Rosa. Puedo contarte cómo van tus números, comparar cotizaciones de proveedores (adjunta la foto o el PDF) o asesorarte sobre Fondo Emprender. ¿En qué te ayudo?');
+      agregarBurbujaChatIA('assistant', '¡Hola! Soy Rosina, la asistente de Lana Rosa. ¿En qué puedo ayudarte el día de hoy?');
+      mostrarOpcionesRapidasIA();
     }
+  }
+
+  function mostrarOpcionesRapidasIA() {
+    const cont = document.getElementById('mensajesChatAsistenteIA');
+    const opciones = document.createElement('div');
+    opciones.style.cssText = 'display:flex;flex-direction:column;gap:6px;margin:4px 0 12px 0;';
+    opciones.innerHTML = `
+      <button onclick="elegirOpcionRapidaIA('cotizaciones')" style="text-align:left;padding:9px 12px;border-radius:10px;border:1.5px solid var(--rosa-medio);background:white;font-size:12.5px;cursor:pointer;">📎 Comparar cotizaciones</button>
+      <button onclick="elegirOpcionRapidaIA('numeros')" style="text-align:left;padding:9px 12px;border-radius:10px;border:1.5px solid var(--rosa-medio);background:white;font-size:12.5px;cursor:pointer;">📊 Cómo van mis números</button>
+      <button onclick="elegirOpcionRapidaIA('fondo_emprender')" style="text-align:left;padding:9px 12px;border-radius:10px;border:1.5px solid var(--rosa-medio);background:white;font-size:12.5px;cursor:pointer;">🏦 Asesoría de Fondo Emprender</button>
+      <button onclick="elegirOpcionRapidaIA('otro')" style="text-align:left;padding:9px 12px;border-radius:10px;border:1.5px solid var(--rosa-medio);background:white;font-size:12.5px;cursor:pointer;">💬 Otra pregunta</button>
+    `;
+    cont.appendChild(opciones);
+    cont.scrollTop = cont.scrollHeight;
+  }
+
+  function elegirOpcionRapidaIA(opcion) {
+    // Quita los botones de opciones para no dejarlos duplicados en la conversación
+    const botones = document.querySelectorAll('#mensajesChatAsistenteIA > div');
+    const ultimoBloqueOpciones = Array.from(botones).reverse().find(b => b.querySelector('button'));
+    if (ultimoBloqueOpciones) ultimoBloqueOpciones.remove();
+
+    const input = document.getElementById('inputChatAsistenteIA');
+    if (opcion === 'cotizaciones') {
+      document.getElementById('inputAdjuntoIA').click();
+      input.value = 'Te voy a adjuntar unas cotizaciones, compáralas y dime cuál proveedor conviene más para cada producto.';
+      input.focus();
+      return;
+    }
+    if (opcion === 'numeros') {
+      input.value = '¿Cómo van mis números este mes? Cuéntame ventas, qué está rotando bien y el presupuesto.';
+    } else if (opcion === 'fondo_emprender') {
+      input.value = 'Tengo dudas sobre la normatividad de Fondo Emprender, ¿me puedes orientar?';
+    } else {
+      input.focus();
+      return;
+    }
+    enviarMensajeAsistenteIA();
   }
 
   function previsualizarAdjuntoIA(evento) {
