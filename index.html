@@ -629,6 +629,7 @@
         <button class="nav-btn" id="nav-inventario-tienda" onclick="mostrarPantallaInventario('01')"><span class="nav-icon">📊</span> Inventario</button>
         <button class="nav-btn" id="nav-ajustestock" onclick="mostrarPantallaAjusteStock()"><span class="nav-icon">📥</span> Entrada mercancía</button>
         <button class="nav-btn" id="nav-etiquetas" onclick="mostrarPantallaEtiquetas()"><span class="nav-icon">🏷️</span> Imprimir etiquetas</button>
+        <button class="nav-btn" id="nav-transferir-stock" onclick="mostrarPantallaTransferirStock()"><span class="nav-icon">🔄</span> Transferir stock</button>
         <button class="nav-btn" id="nav-turno" onclick="irATurnoActivo()"><span class="nav-icon">💵</span> Turno de caja</button>
         <button class="nav-btn" id="nav-reportes" onclick="mostrarPantallaReportes()"><span class="nav-icon">📈</span> Reportes de turno</button>
         <button class="nav-btn" onclick="mostrarPantallaPagosPendientes('01')"><span class="nav-icon">📈</span> Registro de compras y gastos</button>
@@ -640,6 +641,7 @@
       <div class="sidebar-depto-submenu" id="deptoTallerSubmenu">
         <button class="nav-btn" id="nav-consumotaller" onclick="mostrarPantallaPedidosCrm()"><span class="nav-icon">🧶</span> Consumo de material</button>
         <button class="nav-btn" id="nav-inventario-taller" onclick="mostrarPantallaInventario('03')"><span class="nav-icon">📊</span> Inventario</button>
+        <button class="nav-btn" id="nav-transferir-stock-taller" onclick="mostrarPantallaTransferirStock()"><span class="nav-icon">🔄</span> Transferir stock</button>
         <!-- La solicitud de insumos a la Tienda ahora vive dentro de "Consumo de material", por pedido -->
       </div>
     </div>
@@ -663,7 +665,7 @@
     <div class="sidebar-depto" id="deptoReportesGrupo" style="display:none;">
       <button class="sidebar-depto-header" id="headerDeptoReportes" onclick="toggleSidebarDepto('deptoReportesSubmenu', 'headerDeptoReportes')">📊 Reportes financieros <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoReportesSubmenu">
-        <button class="nav-btn" id="nav-reportes-financieros" onclick="mostrarPantallaReportesFinancieros()"><span class="nav-icon">📊</span> Presupuesto y consolidado</button>
+        <button class="nav-btn" id="nav-reportes-financieros" onclick="mostrarPantallaReportesFinancieros()"><span class="nav-icon">📊</span> Informes de Ventas</button>
       </div>
     </div>
     <div class="sidebar-depto" id="deptoFondoEmprenderGrupo" style="display:none;">
@@ -1027,6 +1029,41 @@
           <div id="listaProximasClasesAcademia" style="max-height:280px;overflow-y:auto;"><div class="cargando">Cargando...</div></div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PANTALLA: TRANSFERIR STOCK ===== -->
+<div id="pantallaTransferirStock" class="oculto contenido">
+  <div class="page-header">
+    <h1>🔄 Transferir stock entre Tienda y Taller</h1>
+    <div class="subtitulo">Mueve productos de un departamento a otro. Si el producto no existe todavía en el destino, se crea automáticamente allá.</div>
+  </div>
+  <div class="grilla-2">
+    <div class="panel">
+      <h2>Nueva transferencia</h2>
+      <label for="transferenciaDepartamentoOrigen">Departamento de origen</label>
+      <select id="transferenciaDepartamentoOrigen" onchange="cargarProductosParaTransferir()">
+        <option value="01">🏬 Tienda Física</option>
+        <option value="03">🧶 Taller</option>
+      </select>
+      <label for="transferenciaProducto">Producto a transferir</label>
+      <select id="transferenciaProducto"><option value="">Selecciona el origen primero...</option></select>
+      <label for="transferenciaDepartamentoDestino">Departamento destino</label>
+      <select id="transferenciaDepartamentoDestino">
+        <option value="03">🧶 Taller</option>
+        <option value="01">🏬 Tienda Física</option>
+      </select>
+      <label for="transferenciaCantidad">Cantidad a transferir</label>
+      <input type="number" id="transferenciaCantidad" min="0.01" step="0.01">
+      <label for="transferenciaObservaciones">Observaciones <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <input type="text" id="transferenciaObservaciones" placeholder="Ej: para armar kits de tejido">
+      <button class="btn-principal" onclick="confirmarTransferirStock()">Transferir</button>
+      <div class="mensaje" id="mensajeTransferirStock"></div>
+    </div>
+    <div class="panel">
+      <h2>Historial de transferencias</h2>
+      <div id="listaTransferenciasStock"><div class="cargando">Cargando...</div></div>
     </div>
   </div>
 </div>
@@ -1526,19 +1563,17 @@
 <!-- ===== PANTALLA: REPORTES FINANCIEROS (solo Admin) ===== -->
 <div id="pantallaReportesFinancieros" class="oculto contenido">
   <div class="page-header">
-    <h1>Reportes financieros</h1>
-    <div class="subtitulo">Presupuesto global del negocio y consolidado de ventas por canal.</div>
+    <h1>Informes de Ventas</h1>
+    <div class="subtitulo">Consolidado de ventas por canal, indicadores de rotación/margen, y costeo real.</div>
   </div>
 
   <div class="filtro-tipo" style="margin-bottom:20px;">
-    <button class="chip-filtro activo" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinPresupuestos', this)">💰 Presupuesto global</button>
-    <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinConsolidado', this); cargarConsolidadoVentas();">📊 Consolidado de ventas</button>
-    <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinAcademia', this); cargarInformeAcademia();">🎓 Academy: ventas y metas</button>
+    <button class="chip-filtro activo" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinConsolidado', this); cargarConsolidadoVentas();">📊 Consolidado de ventas</button>
     <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinIndicadores', this); cargarIndicadoresVentas();">📈 Indicadores de ventas</button>
     <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinCosteo', this); cargarCosteoReal();">🧮 Costeo real (materiales + mano de obra)</button>
   </div>
 
-  <div id="subtabFinConsolidado" data-subtab-grupo="reportesFin" class="oculto">
+  <div id="subtabFinConsolidado" data-subtab-grupo="reportesFin">
     <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
       <div>
         <label for="consolidadoFechaDesde" style="font-size:11px;">Desde</label>
@@ -1551,22 +1586,6 @@
       <button class="btn-mini desactivar" onclick="limpiarFiltroConsolidado()" style="margin-bottom:1px;">Quitar filtro</button>
     </div>
     <div id="listaConsolidadoVentas"><div class="cargando">Cargando...</div></div>
-  </div>
-
-  <div id="subtabFinAcademia" data-subtab-grupo="reportesFin" class="oculto">
-    <div class="panel" style="max-width:none;">
-      <h2>Informe por subárea</h2>
-      <label for="academiaPeriodoInforme">Mes</label>
-      <input type="month" id="academiaPeriodoInforme" onchange="cargarInformeAcademia()" style="max-width:220px;">
-      <div id="resumenInformeAcademia" style="margin-top:14px;"></div>
-      <div id="listaInformeAcademia" style="margin-top:14px;"></div>
-    </div>
-
-    <div class="panel" style="max-width:none;margin-top:20px;">
-      <h2>Fijar metas del mes</h2>
-      <div class="subtitulo">Escribe la meta de ventas de cada subárea para el mes seleccionado arriba.</div>
-      <div id="formMetasAcademia"></div>
-    </div>
   </div>
 
   <div id="subtabFinIndicadores" data-subtab-grupo="reportesFin" class="oculto">
@@ -1606,29 +1625,7 @@
     </div>
   </div>
 
-  <div id="subtabFinPresupuestos" data-subtab-grupo="reportesFin">
-    <div class="grilla-2">
-      <div class="panel">
-        <h2>Asignar presupuesto global del mes</h2>
-        <label for="presupuestoPeriodo">Mes</label>
-        <input type="month" id="presupuestoPeriodo" onchange="cargarPresupuestoConsolidado()">
-        <label for="presupuestoCategoria">Categoría</label>
-        <select id="presupuestoCategoria">
-          <option value="insumos">Insumos</option>
-          <option value="mano_obra">Mano de obra</option>
-          <option value="otros_gastos">Otros gastos</option>
-        </select>
-        <label for="presupuestoMonto">Monto asignado (COP)</label>
-        <input type="number" id="presupuestoMonto" placeholder="0" min="0" step="1000">
-        <button class="btn-principal" id="btnAsignarPresupuesto" onclick="confirmarAsignarPresupuesto()">Guardar presupuesto</button>
-        <div class="mensaje" id="mensajePresupuesto"></div>
-      </div>
-      <div class="panel">
-        <h2>Presupuesto global vs gasto real</h2>
-        <div id="listaPresupuestoConsolidado"><div class="cargando">Cargando...</div></div>
-      </div>
-    </div>
-  </div>
+  <div id="subtabFinPresupuestos" class="oculto"></div>
 </div>
 
 <!-- ===== PANTALLA: NÓMINA (solo Admin) ===== -->
@@ -2664,7 +2661,7 @@
   // UTILIDADES
   // ============================================================================
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -2920,11 +2917,13 @@
     mostrar('nav-inventario-tienda', esAdmin || esCajero);
     mostrar('nav-ajustestock', esAdmin || esCajero);
     mostrar('nav-etiquetas', esAdmin || esCajero);
+    mostrar('nav-transferir-stock', esAdmin || esCajero);
     mostrar('nav-reportes', esAdmin);
     mostrar('nav-pedidos-canal', esAdmin || esCajero);
     mostrar('nav-solicitudes-tienda', esAdmin || esCajero);
     mostrar('nav-consumotaller', esAdmin || esTaller);
     mostrar('nav-inventario-taller', esAdmin || esTaller);
+    mostrar('nav-transferir-stock-taller', esAdmin || esTaller);
     mostrar('nav-nomina', esAdmin);
     mostrar('nav-talento-humano', esAdmin);
     mostrar('nav-reportes-financieros', esAdmin);
@@ -5795,6 +5794,91 @@
   // ============================================================
   let etiquetasSeleccionadas = []; // [{ id, nombre, sku, precio_venta, cantidad }]
 
+  // ============================================================
+  // TRANSFERIR STOCK ENTRE TIENDA Y TALLER
+  // ============================================================
+  let idsCentroCostoPorCodigo = { '01': null, '03': null };
+
+  async function mostrarPantallaTransferirStock() {
+    mostrarPantalla('pantallaTransferirStock');
+    ocultarMensaje('mensajeTransferirStock');
+    document.getElementById('transferenciaCantidad').value = '';
+    document.getElementById('transferenciaObservaciones').value = '';
+    await cargarIdsDepartamentosClave();
+    idsCentroCostoPorCodigo = { '01': centroCostoTiendaId, '03': centroCostoTallerId };
+    await cargarProductosParaTransferir();
+    await cargarHistorialTransferencias();
+  }
+
+  async function cargarProductosParaTransferir() {
+    const select = document.getElementById('transferenciaProducto');
+    const codigoOrigen = document.getElementById('transferenciaDepartamentoOrigen').value;
+    const centroId = idsCentroCostoPorCodigo[codigoOrigen];
+    select.innerHTML = '<option value="">Cargando...</option>';
+    if (!centroId) return;
+
+    const { data } = await supabaseClient
+      .from('inventario_items')
+      .select('id, nombre, stock_actual, unidad_medida')
+      .eq('centro_costo_id', centroId)
+      .eq('activo', true)
+      .gt('stock_actual', 0)
+      .order('nombre', { ascending: true });
+
+    select.innerHTML = (data && data.length > 0)
+      ? data.map(i => `<option value="${i.id}">${escaparHtml(i.nombre)} (stock: ${i.stock_actual} ${i.unidad_medida})</option>`).join('')
+      : '<option value="">Sin productos con stock en este departamento</option>';
+  }
+
+  async function confirmarTransferirStock() {
+    const codigoOrigen = document.getElementById('transferenciaDepartamentoOrigen').value;
+    const codigoDestino = document.getElementById('transferenciaDepartamentoDestino').value;
+    const itemId = document.getElementById('transferenciaProducto').value;
+    const cantidad = Number(document.getElementById('transferenciaCantidad').value);
+    const observaciones = document.getElementById('transferenciaObservaciones').value.trim();
+    ocultarMensaje('mensajeTransferirStock');
+
+    if (codigoOrigen === codigoDestino) { mostrarMensaje('mensajeTransferirStock', 'El origen y el destino deben ser diferentes.', 'error'); return; }
+    if (!itemId) { mostrarMensaje('mensajeTransferirStock', 'Selecciona un producto.', 'error'); return; }
+    if (!cantidad || cantidad <= 0) { mostrarMensaje('mensajeTransferirStock', 'Escribe una cantidad válida.', 'error'); return; }
+
+    const centroDestinoId = idsCentroCostoPorCodigo[codigoDestino];
+    const resp = await fetch(WORKER_URL + '/api/pos/inventario/transferir', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ inventario_item_id: itemId, centro_costo_destino_id: centroDestinoId, cantidad, observaciones: observaciones || null })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeTransferirStock', datos.error || 'No se pudo transferir.', 'error'); return; }
+
+    mostrarMensaje('mensajeTransferirStock', '✅ Transferencia realizada correctamente.', 'exito');
+    document.getElementById('transferenciaCantidad').value = '';
+    document.getElementById('transferenciaObservaciones').value = '';
+    await cargarProductosParaTransferir();
+    await cargarHistorialTransferencias();
+  }
+
+  async function cargarHistorialTransferencias() {
+    const contenedor = document.getElementById('listaTransferenciasStock');
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+    const resp = await fetch(WORKER_URL + '/api/pos/inventario/transferencias', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const { transferencias } = await resp.json();
+
+    if (!transferencias || transferencias.length === 0) { contenedor.innerHTML = '<div class="cargando">Sin transferencias registradas todavía.</div>'; return; }
+
+    contenedor.innerHTML = transferencias.map(t => `
+      <div class="fila-historial" style="margin-bottom:9px;">
+        <div class="fila-historial-encabezado">
+          <span class="fila-historial-consecutivo">${escaparHtml(t.item ? t.item.nombre : 'Producto')}</span>
+          <span class="fila-historial-total">${t.cantidad}</span>
+        </div>
+        <div class="fila-historial-fecha">${new Date(t.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}</div>
+        <div class="fila-historial-detalle">${escaparHtml(t.origen ? t.origen.nombre : '?')} → ${escaparHtml(t.destino ? t.destino.nombre : '?')}${t.observaciones ? ' — ' + escaparHtml(t.observaciones) : ''}</div>
+      </div>
+    `).join('');
+  }
+
   async function mostrarPantallaEtiquetas() {
     mostrarPantalla('pantallaEtiquetas');
     document.getElementById('buscarProductoEtiqueta').value = '';
@@ -6542,7 +6626,7 @@
     { clave: 'nav-nomina', etiqueta: '　　Nómina' },
     { clave: 'nav-talento-humano', etiqueta: '　　Carpetas por empleado' },
     { clave: 'deptoReportesGrupo', etiqueta: '📊 Reportes financieros (grupo completo)' },
-    { clave: 'nav-reportes-financieros', etiqueta: '　　Presupuesto y consolidado' },
+    { clave: 'nav-reportes-financieros', etiqueta: '　　Informes de Ventas' },
     { clave: 'deptoFondoEmprenderGrupo', etiqueta: '🏦 Fondo Emprender (grupo completo)' },
     { clave: 'nav-calendario', etiqueta: '📅 Calendario del equipo' },
   ];
@@ -6660,7 +6744,7 @@
             <span>${escaparHtml(r.empleados ? r.empleados.nombre_completo : 'Empleado')}</span>
             <span>${new Date(r.fecha + 'T00:00:00').toLocaleDateString('es-CO')}</span>
             <span>${new Date(r.hora_entrada).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}</span>
-            <span>${r.hora_salida ? new Date(r.hora_salida).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) : '⏳ En curso'}</span>
+            <span>${r.hora_salida ? new Date(r.hora_salida).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) + (r.observaciones && r.observaciones.includes('automático') ? ' ⚠️' : '') : '⏳ En curso'}</span>
             <span style="text-align:right;font-weight:700;">${r.horas_trabajadas ? r.horas_trabajadas.toFixed(1) : '—'}</span>
           </div>
         `).join('')}
@@ -7803,13 +7887,10 @@
 
   async function mostrarPantallaReportesFinancieros() {
     mostrarPantalla('pantallaReportesFinancieros');
-    mostrarSubTabGrupo('reportesFin', 'subtabFinPresupuestos', document.querySelector('[data-subtab-btn="reportesFin"]'));
-    document.getElementById('presupuestoPeriodo').value = new Date().toISOString().slice(0, 7);
-    document.getElementById('academiaPeriodoInforme').value = new Date().toISOString().slice(0, 7);
+    mostrarSubTabGrupo('reportesFin', 'subtabFinConsolidado', document.querySelector('[data-subtab-btn="reportesFin"]'));
     document.getElementById('consolidadoFechaDesde').value = '';
     document.getElementById('consolidadoFechaHasta').value = '';
-    ocultarMensaje('mensajePresupuesto');
-    await cargarPresupuestoConsolidado();
+    await cargarConsolidadoVentas();
   }
 
   function limpiarFiltroConsolidado() {
