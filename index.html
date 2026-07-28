@@ -647,14 +647,6 @@
       </div>
     </div>
 
-    <div class="sidebar-depto" id="deptoTalentoGrupo" style="display:none;">
-      <button class="sidebar-depto-header" id="headerDeptoTalento" onclick="toggleSidebarDepto('deptoTalentoSubmenu', 'headerDeptoTalento')">🗂️ Talento Humano <span class="chevron">▾</span></button>
-      <div class="sidebar-depto-submenu" id="deptoTalentoSubmenu">
-        <button class="nav-btn" id="nav-nomina" onclick="mostrarPantallaNomina()"><span class="nav-icon">👥</span> Nómina</button>
-        <button class="nav-btn" id="nav-talento-humano" onclick="mostrarPantallaTalentoHumano()"><span class="nav-icon">📁</span> Carpetas por empleado</button>
-      </div>
-    </div>
-
     <div class="sidebar-depto" id="deptoDirectorioGrupo" style="display:none;">
       <button class="sidebar-depto-header" id="headerDeptoDirectorio" onclick="toggleSidebarDepto('deptoDirectorioSubmenu', 'headerDeptoDirectorio')">📇 Directorio <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoDirectorioSubmenu">
@@ -663,8 +655,16 @@
       </div>
     </div>
 
+    <div class="sidebar-depto" id="deptoTalentoGrupo" style="display:none;">
+      <button class="sidebar-depto-header" id="headerDeptoTalento" onclick="toggleSidebarDepto('deptoTalentoSubmenu', 'headerDeptoTalento')">🗂️ Talento Humano <span class="chevron">▾</span></button>
+      <div class="sidebar-depto-submenu" id="deptoTalentoSubmenu">
+        <button class="nav-btn" id="nav-nomina" onclick="mostrarPantallaNomina()"><span class="nav-icon">👥</span> Nómina</button>
+        <button class="nav-btn" id="nav-talento-humano" onclick="mostrarPantallaTalentoHumano()"><span class="nav-icon">📁</span> Carpetas por empleado</button>
+      </div>
+    </div>
+
     <div class="sidebar-depto" id="deptoReportesGrupo" style="display:none;">
-      <button class="sidebar-depto-header" id="headerDeptoReportes" onclick="toggleSidebarDepto('deptoReportesSubmenu', 'headerDeptoReportes')">📊 Reportes financieros <span class="chevron">▾</span></button>
+      <button class="sidebar-depto-header" id="headerDeptoReportes" onclick="toggleSidebarDepto('deptoReportesSubmenu', 'headerDeptoReportes')">💰 Finanzas <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoReportesSubmenu">
         <button class="nav-btn" id="nav-reportes-financieros" onclick="mostrarPantallaReportesFinancieros()"><span class="nav-icon">📊</span> Informes de Ventas</button>
         <button class="nav-btn" id="nav-estados-financieros" onclick="mostrarPantallaEstadosFinancieros()"><span class="nav-icon">📑</span> Estados financieros</button>
@@ -2403,14 +2403,17 @@
     <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
       <div><label for="erFechaDesde" style="font-size:11px;">Desde</label><input type="date" id="erFechaDesde" onchange="cargarEstadoResultados()" style="padding:9px 10px;"></div>
       <div><label for="erFechaHasta" style="font-size:11px;">Hasta</label><input type="date" id="erFechaHasta" onchange="cargarEstadoResultados()" style="padding:9px 10px;"></div>
+      <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarEstadoResultadosExcel()">📥 Excel</button>
+      <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirEstadoFinanciero('contenidoEstadoResultados', 'Estado de Resultados')">🖨️ Imprimir / PDF</button>
     </div>
     <div id="contenidoEstadoResultados"><div class="cargando">Cargando...</div></div>
   </div>
 
   <div id="subtabBalanceGeneral" data-subtab-grupo="estadosFin" class="oculto">
-    <div style="margin-bottom:16px;">
-      <label for="bgFechaCorte" style="font-size:11px;">Fecha de corte</label>
-      <input type="date" id="bgFechaCorte" onchange="cargarBalanceGeneral()" style="padding:9px 10px;">
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+      <div><label for="bgFechaCorte" style="font-size:11px;">Fecha de corte</label><input type="date" id="bgFechaCorte" onchange="cargarBalanceGeneral()" style="padding:9px 10px;"></div>
+      <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarBalanceGeneralExcel()">📥 Excel</button>
+      <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirEstadoFinanciero('contenidoBalanceGeneral', 'Balance General')">🖨️ Imprimir / PDF</button>
     </div>
     <div id="contenidoBalanceGeneral"><div class="cargando">Cargando...</div></div>
   </div>
@@ -2419,6 +2422,8 @@
     <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
       <div><label for="fcFechaDesde" style="font-size:11px;">Desde</label><input type="date" id="fcFechaDesde" onchange="cargarFlujoCaja()" style="padding:9px 10px;"></div>
       <div><label for="fcFechaHasta" style="font-size:11px;">Hasta</label><input type="date" id="fcFechaHasta" onchange="cargarFlujoCaja()" style="padding:9px 10px;"></div>
+      <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarFlujoCajaExcel()">📥 Excel</button>
+      <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirEstadoFinanciero('contenidoFlujoCaja', 'Flujo de Caja')">🖨️ Imprimir / PDF</button>
     </div>
     <div id="contenidoFlujoCaja"><div class="cargando">Cargando...</div></div>
   </div>
@@ -2631,7 +2636,7 @@
   </div>
 
   <div style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;">
-    ℹ️ Para registrar una venta de curso o clase, ve a <strong>Registrar venta → 🎓 Cursos y clases</strong>. El informe de ventas de Academy y las metas se ven desde <strong>Reportes financieros</strong>.
+    ℹ️ Para registrar una venta de curso o clase, ve a <strong>Registrar venta → 🎓 Cursos y clases</strong>. El informe de ventas de Academy y las metas se ven desde <strong>Finanzas</strong>.
   </div>
 
   <div id="subtabAcademiaKits" data-subtab-grupo="academia">
@@ -7144,7 +7149,7 @@
     { clave: 'deptoTalentoGrupo', etiqueta: '🗂️ Talento Humano (grupo completo)' },
     { clave: 'nav-nomina', etiqueta: '　　Nómina' },
     { clave: 'nav-talento-humano', etiqueta: '　　Carpetas por empleado' },
-    { clave: 'deptoReportesGrupo', etiqueta: '📊 Reportes financieros (grupo completo)' },
+    { clave: 'deptoReportesGrupo', etiqueta: '💰 Finanzas (grupo completo)' },
     { clave: 'nav-reportes-financieros', etiqueta: '　　Informes de Ventas' },
     { clave: 'deptoFondoEmprenderGrupo', etiqueta: '🏦 Fondo Emprender (grupo completo)' },
     { clave: 'nav-calendario', etiqueta: '📅 Calendario del equipo' },
@@ -10954,6 +10959,8 @@
     return `<div class="resumen-fila${esTotal ? ' total' : ''}"><span>${etiqueta}</span><strong>${formatearMoneda(valor)}</strong></div>`;
   }
 
+  let cacheEstadoResultados = null;
+
   async function cargarEstadoResultados() {
     const cont = document.getElementById('contenidoEstadoResultados');
     cont.innerHTML = '<div class="cargando">Cargando...</div>';
@@ -10962,6 +10969,7 @@
     const resp = await fetch(`${WORKER_URL}/api/pos/finanzas/estado-resultados?fecha_desde=${desde}&fecha_hasta=${hasta}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
     if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
     const d = await resp.json();
+    cacheEstadoResultados = d;
 
     cont.innerHTML = `
       <div class="panel" style="max-width:560px;max-height:none;">
@@ -10986,6 +10994,8 @@
     `;
   }
 
+  let cacheBalanceGeneral = null;
+
   async function cargarBalanceGeneral() {
     const cont = document.getElementById('contenidoBalanceGeneral');
     cont.innerHTML = '<div class="cargando">Cargando...</div>';
@@ -10993,6 +11003,7 @@
     const resp = await fetch(`${WORKER_URL}/api/pos/finanzas/balance-general?fecha_corte=${fecha}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
     if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
     const d = await resp.json();
+    cacheBalanceGeneral = d;
 
     cont.innerHTML = `
       <div class="grilla-2">
@@ -11018,6 +11029,8 @@
     `;
   }
 
+  let cacheFlujoCaja = null;
+
   async function cargarFlujoCaja() {
     const cont = document.getElementById('contenidoFlujoCaja');
     cont.innerHTML = '<div class="cargando">Cargando...</div>';
@@ -11026,6 +11039,7 @@
     const resp = await fetch(`${WORKER_URL}/api/pos/finanzas/flujo-caja?fecha_desde=${desde}&fecha_hasta=${hasta}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
     if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
     const d = await resp.json();
+    cacheFlujoCaja = d;
 
     cont.innerHTML = `
       <div class="panel" style="max-width:560px;max-height:none;">
@@ -11043,6 +11057,123 @@
         </div>
       </div>
     `;
+  }
+
+  function imprimirEstadoFinanciero(idContenido, titulo) {
+    const contenidoHtml = document.getElementById(idContenido).innerHTML;
+    const ventana = window.open('', '_blank');
+    ventana.document.write(`
+      <html>
+      <head>
+        <title>${titulo} — Lana Rosa Crochet</title>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: Arial, Helvetica, sans-serif; padding: 30px; color: #2d2d2d; }
+          h1 { color: #d8017c; font-size: 20px; margin-bottom: 2px; }
+          .subtitulo-impresion { font-size: 12px; color: #666; margin-bottom: 24px; }
+          h2 { font-size: 14px; margin-top: 18px; margin-bottom: 6px; }
+          .resumen-fila { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #eee; font-size: 13px; }
+          .resumen-fila.total { font-weight: 700; border-top: 2px solid #333; border-bottom: none; margin-top: 4px; padding-top: 8px; }
+          .panel { border: none !important; box-shadow: none !important; max-width: none !important; }
+          .grilla-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+          .cargando { font-size: 12px; color: #888; }
+          .firma-impresion { margin-top: 70px; display: flex; justify-content: space-between; }
+          .firma-impresion div { width: 45%; border-top: 1px solid #333; padding-top: 6px; text-align: center; font-size: 12px; }
+          @media print { body { padding: 10px; } }
+        </style>
+      </head>
+      <body>
+        <h1>Lana Rosa Crochet</h1>
+        <div class="subtitulo-impresion">${escaparHtml(titulo)} — Generado el ${new Date().toLocaleString('es-CO')} — Documento interno de gestión, no es un estado financiero auditado.</div>
+        ${contenidoHtml}
+        <div class="firma-impresion">
+          <div>Elaborado por: Sara Loaiza Muñoz — Administradora</div>
+          <div>Revisado por: _______________________ — Contador(a)</div>
+        </div>
+      </body>
+      </html>
+    `);
+    ventana.document.close();
+    setTimeout(() => ventana.print(), 400);
+  }
+
+  function exportarEstadoResultadosExcel() {
+    if (!cacheEstadoResultados) { alert('Espera a que cargue el reporte primero.'); return; }
+    const d = cacheEstadoResultados;
+    const filas = [
+      ['Lana Rosa Crochet — Estado de Resultados'],
+      [`Período: ${d.periodo.desde || ''} a ${d.periodo.hasta || ''}`],
+      [],
+      ['INGRESOS OPERACIONALES', ''],
+      ...d.ingresos.map(i => [i.nombre, i.valor]),
+      ['Total ingresos', d.total_ingresos],
+      [],
+      ['COSTO DE VENTAS', ''],
+      ...d.costos.map(c => [c.nombre, c.valor]),
+      ['Total costo de ventas', d.total_costos],
+      ['= UTILIDAD BRUTA', d.utilidad_bruta],
+      [],
+      ['GASTOS OPERACIONALES', ''],
+      ...d.gastos.map(g => [g.nombre, g.valor]),
+      ['Total gastos', d.total_gastos],
+      [],
+      ['UTILIDAD NETA DEL PERÍODO', d.utilidad_neta],
+    ];
+    const hoja = XLSX.utils.aoa_to_sheet(filas);
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Estado de Resultados');
+    XLSX.writeFile(libro, `LanaRosa_EstadoResultados_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  }
+
+  function exportarBalanceGeneralExcel() {
+    if (!cacheBalanceGeneral) { alert('Espera a que cargue el reporte primero.'); return; }
+    const d = cacheBalanceGeneral;
+    const filas = [
+      ['Lana Rosa Crochet — Balance General'],
+      [`Fecha de corte: ${d.fecha_corte}`],
+      [],
+      ['ACTIVOS', ''],
+      ...d.activos.map(a => [a.nombre, a.valor]),
+      ['TOTAL ACTIVOS', d.total_activos],
+      [],
+      ['PASIVOS', ''],
+      ...d.pasivos.map(p => [p.nombre, p.valor]),
+      ['TOTAL PASIVOS', d.total_pasivos],
+      [],
+      ['PATRIMONIO', ''],
+      ...d.patrimonio.map(p => [p.nombre, p.valor]),
+      ['Utilidades acumuladas del período', d.utilidad_acumulada],
+      ['TOTAL PATRIMONIO', d.total_patrimonio],
+      [],
+      ['¿Cuadra? (Activos = Pasivos + Patrimonio)', d.cuadra ? 'Sí' : 'No'],
+    ];
+    const hoja = XLSX.utils.aoa_to_sheet(filas);
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Balance General');
+    XLSX.writeFile(libro, `LanaRosa_BalanceGeneral_${d.fecha_corte}.xlsx`);
+  }
+
+  function exportarFlujoCajaExcel() {
+    if (!cacheFlujoCaja) { alert('Espera a que cargue el reporte primero.'); return; }
+    const d = cacheFlujoCaja;
+    const filas = [
+      ['Lana Rosa Crochet — Flujo de Caja'],
+      [`Período: ${d.periodo.desde || ''} a ${d.periodo.hasta || ''}`],
+      [],
+      ['EFECTIVO (CAJA)', ''],
+      ['Entradas', d.efectivo.entradas],
+      ['Salidas', -d.efectivo.salidas],
+      [],
+      ['BANCOS / MEDIOS ELECTRÓNICOS', ''],
+      ['Entradas', d.bancos.entradas],
+      ['Salidas', -d.bancos.salidas],
+      [],
+      ['FLUJO DE CAJA NETO DEL PERÍODO', d.flujo_neto],
+    ];
+    const hoja = XLSX.utils.aoa_to_sheet(filas);
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Flujo de Caja');
+    XLSX.writeFile(libro, `LanaRosa_FlujoCaja_${new Date().toISOString().slice(0, 10)}.xlsx`);
   }
 
   async function mostrarPantallaCopiaSeguridad() {
