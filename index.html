@@ -677,6 +677,7 @@
         <button class="nav-btn" onclick="mostrarPantallaFeCalendario()"><span class="nav-icon">📅</span> Calendario de entregables</button>
         <button class="nav-btn" onclick="mostrarPantallaFeDocumentos()"><span class="nav-icon">📄</span> Validar documentos</button>
         <button class="nav-btn" onclick="mostrarPantallaFePresupuesto()"><span class="nav-icon">💰</span> Ejecución presupuestal</button>
+        <button class="nav-btn" onclick="mostrarPantallaFeIndicadores()"><span class="nav-icon">📊</span> Indicadores de cumplimiento</button>
         <button class="nav-btn" onclick="mostrarPantallaFeConfig()"><span class="nav-icon">⚙️</span> Configuración del proyecto</button>
       </div>
     </div>
@@ -2736,6 +2737,35 @@
 </div>
 
 <!-- ===== FONDO EMPRENDER: EJECUCIÓN PRESUPUESTAL ===== -->
+<!-- ===== PANTALLA: INDICADORES FONDO EMPRENDER ===== -->
+<div id="pantallaFeIndicadores" class="oculto contenido">
+  <div class="page-header">
+    <h1>📊 Indicadores de cumplimiento</h1>
+    <div class="subtitulo">Compara lo que se prometió en el plan de negocio contra lo que realmente se ha logrado.</div>
+  </div>
+
+  <div class="panel" style="max-width:560px;">
+    <h2>+ Agregar indicador</h2>
+    <label for="feIndNombre">Nombre</label>
+    <input type="text" id="feIndNombre" placeholder="Ej: Empleos generados">
+    <label for="feIndDescripcion">Descripción <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+    <input type="text" id="feIndDescripcion">
+    <label for="feIndMeta">Meta prometida</label>
+    <input type="number" id="feIndMeta" min="0" step="0.01">
+    <label for="feIndUnidad">Unidad</label>
+    <select id="feIndUnidad">
+      <option value="unidades">Unidades</option>
+      <option value="pesos">Pesos (COP)</option>
+      <option value="porcentaje">Porcentaje</option>
+      <option value="empleos">Empleos</option>
+    </select>
+    <button class="btn-principal" onclick="confirmarCrearIndicadorFe()">Agregar</button>
+    <div class="mensaje" id="mensajeIndicadorFe"></div>
+  </div>
+
+  <div id="listaIndicadoresFe" style="margin-top:20px;"><div class="cargando">Cargando...</div></div>
+</div>
+
 <div id="pantallaFePresupuesto" class="oculto contenido">
   <div class="page-header">
     <h1>💰 Ejecución presupuestal</h1>
@@ -2974,7 +3004,7 @@
   // UTILIDADES
   // ============================================================================
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaConfigAlertas', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaConfigAlertas', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -12222,6 +12252,100 @@
   }
 
   // --- Ejecución presupuestal ---
+  async function mostrarPantallaFeIndicadores() {
+    mostrarPantalla('pantallaFeIndicadores');
+    ocultarMensaje('mensajeIndicadorFe');
+    await cargarIndicadoresFe();
+  }
+
+  async function cargarIndicadoresFe() {
+    const cont = document.getElementById('listaIndicadoresFe');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    const resp = await fetch(WORKER_URL + '/api/pos/fe/indicadores', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const { indicadores } = await resp.json();
+
+    if (!indicadores || indicadores.length === 0) { cont.innerHTML = '<div class="cargando">Sin indicadores registrados.</div>'; return; }
+
+    const formatearUnidad = (v, unidad) => {
+      if (unidad === 'pesos') return formatearMoneda(v);
+      if (unidad === 'porcentaje') return v + '%';
+      return v;
+    };
+
+    cont.innerHTML = `<div class="grilla-3">` + indicadores.map(i => {
+      const pct = i.meta_prometida > 0 ? Math.min(Math.round((i.valor_actual / i.meta_prometida) * 100), 100) : 0;
+      const color = pct >= 100 ? 'var(--verde-exito)' : pct >= 60 ? '#e6a700' : 'var(--rojo-error)';
+      return `
+        <div class="panel" style="max-height:none;">
+          <h2 style="font-size:14px;">${escaparHtml(i.nombre)}</h2>
+          ${i.descripcion ? `<div class="subtitulo">${escaparHtml(i.descripcion)}</div>` : ''}
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-top:10px;">
+            <span>Actual: <strong>${formatearUnidad(i.valor_actual, i.unidad)}</strong></span>
+            <span>Meta: <strong>${formatearUnidad(i.meta_prometida, i.unidad)}</strong></span>
+          </div>
+          <div style="background:#f0e5ec;border-radius:6px;height:10px;margin-top:8px;overflow:hidden;">
+            <div style="background:${color};width:${pct}%;height:100%;"></div>
+          </div>
+          <div style="text-align:center;font-size:18px;font-weight:700;color:${color};margin-top:6px;">${pct}%</div>
+          <button class="btn-mini editar" style="width:100%;margin-top:10px;" onclick="actualizarValorIndicadorFe('${i.id}', ${i.valor_actual})">Actualizar valor</button>
+          <button class="btn-mini desactivar" style="width:100%;margin-top:6px;" onclick="confirmarEliminarIndicadorFe('${i.id}')">Eliminar</button>
+        </div>
+      `;
+    }).join('') + `</div>`;
+  }
+
+  async function confirmarCrearIndicadorFe() {
+    const nombre = document.getElementById('feIndNombre').value.trim();
+    const descripcion = document.getElementById('feIndDescripcion').value.trim();
+    const meta = Number(document.getElementById('feIndMeta').value);
+    const unidad = document.getElementById('feIndUnidad').value;
+    ocultarMensaje('mensajeIndicadorFe');
+
+    if (!nombre) { mostrarMensaje('mensajeIndicadorFe', 'Escribe un nombre.', 'error'); return; }
+    if (meta === undefined || isNaN(meta)) { mostrarMensaje('mensajeIndicadorFe', 'Escribe la meta prometida.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/fe/indicadores', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ nombre, descripcion: descripcion || null, meta_prometida: meta, unidad })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeIndicadorFe', datos.error || 'No se pudo crear.', 'error'); return; }
+
+    mostrarMensaje('mensajeIndicadorFe', '✅ Indicador agregado.', 'exito');
+    document.getElementById('feIndNombre').value = '';
+    document.getElementById('feIndDescripcion').value = '';
+    document.getElementById('feIndMeta').value = '';
+    await cargarIndicadoresFe();
+  }
+
+  async function actualizarValorIndicadorFe(id, valorActual) {
+    const nuevo = prompt('¿Cuál es el valor actual de este indicador?', valorActual);
+    if (nuevo === null) return;
+    const valor = Number(nuevo);
+    if (isNaN(valor)) { alert('Escribe un número válido.'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/fe/indicadores/actualizar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ id, valor_actual: valor })
+    });
+    if (!resp.ok) { alert('No se pudo actualizar.'); return; }
+    await cargarIndicadoresFe();
+  }
+
+  async function confirmarEliminarIndicadorFe(id) {
+    if (!confirm('¿Eliminar este indicador?')) return;
+    const resp = await fetch(WORKER_URL + '/api/pos/fe/indicadores/eliminar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ id })
+    });
+    if (!resp.ok) { alert('No se pudo eliminar.'); return; }
+    await cargarIndicadoresFe();
+  }
+
   async function mostrarPantallaFePresupuesto() {
     mostrarPantalla('pantallaFePresupuesto');
     await cargarSaldoFe('resumenSaldoFe2');
