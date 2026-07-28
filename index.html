@@ -274,8 +274,10 @@
     padding: 12px 16px;
     background: var(--sidebar-bg);
     color: white;
-    position: sticky;
-    top: 0;
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    width: 100%;
+    box-sizing: border-box;
     z-index: 150;
   }
   .btn-hamburguesa {
@@ -306,9 +308,13 @@
 
     /* El sidebar pasa de "oculto/visible por display" a un cajón que entra
        y sale deslizando desde la izquierda — así sí se puede abrir en
-       celular, con el botón de hamburguesa. */
+       celular, con el botón de hamburguesa. Se refuerza position:fixed
+       aquí también, para que nunca vuelva a competir por espacio con el
+       contenido dentro del flex del body. */
     #sidebar {
       display: flex !important;
+      position: fixed !important;
+      left: 0 !important; top: 0 !important;
       width: 82vw;
       max-width: 300px;
       transform: translateX(-100%);
@@ -321,7 +327,7 @@
        no empuja nada al lado. (Antes esto se rompía por especificidad:
        #main.con-sidebar tenía más peso que la regla de aquí y ganaba
        igual dentro de esta media query, empujando todo el contenido). */
-    #main, #main.con-sidebar { margin-left: 0 !important; }
+    #main, #main.con-sidebar { margin-left: 0 !important; padding-top: 52px; }
   }
 
   @media (min-width: 901px) {
