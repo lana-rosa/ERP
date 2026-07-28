@@ -1457,6 +1457,46 @@
     <button class="chip-filtro" data-subtab-btn="pagosPendientes" onclick="mostrarSubTabGrupo('pagosPendientes', 'subtabPagosAdmin', this)">🏢 Pagos administrativos</button>
     <button class="chip-filtro" data-subtab-btn="pagosPendientes" onclick="mostrarSubTabGrupo('pagosPendientes', 'subtabPagosHistorial', this); cargarHistorialComprasTabla();">📋 Historial de compras</button>
     <button class="chip-filtro" data-subtab-btn="pagosPendientes" onclick="mostrarSubTabGrupo('pagosPendientes', 'subtabFacturaCredito', this)">📅 Factura a crédito</button>
+    <button class="chip-filtro" data-subtab-btn="pagosPendientes" onclick="mostrarSubTabGrupo('pagosPendientes', 'subtabHonorarios', this)">🧑‍💼 Honorarios</button>
+  </div>
+
+  <div id="subtabHonorarios" data-subtab-grupo="pagosPendientes" class="oculto">
+    <div class="panel" style="max-width:480px;">
+      <div style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;font-size:12px;margin-bottom:14px;">
+        ℹ️ Para asesores externos que reciben pago por prestación de servicios (contador, abogado, etc.) — no es nómina. Antes de activar la retención, confírmalo con tu contador: como persona natural, es probable que hoy <strong>no</strong> estés obligada a retener, salvo que ingresos/patrimonio superen 30.000 UVT al año.
+      </div>
+      <label for="honProveedor">Asesor / proveedor de servicios</label>
+      <select id="honProveedor"></select>
+      <label for="honDescripcion">Descripción</label>
+      <input type="text" id="honDescripcion" placeholder="Ej: Asesoría contable mes de julio">
+      <label for="honMontoBruto">Valor del servicio (COP, bruto)</label>
+      <input type="number" id="honMontoBruto" min="0" step="1000" oninput="calcularNetoHonorarios()">
+      <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-weight:400;">
+        <input type="checkbox" id="honAplicaRetencion" style="width:auto;" onchange="calcularNetoHonorarios()">
+        <span>Aplicar retención en la fuente</span>
+      </label>
+      <div id="bloqueRetencionPct" class="oculto">
+        <label for="honRetencionPct">Tarifa de retención (%)</label>
+        <select id="honRetencionPct" onchange="calcularNetoHonorarios()">
+          <option value="11">11% — honorarios a persona jurídica</option>
+          <option value="10">10% — persona natural declarante de renta</option>
+          <option value="11">11% — persona natural NO declarante</option>
+          <option value="4">4% — tarifa especial (economía naranja, si aplica)</option>
+        </select>
+      </div>
+      <div id="resumenNetoHonorarios" style="margin-top:12px;"></div>
+      <label for="honMetodoPago" style="margin-top:10px;">Método de pago (del neto)</label>
+      <select id="honMetodoPago">
+        <option value="efectivo">Efectivo (se descuenta del arqueo de caja)</option>
+        <option value="nequi">Nequi</option>
+        <option value="daviplata">Daviplata</option>
+        <option value="transferencia">Transferencia</option>
+        <option value="tarjeta_debito">Tarjeta débito</option>
+        <option value="tarjeta_credito">Tarjeta crédito</option>
+      </select>
+      <button class="btn-principal" onclick="confirmarRegistrarHonorarios()">Registrar pago</button>
+      <div class="mensaje" id="mensajeHonorarios"></div>
+    </div>
   </div>
 
   <div id="subtabFacturaCredito" data-subtab-grupo="pagosPendientes" class="oculto">
@@ -6721,6 +6761,62 @@
     select.innerHTML = '<option value="">Selecciona un proveedor...</option>' +
       proveedoresCacheFacturaCredito.map(p => `<option value="${p.id}">${escaparHtml(p.nombre_completo)}${p.plazo_pago_dias ? ' (plazo: ' + p.plazo_pago_dias + ' días)' : ''}</option>`).join('');
     document.getElementById('facCreditoFecha').value = new Date().toISOString().slice(0, 10);
+
+    const selectHon = document.getElementById('honProveedor');
+    if (selectHon) {
+      selectHon.innerHTML = '<option value="">Selecciona un proveedor...</option>' +
+        proveedoresCacheFacturaCredito.map(p => `<option value="${p.id}">${escaparHtml(p.nombre_completo)}</option>`).join('');
+    }
+  }
+
+  function calcularNetoHonorarios() {
+    const bruto = Number(document.getElementById('honMontoBruto').value) || 0;
+    const aplica = document.getElementById('honAplicaRetencion').checked;
+    document.getElementById('bloqueRetencionPct').classList.toggle('oculto', !aplica);
+
+    const pct = aplica ? Number(document.getElementById('honRetencionPct').value) : 0;
+    const retencion = Math.round(bruto * (pct / 100));
+    const neto = bruto - retencion;
+
+    document.getElementById('resumenNetoHonorarios').innerHTML = `
+      <div class="resumen-fila"><span>Valor bruto</span><strong>${formatearMoneda(bruto)}</strong></div>
+      ${aplica ? `<div class="resumen-fila"><span>Retención en la fuente (${pct}%)</span><strong>-${formatearMoneda(retencion)}</strong></div>` : ''}
+      <div class="resumen-fila total"><span>Neto a pagar</span><strong>${formatearMoneda(neto)}</strong></div>
+    `;
+  }
+
+  async function confirmarRegistrarHonorarios() {
+    const proveedorId = document.getElementById('honProveedor').value;
+    const descripcion = document.getElementById('honDescripcion').value.trim();
+    const montoBruto = Number(document.getElementById('honMontoBruto').value);
+    const aplicaRetencion = document.getElementById('honAplicaRetencion').checked;
+    const retencionPct = Number(document.getElementById('honRetencionPct').value);
+    const metodoPago = document.getElementById('honMetodoPago').value;
+    ocultarMensaje('mensajeHonorarios');
+
+    if (!proveedorId) { mostrarMensaje('mensajeHonorarios', 'Selecciona el asesor/proveedor.', 'error'); return; }
+    if (!descripcion) { mostrarMensaje('mensajeHonorarios', 'Escribe una descripción.', 'error'); return; }
+    if (!montoBruto || montoBruto <= 0) { mostrarMensaje('mensajeHonorarios', 'Escribe un monto válido.', 'error'); return; }
+
+    const centroCostoId = centroCostoForzadoMiDepartamento || centroCostoTiendaId;
+
+    const resp = await fetch(WORKER_URL + '/api/pos/directorio/honorarios', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({
+        centro_costo_id: centroCostoId, proveedor_tercero_id: proveedorId, descripcion, monto_bruto: montoBruto,
+        aplica_retencion: aplicaRetencion, retencion_pct: aplicaRetencion ? retencionPct : 0, metodo_pago: metodoPago,
+      })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeHonorarios', datos.error || 'No se pudo registrar.', 'error'); return; }
+
+    mostrarMensaje('mensajeHonorarios', '✅ Honorarios registrados y contabilizados.', 'exito');
+    document.getElementById('honDescripcion').value = '';
+    document.getElementById('honMontoBruto').value = '';
+    document.getElementById('honAplicaRetencion').checked = false;
+    document.getElementById('bloqueRetencionPct').classList.add('oculto');
+    document.getElementById('resumenNetoHonorarios').innerHTML = '';
   }
 
   function autocompletarPlazoProveedor() {
