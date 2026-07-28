@@ -2750,6 +2750,32 @@
     <h2>Compromisos presupuestales</h2>
     <div id="listaCommitmentsFe"><div class="cargando">Cargando...</div></div>
   </div>
+
+  <div class="panel" style="max-width:none;max-height:none;margin-top:20px;">
+    <h2>💵 Ejecución financiera del plan operativo</h2>
+    <div class="subtitulo">Cada vez que el Fondo desembolsa un pago (directo o reembolso) por un concepto del plan operativo aprobado, regístralo aquí — queda contabilizado en tus estados financieros automáticamente.</div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:14px;margin-bottom:16px;">
+      <div style="flex:2;min-width:220px;">
+        <label for="feDesembolsoConcepto">Concepto</label>
+        <select id="feDesembolsoConcepto"></select>
+      </div>
+      <div style="flex:1;min-width:120px;">
+        <label for="feDesembolsoMonto">Monto (COP)</label>
+        <input type="number" id="feDesembolsoMonto" min="0" step="1000">
+      </div>
+      <div style="flex:1;min-width:140px;">
+        <label for="feDesembolsoFecha">Fecha</label>
+        <input type="date" id="feDesembolsoFecha">
+      </div>
+      <div>
+        <button class="btn-principal" style="margin-top:0;" onclick="confirmarRegistrarDesembolsoFe()">Registrar</button>
+      </div>
+    </div>
+    <div class="mensaje" id="mensajeDesembolsoFe"></div>
+
+    <div id="listaConceptosFe" style="margin-top:14px;"><div class="cargando">Cargando...</div></div>
+  </div>
 </div>
 
 <!-- Lista desplegable de "Buscar producto" — vive fuera de cualquier panel con
@@ -12169,6 +12195,72 @@
     mostrarPantalla('pantallaFePresupuesto');
     await cargarSaldoFe('resumenSaldoFe2');
     await cargarCommitmentsFe();
+    document.getElementById('feDesembolsoFecha').value = new Date().toISOString().slice(0, 10);
+    await cargarConceptosFe();
+  }
+
+  let conceptosCacheFe = [];
+
+  async function cargarConceptosFe() {
+    const resp = await fetch(WORKER_URL + '/api/pos/fe/conceptos', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    const contenedor = document.getElementById('listaConceptosFe');
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const { conceptos } = await resp.json();
+    conceptosCacheFe = conceptos || [];
+
+    const select = document.getElementById('feDesembolsoConcepto');
+    select.innerHTML = conceptosCacheFe.map(c => {
+      const disponible = Number(c.monto_total_aprobado) - Number(c.monto_ejecutado);
+      return `<option value="${c.id}">#${c.numero_actividad} ${escaparHtml(c.concepto)} (disponible: ${formatearMoneda(disponible)})</option>`;
+    }).join('');
+
+    if (conceptosCacheFe.length === 0) { contenedor.innerHTML = '<div class="cargando">Sin conceptos del plan operativo cargados.</div>'; return; }
+
+    const tiposEtiqueta = { activo_fijo: '🪑 Activo fijo', gasto: '💸 Gasto', inventario: '📦 Inventario' };
+
+    contenedor.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:1fr 100px 100px 100px 90px;">
+          <span>CONCEPTO</span><span style="text-align:right;">APROBADO</span><span style="text-align:right;">EJECUTADO</span><span style="text-align:right;">DISPONIBLE</span><span>TIPO</span>
+        </div>
+        ${conceptosCacheFe.map(c => {
+          const disponible = Number(c.monto_total_aprobado) - Number(c.monto_ejecutado);
+          const pct = Number(c.monto_total_aprobado) > 0 ? Math.round((Number(c.monto_ejecutado) / Number(c.monto_total_aprobado)) * 100) : 0;
+          return `
+            <div class="tabla-lista-fila" style="grid-template-columns:1fr 100px 100px 100px 90px;cursor:default;">
+              <span>#${c.numero_actividad} ${escaparHtml(c.concepto)}<div style="font-size:10px;opacity:0.55;">${pct}% ejecutado</div></span>
+              <span style="text-align:right;">${formatearMoneda(c.monto_total_aprobado)}</span>
+              <span style="text-align:right;">${formatearMoneda(c.monto_ejecutado)}</span>
+              <span style="text-align:right;font-weight:700;color:${disponible > 0 ? 'var(--verde-exito)' : 'var(--rojo-error)'};">${formatearMoneda(disponible)}</span>
+              <span style="font-size:11px;">${tiposEtiqueta[c.tipo_contable] || c.tipo_contable}</span>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  async function confirmarRegistrarDesembolsoFe() {
+    const conceptoId = document.getElementById('feDesembolsoConcepto').value;
+    const monto = Number(document.getElementById('feDesembolsoMonto').value);
+    const fecha = document.getElementById('feDesembolsoFecha').value;
+    ocultarMensaje('mensajeDesembolsoFe');
+
+    if (!conceptoId) { mostrarMensaje('mensajeDesembolsoFe', 'Selecciona un concepto.', 'error'); return; }
+    if (!monto || monto <= 0) { mostrarMensaje('mensajeDesembolsoFe', 'Escribe un monto válido.', 'error'); return; }
+    if (!fecha) { mostrarMensaje('mensajeDesembolsoFe', 'Escribe la fecha.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/fe/desembolso', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ concepto_id: conceptoId, monto, fecha })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeDesembolsoFe', datos.error || 'No se pudo registrar.', 'error'); return; }
+
+    mostrarMensaje('mensajeDesembolsoFe', '✅ Desembolso registrado y contabilizado.', 'exito');
+    document.getElementById('feDesembolsoMonto').value = '';
+    await cargarConceptosFe();
   }
 
   async function cargarCommitmentsFe() {
