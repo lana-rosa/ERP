@@ -692,6 +692,7 @@
         <button class="nav-btn" id="nav-copia-seguridad" onclick="mostrarPantallaCopiaSeguridad()"><span class="nav-icon">💾</span> Copia de seguridad</button>
         <button class="nav-btn" id="nav-codigos-descuento" onclick="mostrarPantallaCodigosDescuento()"><span class="nav-icon">🏷️</span> Códigos de descuento</button>
         <button class="nav-btn" id="nav-fidelizacion" onclick="mostrarPantallaFidelizacion()"><span class="nav-icon">⭐</span> Programa de fidelización</button>
+        <button class="nav-btn" id="nav-config-alertas" onclick="mostrarPantallaConfigAlertas()"><span class="nav-icon">🔔</span> Configuración de alertas</button>
         <button class="nav-btn" id="nav-tarifas-envio" onclick="mostrarPantallaTarifasEnvio()"><span class="nav-icon">🚚</span> Tarifas de envío</button>
         <button class="nav-btn" onclick="mostrarPantallaApariencia()"><span class="nav-icon">🎨</span> Apariencia</button>
       </div>
@@ -1013,6 +1014,7 @@
           <option value="transferencia">Transferencia</option>
           <option value="tarjeta_debito">Tarjeta débito</option>
           <option value="tarjeta_credito">Tarjeta crédito</option>
+          <option value="credito_financiera">🏦 Crédito (CrediLondon)</option>
           <option value="hotmart">Hotmart</option>
           <option value="youtube_adsense">YouTube AdSense</option>
           <option value="otro">Otro</option>
@@ -1454,6 +1456,25 @@
     <button class="chip-filtro activo" data-subtab-btn="pagosPendientes" onclick="mostrarSubTabGrupo('pagosPendientes', 'subtabPagosGastos', this)">🧾 Compra a proveedor</button>
     <button class="chip-filtro" data-subtab-btn="pagosPendientes" onclick="mostrarSubTabGrupo('pagosPendientes', 'subtabPagosAdmin', this)">🏢 Pagos administrativos</button>
     <button class="chip-filtro" data-subtab-btn="pagosPendientes" onclick="mostrarSubTabGrupo('pagosPendientes', 'subtabPagosHistorial', this); cargarHistorialComprasTabla();">📋 Historial de compras</button>
+    <button class="chip-filtro" data-subtab-btn="pagosPendientes" onclick="mostrarSubTabGrupo('pagosPendientes', 'subtabFacturaCredito', this)">📅 Factura a crédito</button>
+  </div>
+
+  <div id="subtabFacturaCredito" data-subtab-grupo="pagosPendientes" class="oculto">
+    <div class="panel" style="max-width:480px;">
+      <div class="subtitulo">Para facturas que NO se pagan de la caja ahora — quedan en "Cuentas por cobrar y pagar" hasta que las marques como pagadas.</div>
+      <label for="facCreditoProveedor">Proveedor</label>
+      <select id="facCreditoProveedor" onchange="autocompletarPlazoProveedor()"></select>
+      <label for="facCreditoDescripcion">Descripción</label>
+      <input type="text" id="facCreditoDescripcion" placeholder="Ej: Compra de lana e hilos">
+      <label for="facCreditoMonto">Monto (COP)</label>
+      <input type="number" id="facCreditoMonto" min="0" step="1000">
+      <label for="facCreditoFecha">Fecha de la factura</label>
+      <input type="date" id="facCreditoFecha">
+      <label for="facCreditoPlazo">Días de plazo <span style="font-size:10px;opacity:0.6;">(se autocompleta con el plazo del proveedor, editable)</span></label>
+      <input type="number" id="facCreditoPlazo" min="0" step="1" placeholder="Ej: 30">
+      <button class="btn-principal" onclick="confirmarRegistrarFacturaCredito()">Registrar factura a crédito</button>
+      <div class="mensaje" id="mensajeFacturaCredito"></div>
+    </div>
   </div>
 
   <div id="subtabPagosAdmin" data-subtab-grupo="pagosPendientes" class="oculto">
@@ -1962,6 +1983,8 @@
       <input type="text" id="proveedorDirDireccion">
       <label for="proveedorDirCiudad">Ciudad <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
       <input type="text" id="proveedorDirCiudad">
+      <label for="proveedorDirPlazo">Plazo de pago que te da <span style="font-size:10px;opacity:0.6;">(días, opcional — ej: 30)</span></label>
+      <input type="number" id="proveedorDirPlazo" min="0" step="1" placeholder="Ej: 30">
       <button class="btn-principal" onclick="confirmarCrearProveedor()">Agregar proveedor</button>
       <div class="mensaje" id="mensajeCrearProveedor"></div>
     </div>
@@ -2093,6 +2116,23 @@
 
 <!-- ===== PANTALLA: CÓDIGOS DE DESCUENTO ===== -->
 <!-- ===== PANTALLA: FIDELIZACIÓN — PUNTOS ===== -->
+<!-- ===== PANTALLA: CONFIGURACIÓN DE ALERTAS ===== -->
+<div id="pantallaConfigAlertas" class="oculto contenido">
+  <div class="page-header">
+    <h1>🔔 Configuración de alertas</h1>
+    <div class="subtitulo">Con cuánta anticipación quieres que te avise de cuentas por cobrar/pagar próximas a vencer, y a qué WhatsApp.</div>
+  </div>
+  <div class="panel" style="max-width:420px;">
+    <label for="alertasDiasAnticipacion">Avisar con cuántos días de anticipación</label>
+    <input type="number" id="alertasDiasAnticipacion" min="1" step="1" placeholder="Ej: 3">
+    <label for="alertasTelefonoWhatsapp">Número de WhatsApp para recibir el aviso</label>
+    <input type="tel" id="alertasTelefonoWhatsapp" placeholder="300 000 0000">
+    <button class="btn-principal" onclick="confirmarGuardarConfigAlertas()">Guardar</button>
+    <div class="mensaje" id="mensajeConfigAlertas"></div>
+    <div style="font-size:11px;opacity:0.55;margin-top:10px;">El aviso no se envía solo en segundo plano — aparece listo para enviar con un clic cada vez que entras al Dashboard, dentro del rango de días que configures aquí.</div>
+  </div>
+</div>
+
 <div id="pantallaFidelizacion" class="oculto contenido">
   <div class="page-header">
     <h1>⭐ Programa de fidelización</h1>
@@ -2877,7 +2917,7 @@
   // UTILIDADES
   // ============================================================================
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaConfigAlertas', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -3119,6 +3159,7 @@
     mostrar('nav-copia-seguridad', esAdmin);
     mostrar('nav-codigos-descuento', esAdmin);
     mostrar('nav-fidelizacion', esAdmin);
+    mostrar('nav-config-alertas', esAdmin);
     mostrar('nav-tarifas-envio', esAdmin);
 
     // Turno de caja solo aplica a quien maneja caja física (Tienda)
@@ -3969,6 +4010,7 @@
             <option value="daviplata" ${pago.metodo_pago === 'daviplata' ? 'selected' : ''}>Daviplata</option>
             <option value="tarjeta_debito" ${pago.metodo_pago === 'tarjeta_debito' ? 'selected' : ''}>Tarjeta débito</option>
             <option value="tarjeta_credito" ${pago.metodo_pago === 'tarjeta_credito' ? 'selected' : ''}>Tarjeta crédito</option>
+            <option value="credito_financiera" ${pago.metodo_pago === 'credito_financiera' ? 'selected' : ''}>🏦 Crédito (CrediLondon)</option>
           </select>
           ${pago.metodo_pago === 'efectivo'
             ? `<input type="number" placeholder="¿Cuánto te dio?" min="0" step="1000" value="${pago.recibido || ''}" oninput="actualizarFilaPago(${indice}, 'recibido', this.value)" style="flex:1;">`
@@ -6578,6 +6620,57 @@
     document.getElementById('gastoNumeroFactura').value = '';
     document.getElementById('gastoFechaFactura').value = '';
     await cargarAprobadoresCompra();
+    await cargarProveedoresParaFacturaCredito();
+  }
+
+  let proveedoresCacheFacturaCredito = [];
+
+  async function cargarProveedoresParaFacturaCredito() {
+    const resp = await fetch(WORKER_URL + '/api/pos/terceros?tipo=proveedor', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) return;
+    const { terceros } = await resp.json();
+    proveedoresCacheFacturaCredito = terceros || [];
+    const select = document.getElementById('facCreditoProveedor');
+    select.innerHTML = '<option value="">Selecciona un proveedor...</option>' +
+      proveedoresCacheFacturaCredito.map(p => `<option value="${p.id}">${escaparHtml(p.nombre_completo)}${p.plazo_pago_dias ? ' (plazo: ' + p.plazo_pago_dias + ' días)' : ''}</option>`).join('');
+    document.getElementById('facCreditoFecha').value = new Date().toISOString().slice(0, 10);
+  }
+
+  function autocompletarPlazoProveedor() {
+    const id = document.getElementById('facCreditoProveedor').value;
+    const proveedor = proveedoresCacheFacturaCredito.find(p => p.id === id);
+    document.getElementById('facCreditoPlazo').value = proveedor && proveedor.plazo_pago_dias ? proveedor.plazo_pago_dias : '';
+  }
+
+  async function confirmarRegistrarFacturaCredito() {
+    const proveedorId = document.getElementById('facCreditoProveedor').value;
+    const descripcion = document.getElementById('facCreditoDescripcion').value.trim();
+    const monto = Number(document.getElementById('facCreditoMonto').value);
+    const fecha = document.getElementById('facCreditoFecha').value;
+    const plazo = document.getElementById('facCreditoPlazo').value;
+    ocultarMensaje('mensajeFacturaCredito');
+
+    if (!proveedorId) { mostrarMensaje('mensajeFacturaCredito', 'Selecciona el proveedor.', 'error'); return; }
+    if (!descripcion) { mostrarMensaje('mensajeFacturaCredito', 'Escribe una descripción.', 'error'); return; }
+    if (!monto || monto <= 0) { mostrarMensaje('mensajeFacturaCredito', 'Escribe un monto válido.', 'error'); return; }
+    if (!fecha) { mostrarMensaje('mensajeFacturaCredito', 'Escribe la fecha de la factura.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/directorio/factura-credito-proveedor', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({
+        proveedor_id: proveedorId, descripcion, monto, fecha_factura: fecha,
+        dias_plazo: plazo ? Number(plazo) : null, centro_costo_id: centroCostoForzadoMiDepartamento || null,
+      })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeFacturaCredito', datos.error || 'No se pudo registrar.', 'error'); return; }
+
+    mostrarMensaje('mensajeFacturaCredito', '✅ Factura registrada — quedó pendiente en Cuentas por pagar.', 'exito');
+    document.getElementById('facCreditoDescripcion').value = '';
+    document.getElementById('facCreditoMonto').value = '';
+    document.getElementById('facCreditoPlazo').value = '';
+    document.getElementById('facCreditoProveedor').value = '';
   }
 
   async function cargarAprobadoresCompra() {
@@ -6993,6 +7086,65 @@
         `).join('')}
       </div>
     `;
+  }
+
+  async function mostrarPantallaConfigAlertas() {
+    mostrarPantalla('pantallaConfigAlertas');
+    ocultarMensaje('mensajeConfigAlertas');
+    const resp = await fetch(WORKER_URL + '/api/pos/finanzas/config-alertas', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (resp.ok) {
+      const { config } = await resp.json();
+      if (config) {
+        document.getElementById('alertasDiasAnticipacion').value = config.dias_anticipacion;
+        document.getElementById('alertasTelefonoWhatsapp').value = config.telefono_whatsapp || '';
+      }
+    }
+  }
+
+  async function confirmarGuardarConfigAlertas() {
+    const dias = Number(document.getElementById('alertasDiasAnticipacion').value);
+    const telefono = document.getElementById('alertasTelefonoWhatsapp').value.trim();
+    ocultarMensaje('mensajeConfigAlertas');
+
+    if (!dias || dias <= 0) { mostrarMensaje('mensajeConfigAlertas', 'Escribe con cuántos días de anticipación quieres el aviso.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/finanzas/config-alertas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ dias_anticipacion: dias, telefono_whatsapp: telefono || null })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeConfigAlertas', datos.error || 'No se pudo guardar.', 'error'); return; }
+    mostrarMensaje('mensajeConfigAlertas', '✅ Guardado correctamente.', 'exito');
+  }
+
+  async function cargarBannerAlertasWhatsapp() {
+    const resp = await fetch(WORKER_URL + '/api/pos/finanzas/alertas-whatsapp', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) return;
+    const { cuentas, telefono_whatsapp, dias_anticipacion } = await resp.json();
+    if (!cuentas || cuentas.length === 0) return;
+
+    const cont = document.getElementById('panelAlertasDashboard');
+    const porCobrar = cuentas.filter(c => c.tipo === 'por_cobrar');
+    const porPagar = cuentas.filter(c => c.tipo === 'por_pagar');
+
+    const mensaje = [
+      '📋 Recordatorio de cuentas por vencer:',
+      ...porCobrar.map(c => `💰 Cobrar: ${c.descripcion} — $${Number(c.monto).toLocaleString('es-CO')} (vence ${new Date(c.fecha_vencimiento + 'T00:00:00').toLocaleDateString('es-CO')})`),
+      ...porPagar.map(c => `💸 Pagar: ${c.descripcion} — $${Number(c.monto).toLocaleString('es-CO')} (vence ${new Date(c.fecha_vencimiento + 'T00:00:00').toLocaleDateString('es-CO')})`),
+    ].join('\n');
+
+    const banner = document.createElement('div');
+    banner.style.cssText = 'background:#fff6e0;color:#a86b00;padding:12px 14px;border-radius:9px;font-size:12.5px;font-weight:600;margin-bottom:8px;';
+    banner.innerHTML = `
+      🔔 Tienes ${cuentas.length} cuenta(s) por vencer en los próximos ${dias_anticipacion} días.
+      <button class="btn-mini editar" style="margin-left:8px;" onclick='enviarAlertasPorWhatsapp(${JSON.stringify(mensaje)}, ${JSON.stringify(telefono_whatsapp || '')})'>📱 Enviar recordatorio por WhatsApp</button>
+    `;
+    cont.prepend(banner);
+  }
+
+  function enviarAlertasPorWhatsapp(mensaje, telefono) {
+    abrirWhatsAppTexto(telefono, mensaje);
   }
 
   async function mostrarPantallaFidelizacion() {
@@ -8111,6 +8263,7 @@
     const correo = document.getElementById('proveedorDirCorreo').value.trim();
     const direccion = document.getElementById('proveedorDirDireccion').value.trim();
     const ciudad = document.getElementById('proveedorDirCiudad').value.trim();
+    const plazoPago = document.getElementById('proveedorDirPlazo').value;
     ocultarMensaje('mensajeCrearProveedor');
 
     if (!nombre) { mostrarMensaje('mensajeCrearProveedor', 'Escribe el nombre del proveedor.', 'error'); return; }
@@ -8118,13 +8271,13 @@
     const resp = await fetch(WORKER_URL + '/api/pos/terceros', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ tipo: 'proveedor', nombre_completo: nombre, tipo_documento: documento ? 'NIT' : null, numero_documento: documento || null, telefono: telefono || null, email: correo || null, direccion: direccion || null, ciudad: ciudad || null })
+      body: JSON.stringify({ tipo: 'proveedor', nombre_completo: nombre, tipo_documento: documento ? 'NIT' : null, numero_documento: documento || null, telefono: telefono || null, email: correo || null, direccion: direccion || null, ciudad: ciudad || null, plazo_pago_dias: plazoPago ? Number(plazoPago) : null })
     });
     const datos = await resp.json();
     if (!resp.ok) { mostrarMensaje('mensajeCrearProveedor', datos.error || 'No se pudo crear.', 'error'); return; }
 
     mostrarMensaje('mensajeCrearProveedor', '✅ Proveedor agregado.', 'exito');
-    ['proveedorDirNombre','proveedorDirDocumento','proveedorDirTelefono','proveedorDirCorreo','proveedorDirDireccion','proveedorDirCiudad'].forEach(id => document.getElementById(id).value = '');
+    ['proveedorDirNombre','proveedorDirDocumento','proveedorDirTelefono','proveedorDirCorreo','proveedorDirDireccion','proveedorDirCiudad','proveedorDirPlazo'].forEach(id => document.getElementById(id).value = '');
     await cargarProveedoresDir();
   }
 
@@ -8885,7 +9038,7 @@
         acciones = `
           <div style="font-size:11.5px;margin-top:6px;">Cobrar anticipo: <strong>${formatearMoneda(p.monto_anticipo_requerido)}</strong></div>
           <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
-            ${['efectivo','nequi','daviplata','transferencia'].map(m => `<button class="btn-mini guardar" onclick="registrarPagoAnticipoPedido('${p.id}', '${m}')">${m}</button>`).join('')}
+            ${['efectivo','nequi','daviplata','transferencia','credito_financiera'].map(m => `<button class="btn-mini guardar" onclick="registrarPagoAnticipoPedido('${p.id}', '${m}')">${m === 'credito_financiera' ? '🏦 crédito' : m}</button>`).join('')}
           </div>
         `;
       } else if (p.estado === 'en_preparacion') {
@@ -8896,7 +9049,7 @@
           acciones = `
             <div style="font-size:11.5px;margin-top:6px;">Cobrar saldo + envío: <strong>${formatearMoneda(p.monto_saldo_requerido)}</strong></div>
             <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
-              ${['efectivo','nequi','daviplata','transferencia'].map(m => `<button class="btn-mini guardar" onclick="registrarPagoSaldoPedido('${p.id}', '${m}')">${m}</button>`).join('')}
+              ${['efectivo','nequi','daviplata','transferencia','credito_financiera'].map(m => `<button class="btn-mini guardar" onclick="registrarPagoSaldoPedido('${p.id}', '${m}')">${m === 'credito_financiera' ? '🏦 crédito' : m}</button>`).join('')}
             </div>
           `;
         } else {
@@ -10412,8 +10565,9 @@
     const hace60 = new Date(Date.now() - 60 * 86400000);
     const fmt = (d) => d.toISOString().slice(0, 10);
 
+    await cargarAlertasDashboard();
+    await cargarBannerAlertasWhatsapp();
     await Promise.all([
-      cargarAlertasDashboard(),
       cargarKpisYComparativo(fmt(hace30), fmt(hoy), fmt(hace60), fmt(hace30)),
       cargarEquilibrioDashboard(fmt(hace30), fmt(hoy)),
       cargarProyeccionDashboard(),
