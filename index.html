@@ -2254,6 +2254,7 @@
     <button class="chip-filtro activo" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabEstadoResultados', this); cargarEstadoResultados();">📈 Estado de Resultados</button>
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabBalanceGeneral', this); cargarBalanceGeneral();">⚖️ Balance General</button>
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabFlujoCaja', this); cargarFlujoCaja();">💵 Flujo de Caja</button>
+    <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabRevisionContador', this); cargarRevisionesContables();">✅ Revisión del contador</button>
   </div>
 
   <div id="subtabEstadoResultados" data-subtab-grupo="estadosFin">
@@ -2278,6 +2279,31 @@
       <div><label for="fcFechaHasta" style="font-size:11px;">Hasta</label><input type="date" id="fcFechaHasta" onchange="cargarFlujoCaja()" style="padding:9px 10px;"></div>
     </div>
     <div id="contenidoFlujoCaja"><div class="cargando">Cargando...</div></div>
+  </div>
+
+  <div id="subtabRevisionContador" data-subtab-grupo="estadosFin" class="oculto">
+    <div class="grilla-2">
+      <div class="panel">
+        <h2>Registrar revisión</h2>
+        <div class="subtitulo">Cuando tu contador revise los estados financieros de un período, regístralo aquí — queda como constancia visible dentro del sistema.</div>
+        <label for="revPeriodoDesde">Período — desde</label>
+        <input type="date" id="revPeriodoDesde">
+        <label for="revPeriodoHasta">Período — hasta</label>
+        <input type="date" id="revPeriodoHasta">
+        <label for="revNombreContador">Nombre del contador</label>
+        <input type="text" id="revNombreContador" placeholder="Nombre completo">
+        <label for="revTarjetaProfesional">Tarjeta profesional <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+        <input type="text" id="revTarjetaProfesional" placeholder="Ej: TP 123456-T">
+        <label for="revObservaciones">Observaciones <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+        <input type="text" id="revObservaciones" placeholder="Ej: revisado sin novedades">
+        <button class="btn-principal" onclick="confirmarRegistrarRevisionContable()">Registrar revisión</button>
+        <div class="mensaje" id="mensajeRevisionContador"></div>
+      </div>
+      <div class="panel">
+        <h2>Historial de revisiones</h2>
+        <div id="listaRevisionesContables"><div class="cargando">Cargando...</div></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -10263,6 +10289,55 @@
   // ============================================================
   // ESTADOS FINANCIEROS
   // ============================================================
+  async function cargarRevisionesContables() {
+    const cont = document.getElementById('listaRevisionesContables');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    const resp = await fetch(WORKER_URL + '/api/pos/finanzas/revision-contable', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const { revisiones } = await resp.json();
+
+    if (!revisiones || revisiones.length === 0) { cont.innerHTML = '<div class="cargando">Todavía no hay revisiones registradas.</div>'; return; }
+
+    cont.innerHTML = revisiones.map(r => `
+      <div class="fila-historial" style="margin-bottom:9px;">
+        <div class="fila-historial-encabezado">
+          <span class="fila-historial-consecutivo">✅ ${escaparHtml(r.nombre_contador)}</span>
+          <span class="fila-historial-total">${new Date(r.fecha_revision + 'T00:00:00').toLocaleDateString('es-CO')}</span>
+        </div>
+        <div class="fila-historial-fecha">Período: ${new Date(r.periodo_desde + 'T00:00:00').toLocaleDateString('es-CO')} — ${new Date(r.periodo_hasta + 'T00:00:00').toLocaleDateString('es-CO')}${r.numero_tarjeta_profesional ? ' · T.P. ' + escaparHtml(r.numero_tarjeta_profesional) : ''}</div>
+        ${r.observaciones ? `<div class="fila-historial-detalle">${escaparHtml(r.observaciones)}</div>` : ''}
+      </div>
+    `).join('');
+  }
+
+  async function confirmarRegistrarRevisionContable() {
+    const periodoDesde = document.getElementById('revPeriodoDesde').value;
+    const periodoHasta = document.getElementById('revPeriodoHasta').value;
+    const nombreContador = document.getElementById('revNombreContador').value.trim();
+    ocultarMensaje('mensajeRevisionContador');
+
+    if (!periodoDesde || !periodoHasta) { mostrarMensaje('mensajeRevisionContador', 'Escribe el período revisado.', 'error'); return; }
+    if (!nombreContador) { mostrarMensaje('mensajeRevisionContador', 'Escribe el nombre del contador.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/finanzas/revision-contable', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({
+        periodo_desde: periodoDesde, periodo_hasta: periodoHasta, nombre_contador: nombreContador,
+        numero_tarjeta_profesional: document.getElementById('revTarjetaProfesional').value.trim() || null,
+        observaciones: document.getElementById('revObservaciones').value.trim() || null,
+      })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeRevisionContador', datos.error || 'No se pudo registrar.', 'error'); return; }
+
+    mostrarMensaje('mensajeRevisionContador', '✅ Revisión registrada correctamente.', 'exito');
+    document.getElementById('revNombreContador').value = '';
+    document.getElementById('revTarjetaProfesional').value = '';
+    document.getElementById('revObservaciones').value = '';
+    await cargarRevisionesContables();
+  }
+
   async function mostrarPantallaEstadosFinancieros() {
     mostrarPantalla('pantallaEstadosFinancieros');
     const primerDiaMes = new Date().toISOString().slice(0, 8) + '01';
