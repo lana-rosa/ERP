@@ -4,6 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lana Rosa OS — Punto de Venta</title>
+
+<!-- PWA: permite instalar la app en el celular, con ícono propio -->
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#d8017c">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lana Rosa OS">
+<meta name="mobile-web-app-capable" content="yes">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -702,6 +713,7 @@
 
   <div class="sidebar-footer">
     <div id="indicadorVentasOffline" class="oculto" style="margin:0 16px 10px 16px;padding:8px 10px;background:#c0392b;color:white;border-radius:8px;font-size:11px;font-weight:600;text-align:center;cursor:pointer;" onclick="sincronizarVentasOfflinePendientes()" title="Clic para intentar sincronizar ahora"></div>
+    <button id="btnInstalarApp" class="nav-btn oculto" style="background:rgba(255,255,255,0.08);margin:0 16px 8px 16px;width:calc(100% - 32px);" onclick="instalarAppPWA()"><span class="nav-icon">📲</span> Instalar app en el celular</button>
     <div id="widgetHorasTrabajadas" class="oculto" style="padding:10px 16px;border-top:1px solid rgba(255,255,255,0.08);"></div>
     <div class="sidebar-usuario">
       <div id="nombreUsuarioSidebar">—</div>
@@ -2969,6 +2981,52 @@
       navigator.serviceWorker.register('./sw.js').catch(() => {});
     });
   }
+
+  // Botón "Instalar app" — Chrome/Android disparan este evento cuando la
+  // PWA cumple los requisitos (manifest + service worker); en iPhone no
+  // existe este evento, así que ahí se muestra un instructivo manual.
+  let eventoInstalacionPWA = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    eventoInstalacionPWA = e;
+    const btn = document.getElementById('btnInstalarApp');
+    if (btn) btn.classList.remove('oculto');
+  });
+
+  async function instalarAppPWA() {
+    const esIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    if (esIOS) {
+      alert('En iPhone/iPad: toca el botón "Compartir" (el cuadrito con la flecha hacia arriba) en Safari, y luego "Agregar a pantalla de inicio".');
+      return;
+    }
+    if (!eventoInstalacionPWA) {
+      alert('Tu navegador ya debería tener la opción de "Instalar app" en el menú (los 3 puntos, arriba a la derecha).');
+      return;
+    }
+    eventoInstalacionPWA.prompt();
+    await eventoInstalacionPWA.userChoice;
+    eventoInstalacionPWA = null;
+    document.getElementById('btnInstalarApp').classList.add('oculto');
+  }
+
+  window.addEventListener('appinstalled', () => {
+    const btn = document.getElementById('btnInstalarApp');
+    if (btn) btn.classList.add('oculto');
+  });
+
+  // En iPhone/iPad nunca dispara "beforeinstallprompt" — mostramos el botón
+  // igual, para que puedan ver el instructivo manual de instalación.
+  // Si ya está instalada (modo standalone), no tiene sentido mostrarlo.
+  (function () {
+    const yaInstalada = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    if (yaInstalada) return;
+    if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
+      window.addEventListener('DOMContentLoaded', () => {
+        const btn = document.getElementById('btnInstalarApp');
+        if (btn) btn.classList.remove('oculto');
+      });
+    }
+  })();
 
   const CLAVE_COLA_OFFLINE = 'lanaRosa_ventasPendientesOffline';
 
