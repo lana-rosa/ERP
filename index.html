@@ -2552,7 +2552,7 @@
 <div id="pantallaReinicioProduccion" class="oculto contenido">
   <div class="page-header">
     <h1>🧹 Reinicio antes de producción</h1>
-    <div class="subtitulo">Borra las ventas, pedidos y turnos de prueba para arrancar en ceros. No toca empleados, nómina, clientes/proveedores, ni el inventario (haz el conteo físico real por separado).</div>
+    <div class="subtitulo">Borra las ventas, pedidos, turnos, nómina y ejecución de Fondo Emprender de prueba, para arrancar en ceros. No toca a las empleadas registradas, clientes/proveedores, ni el inventario (haz el conteo físico real por separado).</div>
   </div>
   <div class="panel" style="max-width:520px;">
     <h2>Lo que se va a borrar</h2>
@@ -8254,6 +8254,9 @@
       <div class="resumen-fila"><span>Pedidos de WhatsApp/Redes</span><strong>${datos.pedidos_canal_venta}</strong></div>
       <div class="resumen-fila"><span>Ventas de Cursos/clases</span><strong>${datos.ventas_academia}</strong></div>
       <div class="resumen-fila"><span>Turnos de caja</span><strong>${datos.turnos_caja}</strong></div>
+      <div class="resumen-fila"><span>Períodos de nómina (con sus liquidaciones)</span><strong>${datos.periodos_nomina}</strong></div>
+      <div class="resumen-fila"><span>Cuentas por cobrar/pagar</span><strong>${datos.cuentas_por_cobrar_pagar}</strong></div>
+      <div class="resumen-fila"><span>Fondo Emprender ejecutado</span><strong>${formatearMoneda(datos.fondo_emprender_ejecutado)}</strong></div>
     `;
   }
 
