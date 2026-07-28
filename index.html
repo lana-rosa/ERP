@@ -666,6 +666,7 @@
       <button class="sidebar-depto-header" id="headerDeptoReportes" onclick="toggleSidebarDepto('deptoReportesSubmenu', 'headerDeptoReportes')">📊 Reportes financieros <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoReportesSubmenu">
         <button class="nav-btn" id="nav-reportes-financieros" onclick="mostrarPantallaReportesFinancieros()"><span class="nav-icon">📊</span> Informes de Ventas</button>
+        <button class="nav-btn" id="nav-estados-financieros" onclick="mostrarPantallaEstadosFinancieros()"><span class="nav-icon">📑</span> Estados financieros</button>
       </div>
     </div>
     <div class="sidebar-depto" id="deptoFondoEmprenderGrupo" style="display:none;">
@@ -2242,6 +2243,44 @@
 <!-- ===== PANTALLA: TRAZABILIDAD DEL SISTEMA ===== -->
 <!-- ===== PANTALLA: REINICIO ANTES DE PRODUCCIÓN ===== -->
 <!-- ===== PANTALLA: COPIA DE SEGURIDAD ===== -->
+<!-- ===== PANTALLA: ESTADOS FINANCIEROS ===== -->
+<div id="pantallaEstadosFinancieros" class="oculto contenido">
+  <div class="page-header">
+    <h1>📑 Estados financieros</h1>
+    <div class="subtitulo">Basados en el libro contable real del negocio (se alimenta solo con cada venta y gasto). Son estados de gestión para tomar decisiones — para fines legales/tributarios, siempre revísalos con tu contador.</div>
+  </div>
+
+  <div class="filtro-tipo" style="margin-bottom:20px;">
+    <button class="chip-filtro activo" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabEstadoResultados', this); cargarEstadoResultados();">📈 Estado de Resultados</button>
+    <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabBalanceGeneral', this); cargarBalanceGeneral();">⚖️ Balance General</button>
+    <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabFlujoCaja', this); cargarFlujoCaja();">💵 Flujo de Caja</button>
+  </div>
+
+  <div id="subtabEstadoResultados" data-subtab-grupo="estadosFin">
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+      <div><label for="erFechaDesde" style="font-size:11px;">Desde</label><input type="date" id="erFechaDesde" onchange="cargarEstadoResultados()" style="padding:9px 10px;"></div>
+      <div><label for="erFechaHasta" style="font-size:11px;">Hasta</label><input type="date" id="erFechaHasta" onchange="cargarEstadoResultados()" style="padding:9px 10px;"></div>
+    </div>
+    <div id="contenidoEstadoResultados"><div class="cargando">Cargando...</div></div>
+  </div>
+
+  <div id="subtabBalanceGeneral" data-subtab-grupo="estadosFin" class="oculto">
+    <div style="margin-bottom:16px;">
+      <label for="bgFechaCorte" style="font-size:11px;">Fecha de corte</label>
+      <input type="date" id="bgFechaCorte" onchange="cargarBalanceGeneral()" style="padding:9px 10px;">
+    </div>
+    <div id="contenidoBalanceGeneral"><div class="cargando">Cargando...</div></div>
+  </div>
+
+  <div id="subtabFlujoCaja" data-subtab-grupo="estadosFin" class="oculto">
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+      <div><label for="fcFechaDesde" style="font-size:11px;">Desde</label><input type="date" id="fcFechaDesde" onchange="cargarFlujoCaja()" style="padding:9px 10px;"></div>
+      <div><label for="fcFechaHasta" style="font-size:11px;">Hasta</label><input type="date" id="fcFechaHasta" onchange="cargarFlujoCaja()" style="padding:9px 10px;"></div>
+    </div>
+    <div id="contenidoFlujoCaja"><div class="cargando">Cargando...</div></div>
+  </div>
+</div>
+
 <div id="pantallaCopiaSeguridad" class="oculto contenido">
   <div class="page-header">
     <h1>💾 Copia de seguridad</h1>
@@ -2750,7 +2789,7 @@
   // UTILIDADES
   // ============================================================================
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -3017,6 +3056,7 @@
     mostrar('nav-nomina', esAdmin);
     mostrar('nav-talento-humano', esAdmin);
     mostrar('nav-reportes-financieros', esAdmin);
+    mostrar('nav-estados-financieros', esAdmin);
     document.getElementById('btnAbrirAsistenteIA').style.display = esAdmin ? 'flex' : 'none';
     mostrar('nav-calendario', true);
 
@@ -10217,6 +10257,117 @@
           `;
         }).join('')}
       </table>
+    `;
+  }
+
+  // ============================================================
+  // ESTADOS FINANCIEROS
+  // ============================================================
+  async function mostrarPantallaEstadosFinancieros() {
+    mostrarPantalla('pantallaEstadosFinancieros');
+    const primerDiaMes = new Date().toISOString().slice(0, 8) + '01';
+    const hoy = new Date().toISOString().slice(0, 10);
+    document.getElementById('erFechaDesde').value = primerDiaMes;
+    document.getElementById('erFechaHasta').value = hoy;
+    document.getElementById('bgFechaCorte').value = hoy;
+    document.getElementById('fcFechaDesde').value = primerDiaMes;
+    document.getElementById('fcFechaHasta').value = hoy;
+    mostrarSubTabGrupo('estadosFin', 'subtabEstadoResultados', document.querySelector('[data-subtab-btn="estadosFin"]'));
+    await cargarEstadoResultados();
+  }
+
+  function filaEstadoFin(etiqueta, valor, esTotal) {
+    return `<div class="resumen-fila${esTotal ? ' total' : ''}"><span>${etiqueta}</span><strong>${formatearMoneda(valor)}</strong></div>`;
+  }
+
+  async function cargarEstadoResultados() {
+    const cont = document.getElementById('contenidoEstadoResultados');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    const desde = document.getElementById('erFechaDesde').value;
+    const hasta = document.getElementById('erFechaHasta').value;
+    const resp = await fetch(`${WORKER_URL}/api/pos/finanzas/estado-resultados?fecha_desde=${desde}&fecha_hasta=${hasta}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const d = await resp.json();
+
+    cont.innerHTML = `
+      <div class="panel" style="max-width:560px;max-height:none;">
+        <h2>Ingresos operacionales</h2>
+        ${d.ingresos.map(i => filaEstadoFin(i.nombre, i.valor)).join('') || '<div class="cargando">Sin ingresos en el período.</div>'}
+        ${filaEstadoFin('Total ingresos', d.total_ingresos, true)}
+
+        <h2 style="margin-top:18px;">Costo de ventas</h2>
+        ${d.costos.map(c => filaEstadoFin(c.nombre, c.valor)).join('') || '<div class="cargando">Sin costos registrados.</div>'}
+        ${filaEstadoFin('Total costo de ventas', d.total_costos, true)}
+        ${filaEstadoFin('= Utilidad bruta', d.utilidad_bruta, true)}
+
+        <h2 style="margin-top:18px;">Gastos operacionales</h2>
+        ${d.gastos.map(g => filaEstadoFin(g.nombre, g.valor)).join('') || '<div class="cargando">Sin gastos en el período.</div>'}
+        ${filaEstadoFin('Total gastos', d.total_gastos, true)}
+
+        <div style="margin-top:16px;padding:14px;border-radius:10px;background:${d.utilidad_neta >= 0 ? '#eaf6ef' : '#fdecea'};text-align:center;">
+          <div style="font-size:12px;font-weight:600;opacity:0.75;">UTILIDAD NETA DEL PERÍODO</div>
+          <div style="font-size:26px;font-weight:700;color:${d.utilidad_neta >= 0 ? 'var(--verde-exito)' : 'var(--rojo-error)'};margin-top:4px;">${formatearMoneda(d.utilidad_neta)}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  async function cargarBalanceGeneral() {
+    const cont = document.getElementById('contenidoBalanceGeneral');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    const fecha = document.getElementById('bgFechaCorte').value;
+    const resp = await fetch(`${WORKER_URL}/api/pos/finanzas/balance-general?fecha_corte=${fecha}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const d = await resp.json();
+
+    cont.innerHTML = `
+      <div class="grilla-2">
+        <div class="panel" style="max-height:none;">
+          <h2>Activos</h2>
+          ${d.activos.map(a => filaEstadoFin(a.nombre, a.valor)).join('') || '<div class="cargando">Sin movimientos.</div>'}
+          ${filaEstadoFin('TOTAL ACTIVOS', d.total_activos, true)}
+        </div>
+        <div class="panel" style="max-height:none;">
+          <h2>Pasivos</h2>
+          ${d.pasivos.map(p => filaEstadoFin(p.nombre, p.valor)).join('') || '<div class="cargando">Sin pasivos registrados.</div>'}
+          ${filaEstadoFin('TOTAL PASIVOS', d.total_pasivos, true)}
+
+          <h2 style="margin-top:18px;">Patrimonio</h2>
+          ${d.patrimonio.map(p => filaEstadoFin(p.nombre, p.valor)).join('')}
+          ${filaEstadoFin('Utilidades acumuladas del período', d.utilidad_acumulada)}
+          ${filaEstadoFin('TOTAL PATRIMONIO', d.total_patrimonio, true)}
+        </div>
+      </div>
+      <div style="margin-top:16px;padding:12px;border-radius:9px;text-align:center;font-size:12.5px;font-weight:600;background:${d.cuadra ? '#eaf6ef' : '#fdecea'};color:${d.cuadra ? 'var(--verde-exito)' : 'var(--rojo-error)'};">
+        ${d.cuadra ? '✅ El balance cuadra: Activos = Pasivos + Patrimonio' : '⚠️ El balance no cuadra exactamente — revisa con tu contador (puede ser normal si hay movimientos sin contabilizar).'}
+      </div>
+    `;
+  }
+
+  async function cargarFlujoCaja() {
+    const cont = document.getElementById('contenidoFlujoCaja');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    const desde = document.getElementById('fcFechaDesde').value;
+    const hasta = document.getElementById('fcFechaHasta').value;
+    const resp = await fetch(`${WORKER_URL}/api/pos/finanzas/flujo-caja?fecha_desde=${desde}&fecha_hasta=${hasta}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const d = await resp.json();
+
+    cont.innerHTML = `
+      <div class="panel" style="max-width:560px;max-height:none;">
+        <h2>Efectivo (Caja)</h2>
+        ${filaEstadoFin('Entradas', d.efectivo.entradas)}
+        ${filaEstadoFin('Salidas', -d.efectivo.salidas)}
+
+        <h2 style="margin-top:18px;">Bancos / medios electrónicos</h2>
+        ${filaEstadoFin('Entradas', d.bancos.entradas)}
+        ${filaEstadoFin('Salidas', -d.bancos.salidas)}
+
+        <div style="margin-top:16px;padding:14px;border-radius:10px;background:${d.flujo_neto >= 0 ? '#eaf6ef' : '#fdecea'};text-align:center;">
+          <div style="font-size:12px;font-weight:600;opacity:0.75;">FLUJO DE CAJA NETO DEL PERÍODO</div>
+          <div style="font-size:26px;font-weight:700;color:${d.flujo_neto >= 0 ? 'var(--verde-exito)' : 'var(--rojo-error)'};margin-top:4px;">${formatearMoneda(d.flujo_neto)}</div>
+        </div>
+      </div>
     `;
   }
 
