@@ -686,6 +686,7 @@
         <button class="nav-btn" id="nav-ceder-permisos" onclick="mostrarPantallaCederPermisos()"><span class="nav-icon">🔑</span> Ceder permisos de administrador</button>
         <button class="nav-btn" id="nav-trazabilidad" onclick="mostrarPantallaTrazabilidad()"><span class="nav-icon">🕵️</span> Trazabilidad del sistema</button>
         <button class="nav-btn" id="nav-reinicio-produccion" onclick="mostrarPantallaReinicioProduccion()"><span class="nav-icon">🧹</span> Reinicio antes de producción</button>
+        <button class="nav-btn" id="nav-copia-seguridad" onclick="mostrarPantallaCopiaSeguridad()"><span class="nav-icon">💾</span> Copia de seguridad</button>
         <button class="nav-btn" id="nav-codigos-descuento" onclick="mostrarPantallaCodigosDescuento()"><span class="nav-icon">🏷️</span> Códigos de descuento</button>
         <button class="nav-btn" id="nav-fidelizacion" onclick="mostrarPantallaFidelizacion()"><span class="nav-icon">⭐</span> Programa de fidelización</button>
         <button class="nav-btn" id="nav-tarifas-envio" onclick="mostrarPantallaTarifasEnvio()"><span class="nav-icon">🚚</span> Tarifas de envío</button>
@@ -2240,6 +2241,22 @@
 
 <!-- ===== PANTALLA: TRAZABILIDAD DEL SISTEMA ===== -->
 <!-- ===== PANTALLA: REINICIO ANTES DE PRODUCCIÓN ===== -->
+<!-- ===== PANTALLA: COPIA DE SEGURIDAD ===== -->
+<div id="pantallaCopiaSeguridad" class="oculto contenido">
+  <div class="page-header">
+    <h1>💾 Copia de seguridad</h1>
+    <div class="subtitulo">Descarga una copia completa de los datos del negocio en un archivo de Excel, con una pestaña por cada tipo de información.</div>
+  </div>
+  <div class="panel" style="max-width:480px;">
+    <div style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;font-size:12.5px;">
+      ℹ️ Incluye: ventas de Tienda, pedidos de WhatsApp/Redes, ventas de Cursos/clases, inventario, clientes y proveedores, empleados, compras/gastos, turnos de caja, devoluciones y transferencias de stock.
+    </div>
+    <button class="btn-principal" id="btnExportarDatos" onclick="confirmarExportarDatos()" style="margin-top:14px;">📥 Descargar copia completa (.xlsx)</button>
+    <div class="mensaje" id="mensajeExportarDatos"></div>
+    <div style="font-size:11px;opacity:0.55;margin-top:10px;">Guarda este archivo en un lugar seguro (Google Drive, correo, USB) — es tu respaldo por si algún día necesitas recuperar información.</div>
+  </div>
+</div>
+
 <div id="pantallaReinicioProduccion" class="oculto contenido">
   <div class="page-header">
     <h1>🧹 Reinicio antes de producción</h1>
@@ -2733,7 +2750,7 @@
   // UTILIDADES
   // ============================================================================
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -2972,6 +2989,7 @@
     mostrar('nav-ceder-permisos', esAdmin);
     mostrar('nav-trazabilidad', esAdmin);
     mostrar('nav-reinicio-produccion', esAdmin);
+    mostrar('nav-copia-seguridad', esAdmin);
     mostrar('nav-codigos-descuento', esAdmin);
     mostrar('nav-fidelizacion', esAdmin);
     mostrar('nav-tarifas-envio', esAdmin);
@@ -10200,6 +10218,54 @@
         }).join('')}
       </table>
     `;
+  }
+
+  async function mostrarPantallaCopiaSeguridad() {
+    mostrarPantalla('pantallaCopiaSeguridad');
+    ocultarMensaje('mensajeExportarDatos');
+  }
+
+  async function confirmarExportarDatos() {
+    const btn = document.getElementById('btnExportarDatos');
+    btn.disabled = true;
+    btn.textContent = 'Generando archivo...';
+    ocultarMensaje('mensajeExportarDatos');
+
+    try {
+      const resp = await fetch(WORKER_URL + '/api/pos/admin/exportar-datos', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+      if (!resp.ok) throw new Error('No se pudo generar la copia.');
+      const datos = await resp.json();
+
+      const libro = XLSX.utils.book_new();
+      const hojas = {
+        'Ventas Tienda': datos.ventas_pos,
+        'Detalle Ventas Tienda': datos.ventas_pos_detalle,
+        'Pedidos WhatsApp-Redes': datos.pedidos_canal_venta,
+        'Ventas Academy': datos.ventas_academia,
+        'Inventario': datos.inventario_items,
+        'Clientes y Proveedores': datos.terceros,
+        'Empleados': datos.empleados,
+        'Compras y Gastos': datos.gastos_departamentales,
+        'Turnos de Caja': datos.turnos_caja,
+        'Reportes de Turno': datos.reportes_turno,
+        'Devoluciones': datos.devoluciones_venta,
+        'Transferencias Stock': datos.transferencias_stock,
+      };
+
+      for (const [nombreHoja, filas] of Object.entries(hojas)) {
+        const hoja = XLSX.utils.json_to_sheet(Array.isArray(filas) && filas.length > 0 ? filas : [{ info: 'Sin datos' }]);
+        XLSX.utils.book_append_sheet(libro, hoja, nombreHoja.slice(0, 31)); // Excel limita el nombre a 31 caracteres
+      }
+
+      const fecha = new Date().toISOString().slice(0, 10);
+      XLSX.writeFile(libro, `LanaRosa_CopiaSeguridad_${fecha}.xlsx`);
+      mostrarMensaje('mensajeExportarDatos', '✅ Archivo descargado correctamente.', 'exito');
+    } catch (err) {
+      mostrarMensaje('mensajeExportarDatos', err.message || 'No se pudo generar la copia.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '📥 Descargar copia completa (.xlsx)';
+    }
   }
 
   function exportarConsolidadoExcel() {
