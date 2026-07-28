@@ -616,6 +616,7 @@
   </div>
 
   <div class="sidebar-nav">
+    <button class="nav-btn" id="nav-dashboard" onclick="mostrarPantallaDashboard()"><span class="nav-icon">🏠</span> Dashboard</button>
     <button class="nav-btn" id="nav-calendario" onclick="mostrarPantallaCalendario()"><span class="nav-icon">📅</span> Calendario del equipo</button>
 
     <div class="sidebar-depto" id="deptoTiendaGrupo" style="display:none;">
@@ -667,6 +668,7 @@
       <div class="sidebar-depto-submenu" id="deptoReportesSubmenu">
         <button class="nav-btn" id="nav-reportes-financieros" onclick="mostrarPantallaReportesFinancieros()"><span class="nav-icon">📊</span> Informes de Ventas</button>
         <button class="nav-btn" id="nav-estados-financieros" onclick="mostrarPantallaEstadosFinancieros()"><span class="nav-icon">📑</span> Estados financieros</button>
+        <button class="nav-btn" id="nav-cuentas-pendientes" onclick="mostrarPantallaCuentasPendientes()"><span class="nav-icon">📋</span> Cuentas por cobrar/pagar</button>
       </div>
     </div>
     <div class="sidebar-depto" id="deptoFondoEmprenderGrupo" style="display:none;">
@@ -2244,6 +2246,66 @@
 <!-- ===== PANTALLA: REINICIO ANTES DE PRODUCCIÓN ===== -->
 <!-- ===== PANTALLA: COPIA DE SEGURIDAD ===== -->
 <!-- ===== PANTALLA: ESTADOS FINANCIEROS ===== -->
+<!-- ===== PANTALLA: DASHBOARD EJECUTIVO ===== -->
+<div id="pantallaDashboard" class="oculto contenido">
+  <div class="page-header">
+    <h1>🏠 Dashboard</h1>
+    <div class="subtitulo">Lo esencial de tu negocio, de un vistazo — últimos 30 días.</div>
+  </div>
+
+  <div id="panelAlertasDashboard" style="margin-bottom:20px;"></div>
+
+  <div id="kpisDashboard" class="grilla-3" style="margin-bottom:20px;"></div>
+
+  <div class="grilla-2">
+    <div class="panel" style="max-height:none;">
+      <h2>📊 Comparativo — últimos 30 días vs. 30 anteriores</h2>
+      <div id="comparativoDashboard"><div class="cargando">Cargando...</div></div>
+    </div>
+    <div class="panel" style="max-height:none;">
+      <h2>⚖️ Punto de equilibrio (últimos 30 días)</h2>
+      <div id="equilibrioDashboard"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+
+  <div class="panel" style="max-width:none;max-height:none;margin-top:20px;">
+    <h2>💵 Flujo de caja proyectado</h2>
+    <div class="subtitulo">Con base en tus cuentas por cobrar y por pagar pendientes.</div>
+    <div id="proyeccionDashboard" style="margin-top:10px;"><div class="cargando">Cargando...</div></div>
+  </div>
+</div>
+
+<!-- ===== PANTALLA: CUENTAS POR COBRAR Y PAGAR ===== -->
+<div id="pantallaCuentasPendientes" class="oculto contenido">
+  <div class="page-header">
+    <h1>📋 Cuentas por cobrar y por pagar</h1>
+    <div class="subtitulo">Registra dinero pendiente (crédito a un cliente, o una deuda con un proveedor) para llevar control de vencimientos.</div>
+  </div>
+
+  <div class="filtro-tipo" style="margin-bottom:20px;">
+    <button class="chip-filtro activo" data-filtro-cxc="por_cobrar" onclick="cambiarFiltroCxC('por_cobrar', this)">💰 Por cobrar</button>
+    <button class="chip-filtro" data-filtro-cxc="por_pagar" onclick="cambiarFiltroCxC('por_pagar', this)">💸 Por pagar</button>
+  </div>
+
+  <div class="grilla-2">
+    <div class="panel">
+      <h2>Registrar nueva</h2>
+      <label for="cxcDescripcion">Descripción</label>
+      <input type="text" id="cxcDescripcion" placeholder="Ej: Saldo pendiente de la Sra. María">
+      <label for="cxcMonto">Monto (COP)</label>
+      <input type="number" id="cxcMonto" min="0" step="1000">
+      <label for="cxcVencimiento">Fecha de vencimiento</label>
+      <input type="date" id="cxcVencimiento">
+      <button class="btn-principal" onclick="confirmarCrearCuentaPendiente()">Registrar</button>
+      <div class="mensaje" id="mensajeCxC"></div>
+    </div>
+    <div class="panel">
+      <h2>Pendientes</h2>
+      <div id="listaCuentasPendientes"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+</div>
+
 <div id="pantallaEstadosFinancieros" class="oculto contenido">
   <div class="page-header">
     <h1>📑 Estados financieros</h1>
@@ -2815,7 +2877,7 @@
   // UTILIDADES
   // ============================================================================
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -3083,6 +3145,8 @@
     mostrar('nav-talento-humano', esAdmin);
     mostrar('nav-reportes-financieros', esAdmin);
     mostrar('nav-estados-financieros', esAdmin);
+    mostrar('nav-cuentas-pendientes', esAdmin);
+    mostrar('nav-dashboard', esAdmin);
     document.getElementById('btnAbrirAsistenteIA').style.display = esAdmin ? 'flex' : 'none';
     mostrar('nav-calendario', true);
 
@@ -10336,6 +10400,202 @@
     document.getElementById('revTarjetaProfesional').value = '';
     document.getElementById('revObservaciones').value = '';
     await cargarRevisionesContables();
+  }
+
+  // ============================================================
+  // DASHBOARD EJECUTIVO
+  // ============================================================
+  async function mostrarPantallaDashboard() {
+    mostrarPantalla('pantallaDashboard');
+    const hoy = new Date();
+    const hace30 = new Date(Date.now() - 30 * 86400000);
+    const hace60 = new Date(Date.now() - 60 * 86400000);
+    const fmt = (d) => d.toISOString().slice(0, 10);
+
+    await Promise.all([
+      cargarAlertasDashboard(),
+      cargarKpisYComparativo(fmt(hace30), fmt(hoy), fmt(hace60), fmt(hace30)),
+      cargarEquilibrioDashboard(fmt(hace30), fmt(hoy)),
+      cargarProyeccionDashboard(),
+    ]);
+  }
+
+  async function cargarAlertasDashboard() {
+    const cont = document.getElementById('panelAlertasDashboard');
+    cont.innerHTML = '<div class="cargando">Revisando alertas...</div>';
+    const resp = await fetch(WORKER_URL + '/api/pos/finanzas/alertas', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { cont.innerHTML = ''; return; }
+    const { alertas } = await resp.json();
+
+    const colores = { urgente: '#fdecea', atencion: '#fff6e0', info: '#eaf6ef' };
+    const textos = { urgente: 'var(--rojo-error)', atencion: '#a86b00', info: 'var(--verde-exito)' };
+    const iconos = { urgente: '🔴', atencion: '🟡', info: '🟢' };
+
+    cont.innerHTML = alertas.map(a => `
+      <div style="background:${colores[a.severidad]};color:${textos[a.severidad]};padding:10px 14px;border-radius:9px;font-size:12.5px;font-weight:600;margin-bottom:8px;">
+        ${iconos[a.severidad]} ${escaparHtml(a.mensaje)}
+      </div>
+    `).join('');
+  }
+
+  async function cargarKpisYComparativo(desdeA, hastaA, desdeB, hastaB) {
+    const resp = await fetch(`${WORKER_URL}/api/pos/finanzas/comparativo-resultados?fecha_desde_a=${desdeA}&fecha_hasta_a=${hastaA}&fecha_desde_b=${desdeB}&fecha_hasta_b=${hastaB}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    const kpisCont = document.getElementById('kpisDashboard');
+    const compCont = document.getElementById('comparativoDashboard');
+    if (!resp.ok) { kpisCont.innerHTML = ''; compCont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const d = await resp.json();
+
+    const flechita = (pct) => pct === null ? '' : (pct >= 0 ? `<span style="color:var(--verde-exito);">▲ ${pct}%</span>` : `<span style="color:var(--rojo-error);">▼ ${Math.abs(pct)}%</span>`);
+
+    kpisCont.innerHTML = `
+      <div class="panel" style="max-height:none;text-align:center;">
+        <div style="font-size:11.5px;opacity:0.65;">INGRESOS (30 días)</div>
+        <div style="font-size:22px;font-weight:700;margin-top:4px;">${formatearMoneda(d.periodo_a.ingresos)}</div>
+        <div style="font-size:11px;margin-top:4px;">${flechita(d.variacion_pct.ingresos)}</div>
+      </div>
+      <div class="panel" style="max-height:none;text-align:center;">
+        <div style="font-size:11.5px;opacity:0.65;">GASTOS (30 días)</div>
+        <div style="font-size:22px;font-weight:700;margin-top:4px;">${formatearMoneda(d.periodo_a.gastos)}</div>
+        <div style="font-size:11px;margin-top:4px;">${flechita(d.variacion_pct.gastos)}</div>
+      </div>
+      <div class="panel" style="max-height:none;text-align:center;">
+        <div style="font-size:11.5px;opacity:0.65;">UTILIDAD NETA (30 días)</div>
+        <div style="font-size:22px;font-weight:700;margin-top:4px;color:${d.periodo_a.utilidad_neta >= 0 ? 'var(--verde-exito)' : 'var(--rojo-error)'};">${formatearMoneda(d.periodo_a.utilidad_neta)}</div>
+        <div style="font-size:11px;margin-top:4px;">${flechita(d.variacion_pct.utilidad_neta)}</div>
+      </div>
+    `;
+
+    compCont.innerHTML = `
+      <div class="resumen-fila"><span>Últimos 30 días</span><strong>${formatearMoneda(d.periodo_a.utilidad_neta)}</strong></div>
+      <div class="resumen-fila"><span>30 días anteriores</span><strong>${formatearMoneda(d.periodo_b.utilidad_neta)}</strong></div>
+      <div style="margin-top:8px;font-size:12px;opacity:0.7;">La utilidad neta ${d.variacion_pct.utilidad_neta >= 0 ? 'mejoró' : 'empeoró'} ${flechita(d.variacion_pct.utilidad_neta)} respecto al período anterior.</div>
+    `;
+  }
+
+  async function cargarEquilibrioDashboard(desde, hasta) {
+    const cont = document.getElementById('equilibrioDashboard');
+    const resp = await fetch(`${WORKER_URL}/api/pos/finanzas/punto-equilibrio?fecha_desde=${desde}&fecha_hasta=${hasta}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const d = await resp.json();
+
+    if (d.ventas_punto_equilibrio === null) {
+      cont.innerHTML = '<div class="cargando">Sin suficiente margen positivo para calcular el punto de equilibrio en este período.</div>';
+      return;
+    }
+
+    cont.innerHTML = `
+      <div class="resumen-fila"><span>Margen de contribución</span><strong>${d.margen_contribucion_pct}%</strong></div>
+      <div class="resumen-fila"><span>Gastos fijos del período</span><strong>${formatearMoneda(d.gastos_fijos)}</strong></div>
+      <div class="resumen-fila total"><span>Ventas necesarias para no perder</span><strong>${formatearMoneda(d.ventas_punto_equilibrio)}</strong></div>
+      <div style="margin-top:10px;padding:10px;border-radius:8px;background:${d.ya_cubierto ? '#eaf6ef' : '#fdecea'};font-size:12.5px;font-weight:600;color:${d.ya_cubierto ? 'var(--verde-exito)' : 'var(--rojo-error)'};text-align:center;">
+        ${d.ya_cubierto ? '✅ Ya superaste el punto de equilibrio en este período' : '⚠️ Todavía no llegas al punto de equilibrio'}
+      </div>
+    `;
+  }
+
+  async function cargarProyeccionDashboard() {
+    const cont = document.getElementById('proyeccionDashboard');
+    const resp = await fetch(WORKER_URL + '/api/pos/finanzas/flujo-caja-proyectado', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const d = await resp.json();
+
+    let html = `<div class="resumen-fila total"><span>Saldo actual de efectivo/bancos</span><strong>${formatearMoneda(d.saldo_actual)}</strong></div>`;
+    if (d.proyeccion.length === 0) {
+      html += '<div class="cargando" style="margin-top:10px;">Sin cuentas por cobrar/pagar pendientes registradas para proyectar.</div>';
+    } else {
+      html += d.proyeccion.map(p => `
+        <div class="resumen-fila" style="margin-top:6px;">
+          <span>${p.mes} — entradas ${formatearMoneda(p.entradas)}, salidas ${formatearMoneda(p.salidas)}</span>
+          <strong style="color:${p.saldo_proyectado >= 0 ? 'var(--verde-exito)' : 'var(--rojo-error)'};">${formatearMoneda(p.saldo_proyectado)}</strong>
+        </div>
+      `).join('');
+    }
+    cont.innerHTML = html;
+  }
+
+  // ============================================================
+  // CUENTAS POR COBRAR Y PAGAR
+  // ============================================================
+  let filtroCxCActual = 'por_cobrar';
+
+  async function mostrarPantallaCuentasPendientes() {
+    mostrarPantalla('pantallaCuentasPendientes');
+    document.getElementById('cxcDescripcion').value = '';
+    document.getElementById('cxcMonto').value = '';
+    document.getElementById('cxcVencimiento').value = '';
+    ocultarMensaje('mensajeCxC');
+    await cargarCuentasPendientes();
+  }
+
+  function cambiarFiltroCxC(tipo, botonEl) {
+    filtroCxCActual = tipo;
+    document.querySelectorAll('[data-filtro-cxc]').forEach(b => b.classList.remove('activo'));
+    botonEl.classList.add('activo');
+    cargarCuentasPendientes();
+  }
+
+  async function confirmarCrearCuentaPendiente() {
+    const descripcion = document.getElementById('cxcDescripcion').value.trim();
+    const monto = Number(document.getElementById('cxcMonto').value);
+    const vencimiento = document.getElementById('cxcVencimiento').value;
+    ocultarMensaje('mensajeCxC');
+
+    if (!descripcion) { mostrarMensaje('mensajeCxC', 'Escribe una descripción.', 'error'); return; }
+    if (!monto || monto <= 0) { mostrarMensaje('mensajeCxC', 'Escribe un monto válido.', 'error'); return; }
+    if (!vencimiento) { mostrarMensaje('mensajeCxC', 'Escribe la fecha de vencimiento.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/finanzas/cuentas-pendientes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ tipo: filtroCxCActual, descripcion, monto, fecha_vencimiento: vencimiento })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeCxC', datos.error || 'No se pudo registrar.', 'error'); return; }
+
+    mostrarMensaje('mensajeCxC', '✅ Registrada correctamente.', 'exito');
+    document.getElementById('cxcDescripcion').value = '';
+    document.getElementById('cxcMonto').value = '';
+    document.getElementById('cxcVencimiento').value = '';
+    await cargarCuentasPendientes();
+  }
+
+  async function cargarCuentasPendientes() {
+    const cont = document.getElementById('listaCuentasPendientes');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    const resp = await fetch(`${WORKER_URL}/api/pos/finanzas/cuentas-pendientes?tipo=${filtroCxCActual}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const { cuentas } = await resp.json();
+
+    if (!cuentas || cuentas.length === 0) { cont.innerHTML = '<div class="cargando">Sin cuentas registradas.</div>'; return; }
+
+    const hoy = new Date().toISOString().slice(0, 10);
+    cont.innerHTML = cuentas.map(c => {
+      const vencida = c.estado !== 'pagado' && c.fecha_vencimiento < hoy;
+      return `
+        <div class="fila-historial" style="margin-bottom:9px;${vencida ? 'border-left:3px solid var(--rojo-error);' : ''}">
+          <div class="fila-historial-encabezado">
+            <span class="fila-historial-consecutivo">${escaparHtml(c.descripcion)}</span>
+            <span class="fila-historial-total">${formatearMoneda(c.monto)}</span>
+          </div>
+          <div class="fila-historial-fecha">Vence: ${new Date(c.fecha_vencimiento + 'T00:00:00').toLocaleDateString('es-CO')} ${vencida ? '⚠️ VENCIDA' : ''} — ${c.estado === 'pagado' ? '✅ Pagada el ' + new Date(c.fecha_pago + 'T00:00:00').toLocaleDateString('es-CO') : '⏳ Pendiente'}</div>
+          ${c.estado !== 'pagado' ? `<button class="btn-mini guardar" style="margin-top:6px;" onclick="confirmarPagarCuentaPendiente('${c.id}')">Marcar como ${filtroCxCActual === 'por_cobrar' ? 'cobrada' : 'pagada'}</button>` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function confirmarPagarCuentaPendiente(cuentaId) {
+    const metodoPago = prompt('¿Con qué método de pago? (efectivo, nequi, daviplata, transferencia, tarjeta_debito, tarjeta_credito)', 'efectivo');
+    if (!metodoPago) return;
+
+    const resp = await fetch(WORKER_URL + '/api/pos/finanzas/cuentas-pendientes/pagar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ cuenta_id: cuentaId, metodo_pago: metodoPago })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { alert(datos.error || 'No se pudo marcar como pagada.'); return; }
+    await cargarCuentasPendientes();
   }
 
   async function mostrarPantallaEstadosFinancieros() {
