@@ -3316,6 +3316,21 @@
       return;
     }
 
+    // La administradora entra directo al Dashboard — tiene acceso a todo el
+    // sistema, no solo a la caja. Si necesita abrir/cerrar turno, lo hace
+    // desde el menú cuando quiera.
+    if (rolActual === 'administrador') {
+      try {
+        const resp = await fetch(WORKER_URL + '/api/pos/turnos/activo', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+        if (resp.ok) {
+          const datos = await resp.json();
+          turnoActivoActual = datos.turno_activo || null;
+        }
+      } catch { /* si falla, sigue igual al Dashboard */ }
+      await mostrarPantallaDashboard();
+      return;
+    }
+
     try {
       const resp = await fetch(WORKER_URL + '/api/pos/turnos/activo', {
         headers: { Authorization: 'Bearer ' + sesionActual.token }
@@ -7731,11 +7746,14 @@
   let historialChatIA = [];
   let adjuntoIABase64 = null;
 
+  let bienvenidaChatIAMostrada = false;
+
   function toggleChatAsistenteIA() {
     const panel = document.getElementById('panelChatAsistenteIA');
     const abrir = panel.classList.contains('oculto');
     panel.classList.toggle('oculto', !abrir);
-    if (abrir && historialChatIA.length === 0) {
+    if (abrir && !bienvenidaChatIAMostrada) {
+      bienvenidaChatIAMostrada = true;
       agregarBurbujaChatIA('assistant', '¡Hola! Soy Rosina, la asistente de Lana Rosa. ¿En qué puedo ayudarte el día de hoy?');
       mostrarOpcionesRapidasIA();
     }
