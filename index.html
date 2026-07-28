@@ -7304,23 +7304,25 @@
   async function cargarBannerAlertasWhatsapp() {
     const resp = await fetch(WORKER_URL + '/api/pos/finanzas/alertas-whatsapp', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
     if (!resp.ok) return;
-    const { cuentas, telefono_whatsapp, dias_anticipacion } = await resp.json();
-    if (!cuentas || cuentas.length === 0) return;
+    const { cuentas, eventos_fe, telefono_whatsapp, dias_anticipacion } = await resp.json();
+    const totalAlertas = (cuentas ? cuentas.length : 0) + (eventos_fe ? eventos_fe.length : 0);
+    if (totalAlertas === 0) return;
 
     const cont = document.getElementById('panelAlertasDashboard');
-    const porCobrar = cuentas.filter(c => c.tipo === 'por_cobrar');
-    const porPagar = cuentas.filter(c => c.tipo === 'por_pagar');
+    const porCobrar = (cuentas || []).filter(c => c.tipo === 'por_cobrar');
+    const porPagar = (cuentas || []).filter(c => c.tipo === 'por_pagar');
 
     const mensaje = [
-      '📋 Recordatorio de cuentas por vencer:',
+      '📋 Recordatorio de pendientes:',
       ...porCobrar.map(c => `💰 Cobrar: ${c.descripcion} — $${Number(c.monto).toLocaleString('es-CO')} (vence ${new Date(c.fecha_vencimiento + 'T00:00:00').toLocaleDateString('es-CO')})`),
       ...porPagar.map(c => `💸 Pagar: ${c.descripcion} — $${Number(c.monto).toLocaleString('es-CO')} (vence ${new Date(c.fecha_vencimiento + 'T00:00:00').toLocaleDateString('es-CO')})`),
+      ...(eventos_fe || []).map(e => `📅 Fondo Emprender: ${e.titulo || e.descripcion || 'Entregable'} — vence ${new Date(e.fecha_limite + 'T00:00:00').toLocaleDateString('es-CO')}`),
     ].join('\n');
 
     const banner = document.createElement('div');
     banner.style.cssText = 'background:#fff6e0;color:#a86b00;padding:12px 14px;border-radius:9px;font-size:12.5px;font-weight:600;margin-bottom:8px;';
     banner.innerHTML = `
-      🔔 Tienes ${cuentas.length} cuenta(s) por vencer en los próximos ${dias_anticipacion} días.
+      🔔 Tienes ${totalAlertas} pendiente(s) por vencer en los próximos ${dias_anticipacion} días${eventos_fe && eventos_fe.length > 0 ? ` (incluye ${eventos_fe.length} de Fondo Emprender)` : ''}.
       <button class="btn-mini editar" style="margin-left:8px;" onclick='enviarAlertasPorWhatsapp(${JSON.stringify(mensaje)}, ${JSON.stringify(telefono_whatsapp || '')})'>📱 Enviar recordatorio por WhatsApp</button>
     `;
     cont.prepend(banner);
