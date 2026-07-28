@@ -2802,6 +2802,12 @@
 
     <div id="listaConceptosFe" style="margin-top:14px;"><div class="cargando">Cargando...</div></div>
   </div>
+
+  <div class="panel" style="max-width:none;max-height:none;margin-top:20px;">
+    <h2>🗓️ Cronograma planeado (mes a mes, según el plan operativo)</h2>
+    <div class="subtitulo">Es una referencia del plan original — el interventor puede autorizar cambios en fechas y montos, así que esto no bloquea nada, solo te ayuda a comparar.</div>
+    <div id="cronogramaFe" style="margin-top:10px;overflow-x:auto;"><div class="cargando">Cargando...</div></div>
+  </div>
 </div>
 
 <!-- Lista desplegable de "Buscar producto" — vive fuera de cualquier panel con
@@ -12225,6 +12231,40 @@
     document.getElementById('feIngresoFecha').value = new Date().toISOString().slice(0, 10);
     await cargarConceptosFe();
     await cargarSaldoCuentaFe();
+    await cargarCronogramaFe();
+  }
+
+  async function cargarCronogramaFe() {
+    const cont = document.getElementById('cronogramaFe');
+    const resp = await fetch(WORKER_URL + '/api/pos/fe/cronograma', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const { conceptos, totales_por_mes } = await resp.json();
+
+    const conConograma = conceptos.filter(c => c.cronograma_meses);
+    if (conConograma.length === 0) { cont.innerHTML = '<div class="cargando">Sin cronograma cargado.</div>'; return; }
+
+    cont.innerHTML = `
+      <table style="width:100%;border-collapse:collapse;font-size:11.5px;min-width:900px;">
+        <thead>
+          <tr style="border-bottom:2px solid var(--rosa-medio);">
+            <th style="text-align:left;padding:6px;">Concepto</th>
+            ${Array.from({length:12}, (_, i) => `<th style="text-align:right;padding:6px;">Mes ${i+1}</th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>
+          ${conConograma.map(c => `
+            <tr style="border-bottom:1px solid #f0e5ec;">
+              <td style="padding:6px;">#${c.numero_actividad} ${escaparHtml(c.concepto)}</td>
+              ${c.cronograma_meses.map(v => `<td style="text-align:right;padding:6px;">${v > 0 ? formatearMoneda(v) : '—'}</td>`).join('')}
+            </tr>
+          `).join('')}
+          <tr style="font-weight:700;background:var(--rosa-suave);">
+            <td style="padding:6px;">TOTAL POR MES</td>
+            ${totales_por_mes.map(v => `<td style="text-align:right;padding:6px;">${v > 0 ? formatearMoneda(v) : '—'}</td>`).join('')}
+          </tr>
+        </tbody>
+      </table>
+    `;
   }
 
   async function cargarSaldoCuentaFe() {
