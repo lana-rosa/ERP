@@ -695,6 +695,7 @@
   </div>
 
   <div class="sidebar-footer">
+    <div id="indicadorVentasOffline" class="oculto" style="margin:0 16px 10px 16px;padding:8px 10px;background:#c0392b;color:white;border-radius:8px;font-size:11px;font-weight:600;text-align:center;cursor:pointer;" onclick="sincronizarVentasOfflinePendientes()" title="Clic para intentar sincronizar ahora"></div>
     <div id="widgetHorasTrabajadas" class="oculto" style="padding:10px 16px;border-top:1px solid rgba(255,255,255,0.08);"></div>
     <div class="sidebar-usuario">
       <div id="nombreUsuarioSidebar">—</div>
@@ -2643,6 +2644,77 @@
 
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+  // ============================================================================
+  // MODO SIN CONEXIÓN — registrar el Service Worker (deja abrir la app sin
+  // internet) y preparar la cola de ventas pendientes de sincronizar.
+  // ============================================================================
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    });
+  }
+
+  const CLAVE_COLA_OFFLINE = 'lanaRosa_ventasPendientesOffline';
+
+  function obtenerColaOffline() {
+    try { return JSON.parse(localStorage.getItem(CLAVE_COLA_OFFLINE) || '[]'); }
+    catch { return []; }
+  }
+
+  function guardarColaOffline(cola) {
+    localStorage.setItem(CLAVE_COLA_OFFLINE, JSON.stringify(cola));
+    actualizarIndicadorOffline();
+  }
+
+  function encolarVentaOffline(cuerpoVenta) {
+    const cola = obtenerColaOffline();
+    cola.push({ id: 'offline-' + Date.now() + '-' + Math.random().toString(36).slice(2), cuerpo: cuerpoVenta, guardadaEn: new Date().toISOString() });
+    guardarColaOffline(cola);
+  }
+
+  function actualizarIndicadorOffline() {
+    const cantidad = obtenerColaOffline().length;
+    const el = document.getElementById('indicadorVentasOffline');
+    if (!el) return;
+    if (cantidad > 0) {
+      el.classList.remove('oculto');
+      el.textContent = `📴 ${cantidad} venta(s) sin sincronizar`;
+    } else {
+      el.classList.add('oculto');
+    }
+  }
+
+  async function sincronizarVentasOfflinePendientes() {
+    const cola = obtenerColaOffline();
+    if (cola.length === 0 || !navigator.onLine) return;
+
+    const pendientes = [];
+    for (const venta of cola) {
+      try {
+        const resp = await fetch(WORKER_URL + '/api/pos/ventas', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+          body: JSON.stringify(venta.cuerpo)
+        });
+        if (!resp.ok) {
+          // Error real del servidor (ej: sin stock) — no se reintenta sola,
+          // se deja visible para que la administradora la revise a mano.
+          venta.error = (await resp.json()).error || 'Error al sincronizar';
+          pendientes.push(venta);
+        }
+        // Si resp.ok, la venta ya quedó registrada — se descarta de la cola.
+      } catch {
+        pendientes.push(venta); // seguimos sin internet, se reintenta después
+      }
+    }
+    guardarColaOffline(pendientes);
+    if (pendientes.length < cola.length) {
+      await cargarCatalogo().catch(() => {});
+    }
+  }
+
+  window.addEventListener('online', () => { sincronizarVentasOfflinePendientes(); });
+
   // Aplicar el tema guardado desde el primer momento (incluso antes de iniciar sesión)
   function aplicarTema(tema) {
     document.documentElement.setAttribute('data-tema', tema);
@@ -3160,6 +3232,8 @@
     if (elNombre) elNombre.textContent = miPropiaIdentidad.nombre || '';
 
     cargarWidgetHorasTrabajadas();
+    actualizarIndicadorOffline();
+    sincronizarVentasOfflinePendientes();
   }
 
   async function cargarWidgetHorasTrabajadas() {
@@ -3869,15 +3943,21 @@
           terceroId = clienteDatos.tercero_id;
         }
       }
-      // Centro de costo por defecto: Tienda Física (POS) — código '01'
-      const { data: centroCosto, error: errorCentro } = await supabaseClient
-        .from('centros_costo')
-        .select('id')
-        .eq('codigo', '01')
-        .single();
+      // Centro de costo por defecto: Tienda Física (POS) — código '01'.
+      // Si no hay internet para esta consulta, se usa el id que ya teníamos
+      // guardado en memoria de antes (cargado la última vez que sí hubo señal).
+      let centroCostoTiendaIdVenta = centroCostoTiendaId || null;
+      try {
+        const { data: centroCosto, error: errorCentro } = await supabaseClient
+          .from('centros_costo')
+          .select('id')
+          .eq('codigo', '01')
+          .single();
+        if (!errorCentro && centroCosto) centroCostoTiendaIdVenta = centroCosto.id;
+      } catch { /* sin internet: se usa el id ya guardado en memoria */ }
 
-      if (errorCentro || !centroCosto) {
-        throw new Error('No se encontró el centro de costo de Tienda Física.');
+      if (!centroCostoTiendaIdVenta) {
+        throw new Error('No se encontró el centro de costo de Tienda Física, y no hay uno guardado en memoria. Conéctate a internet al menos una vez antes de vender.');
       }
 
       // Si hay descuento, se reparte proporcionalmente entre las líneas — así el
@@ -3887,28 +3967,43 @@
       const valorDescuento = calcularValorDescuento();
       const factorDescuento = valorDescuento > 0 && subtotalOriginal > 0 ? (subtotalOriginal - valorDescuento) / subtotalOriginal : 1;
 
-      const resp = await fetch(WORKER_URL + '/api/pos/ventas', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-        body: JSON.stringify({
-          centro_costo_id: centroCosto.id,
-          turno_id: turnoActivoActual.id,
-          tercero_id: terceroId,
-          lineas: carrito.map(linea => ({
-            inventario_item_id: linea.id,
-            descripcion: linea.nombre,
-            cantidad: linea.cantidad,
-            precio_unitario: Math.round(linea.precio * factorDescuento)
-          })),
-          pagos: filasPago.map(p => ({
-            metodo_pago: p.metodo_pago,
-            monto: Number(p.monto),
-            referencia: p.referencia || null
-          }))
-        })
-      });
+      const cuerpoVenta = {
+        centro_costo_id: centroCostoTiendaIdVenta,
+        turno_id: turnoActivoActual.id,
+        tercero_id: terceroId,
+        lineas: carrito.map(linea => ({
+          inventario_item_id: linea.id,
+          descripcion: linea.nombre,
+          cantidad: linea.cantidad,
+          precio_unitario: Math.round(linea.precio * factorDescuento)
+        })),
+        pagos: filasPago.map(p => ({
+          metodo_pago: p.metodo_pago,
+          monto: Number(p.monto),
+          referencia: p.referencia || null
+        }))
+      };
 
-      const datos = await resp.json();
+      let resp, datos;
+      try {
+        resp = await fetch(WORKER_URL + '/api/pos/ventas', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+          body: JSON.stringify(cuerpoVenta)
+        });
+        datos = await resp.json();
+      } catch (errorRed) {
+        // No hubo forma de contactar al servidor (sin internet en este momento):
+        // se guarda la venta localmente en vez de perderla, y se avisa al cajero.
+        encolarVentaOffline(cuerpoVenta);
+        mostrarMensaje('mensajeVenta', '📴 Sin conexión — la venta quedó guardada en este dispositivo y se enviará sola apenas vuelva el internet. No cierres esta pantalla en el navegador sin haber sincronizado.', 'exito');
+        carrito = [];
+        renderizarCarrito();
+        renderizarPagos();
+        btn.disabled = false;
+        btn.textContent = 'Confirmar venta';
+        return;
+      }
 
       if (!resp.ok) {
         throw new Error(datos.error || 'No se pudo registrar la venta');
