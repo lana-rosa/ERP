@@ -1505,12 +1505,41 @@
   </div>
 
   <div id="subhistorialRedes" class="oculto">
+    <div class="barra-busqueda" style="margin-bottom:12px;">
+      <input type="text" id="inputBuscarHistorialRedes" placeholder="🔍 Buscar por nombre del cliente, cédula, teléfono o N° de consecutivo..." oninput="debounceBusquedaHistorialRedes()">
+    </div>
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+      <div>
+        <label for="fechaDesdeHistorialRedes" style="font-size:11px;">Desde</label>
+        <input type="date" id="fechaDesdeHistorialRedes" onchange="cargarHistorialRedes()" style="padding:9px 10px;">
+      </div>
+      <div>
+        <label for="fechaHastaHistorialRedes" style="font-size:11px;">Hasta</label>
+        <input type="date" id="fechaHastaHistorialRedes" onchange="cargarHistorialRedes()" style="padding:9px 10px;">
+      </div>
+      <button class="btn-mini desactivar" onclick="limpiarFiltrosHistorialRedes()" style="margin-bottom:1px;">Quitar filtros</button>
+    </div>
     <div class="panel" style="max-height:none;max-width:none;">
       <div id="listaHistorialRedes"><div class="cargando">Cargando...</div></div>
     </div>
   </div>
 
   <div id="subhistorialClases" class="oculto">
+    <div class="barra-busqueda" style="margin-bottom:12px;">
+      <input type="text" id="inputBuscarHistorialClases" placeholder="🔍 Buscar por nombre del cliente..." oninput="debounceBusquedaHistorialClases()">
+    </div>
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+      <div>
+        <label for="fechaDesdeHistorialClases" style="font-size:11px;">Desde</label>
+        <input type="date" id="fechaDesdeHistorialClases" onchange="cargarVentasAcademia()" style="padding:9px 10px;">
+      </div>
+      <div>
+        <label for="fechaHastaHistorialClases" style="font-size:11px;">Hasta</label>
+        <input type="date" id="fechaHastaHistorialClases" onchange="cargarVentasAcademia()" style="padding:9px 10px;">
+      </div>
+      <button class="btn-mini desactivar" onclick="limpiarFiltrosHistorialClases()" style="margin-bottom:1px;">Quitar filtros</button>
+    </div>
+    <div class="subtitulo" style="margin-bottom:10px;">Los cursos/clases solo guardan el nombre del cliente (no cédula ni teléfono), así que la búsqueda aquí es solo por nombre.</div>
     <div class="panel" style="max-height:none;max-width:none;">
       <div id="listaHistorialClases"><div class="cargando">Cargando...</div></div>
     </div>
@@ -5658,32 +5687,58 @@
     if (canal === 'clases') cargarVentasAcademia();
   }
 
+  let timeoutBusquedaRedes = null;
+  function debounceBusquedaHistorialRedes() {
+    clearTimeout(timeoutBusquedaRedes);
+    timeoutBusquedaRedes = setTimeout(cargarHistorialRedes, 350);
+  }
+
+  function limpiarFiltrosHistorialRedes() {
+    document.getElementById('inputBuscarHistorialRedes').value = '';
+    document.getElementById('fechaDesdeHistorialRedes').value = '';
+    document.getElementById('fechaHastaHistorialRedes').value = '';
+    cargarHistorialRedes();
+  }
+
   async function cargarHistorialRedes() {
     const contenedor = document.getElementById('listaHistorialRedes');
     contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
 
-    const resp = await fetch(WORKER_URL + '/api/pos/pedidos-canal', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    const desde = document.getElementById('fechaDesdeHistorialRedes')?.value || '';
+    const hasta = document.getElementById('fechaHastaHistorialRedes')?.value || '';
+    const busqueda = document.getElementById('inputBuscarHistorialRedes')?.value.trim() || '';
+
+    const params = new URLSearchParams();
+    if (desde) params.set('fecha_desde', desde);
+    if (hasta) params.set('fecha_hasta', hasta);
+    if (busqueda) params.set('busqueda', busqueda);
+
+    const resp = await fetch(WORKER_URL + '/api/pos/pedidos-canal?' + params.toString(), { headers: { Authorization: 'Bearer ' + sesionActual.token } });
     if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
     const { pedidos } = await resp.json();
 
     if (!pedidos || pedidos.length === 0) {
-      contenedor.innerHTML = '<div class="cargando">Todavía no hay pedidos registrados.</div>';
+      contenedor.innerHTML = '<div class="cargando">No hay pedidos que coincidan con la búsqueda.</div>';
       return;
     }
 
     const etiquetasCanalHist = { whatsapp: '💬 WhatsApp', instagram: '📷 Instagram', facebook: '👍 Facebook', tienda_virtual: '🛍️ Tienda virtual' };
     const etiquetasEstadoHist = { esperando_pago: '⏳ Esperando pago', en_preparacion: '🧵 En preparación', listo_despacho: '📦 Listo despacho', entregado: '✅ Entregado' };
 
-    contenedor.innerHTML = pedidos.map(p => `
-      <div class="fila-historial" style="margin-bottom:9px;">
-        <div class="fila-historial-encabezado">
-          <span class="fila-historial-consecutivo">${etiquetasCanalHist[p.canal] || p.canal} — ${escaparHtml(p.consecutivo || '')}</span>
-          <span class="fila-historial-total">${formatearMoneda(p.total_pedido)}</span>
+    contenedor.innerHTML = pedidos.map(p => {
+      const nombreCliente = p.tercero?.nombre_completo || 'Sin datos de cliente';
+      const detalleContacto = p.tercero ? ` (${[p.tercero.numero_documento, p.tercero.telefono].filter(Boolean).join(' · ')})` : '';
+      return `
+        <div class="fila-historial" style="margin-bottom:9px;">
+          <div class="fila-historial-encabezado">
+            <span class="fila-historial-consecutivo">${etiquetasCanalHist[p.canal] || p.canal} — ${escaparHtml(p.consecutivo || '')}</span>
+            <span class="fila-historial-total">${formatearMoneda(p.total_pedido)}</span>
+          </div>
+          <div class="fila-historial-fecha">${new Date(p.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })} · ${escaparHtml(nombreCliente)}${escaparHtml(detalleContacto)}</div>
+          <div class="fila-historial-detalle">${escaparHtml(p.descripcion_producto || '')} — ${etiquetasEstadoHist[p.estado] || p.estado}</div>
         </div>
-        <div class="fila-historial-fecha">${new Date(p.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })} · ${escaparHtml(p.nombre_cliente || 'Sin datos de cliente')}</div>
-        <div class="fila-historial-detalle">${escaparHtml(p.descripcion_producto || '')} — ${etiquetasEstadoHist[p.estado] || p.estado}</div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   }
 
   async function mostrarPantallaHistorial(codigoDeptoForzado) {
@@ -12194,19 +12249,41 @@
     await prepararPestanaVentaAcademia();
   }
 
+  let timeoutBusquedaClases = null;
+  function debounceBusquedaHistorialClases() {
+    clearTimeout(timeoutBusquedaClases);
+    timeoutBusquedaClases = setTimeout(cargarVentasAcademia, 350);
+  }
+
+  function limpiarFiltrosHistorialClases() {
+    document.getElementById('inputBuscarHistorialClases').value = '';
+    document.getElementById('fechaDesdeHistorialClases').value = '';
+    document.getElementById('fechaHastaHistorialClases').value = '';
+    cargarVentasAcademia();
+  }
+
   async function cargarVentasAcademia() {
     const contenedor = document.getElementById('listaHistorialClases');
     if (!contenedor) return;
     contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
 
-    const resp = await fetch(WORKER_URL + '/api/pos/academia/ventas', {
+    const desde = document.getElementById('fechaDesdeHistorialClases')?.value || '';
+    const hasta = document.getElementById('fechaHastaHistorialClases')?.value || '';
+    const busqueda = document.getElementById('inputBuscarHistorialClases')?.value.trim() || '';
+
+    const params = new URLSearchParams();
+    if (desde) params.set('fecha_desde', desde);
+    if (hasta) params.set('fecha_hasta', hasta);
+    if (busqueda) params.set('busqueda', busqueda);
+
+    const resp = await fetch(WORKER_URL + '/api/pos/academia/ventas?' + params.toString(), {
       headers: { Authorization: 'Bearer ' + sesionActual.token }
     });
     if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
 
     const { ventas } = await resp.json();
     if (!ventas || ventas.length === 0) {
-      contenedor.innerHTML = '<div class="cargando">Todavía no hay ventas registradas.</div>';
+      contenedor.innerHTML = '<div class="cargando">No hay ventas que coincidan con la búsqueda.</div>';
       return;
     }
 
