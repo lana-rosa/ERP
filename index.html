@@ -1812,13 +1812,14 @@
 <div id="pantallaReportesFinancieros" class="oculto contenido">
   <div class="page-header">
     <h1>Informes de Ventas</h1>
-    <div class="subtitulo">Consolidado de ventas por canal, indicadores de rotación/margen, y costeo real.</div>
+    <div class="subtitulo">Consolidado de ventas por canal, indicadores de rotación/margen, costeo real, y simulación de presupuesto.</div>
   </div>
 
   <div class="filtro-tipo" style="margin-bottom:20px;">
     <button class="chip-filtro activo" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinConsolidado', this); cargarConsolidadoVentas();">📊 Consolidado de ventas</button>
     <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinIndicadores', this); cargarIndicadoresVentas();">📈 Indicadores de ventas</button>
     <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinCosteo', this); cargarCosteoReal();">🧮 Costeo real (materiales + mano de obra)</button>
+    <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinPresupuesto', this); cargarBasePresupuestoSimulacion();">💡 Presupuesto y simulación</button>
   </div>
 
   <div id="subtabFinConsolidado" data-subtab-grupo="reportesFin">
@@ -1870,6 +1871,49 @@
       <h2>🎓 Cursos y clases</h2>
       <div class="subtitulo">Margen = valor de la clase − costo de mano de obra (según la duración registrada al vender la clase).</div>
       <div id="listaCosteoClases" style="margin-top:10px;"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+
+  <div id="subtabFinPresupuesto" data-subtab-grupo="reportesFin" class="oculto">
+    <div style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;">
+      ℹ️ Esto no es un presupuesto fijo que hay que llenar cada mes — es un <strong>simulador</strong>. Trae tus números reales de los últimos 30 días como punto de partida, y puedes moverlos para ver "¿qué pasaría si...?" antes de tomar una decisión (subir precios, contratar, o si un gasto nuevo es sostenible).
+    </div>
+
+    <div class="panel" style="max-width:none;max-height:none;margin-bottom:20px;">
+      <h2>📌 Tu punto de partida real (últimos 30 días)</h2>
+      <div id="baseRealPresupuesto"><div class="cargando">Cargando...</div></div>
+    </div>
+
+    <div class="grilla-2">
+      <div class="panel">
+        <h2>🎛️ Simulador</h2>
+        <label for="simCostosFijos">Costos fijos mensuales (COP)</label>
+        <input type="number" id="simCostosFijos" min="0" step="10000" oninput="recalcularSimulacionPresupuesto()">
+        <div style="font-size:10.5px;opacity:0.6;margin-top:-8px;margin-bottom:10px;">Arriendo, nómina fija, servicios — lo que pagas sin importar cuánto vendas.</div>
+
+        <label for="simMargenContribucion">Margen de contribución (%)</label>
+        <input type="number" id="simMargenContribucion" min="1" max="99" step="1" oninput="recalcularSimulacionPresupuesto()">
+        <div style="font-size:10.5px;opacity:0.6;margin-top:-8px;margin-bottom:10px;">De cada $100 que vendes, cuánto te queda después de materiales/mano de obra directa (antes de gastos fijos).</div>
+
+        <label for="simUtilidadDeseada">Utilidad que quieres ganar ese mes <span style="font-size:10px;opacity:0.6;">(opcional, 0 = solo cubrir gastos)</span></label>
+        <input type="number" id="simUtilidadDeseada" min="0" step="10000" value="0" oninput="recalcularSimulacionPresupuesto()">
+
+        <label for="simPrecioPromedio">Precio promedio por pieza <span style="font-size:10px;opacity:0.6;">(opcional, para traducir a unidades)</span></label>
+        <input type="number" id="simPrecioPromedio" min="0" step="1000" oninput="recalcularSimulacionPresupuesto()">
+
+        <button class="btn-secundario" style="width:auto;margin-top:10px;" onclick="restablecerSimulacionPresupuesto()">↺ Restablecer a mis números reales</button>
+      </div>
+
+      <div class="panel">
+        <h2>📊 Resultado de la simulación</h2>
+        <div id="resultadoSimulacionPresupuesto"></div>
+
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid #f0e5ec;">
+          <div style="font-size:11px;font-weight:700;opacity:0.6;margin-bottom:6px;">REFERENCIA — TU META COMPROMETIDA CON FONDO EMPRENDER</div>
+          <div class="resumen-fila"><span>Ventas comprometidas Año 1</span><strong>$137.400.000</strong></div>
+          <div class="resumen-fila"><span>Promedio mensual necesario</span><strong id="metaMensualFeReferencia">$11.450.000</strong></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -9036,6 +9080,93 @@
       </div>
     `;
   }
+
+  // ============================================================
+  // PRESUPUESTO Y SIMULACIÓN
+  // ============================================================
+  let baseRealPresupuestoCache = null;
+
+  async function cargarBasePresupuestoSimulacion() {
+    const contenedor = document.getElementById('baseRealPresupuesto');
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+
+    const hoy = new Date();
+    const hace30 = new Date(Date.now() - 30 * 86400000);
+    const desde = hace30.toISOString().slice(0, 10);
+    const hasta = hoy.toISOString().slice(0, 10);
+
+    const resp = await fetch(`${WORKER_URL}/api/pos/finanzas/punto-equilibrio?fecha_desde=${desde}&fecha_hasta=${hasta}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const d = await resp.json();
+    baseRealPresupuestoCache = d;
+
+    contenedor.innerHTML = `
+      <div class="resumen-fila"><span>Ingresos (30 días)</span><strong>${formatearMoneda(d.ingresos)}</strong></div>
+      <div class="resumen-fila"><span>Costo de ventas (materiales/mano de obra directa)</span><strong>${formatearMoneda(d.costo_ventas)}</strong></div>
+      <div class="resumen-fila"><span>Gastos fijos (30 días)</span><strong>${formatearMoneda(d.gastos_fijos)}</strong></div>
+      <div class="resumen-fila total"><span>Margen de contribución real</span><strong>${d.margen_contribucion_pct}%</strong></div>
+    `;
+
+    // Precargar el simulador con los números reales
+    document.getElementById('simCostosFijos').value = Math.round(d.gastos_fijos);
+    document.getElementById('simMargenContribucion').value = d.margen_contribucion_pct > 0 ? d.margen_contribucion_pct : 30;
+    recalcularSimulacionPresupuesto();
+  }
+
+  function restablecerSimulacionPresupuesto() {
+    if (!baseRealPresupuestoCache) return;
+    document.getElementById('simCostosFijos').value = Math.round(baseRealPresupuestoCache.gastos_fijos);
+    document.getElementById('simMargenContribucion').value = baseRealPresupuestoCache.margen_contribucion_pct > 0 ? baseRealPresupuestoCache.margen_contribucion_pct : 30;
+    document.getElementById('simUtilidadDeseada').value = 0;
+    document.getElementById('simPrecioPromedio').value = '';
+    recalcularSimulacionPresupuesto();
+  }
+
+  function recalcularSimulacionPresupuesto() {
+    const costosFijos = Number(document.getElementById('simCostosFijos').value) || 0;
+    const margenPct = Number(document.getElementById('simMargenContribucion').value) || 0;
+    const utilidadDeseada = Number(document.getElementById('simUtilidadDeseada').value) || 0;
+    const precioPromedio = Number(document.getElementById('simPrecioPromedio').value) || 0;
+
+    const contenedor = document.getElementById('resultadoSimulacionPresupuesto');
+    if (margenPct <= 0) { contenedor.innerHTML = '<div class="cargando">Escribe un margen de contribución mayor a 0%.</div>'; return; }
+
+    const margenDecimal = margenPct / 100;
+    // Punto de equilibrio: Costos Fijos / Margen de contribución
+    const ventasEquilibrio = costosFijos / margenDecimal;
+    // Con utilidad deseada: (Costos Fijos + Utilidad deseada) / Margen de contribución
+    const ventasConUtilidad = (costosFijos + utilidadDeseada) / margenDecimal;
+
+    let html = `
+      <div class="resumen-fila"><span>Ventas necesarias para no perder (punto de equilibrio)</span><strong>${formatearMoneda(ventasEquilibrio)}</strong></div>
+    `;
+    if (utilidadDeseada > 0) {
+      html += `<div class="resumen-fila total"><span>Ventas necesarias para ganar ${formatearMoneda(utilidadDeseada)}</span><strong>${formatearMoneda(ventasConUtilidad)}</strong></div>`;
+    }
+    if (precioPromedio > 0) {
+      const unidadesEquilibrio = Math.ceil(ventasEquilibrio / precioPromedio);
+      const unidadesConUtilidad = Math.ceil(ventasConUtilidad / precioPromedio);
+      html += `<div class="resumen-fila"><span>≈ Piezas a vender (punto de equilibrio)</span><strong>${unidadesEquilibrio}</strong></div>`;
+      if (utilidadDeseada > 0) {
+        html += `<div class="resumen-fila"><span>≈ Piezas a vender (con la utilidad deseada)</span><strong>${unidadesConUtilidad}</strong></div>`;
+      }
+    }
+
+    // Comparar contra lo que realmente se vendió, si hay datos base
+    if (baseRealPresupuestoCache && baseRealPresupuestoCache.ingresos > 0) {
+      const diferencia = baseRealPresupuestoCache.ingresos - ventasEquilibrio;
+      const colorDif = diferencia >= 0 ? 'var(--verde-exito)' : 'var(--rojo-error)';
+      html += `
+        <div style="margin-top:12px;padding:10px;border-radius:8px;background:${diferencia >= 0 ? '#eaf6ef' : '#fdecea'};font-size:12px;">
+          Con este escenario, tus ventas reales de los últimos 30 días (${formatearMoneda(baseRealPresupuestoCache.ingresos)}) quedarían
+          <strong style="color:${colorDif};">${diferencia >= 0 ? formatearMoneda(diferencia) + ' por encima' : formatearMoneda(Math.abs(diferencia)) + ' por debajo'}</strong> del punto de equilibrio.
+        </div>
+      `;
+    }
+
+    contenedor.innerHTML = html;
+  }
+
 
   async function cargarCosteoReal() {
     const [respAmigurumis, respClases] = await Promise.all([
