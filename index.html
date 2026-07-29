@@ -13553,6 +13553,44 @@
 
   let conceptosCacheFe = [];
 
+  async function abrirEdicionConceptoFe(conceptoId) {
+    const c = conceptosCacheFe.find(x => x.id === conceptoId);
+    if (!c) return;
+
+    const nuevoNombre = prompt('Nombre del concepto:', c.concepto);
+    if (nuevoNombre === null) return;
+
+    const nuevoMonto = prompt(`Monto total aprobado (COP) — ya ejecutado: ${formatearMoneda(c.monto_ejecutado)}, no puede quedar por debajo de eso:`, c.monto_total_aprobado);
+    if (nuevoMonto === null) return;
+    const montoNum = Number(nuevoMonto);
+    if (isNaN(montoNum) || montoNum <= 0) { alert('El monto no es válido.'); return; }
+
+    let cronogramaNuevo = c.cronograma_meses;
+    if (confirm('¿Quieres también actualizar cómo se reparte ese monto mes a mes (el cronograma de referencia)? Si dices que no, se deja igual.')) {
+      const textoActual = (c.cronograma_meses || Array(12).fill(0)).join(', ');
+      const respuesta = prompt('Escribe los 12 valores separados por coma (Mes 1 a Mes 12):', textoActual);
+      if (respuesta !== null) {
+        const valores = respuesta.split(',').map(v => Number(v.trim()) || 0);
+        if (valores.length !== 12) { alert('Deben ser exactamente 12 valores — no se actualizó el cronograma, solo el monto y el nombre.'); }
+        else { cronogramaNuevo = valores; }
+      }
+    }
+
+    const cuerpo = { id: conceptoId, concepto: nuevoNombre.trim(), monto_total_aprobado: montoNum };
+    if (cronogramaNuevo) cuerpo.cronograma_meses = cronogramaNuevo;
+
+    const resp = await fetch(WORKER_URL + '/api/pos/fe/conceptos/actualizar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify(cuerpo)
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { alert(datos.error || 'No se pudo actualizar.'); return; }
+
+    await cargarConceptosFe();
+    await cargarCronogramaFe();
+  }
+
   async function cargarConceptosFe() {
     const resp = await fetch(WORKER_URL + '/api/pos/fe/conceptos', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
     const contenedor = document.getElementById('listaConceptosFe');
@@ -13572,19 +13610,20 @@
 
     contenedor.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:1fr 100px 100px 100px 90px;">
-          <span>CONCEPTO</span><span style="text-align:right;">APROBADO</span><span style="text-align:right;">EJECUTADO</span><span style="text-align:right;">DISPONIBLE</span><span>TIPO</span>
+        <div class="tabla-lista-header" style="grid-template-columns:1fr 100px 100px 100px 90px 70px;">
+          <span>CONCEPTO</span><span style="text-align:right;">APROBADO</span><span style="text-align:right;">EJECUTADO</span><span style="text-align:right;">DISPONIBLE</span><span>TIPO</span><span></span>
         </div>
         ${conceptosCacheFe.map(c => {
           const disponible = Number(c.monto_total_aprobado) - Number(c.monto_ejecutado);
           const pct = Number(c.monto_total_aprobado) > 0 ? Math.round((Number(c.monto_ejecutado) / Number(c.monto_total_aprobado)) * 100) : 0;
           return `
-            <div class="tabla-lista-fila" style="grid-template-columns:1fr 100px 100px 100px 90px;cursor:default;">
+            <div class="tabla-lista-fila" style="grid-template-columns:1fr 100px 100px 100px 90px 70px;cursor:default;">
               <span>#${c.numero_actividad} ${escaparHtml(c.concepto)}<div style="font-size:10px;opacity:0.55;">${pct}% ejecutado</div></span>
               <span style="text-align:right;">${formatearMoneda(c.monto_total_aprobado)}</span>
               <span style="text-align:right;">${formatearMoneda(c.monto_ejecutado)}</span>
               <span style="text-align:right;font-weight:700;color:${disponible > 0 ? 'var(--verde-exito)' : 'var(--rojo-error)'};">${formatearMoneda(disponible)}</span>
               <span style="font-size:11px;">${tiposEtiqueta[c.tipo_contable] || c.tipo_contable}</span>
+              <span><button class="btn-mini editar" onclick="abrirEdicionConceptoFe('${c.id}')">✏️ Editar</button></span>
             </div>
           `;
         }).join('')}
