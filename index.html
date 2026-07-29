@@ -904,23 +904,39 @@
     <!-- Datos del cliente: columna angosta, colapsable -->
     <div class="panel">
       <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="alternarDatosClienteVenta()">
-        <h2 style="margin:0;">Datos del cliente <span style="font-size:11px;font-weight:400;opacity:0.6;">(opcional)</span></h2>
+        <h2 style="margin:0;">Datos del cliente <span id="etiquetaOpcionalCliente" style="font-size:11px;font-weight:400;opacity:0.6;">(opcional)</span></h2>
         <span id="chevronDatosCliente" style="font-size:12px;transition:transform 0.15s;">▾</span>
       </div>
+
+      <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-weight:400;cursor:pointer;" onclick="event.stopPropagation();">
+        <input type="checkbox" id="checkPedidoMarketplace" style="width:auto;" onchange="alternarPedidoMarketplace()">
+        <span>📦 Este pedido es de Marketplace</span>
+      </label>
+
       <div id="contenidoDatosClienteVenta" class="oculto" style="margin-top:10px;">
         <label for="clienteIdentificacion">N° de identificación <span style="font-size:10px;opacity:0.6;">(busca cliente automáticamente)</span></label>
         <input type="text" id="clienteIdentificacion" placeholder="CC, CE, NIT..." oninput="autocompletarCliente('identificacion')">
-        <label for="clienteNombre">Nombre completo</label>
+        <label for="clienteNombre">Nombre completo <span id="etiquetaObligNombre" style="font-size:10px;opacity:0.6;"></span></label>
         <input type="text" id="clienteNombre" placeholder="Nombre completo" style="text-transform:uppercase;" oninput="this.value = this.value.toUpperCase()">
-        <label for="clienteTelefono">Teléfono <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+        <label for="clienteTelefono">Teléfono <span id="etiquetaObligTelefono" style="font-size:10px;opacity:0.6;">(opcional)</span></label>
         <input type="tel" id="clienteTelefono" placeholder="300 000 0000">
         <label for="clienteCorreo">Correo <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
         <input type="email" id="clienteCorreo" placeholder="correo@gmail.com">
-        <label for="clienteDireccion">Dirección <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+        <label for="clienteDireccion">Dirección <span id="etiquetaObligDireccion" style="font-size:10px;opacity:0.6;">(opcional)</span></label>
         <input type="text" id="clienteDireccion" placeholder="Para envíos">
         <label for="clienteCiudad">Ciudad <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
         <input type="text" id="clienteCiudad" placeholder="Manizales">
         <div id="mensajeAutocompletado" style="font-size:12px;color:var(--verde-exito);margin-top:6px;display:none;">✅ Cliente encontrado — datos precargados</div>
+
+        <div id="bloqueEnvioMarketplace" class="oculto" style="margin-top:12px;background:var(--rosa-suave);border-radius:9px;padding:10px 12px;">
+          <label for="marketplaceCiudadTarifa" style="margin-top:0;">Ciudad de envío (para la tarifa)</label>
+          <select id="marketplaceCiudadTarifa" onchange="calcularEnvioMarketplace()"><option value="">Selecciona...</option></select>
+          <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-weight:400;">
+            <input type="checkbox" id="checkCobrarEnvioMarketplace" style="width:auto;" checked onchange="calcularEnvioMarketplace()">
+            <span>Cobrar el envío en esta venta</span>
+          </label>
+          <div id="textoValorEnvioMarketplace" style="font-size:12px;margin-top:6px;font-weight:600;"></div>
+        </div>
 
         <div id="bloquePuntosCliente" class="oculto" style="margin-top:10px;background:var(--rosa-suave);border-radius:9px;padding:10px 12px;">
           <div id="textoPuntosClienteVenta" style="font-size:12.5px;font-weight:600;"></div>
@@ -932,6 +948,7 @@
         </div>
       </div>
     </div>
+
 
     <!-- Carrito: la zona principal de trabajo -->
     <div class="panel" style="max-width:none;">
@@ -4010,6 +4027,65 @@
     chevron.style.transform = contenido.classList.contains('oculto') ? 'rotate(0deg)' : 'rotate(180deg)';
   }
 
+  let tarifasEnvioMarketplaceCache = [];
+
+  async function cargarTarifasEnvioMarketplace() {
+    const resp = await fetch(WORKER_URL + '/api/pos/tarifas-envio', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) return;
+    const { tarifas } = await resp.json();
+    tarifasEnvioMarketplaceCache = (tarifas || []).filter(t => t.activo);
+    const select = document.getElementById('marketplaceCiudadTarifa');
+    if (!select) return;
+    select.innerHTML = '<option value="">Selecciona...</option>' + tarifasEnvioMarketplaceCache.map(t => `<option value="${escaparHtml(t.ciudad)}">${escaparHtml(t.ciudad)} — ${formatearMoneda(t.valor)}</option>`).join('');
+  }
+
+  function alternarPedidoMarketplace() {
+    const activo = document.getElementById('checkPedidoMarketplace').checked;
+    const bloqueEnvio = document.getElementById('bloqueEnvioMarketplace');
+    const etiquetaOpcional = document.getElementById('etiquetaOpcionalCliente');
+    const contenido = document.getElementById('contenidoDatosClienteVenta');
+    const chevron = document.getElementById('chevronDatosCliente');
+
+    bloqueEnvio.classList.toggle('oculto', !activo);
+    etiquetaOpcional.textContent = activo ? '(obligatorio para envío)' : '(opcional)';
+    document.getElementById('etiquetaObligNombre').textContent = activo ? '*' : '';
+    document.getElementById('etiquetaObligTelefono').textContent = activo ? '*' : '(opcional)';
+    document.getElementById('etiquetaObligDireccion').textContent = activo ? '*' : '(opcional)';
+
+    if (activo) {
+      contenido.classList.remove('oculto');
+      chevron.style.transform = 'rotate(180deg)';
+      cargarTarifasEnvioMarketplace();
+    } else {
+      quitarLineaEnvioDelCarrito();
+    }
+  }
+
+  function quitarLineaEnvioDelCarrito() {
+    const idx = carrito.findIndex(l => l.esEnvioMarketplace);
+    if (idx !== -1) { carrito.splice(idx, 1); renderizarCarrito(); }
+  }
+
+  function calcularEnvioMarketplace() {
+    quitarLineaEnvioDelCarrito();
+    const ciudad = document.getElementById('marketplaceCiudadTarifa').value;
+    const cobrar = document.getElementById('checkCobrarEnvioMarketplace').checked;
+    const texto = document.getElementById('textoValorEnvioMarketplace');
+
+    if (!ciudad) { texto.textContent = ''; return; }
+    const tarifa = tarifasEnvioMarketplaceCache.find(t => t.ciudad === ciudad);
+    const valor = tarifa ? Number(tarifa.valor) : 0;
+
+    if (!cobrar) {
+      texto.textContent = `Envío gratis para el cliente (tarifa de referencia: ${formatearMoneda(valor)}).`;
+      return;
+    }
+
+    texto.textContent = `Se agregó el envío por ${formatearMoneda(valor)} al carrito.`;
+    carrito.push({ id: 'envio-marketplace', nombre: `Envío a domicilio — ${ciudad}`, precio: valor, cantidad: 1, stock_actual: 1, esEnvioMarketplace: true });
+    renderizarCarrito();
+  }
+
   async function mostrarPantallaVentas() {
     // Guardia: verificar que hay un turno activo antes de permitir ventas
     if (!turnoActivoActual) {
@@ -4415,6 +4491,17 @@
       return;
     }
 
+    const esPedidoMarketplace = document.getElementById('checkPedidoMarketplace').checked;
+    if (esPedidoMarketplace) {
+      const nombreOk = document.getElementById('clienteNombre').value.trim();
+      const telefonoOk = document.getElementById('clienteTelefono').value.trim();
+      const direccionOk = document.getElementById('clienteDireccion').value.trim();
+      if (!nombreOk || !telefonoOk || !direccionOk) {
+        mostrarMensaje('mensajeVenta', 'Para un pedido de Marketplace, el nombre, teléfono y dirección del cliente son obligatorios (se necesitan para el envío).', 'error');
+        return;
+      }
+    }
+
     const total = calcularTotalCarrito();
     const sumaPagos = filasPago.reduce((acc, p) => acc + (Number(p.monto) || 0), 0);
 
@@ -4517,11 +4604,12 @@
         centro_costo_id: centroCostoTiendaIdVenta,
         turno_id: turnoActivoActual.id,
         tercero_id: terceroId,
+        canal: esPedidoMarketplace ? 'marketplace' : 'tienda',
         lineas: carrito.map(linea => ({
-          inventario_item_id: linea.id,
+          inventario_item_id: linea.id === 'envio-marketplace' ? null : linea.id,
           descripcion: linea.nombre,
           cantidad: linea.cantidad,
-          precio_unitario: Math.round(linea.precio * factorDescuento)
+          precio_unitario: linea.esEnvioMarketplace ? linea.precio : Math.round(linea.precio * factorDescuento)
         })),
         pagos: filasPago.map(p => ({
           metodo_pago: p.metodo_pago,
@@ -4544,6 +4632,8 @@
         encolarVentaOffline(cuerpoVenta);
         mostrarMensaje('mensajeVenta', '📴 Sin conexión — la venta quedó guardada en este dispositivo y se enviará sola apenas vuelva el internet. No cierres esta pantalla en el navegador sin haber sincronizado.', 'exito');
         carrito = [];
+        document.getElementById('checkPedidoMarketplace').checked = false;
+        document.getElementById('bloqueEnvioMarketplace').classList.add('oculto');
         renderizarCarrito();
         renderizarPagos();
         btn.disabled = false;
@@ -4594,6 +4684,14 @@
       document.getElementById('clienteDireccion').value = '';
       document.getElementById('clienteCiudad').value = '';
       document.getElementById('mensajeAutocompletado').style.display = 'none';
+      document.getElementById('checkPedidoMarketplace').checked = false;
+      document.getElementById('bloqueEnvioMarketplace').classList.add('oculto');
+      document.getElementById('marketplaceCiudadTarifa').value = '';
+      document.getElementById('textoValorEnvioMarketplace').textContent = '';
+      document.getElementById('etiquetaOpcionalCliente').textContent = '(opcional)';
+      document.getElementById('etiquetaObligNombre').textContent = '';
+      document.getElementById('etiquetaObligTelefono').textContent = '(opcional)';
+      document.getElementById('etiquetaObligDireccion').textContent = '(opcional)';
       renderizarCarrito();
       renderizarPagos();
       await cargarCatalogo(); // refresca el stock mostrado
