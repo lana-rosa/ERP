@@ -2554,7 +2554,9 @@
     <h1>🧹 Reinicio antes de producción</h1>
     <div class="subtitulo">Borra las ventas, pedidos, turnos, nómina y ejecución de Fondo Emprender de prueba, para arrancar en ceros. No toca a las empleadas registradas, clientes/proveedores, ni el inventario (haz el conteo físico real por separado).</div>
   </div>
-  <div class="panel" style="max-width:520px;">
+  <div class="panel" style="max-width:520px;" id="panelModoProduccion"></div>
+
+  <div class="panel" style="max-width:520px;" id="panelReinicioNormal">
     <h2>Lo que se va a borrar</h2>
     <div id="resumenDatosPrueba"><div class="cargando">Cargando...</div></div>
 
@@ -8238,11 +8240,53 @@
     cambio_articulo: '🔄', kit_tejido: '🧶', traslado_departamentos: '🔁', presupuesto: '📊',
   };
 
+  async function cargarPanelModoProduccion() {
+    const panel = document.getElementById('panelModoProduccion');
+    const panelNormal = document.getElementById('panelReinicioNormal');
+    const resp = await fetch(WORKER_URL + '/api/pos/admin/modo-produccion', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { panel.innerHTML = ''; return; }
+    const { config } = await resp.json();
+
+    if (config && config.modo_produccion) {
+      panelNormal.classList.add('oculto');
+      panel.innerHTML = `
+        <div style="text-align:center;">
+          <div style="font-size:32px;">🔒</div>
+          <h2 style="margin-top:6px;">Modo producción activado</h2>
+          <div class="subtitulo">El reinicio de datos de prueba quedó bloqueado permanentemente desde ${new Date(config.activado_en).toLocaleString('es-CO')} — ya no es posible borrar ventas, nómina ni ejecución de Fondo Emprender desde aquí.</div>
+        </div>
+      `;
+      return;
+    }
+
+    panelNormal.classList.remove('oculto');
+    panel.innerHTML = `
+      <h2>🔒 Activar modo producción</h2>
+      <div class="subtitulo">Cuando empiecen a contratar de verdad y el negocio arranque en operación real, activa esto — bloquea el reinicio para siempre, así nadie puede borrar datos reales por accidente. No se puede desactivar después, ni siquiera por ti.</div>
+      <button class="btn-secundario" style="width:auto;margin-top:10px;" onclick="confirmarActivarModoProduccion()">Activar modo producción ahora</button>
+    `;
+  }
+
+  async function confirmarActivarModoProduccion() {
+    const confirmacion = prompt('Esto es permanente y no se puede deshacer. Escribe "ACTIVAR PRODUCCION" para confirmar:');
+    if (confirmacion !== 'ACTIVAR PRODUCCION') {
+      if (confirmacion !== null) alert('No coincide con el texto exacto — no se activó nada.');
+      return;
+    }
+    const resp = await fetch(WORKER_URL + '/api/pos/admin/modo-produccion/activar', {
+      method: 'POST', headers: { Authorization: 'Bearer ' + sesionActual.token },
+    });
+    if (!resp.ok) { alert('No se pudo activar.'); return; }
+    await cargarPanelModoProduccion();
+  }
+
+
   async function mostrarPantallaReinicioProduccion() {
     mostrarPantalla('pantallaReinicioProduccion');
     document.getElementById('confirmacionReinicioTexto').value = '';
     document.getElementById('btnReiniciarDatosPrueba').disabled = true;
     ocultarMensaje('mensajeReinicioProduccion');
+    await cargarPanelModoProduccion();
 
     const contenedor = document.getElementById('resumenDatosPrueba');
     contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
