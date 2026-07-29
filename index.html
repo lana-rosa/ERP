@@ -3655,12 +3655,14 @@
         <div style="font-size:11px;font-weight:700;opacity:0.6;margin-bottom:4px;">VENTAS POR CANAL</div>
         <div class="resumen-fila"><span>🏬 Ventas Tienda/Mercería</span><strong>${formatearMoneda(d.tienda_total)}</strong></div>
         <div class="resumen-fila"><span>📱 Ventas WhatsApp/Redes sociales</span><strong>${formatearMoneda(d.whatsapp_total)}</strong></div>
-        <div class="resumen-fila total"><span>Total vendido en el turno</span><strong>${formatearMoneda(d.tienda_total + d.whatsapp_total)}</strong></div>
+        <div class="resumen-fila"><span>🎓 Ventas Cursos/clases</span><strong>${formatearMoneda(d.academia_total)}</strong></div>
+        <div class="resumen-fila total"><span>Total vendido en el turno</span><strong>${formatearMoneda(d.tienda_total + d.whatsapp_total + d.academia_total)}</strong></div>
 
         <div style="font-size:11px;font-weight:700;opacity:0.6;margin-top:12px;margin-bottom:4px;">DEBE HABER EN CAJA</div>
         <div class="resumen-fila"><span>Base de apertura</span><strong>${formatearMoneda(d.base_apertura)}</strong></div>
         <div class="resumen-fila"><span>+ Efectivo Tienda</span><strong>${formatearMoneda(d.tienda_efectivo)}</strong></div>
         <div class="resumen-fila"><span>+ Efectivo WhatsApp/Redes</span><strong>${formatearMoneda(d.whatsapp_efectivo)}</strong></div>
+        <div class="resumen-fila"><span>+ Efectivo Cursos/clases</span><strong>${formatearMoneda(d.academia_efectivo)}</strong></div>
         <div class="resumen-fila total"><span>💵 Total efectivo esperado</span><strong>${formatearMoneda(d.total_efectivo_esperado)}</strong></div>
         <div class="resumen-fila"><span>💳 Total en otros medios de pago (no está en caja física)</span><strong>${formatearMoneda(d.total_otros_medios)}</strong></div>
       </div>
@@ -12190,7 +12192,8 @@
     ocultarMensaje('mensajeVentaAcademia');
 
     if (carritoAcademia.length === 0) { mostrarMensaje('mensajeVentaAcademia', 'Agrega al menos una clase o un kit a la lista.', 'error'); return; }
-    if (!turnoActivoActual) { mostrarMensaje('mensajeVentaAcademia', 'No hay un turno de caja de Tienda abierto.', 'error'); return; }
+    const hayClasePresencial = carritoAcademia.some(i => i.tipo === 'clase' && i.subarea === 'clase_presencial');
+    if (hayClasePresencial && !turnoActivoActual) { mostrarMensaje('mensajeVentaAcademia', 'Las clases presenciales requieren un turno de caja de Tienda abierto (pasan por la caja física). Los demás ingresos (YouTube, cursos virtuales, digitales) se pueden registrar sin turno abierto.', 'error'); return; }
 
     const clases = carritoAcademia.filter(i => i.tipo === 'clase');
     const kits = carritoAcademia.filter(i => i.tipo === 'kit');
@@ -12220,7 +12223,7 @@
         cliente_correo: correo || null,
         monto: montoTotal,
         metodo_pago: metodoPago,
-        turno_id: turnoActivoActual.id,
+        turno_id: turnoActivoActual ? turnoActivoActual.id : null,
         duracion_horas: duracionTotalHoras > 0 ? duracionTotalHoras : null
       })
     });
