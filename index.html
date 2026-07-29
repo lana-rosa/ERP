@@ -764,6 +764,7 @@
         <button class="nav-btn" id="nav-reportes-financieros" onclick="mostrarPantallaReportesFinancieros()"><span class="nav-icon">📊</span> Informes de Ventas</button>
         <button class="nav-btn" id="nav-estados-financieros" onclick="mostrarPantallaEstadosFinancieros()"><span class="nav-icon">📑</span> Estados financieros</button>
         <button class="nav-btn" id="nav-cuentas-pendientes" onclick="mostrarPantallaCuentasPendientes()"><span class="nav-icon">📋</span> Cuentas por cobrar/pagar</button>
+        <button class="nav-btn" id="nav-activos-fijos" onclick="mostrarPantallaActivosFijos()"><span class="nav-icon">🪑</span> Activos fijos</button>
       </div>
     </div>
     <div class="sidebar-depto" id="deptoFondoEmprenderGrupo" style="display:none;">
@@ -2541,6 +2542,87 @@
 </div>
 
 <!-- ===== PANTALLA: CUENTAS POR COBRAR Y PAGAR ===== -->
+<!-- ===== PANTALLA: ACTIVOS FIJOS ===== -->
+<div id="pantallaActivosFijos" class="oculto contenido">
+  <div class="page-header">
+    <h1>🪑 Activos fijos</h1>
+    <div class="subtitulo">Propiedad, planta y equipo del negocio (muebles, cómputo, maquinaria, etc.) con depreciación automática por línea recta, según el Artículo 137 del Estatuto Tributario.</div>
+  </div>
+
+  <div class="filtro-tipo" style="margin-bottom:20px;">
+    <button class="chip-filtro activo" data-subtab-btn="activosFijos" onclick="mostrarSubTabGrupo('activosFijos', 'subtabAfListado', this); cargarActivosFijos();">📋 Activos registrados</button>
+    <button class="chip-filtro" data-subtab-btn="activosFijos" onclick="mostrarSubTabGrupo('activosFijos', 'subtabAfRegistrar', this); prepararFormularioActivoFijo();">+ Registrar activo</button>
+    <button class="chip-filtro" data-subtab-btn="activosFijos" onclick="mostrarSubTabGrupo('activosFijos', 'subtabAfDepreciacion', this); cargarHistoricoDepreciacion();">📉 Depreciación mensual</button>
+  </div>
+
+  <div id="subtabAfListado" data-subtab-grupo="activosFijos">
+    <div id="resumenTotalesActivosFijos" class="grilla-3" style="margin-bottom:20px;"></div>
+    <div class="panel" style="max-width:none;max-height:none;">
+      <h2>Activos registrados</h2>
+      <label style="display:flex;align-items:center;gap:8px;font-weight:400;margin-bottom:10px;">
+        <input type="checkbox" id="checkIncluirActivosBaja" style="width:auto;" onchange="cargarActivosFijos()">
+        <span>Incluir los dados de baja</span>
+      </label>
+      <div id="listaActivosFijos"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+
+  <div id="subtabAfRegistrar" data-subtab-grupo="activosFijos" class="oculto">
+    <div class="panel" style="max-width:560px;">
+      <h2>+ Registrar activo fijo</h2>
+      <label for="afNombre">Nombre del activo</label>
+      <input type="text" id="afNombre" placeholder="Ej: Vitrina exhibidora de vidrio">
+      <label for="afCategoria">Categoría</label>
+      <select id="afCategoria" onchange="autocompletarVidaUtilActivo()"></select>
+      <div id="notaVidaUtilCategoria" style="font-size:11px;opacity:0.6;margin-top:-8px;margin-bottom:10px;"></div>
+
+      <label for="afNumeroFactura">N° de factura o recibo</label>
+      <input type="text" id="afNumeroFactura" placeholder="Ej: FE-00123">
+      <label for="afProveedor">Proveedor</label>
+      <select id="afProveedor"><option value="">Sin proveedor asignado</option></select>
+      <label for="afFechaCompra">Fecha de compra</label>
+      <input type="date" id="afFechaCompra">
+      <label for="afCentroCosto">Departamento donde queda el activo</label>
+      <select id="afCentroCosto"></select>
+
+      <label for="afValorCompra">Valor de compra (COP)</label>
+      <input type="number" id="afValorCompra" min="0" step="1000" placeholder="0">
+      <label for="afValorResidual">Valor residual <span style="font-size:10px;opacity:0.6;">(lo que valdría al final de su vida útil — opcional, 0 si no aplica)</span></label>
+      <input type="number" id="afValorResidual" min="0" step="1000" placeholder="0">
+      <label for="afVidaUtil">Vida útil (años) <span style="font-size:10px;opacity:0.6;">(autocompletada según la categoría — editable)</span></label>
+      <input type="number" id="afVidaUtil" min="1" step="1">
+
+      <label for="afMetodoPago">Método de pago</label>
+      <select id="afMetodoPago">
+        <option value="efectivo">Efectivo</option>
+        <option value="nequi">Nequi</option>
+        <option value="daviplata">Daviplata</option>
+        <option value="transferencia">Transferencia</option>
+        <option value="tarjeta_debito">Tarjeta débito</option>
+        <option value="tarjeta_credito">Tarjeta crédito</option>
+      </select>
+
+      <button class="btn-principal" onclick="confirmarRegistrarActivoFijo()">Registrar activo</button>
+      <div class="mensaje" id="mensajeActivoFijo"></div>
+    </div>
+  </div>
+
+  <div id="subtabAfDepreciacion" data-subtab-grupo="activosFijos" class="oculto">
+    <div class="panel" style="max-width:520px;">
+      <h2>Registrar depreciación del mes</h2>
+      <div class="subtitulo">Calcula y contabiliza automáticamente la depreciación de TODOS los activos activos para el período elegido — se puede correr varias veces sin duplicar, y se pone al día sola si llevas meses sin registrarla.</div>
+      <label for="afPeriodoDepreciacion">Período (mes)</label>
+      <input type="month" id="afPeriodoDepreciacion">
+      <button class="btn-principal" onclick="confirmarRegistrarDepreciacionPeriodo()">Registrar depreciación de este mes</button>
+      <div class="mensaje" id="mensajeDepreciacionPeriodo"></div>
+    </div>
+    <div class="panel" style="max-width:none;max-height:none;margin-top:20px;">
+      <h2>Histórico de depreciación registrada</h2>
+      <div id="listaHistoricoDepreciacion"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+</div>
+
 <div id="pantallaCuentasPendientes" class="oculto contenido">
   <div class="page-header">
     <h1>📋 Cuentas por cobrar y por pagar</h1>
@@ -3258,7 +3340,7 @@
   // UTILIDADES
   // ============================================================================
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaConfigAlertas', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConfigAlertas', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -3546,6 +3628,7 @@
     mostrar('nav-reportes-financieros', esAdmin);
     mostrar('nav-estados-financieros', esAdmin);
     mostrar('nav-cuentas-pendientes', esAdmin);
+    mostrar('nav-activos-fijos', esAdmin);
     mostrar('nav-dashboard', esAdmin);
     document.getElementById('btnAbrirAsistenteIA').style.display = 'flex';
     mostrar('nav-calendario', true);
@@ -11300,6 +11383,191 @@
   // CUENTAS POR COBRAR Y PAGAR
   // ============================================================
   let filtroCxCActual = 'por_cobrar';
+
+  // ============================================================
+  // ACTIVOS FIJOS
+  // ============================================================
+  let categoriasActivoFijoCache = [];
+
+  async function mostrarPantallaActivosFijos() {
+    mostrarPantalla('pantallaActivosFijos');
+    document.getElementById('checkIncluirActivosBaja').checked = false;
+    await cargarActivosFijos();
+  }
+
+  async function cargarActivosFijos() {
+    const contenedor = document.getElementById('listaActivosFijos');
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+    const incluirBaja = document.getElementById('checkIncluirActivosBaja').checked;
+
+    const resp = await fetch(`${WORKER_URL}/api/pos/activos-fijos?incluir_baja=${incluirBaja}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const { activos, totales } = await resp.json();
+
+    document.getElementById('resumenTotalesActivosFijos').innerHTML = `
+      <div class="panel" style="max-height:none;text-align:center;">
+        <div style="font-size:11.5px;opacity:0.65;">VALOR DE COMPRA TOTAL</div>
+        <div style="font-size:20px;font-weight:700;margin-top:4px;">${formatearMoneda(totales.valor_compra)}</div>
+      </div>
+      <div class="panel" style="max-height:none;text-align:center;">
+        <div style="font-size:11.5px;opacity:0.65;">DEPRECIACIÓN ACUMULADA</div>
+        <div style="font-size:20px;font-weight:700;margin-top:4px;color:var(--rojo-error);">${formatearMoneda(totales.depreciacion_acumulada)}</div>
+      </div>
+      <div class="panel" style="max-height:none;text-align:center;">
+        <div style="font-size:11.5px;opacity:0.65;">VALOR NETO EN LIBROS</div>
+        <div style="font-size:20px;font-weight:700;margin-top:4px;color:var(--verde-exito);">${formatearMoneda(totales.valor_en_libros)}</div>
+      </div>
+    `;
+
+    if (!activos || activos.length === 0) { contenedor.innerHTML = '<div class="cargando">Sin activos registrados todavía.</div>'; return; }
+
+    const etiquetasCategoria = { muebles_enseres: 'Muebles y enseres', equipo_computo: 'Equipo de cómputo', maquinaria_equipo: 'Maquinaria y equipo', equipo_comunicacion: 'Equipo de comunicación', vehiculos: 'Vehículos', edificaciones: 'Edificaciones', otros: 'Otros' };
+
+    contenedor.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:1.4fr 100px 90px 100px 100px 100px 90px;">
+          <span>NOMBRE</span><span>F. COMPRA</span><span>N° RECIBO</span><span style="text-align:right;">VALOR COMPRA</span><span style="text-align:right;">DEPRECIADO</span><span style="text-align:right;">VALOR NETO</span><span></span>
+        </div>
+        ${activos.map(a => `
+          <div class="tabla-lista-fila" style="grid-template-columns:1.4fr 100px 90px 100px 100px 100px 90px;cursor:default;">
+            <span>${escaparHtml(a.nombre)}<div style="font-size:10px;opacity:0.55;">${etiquetasCategoria[a.categoria] || a.categoria}${a.proveedor ? ' · ' + escaparHtml(a.proveedor.nombre_completo) : ''}${a.estado !== 'activo' ? ' · ⚠️ DADO DE BAJA' : ''}</div></span>
+            <span>${new Date(a.fecha_compra + 'T00:00:00').toLocaleDateString('es-CO')}</span>
+            <span>${escaparHtml(a.numero_factura || '—')}</span>
+            <span style="text-align:right;">${formatearMoneda(a.valor_compra)}</span>
+            <span style="text-align:right;">${formatearMoneda(a.depreciacion_acumulada)} <div style="font-size:10px;opacity:0.55;">${a.porcentaje_depreciado}%</div></span>
+            <span style="text-align:right;font-weight:700;">${formatearMoneda(a.valor_en_libros)}</span>
+            <span>${a.estado === 'activo' ? `<button class="btn-mini desactivar" onclick="confirmarDarDeBajaActivo('${a.id}')">Dar de baja</button>` : ''}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  async function prepararFormularioActivoFijo() {
+    document.getElementById('afFechaCompra').value = new Date().toISOString().slice(0, 10);
+    ocultarMensaje('mensajeActivoFijo');
+
+    if (categoriasActivoFijoCache.length === 0) {
+      const resp = await fetch(WORKER_URL + '/api/pos/activos-fijos/categorias', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+      if (resp.ok) {
+        const { categorias } = await resp.json();
+        categoriasActivoFijoCache = categorias || [];
+        document.getElementById('afCategoria').innerHTML = categoriasActivoFijoCache.map(c => `<option value="${c.categoria}">${escaparHtml(c.nombre_visible)}</option>`).join('');
+        autocompletarVidaUtilActivo();
+      }
+    }
+
+    // Proveedores
+    const respProv = await fetch(WORKER_URL + '/api/pos/terceros?tipo=proveedor', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (respProv.ok) {
+      const { terceros } = await respProv.json();
+      document.getElementById('afProveedor').innerHTML = '<option value="">Sin proveedor asignado</option>' + (terceros || []).map(p => `<option value="${p.id}">${escaparHtml(p.nombre_completo)}</option>`).join('');
+    }
+
+    // Departamentos
+    const respDeptos = await fetch(WORKER_URL + '/api/pos/departamentos', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (respDeptos.ok) {
+      const { departamentos } = await respDeptos.json();
+      document.getElementById('afCentroCosto').innerHTML = (departamentos || []).map(d => `<option value="${d.id}">${escaparHtml(d.nombre)}</option>`).join('');
+    }
+  }
+
+  function autocompletarVidaUtilActivo() {
+    const categoria = document.getElementById('afCategoria').value;
+    const info = categoriasActivoFijoCache.find(c => c.categoria === categoria);
+    if (info) {
+      document.getElementById('afVidaUtil').value = info.vida_util_anios_sugerida;
+      document.getElementById('notaVidaUtilCategoria').textContent = `Según el Art. 137 del Estatuto Tributario: ${info.vida_util_anios_sugerida} años (${info.tasa_anual_pct}% anual). Puedes ajustarla si tienes un criterio distinto.`;
+    }
+  }
+
+  async function confirmarRegistrarActivoFijo() {
+    const nombre = document.getElementById('afNombre').value.trim();
+    const categoria = document.getElementById('afCategoria').value;
+    const numeroFactura = document.getElementById('afNumeroFactura').value.trim();
+    const proveedorId = document.getElementById('afProveedor').value;
+    const fechaCompra = document.getElementById('afFechaCompra').value;
+    const centroCostoId = document.getElementById('afCentroCosto').value;
+    const valorCompra = Number(document.getElementById('afValorCompra').value);
+    const valorResidual = Number(document.getElementById('afValorResidual').value) || 0;
+    const vidaUtil = Number(document.getElementById('afVidaUtil').value);
+    const metodoPago = document.getElementById('afMetodoPago').value;
+    ocultarMensaje('mensajeActivoFijo');
+
+    if (!nombre) { mostrarMensaje('mensajeActivoFijo', 'Escribe el nombre del activo.', 'error'); return; }
+    if (!valorCompra || valorCompra <= 0) { mostrarMensaje('mensajeActivoFijo', 'Escribe un valor de compra válido.', 'error'); return; }
+    if (!vidaUtil || vidaUtil <= 0) { mostrarMensaje('mensajeActivoFijo', 'Escribe la vida útil en años.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/activos-fijos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({
+        nombre, categoria, centro_costo_id: centroCostoId || null, proveedor_tercero_id: proveedorId || null,
+        numero_factura: numeroFactura || null, fecha_compra: fechaCompra, valor_compra: valorCompra,
+        valor_residual: valorResidual, vida_util_anios: vidaUtil, metodo_pago: metodoPago,
+      })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeActivoFijo', datos.error || 'No se pudo registrar.', 'error'); return; }
+
+    mostrarMensaje('mensajeActivoFijo', '✅ Activo registrado y contabilizado.', 'exito');
+    document.getElementById('afNombre').value = '';
+    document.getElementById('afNumeroFactura').value = '';
+    document.getElementById('afValorCompra').value = '';
+    document.getElementById('afValorResidual').value = '';
+  }
+
+  async function confirmarDarDeBajaActivo(activoId) {
+    const motivo = prompt('¿Por qué se da de baja este activo? (vendido, dañado, obsoleto...)');
+    if (motivo === null) return;
+    const fechaBaja = prompt('Fecha de la baja (AAAA-MM-DD):', new Date().toISOString().slice(0, 10));
+    if (!fechaBaja) return;
+
+    const resp = await fetch(WORKER_URL + '/api/pos/activos-fijos/dar-de-baja', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ activo_id: activoId, fecha_baja: fechaBaja, motivo: motivo || null })
+    });
+    if (!resp.ok) { alert('No se pudo dar de baja el activo.'); return; }
+    await cargarActivosFijos();
+  }
+
+  async function confirmarRegistrarDepreciacionPeriodo() {
+    const periodo = document.getElementById('afPeriodoDepreciacion').value;
+    ocultarMensaje('mensajeDepreciacionPeriodo');
+    if (!periodo) { mostrarMensaje('mensajeDepreciacionPeriodo', 'Elige el mes.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/activos-fijos/depreciacion/registrar-periodo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ periodo })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeDepreciacionPeriodo', datos.error || 'No se pudo registrar.', 'error'); return; }
+
+    mostrarMensaje('mensajeDepreciacionPeriodo', `✅ ${datos.registrados} activo(s) depreciado(s). ${datos.omitidos > 0 ? `${datos.omitidos} ya estaban al día o sin depreciación pendiente.` : ''}`, 'exito');
+    await cargarHistoricoDepreciacion();
+  }
+
+  async function cargarHistoricoDepreciacion() {
+    document.getElementById('afPeriodoDepreciacion').value = new Date().toISOString().slice(0, 7);
+    const contenedor = document.getElementById('listaHistoricoDepreciacion');
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/activos-fijos/depreciacion/historico', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const { registros } = await resp.json();
+
+    if (!registros || registros.length === 0) { contenedor.innerHTML = '<div class="cargando">Sin depreciación registrada todavía.</div>'; return; }
+
+    contenedor.innerHTML = registros.map(r => `
+      <div class="resumen-fila">
+        <span>${r.periodo} — ${escaparHtml(r.activo?.nombre || '')}</span>
+        <strong>${formatearMoneda(r.valor_depreciado)}</strong>
+      </div>
+    `).join('');
+  }
+
 
   async function mostrarPantallaCuentasPendientes() {
     mostrarPantalla('pantallaCuentasPendientes');
