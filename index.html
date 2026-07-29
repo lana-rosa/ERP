@@ -13376,7 +13376,12 @@
             <div class="fila-historial-fecha">${inicio} — ${fin}${ev.ubicacion ? ' · ' + escaparHtml(ev.ubicacion) : ''}</div>
             ${ev.descripcion ? `<div style="font-size:12.5px;opacity:0.75;margin-top:4px;">${escaparHtml(ev.descripcion)}</div>` : ''}
             ${ev.recordatorio_minutos_antes ? `<div style="font-size:11px;opacity:0.6;margin-top:4px;">🔔 Recordatorio ${ev.recordatorio_minutos_antes >= 1440 ? (ev.recordatorio_minutos_antes / 1440) + ' día(s)' : ev.recordatorio_minutos_antes + ' min'} antes</div>` : ''}
-            ${ev.origen === 'fe' ? '<div style="font-size:11px;opacity:0.5;margin-top:6px;">Se gestiona desde Fondo Emprender</div>' : (ev.origen === 'personal' || rolActual === 'administrador' || esLiderDepartamentoActual) ? `<button class="btn-mini desactivar" style="margin-top:8px;max-width:140px;" onclick="${ev.origen === 'personal' ? `eliminarTareaPersonal('${ev.id}')` : `eliminarEventoCalendario('${ev.id}')`}">${ev.origen === 'personal' ? 'Eliminar' : '❌ Cancelar evento'}</button>` : ''}
+            ${ev.origen === 'fe' ? '<div style="font-size:11px;opacity:0.5;margin-top:6px;">Se gestiona desde Fondo Emprender</div>' : ev.origen === 'crm_tejedora' ? '<div style="font-size:11px;opacity:0.5;margin-top:6px;">Se gestiona desde el CRM de pedidos</div>' : (ev.origen === 'personal' || rolActual === 'administrador' || esLiderDepartamentoActual) ? `
+              <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+                <button class="btn-mini editar" style="max-width:140px;" onclick="${ev.origen === 'personal' ? `reprogramarTareaPersonal('${ev.id}', '${ev.fecha_inicio}')` : `reprogramarEventoCalendario('${ev.id}', '${ev.fecha_inicio}')`}">🔄 Reprogramar</button>
+                <button class="btn-mini desactivar" style="max-width:140px;" onclick="${ev.origen === 'personal' ? `eliminarTareaPersonal('${ev.id}')` : `eliminarEventoCalendario('${ev.id}')`}">${ev.origen === 'personal' ? 'Eliminar' : '❌ Cancelar evento'}</button>
+              </div>
+            ` : ''}
           </div>
         `;
       }).join('');
@@ -13426,6 +13431,24 @@
       body: JSON.stringify({ id: tareaId })
     });
     if (!resp.ok) { alert('No se pudo eliminar.'); return; }
+    await cargarEventosCalendario();
+  }
+
+  async function reprogramarTareaPersonal(tareaId, fechaActualISO) {
+    const actual = new Date(fechaActualISO);
+    const valorLocal = new Date(actual.getTime() - actual.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    const nuevaFechaHora = prompt('Nueva fecha y hora (AAAA-MM-DDTHH:MM):', valorLocal);
+    if (!nuevaFechaHora) return;
+    const nuevaFecha = new Date(nuevaFechaHora);
+    if (isNaN(nuevaFecha.getTime())) { alert('Fecha/hora inválida.'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/calendario/tareas/actualizar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ id: tareaId, fecha_inicio: nuevaFecha.toISOString(), fecha_fin: nuevaFecha.toISOString() })
+    });
+    if (!resp.ok) { alert('No se pudo reprogramar.'); return; }
+    diaSeleccionadoCalendario = nuevaFecha.toISOString().slice(0, 10);
     await cargarEventosCalendario();
   }
 
@@ -13486,6 +13509,31 @@
       body: JSON.stringify({ evento_id: eventoId })
     });
     if (!resp.ok) { alert('No tienes permiso para eliminar este evento, o ya fue eliminado.'); return; }
+    await cargarEventosCalendario();
+  }
+
+  async function reprogramarEventoCalendario(eventoId, fechaActualISO) {
+    const actual = new Date(fechaActualISO);
+    const valorLocal = new Date(actual.getTime() - actual.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    const nuevaFechaHora = prompt('Nueva fecha y hora de inicio (AAAA-MM-DDTHH:MM) — el evento conserva su misma duración:', valorLocal);
+    if (!nuevaFechaHora) return;
+    const nuevaFechaInicio = new Date(nuevaFechaHora);
+    if (isNaN(nuevaFechaInicio.getTime())) { alert('Fecha/hora inválida.'); return; }
+
+    const eventoOriginal = todosLosEventosCalendario.find(e => e.id === eventoId);
+    let nuevaFechaFin = nuevaFechaInicio;
+    if (eventoOriginal) {
+      const duracionMs = new Date(eventoOriginal.fecha_fin).getTime() - new Date(eventoOriginal.fecha_inicio).getTime();
+      nuevaFechaFin = new Date(nuevaFechaInicio.getTime() + Math.max(duracionMs, 0));
+    }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/rh/calendario/eventos/actualizar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ evento_id: eventoId, fecha_inicio: nuevaFechaInicio.toISOString(), fecha_fin: nuevaFechaFin.toISOString() })
+    });
+    if (!resp.ok) { alert('No se pudo reprogramar.'); return; }
+    diaSeleccionadoCalendario = nuevaFechaInicio.toISOString().slice(0, 10);
     await cargarEventosCalendario();
   }
 
