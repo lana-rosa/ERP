@@ -722,7 +722,6 @@
         <button class="nav-btn" id="nav-historial" onclick="mostrarPantallaHistorial('01')"><span class="nav-icon">📋</span> Historial ventas</button>
         <button class="nav-btn" id="nav-pedidos-canal" onclick="mostrarPantallaPedidosCanal()"><span class="nav-icon">📱</span> Pedidos WhatsApp/Redes</button>
         <button class="nav-btn" id="nav-solicitudes-tienda" onclick="mostrarPantallaSolicitudes()"><span class="nav-icon">📦</span> Solicitud de insumos del Taller</button>
-        <button class="nav-btn" onclick="mostrarPantallaAcademiaKits()"><span class="nav-icon">🧶</span> Kits de tejido</button>
         <button class="nav-btn" id="nav-inventario-tienda" onclick="mostrarPantallaInventario('01')"><span class="nav-icon">📊</span> Inventario</button>
         <button class="nav-btn" id="nav-ajustestock" onclick="mostrarPantallaAjusteStock()"><span class="nav-icon">📥</span> Entrada mercancía</button>
         <button class="nav-btn" id="nav-etiquetas" onclick="mostrarPantallaEtiquetas()"><span class="nav-icon">🏷️</span> Imprimir etiquetas</button>
@@ -1243,6 +1242,7 @@
   <div class="filtro-tipo" style="margin-bottom:20px;">
     <button class="chip-filtro activo" data-subtab-btn="invPantalla" onclick="mostrarSubTabGrupo('invPantalla', 'subtabInvActual', this)">📊 Inventario actual</button>
     <button class="chip-filtro" data-subtab-btn="invPantalla" onclick="mostrarSubTabGrupo('invPantalla', 'subtabInvAgregar', this)">+ Agregar producto o insumo</button>
+    <button class="chip-filtro" id="chipTabKitsInventario" data-subtab-btn="invPantalla" onclick="mostrarSubTabGrupo('invPantalla', 'subtabInvKits', this); cargarRadicadosKit();">🧶 Kits de tejido</button>
   </div>
 
   <div id="subtabInvActual" data-subtab-grupo="invPantalla">
@@ -1304,6 +1304,37 @@
       <select id="invProveedor"><option value="">Sin proveedor asignado</option></select>
       <button class="btn-principal" id="btnGuardarProducto" onclick="guardarNuevoProducto()">Agregar al inventario</button>
       <div class="mensaje" id="mensajeInventarioForm"></div>
+    </div>
+  </div>
+
+  <div id="subtabInvKits" data-subtab-grupo="invPantalla" class="oculto">
+    <div style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;">
+      ℹ️ Los kits se elaboran directamente en la Tienda y se descuentan de este mismo inventario. Para registrar una venta de curso o clase, ve a <strong>Registrar venta → 🎓 Cursos y clases</strong>.
+    </div>
+    <div class="grilla-2">
+      <div class="panel">
+        <h2>+ Armar kit de tejido</h2>
+        <div class="subtitulo">Elige los insumos y la cantidad de cada uno que lleva UN kit — se descuentan del inventario de Tienda y el kit queda listo para vender.</div>
+        <label for="kitNombre">Nombre del kit</label>
+        <input type="text" id="kitNombre" placeholder="Ej: Kit amigurumi básico">
+        <label for="kitPrecioVenta">Precio de venta (por kit, sin empaque ni descuento)</label>
+        <input type="number" id="kitPrecioVenta" min="0" step="1000" placeholder="0" oninput="actualizarPrecioFinalKit()">
+        <label for="kitValorEmpaque">Valor del empaque <span style="font-size:10px;opacity:0.6;">(opcional, se suma al precio)</span></label>
+        <input type="number" id="kitValorEmpaque" min="0" step="500" placeholder="0" oninput="actualizarPrecioFinalKit()">
+        <label for="kitDescuento">Descuento <span style="font-size:10px;opacity:0.6;">(opcional, se resta del precio)</span></label>
+        <input type="number" id="kitDescuento" min="0" step="500" placeholder="0" oninput="actualizarPrecioFinalKit()">
+        <div id="resumenPrecioFinalKit" style="font-size:12.5px;font-weight:600;color:var(--rosa-principal);margin-top:4px;"></div>
+        <label for="kitCantidadKits">¿Cuántos kits vas a armar?</label>
+        <input type="number" id="kitCantidadKits" min="1" step="1" value="1">
+        <label style="margin-top:10px;">Insumos que lleva cada kit</label>
+        <div id="listaInsumosParaKit" style="margin-top:6px;"><div class="cargando">Cargando insumos de Tienda...</div></div>
+        <button class="btn-principal" id="btnArmarKit" onclick="confirmarArmarKit()">Armar kit</button>
+        <div class="mensaje" id="mensajeArmarKit"></div>
+      </div>
+      <div class="panel">
+        <h2>Kits ya armados</h2>
+        <div id="listaKitsArmados"><div class="cargando">Cargando...</div></div>
+      </div>
     </div>
   </div>
 </div>
@@ -2781,49 +2812,6 @@
 </div>
 
 <!-- ===== PANTALLA: LANA ROSA ACADEMY ===== -->
-<div id="pantallaAcademia" class="oculto contenido">
-  <div class="page-header">
-    <h1 id="tituloPantallaAcademia">🧶 Kits de tejido</h1>
-    <div class="subtitulo" id="subtituloPantallaAcademia">Los kits ahora se elaboran directamente en la Tienda, listos para agregarse a la venta de una clase.</div>
-  </div>
-
-  <div class="filtro-tipo" style="margin-bottom:20px;">
-    <button class="chip-filtro activo" data-subtab-btn="academia" onclick="mostrarSubTabGrupo('academia', 'subtabAcademiaKits', this); cargarRadicadosKit();">🧶 Kits de tejido</button>
-  </div>
-
-  <div style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;">
-    ℹ️ Para registrar una venta de curso o clase, ve a <strong>Registrar venta → 🎓 Cursos y clases</strong>. El informe de ventas de Academy y las metas se ven desde <strong>Finanzas</strong>.
-  </div>
-
-  <div id="subtabAcademiaKits" data-subtab-grupo="academia">
-    <div class="grilla-2">
-      <div class="panel">
-        <h2>+ Armar kit de tejido</h2>
-        <div class="subtitulo">Elige los insumos y la cantidad de cada uno que lleva UN kit — se descuentan del inventario de Tienda y el kit queda listo para vender.</div>
-        <label for="kitNombre">Nombre del kit</label>
-        <input type="text" id="kitNombre" placeholder="Ej: Kit amigurumi básico">
-        <label for="kitPrecioVenta">Precio de venta (por kit, sin empaque ni descuento)</label>
-        <input type="number" id="kitPrecioVenta" min="0" step="1000" placeholder="0" oninput="actualizarPrecioFinalKit()">
-        <label for="kitValorEmpaque">Valor del empaque <span style="font-size:10px;opacity:0.6;">(opcional, se suma al precio)</span></label>
-        <input type="number" id="kitValorEmpaque" min="0" step="500" placeholder="0" oninput="actualizarPrecioFinalKit()">
-        <label for="kitDescuento">Descuento <span style="font-size:10px;opacity:0.6;">(opcional, se resta del precio)</span></label>
-        <input type="number" id="kitDescuento" min="0" step="500" placeholder="0" oninput="actualizarPrecioFinalKit()">
-        <div id="resumenPrecioFinalKit" style="font-size:12.5px;font-weight:600;color:var(--rosa-principal);margin-top:4px;"></div>
-        <label for="kitCantidadKits">¿Cuántos kits vas a armar?</label>
-        <input type="number" id="kitCantidadKits" min="1" step="1" value="1">
-        <label style="margin-top:10px;">Insumos que lleva cada kit</label>
-        <div id="listaInsumosParaKit" style="margin-top:6px;"><div class="cargando">Cargando insumos de Tienda...</div></div>
-        <button class="btn-principal" id="btnArmarKit" onclick="confirmarArmarKit()">Armar kit</button>
-        <div class="mensaje" id="mensajeArmarKit"></div>
-      </div>
-      <div class="panel">
-        <h2>Kits ya armados</h2>
-        <div id="listaKitsArmados"><div class="cargando">Cargando...</div></div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- ===== FONDO EMPRENDER: CONFIGURACIÓN ===== -->
 <div id="pantallaFeConfig" class="oculto contenido">
   <div class="page-header">
@@ -3270,7 +3258,7 @@
   // UTILIDADES
   // ============================================================================
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaAcademia', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaConfigAlertas', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaConfigAlertas', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -12125,10 +12113,11 @@
   }
 
   async function mostrarPantallaAcademiaKits() {
-    mostrarPantalla('pantallaAcademia');
-    document.getElementById('tituloPantallaAcademia').textContent = '🧶 Kits de tejido';
-    document.getElementById('subtituloPantallaAcademia').textContent = 'Los kits se elaboran directamente en la Tienda, listos para agregarse a la venta de una clase.';
-    mostrarSubTabGrupo('academia', 'subtabAcademiaKits', document.querySelectorAll('[data-subtab-btn="academia"]')[0]);
+    // Los kits de tejido ahora viven como una pestaña dentro de Inventario,
+    // no como pantalla aparte — esta función queda para no romper otros
+    // lugares del código que todavía la llaman.
+    await mostrarPantallaInventario('01');
+    mostrarSubTabGrupo('invPantalla', 'subtabInvKits', document.getElementById('chipTabKitsInventario'));
     await cargarRadicadosKit();
   }
 
