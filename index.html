@@ -1507,6 +1507,11 @@
   </div>
 
   <div id="subhistorialRedes" class="oculto">
+    <div style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;font-size:12px;margin-bottom:14px;">
+      ℹ️ Esto solo trae las ventas <strong>ya entregadas</strong> del CRM para que queden reflejadas en tu contabilidad — no gestiona envíos aquí (eso lo sigues haciendo en el CRM, como ya lo vienes haciendo).
+      <button class="btn-secundario" style="width:auto;margin-top:8px;display:block;" onclick="sincronizarVentasContablesCrm(this)">🔄 Traer ventas entregadas del CRM</button>
+    </div>
+    <div id="mensajeSincronizarVentasContablesCrm" class="mensaje"></div>
     <div class="barra-busqueda" style="margin-bottom:12px;">
       <input type="text" id="inputBuscarHistorialRedes" placeholder="🔍 Buscar por nombre del cliente, cédula, teléfono o N° de consecutivo..." oninput="debounceBusquedaHistorialRedes()">
     </div>
@@ -9036,6 +9041,28 @@
     ocultarMensaje('mensajePedidoCanal');
     await cargarPedidosCanal();
     await sincronizarPedidosCrm(null, true); // silencioso, automático al entrar
+  }
+
+  async function sincronizarVentasContablesCrm(btn) {
+    ocultarMensaje('mensajeSincronizarVentasContablesCrm');
+    if (btn) { btn.disabled = true; btn.textContent = 'Consultando el CRM...'; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/pedidos-canal/sincronizar-ventas-contables-crm', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + sesionActual.token }
+    });
+
+    if (btn) { btn.disabled = false; btn.textContent = '🔄 Traer ventas entregadas del CRM'; }
+
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeSincronizarVentasContablesCrm', datos.error || 'No se pudo sincronizar con el CRM.', 'error'); return; }
+
+    if (datos.importados === 0) {
+      mostrarMensaje('mensajeSincronizarVentasContablesCrm', `No hay ventas nuevas por traer (ya estaban las ${datos.ya_existian}, y se excluyeron ${datos.excluidos_lana_rosa} por ser restock interno).`, 'exito');
+    } else {
+      mostrarMensaje('mensajeSincronizarVentasContablesCrm', `✅ Se importaron ${datos.importados} venta(s) nueva(s) desde el CRM, ya contabilizadas.`, 'exito');
+      await cargarHistorialRedes();
+    }
   }
 
   async function sincronizarPedidosCrm(btn, silencioso) {
