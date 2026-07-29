@@ -301,8 +301,29 @@
   }
   #overlaySidebarMovil.visible { display: block; }
 
+  .grid-venta-layout { display: grid; grid-template-columns: 340px 1fr; gap: 20px; align-items: start; }
+
   @media (max-width: 900px) {
     .grilla-2, .grilla-3 { grid-template-columns: 1fr; }
+
+    /* El layout de "Registrar venta" (datos del cliente + carrito) pasa de
+       2 columnas fijas a apilado — en celular no hay espacio para 340px
+       de columna angosta. */
+    .grid-venta-layout { grid-template-columns: 1fr; }
+
+    /* Todas las "tablas" del sistema (inventario, compras, nómina, horas
+       trabajadas, reportes de turno, etc.) se arman con filas de grid de
+       columnas fijas en píxeles — perfectas en computador, pero en celular
+       obligaban a la fila entera a ser más ancha que la pantalla. Aquí se
+       apilan en una sola columna: cada dato de la fila pasa a su propia
+       línea, sin cortarse ni obligar a hacer scroll lateral. */
+    .tabla-lista-header { display: none !important; }
+    .tabla-lista-fila {
+      grid-template-columns: 1fr !important;
+      gap: 3px !important;
+      padding: 10px 12px !important;
+    }
+    .tabla-lista-fila > * { min-width: 0; }
 
     .topbar-movil { display: flex; }
 
@@ -598,10 +619,6 @@
   .tabla-lista-fila:hover { background: var(--rosa-suave); }
   .tabla-lista-chevron { opacity: 0.4; font-size: 11px; text-align: center; }
   .tabla-lista-detalle { padding: 14px; background: #fafafa; border-top: 1px solid #f4eef2; }
-  @media (max-width: 720px) {
-    .tabla-lista-header { display: none; }
-    .tabla-lista-fila { grid-template-columns: 1fr 1fr; grid-template-areas: "recibo valor" "fecha cliente" "producto producto"; row-gap: 4px; }
-  }
   .fila-historial-encabezado { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
   .fila-historial-consecutivo { font-weight: 700; font-size: 13.5px; color: var(--rosa-principal); }
   .fila-historial-total { font-weight: 700; font-size: 14px; }
@@ -882,7 +899,7 @@
     </div>
   </div>
 
-  <div style="display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start;">
+  <div class="grid-venta-layout">
 
     <!-- Datos del cliente: columna angosta, colapsable -->
     <div class="panel">
