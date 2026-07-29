@@ -12671,6 +12671,8 @@
             ${ev.estado === 'PENDIENTE' ? `<button class="btn-mini editar" onclick="actualizarEstadoEventoFe('${ev.event_id}', 'EN_REVISION_INTERVENTOR')">Enviar a revisión</button>` : ''}
             ${ev.estado === 'EN_REVISION_INTERVENTOR' ? `<button class="btn-mini guardar" onclick="actualizarEstadoEventoFe('${ev.event_id}', 'APROBADO')">Marcar aprobado</button><button class="btn-mini desactivar" onclick="actualizarEstadoEventoFe('${ev.event_id}', 'RECHAZADO')">Marcar rechazado</button>` : ''}
             ${ev.estado === 'RECHAZADO' ? `<button class="btn-mini editar" onclick="actualizarEstadoEventoFe('${ev.event_id}', 'PENDIENTE')">Reabrir (nueva versión)</button>` : ''}
+            <button class="btn-mini editar" onclick="reprogramarEventoFe('${ev.event_id}', '${ev.fecha_limite}')">📅 Reprogramar fecha</button>
+            <button class="btn-mini desactivar" onclick="confirmarEliminarEventoFe('${ev.event_id}')">🗑️ Eliminar</button>
           </div>
         </div>
       `;
@@ -12684,6 +12686,31 @@
       body: JSON.stringify({ event_id: eventId, estado })
     });
     if (!resp.ok) { alert('No se pudo actualizar.'); return; }
+    await cargarEventosFe();
+  }
+
+  async function reprogramarEventoFe(eventId, fechaActual) {
+    const nuevaFecha = prompt('Nueva fecha límite (AAAA-MM-DD):', fechaActual);
+    if (!nuevaFecha) return;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(nuevaFecha)) { alert('Formato de fecha inválido — usa AAAA-MM-DD.'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/fe/eventos/actualizar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ event_id: eventId, fecha_limite: nuevaFecha })
+    });
+    if (!resp.ok) { alert('No se pudo reprogramar.'); return; }
+    await cargarEventosFe();
+  }
+
+  async function confirmarEliminarEventoFe(eventId) {
+    if (!confirm('¿Eliminar este entregable del calendario? Esta acción no se puede deshacer.')) return;
+    const resp = await fetch(WORKER_URL + '/api/pos/fe/eventos/eliminar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ event_id: eventId })
+    });
+    if (!resp.ok) { alert('No se pudo eliminar.'); return; }
     await cargarEventosFe();
   }
 
