@@ -5387,7 +5387,9 @@
         (proveedoresParaEdicionCache || []).map(p => `<option value="${p.id}" ${p.id === item.proveedor_tercero_id ? 'selected' : ''}>${escaparHtml(p.nombre_completo)}</option>`).join('');
       filaDetalle = `
         <div class="tabla-lista-detalle">
-          <label style="margin-top:0;">Categoría</label>
+          <label style="margin-top:0;">Nombre del producto</label>
+          <input type="text" value="${escaparHtml(item.nombre)}" id="edit-nombre-${item.id}">
+          <label>Categoría</label>
           <select id="edit-categoria-${item.id}">${opcionesCategoria}</select>
           <label>Proveedor</label>
           <select id="edit-proveedor-${item.id}">${opcionesProveedor}</select>
@@ -5432,6 +5434,7 @@
   }
 
   async function guardarEdicionProducto(itemId) {
+    const nombre = document.getElementById(`edit-nombre-${itemId}`).value.trim();
     const precioVenta = Number(document.getElementById(`edit-precio-${itemId}`).value);
     const costo = Number(document.getElementById(`edit-costo-${itemId}`).value);
     const stock = Number(document.getElementById(`edit-stock-${itemId}`).value);
@@ -5439,7 +5442,10 @@
     const categoriaEl = document.getElementById(`edit-categoria-${itemId}`);
     const proveedorEl = document.getElementById(`edit-proveedor-${itemId}`);
 
+    if (!nombre) { alert('El nombre del producto no puede quedar vacío.'); return; }
+
     const cambios = {
+      nombre: nombre,
       precio_venta: precioVenta,
       costo_promedio_ponderado: costo,
       stock_actual: stock,
@@ -6573,12 +6579,16 @@
     }, 300);
   }
 
-  function agregarProductoAEtiquetas(producto) {
+  async function agregarProductoAEtiquetas(producto) {
     if (!producto.sku) {
       const nuevoSku = prompt(`"${producto.nombre}" todavía no tiene código de barras (SKU). Escríbelo para asignárselo:`);
       if (!nuevoSku) return;
       producto.sku = nuevoSku.trim();
-      supabaseClient.from('inventario_items').update({ sku: producto.sku }).eq('id', producto.id).then(() => {});
+      await fetch(WORKER_URL + '/api/pos/inventario/asignar-sku', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+        body: JSON.stringify({ inventario_item_id: producto.id, sku: producto.sku })
+      });
     }
     const yaEsta = etiquetasSeleccionadas.find(e => e.id === producto.id);
     if (yaEsta) { yaEsta.cantidad += 1; }
