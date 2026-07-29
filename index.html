@@ -1099,6 +1099,8 @@
 
         <label for="academiaCliente" style="margin-top:14px;">Cliente <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
         <input type="text" id="academiaCliente" placeholder="Nombre del cliente">
+        <label for="academiaIdentificacion">Cédula <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+        <input type="text" id="academiaIdentificacion" placeholder="CC, CE, NIT...">
         <label for="academiaTelefono">Teléfono <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
         <input type="tel" id="academiaTelefono" placeholder="300 000 0000">
         <label for="academiaCorreo">Correo electrónico <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
@@ -1526,7 +1528,7 @@
 
   <div id="subhistorialClases" class="oculto">
     <div class="barra-busqueda" style="margin-bottom:12px;">
-      <input type="text" id="inputBuscarHistorialClases" placeholder="🔍 Buscar por nombre del cliente..." oninput="debounceBusquedaHistorialClases()">
+      <input type="text" id="inputBuscarHistorialClases" placeholder="🔍 Buscar por nombre, cédula o teléfono del cliente..." oninput="debounceBusquedaHistorialClases()">
     </div>
     <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
       <div>
@@ -1539,7 +1541,7 @@
       </div>
       <button class="btn-mini desactivar" onclick="limpiarFiltrosHistorialClases()" style="margin-bottom:1px;">Quitar filtros</button>
     </div>
-    <div class="subtitulo" style="margin-bottom:10px;">Los cursos/clases solo guardan el nombre del cliente (no cédula ni teléfono), así que la búsqueda aquí es solo por nombre.</div>
+    <div class="subtitulo" style="margin-bottom:10px;">Las ventas registradas antes de este cambio no tienen cédula ni teléfono guardados — solo se pueden buscar por nombre.</div>
     <div class="panel" style="max-height:none;max-width:none;">
       <div id="listaHistorialClases"><div class="cargando">Cargando...</div></div>
     </div>
@@ -12151,7 +12153,9 @@
 
   async function confirmarRegistrarVentaAcademia() {
     const cliente = document.getElementById('academiaCliente').value.trim();
+    const identificacion = document.getElementById('academiaIdentificacion').value.trim();
     const telefono = document.getElementById('academiaTelefono').value.trim();
+    const correo = document.getElementById('academiaCorreo').value.trim();
     const metodoPago = document.getElementById('academiaMetodoPago').value;
     ocultarMensaje('mensajeVentaAcademia');
 
@@ -12181,6 +12185,9 @@
         area_formacion: areaFormacion,
         descripcion: descripcionCombinada,
         cliente_nombre: cliente || null,
+        cliente_identificacion: identificacion || null,
+        cliente_telefono: telefono || null,
+        cliente_correo: correo || null,
         monto: montoTotal,
         metodo_pago: metodoPago,
         turno_id: turnoActivoActual.id,
@@ -12243,6 +12250,7 @@
     document.getElementById('btnWhatsappReciboAcademia').disabled = false;
 
     document.getElementById('academiaCliente').value = '';
+    document.getElementById('academiaIdentificacion').value = '';
     document.getElementById('academiaTelefono').value = '';
     document.getElementById('academiaCorreo').value = '';
 
@@ -12295,7 +12303,7 @@
             <span class="fila-historial-consecutivo">${etiquetasSubareaAcademia[v.area_formacion] || v.area_formacion}</span>
             <span class="fila-historial-total">${formatearMoneda(v.monto)}</span>
           </div>
-          <div class="fila-historial-fecha">${fecha}${v.cliente_nombre ? ' · ' + escaparHtml(v.cliente_nombre) : ''}</div>
+          <div class="fila-historial-fecha">${fecha}${v.cliente_nombre ? ' · ' + escaparHtml(v.cliente_nombre) : ''}${[v.cliente_identificacion, v.cliente_telefono].filter(Boolean).length ? ' (' + [v.cliente_identificacion, v.cliente_telefono].filter(Boolean).map(x => escaparHtml(x)).join(' · ') + ')' : ''}</div>
           <div class="fila-historial-detalle">${escaparHtml(v.descripcion)}</div>
         </div>
       `;
