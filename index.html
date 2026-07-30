@@ -727,6 +727,7 @@
         <button class="nav-btn" id="nav-cotizaciones" onclick="mostrarPantallaCotizaciones()"><span class="nav-icon">📝</span> Cotizaciones</button>
         <button class="nav-btn" id="nav-notas-cd" onclick="mostrarPantallaNotasCD()"><span class="nav-icon">📄</span> Notas crédito/débito</button>
         <button class="nav-btn" id="nav-ordenes-compra" onclick="mostrarPantallaOrdenesCompra()"><span class="nav-icon">📦</span> Órdenes de compra</button>
+        <button class="nav-btn" id="nav-listas-precios" onclick="mostrarPantallaListasPrecios()"><span class="nav-icon">💲</span> Listas de precios</button>
         <button class="nav-btn" id="nav-ajustestock" onclick="mostrarPantallaAjusteStock()"><span class="nav-icon">📥</span> Entrada mercancía</button>
         <button class="nav-btn" id="nav-etiquetas" onclick="mostrarPantallaEtiquetas()"><span class="nav-icon">🏷️</span> Imprimir etiquetas</button>
         <button class="nav-btn" id="nav-transferir-stock" onclick="mostrarPantallaTransferirStock()"><span class="nav-icon">🔄</span> Transferir stock</button>
@@ -2972,6 +2973,35 @@
   </div>
 </div>
 
+<!-- ===== PANTALLA: LISTAS DE PRECIOS ===== -->
+<div id="pantallaListasPrecios" class="oculto contenido">
+  <div class="page-header">
+    <h1>💲 Listas de precios</h1>
+    <div class="subtitulo">Tarifas diferenciadas (ej: mayorista para revendedores). Se asignan a un cliente desde su ficha en Directorio → Clientes — si no tiene ninguna asignada, se le sigue cobrando el precio normal.</div>
+  </div>
+
+  <div class="panel" style="max-width:420px;">
+    <h2>+ Nueva lista</h2>
+    <label for="lpNombre">Nombre</label>
+    <input type="text" id="lpNombre" placeholder="Ej: Mayorista">
+    <label for="lpDescripcion">Descripción <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+    <input type="text" id="lpDescripcion" placeholder="Ej: Para revendedores con más de 10 unidades">
+    <button class="btn-principal" onclick="confirmarCrearListaPrecio()">Crear lista</button>
+    <div class="mensaje" id="mensajeListaPrecio"></div>
+  </div>
+
+  <div class="grilla-2" style="margin-top:20px;">
+    <div class="panel">
+      <h2>Listas</h2>
+      <div id="listaListasPrecios"><div class="cargando">Cargando...</div></div>
+    </div>
+    <div class="panel">
+      <h2 id="tituloPreciosDeLista">Precios de la lista</h2>
+      <div id="contenidoPreciosDeLista"><div style="font-size:12px;opacity:0.6;">Selecciona una lista de la izquierda para ver/editar sus precios.</div></div>
+    </div>
+  </div>
+</div>
+
 <div id="pantallaConciliacion" class="oculto contenido">
   <div class="page-header">
     <h1>🏦 Conciliación bancaria</h1>
@@ -3842,7 +3872,7 @@
   });
 
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -4123,6 +4153,7 @@
     mostrar('nav-cotizaciones', esAdmin || esCajero);
     mostrar('nav-notas-cd', esAdmin);
     mostrar('nav-ordenes-compra', esAdmin);
+    mostrar('nav-listas-precios', esAdmin);
     mostrar('nav-ajustestock', esAdmin || esCajero);
     mostrar('nav-etiquetas', esAdmin || esCajero);
     mostrar('nav-transferir-stock', esAdmin || esCajero);
@@ -5535,6 +5566,34 @@
   // ============================================================================
   let autocompletadoTimeout = null;
 
+  async function aplicarListaPrecioAlCarrito(terceroId) {
+    if (carrito.length === 0) return;
+
+    let preciosEspeciales = {};
+    if (terceroId) {
+      const resp = await fetch(`${WORKER_URL}/api/pos/listas-precios/para-cliente?tercero_id=${terceroId}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+      if (resp.ok) {
+        const datos = await resp.json();
+        if (datos.tiene_lista) preciosEspeciales = datos.precios;
+      }
+    }
+
+    let huboAviso = false;
+    carrito.forEach(linea => {
+      if (linea.esEnvioMarketplace || !linea.id) return; // no tocar líneas que no son productos reales
+      const productoOriginal = catalogoCompleto.find(p => p.id === linea.id);
+      const precioNormal = productoOriginal ? productoOriginal.precio : linea.precio;
+      const precioEspecial = preciosEspeciales[linea.id];
+      const nuevoPrecio = precioEspecial !== undefined ? precioEspecial : precioNormal;
+      if (nuevoPrecio !== linea.precio) { linea.precio = nuevoPrecio; huboAviso = true; }
+    });
+
+    if (huboAviso) renderizarCarrito();
+    if (Object.keys(preciosEspeciales).length > 0 && huboAviso) {
+      mostrarMensaje('mensajeVenta', '💲 Se aplicó la lista de precios especial de este cliente a los productos del carrito.', 'exito');
+    }
+  }
+
   async function autocompletarCliente(campo) {
     clearTimeout(autocompletadoTimeout);
     autocompletadoTimeout = setTimeout(async () => {
@@ -5549,7 +5608,7 @@
 
       const { data, error } = await supabaseClient
         .from('terceros')
-        .select('id, nombre_completo, telefono, email, numero_documento, direccion, ciudad, puntos_fidelizacion')
+        .select('id, nombre_completo, telefono, email, numero_documento, direccion, ciudad, puntos_fidelizacion, lista_precio_id')
         .eq('numero_documento', identificacion)
         .limit(1)
         .single();
@@ -5558,6 +5617,7 @@
         msgEl.style.display = 'none';
         clienteVentaTerceroId = null;
         document.getElementById('bloquePuntosCliente').classList.add('oculto');
+        await aplicarListaPrecioAlCarrito(null);
         return;
       }
 
@@ -5571,6 +5631,7 @@
       msgEl.style.display = 'block';
 
       clienteVentaTerceroId = data.id;
+      await aplicarListaPrecioAlCarrito(data.id);
       const puntos = data.puntos_fidelizacion || 0;
       const bloquePuntos = document.getElementById('bloquePuntosCliente');
       if (puntos > 0) {
@@ -9558,12 +9619,22 @@
       <input type="text" id="editClienteCiudad-${id}" value="${escaparHtml(c.ciudad || '')}">
       <label>Fecha de cumpleaños <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
       <input type="date" id="editClienteCumpleanos-${id}" value="${c.fecha_nacimiento || ''}">
+      <label>Lista de precios <span style="font-size:10px;opacity:0.6;">(opcional — si no elige ninguna, paga el precio normal)</span></label>
+      <select id="editClienteListaPrecio-${id}"><option value="">Precio normal</option></select>
       <div style="display:flex;gap:8px;margin-top:10px;">
         <button class="btn-mini guardar" onclick="guardarEdicionCliente('${id}')">Guardar cambios</button>
         <button class="btn-mini desactivar" onclick="document.getElementById('edicionCliente-${id}').classList.add('oculto')">Cancelar</button>
       </div>
       <div class="mensaje" id="mensajeEditarCliente-${id}"></div>
     `;
+    fetch(WORKER_URL + '/api/pos/listas-precios', { headers: { Authorization: 'Bearer ' + sesionActual.token } })
+      .then(r => r.ok ? r.json() : { listas: [] })
+      .then(({ listas }) => {
+        const select = document.getElementById(`editClienteListaPrecio-${id}`);
+        if (!select) return;
+        select.innerHTML = '<option value="">Precio normal</option>' +
+          (listas || []).map(l => `<option value="${l.id}" ${c.lista_precio_id === l.id ? 'selected' : ''}>${escaparHtml(l.nombre)}</option>`).join('');
+      });
   }
 
   async function guardarEdicionCliente(id) {
@@ -9576,6 +9647,7 @@
       direccion: document.getElementById(`editClienteDireccion-${id}`).value.trim() || null,
       ciudad: document.getElementById(`editClienteCiudad-${id}`).value.trim() || null,
       fecha_nacimiento: document.getElementById(`editClienteCumpleanos-${id}`).value || null,
+      lista_precio_id: document.getElementById(`editClienteListaPrecio-${id}`).value || null,
     };
     if (!cuerpo.nombre_completo) { mostrarMensaje(`mensajeEditarCliente-${id}`, 'El nombre no puede quedar vacío.', 'error'); return; }
 
@@ -12791,6 +12863,165 @@
     });
     if (!resp.ok) { alert('No se pudo eliminar.'); return; }
     await cargarOrdenesCompra();
+  }
+
+  // ============================================================
+  // LISTAS DE PRECIOS
+  // ============================================================
+  let listasPreciosCache = [];
+  let listaPrecioSeleccionadaId = null;
+  let inventarioParaListaCache = [];
+
+  async function mostrarPantallaListasPrecios() {
+    mostrarPantalla('pantallaListasPrecios');
+    document.getElementById('lpNombre').value = '';
+    document.getElementById('lpDescripcion').value = '';
+    ocultarMensaje('mensajeListaPrecio');
+    listaPrecioSeleccionadaId = null;
+    document.getElementById('contenidoPreciosDeLista').innerHTML = '<div style="font-size:12px;opacity:0.6;">Selecciona una lista de la izquierda para ver/editar sus precios.</div>';
+    await cargarListasPrecios();
+  }
+
+  async function confirmarCrearListaPrecio() {
+    const nombre = document.getElementById('lpNombre').value.trim();
+    const descripcion = document.getElementById('lpDescripcion').value.trim();
+    ocultarMensaje('mensajeListaPrecio');
+    if (!nombre) { mostrarMensaje('mensajeListaPrecio', 'Escribe el nombre de la lista.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/listas-precios', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ nombre, descripcion })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeListaPrecio', datos.error || 'No se pudo crear.', 'error'); return; }
+
+    mostrarMensaje('mensajeListaPrecio', '✅ Lista creada.', 'exito');
+    document.getElementById('lpNombre').value = '';
+    document.getElementById('lpDescripcion').value = '';
+    await cargarListasPrecios();
+  }
+
+  async function cargarListasPrecios() {
+    const cont = document.getElementById('listaListasPrecios');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    const resp = await fetch(WORKER_URL + '/api/pos/listas-precios', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const { listas } = await resp.json();
+    listasPreciosCache = listas || [];
+
+    if (listas.length === 0) { cont.innerHTML = '<div class="cargando">Sin listas creadas todavía.</div>'; return; }
+
+    cont.innerHTML = listas.map(l => `
+      <div class="fila-historial" style="margin-bottom:9px;cursor:pointer;${listaPrecioSeleccionadaId === l.id ? 'border:2px solid var(--rosa-principal);' : ''}" onclick="seleccionarListaPrecio('${l.id}', '${escaparHtml(l.nombre)}')">
+        <div class="fila-historial-encabezado">
+          <span class="fila-historial-consecutivo">${escaparHtml(l.nombre)}</span>
+        </div>
+        ${l.descripcion ? `<div class="fila-historial-fecha">${escaparHtml(l.descripcion)}</div>` : ''}
+        <button class="btn-mini desactivar" style="margin-top:6px;" onclick="event.stopPropagation(); confirmarDesactivarListaPrecio('${l.id}')">Desactivar lista</button>
+      </div>
+    `).join('');
+  }
+
+  async function confirmarDesactivarListaPrecio(id) {
+    if (!confirm('¿Desactivar esta lista de precios? Los clientes que la tengan asignada volverán al precio normal.')) return;
+    const resp = await fetch(WORKER_URL + '/api/pos/listas-precios/desactivar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ id })
+    });
+    if (!resp.ok) { alert('No se pudo desactivar.'); return; }
+    if (listaPrecioSeleccionadaId === id) {
+      listaPrecioSeleccionadaId = null;
+      document.getElementById('contenidoPreciosDeLista').innerHTML = '<div style="font-size:12px;opacity:0.6;">Selecciona una lista de la izquierda para ver/editar sus precios.</div>';
+    }
+    await cargarListasPrecios();
+  }
+
+  async function seleccionarListaPrecio(id, nombre) {
+    listaPrecioSeleccionadaId = id;
+    document.getElementById('tituloPreciosDeLista').textContent = `Precios de "${nombre}"`;
+    await cargarListasPrecios(); // para refrescar el resaltado de la seleccionada
+
+    const cont = document.getElementById('contenidoPreciosDeLista');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    const resp = await fetch(`${WORKER_URL}/api/pos/listas-precios/items?lista_id=${id}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const { precios } = await resp.json();
+
+    cont.innerHTML = `
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <input type="text" id="lpBuscarProducto" placeholder="🔍 Buscar producto por nombre..." style="flex:1;" oninput="debounceBuscarProductoParaLista()">
+      </div>
+      <div id="resultadosBuscarProductoLista" style="margin-bottom:10px;"></div>
+      <div id="listaPreciosDeListaActual">
+        ${(precios || []).length === 0 ? '<div style="font-size:12px;opacity:0.6;">Sin precios especiales agregados todavía.</div>' :
+          precios.map(p => `
+            <div class="resumen-fila">
+              <span>${escaparHtml(p.item ? p.item.nombre : '')} <span style="font-size:10px;opacity:0.5;">(normal: ${formatearMoneda(p.item ? p.item.precio_venta : 0)})</span></span>
+              <span><strong>${formatearMoneda(p.precio)}</strong> <button class="btn-mini desactivar" onclick="confirmarQuitarPrecioDeLista('${p.id}')">✕</button></span>
+            </div>
+          `).join('')}
+      </div>
+    `;
+  }
+
+  let timeoutBuscarProductoLista = null;
+  function debounceBuscarProductoParaLista() {
+    clearTimeout(timeoutBuscarProductoLista);
+    timeoutBuscarProductoLista = setTimeout(buscarProductoParaLista, 350);
+  }
+
+  async function buscarProductoParaLista() {
+    const q = document.getElementById('lpBuscarProducto').value.trim();
+    const cont = document.getElementById('resultadosBuscarProductoLista');
+    if (!q) { cont.innerHTML = ''; return; }
+
+    const { data, error } = await supabaseClient
+      .from('inventario_items')
+      .select('id, nombre, precio_venta')
+      .eq('activo', true)
+      .ilike('nombre', `%${q}%`)
+      .limit(8);
+
+    if (error || !data) { cont.innerHTML = '<div style="font-size:12px;opacity:0.6;">No se pudo buscar.</div>'; return; }
+
+    cont.innerHTML = data.map(i => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f4eef2;font-size:12.5px;">
+        <span>${escaparHtml(i.nombre)} <span style="opacity:0.5;">(normal: ${formatearMoneda(i.precio_venta)})</span></span>
+        <span style="display:flex;gap:4px;">
+          <input type="number" id="precioNuevoLista-${i.id}" placeholder="Precio" min="0" step="1000" style="width:90px;padding:5px;">
+          <button class="btn-mini guardar" onclick="confirmarAgregarPrecioALista('${i.id}')">Agregar</button>
+        </span>
+      </div>
+    `).join('');
+  }
+
+  async function confirmarAgregarPrecioALista(inventarioItemId) {
+    const precio = Number(document.getElementById(`precioNuevoLista-${inventarioItemId}`).value);
+    if (!precio || precio <= 0) { alert('Escribe un precio válido.'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/listas-precios/items', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ lista_id: listaPrecioSeleccionadaId, inventario_item_id: inventarioItemId, precio })
+    });
+    if (!resp.ok) { alert('No se pudo agregar.'); return; }
+    document.getElementById('lpBuscarProducto').value = '';
+    document.getElementById('resultadosBuscarProductoLista').innerHTML = '';
+    const lista = listasPreciosCache.find(l => l.id === listaPrecioSeleccionadaId);
+    await seleccionarListaPrecio(listaPrecioSeleccionadaId, lista ? lista.nombre : '');
+  }
+
+  async function confirmarQuitarPrecioDeLista(id) {
+    const resp = await fetch(WORKER_URL + '/api/pos/listas-precios/items/eliminar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ id })
+    });
+    if (!resp.ok) { alert('No se pudo quitar.'); return; }
+    const lista = listasPreciosCache.find(l => l.id === listaPrecioSeleccionadaId);
+    await seleccionarListaPrecio(listaPrecioSeleccionadaId, lista ? lista.nombre : '');
   }
 
   async function mostrarPantallaConciliacion() {
