@@ -766,6 +766,7 @@
         <button class="nav-btn" id="nav-estados-financieros" onclick="mostrarPantallaEstadosFinancieros()"><span class="nav-icon">📑</span> Estados financieros</button>
         <button class="nav-btn" id="nav-cuentas-pendientes" onclick="mostrarPantallaCuentasPendientes()"><span class="nav-icon">📋</span> Cartera</button>
         <button class="nav-btn" id="nav-activos-fijos" onclick="mostrarPantallaActivosFijos()"><span class="nav-icon">🪑</span> Activos fijos</button>
+        <button class="nav-btn" id="nav-conciliacion" onclick="mostrarPantallaConciliacion()"><span class="nav-icon">🏦</span> Conciliación bancaria</button>
       </div>
     </div>
     <div class="sidebar-depto" id="deptoFondoEmprenderGrupo" style="display:none;">
@@ -2759,6 +2760,55 @@
   </div>
 </div>
 
+<!-- ===== PANTALLA: CONCILIACIÓN BANCARIA ===== -->
+<div id="pantallaConciliacion" class="oculto contenido">
+  <div class="page-header">
+    <h1>🏦 Conciliación bancaria</h1>
+    <div class="subtitulo">Compara lo que muestra el extracto real de tu banco/Nequi/Daviplata contra lo que el sistema registró, para detectar diferencias.</div>
+  </div>
+
+  <div id="resumenConciliacion" class="grilla-3" style="margin-bottom:20px;"></div>
+
+  <div class="panel" style="max-width:520px;">
+    <h2>+ Registrar movimiento del extracto</h2>
+    <div class="subtitulo">Digita cada movimiento tal como aparece en tu banco/app, para poder compararlo.</div>
+    <label for="concFecha">Fecha</label>
+    <input type="date" id="concFecha">
+    <label for="concDescripcion">Descripción (como aparece en el extracto)</label>
+    <input type="text" id="concDescripcion" placeholder="Ej: Transferencia recibida Nequi">
+    <label for="concTipo">Tipo</label>
+    <select id="concTipo">
+      <option value="entrada">Entrada (dinero que llegó)</option>
+      <option value="salida">Salida (dinero que salió)</option>
+    </select>
+    <label for="concValor">Valor (COP)</label>
+    <input type="number" id="concValor" min="1" step="1000">
+    <button class="btn-principal" onclick="confirmarRegistrarMovimientoExtracto()">Registrar</button>
+    <div class="mensaje" id="mensajeConciliacion"></div>
+  </div>
+
+  <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin:20px 0 12px 0;">
+    <div><label for="concFiltroDesde" style="font-size:11px;">Desde</label><input type="date" id="concFiltroDesde" onchange="cargarPantallaConciliacionCompleta()" style="padding:9px 10px;"></div>
+    <div><label for="concFiltroHasta" style="font-size:11px;">Hasta</label><input type="date" id="concFiltroHasta" onchange="cargarPantallaConciliacionCompleta()" style="padding:9px 10px;"></div>
+  </div>
+
+  <div class="grilla-2">
+    <div class="panel" style="max-width:none;max-height:none;">
+      <h2>📄 Extracto bancario (sin conciliar)</h2>
+      <div id="listaExtractoSinConciliar"><div class="cargando">Cargando...</div></div>
+    </div>
+    <div class="panel" style="max-width:none;max-height:none;">
+      <h2>💻 Registrado en el sistema (sin conciliar)</h2>
+      <div id="listaApuntesSinConciliar"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+
+  <div class="panel" style="max-width:none;max-height:none;margin-top:20px;">
+    <h2>✅ Ya conciliados</h2>
+    <div id="listaYaConciliados"><div class="cargando">Cargando...</div></div>
+  </div>
+</div>
+
 <div id="pantallaCuentasPendientes" class="oculto contenido">
   <div class="page-header">
     <h1>📋 Cartera</h1>
@@ -3581,7 +3631,7 @@
   });
 
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -3874,6 +3924,7 @@
     mostrar('nav-estados-financieros', esAdmin);
     mostrar('nav-cuentas-pendientes', esAdmin);
     mostrar('nav-activos-fijos', esAdmin);
+    mostrar('nav-conciliacion', esAdmin);
     mostrar('nav-dashboard', esAdmin);
     document.getElementById('btnAbrirAsistenteIA').style.display = 'flex';
     document.getElementById('btnCrearRapido').style.display = esAdmin ? 'flex' : 'none';
@@ -12057,6 +12108,161 @@
   // ACTIVOS FIJOS
   // ============================================================
   let categoriasActivoFijoCache = [];
+
+  // ============================================================
+  // CONCILIACIÓN BANCARIA
+  // ============================================================
+  let movimientoExtractoSeleccionado = null;
+
+  async function mostrarPantallaConciliacion() {
+    mostrarPantalla('pantallaConciliacion');
+    document.getElementById('concFecha').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('concDescripcion').value = '';
+    document.getElementById('concValor').value = '';
+    ocultarMensaje('mensajeConciliacion');
+    if (!document.getElementById('concFiltroDesde').value) {
+      const primerDia = new Date(); primerDia.setDate(1);
+      document.getElementById('concFiltroDesde').value = primerDia.toISOString().slice(0, 10);
+      document.getElementById('concFiltroHasta').value = new Date().toISOString().slice(0, 10);
+    }
+    movimientoExtractoSeleccionado = null;
+    await cargarPantallaConciliacionCompleta();
+  }
+
+  async function confirmarRegistrarMovimientoExtracto() {
+    const fecha = document.getElementById('concFecha').value;
+    const descripcion = document.getElementById('concDescripcion').value.trim();
+    const tipo = document.getElementById('concTipo').value;
+    const valor = Number(document.getElementById('concValor').value);
+    ocultarMensaje('mensajeConciliacion');
+
+    if (!fecha) { mostrarMensaje('mensajeConciliacion', 'Escribe la fecha.', 'error'); return; }
+    if (!descripcion) { mostrarMensaje('mensajeConciliacion', 'Escribe la descripción.', 'error'); return; }
+    if (!valor || valor <= 0) { mostrarMensaje('mensajeConciliacion', 'Escribe un valor válido.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/conciliacion/movimientos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ fecha, descripcion, tipo, valor })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeConciliacion', datos.error || 'No se pudo registrar.', 'error'); return; }
+
+    mostrarMensaje('mensajeConciliacion', '✅ Movimiento registrado.', 'exito');
+    document.getElementById('concDescripcion').value = '';
+    document.getElementById('concValor').value = '';
+    await cargarPantallaConciliacionCompleta();
+  }
+
+  async function cargarPantallaConciliacionCompleta() {
+    const desde = document.getElementById('concFiltroDesde').value;
+    const hasta = document.getElementById('concFiltroHasta').value;
+
+    // Resumen
+    const respResumen = await fetch(`${WORKER_URL}/api/pos/conciliacion/resumen?fecha_corte=${hasta || new Date().toISOString().slice(0, 10)}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (respResumen.ok) {
+      const r = await respResumen.json();
+      const dif = r.diferencia;
+      document.getElementById('resumenConciliacion').innerHTML = `
+        <div class="panel" style="max-height:none;text-align:center;"><div style="font-size:11.5px;opacity:0.65;">SALDO SEGÚN BANCO</div><div style="font-size:19px;font-weight:700;margin-top:4px;">${formatearMoneda(r.saldo_banco)}</div></div>
+        <div class="panel" style="max-height:none;text-align:center;"><div style="font-size:11.5px;opacity:0.65;">SALDO SEGÚN LIBROS</div><div style="font-size:19px;font-weight:700;margin-top:4px;">${formatearMoneda(r.saldo_libros)}</div></div>
+        <div class="panel" style="max-height:none;text-align:center;"><div style="font-size:11.5px;opacity:0.65;">DIFERENCIA</div><div style="font-size:19px;font-weight:700;margin-top:4px;color:${Math.abs(dif) < 1 ? 'var(--verde-exito)' : 'var(--rojo-error)'};">${formatearMoneda(dif)}</div></div>
+      `;
+    }
+
+    // Extracto sin conciliar
+    const respExtracto = await fetch(`${WORKER_URL}/api/pos/conciliacion/movimientos?solo_sin_conciliar=true&fecha_desde=${desde}&fecha_hasta=${hasta}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    const contExtracto = document.getElementById('listaExtractoSinConciliar');
+    if (respExtracto.ok) {
+      const { movimientos } = await respExtracto.json();
+      window._extractoSinConciliarCache = movimientos || [];
+      contExtracto.innerHTML = (!movimientos || movimientos.length === 0) ? '<div class="cargando">Nada pendiente por conciliar aquí.</div>' :
+        movimientos.map(m => `
+          <div class="fila-historial ${movimientoExtractoSeleccionado === m.id ? 'seleccionado-conciliacion' : ''}" style="margin-bottom:8px;cursor:pointer;${movimientoExtractoSeleccionado === m.id ? 'border:2px solid var(--rosa-principal);' : ''}" onclick="seleccionarMovimientoExtracto('${m.id}')">
+            <div class="fila-historial-encabezado">
+              <span class="fila-historial-consecutivo">${new Date(m.fecha + 'T00:00:00').toLocaleDateString('es-CO')} — ${escaparHtml(m.descripcion)}</span>
+              <span class="fila-historial-total" style="color:${m.tipo === 'entrada' ? 'var(--verde-exito)' : 'var(--rojo-error)'};">${m.tipo === 'entrada' ? '+' : '-'}${formatearMoneda(m.valor)}</span>
+            </div>
+            <button class="btn-mini desactivar" style="margin-top:4px;" onclick="event.stopPropagation(); eliminarMovimientoExtracto('${m.id}')">🗑️ Eliminar</button>
+          </div>
+        `).join('');
+    }
+
+    // Apuntes del sistema sin conciliar
+    const respApuntes = await fetch(`${WORKER_URL}/api/pos/conciliacion/apuntes-bancos?fecha_desde=${desde}&fecha_hasta=${hasta}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    const contApuntes = document.getElementById('listaApuntesSinConciliar');
+    if (respApuntes.ok) {
+      const { apuntes } = await respApuntes.json();
+      window._apuntesSinConciliarCache = apuntes || [];
+      contApuntes.innerHTML = (!apuntes || apuntes.length === 0) ? '<div class="cargando">Nada pendiente por conciliar aquí.</div>' :
+        apuntes.map(a => `
+          <div class="fila-historial" style="margin-bottom:8px;cursor:pointer;" onclick="intentarConciliar('${a.id}')">
+            <div class="fila-historial-encabezado">
+              <span class="fila-historial-consecutivo">${new Date(a.fecha + 'T00:00:00').toLocaleDateString('es-CO')} — ${escaparHtml(a.descripcion || '')}</span>
+              <span class="fila-historial-total" style="color:${a.tipo === 'entrada' ? 'var(--verde-exito)' : 'var(--rojo-error)'};">${a.tipo === 'entrada' ? '+' : '-'}${formatearMoneda(a.valor)}</span>
+            </div>
+          </div>
+        `).join('');
+    }
+
+    // Ya conciliados
+    const respConciliados = await fetch(`${WORKER_URL}/api/pos/conciliacion/movimientos?fecha_desde=${desde}&fecha_hasta=${hasta}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    const contConciliados = document.getElementById('listaYaConciliados');
+    if (respConciliados.ok) {
+      const { movimientos } = await respConciliados.json();
+      const soloConciliados = (movimientos || []).filter(m => m.conciliado);
+      contConciliados.innerHTML = soloConciliados.length === 0 ? '<div class="cargando">Todavía no has conciliado nada en este rango.</div>' :
+        soloConciliados.map(m => `
+          <div class="resumen-fila">
+            <span>${new Date(m.fecha + 'T00:00:00').toLocaleDateString('es-CO')} — ${escaparHtml(m.descripcion)}</span>
+            <span><strong>${formatearMoneda(m.valor)}</strong> <button class="btn-mini desactivar" onclick="confirmarDesconciliarMovimiento('${m.id}')">Deshacer</button></span>
+          </div>
+        `).join('');
+    }
+  }
+
+  function seleccionarMovimientoExtracto(id) {
+    movimientoExtractoSeleccionado = movimientoExtractoSeleccionado === id ? null : id;
+    cargarPantallaConciliacionCompleta();
+  }
+
+  async function intentarConciliar(apunteId) {
+    if (!movimientoExtractoSeleccionado) {
+      alert('Primero selecciona (toca) el movimiento del extracto bancario, del lado izquierdo, y luego toca aquí el registro del sistema con el que coincide.');
+      return;
+    }
+    const resp = await fetch(WORKER_URL + '/api/pos/conciliacion/conciliar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ movimiento_id: movimientoExtractoSeleccionado, apunte_contable_id: apunteId })
+    });
+    if (!resp.ok) { alert('No se pudo conciliar.'); return; }
+    movimientoExtractoSeleccionado = null;
+    await cargarPantallaConciliacionCompleta();
+  }
+
+  async function confirmarDesconciliarMovimiento(movimientoId) {
+    if (!confirm('¿Deshacer esta conciliación?')) return;
+    const resp = await fetch(WORKER_URL + '/api/pos/conciliacion/desconciliar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ movimiento_id: movimientoId })
+    });
+    if (!resp.ok) { alert('No se pudo deshacer.'); return; }
+    await cargarPantallaConciliacionCompleta();
+  }
+
+  async function eliminarMovimientoExtracto(id) {
+    if (!confirm('¿Eliminar este movimiento del extracto? No se puede deshacer.')) return;
+    const resp = await fetch(WORKER_URL + '/api/pos/conciliacion/movimientos/eliminar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ id })
+    });
+    if (!resp.ok) { alert('No se pudo eliminar.'); return; }
+    await cargarPantallaConciliacionCompleta();
+  }
+
 
   async function mostrarPantallaActivosFijos() {
     mostrarPantalla('pantallaActivosFijos');
