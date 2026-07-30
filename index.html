@@ -716,45 +716,56 @@
     <button class="nav-btn" id="nav-dashboard" onclick="mostrarPantallaDashboard()"><span class="nav-icon">🏠</span> Dashboard</button>
     <button class="nav-btn" id="nav-calendario" onclick="mostrarPantallaCalendario()"><span class="nav-icon">📅</span> Calendario del equipo</button>
 
-    <div class="sidebar-depto" id="deptoTiendaGrupo" style="display:none;">
-      <button class="sidebar-depto-header" id="headerDeptoTienda" onclick="toggleSidebarDepto('deptoTiendaSubmenu', 'headerDeptoTienda')">🏬 Tienda/Mercería <span class="chevron">▾</span></button>
-      <div class="sidebar-depto-submenu" id="deptoTiendaSubmenu">
+    <!-- 1. VENTAS Y CLIENTES -->
+    <div class="sidebar-depto" id="deptoVentasGrupo" style="display:none;">
+      <button class="sidebar-depto-header" id="headerDeptoVentas" onclick="toggleSidebarDepto('deptoVentasSubmenu', 'headerDeptoVentas')">🛍️ Ventas y Clientes <span class="chevron">▾</span></button>
+      <div class="sidebar-depto-submenu" id="deptoVentasSubmenu">
+        <button class="nav-btn" id="nav-clientes-dir" onclick="mostrarPantallaClientes()"><span class="nav-icon">👤</span> Clientes</button>
+        <button class="nav-btn" id="nav-cotizaciones" onclick="mostrarPantallaCotizaciones()"><span class="nav-icon">📝</span> Cotizaciones</button>
         <button class="nav-btn" id="nav-ventas" onclick="mostrarPantallaVentas()"><span class="nav-icon">🛒</span> Registrar venta</button>
         <button class="nav-btn" id="nav-historial" onclick="mostrarPantallaHistorial('01')"><span class="nav-icon">📋</span> Historial ventas</button>
         <button class="nav-btn" id="nav-pedidos-canal" onclick="mostrarPantallaPedidosCanal()"><span class="nav-icon">📱</span> Pedidos WhatsApp/Redes</button>
-        <button class="nav-btn" id="nav-solicitudes-tienda" onclick="mostrarPantallaSolicitudes()"><span class="nav-icon">📦</span> Solicitud de insumos del Taller</button>
-        <button class="nav-btn" id="nav-inventario-tienda" onclick="mostrarPantallaInventario('01')"><span class="nav-icon">📊</span> Inventario</button>
-        <button class="nav-btn" id="nav-cotizaciones" onclick="mostrarPantallaCotizaciones()"><span class="nav-icon">📝</span> Cotizaciones</button>
         <button class="nav-btn" id="nav-notas-cd" onclick="mostrarPantallaNotasCD()"><span class="nav-icon">📄</span> Notas crédito/débito</button>
+        <button class="nav-btn" id="nav-cuentas-pendientes" onclick="mostrarPantallaCuentasPendientes()"><span class="nav-icon">📋</span> Cartera</button>
+      </div>
+    </div>
+
+    <!-- 2. COMPRAS Y GASTOS -->
+    <div class="sidebar-depto" id="deptoComprasGrupo" style="display:none;">
+      <button class="sidebar-depto-header" id="headerDeptoCompras" onclick="toggleSidebarDepto('deptoComprasSubmenu', 'headerDeptoCompras')">🛒 Compras y Gastos <span class="chevron">▾</span></button>
+      <div class="sidebar-depto-submenu" id="deptoComprasSubmenu">
+        <button class="nav-btn" id="nav-proveedores-dir" onclick="mostrarPantallaProveedores()"><span class="nav-icon">🏭</span> Proveedores</button>
         <button class="nav-btn" id="nav-ordenes-compra" onclick="mostrarPantallaOrdenesCompra()"><span class="nav-icon">📦</span> Órdenes de compra</button>
+        <button class="nav-btn" id="nav-compras-gastos" onclick="mostrarPantallaPagosPendientes('01')"><span class="nav-icon">📈</span> Registro de compras y gastos</button>
+      </div>
+    </div>
+
+    <!-- 3. INVENTARIOS Y PRODUCTOS -->
+    <div class="sidebar-depto" id="deptoInventarioGrupo" style="display:none;">
+      <button class="sidebar-depto-header" id="headerDeptoInventario" onclick="toggleSidebarDepto('deptoInventarioSubmenu', 'headerDeptoInventario')">📦 Inventarios y Productos <span class="chevron">▾</span></button>
+      <div class="sidebar-depto-submenu" id="deptoInventarioSubmenu">
+        <button class="nav-btn" id="nav-inventario-tienda" onclick="mostrarPantallaInventario('01')"><span class="nav-icon">📊</span> Inventario Tienda</button>
+        <button class="nav-btn" id="nav-inventario-taller" onclick="mostrarPantallaInventario('03')"><span class="nav-icon">📊</span> Inventario Taller</button>
         <button class="nav-btn" id="nav-listas-precios" onclick="mostrarPantallaListasPrecios()"><span class="nav-icon">💲</span> Listas de precios</button>
         <button class="nav-btn" id="nav-ajustestock" onclick="mostrarPantallaAjusteStock()"><span class="nav-icon">📥</span> Entrada mercancía</button>
         <button class="nav-btn" id="nav-etiquetas" onclick="mostrarPantallaEtiquetas()"><span class="nav-icon">🏷️</span> Imprimir etiquetas</button>
-        <button class="nav-btn" id="nav-transferir-stock" onclick="mostrarPantallaTransferirStock()"><span class="nav-icon">🔄</span> Transferir stock</button>
-        <button class="nav-btn" id="nav-turno" onclick="irATurnoActivo()"><span class="nav-icon">💵</span> Turno de caja</button>
-        <button class="nav-btn" id="nav-reportes" onclick="mostrarPantallaReportes()"><span class="nav-icon">📈</span> Reportes de turno</button>
-        <button class="nav-btn" onclick="mostrarPantallaPagosPendientes('01')"><span class="nav-icon">📈</span> Registro de compras y gastos</button>
+        <button class="nav-btn" id="nav-transferir-stock" onclick="mostrarPantallaTransferirStock()"><span class="nav-icon">🔄</span> Transferir stock (Tienda)</button>
+        <button class="nav-btn" id="nav-transferir-stock-taller" onclick="mostrarPantallaTransferirStock()"><span class="nav-icon">🔄</span> Transferir stock (Taller)</button>
+        <button class="nav-btn" id="nav-solicitudes-tienda" onclick="mostrarPantallaSolicitudes()"><span class="nav-icon">📦</span> Solicitud de insumos del Taller</button>
+        <button class="nav-btn" id="nav-consumotaller" onclick="mostrarPantallaPedidosCrm()"><span class="nav-icon">🧶</span> Consumo de material (Taller)</button>
       </div>
     </div>
 
-    <div class="sidebar-depto" id="deptoTallerGrupo" style="display:none;">
-      <button class="sidebar-depto-header" id="headerDeptoTaller" onclick="toggleSidebarDepto('deptoTallerSubmenu', 'headerDeptoTaller')">🧶 Taller <span class="chevron">▾</span></button>
-      <div class="sidebar-depto-submenu" id="deptoTallerSubmenu">
-        <button class="nav-btn" id="nav-consumotaller" onclick="mostrarPantallaPedidosCrm()"><span class="nav-icon">🧶</span> Consumo de material</button>
-        <button class="nav-btn" id="nav-inventario-taller" onclick="mostrarPantallaInventario('03')"><span class="nav-icon">📊</span> Inventario</button>
-        <button class="nav-btn" id="nav-transferir-stock-taller" onclick="mostrarPantallaTransferirStock()"><span class="nav-icon">🔄</span> Transferir stock</button>
-        <!-- La solicitud de insumos a la Tienda ahora vive dentro de "Consumo de material", por pedido -->
+    <!-- 4. CONTABILIDAD E IMPUESTOS -->
+    <div class="sidebar-depto" id="deptoContabilidadGrupo" style="display:none;">
+      <button class="sidebar-depto-header" id="headerDeptoContabilidad" onclick="toggleSidebarDepto('deptoContabilidadSubmenu', 'headerDeptoContabilidad')">📊 Contabilidad e Impuestos <span class="chevron">▾</span></button>
+      <div class="sidebar-depto-submenu" id="deptoContabilidadSubmenu">
+        <button class="nav-btn" id="nav-estados-financieros" onclick="mostrarPantallaEstadosFinancieros()"><span class="nav-icon">📑</span> Estados financieros y libros</button>
+        <button class="nav-btn" id="nav-activos-fijos" onclick="mostrarPantallaActivosFijos()"><span class="nav-icon">🪑</span> Activos fijos</button>
       </div>
     </div>
 
-    <div class="sidebar-depto" id="deptoDirectorioGrupo" style="display:none;">
-      <button class="sidebar-depto-header" id="headerDeptoDirectorio" onclick="toggleSidebarDepto('deptoDirectorioSubmenu', 'headerDeptoDirectorio')">📇 Directorio <span class="chevron">▾</span></button>
-      <div class="sidebar-depto-submenu" id="deptoDirectorioSubmenu">
-        <button class="nav-btn" onclick="mostrarPantallaClientes()"><span class="nav-icon">👤</span> Clientes</button>
-        <button class="nav-btn" onclick="mostrarPantallaProveedores()"><span class="nav-icon">🏭</span> Proveedores</button>
-      </div>
-    </div>
-
+    <!-- 5. TALENTO HUMANO (nómina) -->
     <div class="sidebar-depto" id="deptoTalentoGrupo" style="display:none;">
       <button class="sidebar-depto-header" id="headerDeptoTalento" onclick="toggleSidebarDepto('deptoTalentoSubmenu', 'headerDeptoTalento')">🗂️ Talento Humano <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoTalentoSubmenu">
@@ -763,17 +774,26 @@
       </div>
     </div>
 
-    <div class="sidebar-depto" id="deptoReportesGrupo" style="display:none;">
-      <button class="sidebar-depto-header" id="headerDeptoReportes" onclick="toggleSidebarDepto('deptoReportesSubmenu', 'headerDeptoReportes')">💰 Finanzas <span class="chevron">▾</span></button>
-      <div class="sidebar-depto-submenu" id="deptoReportesSubmenu">
-        <button class="nav-btn" id="nav-reportes-financieros" onclick="mostrarPantallaReportesFinancieros()"><span class="nav-icon">📊</span> Informes de Ventas</button>
-        <button class="nav-btn" id="nav-estados-financieros" onclick="mostrarPantallaEstadosFinancieros()"><span class="nav-icon">📑</span> Estados financieros</button>
-        <button class="nav-btn" id="nav-cuentas-pendientes" onclick="mostrarPantallaCuentasPendientes()"><span class="nav-icon">📋</span> Cartera</button>
-        <button class="nav-btn" id="nav-activos-fijos" onclick="mostrarPantallaActivosFijos()"><span class="nav-icon">🪑</span> Activos fijos</button>
+    <!-- 6. BANCOS Y TESORERÍA -->
+    <div class="sidebar-depto" id="deptoTesoreriaGrupo" style="display:none;">
+      <button class="sidebar-depto-header" id="headerDeptoTesoreria" onclick="toggleSidebarDepto('deptoTesoreriaSubmenu', 'headerDeptoTesoreria')">🏦 Bancos y Tesorería <span class="chevron">▾</span></button>
+      <div class="sidebar-depto-submenu" id="deptoTesoreriaSubmenu">
+        <button class="nav-btn" id="nav-turno" onclick="irATurnoActivo()"><span class="nav-icon">💵</span> Turno de caja</button>
+        <button class="nav-btn" id="nav-reportes" onclick="mostrarPantallaReportes()"><span class="nav-icon">📈</span> Reportes de turno</button>
         <button class="nav-btn" id="nav-conciliacion" onclick="mostrarPantallaConciliacion()"><span class="nav-icon">🏦</span> Conciliación bancaria</button>
         <button class="nav-btn" id="nav-transferencias-internas" onclick="mostrarPantallaTransferenciasInternas()"><span class="nav-icon">🔄</span> Transferencias caja/banco</button>
       </div>
     </div>
+
+    <!-- 7. REPORTES E INDICADORES -->
+    <div class="sidebar-depto" id="deptoReportesGrupo" style="display:none;">
+      <button class="sidebar-depto-header" id="headerDeptoReportes" onclick="toggleSidebarDepto('deptoReportesSubmenu', 'headerDeptoReportes')">📈 Reportes e Indicadores <span class="chevron">▾</span></button>
+      <div class="sidebar-depto-submenu" id="deptoReportesSubmenu">
+        <button class="nav-btn" id="nav-reportes-financieros" onclick="mostrarPantallaReportesFinancieros()"><span class="nav-icon">📊</span> Informes de Ventas</button>
+      </div>
+    </div>
+
+    <!-- FONDO EMPRENDER (específico del negocio, fuera de los 7 puntos estándar) -->
     <div class="sidebar-depto" id="deptoFondoEmprenderGrupo" style="display:none;">
       <button class="sidebar-depto-header" id="headerDeptoFE" onclick="toggleSidebarDepto('deptoFESubmenu', 'headerDeptoFE')">🏦 Fondo Emprender <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoFESubmenu">
@@ -4180,11 +4200,13 @@
       if (el) el.style.display = visibleFinal ? '' : 'none';
     };
 
-    // Grupos de departamento completos (acordeón)
-    mostrar('deptoTiendaGrupo', esAdmin || esCajero);
-    mostrar('deptoTallerGrupo', esAdmin || esTaller);
-    mostrar('deptoDirectorioGrupo', esAdmin || esCajero);
+    // Grupos completos (acordeón) — reorganizados según los 7 puntos estándar de un ERP
+    mostrar('deptoVentasGrupo', esAdmin || esCajero);
+    mostrar('deptoComprasGrupo', esAdmin);
+    mostrar('deptoInventarioGrupo', esAdmin || esCajero || esTaller);
+    mostrar('deptoContabilidadGrupo', esAdmin);
     mostrar('deptoTalentoGrupo', esAdmin);
+    mostrar('deptoTesoreriaGrupo', esAdmin || esCajero);
     mostrar('deptoReportesGrupo', esAdmin);
     mostrar('deptoFondoEmprenderGrupo', esAdmin);
     // Configuración es visible para todos (Apariencia y Mi perfil son de
@@ -4209,12 +4231,15 @@
 
     // Ítems individuales — visibles por defecto si su grupo lo está, pero se
     // pueden apagar uno por uno desde los permisos manuales.
+    mostrar('nav-clientes-dir', esAdmin || esCajero);
     mostrar('nav-ventas', esAdmin || esCajero);
     mostrar('nav-historial', esAdmin || esCajero);
     mostrar('nav-inventario-tienda', esAdmin || esCajero);
     mostrar('nav-cotizaciones', esAdmin || esCajero);
     mostrar('nav-notas-cd', esAdmin);
+    mostrar('nav-proveedores-dir', esAdmin);
     mostrar('nav-ordenes-compra', esAdmin);
+    mostrar('nav-compras-gastos', esAdmin || esCajero);
     mostrar('nav-listas-precios', esAdmin);
     mostrar('nav-ajustestock', esAdmin || esCajero);
     mostrar('nav-etiquetas', esAdmin || esCajero);
@@ -4239,8 +4264,8 @@
     mostrar('nav-calendario', true);
 
     // Si el usuario solo tiene un departamento, se abre expandido automáticamente
-    if (esCajero) abrirSidebarDepto('deptoTiendaSubmenu', 'headerDeptoTienda');
-    if (esTaller) abrirSidebarDepto('deptoTallerSubmenu', 'headerDeptoTaller');
+    if (esCajero) abrirSidebarDepto('deptoVentasSubmenu', 'headerDeptoVentas');
+    if (esTaller) abrirSidebarDepto('deptoInventarioSubmenu', 'headerDeptoInventario');
   }
 
   function toggleSidebarDepto(submenuId, headerId) {
@@ -8301,23 +8326,40 @@
   // USUARIOS Y PERMISOS
   // ============================================================
   const CATALOGO_MODULOS = [
-    { clave: 'deptoTiendaGrupo', etiqueta: '🏬 Tienda/Mercería (grupo completo)' },
+    { clave: 'deptoVentasGrupo', etiqueta: '🛍️ Ventas y Clientes (grupo completo)' },
+    { clave: 'nav-clientes-dir', etiqueta: '　　Clientes' },
+    { clave: 'nav-cotizaciones', etiqueta: '　　Cotizaciones' },
     { clave: 'nav-ventas', etiqueta: '　　Registrar venta' },
     { clave: 'nav-historial', etiqueta: '　　Historial de ventas' },
-    { clave: 'nav-inventario-tienda', etiqueta: '　　Inventario' },
-    { clave: 'nav-ajustestock', etiqueta: '　　Entrada de mercancía' },
-    { clave: 'nav-turno', etiqueta: '　　Turno de caja' },
-    { clave: 'nav-reportes', etiqueta: '　　Reportes de turno' },
     { clave: 'nav-pedidos-canal', etiqueta: '　　Pedidos WhatsApp/Redes' },
+    { clave: 'nav-notas-cd', etiqueta: '　　Notas crédito/débito' },
+    { clave: 'nav-cuentas-pendientes', etiqueta: '　　Cartera' },
+    { clave: 'deptoComprasGrupo', etiqueta: '🛒 Compras y Gastos (grupo completo)' },
+    { clave: 'nav-proveedores-dir', etiqueta: '　　Proveedores' },
+    { clave: 'nav-ordenes-compra', etiqueta: '　　Órdenes de compra' },
+    { clave: 'nav-compras-gastos', etiqueta: '　　Registro de compras y gastos' },
+    { clave: 'deptoInventarioGrupo', etiqueta: '📦 Inventarios y Productos (grupo completo)' },
+    { clave: 'nav-inventario-tienda', etiqueta: '　　Inventario Tienda' },
+    { clave: 'nav-inventario-taller', etiqueta: '　　Inventario Taller' },
+    { clave: 'nav-listas-precios', etiqueta: '　　Listas de precios' },
+    { clave: 'nav-ajustestock', etiqueta: '　　Entrada de mercancía' },
+    { clave: 'nav-etiquetas', etiqueta: '　　Imprimir etiquetas' },
+    { clave: 'nav-transferir-stock', etiqueta: '　　Transferir stock (Tienda)' },
+    { clave: 'nav-transferir-stock-taller', etiqueta: '　　Transferir stock (Taller)' },
     { clave: 'nav-solicitudes-tienda', etiqueta: '　　Solicitud de insumos del Taller' },
-    { clave: 'deptoTallerGrupo', etiqueta: '🧶 Taller (grupo completo)' },
-    { clave: 'nav-consumotaller', etiqueta: '　　Consumo de material' },
-    { clave: 'nav-inventario-taller', etiqueta: '　　Inventario' },
-    { clave: 'nav-pagos-pendientes', etiqueta: '　　Registro de compras y gastos' },
+    { clave: 'nav-consumotaller', etiqueta: '　　Consumo de material (Taller)' },
+    { clave: 'deptoContabilidadGrupo', etiqueta: '📊 Contabilidad e Impuestos (grupo completo)' },
+    { clave: 'nav-estados-financieros', etiqueta: '　　Estados financieros y libros' },
+    { clave: 'nav-activos-fijos', etiqueta: '　　Activos fijos' },
     { clave: 'deptoTalentoGrupo', etiqueta: '🗂️ Talento Humano (grupo completo)' },
     { clave: 'nav-nomina', etiqueta: '　　Nómina' },
     { clave: 'nav-talento-humano', etiqueta: '　　Carpetas por empleado' },
-    { clave: 'deptoReportesGrupo', etiqueta: '💰 Finanzas (grupo completo)' },
+    { clave: 'deptoTesoreriaGrupo', etiqueta: '🏦 Bancos y Tesorería (grupo completo)' },
+    { clave: 'nav-turno', etiqueta: '　　Turno de caja' },
+    { clave: 'nav-reportes', etiqueta: '　　Reportes de turno' },
+    { clave: 'nav-conciliacion', etiqueta: '　　Conciliación bancaria' },
+    { clave: 'nav-transferencias-internas', etiqueta: '　　Transferencias caja/banco' },
+    { clave: 'deptoReportesGrupo', etiqueta: '📈 Reportes e Indicadores (grupo completo)' },
     { clave: 'nav-reportes-financieros', etiqueta: '　　Informes de Ventas' },
     { clave: 'deptoFondoEmprenderGrupo', etiqueta: '🏦 Fondo Emprender (grupo completo)' },
     { clave: 'nav-calendario', etiqueta: '📅 Calendario del equipo' },
