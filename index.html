@@ -16,7 +16,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
@@ -39,7 +39,51 @@
     --fondo-panel: #ffffff;
     --fondo-input: #fdfbfd;
     --borde-input: #e4d9e2;
+    --ambar: #e0a032;
+    --texto-suave: #7a6670;
+    --radio-grande: 20px;
   }
+
+  .fredoka { font-family: 'Fredoka', sans-serif; font-weight: 600; }
+
+  /* ===== Estilo "Dashboard rediseñado" (referencia de mockup) ===== */
+  .db-topbar { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 14px; margin-bottom: 4px; }
+  .db-titulo-group { display: flex; align-items: center; gap: 14px; }
+  .db-avatar-rosina {
+    width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0;
+    background: radial-gradient(circle at 32% 30%, #fff, var(--rosa-suave) 55%, var(--rosa-medio) 100%);
+    display: flex; align-items: center; justify-content: center; font-size: 26px;
+    box-shadow: 0 3px 10px rgba(216,1,124,.18);
+  }
+  .db-divider {
+    height: 20px; margin: 18px 0 4px;
+    background-image: radial-gradient(circle at 10px 0, transparent 9px, var(--rosa-suave) 9.5px);
+    background-size: 20px 20px; background-repeat: repeat-x; background-position: top;
+  }
+  .kpi-card-nuevo {
+    background: #fff; border-radius: var(--radio-grande); padding: 18px 18px 16px;
+    border: 1px solid #f1e2ec; box-shadow: 0 4px 16px rgba(216,1,124,.05);
+    position: relative; overflow: hidden;
+  }
+  .kpi-card-nuevo::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background: var(--barra, var(--rosa-principal)); }
+  .kpi-card-nuevo .kpi-label { font-size: 11.5px; color: var(--texto-suave); font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
+  .kpi-card-nuevo .kpi-valor { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 24px; margin-top: 6px; }
+  .kpi-card-nuevo .kpi-delta { font-size: 11.5px; margin-top: 6px; font-weight: 600; }
+  .rosina-bubble {
+    margin-top: 16px; background: #fff; border: 1.5px dashed var(--rosa-medio); border-radius: 18px;
+    padding: 14px 18px; display: flex; gap: 12px; align-items: flex-start;
+  }
+  .rosina-bubble .icon { font-size: 20px; flex-shrink: 0; }
+  .rosina-bubble p { font-size: 13px; line-height: 1.5; }
+  .rosina-bubble strong { color: var(--rosa-principal); font-family: 'Fredoka', sans-serif; font-weight: 600; }
+  .db-panel { background: #fff; border-radius: var(--radio-grande); padding: 20px; border: 1px solid #f1e2ec; box-shadow: 0 4px 16px rgba(216,1,124,.05); }
+  .db-panel h2 { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 15px; margin-bottom: 2px; }
+  .db-panel .db-panel-sub { font-size: 11.5px; color: var(--texto-suave); margin-bottom: 12px; }
+  .badge-antiguedad { padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; display: inline-block; }
+  .badge-antiguedad.al-dia { background: #e4f5ec; color: var(--verde-exito); }
+  .badge-antiguedad.b30 { background: #fdf1de; color: var(--ambar); }
+  .badge-antiguedad.b60 { background: #fbe6de; color: #c9612b; }
+  .badge-antiguedad.b90 { background: #fdecea; color: var(--rojo-error); }
 
   /* ===== MODO OSCURO =====
      Reutiliza las mismas variables que ya usa casi toda la app (--blanco-hueso
@@ -2707,40 +2751,56 @@
 <!-- ===== PANTALLA: ESTADOS FINANCIEROS ===== -->
 <!-- ===== PANTALLA: DASHBOARD EJECUTIVO ===== -->
 <div id="pantallaDashboard" class="oculto contenido">
-  <div class="page-header">
-    <h1>🏠 Dashboard</h1>
-    <div class="subtitulo">Lo esencial de tu negocio, de un vistazo — últimos 30 días.</div>
+  <div class="db-topbar">
+    <div class="db-titulo-group">
+      <div class="db-avatar-rosina">🐑</div>
+      <div>
+        <h1 class="fredoka" style="font-size:24px;">Dashboard</h1>
+        <div class="subtitulo">Lo esencial de tu negocio, de un vistazo — últimos 30 días.</div>
+      </div>
+    </div>
   </div>
+  <div class="db-divider"></div>
 
-  <div id="panelAlertasDashboard" style="margin-bottom:20px;"></div>
+  <div id="panelAlertasDashboard" style="margin-bottom:16px;"></div>
 
-  <div id="kpisDashboard" class="grilla-3" style="margin-bottom:20px;"></div>
+  <div id="kpisDashboard" class="grilla-3" style="margin-bottom:16px;"></div>
 
-  <div class="grilla-2" style="margin-bottom:20px;">
-    <div class="panel" style="max-height:none;">
+  <div id="rosinaInsightDashboard"></div>
+
+  <div class="grilla-2" style="margin-top:18px;margin-bottom:18px;">
+    <div class="db-panel">
       <h2>📊 Ingresos, gastos y utilidad</h2>
+      <div class="db-panel-sub">Últimos 30 días vs. 30 anteriores</div>
       <canvas id="graficaComparativoDashboard" height="220"></canvas>
     </div>
-    <div class="panel" style="max-height:none;">
+    <div class="db-panel">
       <h2>🥧 En qué se va cada peso que vendes</h2>
+      <div class="db-panel-sub">Últimos 30 días</div>
       <canvas id="graficaComposicionDashboard" height="220"></canvas>
     </div>
   </div>
 
-  <div class="grilla-2">
-    <div class="panel" style="max-height:none;">
+  <div class="grilla-2" style="margin-bottom:18px;">
+    <div class="db-panel">
       <h2>📊 Comparativo — últimos 30 días vs. 30 anteriores</h2>
-      <div id="comparativoDashboard"><div class="cargando">Cargando...</div></div>
+      <div id="comparativoDashboard" style="margin-top:10px;"><div class="cargando">Cargando...</div></div>
     </div>
-    <div class="panel" style="max-height:none;">
+    <div class="db-panel">
       <h2>⚖️ Punto de equilibrio (últimos 30 días)</h2>
-      <div id="equilibrioDashboard"><div class="cargando">Cargando...</div></div>
+      <div id="equilibrioDashboard" style="margin-top:10px;"><div class="cargando">Cargando...</div></div>
     </div>
   </div>
 
-  <div class="panel" style="max-width:none;max-height:none;margin-top:20px;">
+  <div class="db-panel" style="margin-bottom:18px;">
+    <h2>📋 Cartera por antigüedad</h2>
+    <div class="db-panel-sub">Cuentas por cobrar pendientes, agrupadas por días de vencimiento</div>
+    <div id="carteraAntiguedadDashboard" style="margin-top:10px;"><div class="cargando">Cargando...</div></div>
+  </div>
+
+  <div class="db-panel">
     <h2>💵 Flujo de caja proyectado</h2>
-    <div class="subtitulo">Con base en tus cuentas por cobrar y por pagar pendientes.</div>
+    <div class="db-panel-sub">Con base en tus cuentas por cobrar y por pagar pendientes.</div>
     <div id="proyeccionDashboard" style="margin-top:10px;"><div class="cargando">Cargando...</div></div>
   </div>
 </div>
@@ -6205,10 +6265,10 @@
       }
       html += `
         <div class="tabla-lista">
-          <div class="tabla-lista-header" style="grid-template-columns:1fr 90px 110px 140px 70px;">
-            <span>PRODUCTO</span><span style="text-align:center;">CANTIDAD</span><span style="text-align:right;">PRECIO</span><span>PROVEEDOR</span><span></span>
+          <div class="tabla-lista-header" style="grid-template-columns:1.5fr 100px 90px 100px 130px 150px 30px;">
+            <span>PRODUCTO</span><span>CATEGORÍA</span><span style="text-align:center;">CANTIDAD</span><span style="text-align:right;">PRECIO</span><span>PROVEEDOR</span><span>ESTADO</span><span></span>
           </div>
-          ${itemsGrupo.map(item => renderizarFilaInventarioItem(item)).join('')}
+          ${itemsGrupo.map(item => renderizarFilaInventarioItem(item, grupo.icono)).join('')}
         </div>
       `;
     }
@@ -6216,12 +6276,13 @@
     contenedor.innerHTML = html;
   }
 
-  function renderizarFilaInventarioItem(item) {
+  function renderizarFilaInventarioItem(item, iconoGrupo) {
     const stockBajo = item.activo && item.stock_actual <= item.stock_minimo;
     const tagInactivo = !item.activo ? ' <span class="badge-inactivo">Inactivo</span>' : '';
     const skuTexto = item.sku ? ` <span style="opacity:0.5;font-size:10.5px;">(${escaparHtml(item.sku)})</span>` : '';
     const nombreProveedor = item.proveedor ? item.proveedor.nombre_completo : '—';
     const estaEditando = itemInventarioEditandoId === item.id && rolActual === 'administrador';
+    const etiquetaCategoria = item.tipo === 'merceria' ? 'Mercería' : 'Producto tejido';
 
     let filaDetalle = '';
     if (estaEditando) {
@@ -6258,11 +6319,20 @@
     }
 
     return `
-      <div class="tabla-lista-fila" style="grid-template-columns:1fr 90px 110px 140px 70px;${rolActual === 'administrador' ? 'cursor:pointer;' : ''}" ${rolActual === 'administrador' ? `onclick="activarEdicionProducto('${item.id}')"` : ''}>
-        <span>${stockBajo ? '⚠️ ' : ''}${escaparHtml(item.nombre)}${tagInactivo}${skuTexto}</span>
+      <div class="tabla-lista-fila" style="grid-template-columns:1.5fr 100px 90px 100px 130px 150px 30px;${rolActual === 'administrador' ? 'cursor:pointer;' : ''}" ${rolActual === 'administrador' ? `onclick="activarEdicionProducto('${item.id}')"` : ''}>
+        <span style="display:flex;align-items:center;gap:10px;">
+          <span style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg, var(--rosa-suave), #fff);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">${iconoGrupo || '📦'}</span>
+          <span>${stockBajo ? '⚠️ ' : ''}${escaparHtml(item.nombre)}${tagInactivo}${skuTexto}</span>
+        </span>
+        <span><span style="font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--azul-acero);color:#fff;display:inline-block;">${etiquetaCategoria}</span></span>
         <span style="text-align:center;${stockBajo ? 'color:var(--rojo-error);font-weight:700;' : ''}">${item.stock_actual} ${item.unidad_medida}</span>
         <span style="text-align:right;">${formatearMoneda(item.precio_venta)}</span>
         <span style="opacity:0.75;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escaparHtml(nombreProveedor)}</span>
+        <span>
+          <span style="font-size:10.5px;font-weight:600;padding:4px 10px;border-radius:999px;display:inline-block;${stockBajo ? 'background:#fdecea;color:var(--rojo-error);' : 'background:#e4f5ec;color:var(--verde-exito);'}">
+            ${stockBajo ? 'Por debajo del mínimo' : 'Stock saludable'}
+          </span>
+        </span>
         <span style="text-align:right;">${rolActual === 'administrador' ? '✏️' : ''}</span>
       </div>
       ${filaDetalle}
@@ -6289,25 +6359,45 @@
     }
 
     const etiquetasTipo = {
-      consumo_taller: '🧶 Consumo Taller', ajuste_manual: '✋ Ajuste manual', compra_proveedor: '🛒 Compra proveedor',
-      entrada_automatica: '⬆️ Entrada', salida_automatica: '⬇️ Salida',
+      consumo_taller: 'Salida', ajuste_manual: 'Ajuste', compra_proveedor: 'Entrada',
+      entrada_automatica: 'Entrada', salida_automatica: 'Salida',
+    };
+    const colorTipo = (tipo) => {
+      const esEntrada = tipo.includes('entrada') || tipo === 'compra_proveedor';
+      const esAjuste = tipo === 'ajuste_manual';
+      if (esAjuste) return { bg: '#e6edf3', color: 'var(--azul-acero)' };
+      return esEntrada ? { bg: '#e4f5ec', color: 'var(--verde-exito)' } : { bg: '#fdecea', color: 'var(--rojo-error)' };
     };
 
     cont.innerHTML = `
-      <div style="font-size:12px;font-weight:700;opacity:0.6;margin-bottom:6px;">KARDEX — ${escaparHtml(nombreProducto)}</div>
-      <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:110px 1fr 80px 90px 90px;">
-          <span>FECHA</span><span>MOVIMIENTO</span><span style="text-align:right;">CANTIDAD</span><span style="text-align:right;">ANTES</span><span style="text-align:right;">DESPUÉS</span>
-        </div>
-        ${movimientos.map(m => `
-          <div class="tabla-lista-fila" style="grid-template-columns:110px 1fr 80px 90px 90px;cursor:default;">
-            <span>${new Date(m.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: '2-digit' })} ${new Date(m.created_at).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}</span>
-            <span>${etiquetasTipo[m.tipo] || m.tipo}${m.observaciones ? '<div style="font-size:10px;opacity:0.55;">' + escaparHtml(m.observaciones) + '</div>' : ''}</span>
-            <span style="text-align:right;color:${m.tipo.includes('entrada') || m.tipo === 'compra_proveedor' ? 'var(--verde-exito)' : 'var(--rojo-error)'};">${m.tipo.includes('entrada') || m.tipo === 'compra_proveedor' ? '+' : '-'}${m.cantidad}</span>
-            <span style="text-align:right;">${m.stock_antes}</span>
-            <span style="text-align:right;font-weight:700;">${m.stock_despues}</span>
-          </div>
-        `).join('')}
+      <div class="fredoka" style="font-size:13px;color:var(--rosa-principal);margin-bottom:8px;">Historial Kardex — ${escaparHtml(nombreProducto)}</div>
+      <div style="background:#fff;border-radius:10px;overflow:hidden;border:1px solid #f1e2ec;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr style="background:#fffafc;">
+              <th style="font-size:10.5px;text-transform:uppercase;color:var(--texto-suave);text-align:left;padding:8px 12px;border-bottom:1px solid #f1e2ec;">Fecha</th>
+              <th style="font-size:10.5px;text-transform:uppercase;color:var(--texto-suave);text-align:left;padding:8px 12px;border-bottom:1px solid #f1e2ec;">Tipo</th>
+              <th style="font-size:10.5px;text-transform:uppercase;color:var(--texto-suave);text-align:left;padding:8px 12px;border-bottom:1px solid #f1e2ec;">Movimiento</th>
+              <th style="font-size:10.5px;text-transform:uppercase;color:var(--texto-suave);text-align:right;padding:8px 12px;border-bottom:1px solid #f1e2ec;">Cantidad</th>
+              <th style="font-size:10.5px;text-transform:uppercase;color:var(--texto-suave);text-align:right;padding:8px 12px;border-bottom:1px solid #f1e2ec;">Saldo</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${movimientos.map(m => {
+              const c = colorTipo(m.tipo);
+              const esEntrada = m.tipo.includes('entrada') || m.tipo === 'compra_proveedor';
+              return `
+                <tr>
+                  <td style="padding:8px 12px;font-size:12px;border-bottom:1px solid #f7eff5;">${new Date(m.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: '2-digit' })} ${new Date(m.created_at).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}</td>
+                  <td style="padding:8px 12px;border-bottom:1px solid #f7eff5;"><span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:999px;background:${c.bg};color:${c.color};">${etiquetasTipo[m.tipo] || m.tipo}</span></td>
+                  <td style="padding:8px 12px;font-size:12px;border-bottom:1px solid #f7eff5;">${escaparHtml(m.observaciones || '—')}</td>
+                  <td style="padding:8px 12px;font-size:12px;text-align:right;border-bottom:1px solid #f7eff5;color:${c.color};font-weight:600;">${esEntrada ? '+' : '-'}${m.cantidad}</td>
+                  <td style="padding:8px 12px;font-size:12px;text-align:right;border-bottom:1px solid #f7eff5;font-weight:700;">${m.stock_despues}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
       </div>
     `;
   }
@@ -12351,7 +12441,96 @@
       cargarKpisYComparativo(fmt(hace30), fmt(hoy), fmt(hace60), fmt(hace30)),
       cargarEquilibrioDashboard(fmt(hace30), fmt(hoy)),
       cargarProyeccionDashboard(),
+      cargarCarteraAntiguedad(),
     ]);
+    renderizarRosinaInsight();
+  }
+
+  let cacheComparativoParaInsight = null;
+  let cacheEquilibrioParaInsight = null;
+  let cacheCarteraParaInsight = null;
+
+  function renderizarRosinaInsight() {
+    const cont = document.getElementById('rosinaInsightDashboard');
+    if (!cont) return;
+    const d = cacheComparativoParaInsight;
+    const eq = cacheEquilibrioParaInsight;
+    const cart = cacheCarteraParaInsight;
+    if (!d) { cont.innerHTML = ''; return; }
+
+    const frases = [];
+    if (d.variacion_pct.ingresos !== null) {
+      frases.push(d.variacion_pct.ingresos >= 0
+        ? `tus ingresos subieron ${d.variacion_pct.ingresos}% frente al período anterior`
+        : `tus ingresos bajaron ${Math.abs(d.variacion_pct.ingresos)}% frente al período anterior`);
+    }
+    if (eq) {
+      frases.push(eq.ya_cubierto ? 'ya superaste el punto de equilibrio este mes' : 'todavía no llegas al punto de equilibrio este mes');
+    }
+    if (cart && cart.vencidas > 0) {
+      frases.push(`tienes ${cart.vencidas} cuenta(s) por cobrar vencida(s) por ${formatearMoneda(cart.totalVencido)}`);
+    }
+
+    if (frases.length === 0) { cont.innerHTML = ''; return; }
+    const texto = frases.join(', ') + '.';
+
+    cont.innerHTML = `
+      <div class="rosina-bubble">
+        <div class="icon">🐑</div>
+        <p><strong>Rosina te cuenta:</strong> ${texto[0].toUpperCase() + texto.slice(1)}</p>
+      </div>
+    `;
+  }
+
+  async function cargarCarteraAntiguedad() {
+    const cont = document.getElementById('carteraAntiguedadDashboard');
+    if (!cont) return;
+    const resp = await fetch(`${WORKER_URL}/api/pos/finanzas/cuentas-pendientes?tipo=por_cobrar`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const { cuentas } = await resp.json();
+    const pendientes = (cuentas || []).filter(c => c.estado !== 'pagado');
+
+    const hoy = new Date().toISOString().slice(0, 10);
+    let totalVencido = 0, vencidas = 0;
+    const filas = pendientes.map(c => {
+      const saldo = Number(c.monto) - Number(c.monto_abonado || 0);
+      const dias = Math.floor((new Date(hoy) - new Date(c.fecha_vencimiento)) / 86400000);
+      let badge = { clase: 'al-dia', texto: 'Al día' };
+      if (dias > 0) {
+        totalVencido += saldo; vencidas++;
+        if (dias <= 30) badge = { clase: 'b30', texto: '1–30 días' };
+        else if (dias <= 60) badge = { clase: 'b60', texto: '31–60 días' };
+        else badge = { clase: 'b90', texto: '+60 días' };
+      }
+      return { nombre: c.tercero ? c.tercero.nombre_completo : c.descripcion, saldo, dias, badge };
+    }).sort((a, b) => b.dias - a.dias);
+
+    cacheCarteraParaInsight = { totalVencido, vencidas };
+
+    if (filas.length === 0) { cont.innerHTML = '<div class="cargando">Sin cuentas por cobrar pendientes.</div>'; return; }
+
+    cont.innerHTML = `
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="border-bottom:2px solid var(--rosa-suave);">
+            <th style="text-align:left;font-size:11px;text-transform:uppercase;color:var(--texto-suave);padding:8px 10px;">Cliente</th>
+            <th style="text-align:right;font-size:11px;text-transform:uppercase;color:var(--texto-suave);padding:8px 10px;">Monto</th>
+            <th style="text-align:center;font-size:11px;text-transform:uppercase;color:var(--texto-suave);padding:8px 10px;">Días vencido</th>
+            <th style="text-align:left;font-size:11px;text-transform:uppercase;color:var(--texto-suave);padding:8px 10px;">Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filas.map(f => `
+            <tr style="border-bottom:1px solid #f4ecf1;">
+              <td style="padding:10px;font-size:13px;">${escaparHtml(f.nombre)}</td>
+              <td style="padding:10px;font-size:13px;text-align:right;">${formatearMoneda(f.saldo)}</td>
+              <td style="padding:10px;font-size:13px;text-align:center;">${f.dias > 0 ? f.dias + ' días' : '—'}</td>
+              <td style="padding:10px;"><span class="badge-antiguedad ${f.badge.clase}">${f.badge.texto}</span></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
   }
 
   async function cargarAlertasDashboard() {
@@ -12378,24 +12557,25 @@
     const compCont = document.getElementById('comparativoDashboard');
     if (!resp.ok) { kpisCont.innerHTML = ''; compCont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
     const d = await resp.json();
+    cacheComparativoParaInsight = d;
 
     const flechita = (pct) => pct === null ? '' : (pct >= 0 ? `<span style="color:var(--verde-exito);">▲ ${pct}%</span>` : `<span style="color:var(--rojo-error);">▼ ${Math.abs(pct)}%</span>`);
 
     kpisCont.innerHTML = `
-      <div class="panel" style="max-height:none;text-align:center;">
-        <div style="font-size:11.5px;opacity:0.65;">INGRESOS (30 días)</div>
-        <div style="font-size:22px;font-weight:700;margin-top:4px;">${formatearMoneda(d.periodo_a.ingresos)}</div>
-        <div style="font-size:11px;margin-top:4px;">${flechita(d.variacion_pct.ingresos)}</div>
+      <div class="kpi-card-nuevo" style="--barra:var(--rosa-principal);">
+        <div class="kpi-label">Ingresos (30 días)</div>
+        <div class="kpi-valor">${formatearMoneda(d.periodo_a.ingresos)}</div>
+        <div class="kpi-delta">${flechita(d.variacion_pct.ingresos)}</div>
       </div>
-      <div class="panel" style="max-height:none;text-align:center;">
-        <div style="font-size:11.5px;opacity:0.65;">GASTOS (30 días)</div>
-        <div style="font-size:22px;font-weight:700;margin-top:4px;">${formatearMoneda(d.periodo_a.gastos)}</div>
-        <div style="font-size:11px;margin-top:4px;">${flechita(d.variacion_pct.gastos)}</div>
+      <div class="kpi-card-nuevo" style="--barra:var(--azul-acero);">
+        <div class="kpi-label">Gastos (30 días)</div>
+        <div class="kpi-valor">${formatearMoneda(d.periodo_a.gastos)}</div>
+        <div class="kpi-delta">${flechita(d.variacion_pct.gastos)}</div>
       </div>
-      <div class="panel" style="max-height:none;text-align:center;">
-        <div style="font-size:11.5px;opacity:0.65;">UTILIDAD NETA (30 días)</div>
-        <div style="font-size:22px;font-weight:700;margin-top:4px;color:${d.periodo_a.utilidad_neta >= 0 ? 'var(--verde-exito)' : 'var(--rojo-error)'};">${formatearMoneda(d.periodo_a.utilidad_neta)}</div>
-        <div style="font-size:11px;margin-top:4px;">${flechita(d.variacion_pct.utilidad_neta)}</div>
+      <div class="kpi-card-nuevo" style="--barra:${d.periodo_a.utilidad_neta >= 0 ? 'var(--verde-exito)' : 'var(--rojo-error)'};">
+        <div class="kpi-label">Utilidad neta (30 días)</div>
+        <div class="kpi-valor" style="color:${d.periodo_a.utilidad_neta >= 0 ? 'var(--verde-exito)' : 'var(--rojo-error)'};">${formatearMoneda(d.periodo_a.utilidad_neta)}</div>
+        <div class="kpi-delta">${flechita(d.variacion_pct.utilidad_neta)}</div>
       </div>
     `;
 
@@ -12435,6 +12615,7 @@
     const resp = await fetch(`${WORKER_URL}/api/pos/finanzas/punto-equilibrio?fecha_desde=${desde}&fecha_hasta=${hasta}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
     if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
     const d = await resp.json();
+    cacheEquilibrioParaInsight = d;
 
     if (d.ventas_punto_equilibrio === null) {
       cont.innerHTML = '<div class="cargando">Sin suficiente margen positivo para calcular el punto de equilibrio en este período.</div>';
