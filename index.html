@@ -21,6 +21,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 <style>
   :root {
     --rosa-principal: #d8017c;
@@ -2646,6 +2647,17 @@
   <div id="panelAlertasDashboard" style="margin-bottom:20px;"></div>
 
   <div id="kpisDashboard" class="grilla-3" style="margin-bottom:20px;"></div>
+
+  <div class="grilla-2" style="margin-bottom:20px;">
+    <div class="panel" style="max-height:none;">
+      <h2>📊 Ingresos, gastos y utilidad</h2>
+      <canvas id="graficaComparativoDashboard" height="220"></canvas>
+    </div>
+    <div class="panel" style="max-height:none;">
+      <h2>🥧 En qué se va cada peso que vendes</h2>
+      <canvas id="graficaComposicionDashboard" height="220"></canvas>
+    </div>
+  </div>
 
   <div class="grilla-2">
     <div class="panel" style="max-height:none;">
@@ -11905,6 +11917,30 @@
       <div class="resumen-fila"><span>30 días anteriores</span><strong>${formatearMoneda(d.periodo_b.utilidad_neta)}</strong></div>
       <div style="margin-top:8px;font-size:12px;opacity:0.7;">La utilidad neta ${d.variacion_pct.utilidad_neta >= 0 ? 'mejoró' : 'empeoró'} ${flechita(d.variacion_pct.utilidad_neta)} respecto al período anterior.</div>
     `;
+
+    renderizarGraficaComparativoDashboard(d);
+  }
+
+  let graficaComparativoInstancia = null;
+  function renderizarGraficaComparativoDashboard(d) {
+    const ctx = document.getElementById('graficaComparativoDashboard');
+    if (!ctx || typeof Chart === 'undefined') return;
+    if (graficaComparativoInstancia) graficaComparativoInstancia.destroy();
+    graficaComparativoInstancia = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Ingresos', 'Gastos', 'Utilidad neta'],
+        datasets: [
+          { label: '30 días anteriores', data: [d.periodo_b.ingresos, d.periodo_b.gastos, d.periodo_b.utilidad_neta], backgroundColor: '#ff8fd4' },
+          { label: 'Últimos 30 días', data: [d.periodo_a.ingresos, d.periodo_a.gastos, d.periodo_a.utilidad_neta], backgroundColor: '#d8017c' },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'bottom', labels: { font: { family: 'Poppins', size: 11 } } } },
+        scales: { y: { ticks: { callback: (v) => '$' + (v / 1000).toLocaleString('es-CO') + 'k' } } },
+      },
+    });
   }
 
   async function cargarEquilibrioDashboard(desde, hasta) {
@@ -11926,6 +11962,27 @@
         ${d.ya_cubierto ? '✅ Ya superaste el punto de equilibrio en este período' : '⚠️ Todavía no llegas al punto de equilibrio'}
       </div>
     `;
+
+    renderizarGraficaComposicionDashboard(d);
+  }
+
+  let graficaComposicionInstancia = null;
+  function renderizarGraficaComposicionDashboard(d) {
+    const ctx = document.getElementById('graficaComposicionDashboard');
+    if (!ctx || typeof Chart === 'undefined') return;
+    const utilidad = Math.max(d.ingresos - d.costo_ventas - d.gastos_fijos, 0);
+    if (graficaComposicionInstancia) graficaComposicionInstancia.destroy();
+    graficaComposicionInstancia = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Costo de ventas', 'Gastos fijos', 'Utilidad'],
+        datasets: [{ data: [d.costo_ventas, d.gastos_fijos, utilidad], backgroundColor: ['#85a3c0', '#ff8fd4', '#d8017c'] }],
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'bottom', labels: { font: { family: 'Poppins', size: 11 } } } },
+      },
+    });
   }
 
   async function cargarProyeccionDashboard() {
