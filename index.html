@@ -724,6 +724,7 @@
         <button class="nav-btn" id="nav-pedidos-canal" onclick="mostrarPantallaPedidosCanal()"><span class="nav-icon">📱</span> Pedidos WhatsApp/Redes</button>
         <button class="nav-btn" id="nav-solicitudes-tienda" onclick="mostrarPantallaSolicitudes()"><span class="nav-icon">📦</span> Solicitud de insumos del Taller</button>
         <button class="nav-btn" id="nav-inventario-tienda" onclick="mostrarPantallaInventario('01')"><span class="nav-icon">📊</span> Inventario</button>
+        <button class="nav-btn" id="nav-cotizaciones" onclick="mostrarPantallaCotizaciones()"><span class="nav-icon">📝</span> Cotizaciones</button>
         <button class="nav-btn" id="nav-ajustestock" onclick="mostrarPantallaAjusteStock()"><span class="nav-icon">📥</span> Entrada mercancía</button>
         <button class="nav-btn" id="nav-etiquetas" onclick="mostrarPantallaEtiquetas()"><span class="nav-icon">🏷️</span> Imprimir etiquetas</button>
         <button class="nav-btn" id="nav-transferir-stock" onclick="mostrarPantallaTransferirStock()"><span class="nav-icon">🔄</span> Transferir stock</button>
@@ -2761,6 +2762,60 @@
 </div>
 
 <!-- ===== PANTALLA: CONCILIACIÓN BANCARIA ===== -->
+<!-- ===== PANTALLA: COTIZACIONES ===== -->
+<div id="pantallaCotizaciones" class="oculto contenido">
+  <div class="page-header">
+    <h1>📝 Cotizaciones</h1>
+    <div class="subtitulo">Ofrécele un precio al cliente antes de que se confirme como pedido — envíasela por WhatsApp, y cuando la apruebe, la conviertes en pedido con un clic.</div>
+  </div>
+
+  <div class="grilla-2">
+    <div class="panel">
+      <h2>+ Nueva cotización</h2>
+      <label for="cotClienteExistente">Cliente ya registrado <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <select id="cotClienteExistente" onchange="alSeleccionarClienteCotizacion()"><option value="">Prospecto nuevo (sin registrar)...</option></select>
+      <div id="bloqueClienteLibreCotizacion">
+        <label for="cotClienteNombre">Nombre del cliente</label>
+        <input type="text" id="cotClienteNombre" placeholder="Nombre completo">
+        <label for="cotClienteTelefono">Teléfono (para enviarla por WhatsApp)</label>
+        <input type="tel" id="cotClienteTelefono" placeholder="300 000 0000">
+      </div>
+
+      <label for="cotFechaVencimiento" style="margin-top:10px;">Válida hasta</label>
+      <input type="date" id="cotFechaVencimiento">
+
+      <label style="margin-top:10px;">Ítems de la cotización</label>
+      <div id="listaItemsCotizacion"></div>
+      <div style="display:flex;gap:8px;margin-top:6px;">
+        <input type="text" id="cotNuevoItemDesc" placeholder="Descripción" style="flex:2;">
+        <input type="number" id="cotNuevoItemCant" placeholder="Cant." min="1" value="1" style="flex:1;">
+        <input type="number" id="cotNuevoItemPrecio" placeholder="Precio" min="0" step="1000" style="flex:1;">
+        <button type="button" class="btn-mini editar" onclick="agregarItemCotizacion()">+ Agregar</button>
+      </div>
+
+      <label for="cotDescuento" style="margin-top:10px;">Descuento total <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <input type="number" id="cotDescuento" min="0" step="1000" value="0" oninput="actualizarTotalCotizacion()">
+      <div id="totalCotizacion" style="font-size:15px;font-weight:700;color:var(--rosa-principal);margin-top:4px;"></div>
+
+      <label for="cotNotas" style="margin-top:10px;">Notas / condiciones <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <input type="text" id="cotNotas" placeholder="Ej: 50% de anticipo para iniciar">
+
+      <button class="btn-principal" onclick="confirmarCrearCotizacion()">Crear cotización</button>
+      <div class="mensaje" id="mensajeCotizacion"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Cotizaciones</h2>
+      <div class="filtro-tipo" style="margin-bottom:12px;">
+        <button class="chip-filtro activo" data-filtro-cot="" onclick="cambiarFiltroCotizaciones('', this)">Todas</button>
+        <button class="chip-filtro" data-filtro-cot="enviada" onclick="cambiarFiltroCotizaciones('enviada', this)">Enviadas</button>
+        <button class="chip-filtro" data-filtro-cot="aprobada" onclick="cambiarFiltroCotizaciones('aprobada', this)">Aprobadas</button>
+      </div>
+      <div id="listaCotizaciones"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+</div>
+
 <div id="pantallaConciliacion" class="oculto contenido">
   <div class="page-header">
     <h1>🏦 Conciliación bancaria</h1>
@@ -3631,7 +3686,7 @@
   });
 
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaCotizaciones', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -3909,6 +3964,7 @@
     mostrar('nav-ventas', esAdmin || esCajero);
     mostrar('nav-historial', esAdmin || esCajero);
     mostrar('nav-inventario-tienda', esAdmin || esCajero);
+    mostrar('nav-cotizaciones', esAdmin || esCajero);
     mostrar('nav-ajustestock', esAdmin || esCajero);
     mostrar('nav-etiquetas', esAdmin || esCajero);
     mostrar('nav-transferir-stock', esAdmin || esCajero);
@@ -12113,6 +12169,226 @@
   // CONCILIACIÓN BANCARIA
   // ============================================================
   let movimientoExtractoSeleccionado = null;
+
+  // ============================================================
+  // COTIZACIONES
+  // ============================================================
+  let carritoCotizacion = [];
+  let filtroCotizacionesActual = '';
+
+  async function mostrarPantallaCotizaciones() {
+    mostrarPantalla('pantallaCotizaciones');
+    carritoCotizacion = [];
+    renderizarItemsCotizacion();
+    document.getElementById('cotClienteNombre').value = '';
+    document.getElementById('cotClienteTelefono').value = '';
+    document.getElementById('cotDescuento').value = '0';
+    document.getElementById('cotNotas').value = '';
+    const en15dias = new Date(Date.now() + 15 * 86400000);
+    document.getElementById('cotFechaVencimiento').value = en15dias.toISOString().slice(0, 10);
+    ocultarMensaje('mensajeCotizacion');
+
+    const respClientes = await fetch(WORKER_URL + '/api/pos/terceros?tipo=cliente', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (respClientes.ok) {
+      const { terceros } = await respClientes.json();
+      document.getElementById('cotClienteExistente').innerHTML = '<option value="">Prospecto nuevo (sin registrar)...</option>' +
+        (terceros || []).map(t => `<option value="${t.id}" data-telefono="${t.telefono || ''}">${escaparHtml(t.nombre_completo)}</option>`).join('');
+    }
+    alSeleccionarClienteCotizacion();
+    await cargarCotizaciones();
+  }
+
+  function alSeleccionarClienteCotizacion() {
+    const select = document.getElementById('cotClienteExistente');
+    const esExistente = !!select.value;
+    document.getElementById('bloqueClienteLibreCotizacion').classList.toggle('oculto', esExistente);
+    if (esExistente) {
+      const telefono = select.options[select.selectedIndex].getAttribute('data-telefono');
+      document.getElementById('cotClienteTelefono').value = telefono || '';
+    }
+  }
+
+  function agregarItemCotizacion() {
+    const desc = document.getElementById('cotNuevoItemDesc').value.trim();
+    const cant = Number(document.getElementById('cotNuevoItemCant').value) || 1;
+    const precio = Number(document.getElementById('cotNuevoItemPrecio').value);
+    if (!desc) { alert('Escribe la descripción del ítem.'); return; }
+    if (!precio || precio <= 0) { alert('Escribe un precio válido.'); return; }
+
+    carritoCotizacion.push({ descripcion: desc, cantidad: cant, precio_unitario: precio });
+    document.getElementById('cotNuevoItemDesc').value = '';
+    document.getElementById('cotNuevoItemCant').value = '1';
+    document.getElementById('cotNuevoItemPrecio').value = '';
+    renderizarItemsCotizacion();
+  }
+
+  function quitarItemCotizacion(indice) {
+    carritoCotizacion.splice(indice, 1);
+    renderizarItemsCotizacion();
+  }
+
+  function renderizarItemsCotizacion() {
+    const cont = document.getElementById('listaItemsCotizacion');
+    cont.innerHTML = carritoCotizacion.length === 0 ? '<div style="font-size:12px;opacity:0.6;">Sin ítems todavía.</div>' :
+      carritoCotizacion.map((i, idx) => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f4eef2;font-size:12.5px;">
+          <span>${i.cantidad} × ${escaparHtml(i.descripcion)}</span>
+          <span>${formatearMoneda(i.cantidad * i.precio_unitario)} <button type="button" class="btn-mini desactivar" onclick="quitarItemCotizacion(${idx})">✕</button></span>
+        </div>
+      `).join('');
+    actualizarTotalCotizacion();
+  }
+
+  function actualizarTotalCotizacion() {
+    const subtotal = carritoCotizacion.reduce((a, i) => a + i.cantidad * i.precio_unitario, 0);
+    const descuento = Number(document.getElementById('cotDescuento').value) || 0;
+    document.getElementById('totalCotizacion').textContent = `Total: ${formatearMoneda(subtotal - descuento)}`;
+  }
+
+  async function confirmarCrearCotizacion() {
+    const terceroId = document.getElementById('cotClienteExistente').value;
+    const nombreLibre = document.getElementById('cotClienteNombre').value.trim();
+    const telefonoLibre = document.getElementById('cotClienteTelefono').value.trim();
+    const fechaVencimiento = document.getElementById('cotFechaVencimiento').value;
+    const descuento = Number(document.getElementById('cotDescuento').value) || 0;
+    const notas = document.getElementById('cotNotas').value.trim();
+    ocultarMensaje('mensajeCotizacion');
+
+    if (!terceroId && !nombreLibre) { mostrarMensaje('mensajeCotizacion', 'Selecciona un cliente o escribe el nombre del prospecto.', 'error'); return; }
+    if (carritoCotizacion.length === 0) { mostrarMensaje('mensajeCotizacion', 'Agrega al menos un ítem.', 'error'); return; }
+    if (!fechaVencimiento) { mostrarMensaje('mensajeCotizacion', 'Escribe hasta cuándo es válida.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/cotizaciones', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({
+        tercero_id: terceroId || null, cliente_nombre_libre: terceroId ? null : nombreLibre,
+        cliente_telefono_libre: terceroId ? null : telefonoLibre, fecha_vencimiento: fechaVencimiento,
+        items: carritoCotizacion, descuento, notas,
+      })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeCotizacion', datos.error || 'No se pudo crear.', 'error'); return; }
+
+    mostrarMensaje('mensajeCotizacion', `✅ Cotización ${datos.cotizacion.consecutivo} creada.`, 'exito');
+    carritoCotizacion = [];
+    renderizarItemsCotizacion();
+    document.getElementById('cotClienteNombre').value = '';
+    document.getElementById('cotClienteTelefono').value = '';
+    document.getElementById('cotNotas').value = '';
+    await cargarCotizaciones();
+  }
+
+  function cambiarFiltroCotizaciones(estado, botonEl) {
+    filtroCotizacionesActual = estado;
+    document.querySelectorAll('[data-filtro-cot]').forEach(b => b.classList.remove('activo'));
+    botonEl.classList.add('activo');
+    cargarCotizaciones();
+  }
+
+  let cotizacionesCache = [];
+  async function cargarCotizaciones() {
+    const cont = document.getElementById('listaCotizaciones');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    const resp = await fetch(`${WORKER_URL}/api/pos/cotizaciones${filtroCotizacionesActual ? '?estado=' + filtroCotizacionesActual : ''}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const { cotizaciones } = await resp.json();
+    cotizacionesCache = cotizaciones || [];
+
+    if (cotizaciones.length === 0) { cont.innerHTML = '<div class="cargando">Sin cotizaciones todavía.</div>'; return; }
+
+    const etiquetasEstado = { enviada: '📤 Enviada', aprobada: '✅ Aprobada', rechazada: '❌ Rechazada', vencida: '⏰ Vencida', convertida: '🔄 Convertida en pedido' };
+
+    cont.innerHTML = cotizaciones.map(c => `
+      <div class="fila-historial" style="margin-bottom:9px;">
+        <div class="fila-historial-encabezado">
+          <span class="fila-historial-consecutivo">${escaparHtml(c.consecutivo)} — ${escaparHtml(c.tercero ? c.tercero.nombre_completo : c.cliente_nombre_libre || '')}</span>
+          <span class="fila-historial-total">${formatearMoneda(c.total)}</span>
+        </div>
+        <div class="fila-historial-fecha">Válida hasta: ${new Date(c.fecha_vencimiento + 'T00:00:00').toLocaleDateString('es-CO')} — ${etiquetasEstado[c.estado] || c.estado}</div>
+        <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+          ${c.estado === 'enviada' ? `
+            <button class="btn-mini guardar" onclick="cambiarEstadoCotizacion('${c.id}', 'aprobada')">✅ Aprobada</button>
+            <button class="btn-mini desactivar" onclick="cambiarEstadoCotizacion('${c.id}', 'rechazada')">❌ Rechazada</button>
+          ` : ''}
+          <button class="btn-mini editar" onclick="enviarCotizacionWhatsApp('${c.id}')">📱 Enviar por WhatsApp</button>
+          ${c.estado === 'aprobada' ? `<button class="btn-mini guardar" onclick="convertirCotizacionEnPedido('${c.id}')">🔄 Convertir en pedido</button>` : ''}
+          <button class="btn-mini desactivar" onclick="eliminarCotizacion('${c.id}')">🗑️</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function cambiarEstadoCotizacion(id, estado) {
+    const resp = await fetch(WORKER_URL + '/api/pos/cotizaciones/estado', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ id, estado })
+    });
+    if (!resp.ok) { alert('No se pudo actualizar.'); return; }
+    await cargarCotizaciones();
+  }
+
+  async function eliminarCotizacion(id) {
+    if (!confirm('¿Eliminar esta cotización?')) return;
+    const resp = await fetch(WORKER_URL + '/api/pos/cotizaciones/eliminar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ id })
+    });
+    if (!resp.ok) { alert('No se pudo eliminar.'); return; }
+    await cargarCotizaciones();
+  }
+
+  function enviarCotizacionWhatsApp(id) {
+    const c = cotizacionesCache.find(x => x.id === id);
+    if (!c) return;
+    const telefono = c.tercero ? c.tercero.telefono : c.cliente_telefono_libre;
+    if (!telefono) { alert('Este cliente no tiene teléfono registrado.'); return; }
+
+    const nombreCliente = c.tercero ? c.tercero.nombre_completo : c.cliente_nombre_libre;
+    let mensaje = `Hola ${nombreCliente}, aquí tienes tu cotización de Lana Rosa Crochet (${c.consecutivo}):\n\n`;
+    c.items.forEach(i => { mensaje += `• ${i.cantidad} × ${i.descripcion} — ${formatearMoneda(i.cantidad * i.precio_unitario)}\n`; });
+    if (Number(c.descuento) > 0) mensaje += `\nDescuento: -${formatearMoneda(c.descuento)}\n`;
+    mensaje += `\n*Total: ${formatearMoneda(c.total)}*\n\nVálida hasta el ${new Date(c.fecha_vencimiento + 'T00:00:00').toLocaleDateString('es-CO')}.`;
+    if (c.notas) mensaje += `\n\n${c.notas}`;
+    mensaje += '\n\n¿La confirmamos? 🐑💕';
+
+    abrirWhatsAppTexto(telefono, mensaje);
+  }
+
+  function convertirCotizacionEnPedido(id) {
+    const c = cotizacionesCache.find(x => x.id === id);
+    if (!c) return;
+    if (!confirm(`Esto te llevará a "Registrar venta → WhatsApp/Redes" con los datos de ${c.consecutivo} precargados, para que confirmes el pedido. ¿Continuar?`)) return;
+
+    window._cotizacionParaConvertir = c;
+    mostrarPantallaVentas();
+    mostrarSubTabGrupo('registrarVenta', 'subtabVentaWhatsapp', document.querySelectorAll('[data-subtab-btn="registrarVenta"]')[1]);
+    cargarTarifasEnvioParaPedido();
+    setTimeout(precargarCotizacionEnPedido, 300);
+  }
+
+  function precargarCotizacionEnPedido(reintento) {
+    const c = window._cotizacionParaConvertir;
+    if (!c) return;
+    const campoNombre = document.getElementById('pedidoNombreCliente');
+    if (!campoNombre) {
+      if (!reintento || reintento < 5) setTimeout(() => precargarCotizacionEnPedido((reintento || 0) + 1), 300);
+      return;
+    }
+    campoNombre.value = c.tercero ? c.tercero.nombre_completo : (c.cliente_nombre_libre || '');
+    const campoTelefono = document.getElementById('pedidoTelefonoCliente');
+    if (campoTelefono) campoTelefono.value = c.tercero ? (c.tercero.telefono || '') : (c.cliente_telefono_libre || '');
+    const campoDescripcion = document.getElementById('pedidoDescripcionProducto');
+    if (campoDescripcion) campoDescripcion.value = c.items.map(i => `${i.cantidad} × ${i.descripcion}`).join(', ');
+    const campoValor = document.getElementById('pedidoValorProducto');
+    if (campoValor) { campoValor.value = c.total; campoValor.dispatchEvent(new Event('input')); }
+
+    alert(`Datos de ${c.consecutivo} precargados — recuerda marcar esta cotización como convertida una vez confirmes el pedido, desde la pantalla de Cotizaciones.`);
+    window._cotizacionParaConvertir = null;
+  }
+
 
   async function mostrarPantallaConciliacion() {
     mostrarPantalla('pantallaConciliacion');
