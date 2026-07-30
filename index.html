@@ -790,6 +790,7 @@
         <button class="nav-btn" id="nav-codigos-descuento" onclick="mostrarPantallaCodigosDescuento()"><span class="nav-icon">🏷️</span> Códigos de descuento</button>
         <button class="nav-btn" id="nav-fidelizacion" onclick="mostrarPantallaFidelizacion()"><span class="nav-icon">⭐</span> Programa de fidelización</button>
         <button class="nav-btn" id="nav-config-alertas" onclick="mostrarPantallaConfigAlertas()"><span class="nav-icon">🔔</span> Configuración de alertas</button>
+        <button class="nav-btn" id="nav-documentos-empresa" onclick="mostrarPantallaDocumentosEmpresa()"><span class="nav-icon">📁</span> Documentos legales</button>
         <button class="nav-btn" id="nav-tarifas-envio" onclick="mostrarPantallaTarifasEnvio()"><span class="nav-icon">🚚</span> Tarifas de envío</button>
         <button class="nav-btn" onclick="mostrarPantallaApariencia()"><span class="nav-icon">🎨</span> Apariencia</button>
       </div>
@@ -2387,6 +2388,45 @@
 <!-- ===== PANTALLA: CÓDIGOS DE DESCUENTO ===== -->
 <!-- ===== PANTALLA: FIDELIZACIÓN — PUNTOS ===== -->
 <!-- ===== PANTALLA: CONFIGURACIÓN DE ALERTAS ===== -->
+<!-- ===== PANTALLA: DOCUMENTOS LEGALES DE LA EMPRESA ===== -->
+<div id="pantallaDocumentosEmpresa" class="oculto contenido">
+  <div class="page-header">
+    <h1>📁 Documentos legales de la empresa</h1>
+    <div class="subtitulo">RUT, Cámara de Comercio, cédula de la propietaria, registros de marca y diseño, y otros documentos que a veces piden los clientes.</div>
+  </div>
+
+  <div class="panel" style="max-width:520px;">
+    <h2>+ Subir documento</h2>
+    <label for="docEmpNombre">Nombre del documento</label>
+    <input type="text" id="docEmpNombre" placeholder="Ej: RUT actualizado 2026">
+    <label for="docEmpTipo">Tipo</label>
+    <select id="docEmpTipo">
+      <option value="rut">RUT</option>
+      <option value="camara_comercio">Cámara de Comercio</option>
+      <option value="cedula_propietaria">Cédula de la propietaria</option>
+      <option value="registro_marca">Registro de marca</option>
+      <option value="registro_diseno">Registro de diseño</option>
+      <option value="certificado_bancario">Certificado bancario</option>
+      <option value="otro">Otro</option>
+    </select>
+    <label for="docEmpDescripcion">Descripción <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+    <input type="text" id="docEmpDescripcion">
+    <label for="docEmpFechaExpedicion">Fecha de expedición <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+    <input type="date" id="docEmpFechaExpedicion">
+    <label for="docEmpFechaVencimiento">Fecha de vencimiento <span style="font-size:10px;opacity:0.6;">(opcional, si aplica)</span></label>
+    <input type="date" id="docEmpFechaVencimiento">
+    <label for="docEmpArchivo">Archivo (PDF o imagen)</label>
+    <input type="file" id="docEmpArchivo" accept=".pdf,image/*">
+    <button class="btn-principal" onclick="confirmarSubirDocumentoEmpresa()">Subir documento</button>
+    <div class="mensaje" id="mensajeDocumentoEmpresa"></div>
+  </div>
+
+  <div class="panel" style="max-width:none;max-height:none;margin-top:20px;">
+    <h2>Documentos guardados</h2>
+    <div id="listaDocumentosEmpresa"><div class="cargando">Cargando...</div></div>
+  </div>
+</div>
+
 <div id="pantallaConfigAlertas" class="oculto contenido">
   <div class="page-header">
     <h1>🔔 Configuración de alertas</h1>
@@ -2472,6 +2512,21 @@
     <input type="file" id="inputLogoEmpresa" accept="image/*" onchange="previsualizarLogo(event)">
     <button class="btn-principal" onclick="guardarLogoEmpresa()">Guardar logo</button>
     <div class="mensaje" id="mensajeLogoEmpresa"></div>
+  </div>
+
+  <div class="panel oculto" id="panelDatosFiscalesEmpresa" style="max-width:420px;margin-top:20px;">
+    <h2>Datos de la empresa</h2>
+    <div class="subtitulo">Se usan para generar la cuenta de cobro y documentos formales.</div>
+    <label for="empresaRazonSocial">Razón social / Nombre completo</label>
+    <input type="text" id="empresaRazonSocial" placeholder="Sara Loaiza Muñoz — Lana Rosa Crochet">
+    <label for="empresaNit">NIT / Cédula</label>
+    <input type="text" id="empresaNit" placeholder="0000000000-0">
+    <label for="empresaDireccion">Dirección</label>
+    <input type="text" id="empresaDireccion" placeholder="Villamaría, Caldas">
+    <label for="empresaTelefono">Teléfono</label>
+    <input type="text" id="empresaTelefono" placeholder="300 000 0000">
+    <button class="btn-principal" onclick="guardarDatosFiscalesEmpresa()">Guardar</button>
+    <div class="mensaje" id="mensajeDatosFiscalesEmpresa"></div>
   </div>
 </div>
 
@@ -2670,7 +2725,7 @@
 <div id="pantallaCuentasPendientes" class="oculto contenido">
   <div class="page-header">
     <h1>📋 Cuentas por cobrar y por pagar</h1>
-    <div class="subtitulo">Registra dinero pendiente (crédito a un cliente, o una deuda con un proveedor) para llevar control de vencimientos.</div>
+    <div class="subtitulo">Vinculadas al cliente/proveedor real, con número de factura y abonos parciales.</div>
   </div>
 
   <div class="filtro-tipo" style="margin-bottom:20px;">
@@ -2681,8 +2736,20 @@
   <div class="grilla-2">
     <div class="panel">
       <h2>Registrar nueva</h2>
+      <label for="cxcTercero">Cliente / Proveedor</label>
+      <select id="cxcTercero" onchange="alCambiarTerceroCxC()"><option value="">Selecciona...</option></select>
+
+      <div id="bloqueFacturaVinculadaCxC" class="oculto">
+        <label for="cxcFacturaVinculada">Vincular con una venta ya registrada <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+        <select id="cxcFacturaVinculada" onchange="alSeleccionarFacturaVinculadaCxC()"><option value="">Sin vincular — factura externa</option></select>
+      </div>
+
       <label for="cxcDescripcion">Descripción</label>
-      <input type="text" id="cxcDescripcion" placeholder="Ej: Saldo pendiente de la Sra. María">
+      <input type="text" id="cxcDescripcion" placeholder="Ej: Saldo pendiente pedido de amigurumis">
+      <label for="cxcNumeroFactura">N° de factura o recibo</label>
+      <input type="text" id="cxcNumeroFactura" placeholder="Ej: FE-00123">
+      <label for="cxcFechaFactura">Fecha de la factura</label>
+      <input type="date" id="cxcFechaFactura">
       <label for="cxcMonto">Monto (COP)</label>
       <input type="number" id="cxcMonto" min="0" step="1000">
       <label for="cxcVencimiento">Fecha de vencimiento</label>
@@ -3433,7 +3500,7 @@
   });
 
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConfigAlertas', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -3697,6 +3764,7 @@
     mostrar('nav-codigos-descuento', esAdmin);
     mostrar('nav-fidelizacion', esAdmin);
     mostrar('nav-config-alertas', esAdmin);
+    mostrar('nav-documentos-empresa', esAdmin);
     mostrar('nav-tarifas-envio', esAdmin);
 
     // Turno de caja solo aplica a quien maneja caja física (Tienda)
@@ -7801,6 +7869,115 @@
     `;
   }
 
+  // ============================================================
+  // DOCUMENTOS LEGALES DE LA EMPRESA
+  // ============================================================
+  const etiquetasTipoDocEmpresa = {
+    rut: 'RUT', camara_comercio: 'Cámara de Comercio', cedula_propietaria: 'Cédula de la propietaria',
+    registro_marca: 'Registro de marca', registro_diseno: 'Registro de diseño', certificado_bancario: 'Certificado bancario', otro: 'Otro',
+  };
+
+  async function mostrarPantallaDocumentosEmpresa() {
+    mostrarPantalla('pantallaDocumentosEmpresa');
+    document.getElementById('docEmpNombre').value = '';
+    document.getElementById('docEmpDescripcion').value = '';
+    document.getElementById('docEmpFechaExpedicion').value = '';
+    document.getElementById('docEmpFechaVencimiento').value = '';
+    document.getElementById('docEmpArchivo').value = '';
+    ocultarMensaje('mensajeDocumentoEmpresa');
+    await cargarDocumentosEmpresa();
+  }
+
+  async function confirmarSubirDocumentoEmpresa() {
+    const nombre = document.getElementById('docEmpNombre').value.trim();
+    const tipo = document.getElementById('docEmpTipo').value;
+    const descripcion = document.getElementById('docEmpDescripcion').value.trim();
+    const fechaExpedicion = document.getElementById('docEmpFechaExpedicion').value;
+    const fechaVencimiento = document.getElementById('docEmpFechaVencimiento').value;
+    const archivo = document.getElementById('docEmpArchivo').files[0];
+    ocultarMensaje('mensajeDocumentoEmpresa');
+
+    if (!nombre) { mostrarMensaje('mensajeDocumentoEmpresa', 'Escribe el nombre del documento.', 'error'); return; }
+    if (!archivo) { mostrarMensaje('mensajeDocumentoEmpresa', 'Selecciona el archivo.', 'error'); return; }
+    if (archivo.size > 10_000_000) { mostrarMensaje('mensajeDocumentoEmpresa', 'El archivo pesa más de 10MB.', 'error'); return; }
+
+    const form = new FormData();
+    form.append('nombre', nombre);
+    form.append('tipo_documento', tipo);
+    if (descripcion) form.append('descripcion', descripcion);
+    if (fechaExpedicion) form.append('fecha_expedicion', fechaExpedicion);
+    if (fechaVencimiento) form.append('fecha_vencimiento', fechaVencimiento);
+    form.append('archivo', archivo);
+
+    mostrarMensaje('mensajeDocumentoEmpresa', 'Subiendo...', 'exito');
+    const resp = await fetch(WORKER_URL + '/api/pos/documentos-empresa', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + sesionActual.token },
+      body: form
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeDocumentoEmpresa', datos.error || 'No se pudo subir.', 'error'); return; }
+
+    mostrarMensaje('mensajeDocumentoEmpresa', '✅ Documento subido.', 'exito');
+    document.getElementById('docEmpNombre').value = '';
+    document.getElementById('docEmpDescripcion').value = '';
+    document.getElementById('docEmpFechaExpedicion').value = '';
+    document.getElementById('docEmpFechaVencimiento').value = '';
+    document.getElementById('docEmpArchivo').value = '';
+    await cargarDocumentosEmpresa();
+  }
+
+  async function cargarDocumentosEmpresa() {
+    const cont = document.getElementById('listaDocumentosEmpresa');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    const resp = await fetch(WORKER_URL + '/api/pos/documentos-empresa', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const { documentos } = await resp.json();
+
+    if (!documentos || documentos.length === 0) { cont.innerHTML = '<div class="cargando">Sin documentos guardados todavía.</div>'; return; }
+
+    const hoy = new Date().toISOString().slice(0, 10);
+    cont.innerHTML = documentos.map(d => {
+      const vencido = d.fecha_vencimiento && d.fecha_vencimiento < hoy;
+      const porVencer = d.fecha_vencimiento && !vencido && d.fecha_vencimiento < new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+      return `
+        <div class="fila-historial" style="margin-bottom:9px;${vencido ? 'border-left:3px solid var(--rojo-error);' : porVencer ? 'border-left:3px solid #e6a700;' : ''}">
+          <div class="fila-historial-encabezado">
+            <span class="fila-historial-consecutivo">📄 ${escaparHtml(d.nombre)}</span>
+            <span style="font-size:11px;opacity:0.6;">${etiquetasTipoDocEmpresa[d.tipo_documento] || d.tipo_documento}</span>
+          </div>
+          <div class="fila-historial-fecha">
+            ${d.descripcion ? escaparHtml(d.descripcion) + ' — ' : ''}
+            ${d.fecha_vencimiento ? `Vence: ${new Date(d.fecha_vencimiento + 'T00:00:00').toLocaleDateString('es-CO')}${vencido ? ' ⚠️ VENCIDO' : porVencer ? ' 🟡 Por vencer' : ''}` : 'Sin fecha de vencimiento'}
+          </div>
+          <div style="display:flex;gap:6px;margin-top:6px;">
+            <button class="btn-mini guardar" onclick="descargarDocumentoEmpresa('${d.id}')">⬇️ Descargar</button>
+            <button class="btn-mini desactivar" onclick="confirmarEliminarDocumentoEmpresa('${d.id}')">🗑️ Eliminar</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function descargarDocumentoEmpresa(documentoId) {
+    const resp = await fetch(`${WORKER_URL}/api/pos/documentos-empresa/url?documento_id=${documentoId}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { alert('No se pudo generar el enlace de descarga.'); return; }
+    const { url } = await resp.json();
+    window.open(url, '_blank');
+  }
+
+  async function confirmarEliminarDocumentoEmpresa(documentoId) {
+    if (!confirm('¿Eliminar este documento? No se puede deshacer.')) return;
+    const resp = await fetch(WORKER_URL + '/api/pos/documentos-empresa/eliminar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ documento_id: documentoId })
+    });
+    if (!resp.ok) { alert('No se pudo eliminar.'); return; }
+    await cargarDocumentosEmpresa();
+  }
+
+
   async function mostrarPantallaConfigAlertas() {
     mostrarPantalla('pantallaConfigAlertas');
     ocultarMensaje('mensajeConfigAlertas');
@@ -8413,11 +8590,42 @@
     mostrarPantalla('pantallaApariencia');
     actualizarBotonesTema();
     document.getElementById('panelLogoEmpresa').classList.toggle('oculto', rolActual !== 'administrador');
+    document.getElementById('panelDatosFiscalesEmpresa').classList.toggle('oculto', rolActual !== 'administrador');
     ocultarMensaje('mensajeLogoEmpresa');
+    ocultarMensaje('mensajeDatosFiscalesEmpresa');
     document.getElementById('previsualizacionLogo').innerHTML = logoEmpresaCache
       ? `<img src="${logoEmpresaCache}" style="max-width:180px;max-height:100px;border-radius:8px;">`
       : '<div style="font-size:12px;opacity:0.6;">Todavía no se ha subido ningún logo.</div>';
+
+    if (rolActual === 'administrador') {
+      fetch(WORKER_URL + '/api/pos/config-empresa', { headers: { Authorization: 'Bearer ' + sesionActual.token } })
+        .then(r => r.ok ? r.json() : null)
+        .then(d => {
+          if (!d) return;
+          document.getElementById('empresaRazonSocial').value = d.razon_social || '';
+          document.getElementById('empresaNit').value = d.nit || '';
+          document.getElementById('empresaDireccion').value = d.direccion || '';
+          document.getElementById('empresaTelefono').value = d.telefono || '';
+        });
+    }
   }
+
+  async function guardarDatosFiscalesEmpresa() {
+    ocultarMensaje('mensajeDatosFiscalesEmpresa');
+    const resp = await fetch(WORKER_URL + '/api/pos/config-empresa/datos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({
+        razon_social: document.getElementById('empresaRazonSocial').value.trim(),
+        nit: document.getElementById('empresaNit').value.trim(),
+        direccion: document.getElementById('empresaDireccion').value.trim(),
+        telefono: document.getElementById('empresaTelefono').value.trim(),
+      })
+    });
+    if (!resp.ok) { mostrarMensaje('mensajeDatosFiscalesEmpresa', 'No se pudo guardar.', 'error'); return; }
+    mostrarMensaje('mensajeDatosFiscalesEmpresa', '✅ Guardado.', 'exito');
+  }
+
 
   let logoNuevoBase64 = null;
   function previsualizarLogo(evento) {
@@ -11759,46 +11967,120 @@
   }
 
 
+  let terceroSeleccionadoCxC = null;
+  let facturasClienteCacheCxC = [];
+
   async function mostrarPantallaCuentasPendientes() {
     mostrarPantalla('pantallaCuentasPendientes');
     document.getElementById('cxcDescripcion').value = '';
+    document.getElementById('cxcNumeroFactura').value = '';
+    document.getElementById('cxcFechaFactura').value = '';
     document.getElementById('cxcMonto').value = '';
     document.getElementById('cxcVencimiento').value = '';
+    document.getElementById('cxcTercero').value = '';
+    document.getElementById('bloqueFacturaVinculadaCxC').classList.add('oculto');
+    terceroSeleccionadoCxC = null;
     ocultarMensaje('mensajeCxC');
+    await cargarTercerosParaCxC();
     await cargarCuentasPendientes();
+  }
+
+  async function cargarTercerosParaCxC() {
+    const tipoTercero = filtroCxCActual === 'por_cobrar' ? 'cliente' : 'proveedor';
+    const resp = await fetch(WORKER_URL + '/api/pos/terceros?tipo=' + tipoTercero, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) return;
+    const { terceros } = await resp.json();
+    document.getElementById('cxcTercero').innerHTML = '<option value="">Selecciona...</option>' +
+      (terceros || []).map(t => `<option value="${t.id}">${escaparHtml(t.nombre_completo)}${t.numero_documento ? ' — ' + escaparHtml(t.numero_documento) : ''}</option>`).join('');
+  }
+
+  async function alCambiarTerceroCxC() {
+    terceroSeleccionadoCxC = document.getElementById('cxcTercero').value;
+    const bloqueFactura = document.getElementById('bloqueFacturaVinculadaCxC');
+
+    if (filtroCxCActual !== 'por_cobrar' || !terceroSeleccionadoCxC) {
+      bloqueFactura.classList.add('oculto');
+      return;
+    }
+
+    bloqueFactura.classList.remove('oculto');
+    const selectFactura = document.getElementById('cxcFacturaVinculada');
+    selectFactura.innerHTML = '<option value="">Cargando ventas del cliente...</option>';
+
+    const resp = await fetch(`${WORKER_URL}/api/pos/finanzas/facturas-cliente?tercero_id=${terceroSeleccionadoCxC}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { selectFactura.innerHTML = '<option value="">Sin vincular — factura externa</option>'; return; }
+    const { ventas, pedidos } = await resp.json();
+    facturasClienteCacheCxC = [
+      ...(ventas || []).map(v => ({ id: v.id, tipo: 'venta_pos', etiqueta: `🧵 ${v.consecutivo} — ${formatearMoneda(v.total)} (${new Date(v.created_at).toLocaleDateString('es-CO')})`, total: v.total })),
+      ...(pedidos || []).map(p => ({ id: p.id, tipo: 'pedido_canal', etiqueta: `📱 ${p.consecutivo} — ${formatearMoneda(p.total_pedido)} (${new Date(p.created_at).toLocaleDateString('es-CO')})`, total: p.total_pedido })),
+    ];
+    selectFactura.innerHTML = '<option value="">Sin vincular — factura externa</option>' +
+      facturasClienteCacheCxC.map(f => `<option value="${f.id}">${f.etiqueta}</option>`).join('');
+  }
+
+  function alSeleccionarFacturaVinculadaCxC() {
+    const id = document.getElementById('cxcFacturaVinculada').value;
+    const factura = facturasClienteCacheCxC.find(f => f.id === id);
+    if (factura) {
+      document.getElementById('cxcMonto').value = factura.total;
+      document.getElementById('cxcNumeroFactura').value = factura.etiqueta.split(' — ')[0].replace(/^[^\s]+\s/, '');
+    }
   }
 
   function cambiarFiltroCxC(tipo, botonEl) {
     filtroCxCActual = tipo;
     document.querySelectorAll('[data-filtro-cxc]').forEach(b => b.classList.remove('activo'));
     botonEl.classList.add('activo');
+    document.getElementById('bloqueFacturaVinculadaCxC').classList.add('oculto');
+    cargarTercerosParaCxC();
     cargarCuentasPendientes();
   }
 
   async function confirmarCrearCuentaPendiente() {
+    const terceroId = document.getElementById('cxcTercero').value;
+    const facturaVinculadaId = document.getElementById('cxcFacturaVinculada') ? document.getElementById('cxcFacturaVinculada').value : '';
+    const facturaVinculada = facturasClienteCacheCxC.find(f => f.id === facturaVinculadaId);
     const descripcion = document.getElementById('cxcDescripcion').value.trim();
+    const numeroFactura = document.getElementById('cxcNumeroFactura').value.trim();
+    const fechaFactura = document.getElementById('cxcFechaFactura').value;
     const monto = Number(document.getElementById('cxcMonto').value);
     const vencimiento = document.getElementById('cxcVencimiento').value;
     ocultarMensaje('mensajeCxC');
 
+    if (!terceroId) { mostrarMensaje('mensajeCxC', `Selecciona el ${filtroCxCActual === 'por_cobrar' ? 'cliente' : 'proveedor'}.`, 'error'); return; }
     if (!descripcion) { mostrarMensaje('mensajeCxC', 'Escribe una descripción.', 'error'); return; }
     if (!monto || monto <= 0) { mostrarMensaje('mensajeCxC', 'Escribe un monto válido.', 'error'); return; }
     if (!vencimiento) { mostrarMensaje('mensajeCxC', 'Escribe la fecha de vencimiento.', 'error'); return; }
 
+    const cuerpo = {
+      tipo: filtroCxCActual, tercero_id: terceroId, descripcion, monto, fecha_vencimiento: vencimiento,
+      numero_factura: numeroFactura || null, fecha_factura: fechaFactura || null,
+    };
+    if (facturaVinculada) {
+      if (facturaVinculada.tipo === 'venta_pos') cuerpo.venta_pos_id = facturaVinculada.id;
+      else cuerpo.pedido_canal_id = facturaVinculada.id;
+    }
+
     const resp = await fetch(WORKER_URL + '/api/pos/finanzas/cuentas-pendientes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ tipo: filtroCxCActual, descripcion, monto, fecha_vencimiento: vencimiento })
+      body: JSON.stringify(cuerpo)
     });
     const datos = await resp.json();
     if (!resp.ok) { mostrarMensaje('mensajeCxC', datos.error || 'No se pudo registrar.', 'error'); return; }
 
     mostrarMensaje('mensajeCxC', '✅ Registrada correctamente.', 'exito');
     document.getElementById('cxcDescripcion').value = '';
+    document.getElementById('cxcNumeroFactura').value = '';
+    document.getElementById('cxcFechaFactura').value = '';
     document.getElementById('cxcMonto').value = '';
     document.getElementById('cxcVencimiento').value = '';
+    document.getElementById('cxcTercero').value = '';
+    document.getElementById('bloqueFacturaVinculadaCxC').classList.add('oculto');
     await cargarCuentasPendientes();
   }
+
+  let cuentasPendientesCache = [];
 
   async function cargarCuentasPendientes() {
     const cont = document.getElementById('listaCuentasPendientes');
@@ -11806,23 +12088,61 @@
     const resp = await fetch(`${WORKER_URL}/api/pos/finanzas/cuentas-pendientes?tipo=${filtroCxCActual}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
     if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
     const { cuentas } = await resp.json();
+    cuentasPendientesCache = cuentas || [];
 
     if (!cuentas || cuentas.length === 0) { cont.innerHTML = '<div class="cargando">Sin cuentas registradas.</div>'; return; }
 
     const hoy = new Date().toISOString().slice(0, 10);
     cont.innerHTML = cuentas.map(c => {
       const vencida = c.estado !== 'pagado' && c.fecha_vencimiento < hoy;
+      const saldoPendiente = Number(c.monto) - Number(c.monto_abonado || 0);
+      const esEmpresarial = c.tercero && c.tercero.tipo_documento === 'NIT';
       return `
         <div class="fila-historial" style="margin-bottom:9px;${vencida ? 'border-left:3px solid var(--rojo-error);' : ''}">
           <div class="fila-historial-encabezado">
-            <span class="fila-historial-consecutivo">${escaparHtml(c.descripcion)}</span>
+            <span class="fila-historial-consecutivo">${escaparHtml(c.tercero ? c.tercero.nombre_completo : c.descripcion)}${c.numero_factura ? ' · ' + escaparHtml(c.numero_factura) : ''}</span>
             <span class="fila-historial-total">${formatearMoneda(c.monto)}</span>
           </div>
-          <div class="fila-historial-fecha">Vence: ${new Date(c.fecha_vencimiento + 'T00:00:00').toLocaleDateString('es-CO')} ${vencida ? '⚠️ VENCIDA' : ''} — ${c.estado === 'pagado' ? '✅ Pagada el ' + new Date(c.fecha_pago + 'T00:00:00').toLocaleDateString('es-CO') : '⏳ Pendiente'}</div>
-          ${c.estado !== 'pagado' ? `<button class="btn-mini guardar" style="margin-top:6px;" onclick="confirmarPagarCuentaPendiente('${c.id}')">Marcar como ${filtroCxCActual === 'por_cobrar' ? 'cobrada' : 'pagada'}</button>` : ''}
+          <div class="fila-historial-fecha">${escaparHtml(c.descripcion)}</div>
+          <div class="fila-historial-fecha">Vence: ${new Date(c.fecha_vencimiento + 'T00:00:00').toLocaleDateString('es-CO')} ${vencida ? '⚠️ VENCIDA' : ''} — ${c.estado === 'pagado' ? '✅ Pagada el ' + new Date(c.fecha_pago + 'T00:00:00').toLocaleDateString('es-CO') : `⏳ Pendiente (abonado: ${formatearMoneda(c.monto_abonado || 0)}, saldo: ${formatearMoneda(saldoPendiente)})`}</div>
+          ${c.estado !== 'pagado' ? `
+            <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+              <button class="btn-mini guardar" onclick="abrirAbonoCuentaPendiente('${c.id}', ${saldoPendiente})">💵 Registrar abono</button>
+              <button class="btn-mini editar" onclick="verHistorialAbonosCuenta('${c.id}')">📜 Ver abonos</button>
+              ${esEmpresarial && filtroCxCActual === 'por_cobrar' ? `<button class="btn-mini editar" onclick="generarCuentaDeCobro('${c.id}')">🧾 Generar cuenta de cobro</button>` : ''}
+            </div>
+          ` : ''}
         </div>
       `;
     }).join('');
+  }
+
+  async function abrirAbonoCuentaPendiente(cuentaId, saldoPendiente) {
+    const montoStr = prompt(`Saldo pendiente: ${formatearMoneda(saldoPendiente)}\n¿Cuánto vas a abonar?`, saldoPendiente);
+    if (!montoStr) return;
+    const monto = Number(montoStr);
+    if (isNaN(monto) || monto <= 0) { alert('Monto inválido.'); return; }
+
+    const metodoPago = prompt('Método de pago: efectivo, nequi, daviplata, transferencia, tarjeta_debito, tarjeta_credito, credito_financiera (CrediLondon)', 'efectivo');
+    if (!metodoPago) return;
+
+    const resp = await fetch(WORKER_URL + '/api/pos/finanzas/cuentas-pendientes/abonar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ cuenta_id: cuentaId, monto, metodo_pago: metodoPago })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { alert(datos.error || 'No se pudo registrar el abono.'); return; }
+    await cargarCuentasPendientes();
+  }
+
+  async function verHistorialAbonosCuenta(cuentaId) {
+    const resp = await fetch(`${WORKER_URL}/api/pos/finanzas/cuentas-pendientes/abonos?cuenta_id=${cuentaId}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { alert('No se pudo cargar el historial.'); return; }
+    const { abonos } = await resp.json();
+    if (!abonos || abonos.length === 0) { alert('Todavía no hay abonos registrados para esta cuenta.'); return; }
+    const texto = abonos.map(a => `${new Date(a.fecha + 'T00:00:00').toLocaleDateString('es-CO')} — ${formatearMoneda(a.monto)} (${a.metodo_pago})`).join('\n');
+    alert('Historial de abonos:\n\n' + texto);
   }
 
   async function confirmarPagarCuentaPendiente(cuentaId) {
@@ -11838,6 +12158,141 @@
     if (!resp.ok) { alert(datos.error || 'No se pudo marcar como pagada.'); return; }
     await cargarCuentasPendientes();
   }
+
+  async function generarCuentaDeCobro(cuentaId) {
+    const c = cuentasPendientesCache.find(x => x.id === cuentaId);
+    if (!c) { alert('No se encontró la cuenta.'); return; }
+
+    const respEmpresa = await fetch(WORKER_URL + '/api/pos/config-empresa', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    const empresa = respEmpresa.ok ? await respEmpresa.json() : {};
+
+    if (!empresa.nit || !empresa.razon_social) {
+      alert('Antes de generar la cuenta de cobro, completa los datos de tu empresa (razón social y NIT) en Configuración → Apariencia → "Datos de la empresa".');
+      return;
+    }
+
+    const saldoPendiente = Number(c.monto) - Number(c.monto_abonado || 0);
+    const fechaHoy = new Date().toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' });
+    const numeroCuenta = 'CC-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + c.id.slice(0, 4).toUpperCase();
+
+    const ventana = window.open('', '_blank');
+    ventana.document.write(`
+      <html>
+      <head>
+        <title>Cuenta de cobro ${numeroCuenta}</title>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: Arial, Helvetica, sans-serif; padding: 40px; color: #2d2d2d; max-width: 750px; margin: 0 auto; }
+          h1 { color: #d8017c; font-size: 22px; text-align: center; margin-bottom: 4px; }
+          .subtitulo-cc { text-align: center; font-size: 12px; color: #666; margin-bottom: 30px; }
+          .datos-empresa { text-align: center; font-size: 12px; margin-bottom: 30px; line-height: 1.5; }
+          .numero-fecha { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 24px; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
+          .destinatario { font-size: 13px; margin-bottom: 24px; line-height: 1.6; }
+          .cuerpo-cc { font-size: 14px; line-height: 1.8; margin-bottom: 30px; text-align: justify; }
+          .tabla-cc { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+          .tabla-cc th { background: #f9ddf4; padding: 8px 12px; text-align: left; font-size: 12px; }
+          .tabla-cc td { padding: 8px 12px; font-size: 13px; border-bottom: 1px solid #eee; }
+          .total-cc { text-align: right; font-size: 16px; font-weight: bold; color: #d8017c; margin-top: 10px; }
+          .firma-cc { margin-top: 70px; }
+          .firma-cc .linea { width: 280px; border-top: 1px solid #333; padding-top: 6px; font-size: 12px; }
+          @media print { body { padding: 15px; } }
+        </style>
+      </head>
+      <body>
+        <h1>CUENTA DE COBRO</h1>
+        <div class="subtitulo-cc">N° ${numeroCuenta}</div>
+        <div class="datos-empresa">
+          <strong>${escaparHtml(empresa.razon_social)}</strong><br>
+          NIT/Cédula: ${escaparHtml(empresa.nit)}<br>
+          ${empresa.direccion ? escaparHtml(empresa.direccion) + '<br>' : ''}
+          ${empresa.telefono ? 'Tel: ' + escaparHtml(empresa.telefono) : ''}
+        </div>
+        <div class="numero-fecha">
+          <span>Manizales/Villamaría, Caldas</span>
+          <span>${fechaHoy}</span>
+        </div>
+        <div class="destinatario">
+          <strong>Señores:</strong><br>
+          ${escaparHtml(c.tercero ? c.tercero.nombre_completo : '')}<br>
+          ${c.tercero && c.tercero.numero_documento ? 'NIT/Cédula: ' + escaparHtml(c.tercero.numero_documento) + '<br>' : ''}
+          ${c.tercero && c.tercero.direccion ? escaparHtml(c.tercero.direccion) + '<br>' : ''}
+        </div>
+        <div class="cuerpo-cc">
+          Debe a favor de <strong>${escaparHtml(empresa.razon_social)}</strong> y a cargo de <strong>${escaparHtml(c.tercero ? c.tercero.nombre_completo : '')}</strong>, la suma de <strong>${formatearMoneda(saldoPendiente)}</strong> (${numeroALetras(saldoPendiente)}), por concepto de:
+        </div>
+        <table class="tabla-cc">
+          <thead><tr><th>Concepto</th><th>N° Factura</th><th>Fecha</th><th style="text-align:right;">Valor</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>${escaparHtml(c.descripcion)}</td>
+              <td>${escaparHtml(c.numero_factura || '—')}</td>
+              <td>${c.fecha_factura ? new Date(c.fecha_factura + 'T00:00:00').toLocaleDateString('es-CO') : '—'}</td>
+              <td style="text-align:right;">${formatearMoneda(c.monto)}</td>
+            </tr>
+            ${Number(c.monto_abonado || 0) > 0 ? `
+            <tr>
+              <td colspan="3" style="text-align:right;">Abonos ya recibidos</td>
+              <td style="text-align:right;">-${formatearMoneda(c.monto_abonado)}</td>
+            </tr>
+            ` : ''}
+          </tbody>
+        </table>
+        <div class="total-cc">Saldo pendiente: ${formatearMoneda(saldoPendiente)}</div>
+
+        <div class="firma-cc">
+          <div class="linea">
+            ${escaparHtml(empresa.razon_social)}<br>
+            NIT/Cédula: ${escaparHtml(empresa.nit)}
+          </div>
+        </div>
+      </body>
+      </html>
+    `);
+    ventana.document.close();
+    setTimeout(() => ventana.print(), 400);
+  }
+
+  // Convierte un número a su forma en letras, para la cuenta de cobro (ej:
+  // "cien mil pesos"). Cubre los rangos típicos de una pyme — no es
+  // exhaustivo para cifras astronómicas, pero sí para el uso real del negocio.
+  function numeroALetras(numero) {
+    const unidades = ['', 'un', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve'];
+    const especiales = ['diez', 'once', 'doce', 'trece', 'catorce', 'quince', 'dieciséis', 'diecisiete', 'dieciocho', 'diecinueve'];
+    const decenas = ['', '', 'veinte', 'treinta', 'cuarenta', 'cincuenta', 'sesenta', 'setenta', 'ochenta', 'noventa'];
+    const centenas = ['', 'ciento', 'doscientos', 'trescientos', 'cuatrocientos', 'quinientos', 'seiscientos', 'setecientos', 'ochocientos', 'novecientos'];
+
+    function trescientos(n) {
+      if (n === 0) return '';
+      if (n === 100) return 'cien';
+      let texto = '';
+      if (n >= 100) { texto += centenas[Math.floor(n / 100)] + ' '; n %= 100; }
+      if (n >= 10 && n < 20) { texto += especiales[n - 10]; return texto.trim(); }
+      if (n >= 20) {
+        texto += decenas[Math.floor(n / 10)];
+        if (n % 10 > 0) texto += ' y ' + unidades[n % 10];
+      } else if (n > 0) {
+        texto += unidades[n];
+      }
+      return texto.trim();
+    }
+
+    const entero = Math.round(numero);
+    if (entero === 0) return 'cero pesos';
+
+    let resto = entero;
+    const millones = Math.floor(resto / 1000000); resto %= 1000000;
+    const miles = Math.floor(resto / 1000); resto %= 1000;
+    const cientos = resto;
+
+    let partes = [];
+    if (millones > 0) partes.push(trescientos(millones) + (millones === 1 ? ' millón' : ' millones'));
+    if (miles > 0) partes.push((miles === 1 ? 'mil' : trescientos(miles) + ' mil'));
+    if (cientos > 0) partes.push(trescientos(cientos));
+
+    return partes.join(' ').trim() + ' pesos m/cte';
+  }
+
+
 
   async function mostrarPantallaEstadosFinancieros() {
     mostrarPantalla('pantallaEstadosFinancieros');
