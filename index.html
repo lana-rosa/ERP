@@ -3386,6 +3386,52 @@
   // ============================================================================
   // UTILIDADES
   // ============================================================================
+  // ============================================================
+  // NAVEGACIÓN CON EL BOTÓN "ATRÁS" DEL CELULAR/NAVEGADOR
+  // ============================================================
+  // Cada vez que se cambia de pantalla o se abre algo tipo panel (el chat de
+  // Rosina), se apila una entrada en el historial del navegador. Así, el
+  // botón de atrás del celular navega DENTRO de la app en vez de salirse.
+  let procesandoPopStateNavegacion = false;
+  let ultimaPantallaHistorial = null;
+
+  function pushHistorialNavegacion(tipo, datos) {
+    if (procesandoPopStateNavegacion) return;
+    if (tipo === 'pantalla' && datos.id === ultimaPantallaHistorial) return; // evita apilar la misma pantalla dos veces seguidas
+    if (tipo === 'pantalla') ultimaPantallaHistorial = datos.id;
+    try {
+      history.pushState(Object.assign({ tipo: tipo }, datos), '', location.pathname + location.search);
+    } catch (e) { /* si falla el historial, la app sigue funcionando igual */ }
+  }
+
+  window.addEventListener('popstate', function (event) {
+    procesandoPopStateNavegacion = true;
+
+    // 1) Si el chat de Rosina está abierto, ciérralo primero — no navegar de pantalla todavía.
+    const panelChat = document.getElementById('panelChatAsistenteIA');
+    if (panelChat && !panelChat.classList.contains('oculto')) {
+      panelChat.classList.add('oculto');
+      procesandoPopStateNavegacion = false;
+      return;
+    }
+
+    // 2) Si el menú móvil está abierto, ciérralo primero.
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar && sidebar.classList.contains('mobile-abierto')) {
+      cerrarSidebarMovil();
+      procesandoPopStateNavegacion = false;
+      return;
+    }
+
+    // 3) Volver a la pantalla anterior guardada en el historial.
+    const estado = event.state;
+    if (estado && estado.tipo === 'pantalla' && estado.id && document.getElementById(estado.id) && sesionActual) {
+      ultimaPantallaHistorial = estado.id;
+      mostrarPantalla(estado.id);
+    }
+    procesandoPopStateNavegacion = false;
+  });
+
   function mostrarPantalla(idPantalla) {
     const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConfigAlertas', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
@@ -3423,6 +3469,9 @@
         const submenuPadre = btn.closest('.sidebar-depto-submenu');
         if (submenuPadre) abrirSidebarDepto(submenuPadre.id, submenuPadre.previousElementSibling.id);
       }
+    }
+    if (idPantalla !== 'pantallaLogin' && idPantalla !== 'pantallaCargando') {
+      pushHistorialNavegacion('pantalla', { id: idPantalla });
     }
   }
 
@@ -8065,10 +8114,17 @@
     const panel = document.getElementById('panelChatAsistenteIA');
     const abrir = panel.classList.contains('oculto');
     panel.classList.toggle('oculto', !abrir);
-    if (abrir && !bienvenidaChatIAMostrada) {
-      bienvenidaChatIAMostrada = true;
-      agregarBurbujaChatIA('assistant', '¡Hola! Soy Rosina, la asistente de Lana Rosa. ¿En qué puedo ayudarte el día de hoy?');
-      mostrarOpcionesRapidasIA();
+    if (abrir) {
+      pushHistorialNavegacion('chat', {});
+      if (!bienvenidaChatIAMostrada) {
+        bienvenidaChatIAMostrada = true;
+        agregarBurbujaChatIA('assistant', '¡Hola! Soy Rosina, la asistente de Lana Rosa. ¿En qué puedo ayudarte el día de hoy?');
+        mostrarOpcionesRapidasIA();
+      }
+    } else if (!procesandoPopStateNavegacion) {
+      // Si lo cerraron con la X (no con "atrás" del celular), se retrocede en
+      // el historial para que quede sincronizado y no se acumulen entradas.
+      history.back();
     }
   }
 
