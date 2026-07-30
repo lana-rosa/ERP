@@ -3123,6 +3123,8 @@
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabBalanceGeneral', this); cargarBalanceGeneral();">⚖️ Balance General</button>
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabFlujoCaja', this); cargarFlujoCaja();">💵 Flujo de Caja</button>
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabLibroDiario', this); cargarLibroDiario();">📖 Libro Diario</button>
+    <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabLibroMayor', this); cargarLibroMayor();">📚 Libro Mayor</button>
+    <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabLibroAuxiliar', this); prepararLibroAuxiliar();">🔍 Libro Auxiliar</button>
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabRevisionContador', this); cargarRevisionesContables();">✅ Revisión del contador</button>
   </div>
 
@@ -3163,6 +3165,32 @@
       <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirLibroDiario()">🖨️ Imprimir / PDF</button>
     </div>
     <div id="contenidoLibroDiario"><div class="cargando">Cargando...</div></div>
+  </div>
+
+  <div id="subtabLibroMayor" data-subtab-grupo="estadosFin" class="oculto">
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+      <div><label for="lmFechaDesde" style="font-size:11px;">Desde</label><input type="date" id="lmFechaDesde" onchange="cargarLibroMayor()" style="padding:9px 10px;"></div>
+      <div><label for="lmFechaHasta" style="font-size:11px;">Hasta</label><input type="date" id="lmFechaHasta" onchange="cargarLibroMayor()" style="padding:9px 10px;"></div>
+      <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarLibroMayorExcel()">📥 Excel</button>
+    </div>
+    <div id="contenidoLibroMayor"><div class="cargando">Cargando...</div></div>
+  </div>
+
+  <div id="subtabLibroAuxiliar" data-subtab-grupo="estadosFin" class="oculto">
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+      <div>
+        <label for="laModo" style="font-size:11px;">Buscar por</label>
+        <select id="laModo" onchange="cambiarModoLibroAuxiliar()" style="padding:9px 10px;">
+          <option value="cuenta">Cuenta contable</option>
+          <option value="tercero">Cliente/Proveedor</option>
+        </select>
+      </div>
+      <div id="bloqueLaCuenta"><label for="laCuenta" style="font-size:11px;">Cuenta</label><select id="laCuenta" onchange="cargarLibroAuxiliar()" style="padding:9px 10px;"></select></div>
+      <div id="bloqueLaTercero" class="oculto"><label for="laTercero" style="font-size:11px;">Cliente/Proveedor</label><select id="laTercero" onchange="cargarLibroAuxiliar()" style="padding:9px 10px;"></select></div>
+      <div><label for="laFechaDesde" style="font-size:11px;">Desde</label><input type="date" id="laFechaDesde" onchange="cargarLibroAuxiliar()" style="padding:9px 10px;"></div>
+      <div><label for="laFechaHasta" style="font-size:11px;">Hasta</label><input type="date" id="laFechaHasta" onchange="cargarLibroAuxiliar()" style="padding:9px 10px;"></div>
+    </div>
+    <div id="contenidoLibroAuxiliar"><div class="cargando">Selecciona una cuenta o un tercero para ver su historial.</div></div>
   </div>
 
   <div id="subtabRevisionContador" data-subtab-grupo="estadosFin" class="oculto">
@@ -14097,6 +14125,152 @@
 
   function imprimirLibroDiario() {
     imprimirEstadoFinanciero('contenidoLibroDiario', 'Libro Diario');
+  }
+
+  // ============================================================
+  // LIBRO MAYOR Y BALANCES
+  // ============================================================
+  let cacheLibroMayor = null;
+
+  async function cargarLibroMayor() {
+    const cont = document.getElementById('contenidoLibroMayor');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    if (!document.getElementById('lmFechaDesde').value) {
+      const primerDia = new Date(); primerDia.setDate(1);
+      document.getElementById('lmFechaDesde').value = primerDia.toISOString().slice(0, 10);
+      document.getElementById('lmFechaHasta').value = new Date().toISOString().slice(0, 10);
+    }
+    const desde = document.getElementById('lmFechaDesde').value;
+    const hasta = document.getElementById('lmFechaHasta').value;
+
+    const resp = await fetch(`${WORKER_URL}/api/pos/finanzas/libro-mayor?fecha_desde=${desde}&fecha_hasta=${hasta}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const d = await resp.json();
+    cacheLibroMayor = d;
+
+    if (!d.cuentas || d.cuentas.length === 0) { cont.innerHTML = '<div class="cargando">Sin movimientos en este período.</div>'; return; }
+
+    cont.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:1.3fr 100px 90px 90px 100px;">
+          <span>CUENTA</span><span style="text-align:right;">SALDO INICIAL</span><span style="text-align:right;">DÉBITOS</span><span style="text-align:right;">CRÉDITOS</span><span style="text-align:right;">SALDO FINAL</span>
+        </div>
+        ${d.cuentas.map(c => `
+          <div class="tabla-lista-fila" style="grid-template-columns:1.3fr 100px 90px 90px 100px;cursor:default;">
+            <span>${escaparHtml(c.codigo)} — ${escaparHtml(c.nombre)}</span>
+            <span style="text-align:right;">${formatearMoneda(c.saldo_inicial)}</span>
+            <span style="text-align:right;">${formatearMoneda(c.debitos)}</span>
+            <span style="text-align:right;">${formatearMoneda(c.creditos)}</span>
+            <span style="text-align:right;font-weight:700;">${formatearMoneda(c.saldo_final)}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  function exportarLibroMayorExcel() {
+    if (!cacheLibroMayor || !cacheLibroMayor.cuentas.length) { alert('No hay datos para exportar.'); return; }
+    const filas = [
+      ['Lana Rosa Crochet — Libro Mayor y Balances'],
+      [`Período: ${cacheLibroMayor.periodo.desde} a ${cacheLibroMayor.periodo.hasta}`],
+      [],
+      ['Cuenta', 'Nombre', 'Saldo inicial', 'Débitos', 'Créditos', 'Saldo final'],
+      ...cacheLibroMayor.cuentas.map(c => [c.codigo, c.nombre, c.saldo_inicial, c.debitos, c.creditos, c.saldo_final]),
+    ];
+    const hoja = XLSX.utils.aoa_to_sheet(filas);
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Libro Mayor');
+    XLSX.writeFile(libro, `LanaRosa_LibroMayor_${cacheLibroMayor.periodo.desde}_a_${cacheLibroMayor.periodo.hasta}.xlsx`);
+  }
+
+  // ============================================================
+  // LIBRO AUXILIAR
+  // ============================================================
+  async function prepararLibroAuxiliar() {
+    if (!document.getElementById('laFechaDesde').value) {
+      const hace90 = new Date(Date.now() - 90 * 86400000);
+      document.getElementById('laFechaDesde').value = hace90.toISOString().slice(0, 10);
+      document.getElementById('laFechaHasta').value = new Date().toISOString().slice(0, 10);
+    }
+
+    const selectCuenta = document.getElementById('laCuenta');
+    if (selectCuenta.options.length === 0) {
+      const { data, error } = await supabaseClient
+        .from('plan_cuentas_puc')
+        .select('codigo, nombre, acepta_movimientos')
+        .eq('acepta_movimientos', true)
+        .eq('activa', true)
+        .order('codigo', { ascending: true });
+      if (!error && data) {
+        selectCuenta.innerHTML = data.map(c => `<option value="${c.codigo}">${escaparHtml(c.codigo)} — ${escaparHtml(c.nombre)}</option>`).join('');
+      }
+    }
+
+    const selectTercero = document.getElementById('laTercero');
+    if (selectTercero.options.length === 0) {
+      const [respClientes, respProveedores] = await Promise.all([
+        fetch(WORKER_URL + '/api/pos/terceros?tipo=cliente', { headers: { Authorization: 'Bearer ' + sesionActual.token } }),
+        fetch(WORKER_URL + '/api/pos/terceros?tipo=proveedor', { headers: { Authorization: 'Bearer ' + sesionActual.token } }),
+      ]);
+      const clientes = respClientes.ok ? (await respClientes.json()).terceros || [] : [];
+      const proveedores = respProveedores.ok ? (await respProveedores.json()).terceros || [] : [];
+      selectTercero.innerHTML = '<option value="">Selecciona...</option>' +
+        [...clientes, ...proveedores].map(t => `<option value="${t.id}">${escaparHtml(t.nombre_completo)}</option>`).join('');
+    }
+
+    if (selectCuenta.value) await cargarLibroAuxiliar();
+  }
+
+  function cambiarModoLibroAuxiliar() {
+    const modo = document.getElementById('laModo').value;
+    document.getElementById('bloqueLaCuenta').classList.toggle('oculto', modo !== 'cuenta');
+    document.getElementById('bloqueLaTercero').classList.toggle('oculto', modo !== 'tercero');
+    document.getElementById('contenidoLibroAuxiliar').innerHTML = '<div class="cargando">Selecciona una cuenta o un tercero para ver su historial.</div>';
+  }
+
+  async function cargarLibroAuxiliar() {
+    const modo = document.getElementById('laModo').value;
+    const desde = document.getElementById('laFechaDesde').value;
+    const hasta = document.getElementById('laFechaHasta').value;
+    const cont = document.getElementById('contenidoLibroAuxiliar');
+
+    const params = new URLSearchParams({ fecha_desde: desde, fecha_hasta: hasta });
+    if (modo === 'cuenta') {
+      const codigo = document.getElementById('laCuenta').value;
+      if (!codigo) return;
+      params.set('cuenta_codigo', codigo);
+    } else {
+      const terceroId = document.getElementById('laTercero').value;
+      if (!terceroId) { cont.innerHTML = '<div class="cargando">Selecciona un cliente o proveedor.</div>'; return; }
+      params.set('tercero_id', terceroId);
+    }
+
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    const resp = await fetch(`${WORKER_URL}/api/pos/finanzas/libro-auxiliar?${params.toString()}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const d = await resp.json();
+
+    if (!d.movimientos || d.movimientos.length === 0) { cont.innerHTML = '<div class="cargando">Sin movimientos en este período.</div>'; return; }
+
+    cont.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:80px 1fr 90px 90px 100px;">
+          <span>FECHA</span><span>CONCEPTO</span><span style="text-align:right;">DÉBITO</span><span style="text-align:right;">CRÉDITO</span><span style="text-align:right;">SALDO</span>
+        </div>
+        ${d.movimientos.map(m => `
+          <div class="tabla-lista-fila" style="grid-template-columns:80px 1fr 90px 90px 100px;cursor:default;">
+            <span>${new Date(m.fecha + 'T00:00:00').toLocaleDateString('es-CO')}</span>
+            <span>${escaparHtml(m.concepto || '')}${m.tercero ? '<div style="font-size:10px;opacity:0.55;">' + escaparHtml(m.tercero) + '</div>' : ''}${modo === 'tercero' ? '<div style="font-size:10px;opacity:0.55;">' + escaparHtml(m.cuenta_codigo) + ' — ' + escaparHtml(m.cuenta_nombre) + '</div>' : ''}</span>
+            <span style="text-align:right;">${m.debito > 0 ? formatearMoneda(m.debito) : '—'}</span>
+            <span style="text-align:right;">${m.credito > 0 ? formatearMoneda(m.credito) : '—'}</span>
+            <span style="text-align:right;font-weight:700;">${formatearMoneda(m.saldo)}</span>
+          </div>
+        `).join('')}
+        <div class="tabla-lista-fila" style="grid-template-columns:80px 1fr 90px 90px 100px;font-weight:700;background:var(--rosa-suave);cursor:default;">
+          <span style="grid-column:span 3;">SALDO FINAL DEL PERÍODO</span><span></span><span style="text-align:right;">${formatearMoneda(d.saldo_final)}</span>
+        </div>
+      </div>
+    `;
   }
 
 
