@@ -880,6 +880,17 @@
     <button class="chip-filtro activo" data-subtab-btn="registrarVenta" onclick="mostrarSubTabGrupo('registrarVenta', 'subtabVentaProductos', this)">🛒 Productos</button>
     <button class="chip-filtro" data-subtab-btn="registrarVenta" onclick="mostrarSubTabGrupo('registrarVenta', 'subtabVentaWhatsapp', this); cargarTarifasEnvioParaPedido();">📱 WhatsApp/Redes</button>
     <button class="chip-filtro" data-subtab-btn="registrarVenta" onclick="mostrarSubTabGrupo('registrarVenta', 'subtabVentaAcademia', this); prepararPestanaVentaAcademia();">🎓 Cursos y clases</button>
+    <button class="chip-filtro" data-subtab-btn="registrarVenta" onclick="mostrarSubTabGrupo('registrarVenta', 'subtabVentaCartera', this);">📋 Cartera</button>
+  </div>
+
+  <div id="subtabVentaCartera" data-subtab-grupo="registrarVenta" class="oculto">
+    <div class="panel" style="max-width:520px;">
+      <h2>Buscar cliente</h2>
+      <label for="carteraVentaBuscarCliente">Nombre, cédula o teléfono</label>
+      <input type="text" id="carteraVentaBuscarCliente" placeholder="Escribe para buscar..." oninput="debounceBuscarClienteCarteraVenta()">
+      <div id="resultadosBusquedaClienteCarteraVenta" style="margin-top:8px;"></div>
+    </div>
+    <div id="cuentasClienteCarteraVenta" style="margin-top:20px;"></div>
   </div>
 
   <div id="subtabVentaProductos" data-subtab-grupo="registrarVenta">
@@ -1639,7 +1650,6 @@
     <button class="chip-filtro activo" data-subtab-btn="pagosPendientes" onclick="mostrarSubTabGrupo('pagosPendientes', 'subtabPagosGastos', this)">🧾 Compra a proveedor</button>
     <button class="chip-filtro" data-subtab-btn="pagosPendientes" onclick="mostrarSubTabGrupo('pagosPendientes', 'subtabPagosAdmin', this)">🏢 Pagos administrativos</button>
     <button class="chip-filtro" data-subtab-btn="pagosPendientes" onclick="mostrarSubTabGrupo('pagosPendientes', 'subtabPagosHistorial', this); cargarHistorialComprasTabla();">📋 Historial de compras</button>
-    <button class="chip-filtro" data-subtab-btn="pagosPendientes" onclick="mostrarSubTabGrupo('pagosPendientes', 'subtabFacturaCredito', this)">📅 Factura a crédito</button>
     <button class="chip-filtro" data-subtab-btn="pagosPendientes" onclick="mostrarSubTabGrupo('pagosPendientes', 'subtabHonorarios', this)">🧑‍💼 Honorarios</button>
   </div>
 
@@ -1762,15 +1772,30 @@
       <input type="text" id="gastoDescripcion" placeholder="Ej: Lana acrílica varios colores">
       <label for="gastoMonto">Monto (COP)</label>
       <input type="number" id="gastoMonto" placeholder="0" min="1" step="1000">
-      <label for="gastoMetodoPago">Método de pago</label>
-      <select id="gastoMetodoPago">
-        <option value="efectivo">Efectivo (se descuenta del arqueo de caja)</option>
-        <option value="nequi">Nequi</option>
-        <option value="daviplata">Daviplata</option>
-        <option value="transferencia">Transferencia</option>
-        <option value="tarjeta_debito">Tarjeta débito</option>
-        <option value="tarjeta_credito">Tarjeta crédito</option>
-      </select>
+
+      <label style="margin-top:14px;">¿Cómo se pagó esta compra?</label>
+      <div style="display:flex;gap:10px;margin-bottom:10px;">
+        <button type="button" class="btn-secundario" id="btnCompraPagoCompleto" style="flex:1;margin-top:0;" onclick="cambiarModoPagoCompra('completo')">✅ Pagado completo</button>
+        <button type="button" class="btn-secundario" id="btnCompraQuedoDebiendo" style="flex:1;margin-top:0;" onclick="cambiarModoPagoCompra('credito')">📅 Quedó debiendo</button>
+      </div>
+
+      <div id="bloqueCompraPagoCompleto">
+        <label for="gastoMetodoPago">Método de pago</label>
+        <select id="gastoMetodoPago">
+          <option value="efectivo">Efectivo (se descuenta del arqueo de caja)</option>
+          <option value="nequi">Nequi</option>
+          <option value="daviplata">Daviplata</option>
+          <option value="transferencia">Transferencia</option>
+          <option value="tarjeta_debito">Tarjeta débito</option>
+          <option value="tarjeta_credito">Tarjeta crédito</option>
+        </select>
+      </div>
+
+      <div id="bloqueCompraQuedoDebiendo" class="oculto">
+        <label for="gastoDiasPlazo">Días de plazo <span style="font-size:10px;opacity:0.6;">(se autocompleta con el plazo del proveedor, si lo tiene configurado)</span></label>
+        <input type="number" id="gastoDiasPlazo" min="0" step="1" placeholder="Ej: 30">
+        <div style="font-size:10.5px;opacity:0.6;">No se descuenta de la caja ahora — queda registrado en Cartera → Cuentas por pagar hasta que lo abones.</div>
+      </div>
 
       <label for="gastoNumeroFactura" style="margin-top:14px;">Número de factura</label>
       <input type="text" id="gastoNumeroFactura" placeholder="Ej: FV-00123">
@@ -2757,6 +2782,7 @@
       <h2>Registrar nueva</h2>
       <label for="cxcTercero">Cliente / Proveedor</label>
       <select id="cxcTercero" onchange="alCambiarTerceroCxC()"><option value="">Selecciona...</option></select>
+      <div id="notaClienteCorporativoCxC" style="font-size:10.5px;opacity:0.6;margin-top:-8px;margin-bottom:10px;"></div>
 
       <div id="bloqueFacturaVinculadaCxC" class="oculto">
         <label for="cxcFacturaVinculada">Vincular con una venta ya registrada <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
@@ -7380,6 +7406,8 @@
     else centroCostoForzadoMiDepartamento = null;
 
     mostrarSubTabGrupo('pagosPendientes', 'subtabPagosGastos', document.querySelector('[data-subtab-btn="pagosPendientes"]'));
+    cambiarModoPagoCompra('completo');
+    document.getElementById('gastoDiasPlazo').value = '';
     ocultarMensaje('mensajeGasto');
     document.getElementById('gastoDescripcion').value = '';
     document.getElementById('gastoMonto').value = '';
@@ -7628,12 +7656,24 @@
     document.getElementById('pagoAdminMonto').value = '';
   }
 
+  let modoPagoCompraActual = 'completo';
+  function cambiarModoPagoCompra(modo) {
+    modoPagoCompraActual = modo;
+    document.getElementById('btnCompraPagoCompleto').style.background = modo === 'completo' ? 'var(--rosa-principal)' : '';
+    document.getElementById('btnCompraPagoCompleto').style.color = modo === 'completo' ? 'white' : '';
+    document.getElementById('btnCompraQuedoDebiendo').style.background = modo === 'credito' ? 'var(--rosa-principal)' : '';
+    document.getElementById('btnCompraQuedoDebiendo').style.color = modo === 'credito' ? 'white' : '';
+    document.getElementById('bloqueCompraPagoCompleto').classList.toggle('oculto', modo !== 'completo');
+    document.getElementById('bloqueCompraQuedoDebiendo').classList.toggle('oculto', modo !== 'credito');
+  }
+
   async function confirmarRegistrarGasto() {
     const centroCostoId = obtenerCentroCostoPropio();
     const categoria = document.getElementById('gastoCategoria').value;
     const descripcion = document.getElementById('gastoDescripcion').value.trim();
     const monto = Number(document.getElementById('gastoMonto').value);
     const metodoPago = document.getElementById('gastoMetodoPago').value;
+    const diasPlazo = document.getElementById('gastoDiasPlazo').value;
     const numeroFactura = document.getElementById('gastoNumeroFactura').value.trim();
     const fechaFactura = document.getElementById('gastoFechaFactura').value;
     const aprobadoPor = document.getElementById('gastoAprobadoPor').value;
@@ -7644,45 +7684,79 @@
     if (!monto || monto <= 0) { mostrarMensaje('mensajeGasto', 'Escribe un monto válido mayor a cero.', 'error'); return; }
     if (!numeroFactura) { mostrarMensaje('mensajeGasto', 'Escribe el número de factura.', 'error'); return; }
     if (!fechaFactura) { mostrarMensaje('mensajeGasto', 'Escribe la fecha de la factura.', 'error'); return; }
-    if (!aprobadoPor) { mostrarMensaje('mensajeGasto', 'Selecciona quién aprobó esta compra.', 'error'); return; }
-
-    const cuerpo = {
-      centro_costo_id: centroCostoId, categoria, descripcion, monto, metodo_pago: metodoPago,
-      turno_id: turnoActivoActual ? turnoActivoActual.id : null,
-      numero_factura: numeroFactura, fecha_factura: fechaFactura, aprobado_por_nombre: aprobadoPor
-    };
-
-    if (proveedorGastoSeleccionadoId) {
-      cuerpo.proveedor_tercero_id = proveedorGastoSeleccionadoId;
-    } else {
-      const nombreProveedor = document.getElementById('gastoProveedorNombre').value.trim();
-      if (!nombreProveedor) { mostrarMensaje('mensajeGasto', 'Busca un proveedor existente o escribe el nombre de uno nuevo.', 'error'); return; }
-      cuerpo.proveedor_nombre = nombreProveedor;
-      cuerpo.proveedor_nit = document.getElementById('gastoProveedorNit').value.trim();
-      cuerpo.proveedor_telefono = document.getElementById('gastoProveedorTelefono').value.trim();
-      cuerpo.proveedor_direccion = document.getElementById('gastoProveedorDireccion').value.trim();
-    }
+    if (modoPagoCompraActual === 'completo' && !aprobadoPor) { mostrarMensaje('mensajeGasto', 'Selecciona quién aprobó esta compra.', 'error'); return; }
 
     const btn = document.getElementById('btnRegistrarGasto');
     btn.disabled = true;
     btn.textContent = 'Registrando...';
 
-    const resp = await fetch(WORKER_URL + '/api/pos/compras', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify(cuerpo)
-    });
+    // Si es un proveedor nuevo (no seleccionado de la lista), hay que crearlo
+    // primero — ambos caminos (pago completo o a crédito) lo necesitan.
+    let proveedorId = proveedorGastoSeleccionadoId;
+    if (!proveedorId) {
+      const nombreProveedor = document.getElementById('gastoProveedorNombre').value.trim();
+      if (!nombreProveedor) { mostrarMensaje('mensajeGasto', 'Busca un proveedor existente o escribe el nombre de uno nuevo.', 'error'); btn.disabled = false; btn.textContent = 'Registrar compra'; return; }
+
+      if (modoPagoCompraActual === 'credito') {
+        const respCrear = await fetch(WORKER_URL + '/api/pos/terceros', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+          body: JSON.stringify({
+            tipo: 'proveedor', nombre_completo: nombreProveedor,
+            tipo_documento: document.getElementById('gastoProveedorNit').value.trim() ? 'NIT' : null,
+            numero_documento: document.getElementById('gastoProveedorNit').value.trim() || null,
+            telefono: document.getElementById('gastoProveedorTelefono').value.trim() || null,
+            direccion: document.getElementById('gastoProveedorDireccion').value.trim() || null,
+          })
+        });
+        const datosCrear = await respCrear.json();
+        if (!respCrear.ok) { mostrarMensaje('mensajeGasto', datosCrear.error || 'No se pudo crear el proveedor.', 'error'); btn.disabled = false; btn.textContent = 'Registrar compra'; return; }
+        proveedorId = datosCrear.tercero ? datosCrear.tercero.id : null;
+      }
+    }
+
+    let resp, datos;
+    if (modoPagoCompraActual === 'credito') {
+      resp = await fetch(WORKER_URL + '/api/pos/directorio/factura-credito-proveedor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+        body: JSON.stringify({
+          proveedor_id: proveedorId, descripcion, monto, fecha_factura: fechaFactura,
+          dias_plazo: diasPlazo ? Number(diasPlazo) : null, centro_costo_id: centroCostoId,
+        })
+      });
+      datos = await resp.json();
+    } else {
+      const cuerpo = {
+        centro_costo_id: centroCostoId, categoria, descripcion, monto, metodo_pago: metodoPago,
+        turno_id: turnoActivoActual ? turnoActivoActual.id : null,
+        numero_factura: numeroFactura, fecha_factura: fechaFactura, aprobado_por_nombre: aprobadoPor
+      };
+      if (proveedorId) {
+        cuerpo.proveedor_tercero_id = proveedorId;
+      } else {
+        cuerpo.proveedor_nombre = document.getElementById('gastoProveedorNombre').value.trim();
+        cuerpo.proveedor_nit = document.getElementById('gastoProveedorNit').value.trim();
+        cuerpo.proveedor_telefono = document.getElementById('gastoProveedorTelefono').value.trim();
+        cuerpo.proveedor_direccion = document.getElementById('gastoProveedorDireccion').value.trim();
+      }
+      resp = await fetch(WORKER_URL + '/api/pos/compras', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+        body: JSON.stringify(cuerpo)
+      });
+      datos = await resp.json();
+    }
 
     btn.disabled = false;
     btn.textContent = 'Registrar compra';
 
-    const datos = await resp.json();
     if (!resp.ok) {
       mostrarMensaje('mensajeGasto', datos.error || 'No se pudo registrar la compra.', 'error');
       return;
     }
 
-    mostrarMensaje('mensajeGasto', '✅ Compra registrada correctamente.', 'exito');
+    mostrarMensaje('mensajeGasto', modoPagoCompraActual === 'credito' ? '✅ Factura registrada — quedó pendiente en Cartera → Cuentas por pagar.' : '✅ Compra registrada correctamente.', 'exito');
     document.getElementById('gastoDescripcion').value = '';
     document.getElementById('gastoMonto').value = '';
     document.getElementById('gastoProveedorNombre').value = '';
@@ -12024,6 +12098,9 @@
     document.getElementById('cxcFiltroFechaDesde').value = '';
     document.getElementById('cxcFiltroFechaHasta').value = '';
     terceroSeleccionadoCxC = null;
+    document.getElementById('notaClienteCorporativoCxC').textContent = filtroCxCActual === 'por_cobrar'
+      ? 'Solo se muestran clientes corporativos (con NIT) — las compras de clientes normales de Tienda ya generan la cuenta por cobrar solas desde Registrar venta.'
+      : '';
     ocultarMensaje('mensajeCxC');
     await cargarTercerosParaCxC();
     await cargarCuentasPendientes();
@@ -12034,8 +12111,12 @@
     const resp = await fetch(WORKER_URL + '/api/pos/terceros?tipo=' + tipoTercero, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
     if (!resp.ok) return;
     const { terceros } = await resp.json();
+    // Cuentas por cobrar aquí es solo para clientes corporativos (NIT) — las
+    // compras de clientes normales de Tienda ya generan su cuenta por cobrar
+    // automáticamente desde Registrar venta (crédito directo o CrediLondon).
+    const listaFiltrada = filtroCxCActual === 'por_cobrar' ? (terceros || []).filter(t => t.tipo_documento === 'NIT') : (terceros || []);
     document.getElementById('cxcTercero').innerHTML = '<option value="">Selecciona...</option>' +
-      (terceros || []).map(t => `<option value="${t.id}">${escaparHtml(t.nombre_completo)}${t.numero_documento ? ' — ' + escaparHtml(t.numero_documento) : ''}</option>`).join('');
+      listaFiltrada.map(t => `<option value="${t.id}">${escaparHtml(t.nombre_completo)}${t.numero_documento ? ' — ' + escaparHtml(t.numero_documento) : ''}</option>`).join('');
   }
 
   async function alCambiarTerceroCxC() {
@@ -12076,6 +12157,9 @@
     document.querySelectorAll('[data-filtro-cxc]').forEach(b => b.classList.remove('activo'));
     botonEl.classList.add('activo');
     document.getElementById('bloqueFacturaVinculadaCxC').classList.add('oculto');
+    document.getElementById('notaClienteCorporativoCxC').textContent = tipo === 'por_cobrar'
+      ? 'Solo se muestran clientes corporativos (con NIT) — las compras de clientes normales de Tienda ya generan la cuenta por cobrar solas desde Registrar venta.'
+      : '';
     cargarTercerosParaCxC();
     cargarCuentasPendientes();
   }
@@ -12310,6 +12394,73 @@
     setTimeout(() => ventana.print(), 400);
   }
 
+  // ============================================================
+  // CARTERA DENTRO DE REGISTRAR VENTA (buscar cliente y abonar directo)
+  // ============================================================
+  let timeoutBuscarClienteCarteraVenta = null;
+  function debounceBuscarClienteCarteraVenta() {
+    clearTimeout(timeoutBuscarClienteCarteraVenta);
+    timeoutBuscarClienteCarteraVenta = setTimeout(buscarClienteCarteraVenta, 350);
+  }
+
+  async function buscarClienteCarteraVenta() {
+    const q = document.getElementById('carteraVentaBuscarCliente').value.trim();
+    const cont = document.getElementById('resultadosBusquedaClienteCarteraVenta');
+    document.getElementById('cuentasClienteCarteraVenta').innerHTML = '';
+    if (!q) { cont.innerHTML = ''; return; }
+
+    const resp = await fetch(`${WORKER_URL}/api/pos/finanzas/cuentas-pendientes?tipo=por_cobrar&busqueda=${encodeURIComponent(q)}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo buscar.</div>'; return; }
+    const { cuentas } = await resp.json();
+
+    // Agrupar por cliente (un cliente puede tener varias cuentas pendientes)
+    const clientesMap = {};
+    (cuentas || []).forEach(c => {
+      if (!c.tercero) return;
+      const id = c.tercero_id;
+      if (!clientesMap[id]) clientesMap[id] = { tercero: c.tercero, cuentas: [] };
+      clientesMap[id].cuentas.push(c);
+    });
+    const clientes = Object.entries(clientesMap);
+
+    if (clientes.length === 0) { cont.innerHTML = '<div class="cargando">No se encontraron clientes con cuentas pendientes que coincidan.</div>'; return; }
+
+    cont.innerHTML = clientes.map(([id, info]) => `
+      <button class="btn-mini editar" style="display:block;width:100%;text-align:left;margin-bottom:6px;" onclick="mostrarCuentasClienteCarteraVenta('${id}')">
+        👤 ${escaparHtml(info.tercero.nombre_completo)} — ${info.cuentas.length} cuenta(s) pendiente(s)
+      </button>
+    `).join('');
+
+    window._cuentasClienteCarteraVentaCache = clientesMap;
+  }
+
+  function mostrarCuentasClienteCarteraVenta(terceroId) {
+    const info = window._cuentasClienteCarteraVentaCache[terceroId];
+    const cont = document.getElementById('cuentasClienteCarteraVenta');
+    if (!info) { cont.innerHTML = ''; return; }
+
+    const hoy = new Date().toISOString().slice(0, 10);
+    cont.innerHTML = `
+      <div class="panel" style="max-width:none;max-height:none;">
+        <h2>Cuentas pendientes de ${escaparHtml(info.tercero.nombre_completo)}</h2>
+        ${info.cuentas.map(c => {
+          const vencida = c.fecha_vencimiento < hoy;
+          const saldo = Number(c.monto) - Number(c.monto_abonado || 0);
+          return `
+            <div class="fila-historial" style="margin-bottom:9px;${vencida ? 'border-left:3px solid var(--rojo-error);' : ''}">
+              <div class="fila-historial-encabezado">
+                <span class="fila-historial-consecutivo">${escaparHtml(c.descripcion)}${c.numero_factura ? ' · ' + escaparHtml(c.numero_factura) : ''}</span>
+                <span class="fila-historial-total">${formatearMoneda(saldo)}</span>
+              </div>
+              <div class="fila-historial-fecha">Vence: ${new Date(c.fecha_vencimiento + 'T00:00:00').toLocaleDateString('es-CO')} ${vencida ? '⚠️ VENCIDA' : ''}</div>
+              <button class="btn-mini guardar" style="margin-top:6px;" onclick="abrirAbonoCuentaPendiente('${c.id}', ${saldo})">💵 Registrar abono</button>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
   async function abrirAbonoCuentaPendiente(cuentaId, saldoPendiente) {
     const montoStr = prompt(`Saldo pendiente: ${formatearMoneda(saldoPendiente)}\n¿Cuánto vas a abonar?`, saldoPendiente);
     if (!montoStr) return;
@@ -12327,7 +12478,11 @@
     const datos = await resp.json();
     if (!resp.ok) { alert(datos.error || 'No se pudo registrar el abono.'); return; }
 
-    await cargarCuentasPendientes();
+    if (document.getElementById('listaCuentasPendientes')) await cargarCuentasPendientes();
+    if (document.getElementById('carteraVentaBuscarCliente') && document.getElementById('carteraVentaBuscarCliente').value.trim()) {
+      await buscarClienteCarteraVenta();
+      document.getElementById('cuentasClienteCarteraVenta').innerHTML = '';
+    }
     if (confirm(`✅ Abono registrado (recibo ${datos.numero_recibo}).${datos.paz_y_salvo ? ' El cliente queda a paz y salvo.' : ''}\n\n¿Quieres imprimir el recibo ahora?`)) {
       imprimirReciboAbono(datos);
     }
