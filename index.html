@@ -1261,6 +1261,7 @@
     <button class="chip-filtro activo" data-subtab-btn="invPantalla" onclick="mostrarSubTabGrupo('invPantalla', 'subtabInvActual', this)">📊 Inventario actual</button>
     <button class="chip-filtro" data-subtab-btn="invPantalla" onclick="mostrarSubTabGrupo('invPantalla', 'subtabInvAgregar', this)">+ Agregar producto o insumo</button>
     <button class="chip-filtro" id="chipTabKitsInventario" data-subtab-btn="invPantalla" onclick="mostrarSubTabGrupo('invPantalla', 'subtabInvKits', this); cargarRadicadosKit();">🧶 Kits de tejido</button>
+    <button class="chip-filtro" data-subtab-btn="invPantalla" onclick="mostrarSubTabGrupo('invPantalla', 'subtabInvTomaFisica', this); cargarTomasInventario();">📋 Toma física</button>
   </div>
 
   <div id="subtabInvActual" data-subtab-grupo="invPantalla">
@@ -1352,6 +1353,41 @@
       <div class="panel">
         <h2>Kits ya armados</h2>
         <div id="listaKitsArmados"><div class="cargando">Cargando...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="subtabInvTomaFisica" data-subtab-grupo="invPantalla" class="oculto">
+    <div style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;">
+      ℹ️ Cuenta físicamente lo que tienes, compáralo contra lo que dice el sistema, y ajusta las diferencias de una vez. Cada ajuste queda registrado en el Kardex del producto.
+    </div>
+
+    <div id="tomaInventarioEnProceso" class="oculto">
+      <div class="panel" style="max-width:none;max-height:none;">
+        <h2 id="tituloTomaEnProceso"></h2>
+        <div id="listaConteoTomaInventario"></div>
+        <div style="display:flex;gap:10px;margin-top:14px;">
+          <button class="btn-principal" style="width:auto;" onclick="confirmarFinalizarTomaInventario()">✅ Finalizar y ajustar diferencias</button>
+          <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="confirmarCancelarTomaInventario()">Cancelar toma</button>
+        </div>
+        <div class="mensaje" id="mensajeTomaInventario"></div>
+      </div>
+    </div>
+
+    <div id="bloqueIniciarTomaInventario">
+      <div class="panel" style="max-width:420px;">
+        <h2>+ Iniciar toma de inventario</h2>
+        <label for="tomaCentroCosto">Departamento a contar</label>
+        <select id="tomaCentroCosto"></select>
+        <label for="tomaNotas">Notas <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+        <input type="text" id="tomaNotas" placeholder="Ej: Conteo mensual de julio">
+        <button class="btn-principal" onclick="confirmarAbrirTomaInventario()">Iniciar conteo</button>
+        <div class="mensaje" id="mensajeIniciarToma"></div>
+      </div>
+
+      <div class="panel" style="max-width:none;max-height:none;margin-top:20px;">
+        <h2>Historial de tomas</h2>
+        <div id="listaHistorialTomas"><div class="cargando">Cargando...</div></div>
       </div>
     </div>
   </div>
@@ -14866,6 +14902,136 @@
   // ============================================================
   let insumosParaKitCache = [];
   let kitsArmadosCache = [];
+
+  // ============================================================
+  // TOMA DE INVENTARIO FÍSICO
+  // ============================================================
+  let tomaInventarioActivaId = null;
+
+  async function cargarTomasInventario() {
+    // Departamentos para el selector
+    const respDeptos = await fetch(WORKER_URL + '/api/pos/departamentos', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (respDeptos.ok) {
+      const { departamentos } = await respDeptos.json();
+      document.getElementById('tomaCentroCosto').innerHTML = (departamentos || []).map(d => `<option value="${d.id}">${escaparHtml(d.nombre)}</option>`).join('');
+    }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/tomas-inventario', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) return;
+    const { tomas } = await resp.json();
+
+    const enProceso = (tomas || []).find(t => t.estado === 'en_proceso');
+    if (enProceso) {
+      tomaInventarioActivaId = enProceso.id;
+      document.getElementById('tomaInventarioEnProceso').classList.remove('oculto');
+      document.getElementById('bloqueIniciarTomaInventario').classList.add('oculto');
+      await cargarDetalleTomaInventario(enProceso);
+    } else {
+      tomaInventarioActivaId = null;
+      document.getElementById('tomaInventarioEnProceso').classList.add('oculto');
+      document.getElementById('bloqueIniciarTomaInventario').classList.remove('oculto');
+      ocultarMensaje('mensajeIniciarToma');
+      document.getElementById('tomaNotas').value = '';
+    }
+
+    const cont = document.getElementById('listaHistorialTomas');
+    if (cont) {
+      const finalizadas = (tomas || []).filter(t => t.estado !== 'en_proceso');
+      cont.innerHTML = finalizadas.length === 0 ? '<div class="cargando">Sin tomas anteriores.</div>' :
+        finalizadas.map(t => `
+          <div class="resumen-fila">
+            <span>${escaparHtml(t.consecutivo)} — ${escaparHtml(t.centro_costo ? t.centro_costo.nombre : '')} (${new Date(t.fecha + 'T00:00:00').toLocaleDateString('es-CO')})</span>
+            <strong>${t.estado === 'finalizada' ? '✅ Finalizada' : '❌ Cancelada'}</strong>
+          </div>
+        `).join('');
+    }
+  }
+
+  async function confirmarAbrirTomaInventario() {
+    const centroCostoId = document.getElementById('tomaCentroCosto').value;
+    const notas = document.getElementById('tomaNotas').value.trim();
+    ocultarMensaje('mensajeIniciarToma');
+    if (!centroCostoId) { mostrarMensaje('mensajeIniciarToma', 'Selecciona el departamento.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/tomas-inventario/abrir', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ centro_costo_id: centroCostoId, notas })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeIniciarToma', datos.error || 'No se pudo iniciar.', 'error'); return; }
+    await cargarTomasInventario();
+  }
+
+  async function cargarDetalleTomaInventario(toma) {
+    document.getElementById('tituloTomaEnProceso').textContent = `📋 ${toma.consecutivo} — ${toma.centro_costo ? toma.centro_costo.nombre : ''} (en proceso)`;
+    const resp = await fetch(`${WORKER_URL}/api/pos/tomas-inventario/detalle?toma_id=${toma.id}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) return;
+    const { detalle } = await resp.json();
+
+    const cont = document.getElementById('listaConteoTomaInventario');
+    cont.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:1fr 100px 110px 90px;">
+          <span>PRODUCTO</span><span style="text-align:right;">SISTEMA</span><span>CONTADO</span><span>DIF.</span>
+        </div>
+        ${(detalle || []).map(d => {
+          const dif = d.stock_contado !== null ? (d.stock_contado - d.stock_sistema) : null;
+          return `
+            <div class="tabla-lista-fila" style="grid-template-columns:1fr 100px 110px 90px;cursor:default;">
+              <span>${escaparHtml(d.item ? d.item.nombre : '')}</span>
+              <span style="text-align:right;">${d.stock_sistema}</span>
+              <span><input type="number" min="0" step="1" value="${d.stock_contado !== null ? d.stock_contado : ''}" placeholder="—" style="padding:6px 8px;font-size:12.5px;" onchange="guardarConteoItemToma('${d.id}', this.value)"></span>
+              <span style="font-weight:700;color:${dif === null ? '#999' : dif === 0 ? 'var(--verde-exito)' : 'var(--rojo-error)'};">${dif === null ? '—' : (dif > 0 ? '+' : '') + dif}</span>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  async function guardarConteoItemToma(detalleId, valor) {
+    if (valor === '') return;
+    await fetch(WORKER_URL + '/api/pos/tomas-inventario/contar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ detalle_id: detalleId, stock_contado: Number(valor) })
+    });
+    // Refresca solo la lista (para actualizar la columna de diferencia), sin perder el foco de otros campos
+    const resp = await fetch(WORKER_URL + '/api/pos/tomas-inventario', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (resp.ok) {
+      const { tomas } = await resp.json();
+      const enProceso = (tomas || []).find(t => t.estado === 'en_proceso');
+      if (enProceso) await cargarDetalleTomaInventario(enProceso);
+    }
+  }
+
+  async function confirmarFinalizarTomaInventario() {
+    if (!confirm('¿Finalizar el conteo? Se ajustará el stock de todos los productos que tengan un conteo registrado y difieran del sistema. Los productos sin contar se dejan como están.')) return;
+    ocultarMensaje('mensajeTomaInventario');
+
+    const resp = await fetch(WORKER_URL + '/api/pos/tomas-inventario/finalizar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ toma_id: tomaInventarioActivaId })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeTomaInventario', datos.error || 'No se pudo finalizar.', 'error'); return; }
+
+    alert(`✅ Toma finalizada. ${datos.ajustados} producto(s) ajustado(s).${datos.sin_contar > 0 ? ' ' + datos.sin_contar + ' producto(s) quedaron sin contar (no se tocaron).' : ''}`);
+    await cargarTomasInventario();
+  }
+
+  async function confirmarCancelarTomaInventario() {
+    if (!confirm('¿Cancelar esta toma de inventario? No se ajustará nada.')) return;
+    const resp = await fetch(WORKER_URL + '/api/pos/tomas-inventario/cancelar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ toma_id: tomaInventarioActivaId })
+    });
+    if (!resp.ok) { alert('No se pudo cancelar.'); return; }
+    await cargarTomasInventario();
+  }
 
   async function cargarRadicadosKit() {
     await Promise.all([cargarInsumosParaKit(), cargarKitsArmados()]);
