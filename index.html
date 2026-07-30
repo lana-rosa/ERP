@@ -771,6 +771,7 @@
         <button class="nav-btn" id="nav-cuentas-pendientes" onclick="mostrarPantallaCuentasPendientes()"><span class="nav-icon">📋</span> Cartera</button>
         <button class="nav-btn" id="nav-activos-fijos" onclick="mostrarPantallaActivosFijos()"><span class="nav-icon">🪑</span> Activos fijos</button>
         <button class="nav-btn" id="nav-conciliacion" onclick="mostrarPantallaConciliacion()"><span class="nav-icon">🏦</span> Conciliación bancaria</button>
+        <button class="nav-btn" id="nav-transferencias-internas" onclick="mostrarPantallaTransferenciasInternas()"><span class="nav-icon">🔄</span> Transferencias caja/banco</button>
       </div>
     </div>
     <div class="sidebar-depto" id="deptoFondoEmprenderGrupo" style="display:none;">
@@ -3002,6 +3003,39 @@
   </div>
 </div>
 
+<!-- ===== PANTALLA: TRANSFERENCIAS INTERNAS CAJA/BANCO ===== -->
+<div id="pantallaTransferenciasInternas" class="oculto contenido">
+  <div class="page-header">
+    <h1>🔄 Transferencias internas (Caja ↔ Banco)</h1>
+    <div class="subtitulo">Registra cuando consignas el efectivo de una caja al banco, o cuando retiras del banco para tener caja menor. Ajusta la contabilidad y el saldo real de la caja del departamento.</div>
+  </div>
+
+  <div class="grilla-2">
+    <div class="panel">
+      <h2>+ Nueva transferencia</h2>
+      <label for="tiTipo">Tipo</label>
+      <select id="tiTipo">
+        <option value="caja_a_banco">💵 → 🏦 Caja a Banco (consignar efectivo)</option>
+        <option value="banco_a_caja">🏦 → 💵 Banco a Caja (retiro para caja menor)</option>
+      </select>
+      <label for="tiCentroCosto">Departamento</label>
+      <select id="tiCentroCosto"></select>
+      <label for="tiMonto">Monto (COP)</label>
+      <input type="number" id="tiMonto" min="1" step="1000">
+      <label for="tiFecha">Fecha</label>
+      <input type="date" id="tiFecha">
+      <label for="tiDescripcion">Descripción</label>
+      <input type="text" id="tiDescripcion" placeholder="Ej: Consignación efectivo del día">
+      <button class="btn-principal" onclick="confirmarRegistrarTransferenciaInterna()">Registrar transferencia</button>
+      <div class="mensaje" id="mensajeTransferenciaInterna"></div>
+    </div>
+    <div class="panel">
+      <h2>Historial</h2>
+      <div id="listaTransferenciasInternas"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+</div>
+
 <div id="pantallaConciliacion" class="oculto contenido">
   <div class="page-header">
     <h1>🏦 Conciliación bancaria</h1>
@@ -3900,7 +3934,7 @@
   });
 
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -4198,6 +4232,7 @@
     mostrar('nav-cuentas-pendientes', esAdmin);
     mostrar('nav-activos-fijos', esAdmin);
     mostrar('nav-conciliacion', esAdmin);
+    mostrar('nav-transferencias-internas', esAdmin);
     mostrar('nav-dashboard', esAdmin);
     document.getElementById('btnAbrirAsistenteIA').style.display = 'flex';
     document.getElementById('btnCrearRapido').style.display = esAdmin ? 'flex' : 'none';
@@ -13050,6 +13085,70 @@
     if (!resp.ok) { alert('No se pudo quitar.'); return; }
     const lista = listasPreciosCache.find(l => l.id === listaPrecioSeleccionadaId);
     await seleccionarListaPrecio(listaPrecioSeleccionadaId, lista ? lista.nombre : '');
+  }
+
+  // ============================================================
+  // TRANSFERENCIAS INTERNAS (Caja ↔ Banco)
+  // ============================================================
+  async function mostrarPantallaTransferenciasInternas() {
+    mostrarPantalla('pantallaTransferenciasInternas');
+    document.getElementById('tiFecha').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('tiMonto').value = '';
+    document.getElementById('tiDescripcion').value = '';
+    ocultarMensaje('mensajeTransferenciaInterna');
+
+    const respDeptos = await fetch(WORKER_URL + '/api/pos/departamentos', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (respDeptos.ok) {
+      const { departamentos } = await respDeptos.json();
+      document.getElementById('tiCentroCosto').innerHTML = (departamentos || []).map(d => `<option value="${d.id}">${escaparHtml(d.nombre)} (saldo caja: ${formatearMoneda(d.cajas_departamentales && d.cajas_departamentales[0] ? d.cajas_departamentales[0].saldo_actual : 0)})</option>`).join('');
+    }
+    await cargarTransferenciasInternas();
+  }
+
+  async function confirmarRegistrarTransferenciaInterna() {
+    const tipo = document.getElementById('tiTipo').value;
+    const centroCostoId = document.getElementById('tiCentroCosto').value;
+    const monto = Number(document.getElementById('tiMonto').value);
+    const fecha = document.getElementById('tiFecha').value;
+    const descripcion = document.getElementById('tiDescripcion').value.trim();
+    ocultarMensaje('mensajeTransferenciaInterna');
+
+    if (!centroCostoId) { mostrarMensaje('mensajeTransferenciaInterna', 'Selecciona el departamento.', 'error'); return; }
+    if (!monto || monto <= 0) { mostrarMensaje('mensajeTransferenciaInterna', 'Escribe un monto válido.', 'error'); return; }
+    if (!descripcion) { mostrarMensaje('mensajeTransferenciaInterna', 'Escribe una descripción.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/transferencias-internas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ tipo, centro_costo_id: centroCostoId, monto, fecha, descripcion })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeTransferenciaInterna', datos.error || 'No se pudo registrar.', 'error'); return; }
+
+    mostrarMensaje('mensajeTransferenciaInterna', `✅ ${datos.consecutivo} registrada. Saldo de caja ahora: ${formatearMoneda(datos.saldo_caja_despues)}.`, 'exito');
+    document.getElementById('tiMonto').value = '';
+    document.getElementById('tiDescripcion').value = '';
+    await mostrarPantallaTransferenciasInternas();
+  }
+
+  async function cargarTransferenciasInternas() {
+    const cont = document.getElementById('listaTransferenciasInternas');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    const resp = await fetch(WORKER_URL + '/api/pos/transferencias-internas', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const { transferencias } = await resp.json();
+
+    if (!transferencias || transferencias.length === 0) { cont.innerHTML = '<div class="cargando">Sin transferencias registradas todavía.</div>'; return; }
+
+    cont.innerHTML = transferencias.map(t => `
+      <div class="fila-historial" style="margin-bottom:9px;">
+        <div class="fila-historial-encabezado">
+          <span class="fila-historial-consecutivo">${t.tipo === 'caja_a_banco' ? '💵→🏦' : '🏦→💵'} ${escaparHtml(t.consecutivo)}</span>
+          <span class="fila-historial-total">${formatearMoneda(t.monto)}</span>
+        </div>
+        <div class="fila-historial-fecha">${new Date(t.fecha + 'T00:00:00').toLocaleDateString('es-CO')} — ${escaparHtml(t.centro_costo ? t.centro_costo.nombre : '')} — ${escaparHtml(t.descripcion)}</div>
+      </div>
+    `).join('');
   }
 
   async function mostrarPantallaConciliacion() {
