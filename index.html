@@ -5834,9 +5834,11 @@
           </div>
           <div class="fila-inventario-acciones">
             <button class="btn-mini guardar" onclick="guardarEdicionProducto('${item.id}')">Guardar cambios</button>
+            <button class="btn-mini editar" onclick="event.stopPropagation(); mostrarKardexProducto('${item.id}', '${escaparHtml(item.nombre)}')">📖 Ver Kardex</button>
             <button class="btn-mini desactivar" onclick="cancelarEdicionProducto()">Cancelar</button>
             <button class="btn-mini desactivar" onclick="alternarActivoProducto('${item.id}', ${item.activo})">${item.activo ? 'Desactivar' : 'Reactivar'}</button>
           </div>
+          <div id="kardexProducto-${item.id}" class="oculto" style="margin-top:12px;"></div>
         </div>
       `;
     }
@@ -5854,6 +5856,47 @@
   }
 
   let proveedoresParaEdicionCache = [];
+
+  async function mostrarKardexProducto(itemId, nombreProducto) {
+    const cont = document.getElementById(`kardexProducto-${itemId}`);
+    if (!cont) return;
+    const abrir = cont.classList.contains('oculto');
+    cont.classList.toggle('oculto', !abrir);
+    if (!abrir) return;
+
+    cont.innerHTML = '<div class="cargando">Cargando historial...</div>';
+    const resp = await fetch(`${WORKER_URL}/api/pos/inventario/kardex?inventario_item_id=${itemId}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar el Kardex.</div>'; return; }
+    const { movimientos } = await resp.json();
+
+    if (!movimientos || movimientos.length === 0) {
+      cont.innerHTML = `<div class="cargando">Sin movimientos registrados todavía para "${escaparHtml(nombreProducto)}" — el Kardex empezó a registrarse recientemente, así que solo mostrará cambios desde ahora en adelante.</div>`;
+      return;
+    }
+
+    const etiquetasTipo = {
+      consumo_taller: '🧶 Consumo Taller', ajuste_manual: '✋ Ajuste manual', compra_proveedor: '🛒 Compra proveedor',
+      entrada_automatica: '⬆️ Entrada', salida_automatica: '⬇️ Salida',
+    };
+
+    cont.innerHTML = `
+      <div style="font-size:12px;font-weight:700;opacity:0.6;margin-bottom:6px;">KARDEX — ${escaparHtml(nombreProducto)}</div>
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:110px 1fr 80px 90px 90px;">
+          <span>FECHA</span><span>MOVIMIENTO</span><span style="text-align:right;">CANTIDAD</span><span style="text-align:right;">ANTES</span><span style="text-align:right;">DESPUÉS</span>
+        </div>
+        ${movimientos.map(m => `
+          <div class="tabla-lista-fila" style="grid-template-columns:110px 1fr 80px 90px 90px;cursor:default;">
+            <span>${new Date(m.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: '2-digit' })} ${new Date(m.created_at).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}</span>
+            <span>${etiquetasTipo[m.tipo] || m.tipo}${m.observaciones ? '<div style="font-size:10px;opacity:0.55;">' + escaparHtml(m.observaciones) + '</div>' : ''}</span>
+            <span style="text-align:right;color:${m.tipo.includes('entrada') || m.tipo === 'compra_proveedor' ? 'var(--verde-exito)' : 'var(--rojo-error)'};">${m.tipo.includes('entrada') || m.tipo === 'compra_proveedor' ? '+' : '-'}${m.cantidad}</span>
+            <span style="text-align:right;">${m.stock_antes}</span>
+            <span style="text-align:right;font-weight:700;">${m.stock_despues}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
 
   function activarEdicionProducto(itemId) {
     if (rolActual !== 'administrador') return;
