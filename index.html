@@ -725,6 +725,7 @@
         <button class="nav-btn" id="nav-solicitudes-tienda" onclick="mostrarPantallaSolicitudes()"><span class="nav-icon">📦</span> Solicitud de insumos del Taller</button>
         <button class="nav-btn" id="nav-inventario-tienda" onclick="mostrarPantallaInventario('01')"><span class="nav-icon">📊</span> Inventario</button>
         <button class="nav-btn" id="nav-cotizaciones" onclick="mostrarPantallaCotizaciones()"><span class="nav-icon">📝</span> Cotizaciones</button>
+        <button class="nav-btn" id="nav-notas-cd" onclick="mostrarPantallaNotasCD()"><span class="nav-icon">📄</span> Notas crédito/débito</button>
         <button class="nav-btn" id="nav-ajustestock" onclick="mostrarPantallaAjusteStock()"><span class="nav-icon">📥</span> Entrada mercancía</button>
         <button class="nav-btn" id="nav-etiquetas" onclick="mostrarPantallaEtiquetas()"><span class="nav-icon">🏷️</span> Imprimir etiquetas</button>
         <button class="nav-btn" id="nav-transferir-stock" onclick="mostrarPantallaTransferirStock()"><span class="nav-icon">🔄</span> Transferir stock</button>
@@ -2816,6 +2817,74 @@
   </div>
 </div>
 
+<!-- ===== PANTALLA: NOTAS CRÉDITO / DÉBITO ===== -->
+<div id="pantallaNotasCD" class="oculto contenido">
+  <div class="page-header">
+    <h1>📄 Notas crédito y débito</h1>
+    <div class="subtitulo">Ajustes formales sobre ventas o compras ya registradas: devoluciones, descuentos posteriores, correcciones o cargos adicionales.</div>
+  </div>
+
+  <div class="grilla-2">
+    <div class="panel">
+      <h2>+ Nueva nota</h2>
+      <label for="ncdTipo">Tipo</label>
+      <select id="ncdTipo">
+        <option value="credito">Nota Crédito (reduce lo que debe / le devuelven a favor)</option>
+        <option value="debito">Nota Débito (aumenta lo que debe / se cobra de más)</option>
+      </select>
+      <label for="ncdAplicaA">Aplica a</label>
+      <select id="ncdAplicaA" onchange="cargarTercerosParaNotaCD()">
+        <option value="cliente">Cliente</option>
+        <option value="proveedor">Proveedor</option>
+      </select>
+      <label for="ncdTercero">Cliente / Proveedor</label>
+      <select id="ncdTercero"><option value="">Selecciona...</option></select>
+
+      <label for="ncdConcepto">Concepto</label>
+      <select id="ncdConcepto">
+        <option value="devolucion">Devolución</option>
+        <option value="descuento_posventa">Descuento posterior</option>
+        <option value="correccion">Corrección de valor</option>
+        <option value="cargo_adicional">Cargo adicional</option>
+        <option value="otro">Otro</option>
+      </select>
+      <label for="ncdDescripcion">Descripción</label>
+      <input type="text" id="ncdDescripcion" placeholder="Ej: Devolución de amigurumi con defecto">
+      <label for="ncdValor">Valor (COP)</label>
+      <input type="number" id="ncdValor" min="1" step="1000">
+      <label for="ncdFecha">Fecha</label>
+      <input type="date" id="ncdFecha">
+      <label for="ncdReferencia">Documento de referencia <span style="font-size:10px;opacity:0.6;">(N° de venta/factura que origina el ajuste)</span></label>
+      <input type="text" id="ncdReferencia" placeholder="Ej: PED-2026-00012">
+
+      <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-weight:400;">
+        <input type="checkbox" id="ncdAfectaCaja" style="width:auto;" onchange="document.getElementById('bloqueMetodoPagoNCD').classList.toggle('oculto', !this.checked)">
+        <span>Se paga/devuelve dinero AHORA (no solo ajusta lo que debía)</span>
+      </label>
+      <div id="bloqueMetodoPagoNCD" class="oculto">
+        <label for="ncdMetodoPago">Método de pago</label>
+        <select id="ncdMetodoPago">
+          <option value="efectivo">Efectivo</option>
+          <option value="nequi">Nequi</option>
+          <option value="daviplata">Daviplata</option>
+          <option value="transferencia">Transferencia</option>
+        </select>
+      </div>
+
+      <button class="btn-principal" onclick="confirmarRegistrarNotaCD()">Registrar nota</button>
+      <div class="mensaje" id="mensajeNotaCD"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Historial</h2>
+      <div class="barra-busqueda" style="margin-bottom:10px;">
+        <input type="text" id="inputBuscarNotaCD" placeholder="🔍 Buscar por cliente, consecutivo o referencia..." oninput="debounceBuscarNotaCD()">
+      </div>
+      <div id="listaNotasCD"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+</div>
+
 <div id="pantallaConciliacion" class="oculto contenido">
   <div class="page-header">
     <h1>🏦 Conciliación bancaria</h1>
@@ -3686,7 +3755,7 @@
   });
 
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaCotizaciones', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -3965,6 +4034,7 @@
     mostrar('nav-historial', esAdmin || esCajero);
     mostrar('nav-inventario-tienda', esAdmin || esCajero);
     mostrar('nav-cotizaciones', esAdmin || esCajero);
+    mostrar('nav-notas-cd', esAdmin);
     mostrar('nav-ajustestock', esAdmin || esCajero);
     mostrar('nav-etiquetas', esAdmin || esCajero);
     mostrar('nav-transferir-stock', esAdmin || esCajero);
@@ -12389,6 +12459,110 @@
     window._cotizacionParaConvertir = null;
   }
 
+
+  // ============================================================
+  // NOTAS CRÉDITO / DÉBITO
+  // ============================================================
+  async function mostrarPantallaNotasCD() {
+    mostrarPantalla('pantallaNotasCD');
+    document.getElementById('ncdFecha').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('ncdDescripcion').value = '';
+    document.getElementById('ncdValor').value = '';
+    document.getElementById('ncdReferencia').value = '';
+    document.getElementById('ncdAfectaCaja').checked = false;
+    document.getElementById('bloqueMetodoPagoNCD').classList.add('oculto');
+    document.getElementById('inputBuscarNotaCD').value = '';
+    ocultarMensaje('mensajeNotaCD');
+    await cargarTercerosParaNotaCD();
+    await cargarNotasCD();
+  }
+
+  async function cargarTercerosParaNotaCD() {
+    const tipo = document.getElementById('ncdAplicaA').value;
+    const resp = await fetch(WORKER_URL + '/api/pos/terceros?tipo=' + tipo, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) return;
+    const { terceros } = await resp.json();
+    document.getElementById('ncdTercero').innerHTML = '<option value="">Selecciona...</option>' +
+      (terceros || []).map(t => `<option value="${t.id}">${escaparHtml(t.nombre_completo)}${t.numero_documento ? ' — ' + escaparHtml(t.numero_documento) : ''}</option>`).join('');
+  }
+
+  async function confirmarRegistrarNotaCD() {
+    const tipo = document.getElementById('ncdTipo').value;
+    const aplicaA = document.getElementById('ncdAplicaA').value;
+    const terceroId = document.getElementById('ncdTercero').value;
+    const concepto = document.getElementById('ncdConcepto').value;
+    const descripcion = document.getElementById('ncdDescripcion').value.trim();
+    const valor = Number(document.getElementById('ncdValor').value);
+    const fecha = document.getElementById('ncdFecha').value;
+    const referencia = document.getElementById('ncdReferencia').value.trim();
+    const afectaCaja = document.getElementById('ncdAfectaCaja').checked;
+    const metodoPago = document.getElementById('ncdMetodoPago').value;
+    ocultarMensaje('mensajeNotaCD');
+
+    if (!terceroId) { mostrarMensaje('mensajeNotaCD', `Selecciona el ${aplicaA === 'cliente' ? 'cliente' : 'proveedor'}.`, 'error'); return; }
+    if (!descripcion) { mostrarMensaje('mensajeNotaCD', 'Escribe la descripción.', 'error'); return; }
+    if (!valor || valor <= 0) { mostrarMensaje('mensajeNotaCD', 'Escribe un valor válido.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/notas-cd', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({
+        tipo, aplica_a: aplicaA, tercero_id: terceroId, concepto, descripcion, valor, fecha,
+        documento_referencia: referencia || null, afecta_caja: afectaCaja, metodo_pago: afectaCaja ? metodoPago : null,
+      })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeNotaCD', datos.error || 'No se pudo registrar.', 'error'); return; }
+
+    mostrarMensaje('mensajeNotaCD', `✅ ${datos.consecutivo} registrada y contabilizada.`, 'exito');
+    document.getElementById('ncdDescripcion').value = '';
+    document.getElementById('ncdValor').value = '';
+    document.getElementById('ncdReferencia').value = '';
+    await cargarNotasCD();
+  }
+
+  let timeoutBuscarNotaCD = null;
+  function debounceBuscarNotaCD() {
+    clearTimeout(timeoutBuscarNotaCD);
+    timeoutBuscarNotaCD = setTimeout(cargarNotasCD, 350);
+  }
+
+  async function cargarNotasCD() {
+    const cont = document.getElementById('listaNotasCD');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    const busqueda = document.getElementById('inputBuscarNotaCD').value.trim();
+    const resp = await fetch(`${WORKER_URL}/api/pos/notas-cd${busqueda ? '?busqueda=' + encodeURIComponent(busqueda) : ''}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const { notas } = await resp.json();
+
+    if (!notas || notas.length === 0) { cont.innerHTML = '<div class="cargando">Sin notas registradas todavía.</div>'; return; }
+
+    const etiquetasConcepto = { devolucion: 'Devolución', descuento_posventa: 'Descuento posterior', correccion: 'Corrección', cargo_adicional: 'Cargo adicional', otro: 'Otro' };
+
+    cont.innerHTML = notas.map(n => `
+      <div class="fila-historial" style="margin-bottom:9px;${n.estado === 'anulada' ? 'opacity:0.5;' : ''}">
+        <div class="fila-historial-encabezado">
+          <span class="fila-historial-consecutivo">${n.tipo === 'credito' ? '🟢' : '🔴'} ${escaparHtml(n.consecutivo)} — ${escaparHtml(n.tercero ? n.tercero.nombre_completo : '')}</span>
+          <span class="fila-historial-total">${formatearMoneda(n.valor)}</span>
+        </div>
+        <div class="fila-historial-fecha">${new Date(n.fecha + 'T00:00:00').toLocaleDateString('es-CO')} — ${etiquetasConcepto[n.concepto] || n.concepto} — ${escaparHtml(n.descripcion)}${n.documento_referencia ? ' (ref: ' + escaparHtml(n.documento_referencia) + ')' : ''}</div>
+        <div class="fila-historial-fecha">${n.aplica_a === 'cliente' ? 'Cliente' : 'Proveedor'} · ${n.afecta_caja ? '💵 Se pagó/devolvió ya (' + (n.metodo_pago || '') + ')' : '📋 Solo ajustó lo que debía'} ${n.estado === 'anulada' ? '· ⚠️ ANULADA' : ''}</div>
+        ${n.estado !== 'anulada' ? `<button class="btn-mini desactivar" style="margin-top:6px;" onclick="confirmarAnularNotaCD('${n.id}')">Anular</button>` : ''}
+      </div>
+    `).join('');
+  }
+
+  async function confirmarAnularNotaCD(id) {
+    if (!confirm('¿Anular esta nota? Se generará un reverso contable — el historial completo queda visible en el Libro Diario, no se borra nada.')) return;
+    const resp = await fetch(WORKER_URL + '/api/pos/notas-cd/anular', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ id })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { alert(datos.error || 'No se pudo anular.'); return; }
+    await cargarNotasCD();
+  }
 
   async function mostrarPantallaConciliacion() {
     mostrarPantalla('pantallaConciliacion');
