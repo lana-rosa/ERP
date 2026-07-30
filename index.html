@@ -726,6 +726,7 @@
         <button class="nav-btn" id="nav-inventario-tienda" onclick="mostrarPantallaInventario('01')"><span class="nav-icon">📊</span> Inventario</button>
         <button class="nav-btn" id="nav-cotizaciones" onclick="mostrarPantallaCotizaciones()"><span class="nav-icon">📝</span> Cotizaciones</button>
         <button class="nav-btn" id="nav-notas-cd" onclick="mostrarPantallaNotasCD()"><span class="nav-icon">📄</span> Notas crédito/débito</button>
+        <button class="nav-btn" id="nav-ordenes-compra" onclick="mostrarPantallaOrdenesCompra()"><span class="nav-icon">📦</span> Órdenes de compra</button>
         <button class="nav-btn" id="nav-ajustestock" onclick="mostrarPantallaAjusteStock()"><span class="nav-icon">📥</span> Entrada mercancía</button>
         <button class="nav-btn" id="nav-etiquetas" onclick="mostrarPantallaEtiquetas()"><span class="nav-icon">🏷️</span> Imprimir etiquetas</button>
         <button class="nav-btn" id="nav-transferir-stock" onclick="mostrarPantallaTransferirStock()"><span class="nav-icon">🔄</span> Transferir stock</button>
@@ -1802,9 +1803,15 @@
       </div>
 
       <label for="gastoNumeroFactura" style="margin-top:14px;">Número de factura</label>
-      <input type="text" id="gastoNumeroFactura" placeholder="Ej: FV-00123">
+      <input type="text" id="gastoNumeroFactura" placeholder="Ej: FV-00123 (o el N° de recibo/nota si el vendedor no factura)">
       <label for="gastoFechaFactura">Fecha de la factura</label>
       <input type="date" id="gastoFechaFactura">
+
+      <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-weight:400;">
+        <input type="checkbox" id="gastoEsDocumentoSoporte" style="width:auto;">
+        <span>Este proveedor no está obligado a facturar (persona natural, artesano, etc.)</span>
+      </label>
+      <div style="font-size:10.5px;opacity:0.6;margin-bottom:10px;">Genera un documento soporte interno con los datos que exige la norma — no reemplaza la transmisión electrónica a la DIAN, es un respaldo para tu contabilidad y tu contador.</div>
 
       <label for="gastoAprobadoPor" style="margin-top:14px;">Aprobado por</label>
       <select id="gastoAprobadoPor"><option value="">Cargando...</option></select>
@@ -2885,6 +2892,50 @@
   </div>
 </div>
 
+<!-- ===== PANTALLA: ÓRDENES DE COMPRA ===== -->
+<div id="pantallaOrdenesCompra" class="oculto contenido">
+  <div class="page-header">
+    <h1>📦 Órdenes de compra</h1>
+    <div class="subtitulo">Solicitud formal al proveedor antes de recibir la mercancía — no es un gasto todavía. Cuando llegue, se registra la compra real desde "Registro de compras y gastos".</div>
+  </div>
+
+  <div class="grilla-2">
+    <div class="panel">
+      <h2>+ Nueva orden</h2>
+      <label for="ocProveedor">Proveedor</label>
+      <select id="ocProveedor"><option value="">Selecciona...</option></select>
+      <label for="ocFechaEntrega">Fecha de entrega esperada <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <input type="date" id="ocFechaEntrega">
+
+      <label style="margin-top:10px;">Ítems solicitados</label>
+      <div id="listaItemsOrdenCompra"></div>
+      <div style="display:flex;gap:8px;margin-top:6px;">
+        <input type="text" id="ocNuevoItemDesc" placeholder="Descripción" style="flex:2;">
+        <input type="number" id="ocNuevoItemCant" placeholder="Cant." min="1" value="1" style="flex:1;">
+        <input type="number" id="ocNuevoItemPrecio" placeholder="Precio estimado" min="0" step="1000" style="flex:1;">
+        <button type="button" class="btn-mini editar" onclick="agregarItemOrdenCompra()">+ Agregar</button>
+      </div>
+      <div id="totalOrdenCompra" style="font-size:15px;font-weight:700;color:var(--rosa-principal);margin-top:8px;"></div>
+
+      <label for="ocNotas" style="margin-top:10px;">Notas <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <input type="text" id="ocNotas" placeholder="Ej: Entregar en el taller">
+
+      <button class="btn-principal" onclick="confirmarCrearOrdenCompra()">Crear orden de compra</button>
+      <div class="mensaje" id="mensajeOrdenCompra"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Órdenes</h2>
+      <div class="filtro-tipo" style="margin-bottom:12px;">
+        <button class="chip-filtro activo" data-filtro-oc="" onclick="cambiarFiltroOrdenesCompra('', this)">Todas</button>
+        <button class="chip-filtro" data-filtro-oc="enviada" onclick="cambiarFiltroOrdenesCompra('enviada', this)">Enviadas</button>
+        <button class="chip-filtro" data-filtro-oc="recibida" onclick="cambiarFiltroOrdenesCompra('recibida', this)">Recibidas</button>
+      </div>
+      <div id="listaOrdenesCompra"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+</div>
+
 <div id="pantallaConciliacion" class="oculto contenido">
   <div class="page-header">
     <h1>🏦 Conciliación bancaria</h1>
@@ -3755,7 +3806,7 @@
   });
 
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -4035,6 +4086,7 @@
     mostrar('nav-inventario-tienda', esAdmin || esCajero);
     mostrar('nav-cotizaciones', esAdmin || esCajero);
     mostrar('nav-notas-cd', esAdmin);
+    mostrar('nav-ordenes-compra', esAdmin);
     mostrar('nav-ajustestock', esAdmin || esCajero);
     mostrar('nav-etiquetas', esAdmin || esCajero);
     mostrar('nav-transferir-stock', esAdmin || esCajero);
@@ -7976,7 +8028,8 @@
       const cuerpo = {
         centro_costo_id: centroCostoId, categoria, descripcion, monto, metodo_pago: metodoPago,
         turno_id: turnoActivoActual ? turnoActivoActual.id : null,
-        numero_factura: numeroFactura, fecha_factura: fechaFactura, aprobado_por_nombre: aprobadoPor
+        numero_factura: numeroFactura, fecha_factura: fechaFactura, aprobado_por_nombre: aprobadoPor,
+        es_documento_soporte: document.getElementById('gastoEsDocumentoSoporte').checked,
       };
       if (proveedorId) {
         cuerpo.proveedor_tercero_id = proveedorId;
@@ -8002,7 +8055,8 @@
       return;
     }
 
-    mostrarMensaje('mensajeGasto', modoPagoCompraActual === 'credito' ? '✅ Factura registrada — quedó pendiente en Cartera → Cuentas por pagar.' : '✅ Compra registrada correctamente.', 'exito');
+    mostrarMensaje('mensajeGasto', modoPagoCompraActual === 'credito' ? '✅ Factura registrada — quedó pendiente en Cartera → Cuentas por pagar.' : `✅ Compra registrada correctamente.${datos.numero_documento_soporte ? ' Documento soporte interno: ' + datos.numero_documento_soporte : ''}`, 'exito');
+    document.getElementById('gastoEsDocumentoSoporte').checked = false;
     document.getElementById('gastoDescripcion').value = '';
     document.getElementById('gastoMonto').value = '';
     document.getElementById('gastoProveedorNombre').value = '';
@@ -12562,6 +12616,145 @@
     const datos = await resp.json();
     if (!resp.ok) { alert(datos.error || 'No se pudo anular.'); return; }
     await cargarNotasCD();
+  }
+
+  // ============================================================
+  // ÓRDENES DE COMPRA
+  // ============================================================
+  let carritoOrdenCompra = [];
+  let filtroOrdenesCompraActual = '';
+  let ordenesCompraCache = [];
+
+  async function mostrarPantallaOrdenesCompra() {
+    mostrarPantalla('pantallaOrdenesCompra');
+    carritoOrdenCompra = [];
+    renderizarItemsOrdenCompra();
+    document.getElementById('ocFechaEntrega').value = '';
+    document.getElementById('ocNotas').value = '';
+    ocultarMensaje('mensajeOrdenCompra');
+
+    const respProveedores = await fetch(WORKER_URL + '/api/pos/terceros?tipo=proveedor', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (respProveedores.ok) {
+      const { terceros } = await respProveedores.json();
+      document.getElementById('ocProveedor').innerHTML = '<option value="">Selecciona...</option>' +
+        (terceros || []).map(t => `<option value="${t.id}">${escaparHtml(t.nombre_completo)}</option>`).join('');
+    }
+    await cargarOrdenesCompra();
+  }
+
+  function agregarItemOrdenCompra() {
+    const desc = document.getElementById('ocNuevoItemDesc').value.trim();
+    const cant = Number(document.getElementById('ocNuevoItemCant').value) || 1;
+    const precio = Number(document.getElementById('ocNuevoItemPrecio').value);
+    if (!desc) { alert('Escribe la descripción.'); return; }
+    if (!precio || precio <= 0) { alert('Escribe un precio estimado válido.'); return; }
+
+    carritoOrdenCompra.push({ descripcion: desc, cantidad: cant, precio_unitario_estimado: precio });
+    document.getElementById('ocNuevoItemDesc').value = '';
+    document.getElementById('ocNuevoItemCant').value = '1';
+    document.getElementById('ocNuevoItemPrecio').value = '';
+    renderizarItemsOrdenCompra();
+  }
+
+  function quitarItemOrdenCompra(indice) {
+    carritoOrdenCompra.splice(indice, 1);
+    renderizarItemsOrdenCompra();
+  }
+
+  function renderizarItemsOrdenCompra() {
+    const cont = document.getElementById('listaItemsOrdenCompra');
+    cont.innerHTML = carritoOrdenCompra.length === 0 ? '<div style="font-size:12px;opacity:0.6;">Sin ítems todavía.</div>' :
+      carritoOrdenCompra.map((i, idx) => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f4eef2;font-size:12.5px;">
+          <span>${i.cantidad} × ${escaparHtml(i.descripcion)}</span>
+          <span>${formatearMoneda(i.cantidad * i.precio_unitario_estimado)} <button type="button" class="btn-mini desactivar" onclick="quitarItemOrdenCompra(${idx})">✕</button></span>
+        </div>
+      `).join('');
+    const total = carritoOrdenCompra.reduce((a, i) => a + i.cantidad * i.precio_unitario_estimado, 0);
+    document.getElementById('totalOrdenCompra').textContent = `Total estimado: ${formatearMoneda(total)}`;
+  }
+
+  async function confirmarCrearOrdenCompra() {
+    const proveedorId = document.getElementById('ocProveedor').value;
+    const fechaEntrega = document.getElementById('ocFechaEntrega').value;
+    const notas = document.getElementById('ocNotas').value.trim();
+    ocultarMensaje('mensajeOrdenCompra');
+
+    if (!proveedorId) { mostrarMensaje('mensajeOrdenCompra', 'Selecciona el proveedor.', 'error'); return; }
+    if (carritoOrdenCompra.length === 0) { mostrarMensaje('mensajeOrdenCompra', 'Agrega al menos un ítem.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/ordenes-compra', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ proveedor_id: proveedorId, fecha_entrega_esperada: fechaEntrega || null, items: carritoOrdenCompra, notas })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeOrdenCompra', datos.error || 'No se pudo crear.', 'error'); return; }
+
+    mostrarMensaje('mensajeOrdenCompra', `✅ Orden ${datos.orden.numero_orden} creada.`, 'exito');
+    carritoOrdenCompra = [];
+    renderizarItemsOrdenCompra();
+    document.getElementById('ocNotas').value = '';
+    await cargarOrdenesCompra();
+  }
+
+  function cambiarFiltroOrdenesCompra(estado, botonEl) {
+    filtroOrdenesCompraActual = estado;
+    document.querySelectorAll('[data-filtro-oc]').forEach(b => b.classList.remove('activo'));
+    botonEl.classList.add('activo');
+    cargarOrdenesCompra();
+  }
+
+  async function cargarOrdenesCompra() {
+    const cont = document.getElementById('listaOrdenesCompra');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    const resp = await fetch(`${WORKER_URL}/api/pos/ordenes-compra${filtroOrdenesCompraActual ? '?estado=' + filtroOrdenesCompraActual : ''}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const { ordenes } = await resp.json();
+    ordenesCompraCache = ordenes || [];
+
+    if (ordenes.length === 0) { cont.innerHTML = '<div class="cargando">Sin órdenes todavía.</div>'; return; }
+
+    const etiquetasEstado = { enviada: '📤 Enviada', recibida: '✅ Recibida', cancelada: '❌ Cancelada' };
+
+    cont.innerHTML = ordenes.map(o => `
+      <div class="fila-historial" style="margin-bottom:9px;">
+        <div class="fila-historial-encabezado">
+          <span class="fila-historial-consecutivo">${escaparHtml(o.numero_orden)} — ${escaparHtml(o.proveedor ? o.proveedor.nombre_completo : '')}</span>
+          <span class="fila-historial-total">${formatearMoneda(o.total_estimado)}</span>
+        </div>
+        <div class="fila-historial-fecha">${o.fecha_entrega_esperada ? 'Entrega esperada: ' + new Date(o.fecha_entrega_esperada + 'T00:00:00').toLocaleDateString('es-CO') + ' — ' : ''}${etiquetasEstado[o.estado] || o.estado}</div>
+        <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+          ${o.estado === 'enviada' ? `
+            <button class="btn-mini guardar" onclick="cambiarEstadoOrdenCompra('${o.id}', 'recibida')">✅ Marcar recibida</button>
+            <button class="btn-mini desactivar" onclick="cambiarEstadoOrdenCompra('${o.id}', 'cancelada')">❌ Cancelar</button>
+          ` : ''}
+          <button class="btn-mini desactivar" onclick="eliminarOrdenCompra('${o.id}')">🗑️</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function cambiarEstadoOrdenCompra(id, estado) {
+    const resp = await fetch(WORKER_URL + '/api/pos/ordenes-compra/estado', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ id, estado })
+    });
+    if (!resp.ok) { alert('No se pudo actualizar.'); return; }
+    if (estado === 'recibida') alert('Recuerda registrar la compra real en "Registro de compras y gastos" para que quede contabilizada.');
+    await cargarOrdenesCompra();
+  }
+
+  async function eliminarOrdenCompra(id) {
+    if (!confirm('¿Eliminar esta orden de compra?')) return;
+    const resp = await fetch(WORKER_URL + '/api/pos/ordenes-compra/eliminar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ id })
+    });
+    if (!resp.ok) { alert('No se pudo eliminar.'); return; }
+    await cargarOrdenesCompra();
   }
 
   async function mostrarPantallaConciliacion() {
