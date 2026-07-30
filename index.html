@@ -2733,6 +2733,23 @@
     <button class="chip-filtro" data-filtro-cxc="por_pagar" onclick="cambiarFiltroCxC('por_pagar', this)">💸 Por pagar</button>
   </div>
 
+  <div class="barra-busqueda" style="margin-bottom:12px;">
+    <input type="text" id="inputBuscarCxC" placeholder="🔍 Buscar por nombre, cédula, teléfono o N° de factura..." oninput="debounceBusquedaCxC()">
+  </div>
+  <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+    <div>
+      <label for="cxcFiltroFechaDesde" style="font-size:11px;">Vencimiento desde</label>
+      <input type="date" id="cxcFiltroFechaDesde" onchange="cargarCuentasPendientes()" style="padding:9px 10px;">
+    </div>
+    <div>
+      <label for="cxcFiltroFechaHasta" style="font-size:11px;">Vencimiento hasta</label>
+      <input type="date" id="cxcFiltroFechaHasta" onchange="cargarCuentasPendientes()" style="padding:9px 10px;">
+    </div>
+    <button class="btn-mini desactivar" onclick="limpiarFiltrosCxC()" style="margin-bottom:1px;">Quitar filtros</button>
+    <button class="btn-secundario" style="width:auto;margin-top:0;margin-bottom:1px;" onclick="exportarCxCExcel()">📥 Excel</button>
+    <button class="btn-secundario" style="width:auto;margin-top:0;margin-bottom:1px;" onclick="imprimirListadoCxC()">🖨️ Imprimir / PDF</button>
+  </div>
+
   <div class="grilla-2">
     <div class="panel">
       <h2>Registrar nueva</h2>
@@ -11979,6 +11996,9 @@
     document.getElementById('cxcVencimiento').value = '';
     document.getElementById('cxcTercero').value = '';
     document.getElementById('bloqueFacturaVinculadaCxC').classList.add('oculto');
+    document.getElementById('inputBuscarCxC').value = '';
+    document.getElementById('cxcFiltroFechaDesde').value = '';
+    document.getElementById('cxcFiltroFechaHasta').value = '';
     terceroSeleccionadoCxC = null;
     ocultarMensaje('mensajeCxC');
     await cargarTercerosParaCxC();
@@ -12085,12 +12105,22 @@
   async function cargarCuentasPendientes() {
     const cont = document.getElementById('listaCuentasPendientes');
     cont.innerHTML = '<div class="cargando">Cargando...</div>';
-    const resp = await fetch(`${WORKER_URL}/api/pos/finanzas/cuentas-pendientes?tipo=${filtroCxCActual}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+
+    const busqueda = document.getElementById('inputBuscarCxC')?.value.trim() || '';
+    const desde = document.getElementById('cxcFiltroFechaDesde')?.value || '';
+    const hasta = document.getElementById('cxcFiltroFechaHasta')?.value || '';
+
+    const params = new URLSearchParams({ tipo: filtroCxCActual });
+    if (busqueda) params.set('busqueda', busqueda);
+    if (desde) params.set('fecha_desde', desde);
+    if (hasta) params.set('fecha_hasta', hasta);
+
+    const resp = await fetch(`${WORKER_URL}/api/pos/finanzas/cuentas-pendientes?${params.toString()}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
     if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
     const { cuentas } = await resp.json();
     cuentasPendientesCache = cuentas || [];
 
-    if (!cuentas || cuentas.length === 0) { cont.innerHTML = '<div class="cargando">Sin cuentas registradas.</div>'; return; }
+    if (!cuentas || cuentas.length === 0) { cont.innerHTML = '<div class="cargando">Sin cuentas que coincidan.</div>'; return; }
 
     const hoy = new Date().toISOString().slice(0, 10);
     cont.innerHTML = cuentas.map(c => {
@@ -12117,6 +12147,111 @@
     }).join('');
   }
 
+  let timeoutBusquedaCxC = null;
+  function debounceBusquedaCxC() {
+    clearTimeout(timeoutBusquedaCxC);
+    timeoutBusquedaCxC = setTimeout(cargarCuentasPendientes, 350);
+  }
+
+  function limpiarFiltrosCxC() {
+    document.getElementById('inputBuscarCxC').value = '';
+    document.getElementById('cxcFiltroFechaDesde').value = '';
+    document.getElementById('cxcFiltroFechaHasta').value = '';
+    cargarCuentasPendientes();
+  }
+
+  function exportarCxCExcel() {
+    if (!cuentasPendientesCache || cuentasPendientesCache.length === 0) { alert('No hay datos para exportar.'); return; }
+    const filas = [
+      [filtroCxCActual === 'por_cobrar' ? 'Cuentas por Cobrar' : 'Cuentas por Pagar', '', '', '', '', ''],
+      ['Cliente/Proveedor', 'N° Factura', 'Descripción', 'Monto', 'Abonado', 'Saldo', 'Vencimiento', 'Estado'],
+      ...cuentasPendientesCache.map(c => [
+        c.tercero ? c.tercero.nombre_completo : '', c.numero_factura || '', c.descripcion,
+        Number(c.monto), Number(c.monto_abonado || 0), Number(c.monto) - Number(c.monto_abonado || 0),
+        c.fecha_vencimiento, c.estado
+      ]),
+    ];
+    const hoja = XLSX.utils.aoa_to_sheet(filas);
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, filtroCxCActual === 'por_cobrar' ? 'Por Cobrar' : 'Por Pagar');
+    XLSX.writeFile(libro, `LanaRosa_CuentasPor${filtroCxCActual === 'por_cobrar' ? 'Cobrar' : 'Pagar'}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  }
+
+  function imprimirListadoCxC() {
+    if (!cuentasPendientesCache || cuentasPendientesCache.length === 0) { alert('No hay datos para imprimir.'); return; }
+    const titulo = filtroCxCActual === 'por_cobrar' ? 'Cuentas por Cobrar' : 'Cuentas por Pagar';
+    const filasHtml = cuentasPendientesCache.map(c => {
+      const saldo = Number(c.monto) - Number(c.monto_abonado || 0);
+      return `<tr>
+        <td>${escaparHtml(c.tercero ? c.tercero.nombre_completo : '')}</td>
+        <td>${escaparHtml(c.numero_factura || '—')}</td>
+        <td>${escaparHtml(c.descripcion)}</td>
+        <td style="text-align:right;">${formatearMoneda(c.monto)}</td>
+        <td style="text-align:right;">${formatearMoneda(saldo)}</td>
+        <td>${new Date(c.fecha_vencimiento + 'T00:00:00').toLocaleDateString('es-CO')}</td>
+        <td>${c.estado === 'pagado' ? 'Pagado' : 'Pendiente'}</td>
+      </tr>`;
+    }).join('');
+    const total = cuentasPendientesCache.reduce((a, c) => a + (Number(c.monto) - Number(c.monto_abonado || 0)), 0);
+
+    const ventana = window.open('', '_blank');
+    ventana.document.write(`
+      <html><head><title>${titulo}</title><meta charset="utf-8">
+      <style>
+        body { font-family: Arial, sans-serif; padding: 30px; color: #2d2d2d; }
+        h1 { color: #d8017c; font-size: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 12px; }
+        th { background: #f9ddf4; padding: 7px 10px; text-align: left; }
+        td { padding: 7px 10px; border-bottom: 1px solid #eee; }
+        .total-row td { font-weight: bold; border-top: 2px solid #333; }
+        @media print { body { padding: 10px; } }
+      </style></head>
+      <body>
+        <h1>Lana Rosa Crochet — ${titulo}</h1>
+        <div style="font-size:12px;color:#666;">Generado el ${new Date().toLocaleString('es-CO')}</div>
+        <table>
+          <thead><tr><th>Cliente/Proveedor</th><th>N° Factura</th><th>Descripción</th><th>Monto</th><th>Saldo</th><th>Vencimiento</th><th>Estado</th></tr></thead>
+          <tbody>${filasHtml}<tr class="total-row"><td colspan="4"></td><td>${formatearMoneda(total)}</td><td colspan="2"></td></tr></tbody>
+        </table>
+      </body></html>
+    `);
+    ventana.document.close();
+    setTimeout(() => ventana.print(), 400);
+  }
+
+  function imprimirReciboAbono(datos) {
+    const c = datos.cuenta;
+    const ventana = window.open('', '_blank');
+    ventana.document.write(`
+      <html><head><title>Recibo ${datos.numero_recibo}</title><meta charset="utf-8">
+      <style>
+        body { font-family: Arial, sans-serif; padding: 40px; color: #2d2d2d; max-width: 600px; margin: 0 auto; }
+        h1 { color: #d8017c; font-size: 20px; text-align: center; }
+        .num-recibo { text-align: center; font-size: 13px; color: #666; margin-bottom: 24px; }
+        .fila { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; font-size: 13px; }
+        .total { font-size: 16px; font-weight: bold; color: #d8017c; text-align: right; margin-top: 14px; }
+        .paz-y-salvo { margin-top: 24px; padding: 14px; background: #eaf6ef; border-radius: 8px; text-align: center; font-weight: bold; color: #1a7a4c; }
+        .firma { margin-top: 60px; width: 260px; border-top: 1px solid #333; padding-top: 6px; font-size: 12px; }
+        @media print { body { padding: 15px; } }
+      </style></head>
+      <body>
+        <h1>RECIBO DE CAJA</h1>
+        <div class="num-recibo">N° ${datos.numero_recibo} — ${new Date(datos.fecha + 'T00:00:00').toLocaleDateString('es-CO')}</div>
+        <div class="fila"><span>Recibido de</span><strong>${escaparHtml(c && c.tercero ? c.tercero.nombre_completo : '')}</strong></div>
+        ${c && c.tercero && c.tercero.numero_documento ? `<div class="fila"><span>NIT/Cédula</span><strong>${escaparHtml(c.tercero.numero_documento)}</strong></div>` : ''}
+        <div class="fila"><span>Concepto</span><strong>${escaparHtml(c ? c.descripcion : '')}</strong></div>
+        ${c && c.numero_factura ? `<div class="fila"><span>Referencia — N° Factura</span><strong>${escaparHtml(c.numero_factura)}</strong></div>` : ''}
+        <div class="fila"><span>Forma de pago</span><strong>${escaparHtml(datos.metodo_pago)}</strong></div>
+        <div class="fila"><span>Saldo pendiente después de este abono</span><strong>${formatearMoneda(datos.saldo_pendiente)}</strong></div>
+        <div class="total">Valor recibido: ${formatearMoneda(datos.monto_abonado)}</div>
+        ${datos.paz_y_salvo ? `<div class="paz-y-salvo">✅ Con este pago, el cliente queda A PAZ Y SALVO por este concepto.</div>` : ''}
+        <div class="firma">Recibido por</div>
+      </body></html>
+    `);
+    ventana.document.close();
+    setTimeout(() => ventana.print(), 400);
+  }
+
   async function abrirAbonoCuentaPendiente(cuentaId, saldoPendiente) {
     const montoStr = prompt(`Saldo pendiente: ${formatearMoneda(saldoPendiente)}\n¿Cuánto vas a abonar?`, saldoPendiente);
     if (!montoStr) return;
@@ -12133,7 +12268,11 @@
     });
     const datos = await resp.json();
     if (!resp.ok) { alert(datos.error || 'No se pudo registrar el abono.'); return; }
+
     await cargarCuentasPendientes();
+    if (confirm(`✅ Abono registrado (recibo ${datos.numero_recibo}).${datos.paz_y_salvo ? ' El cliente queda a paz y salvo.' : ''}\n\n¿Quieres imprimir el recibo ahora?`)) {
+      imprimirReciboAbono(datos);
+    }
   }
 
   async function verHistorialAbonosCuenta(cuentaId) {
