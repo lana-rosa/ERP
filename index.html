@@ -311,6 +311,12 @@
     gap: 20px;
   }
 
+  .grilla-4 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+  }
+
   /* ===== BARRA SUPERIOR MÓVIL (solo aparece en pantallas angostas) ===== */
   .topbar-movil {
     display: none;
@@ -349,7 +355,7 @@
   .grid-venta-layout { display: grid; grid-template-columns: 340px 1fr; gap: 20px; align-items: start; }
 
   @media (max-width: 900px) {
-    .grilla-2, .grilla-3 { grid-template-columns: 1fr; }
+    .grilla-2, .grilla-3, .grilla-4 { grid-template-columns: 1fr; }
 
     /* El layout de "Registrar venta" (datos del cliente + carrito) pasa de
        2 columnas fijas a apilado — en celular no hay espacio para 340px
@@ -882,6 +888,13 @@
 
 <!-- ÁREA PRINCIPAL -->
 <div id="main">
+<div id="barraBusquedaGlobal" class="oculto" style="position:sticky;top:0;z-index:390;background:#fff;border-bottom:1px solid #f1e2ec;padding:10px 24px;display:flex;justify-content:flex-end;">
+  <div style="position:relative;width:100%;max-width:360px;">
+    <input type="text" id="inputBusquedaGlobal" placeholder="🔍 Buscar cliente o proveedor por nombre o cédula/NIT..." oninput="debounceBusquedaGlobal()" style="width:100%;padding:9px 14px;border-radius:10px;border:1.5px solid #f1e2ec;font-family:'Poppins',sans-serif;font-size:13px;outline:none;">
+    <div id="resultadosBusquedaGlobal" class="oculto" style="position:absolute;top:calc(100% + 6px);left:0;right:0;background:#fff;border-radius:12px;border:1px solid #f1e2ec;box-shadow:0 8px 24px rgba(0,0,0,0.12);max-height:340px;overflow-y:auto;z-index:391;"></div>
+  </div>
+</div>
+
 
 <!-- ===== PANTALLA: LOGIN ===== -->
 <div id="pantallaLogin">
@@ -2764,7 +2777,7 @@
 
   <div id="panelAlertasDashboard" style="margin-bottom:16px;"></div>
 
-  <div id="kpisDashboard" class="grilla-3" style="margin-bottom:16px;"></div>
+  <div id="kpisDashboard" class="grilla-4" style="margin-bottom:16px;"></div>
 
   <div id="rosinaInsightDashboard"></div>
 
@@ -4321,6 +4334,7 @@
     mostrar('nav-dashboard', esAdmin);
     document.getElementById('btnAbrirAsistenteIA').style.display = 'flex';
     document.getElementById('btnCrearRapido').style.display = esAdmin ? 'flex' : 'none';
+    document.getElementById('barraBusquedaGlobal').classList.remove('oculto');
     mostrar('nav-calendario', true);
 
     // Si el usuario solo tiene un departamento, se abre expandido automáticamente
@@ -6277,7 +6291,8 @@
   }
 
   function renderizarFilaInventarioItem(item, iconoGrupo) {
-    const stockBajo = item.activo && item.stock_actual <= item.stock_minimo;
+    const estadoStock = !item.activo ? 'inactivo' : item.stock_actual <= 0 ? 'agotado' : item.stock_actual <= item.stock_minimo ? 'reorden' : 'ok';
+    const stockBajo = estadoStock === 'agotado' || estadoStock === 'reorden'; // se sigue usando para el color del número y el ícono de advertencia
     const tagInactivo = !item.activo ? ' <span class="badge-inactivo">Inactivo</span>' : '';
     const skuTexto = item.sku ? ` <span style="opacity:0.5;font-size:10.5px;">(${escaparHtml(item.sku)})</span>` : '';
     const nombreProveedor = item.proveedor ? item.proveedor.nombre_completo : '—';
@@ -6329,8 +6344,12 @@
         <span style="text-align:right;">${formatearMoneda(item.precio_venta)}</span>
         <span style="opacity:0.75;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escaparHtml(nombreProveedor)}</span>
         <span>
-          <span style="font-size:10.5px;font-weight:600;padding:4px 10px;border-radius:999px;display:inline-block;${stockBajo ? 'background:#fdecea;color:var(--rojo-error);' : 'background:#e4f5ec;color:var(--verde-exito);'}">
-            ${stockBajo ? 'Por debajo del mínimo' : 'Stock saludable'}
+          <span style="font-size:10.5px;font-weight:600;padding:4px 10px;border-radius:999px;display:inline-block;${
+            estadoStock === 'agotado' ? 'background:#fdecea;color:var(--rojo-error);' :
+            estadoStock === 'reorden' ? 'background:#fdf1de;color:var(--ambar);' :
+            'background:#e4f5ec;color:var(--verde-exito);'
+          }">
+            ${estadoStock === 'agotado' ? '🔴 Agotado' : estadoStock === 'reorden' ? '🟡 Punto de reorden' : '🟢 Stock saludable'}
           </span>
         </span>
         <span style="text-align:right;">${rolActual === 'administrador' ? '✏️' : ''}</span>
@@ -9006,6 +9025,63 @@
     { icono: '🏭', texto: 'Nuevo proveedor', fn: () => mostrarPantallaProveedores() },
     { icono: '💵', texto: 'Registrar abono (Cartera)', fn: () => { mostrarPantallaVentas(); mostrarSubTabGrupo('registrarVenta', 'subtabVentaCartera', document.querySelectorAll('[data-subtab-btn="registrarVenta"]')[3]); } },
   ];
+
+  // ============================================================
+  // BUSCADOR GLOBAL (clientes/proveedores por nombre o cédula/NIT)
+  // ============================================================
+  let timeoutBusquedaGlobal = null;
+  function debounceBusquedaGlobal() {
+    clearTimeout(timeoutBusquedaGlobal);
+    timeoutBusquedaGlobal = setTimeout(ejecutarBusquedaGlobal, 350);
+  }
+
+  async function ejecutarBusquedaGlobal() {
+    const q = document.getElementById('inputBusquedaGlobal').value.trim();
+    const cont = document.getElementById('resultadosBusquedaGlobal');
+    if (!q || q.length < 2) { cont.classList.add('oculto'); cont.innerHTML = ''; return; }
+
+    const { data, error } = await supabaseClient
+      .from('terceros')
+      .select('id, nombre_completo, numero_documento, telefono, tipo')
+      .or(`nombre_completo.ilike.%${q}%,numero_documento.ilike.%${q}%`)
+      .limit(8);
+
+    if (error || !data || data.length === 0) {
+      cont.innerHTML = '<div style="padding:12px 14px;font-size:12.5px;opacity:0.6;">Sin resultados.</div>';
+      cont.classList.remove('oculto');
+      return;
+    }
+
+    cont.innerHTML = data.map(t => `
+      <button onclick="irAResultadoBusquedaGlobal('${t.id}', '${t.tipo}')" style="display:block;width:100%;text-align:left;padding:10px 14px;border:none;border-bottom:1px solid #f4eef2;background:#fff;cursor:pointer;font-family:'Poppins',sans-serif;">
+        <div style="font-size:13px;font-weight:600;">${t.tipo === 'cliente' ? '👤' : '🏭'} ${escaparHtml(t.nombre_completo)}</div>
+        <div style="font-size:11px;opacity:0.6;">${escaparHtml(t.numero_documento || 'Sin documento')}${t.telefono ? ' · ' + escaparHtml(t.telefono) : ''}</div>
+      </button>
+    `).join('');
+    cont.classList.remove('oculto');
+  }
+
+  function irAResultadoBusquedaGlobal(terceroId, tipo) {
+    document.getElementById('resultadosBusquedaGlobal').classList.add('oculto');
+    const nombreBuscado = document.getElementById('inputBusquedaGlobal').value.trim();
+    document.getElementById('inputBusquedaGlobal').value = '';
+    if (tipo === 'cliente') {
+      mostrarPantallaClientes();
+      setTimeout(() => { const el = document.getElementById('buscarClienteDir'); if (el) { el.value = nombreBuscado; el.dispatchEvent(new Event('input')); } }, 300);
+    } else {
+      mostrarPantallaProveedores();
+      setTimeout(() => { const el = document.getElementById('buscarProveedorDir'); if (el) { el.value = nombreBuscado; el.dispatchEvent(new Event('input')); } }, 300);
+    }
+  }
+
+  document.addEventListener('click', (e) => {
+    const cont = document.getElementById('resultadosBusquedaGlobal');
+    const input = document.getElementById('inputBusquedaGlobal');
+    if (cont && !cont.classList.contains('oculto') && !cont.contains(e.target) && e.target !== input) {
+      cont.classList.add('oculto');
+    }
+  });
+
 
   function toggleMenuCrearRapido() {
     const menu = document.getElementById('menuCrearRapido');
@@ -12577,7 +12653,18 @@
         <div class="kpi-valor" style="color:${d.periodo_a.utilidad_neta >= 0 ? 'var(--verde-exito)' : 'var(--rojo-error)'};">${formatearMoneda(d.periodo_a.utilidad_neta)}</div>
         <div class="kpi-delta">${flechita(d.variacion_pct.utilidad_neta)}</div>
       </div>
+      <div class="kpi-card-nuevo" id="kpiCarteraPendiente" style="--barra:var(--ambar);">
+        <div class="kpi-label">Cartera pendiente</div>
+        <div class="kpi-valor">Cargando...</div>
+        <div class="kpi-delta"></div>
+      </div>
+      <div class="kpi-card-nuevo" id="kpiSaldoBancos" style="--barra:var(--azul-acero);">
+        <div class="kpi-label">Saldo en Bancos</div>
+        <div class="kpi-valor">Cargando...</div>
+        <div class="kpi-delta"></div>
+      </div>
     `;
+    cargarKpisExtra();
 
     compCont.innerHTML = `
       <div class="resumen-fila"><span>Últimos 30 días</span><strong>${formatearMoneda(d.periodo_a.utilidad_neta)}</strong></div>
@@ -12586,6 +12673,28 @@
     `;
 
     renderizarGraficaComparativoDashboard(d);
+  }
+
+  async function cargarKpisExtra() {
+    // Cartera pendiente total (todo lo que deben los clientes, no solo lo vencido)
+    const respCartera = await fetch(`${WORKER_URL}/api/pos/finanzas/cuentas-pendientes?tipo=por_cobrar`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    const elCartera = document.getElementById('kpiCarteraPendiente');
+    if (respCartera.ok && elCartera) {
+      const { cuentas } = await respCartera.json();
+      const pendientes = (cuentas || []).filter(c => c.estado !== 'pagado');
+      const total = pendientes.reduce((a, c) => a + (Number(c.monto) - Number(c.monto_abonado || 0)), 0);
+      elCartera.querySelector('.kpi-valor').textContent = formatearMoneda(total);
+      elCartera.querySelector('.kpi-delta').textContent = pendientes.length > 0 ? `${pendientes.length} cuenta(s) pendiente(s)` : 'Sin cartera pendiente';
+    }
+
+    // Saldo en Bancos — reutiliza el mismo cálculo que ya usa Conciliación bancaria
+    const respBancos = await fetch(`${WORKER_URL}/api/pos/conciliacion/resumen`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    const elBancos = document.getElementById('kpiSaldoBancos');
+    if (respBancos.ok && elBancos) {
+      const r = await respBancos.json();
+      elBancos.querySelector('.kpi-valor').textContent = formatearMoneda(r.saldo_libros);
+      elBancos.querySelector('.kpi-delta').textContent = 'Según libros contables';
+    }
   }
 
   let graficaComparativoInstancia = null;
