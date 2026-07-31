@@ -2679,6 +2679,17 @@
     <button class="btn-principal" onclick="guardarDatosFiscalesEmpresa()">Guardar</button>
     <div class="mensaje" id="mensajeDatosFiscalesEmpresa"></div>
   </div>
+
+  <div class="panel oculto" id="panelBloqueoFecha" style="max-width:420px;margin-top:20px;">
+    <h2>🔒 Bloqueo de período contable</h2>
+    <div class="subtitulo">Protege los períodos ya cerrados: ninguna venta, compra, nómina u otro movimiento contable podrá registrarse con fecha igual o anterior a la que pongas aquí — sin importar desde qué pantalla se intente.</div>
+    <div id="estadoBloqueoFecha" style="margin:10px 0;font-size:13px;"></div>
+    <label for="inputFechaBloqueo">Bloquear todo hasta (inclusive)</label>
+    <input type="date" id="inputFechaBloqueo">
+    <button class="btn-principal" onclick="confirmarGuardarBloqueoFecha()">Aplicar bloqueo</button>
+    <button class="btn-secundario" onclick="confirmarQuitarBloqueoFecha()">Quitar bloqueo</button>
+    <div class="mensaje" id="mensajeBloqueoFecha"></div>
+  </div>
 </div>
 
 <!-- ===== PANTALLA: MI PERFIL ===== -->
@@ -9416,8 +9427,10 @@
     actualizarBotonesTema();
     document.getElementById('panelLogoEmpresa').classList.toggle('oculto', rolActual !== 'administrador');
     document.getElementById('panelDatosFiscalesEmpresa').classList.toggle('oculto', rolActual !== 'administrador');
+    document.getElementById('panelBloqueoFecha').classList.toggle('oculto', rolActual !== 'administrador');
     ocultarMensaje('mensajeLogoEmpresa');
     ocultarMensaje('mensajeDatosFiscalesEmpresa');
+    ocultarMensaje('mensajeBloqueoFecha');
     document.getElementById('previsualizacionLogo').innerHTML = logoEmpresaCache
       ? `<img src="${logoEmpresaCache}" style="max-width:180px;max-height:100px;border-radius:8px;">`
       : '<div style="font-size:12px;opacity:0.6;">Todavía no se ha subido ningún logo.</div>';
@@ -9431,8 +9444,47 @@
           document.getElementById('empresaNit').value = d.nit || '';
           document.getElementById('empresaDireccion').value = d.direccion || '';
           document.getElementById('empresaTelefono').value = d.telefono || '';
+
+          const estadoEl = document.getElementById('estadoBloqueoFecha');
+          if (d.fecha_bloqueo_transacciones) {
+            estadoEl.innerHTML = `🔒 <strong>Bloqueado</strong> hasta el ${new Date(d.fecha_bloqueo_transacciones + 'T00:00:00').toLocaleDateString('es-CO')} (inclusive). Nada con esa fecha o antes se puede registrar ni editar.`;
+            document.getElementById('inputFechaBloqueo').value = d.fecha_bloqueo_transacciones;
+          } else {
+            estadoEl.innerHTML = '🔓 Sin bloqueo activo — se puede registrar con cualquier fecha.';
+            document.getElementById('inputFechaBloqueo').value = '';
+          }
         });
     }
+  }
+
+  async function confirmarGuardarBloqueoFecha() {
+    const fecha = document.getElementById('inputFechaBloqueo').value;
+    ocultarMensaje('mensajeBloqueoFecha');
+    if (!fecha) { mostrarMensaje('mensajeBloqueoFecha', 'Escribe la fecha hasta la que quieres bloquear.', 'error'); return; }
+    if (!confirm(`¿Bloquear todo movimiento contable con fecha igual o anterior al ${new Date(fecha + 'T00:00:00').toLocaleDateString('es-CO')}? Ni tú misma podrás registrar nada en esas fechas hasta que quites el bloqueo.`)) return;
+
+    const resp = await fetch(WORKER_URL + '/api/pos/config-empresa/bloqueo-fecha', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ fecha_bloqueo_transacciones: fecha })
+    });
+    if (!resp.ok) { mostrarMensaje('mensajeBloqueoFecha', 'No se pudo aplicar el bloqueo.', 'error'); return; }
+    mostrarMensaje('mensajeBloqueoFecha', '✅ Bloqueo aplicado.', 'exito');
+    mostrarPantallaApariencia();
+  }
+
+  async function confirmarQuitarBloqueoFecha() {
+    ocultarMensaje('mensajeBloqueoFecha');
+    if (!confirm('¿Quitar el bloqueo de período contable? Se podrá volver a registrar con cualquier fecha.')) return;
+
+    const resp = await fetch(WORKER_URL + '/api/pos/config-empresa/bloqueo-fecha', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ fecha_bloqueo_transacciones: null })
+    });
+    if (!resp.ok) { mostrarMensaje('mensajeBloqueoFecha', 'No se pudo quitar el bloqueo.', 'error'); return; }
+    mostrarMensaje('mensajeBloqueoFecha', '✅ Bloqueo retirado.', 'exito');
+    mostrarPantallaApariencia();
   }
 
   async function guardarDatosFiscalesEmpresa() {
