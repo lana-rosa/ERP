@@ -1972,6 +1972,7 @@
     <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinIndicadores', this); cargarIndicadoresVentas();">📈 Indicadores de ventas</button>
     <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinCosteo', this); cargarCosteoReal();">🧮 Costeo real (materiales + mano de obra)</button>
     <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinPresupuesto', this); cargarBasePresupuestoSimulacion();">💡 Presupuesto y simulación</button>
+    <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinRanking', this); cargarRankingVentas();">🏆 Ranking (productos, clientes, vendedoras)</button>
   </div>
 
   <div id="subtabFinConsolidado" data-subtab-grupo="reportesFin">
@@ -2065,6 +2066,30 @@
           <div class="resumen-fila"><span>Ventas comprometidas Año 1</span><strong>$137.400.000</strong></div>
           <div class="resumen-fila"><span>Promedio mensual necesario</span><strong id="metaMensualFeReferencia">$11.450.000</strong></div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="subtabFinRanking" data-subtab-grupo="reportesFin" class="oculto">
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+      <div><label for="rkFechaDesde" style="font-size:11px;">Desde</label><input type="date" id="rkFechaDesde" onchange="cargarRankingVentas()" style="padding:9px 10px;"></div>
+      <div><label for="rkFechaHasta" style="font-size:11px;">Hasta</label><input type="date" id="rkFechaHasta" onchange="cargarRankingVentas()" style="padding:9px 10px;"></div>
+    </div>
+    <div class="subtitulo" style="margin-bottom:14px;">Basado en las ventas de Tienda (POS) — el canal con el detalle línea a línea más completo.</div>
+
+    <div class="panel" style="max-width:none;max-height:none;margin-bottom:20px;">
+      <h2>🏆 Productos más vendidos</h2>
+      <div id="rankingProductos"><div class="cargando">Cargando...</div></div>
+    </div>
+
+    <div class="grilla-2">
+      <div class="panel">
+        <h2>⭐ Mejores clientes</h2>
+        <div id="rankingClientes"><div class="cargando">Cargando...</div></div>
+      </div>
+      <div class="panel">
+        <h2>👩‍💼 Desempeño por vendedora/cajera</h2>
+        <div id="rankingVendedoras"><div class="cargando">Cargando...</div></div>
       </div>
     </div>
   </div>
@@ -10272,6 +10297,52 @@
     document.getElementById('simUtilidadDeseada').value = 0;
     document.getElementById('simPrecioPromedio').value = '';
     recalcularSimulacionPresupuesto();
+  }
+
+  // ============================================================
+  // RANKING DE VENTAS (productos, clientes, vendedoras)
+  // ============================================================
+  async function cargarRankingVentas() {
+    if (!document.getElementById('rkFechaDesde').value) {
+      const primerDia = new Date(); primerDia.setDate(1);
+      document.getElementById('rkFechaDesde').value = primerDia.toISOString().slice(0, 10);
+      document.getElementById('rkFechaHasta').value = new Date().toISOString().slice(0, 10);
+    }
+    const desde = document.getElementById('rkFechaDesde').value;
+    const hasta = document.getElementById('rkFechaHasta').value;
+
+    const contProd = document.getElementById('rankingProductos');
+    const contCli = document.getElementById('rankingClientes');
+    const contVend = document.getElementById('rankingVendedoras');
+    contProd.innerHTML = contCli.innerHTML = contVend.innerHTML = '<div class="cargando">Cargando...</div>';
+
+    const resp = await fetch(`${WORKER_URL}/api/pos/finanzas/ranking-ventas?fecha_desde=${desde}&fecha_hasta=${hasta}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { contProd.innerHTML = contCli.innerHTML = contVend.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const d = await resp.json();
+
+    contProd.innerHTML = (!d.productos || d.productos.length === 0) ? '<div class="cargando">Sin ventas en este período.</div>' :
+      d.productos.slice(0, 15).map((p, i) => `
+        <div class="resumen-fila">
+          <span>${i < 3 ? ['🥇', '🥈', '🥉'][i] : (i + 1) + '.'} ${escaparHtml(p.nombre)} <span style="opacity:0.55;">(${p.cantidad} unid.)</span></span>
+          <strong>${formatearMoneda(p.total)}</strong>
+        </div>
+      `).join('');
+
+    contCli.innerHTML = (!d.clientes || d.clientes.length === 0) ? '<div class="cargando">Sin ventas en este período.</div>' :
+      d.clientes.slice(0, 10).map((c, i) => `
+        <div class="resumen-fila">
+          <span>${i < 3 ? ['🥇', '🥈', '🥉'][i] : (i + 1) + '.'} ${escaparHtml(c.nombre)} <span style="opacity:0.55;">(${c.ventas} compra(s))</span></span>
+          <strong>${formatearMoneda(c.total)}</strong>
+        </div>
+      `).join('');
+
+    contVend.innerHTML = (!d.vendedoras || d.vendedoras.length === 0) ? '<div class="cargando">Sin ventas en este período.</div>' :
+      d.vendedoras.map((v, i) => `
+        <div class="resumen-fila">
+          <span>${i < 3 ? ['🥇', '🥈', '🥉'][i] : (i + 1) + '.'} ${escaparHtml(v.nombre)} <span style="opacity:0.55;">(${v.ventas} venta(s))</span></span>
+          <strong>${formatearMoneda(v.total)}</strong>
+        </div>
+      `).join('');
   }
 
   function recalcularSimulacionPresupuesto() {
