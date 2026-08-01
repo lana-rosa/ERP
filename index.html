@@ -5363,6 +5363,28 @@
 
   function actualizarResumenPagos() {
     const total = calcularTotalCarrito();
+
+    // Si solo hay un método de pago, se autocompleta con el total — así en
+    // la venta más común (pago único, monto exacto) no hay que escribirlo a
+    // mano. Si la persona ya editó ese monto a propósito (para un pago
+    // parcial, por ejemplo), no se le pisa: solo se autocompleta mientras el
+    // campo esté vacío o siga igual al último valor que puso el propio
+    // autocompletado. Para efectivo, el campo visible es "¿cuánto te dio?"
+    // (recibido), no el monto directo, así que se autocompleta ese en su lugar.
+    if (filasPago.length === 1 && carrito.length > 0) {
+      const unicaFila = filasPago[0];
+      const campoVisible = unicaFila.metodo_pago === 'efectivo' ? 'recibido' : 'monto';
+      const valorActual = unicaFila[campoVisible];
+      const eraAutocompletado = valorActual === '' || valorActual === undefined || Number(valorActual) === Number(unicaFila._ultimoAutocompletado || -1);
+      if (eraAutocompletado && Number(valorActual) !== total) {
+        unicaFila[campoVisible] = total;
+        if (campoVisible === 'recibido') { unicaFila.monto = total; unicaFila.cambio = 0; }
+        unicaFila._ultimoAutocompletado = total;
+        renderizarPagos();
+        return; // renderizarPagos ya vuelve a llamar actualizarResumenPagos
+      }
+    }
+
     const sumaPagos = filasPago.reduce((acc, p) => acc + (Number(p.monto) || 0), 0);
     const resumen = document.getElementById('resumenPagos');
     const diferencia = total - sumaPagos;
