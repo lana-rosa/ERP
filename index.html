@@ -4263,6 +4263,13 @@
       return;
     }
 
+    // El contador no maneja caja ni ventas — entra directo a Estados
+    // financieros, que es lo único que necesita ver.
+    if (rolActual === 'contador') {
+      await mostrarPantallaEstadosFinancieros();
+      return;
+    }
+
     try {
       const resp = await fetch(WORKER_URL + '/api/pos/turnos/activo', {
         headers: { Authorization: 'Bearer ' + sesionActual.token }
@@ -4360,6 +4367,7 @@
     const esAdmin = rolesUsuario.includes('administrador');
     const esCajero = rolesUsuario.includes('cajero');
     const esTaller = rolesUsuario.includes('taller');
+    const esContador = rolesUsuario.includes('contador');
 
     const mostrar = (id, visible) => {
       // Un permiso manual otorgado por la administradora siempre tiene la
@@ -4373,10 +4381,10 @@
     mostrar('deptoVentasGrupo', esAdmin || esCajero);
     mostrar('deptoComprasGrupo', esAdmin);
     mostrar('deptoInventarioGrupo', esAdmin || esCajero || esTaller);
-    mostrar('deptoContabilidadGrupo', esAdmin);
+    mostrar('deptoContabilidadGrupo', esAdmin || esContador);
     mostrar('deptoTalentoGrupo', esAdmin);
     mostrar('deptoTesoreriaGrupo', esAdmin || esCajero);
-    mostrar('deptoReportesGrupo', esAdmin);
+    mostrar('deptoReportesGrupo', esAdmin || esContador);
     mostrar('deptoFondoEmprenderGrupo', esAdmin);
     // Configuración es visible para todos (Apariencia y Mi perfil son de
     // cualquiera), pero los ítems sensibles adentro quedan solo para admin.
@@ -4389,7 +4397,7 @@
     mostrar('nav-codigos-descuento', esAdmin);
     mostrar('nav-fidelizacion', esAdmin);
     mostrar('nav-config-alertas', esAdmin);
-    mostrar('nav-documentos-empresa', esAdmin);
+    mostrar('nav-documentos-empresa', esAdmin || esContador);
     mostrar('nav-tarifas-envio', esAdmin);
 
     // Turno de caja solo aplica a quien maneja caja física (Tienda)
@@ -4421,9 +4429,9 @@
     mostrar('nav-transferir-stock-taller', esAdmin || esTaller);
     mostrar('nav-nomina', esAdmin);
     mostrar('nav-talento-humano', esAdmin);
-    mostrar('nav-reportes-financieros', esAdmin);
-    mostrar('nav-estados-financieros', esAdmin);
-    mostrar('nav-cuentas-pendientes', esAdmin);
+    mostrar('nav-reportes-financieros', esAdmin || esContador);
+    mostrar('nav-estados-financieros', esAdmin || esContador);
+    mostrar('nav-cuentas-pendientes', esAdmin || esContador);
     mostrar('nav-activos-fijos', esAdmin);
     mostrar('nav-conciliacion', esAdmin);
     mostrar('nav-transferencias-internas', esAdmin);
