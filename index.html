@@ -2443,7 +2443,7 @@
       <input type="date" id="clienteDirCumpleanos">
       <label style="display:flex;align-items:flex-start;gap:8px;margin-top:14px;font-weight:400;">
         <input type="checkbox" id="clienteDirAceptaTratamientoDatos" style="width:auto;margin-top:3px;">
-        <span style="font-size:12.5px;">Confirmo que el cliente autorizó el tratamiento de sus datos personales, según la <a href="#" onclick="alert('Aquí debe ir el enlace a tu Política de Tratamiento de Datos Personales una vez la tengas redactada con tu asesor legal.'); return false;" style="color:var(--rosa-principal);">Política de Tratamiento de Datos de Lana Rosa</a>.</span>
+        <span style="font-size:12.5px;">Confirmo que el cliente autorizó el tratamiento de sus datos personales, según la <a href="#" onclick="document.getElementById('modalPoliticaDatos').classList.remove('oculto'); return false;" style="color:var(--rosa-principal);">Política de Tratamiento de Datos de Lana Rosa</a>.</span>
       </label>
       <button class="btn-principal" onclick="confirmarCrearCliente()">Agregar cliente</button>
       <div class="mensaje" id="mensajeCrearCliente"></div>
@@ -2765,6 +2765,28 @@
 </div>
 
 <!-- ===== PANTALLA: MI PERFIL ===== -->
+<div id="modalPoliticaDatos" class="oculto" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:600;display:flex;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fff;border-radius:14px;max-width:600px;width:100%;max-height:85vh;overflow-y:auto;padding:28px;">
+    <h2 style="margin-top:0;">📋 Política de Tratamiento de Datos Personales — Lana Rosa Crochet</h2>
+    <div style="font-size:13px;line-height:1.6;">
+      <p>En cumplimiento de la Ley 1581 de 2012, el Decreto 1377 de 2013 y demás normas concordantes, <strong>Sara Loaiza Muñoz</strong>, identificada con C.C. 1.055.359.694, con establecimiento de comercio denominado <strong>Lana Rosa Crochet</strong> en Villamaría, Caldas, informa que es el Responsable del Tratamiento de sus datos personales.</p>
+
+      <p><strong>1. Finalidad del Tratamiento:</strong> Los datos personales recolectados (nombre, cédula/NIT, teléfono, dirección, correo electrónico) serán utilizados para:</p>
+      <ul>
+        <li>La gestión administrativa, facturación, cobro y despacho de pedidos.</li>
+        <li>El envío de cotizaciones, confirmación de compras y atención de garantías o reclamos.</li>
+        <li>El cumplimiento de obligaciones tributarias y contables ante la DIAN y autoridades locales.</li>
+        <li>Envío de promociones y novedades sobre nuestros productos, previo consentimiento expreso.</li>
+      </ul>
+
+      <p><strong>2. Derechos del Titular:</strong> Como titular de los datos, usted tiene derecho a conocer, actualizar, rectificar y solicitar la supresión de sus datos personales, así como a revocar la autorización otorgada.</p>
+
+      <p><strong>3. Canal de Atención:</strong> Para ejercer sus derechos, puede comunicarse al correo electrónico <strong>lanarosacrochet@gmail.com</strong> o al teléfono/WhatsApp <strong>3205072801</strong>.</p>
+    </div>
+    <button class="btn-principal" onclick="document.getElementById('modalPoliticaDatos').classList.add('oculto')" style="margin-top:16px;">Cerrar</button>
+  </div>
+</div>
+
 <div id="pantallaMiPerfil" class="oculto contenido">
   <div class="page-header">
     <h1>👤 Mi perfil</h1>
@@ -11187,7 +11209,7 @@
       // como un paso aparte, no automático, porque abrir WhatsApp exige que
       // la propia Sara confirme el envío desde su cuenta.
       if (telefonoCliente) {
-        const mensajeAviso = `¡Hola! Gracias por tu compra en Lana Rosa 🐑 Para gestionar tu pedido ${datos.consecutivo || ''}, tu envío y tu factura, vamos a registrar tus datos. Puedes consultar nuestra Política de Tratamiento de Datos Personales, o escríbenos a este mismo número si en algún momento quieres actualizar o eliminar tu información.`;
+        const mensajeAviso = `¡Hola! Gracias por tu compra en Lana Rosa 🐑 Para gestionar tu pedido ${datos.consecutivo || ''}, tu factura, envío y garantías, vamos a registrar tus datos. Puedes consultar nuestra Política de Tratamiento de Datos Personales en nuestro punto de venta o en nuestra plataforma web. Para actualizar, rectificar o eliminar tus datos, escríbenos a lanarosacrochet@gmail.com o a este mismo WhatsApp (3205072801).`;
         document.getElementById('mensajePedidoCanal').insertAdjacentHTML('beforeend', `
           <button class="btn-secundario" style="margin-top:8px;width:auto;" onclick="window.open('https://wa.me/${telefonoCliente.replace(/\\D/g, '')}?text=${encodeURIComponent(mensajeAviso)}', '_blank')">📤 Enviar aviso de tratamiento de datos por WhatsApp</button>
         `);
