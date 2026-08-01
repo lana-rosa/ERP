@@ -1128,6 +1128,9 @@
 
       <div id="listaProductosPedido" style="margin-top:10px;"></div>
 
+      <label for="pedidoFechaEstimadaEntrega" style="margin-top:10px;">Fecha estimada de entrega <span style="font-size:10px;opacity:0.6;">(si algún producto de la lista se va a elaborar — déjalo vacío si todo está listo ya)</span></label>
+      <input type="date" id="pedidoFechaEstimadaEntrega">
+
       <div id="bloqueDescuentoPedido" style="margin-top:10px;">
         <button type="button" class="btn-mini editar" id="btnMostrarDescuentoPedido" onclick="alternarDescuentoPedido()">🏷️ Aplicar código de descuento</button>
         <div id="formDescuentoPedido" class="oculto" style="margin-top:8px;display:flex;gap:8px;align-items:center;">
@@ -10823,6 +10826,7 @@
     document.getElementById('pedidoCantidad').value = '1';
     document.getElementById('pedidoValorProducto').value = '';
     document.getElementById('pedidoValorEnvio').value = '';
+    document.getElementById('pedidoFechaEstimadaEntrega').value = '';
     productoPedidoSeleccionado = null;
     carritoPedidoCanal = [];
     quitarDescuentoPedido();
@@ -11112,7 +11116,8 @@
           descripcion_producto: descripcion,
           cantidad,
           valor_producto: valorProducto,
-          valor_envio: valorEnvio
+          valor_envio: valorEnvio,
+          fecha_estimada_entrega: document.getElementById('pedidoFechaEstimadaEntrega').value || null
         })
       });
 
@@ -11302,7 +11307,9 @@
           </div>
         `;
       } else if (p.estado === 'en_preparacion') {
-        const avisoStock = !p.disponible_en_stock ? '<div style="font-size:11.5px;color:var(--rojo-error);margin-top:4px;">⚠️ No estaba en stock — pídelo al Taller desde "Cajas y ventas internas".</div>' : '';
+        const avisoStock = !p.disponible_en_stock
+          ? `<div style="font-size:11.5px;color:var(--rojo-error);margin-top:4px;">⚠️ No estaba en stock — pídelo al Taller desde "Cajas y ventas internas".${p.fecha_estimada_entrega ? ' Entrega estimada: <strong>' + new Date(p.fecha_estimada_entrega + 'T00:00:00').toLocaleDateString('es-CO') + '</strong>.' : ''}</div>`
+          : '';
         acciones = `${avisoStock}<button class="btn-mini guardar" style="margin-top:8px;" onclick="marcarPedidoListoUI('${p.id}')">📦 Marcar listo para despachar</button>`;
       } else if (p.estado === 'listo_despacho') {
         if (p.monto_saldo_requerido > 0 && !p.saldo_pagado) {
