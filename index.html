@@ -2441,6 +2441,10 @@
       <input type="text" id="clienteDirCiudad">
       <label for="clienteDirCumpleanos">Fecha de cumpleaños <span style="font-size:10px;opacity:0.6;">(opcional — solo si el cliente quiere recibir descuentos ese día)</span></label>
       <input type="date" id="clienteDirCumpleanos">
+      <label style="display:flex;align-items:flex-start;gap:8px;margin-top:14px;font-weight:400;">
+        <input type="checkbox" id="clienteDirAceptaTratamientoDatos" style="width:auto;margin-top:3px;">
+        <span style="font-size:12.5px;">Confirmo que el cliente autorizó el tratamiento de sus datos personales, según la <a href="#" onclick="alert('Aquí debe ir el enlace a tu Política de Tratamiento de Datos Personales una vez la tengas redactada con tu asesor legal.'); return false;" style="color:var(--rosa-principal);">Política de Tratamiento de Datos de Lana Rosa</a>.</span>
+      </label>
       <button class="btn-principal" onclick="confirmarCrearCliente()">Agregar cliente</button>
       <div class="mensaje" id="mensajeCrearCliente"></div>
     </div>
@@ -10116,6 +10120,7 @@
           <button class="btn-mini editar" onclick="event.stopPropagation(); abrirEdicionCliente('${c.id}')">✏️ Editar</button>
         </div>
         <div style="font-size:12px;opacity:0.65;">${escaparHtml(c.numero_documento || 'Sin documento')} · ${escaparHtml(c.telefono || 'Sin teléfono')}${c.puntos_fidelizacion > 0 ? ` · ⭐ ${c.puntos_fidelizacion} puntos` : ''}</div>
+        <div style="font-size:10.5px;opacity:0.5;margin-top:2px;">${c.acepta_tratamiento_datos ? '✅' : '⚠️'} Datos personales: ${escaparHtml(c.medio_autorizacion || 'Sin registrar')}${c.fecha_aceptacion_datos ? ' — ' + new Date(c.fecha_aceptacion_datos).toLocaleDateString('es-CO') : ''}</div>
         <div id="edicionCliente-${c.id}" class="oculto" style="margin-top:8px;padding:10px;background:var(--rosa-suave);border-radius:9px;"></div>
         <div id="historialCliente-${c.id}" class="oculto" style="margin-top:8px;"></div>
       </div>
@@ -10217,20 +10222,23 @@
     const direccion = document.getElementById('clienteDirDireccion').value.trim();
     const ciudad = document.getElementById('clienteDirCiudad').value.trim();
     const cumpleanos = document.getElementById('clienteDirCumpleanos').value;
+    const aceptaTratamientoDatos = document.getElementById('clienteDirAceptaTratamientoDatos').checked;
     ocultarMensaje('mensajeCrearCliente');
 
     if (!nombre) { mostrarMensaje('mensajeCrearCliente', 'Escribe el nombre del cliente.', 'error'); return; }
+    if (!aceptaTratamientoDatos) { mostrarMensaje('mensajeCrearCliente', 'Marca la casilla de autorización de tratamiento de datos antes de guardar.', 'error'); return; }
 
     const resp = await fetch(WORKER_URL + '/api/pos/terceros', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ tipo: 'cliente', nombre_completo: nombre, tipo_documento: documento ? 'CC' : null, numero_documento: documento || null, telefono: telefono || null, email: correo || null, direccion: direccion || null, ciudad: ciudad || null, fecha_nacimiento: cumpleanos || null })
+      body: JSON.stringify({ tipo: 'cliente', nombre_completo: nombre, tipo_documento: documento ? 'CC' : null, numero_documento: documento || null, telefono: telefono || null, email: correo || null, direccion: direccion || null, ciudad: ciudad || null, fecha_nacimiento: cumpleanos || null, acepta_tratamiento_datos: aceptaTratamientoDatos })
     });
     const datos = await resp.json();
     if (!resp.ok) { mostrarMensaje('mensajeCrearCliente', datos.error || 'No se pudo crear.', 'error'); return; }
 
     mostrarMensaje('mensajeCrearCliente', '✅ Cliente agregado.', 'exito');
     ['clienteDirNombre','clienteDirDocumento','clienteDirTelefono','clienteDirCorreo','clienteDirDireccion','clienteDirCiudad','clienteDirCumpleanos'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('clienteDirAceptaTratamientoDatos').checked = false;
     await cargarClientesDir();
   }
 
@@ -11136,7 +11144,7 @@
         const clienteResp = await fetch(WORKER_URL + '/api/pos/clientes', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-          body: JSON.stringify({ nombre: nombreCliente, telefono: telefonoCliente || null, identificacion: identificacion || null })
+          body: JSON.stringify({ nombre: nombreCliente, telefono: telefonoCliente || null, identificacion: identificacion || null, canal_origen: 'whatsapp_redes' })
         });
         const clienteDatos = await clienteResp.json();
         if (clienteResp.ok) terceroId = clienteDatos.tercero_id;
@@ -11174,6 +11182,16 @@
       }
 
       mostrarMensaje('mensajePedidoCanal', '✅ Pedido creado. Ahora regístrale el anticipo cuando el cliente pague.', 'exito');
+
+      // Aviso de tratamiento de datos por WhatsApp (Ley 1581) — se ofrece
+      // como un paso aparte, no automático, porque abrir WhatsApp exige que
+      // la propia Sara confirme el envío desde su cuenta.
+      if (telefonoCliente) {
+        const mensajeAviso = `¡Hola! Gracias por tu compra en Lana Rosa 🐑 Para gestionar tu pedido ${datos.consecutivo || ''}, tu envío y tu factura, vamos a registrar tus datos. Puedes consultar nuestra Política de Tratamiento de Datos Personales, o escríbenos a este mismo número si en algún momento quieres actualizar o eliminar tu información.`;
+        document.getElementById('mensajePedidoCanal').insertAdjacentHTML('beforeend', `
+          <button class="btn-secundario" style="margin-top:8px;width:auto;" onclick="window.open('https://wa.me/${telefonoCliente.replace(/\\D/g, '')}?text=${encodeURIComponent(mensajeAviso)}', '_blank')">📤 Enviar aviso de tratamiento de datos por WhatsApp</button>
+        `);
+      }
 
       ultimaVentaCache = {
         consecutivo: datos.consecutivo || 'PEDIDO',
