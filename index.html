@@ -1596,7 +1596,10 @@
     </div>
     <div id="productoSeleccionadoInfo" style="display:none;margin-top:10px;padding:10px 12px;background:var(--rosa-suave);border-radius:9px;font-size:13px;"></div>
     <label for="inputCantidadNueva">¿Cuántas unidades entraron?</label>
-    <input type="number" id="inputCantidadNueva" placeholder="0" min="1" step="1">
+    <input type="number" id="inputCantidadNueva" placeholder="0" min="1" step="1" oninput="actualizarPrevisualizacionCostoPonderado()">
+    <label for="inputCostoUnitarioEntrada">Costo de compra por unidad (COP) <span style="font-size:10px;opacity:0.6;">(recomendado — actualiza el costo promedio para que la utilidad se calcule bien)</span></label>
+    <input type="number" id="inputCostoUnitarioEntrada" placeholder="0" min="0" step="100" oninput="actualizarPrevisualizacionCostoPonderado()">
+    <div id="previsualizacionCostoPonderado" style="font-size:11.5px;opacity:0.7;margin-top:-8px;margin-bottom:8px;"></div>
     <button class="btn-principal" id="btnConfirmarAjusteStock" onclick="confirmarAjusteStock()">Registrar entrada</button>
     <button class="btn-secundario" onclick="irATurnoActivo()">Cancelar</button>
     <div class="mensaje" id="mensajeAjusteStock"></div>
@@ -7761,6 +7764,8 @@
     mostrarPantalla('pantallaAjusteStock');
     document.getElementById('inputSkuAjuste').value = '';
     document.getElementById('inputCantidadNueva').value = '';
+    document.getElementById('inputCostoUnitarioEntrada').value = '';
+    document.getElementById('previsualizacionCostoPonderado').textContent = '';
     document.getElementById('sugerenciasEntrada').style.display = 'none';
     document.getElementById('productoSeleccionadoInfo').style.display = 'none';
     productoEntradaSeleccionado = null;
@@ -7784,7 +7789,7 @@
     timeoutBusquedaEntrada = setTimeout(async () => {
       const { data, error } = await supabaseClient
         .from('inventario_items')
-        .select('id, nombre, sku, stock_actual, unidad_medida')
+        .select('id, nombre, sku, stock_actual, unidad_medida, costo_promedio_ponderado')
         .eq('activo', true)
         .eq('centro_costo_id', obtenerCentroCostoPropio())
         .or(`nombre.ilike.%${texto}%,sku.ilike.%${texto}%`)
@@ -7797,29 +7802,46 @@
       }
 
       sugerenciasEl.innerHTML = data.map(item => `
-        <div style="padding:10px 12px;cursor:pointer;border-bottom:1px solid #f4eef2;" onmouseover="this.style.background='var(--rosa-suave)'" onmouseout="this.style.background='white'" onclick="seleccionarProductoEntrada('${item.id}', '${escaparHtml(item.nombre).replace(/'/g, "\\'")}', ${item.stock_actual}, '${item.unidad_medida}')">
+        <div style="padding:10px 12px;cursor:pointer;border-bottom:1px solid #f4eef2;" onmouseover="this.style.background='var(--rosa-suave)'" onmouseout="this.style.background='white'" onclick="seleccionarProductoEntrada('${item.id}', '${escaparHtml(item.nombre).replace(/'/g, "\\'")}', ${item.stock_actual}, '${item.unidad_medida}', ${item.costo_promedio_ponderado || 0})">
           <div style="font-weight:600;font-size:13px;">${escaparHtml(item.nombre)}</div>
-          <div style="font-size:11.5px;opacity:0.6;">${item.sku ? 'SKU: ' + escaparHtml(item.sku) + ' · ' : ''}Stock actual: ${item.stock_actual} ${item.unidad_medida}</div>
+          <div style="font-size:11.5px;opacity:0.6;">${item.sku ? 'SKU: ' + escaparHtml(item.sku) + ' · ' : ''}Stock actual: ${item.stock_actual} ${item.unidad_medida}${item.costo_promedio_ponderado ? ' · Costo actual: ' + formatearMoneda(item.costo_promedio_ponderado) : ''}</div>
         </div>
       `).join('');
       sugerenciasEl.style.display = 'block';
     }, 300);
   }
 
-  function seleccionarProductoEntrada(id, nombre, stockActual, unidad) {
-    productoEntradaSeleccionado = { id, nombre, stock_actual: stockActual, unidad };
+  function seleccionarProductoEntrada(id, nombre, stockActual, unidad, costoActual) {
+    productoEntradaSeleccionado = { id, nombre, stock_actual: stockActual, unidad, costo_actual: costoActual || 0 };
     document.getElementById('inputSkuAjuste').value = nombre;
     document.getElementById('sugerenciasEntrada').style.display = 'none';
 
     const infoEl = document.getElementById('productoSeleccionadoInfo');
-    infoEl.innerHTML = `✅ <strong>${escaparHtml(nombre)}</strong> — Stock actual: ${stockActual} ${unidad}`;
+    infoEl.innerHTML = `✅ <strong>${escaparHtml(nombre)}</strong> — Stock actual: ${stockActual} ${unidad}${costoActual ? ' · Costo promedio actual: ' + formatearMoneda(costoActual) : ' · Sin costo registrado todavía'}`;
     infoEl.style.display = 'block';
 
     document.getElementById('inputCantidadNueva').focus();
   }
 
+  function actualizarPrevisualizacionCostoPonderado() {
+    const cont = document.getElementById('previsualizacionCostoPonderado');
+    if (!productoEntradaSeleccionado) { cont.textContent = ''; return; }
+
+    const cantidad = Number(document.getElementById('inputCantidadNueva').value) || 0;
+    const costoUnitario = Number(document.getElementById('inputCostoUnitarioEntrada').value) || 0;
+    if (cantidad <= 0 || costoUnitario <= 0) { cont.textContent = ''; return; }
+
+    const stockAnterior = productoEntradaSeleccionado.stock_actual;
+    const costoAnterior = productoEntradaSeleccionado.costo_actual || 0;
+    const stockNuevo = stockAnterior + cantidad;
+    const costoNuevo = (stockAnterior * costoAnterior + cantidad * costoUnitario) / stockNuevo;
+
+    cont.innerHTML = `💡 Nuevo costo promedio ponderado: <strong>${formatearMoneda(costoNuevo)}</strong> por unidad`;
+  }
+
   async function confirmarAjusteStock() {
     const cantidadEntrada = Number(document.getElementById('inputCantidadNueva').value);
+    const costoUnitario = Number(document.getElementById('inputCostoUnitarioEntrada').value) || null;
     ocultarMensaje('mensajeAjusteStock');
 
     if (!productoEntradaSeleccionado) {
@@ -7830,6 +7852,9 @@
       mostrarMensaje('mensajeAjusteStock', 'Escribe cuántas unidades entraron (debe ser mayor a cero).', 'error');
       return;
     }
+    if (!costoUnitario && !confirm('No escribiste el costo de compra — el costo promedio de este producto NO se actualizará, y eso puede afectar tu utilidad calculada más adelante. ¿Continuar de todas formas?')) {
+      return;
+    }
 
     const btn = document.getElementById('btnConfirmarAjusteStock');
     btn.disabled = true;
@@ -7838,7 +7863,7 @@
     const resp = await fetch(WORKER_URL + '/api/pos/inventario/entrada-stock', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ inventario_item_id: productoEntradaSeleccionado.id, cantidad_entrada: cantidadEntrada })
+      body: JSON.stringify({ inventario_item_id: productoEntradaSeleccionado.id, cantidad_entrada: cantidadEntrada, costo_unitario: costoUnitario })
     });
 
     btn.disabled = false;
@@ -7851,10 +7876,12 @@
     }
 
     mostrarMensaje('mensajeAjusteStock',
-      `✅ Entrada registrada: +${cantidadEntrada} unidades de "${datos.nombre_producto}". Stock actual: ${datos.stock_nuevo}.`,
+      `✅ Entrada registrada: +${cantidadEntrada} unidades de "${datos.nombre_producto}". Stock actual: ${datos.stock_nuevo}.${costoUnitario ? ' Costo promedio actualizado a ' + formatearMoneda(datos.costo_promedio_nuevo) + '.' : ''}`,
       'exito');
     document.getElementById('inputSkuAjuste').value = '';
     document.getElementById('inputCantidadNueva').value = '';
+    document.getElementById('inputCostoUnitarioEntrada').value = '';
+    document.getElementById('previsualizacionCostoPonderado').textContent = '';
     document.getElementById('productoSeleccionadoInfo').style.display = 'none';
     productoEntradaSeleccionado = null;
     document.getElementById('inputSkuAjuste').focus();
