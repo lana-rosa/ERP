@@ -2307,6 +2307,16 @@
       <div class="subtitulo">Por ahora se envían manualmente por WhatsApp con un clic (se abre el chat con el mensaje ya redactado). El envío automático por correo queda pendiente de configurar más adelante.</div>
       <div id="listaDesprendiblesPendientes"><div class="cargando">Selecciona un período arriba.</div></div>
     </div>
+
+    <div class="panel" style="max-height:none;margin-top:20px;">
+      <h2>👑 Repartir utilidades entre socias</h2>
+      <div class="subtitulo">Lana Rosa Crochet está registrada en Cámara de Comercio como persona natural (solo Sara), pero en la práctica hay 2 socias reales. Escribe el monto TOTAL de utilidad a repartir en el período seleccionado arriba, y el sistema lo divide automáticamente según el % de participación de cada una, liquidando la cotización de independiente de cada socia por separado.</div>
+      <div id="listaSociasParticipacion" style="margin-bottom:14px;"></div>
+      <label for="montoTotalUtilidadRepartir">Monto total de utilidad a repartir este período</label>
+      <input type="number" id="montoTotalUtilidadRepartir" min="0" step="10000" placeholder="Ej: 1500000">
+      <button class="btn-principal" onclick="confirmarRepartirUtilidadesSocias()">Repartir según participación</button>
+      <div class="mensaje" id="mensajeRepartirUtilidades"></div>
+    </div>
   </div>
 
   <!-- ===== SUBTAB: REPORTES ===== -->
@@ -17951,6 +17961,39 @@
     await cargarRetirosPropietario(periodoNominaSeleccionadoId);
   }
 
+  function cargarListaSociasParticipacion() {
+    const cont = document.getElementById('listaSociasParticipacion');
+    if (!cont) return;
+    const socias = (empleadosActivosCache || []).filter(e => e.porcentaje_participacion_socia);
+    cont.innerHTML = socias.length === 0
+      ? '<div style="font-size:12px;opacity:0.6;">No hay socias con porcentaje de participación configurado.</div>'
+      : socias.map(s => `<div class="resumen-fila"><span>${escaparHtml(s.nombre_completo)}</span><strong>${s.porcentaje_participacion_socia}%</strong></div>`).join('');
+  }
+
+  async function confirmarRepartirUtilidadesSocias() {
+    const monto = Number(document.getElementById('montoTotalUtilidadRepartir').value);
+    ocultarMensaje('mensajeRepartirUtilidades');
+
+    if (!periodoNominaSeleccionadoId) { mostrarMensaje('mensajeRepartirUtilidades', 'Primero selecciona un período en "Períodos y liquidación".', 'error'); return; }
+    if (!monto || monto <= 0) { mostrarMensaje('mensajeRepartirUtilidades', 'Escribe un monto total válido.', 'error'); return; }
+
+    const socias = (empleadosActivosCache || []).filter(e => e.porcentaje_participacion_socia);
+    const previa = socias.map(s => `${escaparHtml(s.nombre_completo)}: ${formatearMoneda(Math.round(monto * s.porcentaje_participacion_socia / 100))} (${s.porcentaje_participacion_socia}%)`).join('\n');
+    if (!confirm(`¿Repartir ${formatearMoneda(monto)} de utilidad en este período así?\n\n${previa}\n\nSe liquidará la cotización de independiente de cada socia por separado. No se puede deshacer.`)) return;
+
+    const resp = await fetch(WORKER_URL + '/api/pos/nomina/repartir-utilidades-socias', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ periodo_nomina_id: periodoNominaSeleccionadoId, monto_total_utilidad: monto })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeRepartirUtilidades', datos.error || 'No se pudo repartir.', 'error'); return; }
+
+    mostrarMensaje('mensajeRepartirUtilidades', `✅ Utilidad repartida: ${(datos.detalle || []).map(d => `${d.nombre} ${formatearMoneda(d.monto)}`).join(' · ')}`, 'exito');
+    document.getElementById('montoTotalUtilidadRepartir').value = '';
+    await cargarRetirosPropietario(periodoNominaSeleccionadoId);
+  }
+
   async function cargarRetirosPropietario(periodoId) {
     const resp = await fetch(`${WORKER_URL}/api/pos/nomina/retiros-propietario?periodo_nomina_id=${periodoId}`, {
       headers: { Authorization: 'Bearer ' + sesionActual.token }
@@ -18463,6 +18506,7 @@
   async function verLiquidacionesPeriodo(periodoId) {
     periodoNominaSeleccionadoId = periodoId;
     renderizarListaEmpleados(); // refresca para mostrar el botón "Liquidar este empleado"
+    cargarListaSociasParticipacion();
     cargarReportePila(periodoId);
     cargarRetirosPropietario(periodoId);
     cargarDesprendiblesPendientes(periodoId);
