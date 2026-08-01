@@ -1973,6 +1973,7 @@
     <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinCosteo', this); cargarCosteoReal();">🧮 Costeo real (materiales + mano de obra)</button>
     <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinPresupuesto', this); cargarBasePresupuestoSimulacion();">💡 Presupuesto y simulación</button>
     <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinRanking', this); cargarRankingVentas();">🏆 Ranking (productos, clientes, vendedoras)</button>
+    <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinBimestral', this); cargarIngresosBimestralesRST();">📅 Ingresos bimestrales (RST)</button>
   </div>
 
   <div id="subtabFinConsolidado" data-subtab-grupo="reportesFin">
@@ -2091,6 +2092,23 @@
         <h2>👩‍💼 Desempeño por vendedora/cajera</h2>
         <div id="rankingVendedoras"><div class="cargando">Cargando...</div></div>
       </div>
+    </div>
+  </div>
+
+  <div id="subtabFinBimestral" data-subtab-grupo="reportesFin" class="oculto">
+    <div style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;">
+      ℹ️ Consolida los ingresos brutos de tus 3 canales de venta (Tienda, WhatsApp/Redes, Academy) en los 6 bimestres del año calendario, con el acumulado corrido — es lo que necesitas para diligenciar el Formulario 2593 del Régimen Simple. La tarifa aplicable a cada bimestre depende de tu actividad económica y del acumulado del año — confírmala con tu contador antes de presentar.
+    </div>
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+      <div><label for="bimAnio" style="font-size:11px;">Año</label>
+        <select id="bimAnio" onchange="cargarIngresosBimestralesRST()" style="padding:9px 10px;"></select>
+      </div>
+      <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarIngresosBimestralesExcel()">📥 Excel</button>
+    </div>
+
+    <div class="panel" style="max-width:none;max-height:none;">
+      <h2>📅 Ingresos brutos por bimestre — <span id="bimAnioTitulo"></span></h2>
+      <div id="contenidoIngresosBimestrales"><div class="cargando">Cargando...</div></div>
     </div>
   </div>
 
@@ -10309,6 +10327,67 @@
     document.getElementById('simUtilidadDeseada').value = 0;
     document.getElementById('simPrecioPromedio').value = '';
     recalcularSimulacionPresupuesto();
+  }
+
+  // ============================================================
+  // INGRESOS BRUTOS BIMESTRALES (Régimen Simple — Formulario 2593)
+  // ============================================================
+  let cacheIngresosBimestrales = null;
+
+  async function cargarIngresosBimestralesRST() {
+    const selectAnio = document.getElementById('bimAnio');
+    if (selectAnio.options.length === 0) {
+      const anioActual = new Date().getFullYear();
+      selectAnio.innerHTML = [anioActual, anioActual - 1].map(a => `<option value="${a}">${a}</option>`).join('');
+    }
+    const anio = selectAnio.value || new Date().getFullYear();
+    document.getElementById('bimAnioTitulo').textContent = anio;
+
+    const cont = document.getElementById('contenidoIngresosBimestrales');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+
+    const resp = await fetch(`${WORKER_URL}/api/pos/finanzas/ingresos-bimestrales-rst?anio=${anio}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const d = await resp.json();
+    cacheIngresosBimestrales = d;
+
+    cont.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:1.6fr 90px 100px 90px 100px 110px;">
+          <span>BIMESTRE</span><span style="text-align:right;">TIENDA</span><span style="text-align:right;">WHATSAPP/REDES</span><span style="text-align:right;">ACADEMY</span><span style="text-align:right;">TOTAL</span><span style="text-align:right;">ACUMULADO AÑO</span>
+        </div>
+        ${d.bimestres.map(b => `
+          <div class="tabla-lista-fila" style="grid-template-columns:1.6fr 90px 100px 90px 100px 110px;cursor:default;">
+            <span>Bimestre ${b.numero} — ${escaparHtml(b.nombre)}<div style="font-size:10px;opacity:0.55;">${b.numero_ventas} venta(s)</div></span>
+            <span style="text-align:right;">${formatearMoneda(b.total_tienda)}</span>
+            <span style="text-align:right;">${formatearMoneda(b.total_whatsapp_redes)}</span>
+            <span style="text-align:right;">${formatearMoneda(b.total_academy)}</span>
+            <span style="text-align:right;font-weight:700;">${formatearMoneda(b.total_bimestre)}</span>
+            <span style="text-align:right;font-weight:700;color:var(--rosa-principal);">${formatearMoneda(b.acumulado_anio)}</span>
+          </div>
+        `).join('')}
+        <div class="tabla-lista-fila" style="grid-template-columns:1.6fr 90px 100px 90px 100px 110px;font-weight:700;background:var(--rosa-suave);cursor:default;">
+          <span>TOTAL DEL AÑO</span><span></span><span></span><span></span><span style="text-align:right;">${formatearMoneda(d.total_anio)}</span><span></span>
+        </div>
+      </div>
+    `;
+  }
+
+  function exportarIngresosBimestralesExcel() {
+    if (!cacheIngresosBimestrales) { alert('No hay datos para exportar.'); return; }
+    const d = cacheIngresosBimestrales;
+    const filas = [
+      [`Lana Rosa Crochet — Ingresos brutos bimestrales ${d.anio} (Régimen Simple — Formulario 2593)`],
+      [],
+      ['Bimestre', 'Desde', 'Hasta', 'Tienda', 'WhatsApp/Redes', 'Academy', 'Total bimestre', 'Acumulado año', 'N° ventas'],
+      ...d.bimestres.map(b => [`Bimestre ${b.numero} — ${b.nombre}`, b.desde, b.hasta, b.total_tienda, b.total_whatsapp_redes, b.total_academy, b.total_bimestre, b.acumulado_anio, b.numero_ventas]),
+      [],
+      ['', '', '', '', '', '', 'TOTAL AÑO', d.total_anio],
+    ];
+    const hoja = XLSX.utils.aoa_to_sheet(filas);
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, `Bimestral ${d.anio}`);
+    XLSX.writeFile(libro, `LanaRosa_IngresosBimestrales_RST_${d.anio}.xlsx`);
   }
 
   // ============================================================
