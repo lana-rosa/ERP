@@ -1050,6 +1050,11 @@
         <input type="text" id="clienteCiudad" placeholder="Manizales">
         <div id="mensajeAutocompletado" style="font-size:12px;color:var(--verde-exito);margin-top:6px;display:none;">✅ Cliente encontrado — datos precargados</div>
 
+        <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-weight:400;">
+          <input type="checkbox" id="clienteAceptaTratamientoDatosVenta" style="width:auto;" checked>
+          <span style="font-size:12px;">El cliente autoriza el tratamiento de sus datos (según el aviso visible en el local)</span>
+        </label>
+
         <div id="bloqueEnvioMarketplace" class="oculto" style="margin-top:12px;background:var(--rosa-suave);border-radius:9px;padding:10px 12px;">
           <label for="marketplaceCiudadTarifa" style="margin-top:0;">Ciudad de envío (para la tarifa)</label>
           <select id="marketplaceCiudadTarifa" onchange="calcularEnvioMarketplace()"><option value="">Selecciona...</option></select>
@@ -2503,6 +2508,8 @@
       <input type="text" id="proveedorDirDireccion">
       <label for="proveedorDirCiudad">Ciudad <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
       <input type="text" id="proveedorDirCiudad">
+      <label for="proveedorDirContacto">Persona de contacto <span style="font-size:10px;opacity:0.6;">(opcional — quién te atiende ahí)</span></label>
+      <input type="text" id="proveedorDirContacto" placeholder="Ej: Doña Marta">
       <label for="proveedorDirPlazo">Plazo de pago que te da <span style="font-size:10px;opacity:0.6;">(días, opcional — ej: 30)</span></label>
       <input type="number" id="proveedorDirPlazo" min="0" step="1" placeholder="Ej: 30">
       <button class="btn-principal" onclick="confirmarCrearProveedor()">Agregar proveedor</button>
@@ -3063,8 +3070,14 @@
         <button type="button" class="btn-mini editar" onclick="agregarItemCotizacion()">+ Agregar</button>
       </div>
 
-      <label for="cotDescuento" style="margin-top:10px;">Descuento total <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
-      <input type="number" id="cotDescuento" min="0" step="1000" value="0" oninput="actualizarTotalCotizacion()">
+      <label style="margin-top:10px;">Descuento total <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <select id="cotTipoDescuento" onchange="cambiarTipoDescuentoCotizacion()" style="flex:0 0 90px;">
+          <option value="monto">$ Monto</option>
+          <option value="porcentaje">% Porcentaje</option>
+        </select>
+        <input type="number" id="cotDescuento" min="0" step="1000" value="0" oninput="actualizarTotalCotizacion()" style="flex:1;">
+      </div>
       <div id="totalCotizacion" style="font-size:15px;font-weight:700;color:var(--rosa-principal);margin-top:4px;"></div>
 
       <label for="cotNotas" style="margin-top:10px;">Notas / condiciones <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
@@ -4919,6 +4932,7 @@
     document.getElementById('clienteIdentificacion').value = '';
     document.getElementById('clienteDireccion').value = '';
     document.getElementById('clienteCiudad').value = '';
+      document.getElementById('clienteAceptaTratamientoDatosVenta').checked = true;
     ocultarMensaje('mensajeVenta');
     renderizarCarrito();
     renderizarPagos();
@@ -5568,8 +5582,13 @@
       const clienteIdentificacion = document.getElementById('clienteIdentificacion').value.trim();
       const clienteDireccion = document.getElementById('clienteDireccion').value.trim();
       const clienteCiudad = document.getElementById('clienteCiudad').value.trim();
+      const clienteAceptaDatos = document.getElementById('clienteAceptaTratamientoDatosVenta').checked;
 
-      if (clienteNombre && (clienteTelefono || clienteCorreo)) {
+      if (clienteNombre && (clienteTelefono || clienteCorreo) && !clienteAceptaDatos) {
+        mostrarMensaje('mensajeVenta', 'El cliente no autorizó el tratamiento de sus datos — la venta se registra sin guardar su nombre, teléfono o correo.', 'error');
+      }
+
+      if (clienteNombre && (clienteTelefono || clienteCorreo) && clienteAceptaDatos) {
         const clienteResp = await fetch(WORKER_URL + '/api/pos/clientes', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
@@ -5666,7 +5685,8 @@
         total,
         pagos: filasPago.map(p => ({ metodo_pago: p.metodo_pago, monto: Number(p.monto) })),
         cliente: { nombre: clienteNombre, telefono: clienteTelefono, identificacion: clienteIdentificacion },
-        cajero: miPropiaIdentidad.nombre || 'Cajero'
+        cajero: miPropiaIdentidad.nombre || 'Cajero',
+        puntos_ganados: datos.puntos_ganados || null
       };
       document.getElementById('btnImprimirRecibo').disabled = false;
       document.getElementById('btnWhatsappRecibo').disabled = false;
@@ -5694,6 +5714,7 @@
       document.getElementById('clienteIdentificacion').value = '';
       document.getElementById('clienteDireccion').value = '';
       document.getElementById('clienteCiudad').value = '';
+      document.getElementById('clienteAceptaTratamientoDatosVenta').checked = true;
       document.getElementById('mensajeAutocompletado').style.display = 'none';
       document.getElementById('checkPedidoMarketplace').checked = false;
       document.getElementById('bloqueEnvioMarketplace').classList.add('oculto');
@@ -5784,6 +5805,12 @@
         <div style="font-size:11px;font-weight:700;opacity:0.6;margin-bottom:4px;">FORMA DE PAGO</div>
         ${filasPago}
       </div>
+
+      ${v.puntos_ganados ? `
+        <div style="margin-top:12px;background:#fdf1de;border-radius:8px;padding:8px 10px;text-align:center;font-size:12px;">
+          ⭐ ¡Ganaste <strong>${v.puntos_ganados}</strong> punto(s) de fidelización con esta compra!
+        </div>
+      ` : ''}
 
       <div style="margin-top:16px;font-size:10.5px;color:#888;text-align:center;">
         Recibo de venta — Lana Rosa Crochet no está obligada a expedir factura electrónica (persona natural, ingresos bajo el tope de la DIAN). Este documento sirve como comprobante de pago.
@@ -10342,7 +10369,7 @@
           <span class="fila-inventario-nombre" style="cursor:pointer;" onclick="alternarHistorialProveedor('${p.id}')">${escaparHtml(p.nombre_completo)}</span>
           <button class="btn-mini editar" onclick="event.stopPropagation(); abrirEdicionProveedor('${p.id}')">✏️ Editar</button>
         </div>
-        <div style="font-size:12px;opacity:0.65;">${escaparHtml(p.numero_documento || 'Sin NIT')} · ${escaparHtml(p.telefono || 'Sin teléfono')}</div>
+        <div style="font-size:12px;opacity:0.65;">${escaparHtml(p.numero_documento || 'Sin NIT')} · ${escaparHtml(p.telefono || 'Sin teléfono')}${p.persona_contacto ? ' · 👤 ' + escaparHtml(p.persona_contacto) : ''}</div>
         <div id="edicionProveedor-${p.id}" class="oculto" style="margin-top:8px;padding:10px;background:var(--rosa-suave);border-radius:9px;"></div>
         <div id="historialProveedor-${p.id}" class="oculto" style="margin-top:8px;"></div>
       </div>
@@ -10371,6 +10398,8 @@
       <input type="text" id="editProveedorDireccion-${id}" value="${escaparHtml(p.direccion || '')}">
       <label>Ciudad</label>
       <input type="text" id="editProveedorCiudad-${id}" value="${escaparHtml(p.ciudad || '')}">
+      <label>Persona de contacto</label>
+      <input type="text" id="editProveedorContacto-${id}" value="${escaparHtml(p.persona_contacto || '')}">
       <div style="display:flex;gap:8px;margin-top:10px;">
         <button class="btn-mini guardar" onclick="guardarEdicionProveedor('${id}')">Guardar cambios</button>
         <button class="btn-mini desactivar" onclick="document.getElementById('edicionProveedor-${id}').classList.add('oculto')">Cancelar</button>
@@ -10388,6 +10417,7 @@
       email: document.getElementById(`editProveedorCorreo-${id}`).value.trim() || null,
       direccion: document.getElementById(`editProveedorDireccion-${id}`).value.trim() || null,
       ciudad: document.getElementById(`editProveedorCiudad-${id}`).value.trim() || null,
+      persona_contacto: document.getElementById(`editProveedorContacto-${id}`).value.trim() || null,
     };
     if (!cuerpo.nombre_completo) { mostrarMensaje(`mensajeEditarProveedor-${id}`, 'El nombre no puede quedar vacío.', 'error'); return; }
 
@@ -10429,6 +10459,7 @@
     const correo = document.getElementById('proveedorDirCorreo').value.trim();
     const direccion = document.getElementById('proveedorDirDireccion').value.trim();
     const ciudad = document.getElementById('proveedorDirCiudad').value.trim();
+    const contacto = document.getElementById('proveedorDirContacto').value.trim();
     const plazoPago = document.getElementById('proveedorDirPlazo').value;
     ocultarMensaje('mensajeCrearProveedor');
 
@@ -10437,13 +10468,13 @@
     const resp = await fetch(WORKER_URL + '/api/pos/terceros', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ tipo: 'proveedor', nombre_completo: nombre, tipo_documento: documento ? 'NIT' : null, numero_documento: documento || null, telefono: telefono || null, email: correo || null, direccion: direccion || null, ciudad: ciudad || null, plazo_pago_dias: plazoPago ? Number(plazoPago) : null })
+      body: JSON.stringify({ tipo: 'proveedor', nombre_completo: nombre, tipo_documento: documento ? 'NIT' : null, numero_documento: documento || null, telefono: telefono || null, email: correo || null, direccion: direccion || null, ciudad: ciudad || null, persona_contacto: contacto || null, plazo_pago_dias: plazoPago ? Number(plazoPago) : null })
     });
     const datos = await resp.json();
     if (!resp.ok) { mostrarMensaje('mensajeCrearProveedor', datos.error || 'No se pudo crear.', 'error'); return; }
 
     mostrarMensaje('mensajeCrearProveedor', '✅ Proveedor agregado.', 'exito');
-    ['proveedorDirNombre','proveedorDirDocumento','proveedorDirTelefono','proveedorDirCorreo','proveedorDirDireccion','proveedorDirCiudad','proveedorDirPlazo'].forEach(id => document.getElementById(id).value = '');
+    ['proveedorDirNombre','proveedorDirDocumento','proveedorDirTelefono','proveedorDirCorreo','proveedorDirDireccion','proveedorDirCiudad','proveedorDirContacto','proveedorDirPlazo'].forEach(id => document.getElementById(id).value = '');
     await cargarProveedoresDir();
   }
 
@@ -13361,6 +13392,7 @@
     document.getElementById('cotClienteNombre').value = '';
     document.getElementById('cotClienteTelefono').value = '';
     document.getElementById('cotDescuento').value = '0';
+    document.getElementById('cotTipoDescuento').value = 'monto';
     document.getElementById('cotNotas').value = '';
     const en15dias = new Date(Date.now() + 15 * 86400000);
     document.getElementById('cotFechaVencimiento').value = en15dias.toISOString().slice(0, 10);
@@ -13417,9 +13449,24 @@
     actualizarTotalCotizacion();
   }
 
+  function cambiarTipoDescuentoCotizacion() {
+    const tipo = document.getElementById('cotTipoDescuento').value;
+    const input = document.getElementById('cotDescuento');
+    input.step = tipo === 'porcentaje' ? '1' : '1000';
+    input.max = tipo === 'porcentaje' ? '100' : '';
+    input.value = '0';
+    actualizarTotalCotizacion();
+  }
+
+  function calcularDescuentoCotizacion(subtotal) {
+    const tipo = document.getElementById('cotTipoDescuento').value;
+    const valor = Number(document.getElementById('cotDescuento').value) || 0;
+    return tipo === 'porcentaje' ? Math.round(subtotal * (valor / 100)) : valor;
+  }
+
   function actualizarTotalCotizacion() {
     const subtotal = carritoCotizacion.reduce((a, i) => a + i.cantidad * i.precio_unitario, 0);
-    const descuento = Number(document.getElementById('cotDescuento').value) || 0;
+    const descuento = calcularDescuentoCotizacion(subtotal);
     document.getElementById('totalCotizacion').textContent = `Total: ${formatearMoneda(subtotal - descuento)}`;
   }
 
@@ -13428,7 +13475,9 @@
     const nombreLibre = document.getElementById('cotClienteNombre').value.trim();
     const telefonoLibre = document.getElementById('cotClienteTelefono').value.trim();
     const fechaVencimiento = document.getElementById('cotFechaVencimiento').value;
-    const descuento = Number(document.getElementById('cotDescuento').value) || 0;
+    const subtotalActual = carritoCotizacion.reduce((a, i) => a + i.cantidad * i.precio_unitario, 0);
+    const descuento = calcularDescuentoCotizacion(subtotalActual);
+    const descuentoPorcentaje = document.getElementById('cotTipoDescuento').value === 'porcentaje' ? Number(document.getElementById('cotDescuento').value) || 0 : null;
     const notas = document.getElementById('cotNotas').value.trim();
     ocultarMensaje('mensajeCotizacion');
 
@@ -13442,7 +13491,7 @@
       body: JSON.stringify({
         tercero_id: terceroId || null, cliente_nombre_libre: terceroId ? null : nombreLibre,
         cliente_telefono_libre: terceroId ? null : telefonoLibre, fecha_vencimiento: fechaVencimiento,
-        items: carritoCotizacion, descuento, notas,
+        items: carritoCotizacion, descuento, descuento_porcentaje: descuentoPorcentaje, notas,
       })
     });
     const datos = await resp.json();
@@ -13490,11 +13539,64 @@
             <button class="btn-mini desactivar" onclick="cambiarEstadoCotizacion('${c.id}', 'rechazada')">❌ Rechazada</button>
           ` : ''}
           <button class="btn-mini editar" onclick="enviarCotizacionWhatsApp('${c.id}')">📱 Enviar por WhatsApp</button>
+          <button class="btn-mini editar" onclick="imprimirCotizacion('${c.id}')">🖨️ Imprimir</button>
           ${c.estado === 'aprobada' ? `<button class="btn-mini guardar" onclick="convertirCotizacionEnPedido('${c.id}')">🔄 Convertir en pedido</button>` : ''}
           <button class="btn-mini desactivar" onclick="eliminarCotizacion('${c.id}')">🗑️</button>
         </div>
       </div>
     `).join('');
+  }
+
+  async function imprimirCotizacion(id) {
+    const c = cotizacionesCache.find(x => x.id === id);
+    if (!c) { alert('No se encontró la cotización.'); return; }
+
+    const respEmpresa = await fetch(WORKER_URL + '/api/pos/config-empresa', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    const empresa = respEmpresa.ok ? await respEmpresa.json() : {};
+
+    const nombreCliente = c.tercero ? c.tercero.nombre_completo : (c.cliente_nombre_libre || 'Cliente');
+    const fechaHoy = new Date().toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' });
+    const filasItems = (c.items || []).map(i => `
+      <tr>
+        <td style="padding:6px 0;">${escaparHtml(i.descripcion)}</td>
+        <td style="padding:6px 0;text-align:center;">${i.cantidad}</td>
+        <td style="padding:6px 0;text-align:right;">${formatearMoneda(i.precio_unitario)}</td>
+        <td style="padding:6px 0;text-align:right;">${formatearMoneda(i.cantidad * i.precio_unitario)}</td>
+      </tr>
+    `).join('');
+
+    const ventana = window.open('', '_blank');
+    ventana.document.write(`
+      <html><head><title>Cotización ${escaparHtml(c.consecutivo)}</title><meta charset="utf-8">
+      <style>
+        body{font-family:Arial,sans-serif;padding:30px 40px;max-width:650px;margin:0 auto;color:#222;font-size:13px;}
+        h1{font-size:20px;color:#d8017c;margin-bottom:2px;}
+        table{width:100%;border-collapse:collapse;margin-top:14px;}
+        th{text-align:left;border-bottom:2px solid #d8017c;padding-bottom:6px;font-size:11px;color:#666;}
+        td{border-bottom:1px dashed #eee;}
+        .total-cot{display:flex;justify-content:space-between;font-weight:bold;font-size:16px;border-top:2px solid #d8017c;margin-top:10px;padding-top:10px;}
+        .fila-resumen{display:flex;justify-content:space-between;padding:2px 0;font-size:12.5px;}
+        @media print { button{display:none;} }
+      </style></head>
+      <body>
+        <h1>Cotización ${escaparHtml(c.consecutivo)}</h1>
+        <div style="opacity:0.75;">${escaparHtml(empresa.razon_social || 'Lana Rosa Crochet')}${empresa.nit ? ' — NIT/Cédula ' + escaparHtml(empresa.nit) : ''}</div>
+        <div style="margin-top:14px;"><strong>Cliente:</strong> ${escaparHtml(nombreCliente)}</div>
+        <div><strong>Fecha:</strong> ${fechaHoy} &nbsp;·&nbsp; <strong>Válida hasta:</strong> ${new Date(c.fecha_vencimiento + 'T00:00:00').toLocaleDateString('es-CO')}</div>
+        <table>
+          <tr><th>Producto</th><th style="text-align:center;">Cant.</th><th style="text-align:right;">Precio</th><th style="text-align:right;">Subtotal</th></tr>
+          ${filasItems}
+        </table>
+        <div style="margin-top:10px;">
+          <div class="fila-resumen"><span>Subtotal</span><span>${formatearMoneda(c.subtotal)}</span></div>
+          ${c.descuento > 0 ? `<div class="fila-resumen"><span>Descuento${c.descuento_porcentaje ? ' (' + c.descuento_porcentaje + '%)' : ''}</span><span>-${formatearMoneda(c.descuento)}</span></div>` : ''}
+        </div>
+        <div class="total-cot"><span>TOTAL</span><span>${formatearMoneda(c.total)}</span></div>
+        ${c.notas ? `<div style="margin-top:16px;font-size:12px;"><strong>Notas:</strong> ${escaparHtml(c.notas)}</div>` : ''}
+        <button onclick="window.print()" style="margin-top:24px;width:100%;padding:10px;background:#d8017c;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;">🖨️ Imprimir / guardar como PDF</button>
+      </body></html>
+    `);
+    ventana.document.close();
   }
 
   async function cambiarEstadoCotizacion(id, estado) {
