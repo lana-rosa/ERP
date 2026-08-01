@@ -739,6 +739,31 @@
   .gcal-celda.seleccionada { background: var(--rosa-suave); }
   .gcal-evento-chip { font-size: 10.5px; padding: 2px 6px; border-radius: 4px; color: white; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
   .gcal-mas-eventos { font-size: 10px; color: #70757a; padding: 2px 6px; }
+
+  /* ============================================================
+     IMPRESIÓN (Ctrl+P) DE PANTALLAS INTERNAS — Estado de Resultados,
+     Libro Diario, Cartera, y cualquier reporte que se vea DENTRO de la
+     app (a diferencia de recibos/certificados, que se abren en una
+     ventana aparte y ya imprimen limpios). Sin esto, el menú lateral,
+     la barra de búsqueda y los botones flotantes salían en el papel.
+     ============================================================ */
+  @media print {
+    #sidebar, .topbar-movil, #barraBusquedaGlobal, #btnCrearRapido,
+    #btnAbrirAsistenteIA, #menuCrearRapido, #modalPoliticaDatos,
+    .nav-btn, #indicadorVentasOffline {
+      display: none !important;
+    }
+    #main, #main.con-sidebar {
+      margin-left: 0 !important;
+      height: auto !important;
+      overflow: visible !important;
+    }
+    body { overflow: visible !important; }
+    .tabla-lista-fila, .tabla-lista-header, .resumen-fila {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+  }
 </style>
 </head>
 <body>
@@ -5769,7 +5794,7 @@
     return `
       <html><head><title>Recibo de venta ${v.consecutivo}</title>
       <style>
-        body{font-family:Arial,sans-serif;padding:24px;max-width:420px;margin:0 auto;color:#222;font-size:13px;}
+        body{font-family:'Courier New',monospace;padding:24px;max-width:420px;margin:0 auto;color:#222;font-size:13px;}
         h1{font-size:16px;color:#d8017c;margin-bottom:2px;}
         table{width:100%;border-collapse:collapse;margin-top:10px;font-size:12.5px;}
         th{text-align:left;border-bottom:1px solid #ccc;padding-bottom:4px;font-size:11px;color:#666;}
@@ -5777,9 +5802,26 @@
         .resumen-fila-recibo{display:flex;justify-content:space-between;padding:3px 0;}
         .total-recibo{display:flex;justify-content:space-between;font-weight:bold;font-size:15px;border-top:2px solid #d8017c;margin-top:8px;padding-top:8px;}
         .encabezado-recibo{text-align:center;border-bottom:2px dashed #d8017c;padding-bottom:10px;margin-bottom:10px;}
-        @media print { button{display:none;} }
+        .selector-formato{display:flex;gap:6px;margin-bottom:14px;justify-content:center;}
+        .selector-formato button{font-size:11px;padding:5px 10px;border-radius:6px;border:1px solid #ddd;background:#fafafa;cursor:pointer;}
+        .selector-formato button.activo{background:#d8017c;color:white;border-color:#d8017c;}
+        @media print { button, .selector-formato{display:none;} }
+        /* Formato tirilla real: se activa con la clase .modo-tirilla en <body>,
+           para cuando se imprime en una impresora térmica de 58mm/80mm
+           instalada como impresora normal del sistema operativo. */
+        body.modo-tirilla { max-width: 76mm; padding: 4mm; font-size: 11px; }
+        body.modo-tirilla h1 { font-size: 13px; }
+        body.modo-tirilla table { font-size: 10.5px; }
+        @media print {
+          body.modo-tirilla { max-width: none; }
+          @page { margin: 2mm; }
+        }
       </style></head>
       <body>
+        <div class="selector-formato">
+          <button class="activo" id="btnFormatoNormal" onclick="document.body.classList.remove('modo-tirilla'); document.getElementById('btnFormatoNormal').classList.add('activo'); document.getElementById('btnFormatoTirilla').classList.remove('activo');">📄 Hoja normal / PDF</button>
+          <button id="btnFormatoTirilla" onclick="document.body.classList.add('modo-tirilla'); document.getElementById('btnFormatoTirilla').classList.add('activo'); document.getElementById('btnFormatoNormal').classList.remove('activo');">🧾 Tirilla térmica (80mm)</button>
+        </div>
         ${generarContenidoReciboVenta(v)}
         <button onclick="window.print()" style="margin-top:16px;width:100%;padding:10px;background:#d8017c;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;">🖨️ Imprimir / guardar como PDF</button>
       </body></html>
