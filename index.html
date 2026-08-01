@@ -2290,6 +2290,13 @@
     </div>
 
     <div class="panel" style="max-height:none;margin-top:20px;">
+      <h2>📦 Paquete de evidencias para el SENA</h2>
+      <div class="subtitulo">Junta en un solo documento imprimible: el reporte PILA, el certificado laboral de cada empleada activa, y el listado de documentos que tienes archivados de cada una — listo para una visita de interventoría, sin ir a 3 pantallas distintas.</div>
+      <button class="btn-principal" onclick="generarPaqueteEvidenciasSena()">📦 Generar paquete (del período seleccionado arriba)</button>
+      <div class="mensaje" id="mensajePaqueteSena"></div>
+    </div>
+
+    <div class="panel" style="max-height:none;margin-top:20px;">
       <h2>📊 Consolidado total de nómina</h2>
       <div class="subtitulo">Suma de todas las liquidaciones hechas, con la opción de filtrar por año y exportar a Excel.</div>
       <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px;">
@@ -18332,6 +18339,109 @@
   // ============================================================
   // REPORTE PILA (para pagar en SOI u otro operador)
   // ============================================================
+  async function generarPaqueteEvidenciasSena() {
+    ocultarMensaje('mensajePaqueteSena');
+    if (!periodoNominaSeleccionadoId) {
+      mostrarMensaje('mensajePaqueteSena', 'Primero selecciona un período ya liquidado en la pestaña "Períodos y liquidación".', 'error');
+      return;
+    }
+
+    const resp = await fetch(`${WORKER_URL}/api/pos/nomina/paquete-evidencias-sena?periodo_nomina_id=${periodoNominaSeleccionadoId}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    const d = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajePaqueteSena', d.error || 'No se pudo generar el paquete.', 'error'); return; }
+
+    const respEmpresa = await fetch(WORKER_URL + '/api/pos/config-empresa', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    const empresa = respEmpresa.ok ? await respEmpresa.json() : {};
+
+    const etiquetasContrato = { indefinido: 'a término indefinido', fijo: 'a término fijo', obra_labor: 'por obra o labor', aprendizaje: 'de aprendizaje' };
+    const fechaGeneracion = new Date().toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' });
+    const periodoTexto = d.periodo ? `${new Date(d.periodo.fecha_inicio + 'T00:00:00').toLocaleDateString('es-CO')} — ${new Date(d.periodo.fecha_fin + 'T00:00:00').toLocaleDateString('es-CO')}` : '';
+
+    const ventana = window.open('', '_blank');
+    ventana.document.write(`
+      <html>
+      <head>
+        <title>Paquete de evidencias SENA — ${escaparHtml(periodoTexto)}</title>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: Arial, Helvetica, sans-serif; padding: 40px 50px; color: #2d2d2d; max-width: 900px; margin: 0 auto; line-height: 1.6; font-size: 13px; }
+          h1 { color: #d8017c; font-size: 22px; margin-bottom: 4px; }
+          h2 { color: #d8017c; font-size: 16px; margin-top: 36px; border-bottom: 2px solid #f9ddf4; padding-bottom: 6px; }
+          .subt { color: #666; font-size: 12px; margin-bottom: 20px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11.5px; }
+          th, td { border: 1px solid #ddd; padding: 6px 8px; text-align: left; }
+          th { background: #f9ddf4; }
+          .totales-row { font-weight: bold; background: #fafafa; }
+          .certificado-pagina { page-break-before: always; padding-top: 30px; }
+          .certificado-pagina p { text-align: justify; margin-bottom: 14px; }
+          .doc-lista { font-size: 12px; margin-top: 6px; }
+          .doc-lista li { margin-bottom: 3px; }
+          .sin-docs { color: #b0402f; font-size: 11.5px; }
+          @media print { .certificado-pagina { page-break-before: always; } }
+        </style>
+      </head>
+      <body>
+        <h1>📦 Paquete de evidencias — Fondo Emprender / SENA</h1>
+        <div class="subt">${escaparHtml(empresa.razon_social || 'Lana Rosa Crochet')} — NIT/Cédula ${escaparHtml(empresa.nit || '')} · Período: ${periodoTexto} · Generado el ${fechaGeneracion}</div>
+
+        <h2>1. Reporte PILA — aportes a seguridad social</h2>
+        <table>
+          <tr><th>Empleado</th><th>Documento</th><th>IBC</th><th>EPS</th><th>Pensión</th><th>ARL</th><th>Salud (total)</th><th>Pensión (total)</th></tr>
+          ${d.pila.detalle.map(e => `
+            <tr>
+              <td>${escaparHtml(e.nombre_completo)}</td>
+              <td>${escaparHtml(e.numero_documento || '—')}</td>
+              <td>${formatearMoneda(e.ibc)}</td>
+              <td>${escaparHtml(e.eps || '—')}</td>
+              <td>${escaparHtml(e.fondo_pension || '—')}</td>
+              <td>${escaparHtml(e.arl_entidad || '—')}</td>
+              <td>${formatearMoneda(e.aporte_salud_empleado + e.aporte_salud_empleador)}</td>
+              <td>${formatearMoneda(e.aporte_pension_empleado + e.aporte_pension_empleador)}</td>
+            </tr>
+          `).join('')}
+          <tr class="totales-row">
+            <td colspan="2">TOTALES</td>
+            <td>${formatearMoneda(d.pila.totales.total_ibc)}</td>
+            <td colspan="2"></td>
+            <td>ARL: ${formatearMoneda(d.pila.totales.total_arl)}</td>
+            <td>${formatearMoneda(d.pila.totales.total_salud)}</td>
+            <td>${formatearMoneda(d.pila.totales.total_pension)}</td>
+          </tr>
+        </table>
+
+        <h2>2. Documentos archivados por empleado</h2>
+        ${d.certificados.map(e => {
+          const docs = d.documentos_por_empleado[e.id] || [];
+          return `
+            <p style="margin-top:14px;"><strong>${escaparHtml(e.nombre_completo)}</strong></p>
+            ${docs.length === 0
+              ? '<div class="sin-docs">⚠️ Sin documentos archivados en el sistema todavía.</div>'
+              : `<ul class="doc-lista">${docs.map(doc => `<li>${escaparHtml(doc.tipo_documento)} — ${escaparHtml(doc.nombre_archivo)} (subido el ${new Date(doc.created_at).toLocaleDateString('es-CO')})</li>`).join('')}</ul>`
+            }
+          `;
+        }).join('')}
+
+        <h2 style="page-break-before:always;">3. Certificados laborales</h2>
+        ${d.certificados.map(e => `
+          <div class="certificado-pagina">
+            <h1 style="font-size:18px;text-align:center;">CERTIFICADO LABORAL</h1>
+            <div class="subt" style="text-align:center;">${escaparHtml(empresa.razon_social || '')} — NIT/Cédula ${escaparHtml(empresa.nit || '')}</div>
+            <p>${escaparHtml(empresa.razon_social || 'La empresa')} hace constar que:</p>
+            <p><strong>${escaparHtml(e.nombre_completo)}</strong>, identificado(a) con ${escaparHtml(e.tipo_documento || 'CC')} N° <strong>${escaparHtml(e.numero_documento || 'no registrado')}</strong>,
+            labora en esta empresa desde el <strong>${new Date(e.fecha_ingreso + 'T00:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })}</strong>,
+            mediante contrato de trabajo ${etiquetasContrato[e.tipo_contrato] || e.tipo_contrato}, en el área de <strong>${escaparHtml(e.departamento)}</strong>,
+            con un salario mensual de <strong>${formatearMoneda(e.salario_basico)}</strong>.</p>
+            <p>Este certificado se expide para los fines que estime convenientes.</p>
+            <p style="margin-top:40px;">${fechaGeneracion}</p>
+          </div>
+        `).join('')}
+      </body>
+      </html>
+    `);
+    ventana.document.close();
+    mostrarMensaje('mensajePaqueteSena', '✅ Paquete generado en una nueva pestaña — puedes imprimirlo o guardarlo como PDF desde ahí.', 'exito');
+  }
+
   async function cargarReportePila(periodoId) {
     const contenedor = document.getElementById('listaReportePila');
     contenedor.innerHTML = '<div class="cargando">Cargando reporte...</div>';
