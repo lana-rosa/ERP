@@ -1672,11 +1672,11 @@
     <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
       <div>
         <label for="fechaDesdeHistorial" style="font-size:11px;">Desde</label>
-        <input type="date" id="fechaDesdeHistorial" onchange="cargarHistorialVentas()" style="padding:9px 10px;">
+        <input type="date" id="fechaDesdeHistorial" onchange="limiteHistorialVentas = 100; cargarHistorialVentas();" style="padding:9px 10px;">
       </div>
       <div>
         <label for="fechaHastaHistorial" style="font-size:11px;">Hasta</label>
-        <input type="date" id="fechaHastaHistorial" onchange="cargarHistorialVentas()" style="padding:9px 10px;">
+        <input type="date" id="fechaHastaHistorial" onchange="limiteHistorialVentas = 100; cargarHistorialVentas();" style="padding:9px 10px;">
       </div>
       <button class="btn-mini desactivar" onclick="limpiarFechasHistorial()" style="margin-bottom:1px;">Quitar filtro de fecha</button>
     </div>
@@ -6790,6 +6790,7 @@
 
   let centrosCostoHistorialCache = [];
   let filtroDeptoHistorialActual = null;
+  let limiteHistorialVentas = 100;
 
   function cambiarCanalHistorial(canal, botonEl) {
     document.querySelectorAll('[data-canal-historial]').forEach(b => b.classList.remove('activo'));
@@ -6858,6 +6859,7 @@
 
   async function mostrarPantallaHistorial(codigoDeptoForzado) {
     mostrarPantalla('pantallaHistorial');
+    limiteHistorialVentas = 100;
     document.querySelectorAll('[data-canal-historial]').forEach(b => b.classList.remove('activo'));
     document.querySelector('[data-canal-historial="tienda"]').classList.add('activo');
     document.getElementById('subhistorialTienda').classList.remove('oculto');
@@ -6908,6 +6910,7 @@
   let timeoutBusquedaHistorial = null;
   function debounceBusquedaHistorial() {
     clearTimeout(timeoutBusquedaHistorial);
+    limiteHistorialVentas = 100;
     timeoutBusquedaHistorial = setTimeout(() => cargarHistorialVentas(), 400);
   }
 
@@ -6935,6 +6938,7 @@
     if (fechaDesde) query = query.gte('fecha', fechaDesde + 'T00:00:00');
     if (fechaHasta) query = query.lte('fecha', fechaHasta + 'T23:59:59');
 
+    let limiteConsulta;
     if (termino) {
       // Buscando: no se limita a las últimas ventas — se busca en todo el
       // historial del departamento por consecutivo del recibo o cliente.
@@ -6949,12 +6953,13 @@
       } else {
         query = query.ilike('consecutivo', `%${termino}%`);
       }
-      query = query.limit(200);
+      limiteConsulta = Math.max(limiteHistorialVentas, 200);
     } else if (fechaDesde || fechaHasta) {
-      query = query.limit(500);
+      limiteConsulta = Math.max(limiteHistorialVentas, 500);
     } else {
-      query = query.limit(100);
+      limiteConsulta = limiteHistorialVentas;
     }
+    query = query.limit(limiteConsulta);
 
     const { data: ventas, error } = await query;
 
@@ -7027,6 +7032,19 @@
     } else {
       renderizarHistorialPorTurno(ventas, detalles, pagos, tercerosPorId, cajerosPorId, turnosPorId, etiquetasPago);
     }
+
+    // Si se llegó justo al límite pedido, probablemente haya más historial
+    // atrás — se ofrece cargar más en vez de dejarlo invisible en silencio.
+    if (ventas.length >= limiteConsulta) {
+      contenedor.insertAdjacentHTML('beforeend', `
+        <button class="btn-secundario" style="margin-top:12px;" onclick="cargarMasHistorialVentas()">⬇️ Cargar ventas más antiguas</button>
+      `);
+    }
+  }
+
+  function cargarMasHistorialVentas() {
+    limiteHistorialVentas += 100;
+    cargarHistorialVentas();
   }
 
   function renderizarFilaVentaHistorial(venta, detalles, pagos, tercerosPorId, etiquetasPago) {
@@ -14982,6 +15000,7 @@
           <span style="text-align:right;">${formatearMoneda(d.total_credito)}</span>
         </div>
       </div>
+      ${d.limite_alcanzado ? '<div style="margin-top:10px;padding:10px 14px;background:#fdf1de;border-radius:8px;font-size:12.5px;color:var(--ambar);">⚠️ Este rango de fechas tiene muchos movimientos — se muestran los primeros 3.000. Si necesitas verlos todos, acota el rango de fechas a un período más corto.</div>' : ''}
     `;
   }
 
@@ -15129,12 +15148,21 @@
     if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
     const d = await resp.json();
 
-    if (!d.movimientos || d.movimientos.length === 0) { cont.innerHTML = '<div class="cargando">Sin movimientos en este período.</div>'; return; }
+    if (!d.movimientos || d.movimientos.length === 0) {
+      cont.innerHTML = Number(d.saldo_inicial) !== 0
+        ? `<div class="cargando">Sin movimientos nuevos en este período — el saldo que traía de antes era ${formatearMoneda(d.saldo_inicial)}.</div>`
+        : '<div class="cargando">Sin movimientos en este período.</div>';
+      return;
+    }
 
     cont.innerHTML = `
       <div class="tabla-lista">
         <div class="tabla-lista-header" style="grid-template-columns:80px 1fr 90px 90px 100px;">
           <span>FECHA</span><span>CONCEPTO</span><span style="text-align:right;">DÉBITO</span><span style="text-align:right;">CRÉDITO</span><span style="text-align:right;">SALDO</span>
+        </div>
+        <div class="tabla-lista-fila" style="grid-template-columns:80px 1fr 90px 90px 100px;cursor:default;opacity:0.7;">
+          <span colspan="4" style="grid-column:span 4;">Saldo que traía antes de este período</span>
+          <span style="text-align:right;font-weight:700;">${formatearMoneda(d.saldo_inicial)}</span>
         </div>
         ${d.movimientos.map(m => `
           <div class="tabla-lista-fila" style="grid-template-columns:80px 1fr 90px 90px 100px;cursor:default;">
