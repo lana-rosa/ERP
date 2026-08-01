@@ -5418,13 +5418,14 @@
   // ============================================================================
   // CONFIRMAR VENTA
   // ============================================================================
-  async function confirmarVenta() {
-    if (escanerModoContinuo) cerrarEscanerCodigoBarras();
-    ocultarMensaje('mensajeVenta');
-
+  // Valida todo lo necesario ANTES de intentar registrar la venta — separado
+  // del envío en sí, para que cada función tenga una sola responsabilidad.
+  // Devuelve true si todo está en orden, o false si ya mostró un mensaje de
+  // error y la venta no debe continuar.
+  async function validarAntesDeConfirmarVenta() {
     if (carrito.length === 0) {
       mostrarMensaje('mensajeVenta', 'Agrega al menos un producto antes de confirmar.', 'error');
-      return;
+      return false;
     }
 
     const esPedidoMarketplace = document.getElementById('checkPedidoMarketplace').checked;
@@ -5434,7 +5435,7 @@
       const direccionOk = document.getElementById('clienteDireccion').value.trim();
       if (!nombreOk || !telefonoOk || !direccionOk) {
         mostrarMensaje('mensajeVenta', 'Para un pedido de Marketplace, el nombre, teléfono y dirección del cliente son obligatorios (se necesitan para el envío).', 'error');
-        return;
+        return false;
       }
     }
 
@@ -5444,7 +5445,7 @@
       const identOk = document.getElementById('clienteIdentificacion').value.trim();
       if (!nombreOk || !identOk) {
         mostrarMensaje('mensajeVenta', 'Para dar crédito directo, escribe al menos el nombre y la cédula/NIT del cliente en "Datos del cliente" — así queda la cuenta por cobrar bien enlazada a esa persona.', 'error');
-        return;
+        return false;
       }
     }
 
@@ -5453,13 +5454,13 @@
 
     if (Math.abs(total - sumaPagos) >= 1) {
       mostrarMensaje('mensajeVenta', 'La suma de los pagos debe coincidir exactamente con el total de la venta.', 'error');
-      return;
+      return false;
     }
 
     for (const pago of filasPago) {
       if (!Number(pago.monto) || Number(pago.monto) <= 0) {
         mostrarMensaje('mensajeVenta', 'Cada método de pago debe tener un monto mayor a cero, o elimínalo.', 'error');
-        return;
+        return false;
       }
     }
 
@@ -5475,7 +5476,7 @@
         const codigo = prompt('⚠️ Esta venta parece ser para ti mismo/a. Por seguridad, un cajero no puede venderse a sí mismo sin autorización.\n\nPídele a Sara (o a quien ella autorice) que ingrese su código de autorización para continuar:');
         if (!codigo) {
           mostrarMensaje('mensajeVenta', 'Venta cancelada: se necesita autorización de un supervisor.', 'error');
-          return;
+          return false;
         }
         const respVerif = await fetch(WORKER_URL + '/api/pos/autorizaciones/verificar', {
           method: 'POST',
@@ -5485,10 +5486,22 @@
         const datosVerif = await respVerif.json();
         if (!datosVerif.valido) {
           mostrarMensaje('mensajeVenta', 'Código de autorización inválido. La venta no se registró.', 'error');
-          return;
+          return false;
         }
       }
     }
+
+    return true;
+  }
+
+  async function confirmarVenta() {
+    if (escanerModoContinuo) cerrarEscanerCodigoBarras();
+    ocultarMensaje('mensajeVenta');
+
+    if (!(await validarAntesDeConfirmarVenta())) return;
+
+    const esPedidoMarketplace = document.getElementById('checkPedidoMarketplace').checked;
+    const total = calcularTotalCarrito();
 
     const btn = document.getElementById('btnConfirmarVenta');
     btn.disabled = true;
