@@ -3444,16 +3444,35 @@
 
 <div id="pantallaCopiaSeguridad" class="oculto contenido">
   <div class="page-header">
-    <h1>💾 Copia de seguridad</h1>
-    <div class="subtitulo">Descarga una copia completa de los datos del negocio en un archivo de Excel, con una pestaña por cada tipo de información.</div>
+    <h1>💾 Copia de seguridad y restauración</h1>
+    <div class="subtitulo">Respalda toda la información del negocio (88 tablas — ventas, contabilidad, nómina, inventario, Fondo Emprender y más), y restáurala si algo se borra por accidente.</div>
   </div>
-  <div class="panel" style="max-width:480px;">
-    <div style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;font-size:12.5px;">
-      ℹ️ Incluye: ventas de Tienda, pedidos de WhatsApp/Redes, ventas de Cursos/clases, inventario, clientes y proveedores, empleados, compras/gastos, turnos de caja, devoluciones y transferencias de stock.
+
+  <div class="grilla-2">
+    <div class="panel">
+      <h2>📥 Descargar respaldo</h2>
+      <div style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;font-size:12.5px;">
+        ℹ️ El archivo <strong>.json</strong> es el que realmente sirve para restaurar — guárdalo tal cual, sin abrirlo ni editarlo. El <strong>.xlsx</strong> es solo para que tú lo revises cómodamente, no se puede usar para restaurar.
+      </div>
+      <button class="btn-principal" id="btnExportarDatosJson" onclick="confirmarExportarDatosJson()" style="margin-top:14px;">💾 Descargar respaldo para restaurar (.json)</button>
+      <button class="btn-secundario" id="btnExportarDatos" onclick="confirmarExportarDatos()">📊 Descargar para revisar (.xlsx)</button>
+      <div class="mensaje" id="mensajeExportarDatos"></div>
+      <div style="font-size:11px;opacity:0.55;margin-top:10px;">Guarda el archivo .json en un lugar seguro (Google Drive, correo, USB) — es tu respaldo real por si necesitas recuperar información.</div>
     </div>
-    <button class="btn-principal" id="btnExportarDatos" onclick="confirmarExportarDatos()" style="margin-top:14px;">📥 Descargar copia completa (.xlsx)</button>
-    <div class="mensaje" id="mensajeExportarDatos"></div>
-    <div style="font-size:11px;opacity:0.55;margin-top:10px;">Guarda este archivo en un lugar seguro (Google Drive, correo, USB) — es tu respaldo por si algún día necesitas recuperar información.</div>
+
+    <div class="panel">
+      <h2>🔄 Restaurar desde un respaldo</h2>
+      <div style="background:#fdecea;border-radius:9px;padding:10px 14px;font-size:12.5px;">
+        ⚠️ Esto es para cuando algo se borró por accidente en <strong>este mismo sistema</strong> — no sirve para recrear todo en un proyecto nuevo (eso depende de las copias de seguridad propias de Supabase). No borra nada que ya exista; solo trae de vuelta lo que falte.
+      </div>
+      <label for="inputArchivoRestaurar" style="margin-top:14px;">Selecciona el archivo .json del respaldo</label>
+      <input type="file" id="inputArchivoRestaurar" accept="application/json">
+      <label for="confirmacionRestaurarTexto" style="margin-top:10px;">Para confirmar, escribe exactamente: <strong>RESTAURAR DATOS</strong></label>
+      <input type="text" id="confirmacionRestaurarTexto" placeholder="RESTAURAR DATOS">
+      <button class="btn-principal" id="btnRestaurarDatos" onclick="confirmarRestaurarDatos()" style="margin-top:10px;">🔄 Restaurar datos</button>
+      <div class="mensaje" id="mensajeRestaurarDatos"></div>
+      <div id="resultadoRestauracion" style="margin-top:10px;font-size:11.5px;max-height:200px;overflow-y:auto;"></div>
+    </div>
   </div>
 </div>
 
@@ -4013,7 +4032,8 @@
     if (!el) return;
     if (cantidad > 0) {
       el.classList.remove('oculto');
-      el.textContent = `📴 ${cantidad} venta(s) sin sincronizar`;
+      el.textContent = `📴 ${cantidad} venta(s) sin guardar en el servidor — no cierres el navegador ni borres su historial hasta que desaparezca este aviso`;
+      el.title = 'Estas ventas están guardadas solo en este navegador mientras no haya internet. Si limpias los datos de navegación o cambias de computador antes de que se sincronicen, se pierden. Toca aquí para intentar sincronizar ahora.';
     } else {
       el.classList.add('oculto');
     }
@@ -15301,6 +15321,38 @@
   async function mostrarPantallaCopiaSeguridad() {
     mostrarPantalla('pantallaCopiaSeguridad');
     ocultarMensaje('mensajeExportarDatos');
+    ocultarMensaje('mensajeRestaurarDatos');
+    document.getElementById('confirmacionRestaurarTexto').value = '';
+    document.getElementById('inputArchivoRestaurar').value = '';
+    document.getElementById('resultadoRestauracion').innerHTML = '';
+  }
+
+  async function confirmarExportarDatosJson() {
+    const btn = document.getElementById('btnExportarDatosJson');
+    btn.disabled = true;
+    btn.textContent = 'Generando respaldo...';
+    ocultarMensaje('mensajeExportarDatos');
+
+    try {
+      const resp = await fetch(WORKER_URL + '/api/pos/admin/exportar-datos', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+      if (!resp.ok) throw new Error('No se pudo generar el respaldo.');
+      const datos = await resp.json();
+
+      const blob = new Blob([JSON.stringify(datos)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `LanaRosa_Respaldo_${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      mostrarMensaje('mensajeExportarDatos', `✅ Respaldo descargado (${datos.tablas_incluidas.length} tablas). Guárdalo en un lugar seguro.`, 'exito');
+    } catch (err) {
+      mostrarMensaje('mensajeExportarDatos', err.message || 'No se pudo generar el respaldo.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '💾 Descargar respaldo para restaurar (.json)';
+    }
   }
 
   async function confirmarExportarDatos() {
@@ -15312,7 +15364,8 @@
     try {
       const resp = await fetch(WORKER_URL + '/api/pos/admin/exportar-datos', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
       if (!resp.ok) throw new Error('No se pudo generar la copia.');
-      const datos = await resp.json();
+      const respuesta = await resp.json();
+      const datos = respuesta.datos || {};
 
       const libro = XLSX.utils.book_new();
       const hojas = {
@@ -15328,6 +15381,10 @@
         'Reportes de Turno': datos.reportes_turno,
         'Devoluciones': datos.devoluciones_venta,
         'Transferencias Stock': datos.transferencias_stock,
+        'Libro Diario': datos.asientos_diarios,
+        'Apuntes Contables': datos.apuntes_contables,
+        'Cartera CxC-CxP': datos.cuentas_por_cobrar_pagar,
+        'Nómina': datos.liquidaciones_nomina,
       };
 
       for (const [nombreHoja, filas] of Object.entries(hojas)) {
@@ -15336,13 +15393,58 @@
       }
 
       const fecha = new Date().toISOString().slice(0, 10);
-      XLSX.writeFile(libro, `LanaRosa_CopiaSeguridad_${fecha}.xlsx`);
-      mostrarMensaje('mensajeExportarDatos', '✅ Archivo descargado correctamente.', 'exito');
+      XLSX.writeFile(libro, `LanaRosa_ParaRevisar_${fecha}.xlsx`);
+      mostrarMensaje('mensajeExportarDatos', '✅ Archivo descargado — recuerda que este .xlsx es solo para revisar, no para restaurar.', 'exito');
     } catch (err) {
       mostrarMensaje('mensajeExportarDatos', err.message || 'No se pudo generar la copia.', 'error');
     } finally {
       btn.disabled = false;
-      btn.textContent = '📥 Descargar copia completa (.xlsx)';
+      btn.textContent = '📊 Descargar para revisar (.xlsx)';
+    }
+  }
+
+  async function confirmarRestaurarDatos() {
+    const archivo = document.getElementById('inputArchivoRestaurar').files[0];
+    const confirmacion = document.getElementById('confirmacionRestaurarTexto').value.trim();
+    ocultarMensaje('mensajeRestaurarDatos');
+    document.getElementById('resultadoRestauracion').innerHTML = '';
+
+    if (!archivo) { mostrarMensaje('mensajeRestaurarDatos', 'Selecciona el archivo .json del respaldo.', 'error'); return; }
+    if (confirmacion !== 'RESTAURAR DATOS') { mostrarMensaje('mensajeRestaurarDatos', 'Escribe exactamente: RESTAURAR DATOS', 'error'); return; }
+    if (!confirm('¿Confirmas que quieres restaurar este respaldo? Esto trae de vuelta lo que falte, sin borrar lo que ya existe.')) return;
+
+    const btn = document.getElementById('btnRestaurarDatos');
+    btn.disabled = true;
+    btn.textContent = 'Restaurando (puede tardar unos minutos)...';
+
+    try {
+      const texto = await archivo.text();
+      const contenido = JSON.parse(texto);
+      if (!contenido.datos) throw new Error('Este archivo no parece ser un respaldo válido de Lana Rosa OS (falta el campo "datos").');
+
+      const resp = await fetch(WORKER_URL + '/api/pos/admin/restaurar-datos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+        body: JSON.stringify({ datos: contenido.datos, confirmacion })
+      });
+      const resultado = await resp.json();
+      if (!resp.ok) throw new Error(resultado.error || 'No se pudo restaurar.');
+
+      const filasConDatos = Object.entries(resultado.resultados).filter(([, r]) => r.restauradas > 0 || r.error);
+      document.getElementById('resultadoRestauracion').innerHTML = filasConDatos.length === 0
+        ? '<div style="opacity:0.6;">No había nada que restaurar (todo coincidía con lo que ya existía).</div>'
+        : filasConDatos.map(([tabla, r]) => `
+            <div style="padding:4px 0;border-bottom:1px solid #f4eef2;">
+              ${r.error ? '⚠️ ' : '✅ '}<strong>${tabla}</strong>: ${r.error ? 'error — ' + r.error : r.restauradas + ' fila(s)'}
+            </div>
+          `).join('');
+
+      mostrarMensaje('mensajeRestaurarDatos', '✅ Restauración completada. Revisa el detalle abajo.', 'exito');
+    } catch (err) {
+      mostrarMensaje('mensajeRestaurarDatos', err.message || 'No se pudo restaurar el archivo.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🔄 Restaurar datos';
     }
   }
 
