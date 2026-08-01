@@ -2165,6 +2165,18 @@
           <option value="IV">Clase IV — Riesgo alto</option>
           <option value="V">Clase V — Riesgo máximo</option>
         </select>
+        <label for="empHorasSemana">Horas de trabajo por semana <span style="font-size:10px;opacity:0.6;">(para calcular sus horas extras)</span></label>
+        <input type="number" id="empHorasSemana" min="1" max="48" step="1" value="46" placeholder="46">
+
+        <label style="display:flex;align-items:center;gap:8px;margin-top:12px;">
+          <input type="checkbox" id="empAplicaRetencion" style="width:auto;" onchange="document.getElementById('bloqueDeduccionesUvt').classList.toggle('oculto', !this.checked)">
+          <span style="font-size:13px;">Se le practica retención en la fuente por salarios</span>
+        </label>
+        <div id="bloqueDeduccionesUvt" class="oculto">
+          <label for="empDeduccionesUvt">Deducciones adicionales en UVT <span style="font-size:10px;opacity:0.6;">(dependientes, AFC, pensión voluntaria — opcional)</span></label>
+          <input type="number" id="empDeduccionesUvt" min="0" step="0.1" value="0" placeholder="0">
+        </div>
+
         <label style="display:flex;align-items:center;gap:8px;margin-top:12px;">
           <input type="checkbox" id="empTeletrabajo" style="width:auto;">
           <span style="font-size:13px;">Trabaja en teletrabajo (no recibe auxilio de transporte)</span>
@@ -11660,6 +11672,10 @@
     document.getElementById('empFechaIngreso').value = '';
     document.getElementById('empTeletrabajo').checked = false;
     document.getElementById('empEsPropietario').checked = false;
+    document.getElementById('empHorasSemana').value = '46';
+    document.getElementById('empAplicaRetencion').checked = false;
+    document.getElementById('empDeduccionesUvt').value = '0';
+    document.getElementById('bloqueDeduccionesUvt').classList.add('oculto');
     document.getElementById('empDireccion').value = '';
     document.getElementById('empTelefono').value = '';
     document.getElementById('empCorreo').value = '';
@@ -11808,6 +11824,9 @@
     const fondoPension = document.getElementById('empFondoPension').value.trim();
     const fondoCesantias = document.getElementById('empFondoCesantias').value.trim();
     const arlEntidad = document.getElementById('empArlEntidad').value.trim();
+    const horasSemana = Number(document.getElementById('empHorasSemana').value) || 46;
+    const aplicaRetencion = document.getElementById('empAplicaRetencion').checked;
+    const deduccionesUvt = Number(document.getElementById('empDeduccionesUvt').value) || 0;
     ocultarMensaje('mensajeEmpleado');
 
     if (!nombre) { mostrarMensaje('mensajeEmpleado', 'Escribe el nombre del empleado.', 'error'); return; }
@@ -11832,6 +11851,9 @@
         clase_riesgo_arl: riesgoArl,
         teletrabajo,
         es_propietario: esPropietario,
+        horas_semana: horasSemana,
+        aplica_retencion_fuente: aplicaRetencion,
+        deducciones_adicionales_uvt: deduccionesUvt,
         direccion: direccion || null,
         telefono: telefono || null,
         correo_electronico: correoElectronico || null,
@@ -11856,6 +11878,10 @@
     document.getElementById('empFechaIngreso').value = '';
     document.getElementById('empTeletrabajo').checked = false;
     document.getElementById('empEsPropietario').checked = false;
+    document.getElementById('empHorasSemana').value = '46';
+    document.getElementById('empAplicaRetencion').checked = false;
+    document.getElementById('empDeduccionesUvt').value = '0';
+    document.getElementById('bloqueDeduccionesUvt').classList.add('oculto');
     document.getElementById('empDireccion').value = '';
     document.getElementById('empTelefono').value = '';
     document.getElementById('empCorreo').value = '';
@@ -11937,6 +11963,14 @@
             <select id="edit-emp-depto-${e.id}">${opcionesDepto}</select>
             <label style="margin-top:8px;">Clase de riesgo ARL</label>
             <select id="edit-emp-arl-${e.id}">${opcionesArl}</select>
+            <label style="margin-top:8px;">Horas de trabajo por semana</label>
+            <input type="number" id="edit-emp-horassemana-${e.id}" min="1" max="48" step="1" value="${e.horas_semana || 46}">
+            <label style="display:flex;align-items:center;gap:8px;margin-top:10px;">
+              <input type="checkbox" id="edit-emp-retencion-${e.id}" style="width:auto;" ${e.aplica_retencion_fuente ? 'checked' : ''}>
+              <span style="font-size:13px;">Se le practica retención en la fuente por salarios</span>
+            </label>
+            <label style="margin-top:8px;">Deducciones adicionales en UVT <span style="font-size:10px;opacity:0.6;">(dependientes, AFC, etc.)</span></label>
+            <input type="number" id="edit-emp-deduccionesuvt-${e.id}" min="0" step="0.1" value="${e.deducciones_adicionales_uvt || 0}">
             <label style="display:flex;align-items:center;gap:8px;margin-top:10px;">
               <input type="checkbox" id="edit-emp-teletrabajo-${e.id}" style="width:auto;" ${e.teletrabajo ? 'checked' : ''}>
               <span style="font-size:13px;">Trabaja en teletrabajo (no recibe auxilio de transporte)</span>
@@ -11982,6 +12016,7 @@
               <button class="btn-mini editar" onclick="alternarHistorialSalario('${e.id}')">📈 Historial salario</button>
               <button class="btn-mini editar" onclick="verRetirosPropietariaEmpleado('${e.id}', '${escaparHtml(e.nombre_completo).replace(/'/g, "\\'")}')">💰 Mis retiros</button>
               <button class="btn-mini editar" onclick="alternarDocumentosRh('${e.id}')">📁 Documentos</button>
+              <button class="btn-mini editar" onclick="imprimirCertificadoLaboral('${e.id}')">📃 Certificado laboral</button>
             </div>
             ${puedeLiquidarIndividual ? `<button class="btn-mini guardar" style="width:100%;margin-top:8px;" onclick="registrarRetiroPropietaria('${e.id}', '${escaparHtml(e.nombre_completo).replace(/'/g, "\\'")}', ${e.salario_basico})">👑 Liquidar pago de Sara (retiro de utilidades)</button>` : ''}
             ${beneficiariosAbiertos ? renderizarPanelBeneficiarios(e.id) : ''}
@@ -12008,6 +12043,7 @@
             <button class="btn-mini editar" onclick="alternarHistorialSalario('${e.id}')">📈 Historial salario</button>
             <button class="btn-mini editar" onclick="verLiquidacionesEmpleado('${e.id}', '${escaparHtml(e.nombre_completo).replace(/'/g, "\\'")}')">📄 Mis liquidaciones</button>
             <button class="btn-mini editar" onclick="alternarDocumentosRh('${e.id}')">📁 Documentos</button>
+            <button class="btn-mini editar" onclick="imprimirCertificadoLaboral('${e.id}')">📃 Certificado laboral</button>
             <button class="btn-mini desactivar" onclick="desactivarEmpleado('${e.id}')">Retirar</button>
           </div>
           ${puedeLiquidarIndividual ? `
@@ -12079,6 +12115,16 @@
         </div>
         <label style="margin-top:8px;font-size:11px;">Días trabajados en el período</label>
         <input type="number" id="nov-dias-trabajados-${id}" min="0" max="30" value="30" style="font-size:12.5px;padding:8px;">
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <div style="flex:1;">
+            <label style="font-size:11px;">Horas extra diurnas <span style="opacity:0.6;">(+25%)</span></label>
+            <input type="number" id="nov-horas-extra-diurnas-${id}" min="0" step="0.5" value="0" style="font-size:12.5px;padding:8px;">
+          </div>
+          <div style="flex:1;">
+            <label style="font-size:11px;">Horas extra nocturnas <span style="opacity:0.6;">(+75%)</span></label>
+            <input type="number" id="nov-horas-extra-nocturnas-${id}" min="0" step="0.5" value="0" style="font-size:12.5px;padding:8px;">
+          </div>
+        </div>
         <label style="margin-top:8px;font-size:11px;">Descontar cuota de préstamo</label>
         <select id="nov-prestamo-${id}" style="font-size:12.5px;padding:8px;">${opcionesPrestamo}</select>
         <button class="btn-mini guardar" style="width:100%;margin-top:10px;" onclick="confirmarLiquidarConNovedad('${id}', '${escaparHtml(empleado.nombre_completo).replace(/'/g, "\\'")}')">Liquidar con estas novedades</button>
@@ -12133,7 +12179,9 @@
       dias_incapacidad_laboral: tipo === 'incapacidad_laboral' ? diasNovedad : 0,
       dias_licencia_maternidad: tipo === 'licencia_maternidad' ? diasNovedad : 0,
       dias_licencia_calamidad: tipo === 'licencia_calamidad' ? diasNovedad : 0,
-      prestamo_id: prestamoId
+      prestamo_id: prestamoId,
+      horas_extras_diurnas: Number(document.getElementById(`nov-horas-extra-diurnas-${empleadoId}`).value) || 0,
+      horas_extras_nocturnas: Number(document.getElementById(`nov-horas-extra-nocturnas-${empleadoId}`).value) || 0,
     };
 
     const resp = await fetch(WORKER_URL + '/api/pos/nomina/liquidar-empleado', {
@@ -14364,6 +14412,89 @@
     if (!resp.ok) { alert(datos.error || 'No se pudo marcar como pagada.'); return; }
     await cargarCuentasPendientes();
   }
+
+  async function imprimirCertificadoLaboral(empleadoId) {
+    const e = empleadosActivosCache.find(x => x.id === empleadoId);
+    if (!e) { alert('No se encontró el empleado.'); return; }
+
+    const respEmpresa = await fetch(WORKER_URL + '/api/pos/config-empresa', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    const empresa = respEmpresa.ok ? await respEmpresa.json() : {};
+
+    if (!empresa.nit || !empresa.razon_social) {
+      alert('Antes de generar el certificado, completa los datos de tu empresa (razón social y NIT) en Configuración → Apariencia → "Datos de la empresa".');
+      return;
+    }
+
+    const nombreDepto = e.centros_costo ? e.centros_costo.nombre : 'General';
+    const etiquetasContrato = { indefinido: 'a término indefinido', fijo: 'a término fijo', obra_labor: 'por obra o labor', aprendizaje: 'de aprendizaje' };
+    const tipoContratoTexto = etiquetasContrato[e.tipo_contrato] || e.tipo_contrato || 'laboral';
+    const fechaHoy = new Date().toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' });
+    const tiempoServicio = calcularTiempoServicio(e.fecha_ingreso);
+
+    const ventana = window.open('', '_blank');
+    ventana.document.write(`
+      <html>
+      <head>
+        <title>Certificado laboral — ${e.nombre_completo}</title>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: Arial, Helvetica, sans-serif; padding: 50px 60px; color: #2d2d2d; max-width: 750px; margin: 0 auto; line-height: 1.7; }
+          h1 { color: #d8017c; font-size: 20px; text-align: center; margin-bottom: 6px; letter-spacing: 1px; }
+          .subtitulo-cert { text-align: center; font-size: 12px; color: #666; margin-bottom: 40px; }
+          .cuerpo-cert { font-size: 14px; text-align: justify; margin-bottom: 40px; }
+          .cuerpo-cert p { margin-bottom: 16px; }
+          .cuerpo-cert strong { color: #2d2d2d; }
+          .fecha-cert { font-size: 13px; margin-bottom: 60px; }
+          .firma-cert { margin-top: 70px; }
+          .firma-cert .linea { width: 280px; border-top: 1px solid #333; padding-top: 6px; font-size: 12px; }
+          @media print { body { padding: 20px 30px; } }
+        </style>
+      </head>
+      <body>
+        <h1>CERTIFICADO LABORAL</h1>
+        <div class="subtitulo-cert">${escaparHtml(empresa.razon_social)} — NIT/Cédula ${escaparHtml(empresa.nit)}</div>
+
+        <div class="cuerpo-cert">
+          <p>${escaparHtml(empresa.razon_social)}${empresa.nit ? ', identificada con NIT/Cédula ' + escaparHtml(empresa.nit) : ''}, hace constar que:</p>
+
+          <p><strong>${escaparHtml(e.nombre_completo)}</strong>, identificado(a) con ${escaparHtml(e.tipo_documento || 'CC')} N° <strong>${escaparHtml(e.numero_documento || 'no registrado')}</strong>,
+          labora actualmente en esta empresa desde el <strong>${new Date(e.fecha_ingreso).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })}</strong>
+          ${tiempoServicio ? '(' + tiempoServicio + ')' : ''}, mediante contrato de trabajo ${tipoContratoTexto}, desempeñándose en el área de <strong>${escaparHtml(nombreDepto)}</strong>,
+          con un salario mensual de <strong>${formatearMoneda(e.salario_basico)}</strong>.</p>
+
+          <p>Este certificado se expide a solicitud del(la) interesado(a), para los fines que estime convenientes.</p>
+        </div>
+
+        <div class="fecha-cert">${empresa.direccion ? escaparHtml(empresa.direccion) + ' — ' : ''}${fechaHoy}</div>
+
+        <div class="firma-cert">
+          <div class="linea">
+            ${escaparHtml(empresa.razon_social)}<br>
+            NIT/Cédula: ${escaparHtml(empresa.nit)}
+          </div>
+        </div>
+      </body>
+      </html>
+    `);
+    ventana.document.close();
+    setTimeout(() => ventana.print(), 400);
+  }
+
+  function calcularTiempoServicio(fechaIngreso) {
+    if (!fechaIngreso) return '';
+    const inicio = new Date(fechaIngreso);
+    const hoy = new Date();
+    let meses = (hoy.getFullYear() - inicio.getFullYear()) * 12 + (hoy.getMonth() - inicio.getMonth());
+    if (hoy.getDate() < inicio.getDate()) meses--;
+    if (meses < 1) return 'menos de un mes';
+    const anios = Math.floor(meses / 12);
+    const mesesRestantes = meses % 12;
+    const partes = [];
+    if (anios > 0) partes.push(anios + (anios === 1 ? ' año' : ' años'));
+    if (mesesRestantes > 0) partes.push(mesesRestantes + (mesesRestantes === 1 ? ' mes' : ' meses'));
+    return partes.join(' y ');
+  }
+
 
   async function generarCuentaDeCobro(cuentaId) {
     const c = cuentasPendientesCache.find(x => x.id === cuentaId);
@@ -17432,6 +17563,9 @@
     const fondoPension = document.getElementById(`edit-emp-fondopension-${empleadoId}`).value.trim();
     const fondoCesantias = document.getElementById(`edit-emp-fondocesantias-${empleadoId}`).value.trim();
     const arlEntidad = document.getElementById(`edit-emp-arlentidad-${empleadoId}`).value.trim();
+    const horasSemana = Number(document.getElementById(`edit-emp-horassemana-${empleadoId}`).value) || 46;
+    const aplicaRetencion = document.getElementById(`edit-emp-retencion-${empleadoId}`).checked;
+    const deduccionesUvt = Number(document.getElementById(`edit-emp-deduccionesuvt-${empleadoId}`).value) || 0;
 
     if (!nombre) { alert('El nombre no puede quedar vacío.'); return; }
     if (!salario || salario <= 0) { alert('Escribe un salario válido.'); return; }
@@ -17451,6 +17585,9 @@
         centro_costo_id: centroCostoId || null,
         clase_riesgo_arl: claseRiesgoArl,
         teletrabajo,
+        horas_semana: horasSemana,
+        aplica_retencion_fuente: aplicaRetencion,
+        deducciones_adicionales_uvt: deduccionesUvt,
         direccion: direccion || null,
         telefono: telefono || null,
         correo_electronico: correoElectronico || null,
