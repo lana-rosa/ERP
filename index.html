@@ -3321,6 +3321,7 @@
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabLibroDiario', this); cargarLibroDiario();">📖 Libro Diario</button>
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabLibroMayor', this); cargarLibroMayor();">📚 Libro Mayor</button>
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabLibroAuxiliar', this); prepararLibroAuxiliar();">🔍 Libro Auxiliar</button>
+    <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabCierreContable', this); cargarPantallaCierreContable();">🔒 Cierre contable</button>
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabRevisionContador', this); cargarRevisionesContables();">✅ Revisión del contador</button>
   </div>
 
@@ -3387,6 +3388,32 @@
       <div><label for="laFechaHasta" style="font-size:11px;">Hasta</label><input type="date" id="laFechaHasta" onchange="cargarLibroAuxiliar()" style="padding:9px 10px;"></div>
     </div>
     <div id="contenidoLibroAuxiliar"><div class="cargando">Selecciona una cuenta o un tercero para ver su historial.</div></div>
+  </div>
+
+  <div id="subtabCierreContable" data-subtab-grupo="estadosFin" class="oculto">
+    <div style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;">
+      ℹ️ El cierre contable traslada la utilidad (o pérdida) del período que elijas a la cuenta de Utilidades acumuladas, y deja las cuentas de ingresos, gastos y costos en cero para que el siguiente período empiece limpio. <strong>No se puede deshacer</strong> — considera aplicar el bloqueo de fecha justo después, en Configuración → Apariencia, para proteger el período ya cerrado.
+    </div>
+
+    <div class="panel" style="max-width:480px;">
+      <h2>+ Realizar cierre</h2>
+      <label for="cierreTipo">Tipo</label>
+      <select id="cierreTipo">
+        <option value="mensual">Mensual</option>
+        <option value="anual">Anual</option>
+      </select>
+      <label for="cierreFechaDesde">Desde</label>
+      <input type="date" id="cierreFechaDesde">
+      <label for="cierreFechaHasta">Hasta</label>
+      <input type="date" id="cierreFechaHasta">
+      <button class="btn-principal" onclick="confirmarRealizarCierreContable()">Realizar cierre contable</button>
+      <div class="mensaje" id="mensajeCierreContable"></div>
+    </div>
+
+    <div class="panel" style="max-width:none;max-height:none;margin-top:20px;">
+      <h2>Historial de cierres</h2>
+      <div id="listaCierresContables"><div class="cargando">Cargando...</div></div>
+    </div>
   </div>
 
   <div id="subtabRevisionContador" data-subtab-grupo="estadosFin" class="oculto">
@@ -12729,6 +12756,59 @@
   // ============================================================
   // ESTADOS FINANCIEROS
   // ============================================================
+  // ============================================================
+  // CIERRE CONTABLE FORMAL
+  // ============================================================
+  async function cargarPantallaCierreContable() {
+    if (!document.getElementById('cierreFechaDesde').value) {
+      const primerDiaMes = new Date(); primerDiaMes.setDate(1);
+      document.getElementById('cierreFechaDesde').value = primerDiaMes.toISOString().slice(0, 10);
+      document.getElementById('cierreFechaHasta').value = new Date().toISOString().slice(0, 10);
+    }
+    ocultarMensaje('mensajeCierreContable');
+    await cargarHistorialCierresContables();
+  }
+
+  async function cargarHistorialCierresContables() {
+    const cont = document.getElementById('listaCierresContables');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    const resp = await fetch(WORKER_URL + '/api/pos/finanzas/cierre-contable', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const { cierres } = await resp.json();
+
+    if (!cierres || cierres.length === 0) { cont.innerHTML = '<div class="cargando">Todavía no se ha hecho ningún cierre.</div>'; return; }
+
+    cont.innerHTML = cierres.map(c => `
+      <div class="resumen-fila">
+        <span>${c.tipo === 'mensual' ? '📅' : '📆'} ${new Date(c.fecha_desde + 'T00:00:00').toLocaleDateString('es-CO')} — ${new Date(c.fecha_hasta + 'T00:00:00').toLocaleDateString('es-CO')}</span>
+        <span>Ingresos: ${formatearMoneda(c.total_ingresos)} · Gastos: ${formatearMoneda(c.total_gastos_costos)} · <strong style="color:${c.utilidad_neta >= 0 ? 'var(--verde-exito)' : 'var(--rojo-error)'};">${c.utilidad_neta >= 0 ? 'Utilidad' : 'Pérdida'}: ${formatearMoneda(Math.abs(c.utilidad_neta))}</strong></span>
+      </div>
+    `).join('');
+  }
+
+  async function confirmarRealizarCierreContable() {
+    const tipo = document.getElementById('cierreTipo').value;
+    const desde = document.getElementById('cierreFechaDesde').value;
+    const hasta = document.getElementById('cierreFechaHasta').value;
+    ocultarMensaje('mensajeCierreContable');
+
+    if (!desde || !hasta) { mostrarMensaje('mensajeCierreContable', 'Escribe ambas fechas.', 'error'); return; }
+    if (!confirm(`¿Realizar el cierre contable ${tipo} del ${desde} al ${hasta}? Esto traslada la utilidad o pérdida del período a Utilidades acumuladas, y NO se puede deshacer. ¿Continuar?`)) return;
+
+    const resp = await fetch(WORKER_URL + '/api/pos/finanzas/cierre-contable', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ fecha_desde: desde, fecha_hasta: hasta, tipo })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeCierreContable', datos.error || 'No se pudo realizar el cierre.', 'error'); return; }
+
+    mostrarMensaje('mensajeCierreContable',
+      `✅ Cierre realizado. Ingresos: ${formatearMoneda(datos.total_ingresos)}, Gastos: ${formatearMoneda(datos.total_gastos_costos)}, ${datos.utilidad_neta >= 0 ? 'Utilidad' : 'Pérdida'}: ${formatearMoneda(Math.abs(datos.utilidad_neta))} trasladada a Utilidades acumuladas.`,
+      'exito');
+    await cargarHistorialCierresContables();
+  }
+
   async function cargarRevisionesContables() {
     const cont = document.getElementById('listaRevisionesContables');
     cont.innerHTML = '<div class="cargando">Cargando...</div>';
