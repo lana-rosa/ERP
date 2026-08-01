@@ -2079,7 +2079,7 @@
       <div class="panel">
         <h2>🎛️ Simulador</h2>
         <label for="simCostosFijos">Costos fijos mensuales (COP)</label>
-        <input type="number" id="simCostosFijos" min="0" step="10000" oninput="recalcularSimulacionPresupuesto()">
+        <input type="text" inputmode="decimal" id="simCostosFijos" placeholder="Ej: 800000+150000+95000" oninput="recalcularSimulacionPresupuesto()" onblur="resolverSumaCostosFijos()">
         <div style="font-size:10.5px;opacity:0.6;margin-top:-8px;margin-bottom:10px;">Arriendo, nómina fija, servicios — lo que pagas sin importar cuánto vendas.</div>
 
         <label for="simMargenContribucion">Margen de contribución (%)</label>
@@ -6202,6 +6202,7 @@
     const esTallerForzado = codigoDeptoForzado === '03';
     document.getElementById('chipFiltroProductoTejido').classList.toggle('oculto', esTallerForzado);
     document.getElementById('opcionInvTipoProductoTerminado').classList.toggle('oculto', esTallerForzado);
+    document.getElementById('chipTabKitsInventario').classList.toggle('oculto', esTallerForzado);
     if (esTallerForzado) {
       document.getElementById('invTipo').value = 'merceria';
       cargarCategoriasParaFormulario();
@@ -10689,8 +10690,28 @@
       `).join('');
   }
 
+  // Evalúa expresiones simples de suma/resta escritas a mano (ej.
+  // "800000+150000-20000"), sin usar eval() — solo suma y resta de números,
+  // nada más. Si el texto no es una expresión válida, se trata como un
+  // número plano (o 0 si tampoco eso).
+  function evaluarSumaSimple(texto) {
+    if (!texto) return 0;
+    const limpio = String(texto).replace(/\s/g, '').replace(/,/g, '');
+    if (!/^[0-9+\-.]+$/.test(limpio)) return Number(limpio) || 0;
+    const partes = limpio.match(/[+-]?[0-9.]+/g);
+    if (!partes) return 0;
+    return partes.reduce((acc, p) => acc + (Number(p) || 0), 0);
+  }
+
+  function resolverSumaCostosFijos() {
+    const input = document.getElementById('simCostosFijos');
+    const total = evaluarSumaSimple(input.value);
+    input.value = total > 0 ? String(total) : '';
+    recalcularSimulacionPresupuesto();
+  }
+
   function recalcularSimulacionPresupuesto() {
-    const costosFijos = Number(document.getElementById('simCostosFijos').value) || 0;
+    const costosFijos = evaluarSumaSimple(document.getElementById('simCostosFijos').value);
     const margenPct = Number(document.getElementById('simMargenContribucion').value) || 0;
     const utilidadDeseada = Number(document.getElementById('simUtilidadDeseada').value) || 0;
     const precioPromedio = Number(document.getElementById('simPrecioPromedio').value) || 0;
