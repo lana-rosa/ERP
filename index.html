@@ -3073,6 +3073,8 @@
       <input type="date" id="ncdFecha">
       <label for="ncdReferencia">Documento de referencia <span style="font-size:10px;opacity:0.6;">(N° de venta/factura que origina el ajuste)</span></label>
       <input type="text" id="ncdReferencia" placeholder="Ej: PED-2026-00012">
+      <label for="ncdValorOriginal">Valor de ese documento original (COP) <span style="font-size:10px;opacity:0.6;">(opcional — si lo escribes, no se deja hacer una nota crédito por más de eso)</span></label>
+      <input type="number" id="ncdValorOriginal" min="0" step="1000">
 
       <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-weight:400;">
         <input type="checkbox" id="ncdAfectaCaja" style="width:auto;" onchange="document.getElementById('bloqueMetodoPagoNCD').classList.toggle('oculto', !this.checked)">
@@ -12342,6 +12344,16 @@
             <input type="number" id="nov-horas-extra-nocturnas-${id}" min="0" step="0.5" value="0" style="font-size:12.5px;padding:8px;">
           </div>
         </div>
+        <div style="display:flex;gap:8px;margin-top:6px;">
+          <div style="flex:1;">
+            <label style="font-size:11px;">Extra festiva/dominical diurna <span style="opacity:0.6;">(+100%)</span></label>
+            <input type="number" id="nov-horas-extra-festivas-diurnas-${id}" min="0" step="0.5" value="0" style="font-size:12.5px;padding:8px;">
+          </div>
+          <div style="flex:1;">
+            <label style="font-size:11px;">Extra festiva/dominical nocturna <span style="opacity:0.6;">(+150%)</span></label>
+            <input type="number" id="nov-horas-extra-festivas-nocturnas-${id}" min="0" step="0.5" value="0" style="font-size:12.5px;padding:8px;">
+          </div>
+        </div>
         <label style="margin-top:8px;font-size:11px;">Descontar cuota de préstamo</label>
         <select id="nov-prestamo-${id}" style="font-size:12.5px;padding:8px;">${opcionesPrestamo}</select>
         <button class="btn-mini guardar" style="width:100%;margin-top:10px;" onclick="confirmarLiquidarConNovedad('${id}', '${escaparHtml(empleado.nombre_completo).replace(/'/g, "\\'")}')">Liquidar con estas novedades</button>
@@ -12399,6 +12411,8 @@
       prestamo_id: prestamoId,
       horas_extras_diurnas: Number(document.getElementById(`nov-horas-extra-diurnas-${empleadoId}`).value) || 0,
       horas_extras_nocturnas: Number(document.getElementById(`nov-horas-extra-nocturnas-${empleadoId}`).value) || 0,
+      horas_extras_festivas_diurnas: Number(document.getElementById(`nov-horas-extra-festivas-diurnas-${empleadoId}`).value) || 0,
+      horas_extras_festivas_nocturnas: Number(document.getElementById(`nov-horas-extra-festivas-nocturnas-${empleadoId}`).value) || 0,
     };
 
     const resp = await fetch(WORKER_URL + '/api/pos/nomina/liquidar-empleado', {
@@ -13467,6 +13481,7 @@
     document.getElementById('ncdDescripcion').value = '';
     document.getElementById('ncdValor').value = '';
     document.getElementById('ncdReferencia').value = '';
+    document.getElementById('ncdValorOriginal').value = '';
     document.getElementById('ncdAfectaCaja').checked = false;
     document.getElementById('bloqueMetodoPagoNCD').classList.add('oculto');
     document.getElementById('inputBuscarNotaCD').value = '';
@@ -13493,6 +13508,7 @@
     const valor = Number(document.getElementById('ncdValor').value);
     const fecha = document.getElementById('ncdFecha').value;
     const referencia = document.getElementById('ncdReferencia').value.trim();
+    const valorOriginal = Number(document.getElementById('ncdValorOriginal').value) || null;
     const afectaCaja = document.getElementById('ncdAfectaCaja').checked;
     const metodoPago = document.getElementById('ncdMetodoPago').value;
     ocultarMensaje('mensajeNotaCD');
@@ -13500,13 +13516,17 @@
     if (!terceroId) { mostrarMensaje('mensajeNotaCD', `Selecciona el ${aplicaA === 'cliente' ? 'cliente' : 'proveedor'}.`, 'error'); return; }
     if (!descripcion) { mostrarMensaje('mensajeNotaCD', 'Escribe la descripción.', 'error'); return; }
     if (!valor || valor <= 0) { mostrarMensaje('mensajeNotaCD', 'Escribe un valor válido.', 'error'); return; }
+    if (tipo === 'credito' && valorOriginal && valor > valorOriginal) {
+      mostrarMensaje('mensajeNotaCD', `El valor de la nota crédito (${formatearMoneda(valor)}) no puede ser mayor al valor del documento original que escribiste (${formatearMoneda(valorOriginal)}).`, 'error');
+      return;
+    }
 
     const resp = await fetch(WORKER_URL + '/api/pos/notas-cd', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({
         tipo, aplica_a: aplicaA, tercero_id: terceroId, concepto, descripcion, valor, fecha,
-        documento_referencia: referencia || null, afecta_caja: afectaCaja, metodo_pago: afectaCaja ? metodoPago : null,
+        documento_referencia: referencia || null, valor_documento_original: valorOriginal, afecta_caja: afectaCaja, metodo_pago: afectaCaja ? metodoPago : null,
       })
     });
     const datos = await resp.json();
@@ -13516,6 +13536,7 @@
     document.getElementById('ncdDescripcion').value = '';
     document.getElementById('ncdValor').value = '';
     document.getElementById('ncdReferencia').value = '';
+    document.getElementById('ncdValorOriginal').value = '';
     await cargarNotasCD();
   }
 
