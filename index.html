@@ -3777,6 +3777,8 @@
     <div class="mensaje" id="mensajeIndicadorFe"></div>
   </div>
 
+  <button class="btn-secundario" style="margin-top:20px;width:auto;" onclick="calcularIndicadoresAutomaticosFe()">🔄 Calcular Ventas, Presupuesto ejecutado y Empleos desde el sistema</button>
+  <div class="mensaje" id="mensajeCalculoAutomaticoFe"></div>
   <div id="listaIndicadoresFe" style="margin-top:20px;"><div class="cargando">Cargando...</div></div>
 </div>
 
@@ -16927,6 +16929,31 @@
     await cargarIndicadoresFe();
   }
 
+  async function calcularIndicadoresAutomaticosFe() {
+    ocultarMensaje('mensajeCalculoAutomaticoFe');
+    const resp = await fetch(WORKER_URL + '/api/pos/fe/indicadores/calcular-automaticos', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { mostrarMensaje('mensajeCalculoAutomaticoFe', 'No se pudo calcular.', 'error'); return; }
+    const { calculados } = await resp.json();
+
+    const respIndicadores = await fetch(WORKER_URL + '/api/pos/fe/indicadores', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    const { indicadores } = await respIndicadores.json();
+
+    let actualizados = 0;
+    for (const [nombre, valor] of Object.entries(calculados)) {
+      const indicador = indicadores.find(i => i.nombre === nombre);
+      if (!indicador) continue;
+      await fetch(WORKER_URL + '/api/pos/fe/indicadores/actualizar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+        body: JSON.stringify({ id: indicador.id, valor_actual: valor, observaciones: 'Calculado automáticamente desde el sistema' })
+      });
+      actualizados++;
+    }
+
+    mostrarMensaje('mensajeCalculoAutomaticoFe', `✅ ${actualizados} indicador(es) actualizado(s) con datos reales del sistema.`, 'exito');
+    cargarIndicadoresFe();
+  }
+
   async function cargarIndicadoresFe() {
     const cont = document.getElementById('listaIndicadoresFe');
     cont.innerHTML = '<div class="cargando">Cargando...</div>';
@@ -16942,12 +16969,15 @@
       return v;
     };
 
+    const nombresAutoCalculables = ['Ventas Año 1', 'Presupuesto ejecutado', 'Empleos a crear'];
+
     cont.innerHTML = `<div class="grilla-3">` + indicadores.map(i => {
       const pct = i.meta_prometida > 0 ? Math.min(Math.round((i.valor_actual / i.meta_prometida) * 100), 100) : 0;
       const color = pct >= 100 ? 'var(--verde-exito)' : pct >= 60 ? '#e6a700' : 'var(--rojo-error)';
+      const esAutoCalculable = nombresAutoCalculables.includes(i.nombre);
       return `
         <div class="panel" style="max-height:none;">
-          <h2 style="font-size:14px;">${escaparHtml(i.nombre)}</h2>
+          <h2 style="font-size:14px;">${escaparHtml(i.nombre)} ${esAutoCalculable ? '<span title="Este valor se puede calcular solo con el botón de arriba" style="font-size:11px;opacity:0.6;">🔄 auto</span>' : ''}</h2>
           ${i.descripcion ? `<div class="subtitulo">${escaparHtml(i.descripcion)}</div>` : ''}
           <div style="display:flex;justify-content:space-between;font-size:12px;margin-top:10px;">
             <span>Actual: <strong>${formatearUnidad(i.valor_actual, i.unidad)}</strong></span>
