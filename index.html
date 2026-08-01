@@ -614,16 +614,17 @@
   .control-cantidad { display: flex; align-items: center; gap: 5px; }
 
   .btn-cantidad {
-    width: 26px; height: 26px; border-radius: 50%;
+    width: 40px; height: 40px; border-radius: 50%;
     border: 1.5px solid var(--rosa-medio);
     background: var(--fondo-panel); color: var(--rosa-principal);
-    font-weight: 700; font-size: 14px; cursor: pointer;
+    font-weight: 700; font-size: 16px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
   }
 
   .cantidad-texto { min-width: 20px; text-align: center; font-size: 13px; font-weight: 600; }
   .fila-carrito-subtotal { font-size: 13px; font-weight: 700; min-width: 70px; text-align: right; }
-  .btn-quitar { background: none; border: none; color: var(--azul-acero); cursor: pointer; font-size: 15px; padding: 0 2px; }
+  .btn-quitar { background: none; border: none; color: var(--texto-suave); cursor: pointer; font-size: 15px; min-width: 40px; min-height: 40px; padding: 0; }
+  .item-producto:focus-visible, [role="button"]:focus-visible { outline: 2.5px solid var(--rosa-principal); outline-offset: -2px; background: var(--rosa-suave); }
   .carrito-vacio { text-align: center; padding: 28px 10px; color: var(--texto-oscuro); opacity: 0.5; font-size: 13px; }
 
   .resumen-total {
@@ -639,7 +640,7 @@
   .fila-pago { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
   .fila-pago select { flex: 1.2; padding: 9px; border: 1.5px solid #e4d9e2; border-radius: 8px; font-family: 'Poppins', sans-serif; font-size: 12.5px; background: #fdfbfd; }
   .fila-pago input { flex: 1; padding: 9px; font-size: 12.5px; }
-  .btn-agregar-pago { background: none; border: 1.5px dashed var(--azul-acero); color: var(--azul-acero); border-radius: 8px; padding: 8px; width: 100%; font-family: 'Poppins', sans-serif; font-size: 12px; cursor: pointer; margin-top: 4px; }
+  .btn-agregar-pago { background: none; border: 1.5px dashed var(--texto-suave); color: var(--texto-suave); border-radius: 8px; padding: 8px; width: 100%; font-family: 'Poppins', sans-serif; font-size: 12px; cursor: pointer; margin-top: 4px; }
   .resumen-pagos { font-size: 12px; margin-top: 9px; padding: 9px 11px; border-radius: 8px; background: #fafafa; }
   .resumen-pagos.ok { background: #eaf6ef; color: var(--verde-exito); }
   .resumen-pagos.falta { background: #fdecea; color: var(--rojo-error); }
@@ -693,7 +694,7 @@
   .resumen-fila.total { font-weight: 700; border-top: 1px solid rgba(216,1,124,0.2); margin-top: 5px; padding-top: 9px; }
 
   /* ===== CARGANDO ===== */
-  .cargando { text-align: center; color: var(--azul-acero); font-size: 13px; padding: 18px 0; }
+  .cargando { text-align: center; color: var(--texto-suave); font-size: 13px; padding: 18px 0; }
 
   /* ===== OCULTO ===== */
   .oculto { display: none !important; }
@@ -5164,7 +5165,7 @@
       const sinStockTag = sinStock ? '<span class="stock-bajo-tag">Sin stock</span>' : '';
       const etiquetaTipo = item.tipo === 'merceria' ? 'Mercería' : 'Amigurumi';
       return `
-        <div class="item-producto" style="border-radius:0;margin-bottom:0;border:none;border-bottom:1px solid #f4eef2;${sinStock ? 'opacity:0.45;cursor:not-allowed;' : ''}" onclick="${sinStock ? '' : `agregarAlCarrito('${item.id}')`}">
+        <div class="item-producto" role="button" tabindex="${sinStock ? '-1' : '0'}" aria-disabled="${sinStock}" style="border-radius:0;margin-bottom:0;border:none;border-bottom:1px solid #f4eef2;${sinStock ? 'opacity:0.45;cursor:not-allowed;' : ''}" onclick="${sinStock ? '' : `agregarAlCarrito('${item.id}')`}" onkeydown="if(!${sinStock} && (event.key==='Enter'||event.key===' ')){event.preventDefault();agregarAlCarrito('${item.id}');}">
           <div class="item-producto-info">
             <div class="item-producto-nombre">${escaparHtml(item.nombre)}${stockBajoTag}${sinStockTag}</div>
             <div class="item-producto-meta">${etiquetaTipo} · Stock: ${item.stock_actual} ${item.unidad_medida}</div>
