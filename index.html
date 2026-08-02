@@ -2424,11 +2424,13 @@
   <div id="subtabRhCodigos" data-subtab-grupo="talentoHumano" class="oculto">
     <div class="panel">
       <h2>🔐 Códigos de autorización de supervisor</h2>
-      <div class="subtitulo">Estos códigos los usa un cajero cuando necesita anular una venta ya registrada, o cuando la venta es para él/ella mismo/a. Solo tú puedes crearlos o quitarlos. Nunca se guardan en texto plano — ni siquiera tú podrás volver a verlos después de crearlos.</div>
+      <div class="subtitulo">Estos códigos los usa un cajero cuando necesita anular una venta ya registrada, cuando la venta es para él/ella mismo/a, o cuando un líder de departamento debe autorizar un traslado de stock. Solo tú puedes crearlos o quitarlos. Nunca se guardan en texto plano — ni siquiera tú podrás volver a verlos después de crearlos.</div>
       <div id="listaCodigosAutorizacion"><div class="cargando">Cargando...</div></div>
       <div style="margin-top:14px;padding:12px;background:var(--rosa-suave);border-radius:9px;">
         <label style="margin-top:0;">Nombre de quien tendrá este código</label>
         <input type="text" id="codigoNombreAutorizador" placeholder="Ej: Sara Loaiza Muñoz">
+        <label style="margin-top:8px;">¿A qué departamento representa? <span style="font-size:10px;opacity:0.6;">(opcional — déjalo en "General" si es un código tuyo, válido para cualquier autorización)</span></label>
+        <select id="codigoCentroCostoNuevo"><option value="">General (cualquier autorización)</option></select>
         <label style="margin-top:8px;">Código secreto (mínimo 4 caracteres)</label>
         <input type="text" id="codigoValorNuevo" placeholder="Ej: un PIN o palabra clave">
         <button class="btn-mini guardar" style="width:100%;margin-top:8px;" onclick="crearCodigoAutorizacion()">+ Crear código</button>
@@ -7805,7 +7807,29 @@
     if (!itemId) { mostrarMensaje('mensajeTransferirStock', 'Selecciona un producto.', 'error'); return; }
     if (!cantidad || cantidad <= 0) { mostrarMensaje('mensajeTransferirStock', 'Escribe una cantidad válida.', 'error'); return; }
 
+    const centroOrigenId = idsCentroCostoPorCodigo[codigoOrigen];
     const centroDestinoId = idsCentroCostoPorCodigo[codigoDestino];
+    const nombreOrigen = document.getElementById('transferenciaDepartamentoOrigen').selectedOptions[0].textContent.trim();
+    const nombreDestino = document.getElementById('transferenciaDepartamentoDestino').selectedOptions[0].textContent.trim();
+
+    const codigoLiderOrigen = prompt(`Autorización de ${nombreOrigen}: pídele a su líder que escriba su código para confirmar que autoriza que salga este insumo.`);
+    if (!codigoLiderOrigen) { mostrarMensaje('mensajeTransferirStock', 'Se necesita la autorización del líder de origen para continuar.', 'error'); return; }
+    const respAutOrigen = await fetch(WORKER_URL + '/api/pos/autorizaciones/verificar-lider-departamento', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ codigo: codigoLiderOrigen, centro_costo_id: centroOrigenId })
+    });
+    const autOrigen = await respAutOrigen.json();
+    if (!autOrigen.valido) { mostrarMensaje('mensajeTransferirStock', `Código inválido para autorizar la salida desde ${nombreOrigen}.`, 'error'); return; }
+
+    const codigoLiderDestino = prompt(`Autorización de ${nombreDestino}: pídele a su líder que escriba su código para confirmar que autoriza recibir este insumo.`);
+    if (!codigoLiderDestino) { mostrarMensaje('mensajeTransferirStock', 'Se necesita la autorización del líder de destino para continuar.', 'error'); return; }
+    const respAutDestino = await fetch(WORKER_URL + '/api/pos/autorizaciones/verificar-lider-departamento', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ codigo: codigoLiderDestino, centro_costo_id: centroDestinoId })
+    });
+    const autDestino = await respAutDestino.json();
+    if (!autDestino.valido) { mostrarMensaje('mensajeTransferirStock', `Código inválido para autorizar la recepción en ${nombreDestino}.`, 'error'); return; }
+
     const resp = await fetch(WORKER_URL + '/api/pos/inventario/transferir', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
@@ -7836,7 +7860,7 @@
           <span class="fila-historial-consecutivo">${escaparHtml(t.item ? t.item.nombre : 'Producto')}</span>
           <span class="fila-historial-total">${t.cantidad}</span>
         </div>
-        <div class="fila-historial-fecha">${new Date(t.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}</div>
+        <div class="fila-historial-fecha">${new Date(t.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}${t.registrado_por_nombre ? ' — solicitado por ' + escaparHtml(t.registrado_por_nombre) : ''}</div>
         <div class="fila-historial-detalle">${escaparHtml(t.origen ? t.origen.nombre : '?')} → ${escaparHtml(t.destino ? t.destino.nombre : '?')}${t.observaciones ? ' — ' + escaparHtml(t.observaciones) : ''}</div>
       </div>
     `).join('');
@@ -16014,6 +16038,16 @@
     const contenedor = document.getElementById('listaCodigosAutorizacion');
     contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
 
+    const selectDepto = document.getElementById('codigoCentroCostoNuevo');
+    if (selectDepto && selectDepto.options.length <= 1) {
+      const respDeptos = await fetch(WORKER_URL + '/api/pos/departamentos', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+      if (respDeptos.ok) {
+        const { departamentos } = await respDeptos.json();
+        selectDepto.innerHTML = '<option value="">General (cualquier autorización)</option>' +
+          departamentos.map(d => `<option value="${d.id}">${escaparHtml(d.nombre)}</option>`).join('');
+      }
+    }
+
     const resp = await fetch(WORKER_URL + '/api/pos/autorizaciones/codigos', {
       headers: { Authorization: 'Bearer ' + sesionActual.token }
     });
@@ -16036,6 +16070,7 @@
   async function crearCodigoAutorizacion() {
     const nombre = document.getElementById('codigoNombreAutorizador').value.trim();
     const codigo = document.getElementById('codigoValorNuevo').value.trim();
+    const centroCostoId = document.getElementById('codigoCentroCostoNuevo').value || null;
     ocultarMensaje('mensajeCodigoAutorizacion');
 
     if (!nombre) { mostrarMensaje('mensajeCodigoAutorizacion', 'Escribe el nombre de quien tendrá este código.', 'error'); return; }
@@ -16044,7 +16079,7 @@
     const resp = await fetch(WORKER_URL + '/api/pos/autorizaciones/codigos', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ nombre_autorizador: nombre, codigo })
+      body: JSON.stringify({ nombre_autorizador: nombre, codigo, centro_costo_id: centroCostoId })
     });
 
     const datos = await resp.json();
@@ -16053,6 +16088,7 @@
     mostrarMensaje('mensajeCodigoAutorizacion', `✅ Código creado para ${nombre}. Guárdalo en un lugar seguro — no se puede volver a ver.`, 'exito');
     document.getElementById('codigoNombreAutorizador').value = '';
     document.getElementById('codigoValorNuevo').value = '';
+    document.getElementById('codigoCentroCostoNuevo').value = '';
     await cargarCodigosAutorizacion();
   }
 
