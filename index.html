@@ -1142,6 +1142,11 @@
       <div id="mensajeAutocompletadoPedido" style="font-size:12px;color:var(--verde-exito);margin-top:4px;display:none;">✅ Cliente encontrado</div>
       <div style="font-size:11px;opacity:0.55;margin-top:2px;">* Estos datos son obligatorios: los pedidos se envían por correo certificado.</div>
 
+      <label style="display:flex;align-items:flex-start;gap:8px;margin-top:10px;font-weight:400;">
+        <input type="checkbox" id="pedidoAceptaTratamientoDatos" style="width:auto;margin-top:3px;">
+        <span style="font-size:12px;">El cliente autorizó el tratamiento de sus datos personales (según el aviso enviado en la confirmación del pedido)</span>
+      </label>
+
       <label for="pedidoBuscarProducto">Buscar producto en el inventario de Tienda <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
       <div style="position:relative;">
         <input type="text" id="pedidoBuscarProducto" placeholder="Si ya existe en stock, búscalo aquí..." oninput="buscarProductoPedido()" autocomplete="off">
@@ -1252,6 +1257,10 @@
         <input type="tel" id="academiaTelefono" placeholder="300 000 0000">
         <label for="academiaCorreo">Correo electrónico <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
         <input type="email" id="academiaCorreo" placeholder="correo@gmail.com">
+        <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-weight:400;">
+          <input type="checkbox" id="academiaAceptaTratamientoDatos" style="width:auto;" checked>
+          <span style="font-size:12px;">El cliente autoriza el tratamiento de sus datos (si dejaste teléfono o correo)</span>
+        </label>
         <label for="academiaMetodoPago" style="margin-top:8px;">Método de pago</label>
         <select id="academiaMetodoPago">
           <option value="efectivo">Efectivo</option>
@@ -11023,6 +11032,7 @@
     document.getElementById('pedidoCorreoCliente').value = '';
     document.getElementById('pedidoDireccionCliente').value = '';
     document.getElementById('pedidoMunicipioCliente').value = '';
+    document.getElementById('pedidoAceptaTratamientoDatos').checked = false;
     document.getElementById('mensajeAutocompletadoPedido').style.display = 'none';
     document.getElementById('pedidoBuscarProducto').value = '';
     document.getElementById('sugerenciasPedidoProducto').style.display = 'none';
@@ -11266,6 +11276,7 @@
     const valorEnvio = Number(document.getElementById('pedidoValorEnvio').value) || 0;
     const direccionCliente = document.getElementById('pedidoDireccionCliente').value.trim();
     const municipioCliente = document.getElementById('pedidoMunicipioCliente').value.trim();
+    const aceptaTratamientoDatos = document.getElementById('pedidoAceptaTratamientoDatos').checked;
     ocultarMensaje('mensajePedidoCanal');
 
     if (!identificacion) { mostrarMensaje('mensajePedidoCanal', 'Falta el número de identificación del cliente.', 'error'); return; }
@@ -11273,6 +11284,7 @@
     if (!telefonoCliente) { mostrarMensaje('mensajePedidoCanal', 'Falta el teléfono del cliente.', 'error'); return; }
     if (!direccionCliente) { mostrarMensaje('mensajePedidoCanal', 'Falta la dirección de envío.', 'error'); return; }
     if (!municipioCliente) { mostrarMensaje('mensajePedidoCanal', 'Selecciona la ciudad/municipio de envío.', 'error'); return; }
+    if (!aceptaTratamientoDatos) { mostrarMensaje('mensajePedidoCanal', 'Marca la casilla de autorización de tratamiento de datos antes de crear el pedido.', 'error'); return; }
     if (carritoPedidoCanal.length === 0) {
       mostrarMensaje('mensajePedidoCanal', 'Agrega al menos un producto a la lista.', 'error');
       return;
@@ -16418,10 +16430,12 @@
     const identificacion = document.getElementById('academiaIdentificacion').value.trim();
     const telefono = document.getElementById('academiaTelefono').value.trim();
     const correo = document.getElementById('academiaCorreo').value.trim();
+    const aceptaTratamientoDatos = document.getElementById('academiaAceptaTratamientoDatos').checked;
     const metodoPago = document.getElementById('academiaMetodoPago').value;
     ocultarMensaje('mensajeVentaAcademia');
 
     if (carritoAcademia.length === 0) { mostrarMensaje('mensajeVentaAcademia', 'Agrega al menos una clase o un kit a la lista.', 'error'); return; }
+    if ((telefono || correo) && !aceptaTratamientoDatos) { mostrarMensaje('mensajeVentaAcademia', 'Marca la casilla de autorización de tratamiento de datos, o borra el teléfono/correo si el cliente no autoriza.', 'error'); return; }
     const hayClasePresencial = carritoAcademia.some(i => i.tipo === 'clase' && i.subarea === 'clase_presencial');
     if (hayClasePresencial && !turnoActivoActual) { mostrarMensaje('mensajeVentaAcademia', 'Las clases presenciales requieren un turno de caja de Tienda abierto (pasan por la caja física). Los demás ingresos (YouTube, cursos virtuales, digitales) se pueden registrar sin turno abierto.', 'error'); return; }
 
@@ -16516,6 +16530,7 @@
     document.getElementById('academiaIdentificacion').value = '';
     document.getElementById('academiaTelefono').value = '';
     document.getElementById('academiaCorreo').value = '';
+    document.getElementById('academiaAceptaTratamientoDatos').checked = true;
 
     await prepararPestanaVentaAcademia();
   }
