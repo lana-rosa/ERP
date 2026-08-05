@@ -794,12 +794,11 @@
 
     <!-- 1. VENTAS Y CLIENTES -->
     <div class="sidebar-depto" id="deptoVentasGrupo" style="display:none;">
-      <button class="sidebar-depto-header" id="headerDeptoVentas" onclick="toggleSidebarDepto('deptoVentasSubmenu', 'headerDeptoVentas')">🛍️ Ventas y Clientes <span class="chevron">▾</span></button>
+      <button class="sidebar-depto-header" id="headerDeptoVentas" onclick="toggleSidebarDepto('deptoVentasSubmenu', 'headerDeptoVentas')">🛍️ Punto de Venta <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoVentasSubmenu">
-        <button class="nav-btn" id="nav-clientes-dir" onclick="mostrarPantallaClientes()"><span class="nav-icon">👤</span> Clientes</button>
-        <button class="nav-btn" id="nav-cotizaciones" onclick="mostrarPantallaCotizaciones()"><span class="nav-icon">📝</span> Cotizaciones</button>
         <button class="nav-btn" id="nav-ventas" onclick="mostrarPantallaVentas()"><span class="nav-icon">🛒</span> Registrar venta</button>
         <button class="nav-btn" id="nav-historial" onclick="mostrarPantallaHistorial('01')"><span class="nav-icon">📋</span> Historial ventas</button>
+        <button class="nav-btn" id="nav-clientes-dir" onclick="mostrarPantallaClientes()"><span class="nav-icon">👤</span> Clientes</button>
         <button class="nav-btn" id="nav-pedidos-canal" onclick="mostrarPantallaPedidosCanal()"><span class="nav-icon">📱</span> Pedidos WhatsApp/Redes</button>
         <button class="nav-btn" id="nav-notas-cd" onclick="mostrarPantallaNotasCD()"><span class="nav-icon">📄</span> Notas crédito/débito</button>
         <button class="nav-btn" id="nav-cuentas-pendientes" onclick="mostrarPantallaCuentasPendientes()"><span class="nav-icon">📋</span> Cartera</button>
@@ -810,6 +809,7 @@
     <div class="sidebar-depto" id="deptoComprasGrupo" style="display:none;">
       <button class="sidebar-depto-header" id="headerDeptoCompras" onclick="toggleSidebarDepto('deptoComprasSubmenu', 'headerDeptoCompras')">🛒 Compras y Gastos <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoComprasSubmenu">
+        <button class="nav-btn" id="nav-cotizaciones" onclick="mostrarPantallaCotizaciones()"><span class="nav-icon">📝</span> Cotizaciones</button>
         <button class="nav-btn" id="nav-proveedores-dir" onclick="mostrarPantallaProveedores()"><span class="nav-icon">🏭</span> Proveedores</button>
         <button class="nav-btn" id="nav-ordenes-compra" onclick="mostrarPantallaOrdenesCompra()"><span class="nav-icon">📦</span> Órdenes de compra</button>
         <button class="nav-btn" id="nav-compras-gastos" onclick="mostrarPantallaPagosPendientes('01')"><span class="nav-icon">📈</span> Registro de compras y gastos</button>
@@ -8884,7 +8884,7 @@
   // USUARIOS Y PERMISOS
   // ============================================================
   const CATALOGO_MODULOS = [
-    { clave: 'deptoVentasGrupo', etiqueta: '🛍️ Ventas y Clientes (grupo completo)' },
+    { clave: 'deptoVentasGrupo', etiqueta: '🛍️ Punto de Venta (grupo completo)' },
     { clave: 'nav-clientes-dir', etiqueta: '　　Clientes' },
     { clave: 'nav-cotizaciones', etiqueta: '　　Cotizaciones' },
     { clave: 'nav-ventas', etiqueta: '　　Registrar venta' },
