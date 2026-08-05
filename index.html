@@ -730,9 +730,9 @@
   .gcal-nav-flecha { width: 32px; height: 32px; border-radius: 50%; border: none; background: none; font-size: 15px; cursor: pointer; color: var(--texto-oscuro); }
   .gcal-nav-flecha:hover { background: #f0e8ee; }
   .gcal-titulo { font-size: 16px; font-weight: 500; color: var(--texto-oscuro); text-transform: capitalize; }
-  .gcal-grid { display: grid; grid-template-columns: repeat(7, 1fr); border-top: 1px solid #e4d9e2; border-left: 1px solid #e4d9e2; }
+  .gcal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border-top: 1px solid #e4d9e2; border-left: 1px solid #e4d9e2; }
   .gcal-dia-nombre { text-align: center; font-size: 10.5px; font-weight: 600; color: #70757a; padding: 6px 0; text-transform: uppercase; letter-spacing: 0.5px; }
-  .gcal-celda { min-height: 84px; border-right: 1px solid #e4d9e2; border-bottom: 1px solid #e4d9e2; padding: 4px; cursor: pointer; position: relative; background: var(--fondo-panel); }
+  .gcal-celda { min-height: 84px; min-width: 0; overflow: hidden; border-right: 1px solid #e4d9e2; border-bottom: 1px solid #e4d9e2; padding: 4px; cursor: pointer; position: relative; background: var(--fondo-panel); }
   .gcal-celda:hover { background: #f8f5f7; }
   .gcal-celda.vacia { background: #fbf9fa; cursor: default; }
   .gcal-celda .gcal-num-dia { width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 12.5px; font-weight: 500; }
@@ -740,6 +740,22 @@
   .gcal-celda.seleccionada { background: var(--rosa-suave); }
   .gcal-evento-chip { font-size: 10.5px; padding: 2px 6px; border-radius: 4px; color: white; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
   .gcal-mas-eventos { font-size: 10px; color: #70757a; padding: 2px 6px; }
+
+  /* Calendario en celular: todo el mes visible sin deslizar hacia el lado.
+     Se reduce el tamaño de celdas, texto y el "chip" de evento se vuelve un
+     puntico de color en vez de una pastilla con texto (que era justo lo que
+     obligaba al grid a desbordarse horizontalmente). */
+  @media (max-width: 480px) {
+    .gcal-celda { min-height: 48px; padding: 2px; }
+    .gcal-celda .gcal-num-dia { width: 20px; height: 20px; font-size: 10.5px; }
+    .gcal-dia-nombre { font-size: 9px; padding: 4px 0; }
+    .gcal-evento-chip {
+      font-size: 0; padding: 0; width: 6px; height: 6px; border-radius: 50%;
+      display: inline-block; margin: 1px 1px 0 0;
+    }
+    .gcal-mas-eventos { font-size: 8px; padding: 0; }
+    .gcal-titulo { font-size: 13px; }
+  }
 
   /* ============================================================
      IMPRESIÓN (Ctrl+P) DE PANTALLAS INTERNAS — Estado de Resultados,
@@ -2828,17 +2844,6 @@
       <button class="btn-secundario" id="btnTemaOscuro" style="margin-top:0;flex:1;" onclick="cambiarTema('oscuro')">🌙 Oscuro</button>
     </div>
   </div>
-
-  <div class="panel oculto" id="panelBloqueoFecha" style="max-width:420px;margin-top:20px;">
-    <h2>🔒 Bloqueo de período contable</h2>
-    <div class="subtitulo">Protege los períodos ya cerrados: ninguna venta, compra, nómina u otro movimiento contable podrá registrarse con fecha igual o anterior a la que pongas aquí — sin importar desde qué pantalla se intente.</div>
-    <div id="estadoBloqueoFecha" style="margin:10px 0;font-size:13px;"></div>
-    <label for="inputFechaBloqueo">Bloquear todo hasta (inclusive)</label>
-    <input type="date" id="inputFechaBloqueo">
-    <button class="btn-principal" onclick="confirmarGuardarBloqueoFecha()">Aplicar bloqueo</button>
-    <button class="btn-secundario" onclick="confirmarQuitarBloqueoFecha()">Quitar bloqueo</button>
-    <div class="mensaje" id="mensajeBloqueoFecha"></div>
-  </div>
 </div>
 
 <!-- ===== GRUPO: CONFIGURACIÓN EMPRESA ===== -->
@@ -3490,6 +3495,7 @@
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabLibroMayor', this); cargarLibroMayor();">📚 Libro Mayor</button>
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabLibroAuxiliar', this); prepararLibroAuxiliar();">🔍 Libro Auxiliar</button>
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabCierreContable', this); cargarPantallaCierreContable();">🔒 Cierre contable</button>
+    <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabBloqueoFecha', this); cargarPantallaBloqueoFecha();">🔐 Bloqueo de período</button>
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabRevisionContador', this); cargarRevisionesContables();">✅ Revisión del contador</button>
   </div>
 
@@ -3581,6 +3587,19 @@
     <div class="panel" style="max-width:none;max-height:none;margin-top:20px;">
       <h2>Historial de cierres</h2>
       <div id="listaCierresContables"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+
+  <div id="subtabBloqueoFecha" data-subtab-grupo="estadosFin" class="oculto">
+    <div class="panel" style="max-width:420px;">
+      <h2>🔐 Bloqueo de período contable</h2>
+      <div class="subtitulo">Protege los períodos ya cerrados: ninguna venta, compra, nómina u otro movimiento contable podrá registrarse con fecha igual o anterior a la que pongas aquí — sin importar desde qué pantalla se intente.</div>
+      <div id="estadoBloqueoFecha" style="margin:10px 0;font-size:13px;"></div>
+      <label for="inputFechaBloqueo">Bloquear todo hasta (inclusive)</label>
+      <input type="date" id="inputFechaBloqueo">
+      <button class="btn-principal" onclick="confirmarGuardarBloqueoFecha()">Aplicar bloqueo</button>
+      <button class="btn-secundario" onclick="confirmarQuitarBloqueoFecha()">Quitar bloqueo</button>
+      <div class="mensaje" id="mensajeBloqueoFecha"></div>
     </div>
   </div>
 
@@ -9883,24 +9902,23 @@
   function mostrarPantallaApariencia() {
     mostrarPantalla('pantallaApariencia');
     actualizarBotonesTema();
-    document.getElementById('panelBloqueoFecha').classList.toggle('oculto', rolActual !== 'administrador');
-    ocultarMensaje('mensajeBloqueoFecha');
+  }
 
-    if (rolActual === 'administrador') {
-      fetch(WORKER_URL + '/api/pos/config-empresa', { headers: { Authorization: 'Bearer ' + sesionActual.token } })
-        .then(r => r.ok ? r.json() : null)
-        .then(d => {
-          if (!d) return;
-          const estadoEl = document.getElementById('estadoBloqueoFecha');
-          if (d.fecha_bloqueo_transacciones) {
-            estadoEl.innerHTML = `🔒 <strong>Bloqueado</strong> hasta el ${new Date(d.fecha_bloqueo_transacciones + 'T00:00:00').toLocaleDateString('es-CO')} (inclusive). Nada con esa fecha o antes se puede registrar ni editar.`;
-            document.getElementById('inputFechaBloqueo').value = d.fecha_bloqueo_transacciones;
-          } else {
-            estadoEl.innerHTML = '🔓 Sin bloqueo activo — se puede registrar con cualquier fecha.';
-            document.getElementById('inputFechaBloqueo').value = '';
-          }
-        });
-    }
+  function cargarPantallaBloqueoFecha() {
+    ocultarMensaje('mensajeBloqueoFecha');
+    fetch(WORKER_URL + '/api/pos/config-empresa', { headers: { Authorization: 'Bearer ' + sesionActual.token } })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (!d) return;
+        const estadoEl = document.getElementById('estadoBloqueoFecha');
+        if (d.fecha_bloqueo_transacciones) {
+          estadoEl.innerHTML = `🔒 <strong>Bloqueado</strong> hasta el ${new Date(d.fecha_bloqueo_transacciones + 'T00:00:00').toLocaleDateString('es-CO')} (inclusive). Nada con esa fecha o antes se puede registrar ni editar.`;
+          document.getElementById('inputFechaBloqueo').value = d.fecha_bloqueo_transacciones;
+        } else {
+          estadoEl.innerHTML = '🔓 Sin bloqueo activo — se puede registrar con cualquier fecha.';
+          document.getElementById('inputFechaBloqueo').value = '';
+        }
+      });
   }
 
   function mostrarPantallaLogoEmpresa() {
