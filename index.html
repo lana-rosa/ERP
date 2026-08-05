@@ -886,7 +886,7 @@
       <div class="sidebar-depto-submenu" id="deptoConfigSubmenu">
         <button class="nav-btn" id="nav-gestion-usuarios" onclick="mostrarPantallaUsuarios()"><span class="nav-icon">👥</span> Usuarios y permisos</button>
         <button class="nav-btn" onclick="mostrarPantallaMiPerfil()"><span class="nav-icon">👤</span> Mi perfil</button>
-        <button class="nav-btn" id="nav-config-empresa" onclick="mostrarPantallaDatosEmpresa()"><span class="nav-icon">🏢</span> Configuración empresa</button>
+        <button class="nav-btn" id="nav-config-empresa" onclick="mostrarPantallaLogoEmpresa()"><span class="nav-icon">🏢</span> Configuración empresa</button>
         <button class="nav-btn" id="nav-copia-seguridad" onclick="mostrarPantallaCopiaSeguridad()"><span class="nav-icon">🛡️</span> Respaldo y auditoría</button>
         <button class="nav-btn" onclick="mostrarPantallaApariencia()"><span class="nav-icon">🎨</span> Apariencia</button>
       </div>
@@ -2639,6 +2639,7 @@
 <!-- ===== PANTALLA: TARIFAS DE ENVÍO ===== -->
 <div id="pantallaTarifasEnvio" class="oculto contenido">
   <div class="filtro-tipo" style="margin-bottom:16px;flex-wrap:wrap;">
+    <button class="chip-filtro" onclick="mostrarPantallaLogoEmpresa()">🖼️ Logo</button>
     <button class="chip-filtro" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
     <button class="chip-filtro" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
     <button class="chip-filtro" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
@@ -2674,6 +2675,7 @@
 <!-- ===== PANTALLA: DOCUMENTOS LEGALES DE LA EMPRESA ===== -->
 <div id="pantallaDocumentosEmpresa" class="oculto contenido">
   <div class="filtro-tipo" style="margin-bottom:16px;flex-wrap:wrap;">
+    <button class="chip-filtro" onclick="mostrarPantallaLogoEmpresa()">🖼️ Logo</button>
     <button class="chip-filtro" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
     <button class="chip-filtro" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
     <button class="chip-filtro activo" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
@@ -2721,6 +2723,7 @@
 
 <div id="pantallaConfigAlertas" class="oculto contenido">
   <div class="filtro-tipo" style="margin-bottom:16px;flex-wrap:wrap;">
+    <button class="chip-filtro" onclick="mostrarPantallaLogoEmpresa()">🖼️ Logo</button>
     <button class="chip-filtro" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
     <button class="chip-filtro" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
     <button class="chip-filtro" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
@@ -2746,6 +2749,7 @@
 
 <div id="pantallaFidelizacion" class="oculto contenido">
   <div class="filtro-tipo" style="margin-bottom:16px;flex-wrap:wrap;">
+    <button class="chip-filtro" onclick="mostrarPantallaLogoEmpresa()">🖼️ Logo</button>
     <button class="chip-filtro" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
     <button class="chip-filtro" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
     <button class="chip-filtro" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
@@ -2770,6 +2774,7 @@
 
 <div id="pantallaCodigosDescuento" class="oculto contenido">
   <div class="filtro-tipo" style="margin-bottom:16px;flex-wrap:wrap;">
+    <button class="chip-filtro" onclick="mostrarPantallaLogoEmpresa()">🖼️ Logo</button>
     <button class="chip-filtro" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
     <button class="chip-filtro" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
     <button class="chip-filtro" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
@@ -2837,8 +2842,35 @@
 </div>
 
 <!-- ===== GRUPO: CONFIGURACIÓN EMPRESA ===== -->
+<div id="pantallaLogoEmpresa" class="oculto contenido">
+  <div class="filtro-tipo" style="margin-bottom:16px;flex-wrap:wrap;">
+    <button class="chip-filtro activo" onclick="mostrarPantallaLogoEmpresa()">🖼️ Logo</button>
+    <button class="chip-filtro" onclick="mostrarPantallaLogoEmpresa()">🖼️ Logo</button>
+    <button class="chip-filtro" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
+    <button class="chip-filtro" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
+    <button class="chip-filtro" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
+    <button class="chip-filtro" onclick="mostrarPantallaTarifasEnvio()">🚚 Tarifas de envío</button>
+    <button class="chip-filtro" onclick="mostrarPantallaCodigosDescuento()">🏷️ Códigos de descuento</button>
+    <button class="chip-filtro" onclick="mostrarPantallaFidelizacion()">⭐ Programa de fidelización</button>
+    <button class="chip-filtro" onclick="mostrarPantallaConfigAlertas()">🔔 Configuración de alertas</button>
+  </div>
+  <div class="page-header">
+    <h1>🖼️ Logo de la empresa</h1>
+    <div class="subtitulo">Se usa en los recibos de venta, desprendibles de pago e informes.</div>
+  </div>
+
+  <div class="panel" style="max-width:420px;">
+    <div class="subtitulo">Máximo 1MB.</div>
+    <div id="previsualizacionLogo" style="margin:10px 0;"></div>
+    <input type="file" id="inputLogoEmpresa" accept="image/*" onchange="previsualizarLogo(event)">
+    <button class="btn-principal" onclick="guardarLogoEmpresa()">Guardar logo</button>
+    <div class="mensaje" id="mensajeLogoEmpresa"></div>
+  </div>
+</div>
+
 <div id="pantallaDatosEmpresa" class="oculto contenido">
   <div class="filtro-tipo" style="margin-bottom:16px;flex-wrap:wrap;">
+    <button class="chip-filtro" onclick="mostrarPantallaLogoEmpresa()">🖼️ Logo</button>
     <button class="chip-filtro activo" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
     <button class="chip-filtro" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
     <button class="chip-filtro" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
@@ -2848,22 +2880,11 @@
     <button class="chip-filtro" onclick="mostrarPantallaConfigAlertas()">🔔 Configuración de alertas</button>
   </div>
   <div class="page-header">
-    <h1>🏢 Configuración empresa</h1>
-    <div class="subtitulo">Logo, datos fiscales y todo lo que representa a Lana Rosa Crochet hacia afuera.</div>
-  </div>
-
-  <div class="panel" style="max-width:420px;">
-    <h2>Logo de la empresa</h2>
-    <div class="subtitulo">Se usa en los recibos de venta, desprendibles de pago e informes. Máximo 1MB.</div>
-    <div id="previsualizacionLogo" style="margin:10px 0;"></div>
-    <input type="file" id="inputLogoEmpresa" accept="image/*" onchange="previsualizarLogo(event)">
-    <button class="btn-principal" onclick="guardarLogoEmpresa()">Guardar logo</button>
-    <div class="mensaje" id="mensajeLogoEmpresa"></div>
-  </div>
-
-  <div class="panel" id="panelDatosFiscalesEmpresa" style="max-width:420px;margin-top:20px;">
-    <h2>Datos de la empresa</h2>
+    <h1>🏢 Datos fiscales de la empresa</h1>
     <div class="subtitulo">Se usan para generar la cuenta de cobro y documentos formales.</div>
+  </div>
+
+  <div class="panel" id="panelDatosFiscalesEmpresa" style="max-width:420px;">
     <label for="empresaRazonSocial">Razón social / Nombre completo</label>
     <input type="text" id="empresaRazonSocial" placeholder="Sara Loaiza Muñoz — Lana Rosa Crochet">
     <label for="empresaNit">NIT / Cédula</label>
@@ -3591,6 +3612,7 @@
 
 <div id="pantallaPoliticasLegales" class="oculto contenido">
   <div class="filtro-tipo" style="margin-bottom:16px;flex-wrap:wrap;">
+    <button class="chip-filtro" onclick="mostrarPantallaLogoEmpresa()">🖼️ Logo</button>
     <button class="chip-filtro" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
     <button class="chip-filtro activo" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
     <button class="chip-filtro" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
@@ -4342,7 +4364,7 @@
   });
 
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -9881,13 +9903,17 @@
     }
   }
 
-  function mostrarPantallaDatosEmpresa() {
-    mostrarPantalla('pantallaDatosEmpresa');
+  function mostrarPantallaLogoEmpresa() {
+    mostrarPantalla('pantallaLogoEmpresa');
     ocultarMensaje('mensajeLogoEmpresa');
-    ocultarMensaje('mensajeDatosFiscalesEmpresa');
     document.getElementById('previsualizacionLogo').innerHTML = logoEmpresaCache
       ? `<img src="${logoEmpresaCache}" style="max-width:180px;max-height:100px;border-radius:8px;">`
       : '<div style="font-size:12px;opacity:0.6;">Todavía no se ha subido ningún logo.</div>';
+  }
+
+  function mostrarPantallaDatosEmpresa() {
+    mostrarPantalla('pantallaDatosEmpresa');
+    ocultarMensaje('mensajeDatosFiscalesEmpresa');
 
     fetch(WORKER_URL + '/api/pos/config-empresa', { headers: { Authorization: 'Bearer ' + sesionActual.token } })
       .then(r => r.ok ? r.json() : null)
