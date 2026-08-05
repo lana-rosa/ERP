@@ -890,6 +890,7 @@
         <button class="nav-btn" id="nav-trazabilidad" onclick="mostrarPantallaTrazabilidad()"><span class="nav-icon">🕵️</span> Trazabilidad del sistema</button>
         <button class="nav-btn" id="nav-reinicio-produccion" onclick="mostrarPantallaReinicioProduccion()"><span class="nav-icon">🧹</span> Reinicio antes de producción</button>
         <button class="nav-btn" id="nav-copia-seguridad" onclick="mostrarPantallaCopiaSeguridad()"><span class="nav-icon">💾</span> Copia de seguridad</button>
+        <button class="nav-btn" id="nav-politicas-legales" onclick="mostrarPantallaPoliticasLegales()"><span class="nav-icon">📋</span> Políticas legales</button>
         <button class="nav-btn" id="nav-codigos-descuento" onclick="mostrarPantallaCodigosDescuento()"><span class="nav-icon">🏷️</span> Códigos de descuento</button>
         <button class="nav-btn" id="nav-fidelizacion" onclick="mostrarPantallaFidelizacion()"><span class="nav-icon">⭐</span> Programa de fidelización</button>
         <button class="nav-btn" id="nav-config-alertas" onclick="mostrarPantallaConfigAlertas()"><span class="nav-icon">🔔</span> Configuración de alertas</button>
@@ -2495,7 +2496,7 @@
       <input type="date" id="clienteDirCumpleanos">
       <label style="display:flex;align-items:flex-start;gap:8px;margin-top:14px;font-weight:400;">
         <input type="checkbox" id="clienteDirAceptaTratamientoDatos" style="width:auto;margin-top:3px;">
-        <span style="font-size:12.5px;">Confirmo que el cliente autorizó el tratamiento de sus datos personales, según la <a href="#" onclick="document.getElementById('modalPoliticaDatos').classList.remove('oculto'); return false;" style="color:var(--rosa-principal);">Política de Tratamiento de Datos de Lana Rosa</a>.</span>
+        <span style="font-size:12.5px;">Confirmo que el cliente autorizó el tratamiento de sus datos personales, según la <a href="#" onclick="abrirModalPoliticaDatos(); return false;" style="color:var(--rosa-principal);">Política de Tratamiento de Datos de Lana Rosa</a>.</span>
       </label>
       <button class="btn-principal" onclick="confirmarCrearCliente()">Agregar cliente</button>
       <div class="mensaje" id="mensajeCrearCliente"></div>
@@ -2822,21 +2823,7 @@
 <div id="modalPoliticaDatos" class="oculto" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:600;display:flex;align-items:center;justify-content:center;padding:20px;">
   <div style="background:#fff;border-radius:14px;max-width:600px;width:100%;max-height:85vh;overflow-y:auto;padding:28px;">
     <h2 style="margin-top:0;">📋 Política de Tratamiento de Datos Personales — Lana Rosa Crochet</h2>
-    <div style="font-size:13px;line-height:1.6;">
-      <p>En cumplimiento de la Ley 1581 de 2012, el Decreto 1377 de 2013 y demás normas concordantes, <strong>Sara Loaiza Muñoz</strong>, identificada con C.C. 1.055.359.694, con establecimiento de comercio denominado <strong>Lana Rosa Crochet</strong> en Villamaría, Caldas, informa que es el Responsable del Tratamiento de sus datos personales.</p>
-
-      <p><strong>1. Finalidad del Tratamiento:</strong> Los datos personales recolectados (nombre, cédula/NIT, teléfono, dirección, correo electrónico) serán utilizados para:</p>
-      <ul>
-        <li>La gestión administrativa, facturación, cobro y despacho de pedidos.</li>
-        <li>El envío de cotizaciones, confirmación de compras y atención de garantías o reclamos.</li>
-        <li>El cumplimiento de obligaciones tributarias y contables ante la DIAN y autoridades locales.</li>
-        <li>Envío de promociones y novedades sobre nuestros productos, previo consentimiento expreso.</li>
-      </ul>
-
-      <p><strong>2. Derechos del Titular:</strong> Como titular de los datos, usted tiene derecho a conocer, actualizar, rectificar y solicitar la supresión de sus datos personales, así como a revocar la autorización otorgada.</p>
-
-      <p><strong>3. Canal de Atención:</strong> Para ejercer sus derechos, puede comunicarse al correo electrónico <strong>lanarosacrochet@gmail.com</strong> o al teléfono/WhatsApp <strong>3205072801</strong>.</p>
-    </div>
+    <div id="contenidoModalPoliticaDatos" style="font-size:13px;line-height:1.6;white-space:pre-line;"></div>
     <button class="btn-principal" onclick="document.getElementById('modalPoliticaDatos').classList.add('oculto')" style="margin-top:16px;">Cerrar</button>
   </div>
 </div>
@@ -3540,6 +3527,31 @@
   </div>
 </div>
 
+<div id="pantallaPoliticasLegales" class="oculto contenido">
+  <div class="page-header">
+    <h1>📋 Políticas legales</h1>
+    <div class="subtitulo">Edita aquí el texto de tus 2 documentos de protección de datos personales — los cambios se ven reflejados de inmediato en la casilla de autorización de Directorio → Clientes, y puedes reimprimir el aviso físico cuando quieras, sin pedirle esto a Claude cada vez.</div>
+  </div>
+
+  <div class="panel" style="max-width:700px;">
+    <h2>Política de Tratamiento de Datos Personales</h2>
+    <div class="subtitulo">Este es el texto completo que ven tus clientes cuando tocan el enlace de la política, en la casilla de autorización.</div>
+    <textarea id="textoPoliticaTratamientoDatos" rows="16" style="width:100%;font-family:inherit;font-size:13px;padding:12px;border-radius:8px;border:1px solid #e5dde2;line-height:1.5;"></textarea>
+    <button class="btn-principal" onclick="guardarPoliticasLegales()" style="margin-top:10px;">💾 Guardar cambios</button>
+    <div class="mensaje" id="mensajePoliticasLegales"></div>
+  </div>
+
+  <div class="panel" style="max-width:700px;margin-top:20px;">
+    <h2>Aviso de Privacidad (para imprimir en el local)</h2>
+    <div class="subtitulo">Este es el texto corto que se muestra en el afiche físico de tu punto de venta.</div>
+    <textarea id="textoAvisoPrivacidadFisico" rows="8" style="width:100%;font-family:inherit;font-size:13px;padding:12px;border-radius:8px;border:1px solid #e5dde2;line-height:1.5;"></textarea>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button class="btn-principal" onclick="guardarPoliticasLegales()">💾 Guardar cambios</button>
+      <button class="btn-secundario" onclick="imprimirAvisoPrivacidadFisico()">🖨️ Ver / imprimir el afiche</button>
+    </div>
+  </div>
+</div>
+
 <div id="pantallaCopiaSeguridad" class="oculto contenido">
   <div class="page-header">
     <h1>💾 Copia de seguridad y restauración</h1>
@@ -4178,6 +4190,7 @@
   aplicarTema(localStorage.getItem('lanarosa_tema') || 'claro');
 
   let sesionActual = null; // { token, userId, email }
+  let politicaTratamientoDatosCache = null;
   let rolActual = null;
   let turnoActivoActual = null;
   let centroCostoTiendaId = null;
@@ -4514,6 +4527,7 @@
     mostrar('nav-trazabilidad', esAdmin);
     mostrar('nav-reinicio-produccion', esAdmin);
     mostrar('nav-copia-seguridad', esAdmin);
+    mostrar('nav-politicas-legales', esAdmin);
     mostrar('nav-codigos-descuento', esAdmin);
     mostrar('nav-fidelizacion', esAdmin);
     mostrar('nav-config-alertas', esAdmin);
@@ -15640,6 +15654,87 @@
     const libro = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(libro, hoja, 'Flujo de Caja');
     XLSX.writeFile(libro, `LanaRosa_FlujoCaja_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  }
+
+  async function abrirModalPoliticaDatos() {
+    const cont = document.getElementById('contenidoModalPoliticaDatos');
+    if (!politicaTratamientoDatosCache) {
+      cont.textContent = 'Cargando...';
+      document.getElementById('modalPoliticaDatos').classList.remove('oculto');
+      const resp = await fetch(WORKER_URL + '/api/pos/config-empresa', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+      if (resp.ok) {
+        const d = await resp.json();
+        politicaTratamientoDatosCache = d.politica_tratamiento_datos || 'Todavía no se ha configurado el texto de esta política — ve a Configuración → Políticas legales para escribirlo.';
+      } else {
+        politicaTratamientoDatosCache = 'No se pudo cargar la política en este momento.';
+      }
+    }
+    cont.textContent = politicaTratamientoDatosCache;
+    document.getElementById('modalPoliticaDatos').classList.remove('oculto');
+  }
+
+  async function mostrarPantallaPoliticasLegales() {
+    mostrarPantalla('pantallaPoliticasLegales');
+    ocultarMensaje('mensajePoliticasLegales');
+    const resp = await fetch(WORKER_URL + '/api/pos/config-empresa', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (resp.ok) {
+      const d = await resp.json();
+      document.getElementById('textoPoliticaTratamientoDatos').value = d.politica_tratamiento_datos || '';
+      document.getElementById('textoAvisoPrivacidadFisico').value = d.aviso_privacidad_fisico || '';
+    }
+  }
+
+  async function guardarPoliticasLegales() {
+    ocultarMensaje('mensajePoliticasLegales');
+    const politica = document.getElementById('textoPoliticaTratamientoDatos').value.trim();
+    const aviso = document.getElementById('textoAvisoPrivacidadFisico').value.trim();
+
+    if (!politica || !aviso) { mostrarMensaje('mensajePoliticasLegales', 'Ninguno de los 2 textos puede quedar vacío.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/config-empresa/politicas-legales', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ politica_tratamiento_datos: politica, aviso_privacidad_fisico: aviso })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajePoliticasLegales', datos.error || 'No se pudo guardar.', 'error'); return; }
+
+    // Se refresca la caché local para que el modal de la casilla de
+    // autorización (Directorio → Clientes) use el texto nuevo de inmediato,
+    // sin tener que recargar toda la página.
+    politicaTratamientoDatosCache = politica;
+    mostrarMensaje('mensajePoliticasLegales', '✅ Guardado. Los cambios ya se ven reflejados en todo el sistema.', 'exito');
+  }
+
+  async function imprimirAvisoPrivacidadFisico() {
+    const texto = document.getElementById('textoAvisoPrivacidadFisico').value.trim();
+    if (!texto) { alert('Escribe el texto del aviso antes de imprimirlo.'); return; }
+
+    const respEmpresa = await fetch(WORKER_URL + '/api/pos/config-empresa', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    const empresa = respEmpresa.ok ? await respEmpresa.json() : {};
+
+    const ventana = window.open('', '_blank');
+    ventana.document.write(`
+      <html><head><title>Aviso de Privacidad — Lana Rosa Crochet</title><meta charset="utf-8">
+      <style>
+        body { font-family: Arial, sans-serif; padding: 60px 50px; max-width: 700px; margin: 0 auto; text-align: center; }
+        h1 { color: #d8017c; font-size: 30px; margin-bottom: 6px; }
+        h2 { font-size: 20px; margin-bottom: 30px; }
+        p { font-size: 16px; line-height: 1.7; white-space: pre-line; text-align: left; }
+        .contacto { margin-top: 30px; font-weight: bold; font-size: 16px; }
+        .pie { margin-top: 40px; font-size: 12px; color: #888; font-style: italic; }
+        @media print { button { display: none; } }
+      </style></head>
+      <body>
+        <div style="font-size:70px;">🐑</div>
+        <h1>${escaparHtml(empresa.razon_social || 'LANA ROSA CROCHET')}</h1>
+        <h2>AVISO DE PRIVACIDAD — TRATAMIENTO DE DATOS PERSONALES</h2>
+        <p>${escaparHtml(texto)}</p>
+        <div class="pie">Ley 1581 de 2012 y Decreto 1377 de 2013</div>
+        <button onclick="window.print()" style="margin-top:30px;padding:12px 24px;background:#d8017c;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;">🖨️ Imprimir</button>
+      </body></html>
+    `);
+    ventana.document.close();
   }
 
   async function mostrarPantallaCopiaSeguridad() {
