@@ -886,16 +886,8 @@
       <div class="sidebar-depto-submenu" id="deptoConfigSubmenu">
         <button class="nav-btn" id="nav-gestion-usuarios" onclick="mostrarPantallaUsuarios()"><span class="nav-icon">👥</span> Usuarios y permisos</button>
         <button class="nav-btn" onclick="mostrarPantallaMiPerfil()"><span class="nav-icon">👤</span> Mi perfil</button>
-        <button class="nav-btn" id="nav-ceder-permisos" onclick="mostrarPantallaCederPermisos()"><span class="nav-icon">🔑</span> Ceder permisos de administrador</button>
-        <button class="nav-btn" id="nav-trazabilidad" onclick="mostrarPantallaTrazabilidad()"><span class="nav-icon">🕵️</span> Trazabilidad del sistema</button>
-        <button class="nav-btn" id="nav-reinicio-produccion" onclick="mostrarPantallaReinicioProduccion()"><span class="nav-icon">🧹</span> Reinicio antes de producción</button>
-        <button class="nav-btn" id="nav-copia-seguridad" onclick="mostrarPantallaCopiaSeguridad()"><span class="nav-icon">💾</span> Copia de seguridad</button>
-        <button class="nav-btn" id="nav-politicas-legales" onclick="mostrarPantallaPoliticasLegales()"><span class="nav-icon">📋</span> Políticas legales</button>
-        <button class="nav-btn" id="nav-codigos-descuento" onclick="mostrarPantallaCodigosDescuento()"><span class="nav-icon">🏷️</span> Códigos de descuento</button>
-        <button class="nav-btn" id="nav-fidelizacion" onclick="mostrarPantallaFidelizacion()"><span class="nav-icon">⭐</span> Programa de fidelización</button>
-        <button class="nav-btn" id="nav-config-alertas" onclick="mostrarPantallaConfigAlertas()"><span class="nav-icon">🔔</span> Configuración de alertas</button>
-        <button class="nav-btn" id="nav-documentos-empresa" onclick="mostrarPantallaDocumentosEmpresa()"><span class="nav-icon">📁</span> Documentos legales</button>
-        <button class="nav-btn" id="nav-tarifas-envio" onclick="mostrarPantallaTarifasEnvio()"><span class="nav-icon">🚚</span> Tarifas de envío</button>
+        <button class="nav-btn" id="nav-config-empresa" onclick="mostrarPantallaDatosEmpresa()"><span class="nav-icon">🏢</span> Configuración empresa</button>
+        <button class="nav-btn" id="nav-copia-seguridad" onclick="mostrarPantallaCopiaSeguridad()"><span class="nav-icon">🛡️</span> Respaldo y auditoría</button>
         <button class="nav-btn" onclick="mostrarPantallaApariencia()"><span class="nav-icon">🎨</span> Apariencia</button>
       </div>
     </div>
@@ -2547,6 +2539,10 @@
 
 <!-- ===== PANTALLA: USUARIOS Y PERMISOS ===== -->
 <div id="pantallaUsuarios" class="oculto contenido">
+  <div class="filtro-tipo" style="margin-bottom:16px;">
+    <button class="chip-filtro activo" onclick="mostrarPantallaUsuarios()">👥 Usuarios y permisos</button>
+    <button class="chip-filtro" onclick="mostrarPantallaCederPermisos()">🔑 Ceder permisos de administrador</button>
+  </div>
   <div class="page-header">
     <h1>👥 Usuarios y permisos</h1>
     <div class="subtitulo">Crea usuarios, asigna rol(es) y ajusta manualmente qué módulos ve cada quien.</div>
@@ -2642,6 +2638,15 @@
 
 <!-- ===== PANTALLA: TARIFAS DE ENVÍO ===== -->
 <div id="pantallaTarifasEnvio" class="oculto contenido">
+  <div class="filtro-tipo" style="margin-bottom:16px;flex-wrap:wrap;">
+    <button class="chip-filtro" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
+    <button class="chip-filtro" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
+    <button class="chip-filtro" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
+    <button class="chip-filtro activo" onclick="mostrarPantallaTarifasEnvio()">🚚 Tarifas de envío</button>
+    <button class="chip-filtro" onclick="mostrarPantallaCodigosDescuento()">🏷️ Códigos de descuento</button>
+    <button class="chip-filtro" onclick="mostrarPantallaFidelizacion()">⭐ Programa de fidelización</button>
+    <button class="chip-filtro" onclick="mostrarPantallaConfigAlertas()">🔔 Configuración de alertas</button>
+  </div>
   <div class="page-header">
     <h1>🚚 Tarifas de envío</h1>
     <div class="subtitulo">El valor del envío se calcula solo según la ciudad que elija el cajero al crear un pedido.</div>
@@ -2668,6 +2673,15 @@
 <!-- ===== PANTALLA: CONFIGURACIÓN DE ALERTAS ===== -->
 <!-- ===== PANTALLA: DOCUMENTOS LEGALES DE LA EMPRESA ===== -->
 <div id="pantallaDocumentosEmpresa" class="oculto contenido">
+  <div class="filtro-tipo" style="margin-bottom:16px;flex-wrap:wrap;">
+    <button class="chip-filtro" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
+    <button class="chip-filtro" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
+    <button class="chip-filtro activo" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
+    <button class="chip-filtro" onclick="mostrarPantallaTarifasEnvio()">🚚 Tarifas de envío</button>
+    <button class="chip-filtro" onclick="mostrarPantallaCodigosDescuento()">🏷️ Códigos de descuento</button>
+    <button class="chip-filtro" onclick="mostrarPantallaFidelizacion()">⭐ Programa de fidelización</button>
+    <button class="chip-filtro" onclick="mostrarPantallaConfigAlertas()">🔔 Configuración de alertas</button>
+  </div>
   <div class="page-header">
     <h1>📁 Documentos legales de la empresa</h1>
     <div class="subtitulo">RUT, Cámara de Comercio, cédula de la propietaria, registros de marca y diseño, y otros documentos que a veces piden los clientes.</div>
@@ -2706,6 +2720,15 @@
 </div>
 
 <div id="pantallaConfigAlertas" class="oculto contenido">
+  <div class="filtro-tipo" style="margin-bottom:16px;flex-wrap:wrap;">
+    <button class="chip-filtro" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
+    <button class="chip-filtro" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
+    <button class="chip-filtro" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
+    <button class="chip-filtro" onclick="mostrarPantallaTarifasEnvio()">🚚 Tarifas de envío</button>
+    <button class="chip-filtro" onclick="mostrarPantallaCodigosDescuento()">🏷️ Códigos de descuento</button>
+    <button class="chip-filtro" onclick="mostrarPantallaFidelizacion()">⭐ Programa de fidelización</button>
+    <button class="chip-filtro activo" onclick="mostrarPantallaConfigAlertas()">🔔 Configuración de alertas</button>
+  </div>
   <div class="page-header">
     <h1>🔔 Configuración de alertas</h1>
     <div class="subtitulo">Con cuánta anticipación quieres que te avise de cuentas por cobrar/pagar próximas a vencer, y a qué WhatsApp.</div>
@@ -2722,6 +2745,15 @@
 </div>
 
 <div id="pantallaFidelizacion" class="oculto contenido">
+  <div class="filtro-tipo" style="margin-bottom:16px;flex-wrap:wrap;">
+    <button class="chip-filtro" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
+    <button class="chip-filtro" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
+    <button class="chip-filtro" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
+    <button class="chip-filtro" onclick="mostrarPantallaTarifasEnvio()">🚚 Tarifas de envío</button>
+    <button class="chip-filtro" onclick="mostrarPantallaCodigosDescuento()">🏷️ Códigos de descuento</button>
+    <button class="chip-filtro activo" onclick="mostrarPantallaFidelizacion()">⭐ Programa de fidelización</button>
+    <button class="chip-filtro" onclick="mostrarPantallaConfigAlertas()">🔔 Configuración de alertas</button>
+  </div>
   <div class="page-header">
     <h1>⭐ Programa de fidelización</h1>
     <div class="subtitulo">Configura cuánto vale cada punto, tanto para ganarlo como para canjearlo. Aplica hoy a las ventas de Tienda.</div>
@@ -2737,6 +2769,15 @@
 </div>
 
 <div id="pantallaCodigosDescuento" class="oculto contenido">
+  <div class="filtro-tipo" style="margin-bottom:16px;flex-wrap:wrap;">
+    <button class="chip-filtro" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
+    <button class="chip-filtro" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
+    <button class="chip-filtro" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
+    <button class="chip-filtro" onclick="mostrarPantallaTarifasEnvio()">🚚 Tarifas de envío</button>
+    <button class="chip-filtro activo" onclick="mostrarPantallaCodigosDescuento()">🏷️ Códigos de descuento</button>
+    <button class="chip-filtro" onclick="mostrarPantallaFidelizacion()">⭐ Programa de fidelización</button>
+    <button class="chip-filtro" onclick="mostrarPantallaConfigAlertas()">🔔 Configuración de alertas</button>
+  </div>
   <div class="page-header">
     <h1>🏷️ Códigos de descuento</h1>
     <div class="subtitulo">El descuento en el carrito ya no se escribe a mano — el cajero solo ingresa el código que tú configures aquí.</div>
@@ -2785,6 +2826,36 @@
 
   <div class="panel oculto" id="panelLogoEmpresa" style="max-width:420px;margin-top:20px;">
     <h2>Logo de la empresa</h2>
+  <div class="panel oculto" id="panelBloqueoFecha" style="max-width:420px;margin-top:20px;">
+    <h2>🔒 Bloqueo de período contable</h2>
+    <div class="subtitulo">Protege los períodos ya cerrados: ninguna venta, compra, nómina u otro movimiento contable podrá registrarse con fecha igual o anterior a la que pongas aquí — sin importar desde qué pantalla se intente.</div>
+    <div id="estadoBloqueoFecha" style="margin:10px 0;font-size:13px;"></div>
+    <label for="inputFechaBloqueo">Bloquear todo hasta (inclusive)</label>
+    <input type="date" id="inputFechaBloqueo">
+    <button class="btn-principal" onclick="confirmarGuardarBloqueoFecha()">Aplicar bloqueo</button>
+    <button class="btn-secundario" onclick="confirmarQuitarBloqueoFecha()">Quitar bloqueo</button>
+    <div class="mensaje" id="mensajeBloqueoFecha"></div>
+  </div>
+</div>
+
+<!-- ===== GRUPO: CONFIGURACIÓN EMPRESA ===== -->
+<div id="pantallaDatosEmpresa" class="oculto contenido">
+  <div class="filtro-tipo" style="margin-bottom:16px;flex-wrap:wrap;">
+    <button class="chip-filtro activo" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
+    <button class="chip-filtro" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
+    <button class="chip-filtro" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
+    <button class="chip-filtro" onclick="mostrarPantallaTarifasEnvio()">🚚 Tarifas de envío</button>
+    <button class="chip-filtro" onclick="mostrarPantallaCodigosDescuento()">🏷️ Códigos de descuento</button>
+    <button class="chip-filtro" onclick="mostrarPantallaFidelizacion()">⭐ Programa de fidelización</button>
+    <button class="chip-filtro" onclick="mostrarPantallaConfigAlertas()">🔔 Configuración de alertas</button>
+  </div>
+  <div class="page-header">
+    <h1>🏢 Configuración empresa</h1>
+    <div class="subtitulo">Logo, datos fiscales y todo lo que representa a Lana Rosa Crochet hacia afuera.</div>
+  </div>
+
+  <div class="panel" style="max-width:420px;">
+    <h2>Logo de la empresa</h2>
     <div class="subtitulo">Se usa en los recibos de venta, desprendibles de pago e informes. Máximo 1MB.</div>
     <div id="previsualizacionLogo" style="margin:10px 0;"></div>
     <input type="file" id="inputLogoEmpresa" accept="image/*" onchange="previsualizarLogo(event)">
@@ -2792,7 +2863,7 @@
     <div class="mensaje" id="mensajeLogoEmpresa"></div>
   </div>
 
-  <div class="panel oculto" id="panelDatosFiscalesEmpresa" style="max-width:420px;margin-top:20px;">
+  <div class="panel" id="panelDatosFiscalesEmpresa" style="max-width:420px;margin-top:20px;">
     <h2>Datos de la empresa</h2>
     <div class="subtitulo">Se usan para generar la cuenta de cobro y documentos formales.</div>
     <label for="empresaRazonSocial">Razón social / Nombre completo</label>
@@ -2805,17 +2876,6 @@
     <input type="text" id="empresaTelefono" placeholder="300 000 0000">
     <button class="btn-principal" onclick="guardarDatosFiscalesEmpresa()">Guardar</button>
     <div class="mensaje" id="mensajeDatosFiscalesEmpresa"></div>
-  </div>
-
-  <div class="panel oculto" id="panelBloqueoFecha" style="max-width:420px;margin-top:20px;">
-    <h2>🔒 Bloqueo de período contable</h2>
-    <div class="subtitulo">Protege los períodos ya cerrados: ninguna venta, compra, nómina u otro movimiento contable podrá registrarse con fecha igual o anterior a la que pongas aquí — sin importar desde qué pantalla se intente.</div>
-    <div id="estadoBloqueoFecha" style="margin:10px 0;font-size:13px;"></div>
-    <label for="inputFechaBloqueo">Bloquear todo hasta (inclusive)</label>
-    <input type="date" id="inputFechaBloqueo">
-    <button class="btn-principal" onclick="confirmarGuardarBloqueoFecha()">Aplicar bloqueo</button>
-    <button class="btn-secundario" onclick="confirmarQuitarBloqueoFecha()">Quitar bloqueo</button>
-    <div class="mensaje" id="mensajeBloqueoFecha"></div>
   </div>
 </div>
 
@@ -2872,6 +2932,10 @@
 
 <!-- ===== PANTALLA: CEDER PERMISOS DE ADMINISTRADOR ===== -->
 <div id="pantallaCederPermisos" class="oculto contenido">
+  <div class="filtro-tipo" style="margin-bottom:16px;">
+    <button class="chip-filtro" onclick="mostrarPantallaUsuarios()">👥 Usuarios y permisos</button>
+    <button class="chip-filtro activo" onclick="mostrarPantallaCederPermisos()">🔑 Ceder permisos de administrador</button>
+  </div>
   <div class="page-header">
     <h1>🔑 Ceder permisos de administrador</h1>
     <div class="subtitulo">Para incapacidad, licencia, vacaciones (temporal) o renuncia (permanente). Por seguridad, esto exige tu contraseña.</div>
@@ -3528,6 +3592,15 @@
 </div>
 
 <div id="pantallaPoliticasLegales" class="oculto contenido">
+  <div class="filtro-tipo" style="margin-bottom:16px;flex-wrap:wrap;">
+    <button class="chip-filtro" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
+    <button class="chip-filtro activo" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
+    <button class="chip-filtro" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
+    <button class="chip-filtro" onclick="mostrarPantallaTarifasEnvio()">🚚 Tarifas de envío</button>
+    <button class="chip-filtro" onclick="mostrarPantallaCodigosDescuento()">🏷️ Códigos de descuento</button>
+    <button class="chip-filtro" onclick="mostrarPantallaFidelizacion()">⭐ Programa de fidelización</button>
+    <button class="chip-filtro" onclick="mostrarPantallaConfigAlertas()">🔔 Configuración de alertas</button>
+  </div>
   <div class="page-header">
     <h1>📋 Políticas legales</h1>
     <div class="subtitulo">Edita aquí el texto de tus 2 documentos de protección de datos personales — los cambios se ven reflejados de inmediato en la casilla de autorización de Directorio → Clientes, y puedes reimprimir el aviso físico cuando quieras, sin pedirle esto a Claude cada vez.</div>
@@ -3553,6 +3626,11 @@
 </div>
 
 <div id="pantallaCopiaSeguridad" class="oculto contenido">
+  <div class="filtro-tipo" style="margin-bottom:16px;">
+    <button class="chip-filtro activo" onclick="mostrarPantallaCopiaSeguridad()">💾 Copia de seguridad</button>
+    <button class="chip-filtro" onclick="mostrarPantallaReinicioProduccion()">🧹 Reinicio antes de producción</button>
+    <button class="chip-filtro" onclick="mostrarPantallaTrazabilidad()">🕵️ Trazabilidad del sistema</button>
+  </div>
   <div class="page-header">
     <h1>💾 Copia de seguridad y restauración</h1>
     <div class="subtitulo">Respalda toda la información del negocio (88 tablas — ventas, contabilidad, nómina, inventario, Fondo Emprender y más), y restáurala si algo se borra por accidente.</div>
@@ -3587,6 +3665,11 @@
 </div>
 
 <div id="pantallaReinicioProduccion" class="oculto contenido">
+  <div class="filtro-tipo" style="margin-bottom:16px;">
+    <button class="chip-filtro" onclick="mostrarPantallaCopiaSeguridad()">💾 Copia de seguridad</button>
+    <button class="chip-filtro activo" onclick="mostrarPantallaReinicioProduccion()">🧹 Reinicio antes de producción</button>
+    <button class="chip-filtro" onclick="mostrarPantallaTrazabilidad()">🕵️ Trazabilidad del sistema</button>
+  </div>
   <div class="page-header">
     <h1>🧹 Reinicio antes de producción</h1>
     <div class="subtitulo">Borra las ventas, pedidos, turnos, nómina y ejecución de Fondo Emprender de prueba, para arrancar en ceros. No toca a las empleadas registradas, clientes/proveedores, ni el inventario (haz el conteo físico real por separado).</div>
@@ -3609,6 +3692,11 @@
 </div>
 
 <div id="pantallaTrazabilidad" class="oculto contenido">
+  <div class="filtro-tipo" style="margin-bottom:16px;">
+    <button class="chip-filtro" onclick="mostrarPantallaCopiaSeguridad()">💾 Copia de seguridad</button>
+    <button class="chip-filtro" onclick="mostrarPantallaReinicioProduccion()">🧹 Reinicio antes de producción</button>
+    <button class="chip-filtro activo" onclick="mostrarPantallaTrazabilidad()">🕵️ Trazabilidad del sistema</button>
+  </div>
   <div class="page-header">
     <h1>🕵️ Trazabilidad del sistema</h1>
     <div class="subtitulo">Quién hizo qué y cuándo — ventas, nómina, inventario, calendario, envíos y más, todo en una sola línea de tiempo.</div>
@@ -4523,16 +4611,8 @@
     // cualquiera), pero los ítems sensibles adentro quedan solo para admin.
     mostrar('deptoConfiguracionGrupo', true);
     mostrar('nav-gestion-usuarios', esAdmin);
-    mostrar('nav-ceder-permisos', esAdmin);
-    mostrar('nav-trazabilidad', esAdmin);
-    mostrar('nav-reinicio-produccion', esAdmin);
+    mostrar('nav-config-empresa', esAdmin || esContador);
     mostrar('nav-copia-seguridad', esAdmin);
-    mostrar('nav-politicas-legales', esAdmin);
-    mostrar('nav-codigos-descuento', esAdmin);
-    mostrar('nav-fidelizacion', esAdmin);
-    mostrar('nav-config-alertas', esAdmin);
-    mostrar('nav-documentos-empresa', esAdmin || esContador);
-    mostrar('nav-tarifas-envio', esAdmin);
 
     // Turno de caja solo aplica a quien maneja caja física (Tienda)
     mostrar('nav-turno', esAdmin || esCajero);
@@ -9783,26 +9863,14 @@
   function mostrarPantallaApariencia() {
     mostrarPantalla('pantallaApariencia');
     actualizarBotonesTema();
-    document.getElementById('panelLogoEmpresa').classList.toggle('oculto', rolActual !== 'administrador');
-    document.getElementById('panelDatosFiscalesEmpresa').classList.toggle('oculto', rolActual !== 'administrador');
     document.getElementById('panelBloqueoFecha').classList.toggle('oculto', rolActual !== 'administrador');
-    ocultarMensaje('mensajeLogoEmpresa');
-    ocultarMensaje('mensajeDatosFiscalesEmpresa');
     ocultarMensaje('mensajeBloqueoFecha');
-    document.getElementById('previsualizacionLogo').innerHTML = logoEmpresaCache
-      ? `<img src="${logoEmpresaCache}" style="max-width:180px;max-height:100px;border-radius:8px;">`
-      : '<div style="font-size:12px;opacity:0.6;">Todavía no se ha subido ningún logo.</div>';
 
     if (rolActual === 'administrador') {
       fetch(WORKER_URL + '/api/pos/config-empresa', { headers: { Authorization: 'Bearer ' + sesionActual.token } })
         .then(r => r.ok ? r.json() : null)
         .then(d => {
           if (!d) return;
-          document.getElementById('empresaRazonSocial').value = d.razon_social || '';
-          document.getElementById('empresaNit').value = d.nit || '';
-          document.getElementById('empresaDireccion').value = d.direccion || '';
-          document.getElementById('empresaTelefono').value = d.telefono || '';
-
           const estadoEl = document.getElementById('estadoBloqueoFecha');
           if (d.fecha_bloqueo_transacciones) {
             estadoEl.innerHTML = `🔒 <strong>Bloqueado</strong> hasta el ${new Date(d.fecha_bloqueo_transacciones + 'T00:00:00').toLocaleDateString('es-CO')} (inclusive). Nada con esa fecha o antes se puede registrar ni editar.`;
@@ -9813,6 +9881,25 @@
           }
         });
     }
+  }
+
+  function mostrarPantallaDatosEmpresa() {
+    mostrarPantalla('pantallaDatosEmpresa');
+    ocultarMensaje('mensajeLogoEmpresa');
+    ocultarMensaje('mensajeDatosFiscalesEmpresa');
+    document.getElementById('previsualizacionLogo').innerHTML = logoEmpresaCache
+      ? `<img src="${logoEmpresaCache}" style="max-width:180px;max-height:100px;border-radius:8px;">`
+      : '<div style="font-size:12px;opacity:0.6;">Todavía no se ha subido ningún logo.</div>';
+
+    fetch(WORKER_URL + '/api/pos/config-empresa', { headers: { Authorization: 'Bearer ' + sesionActual.token } })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (!d) return;
+        document.getElementById('empresaRazonSocial').value = d.razon_social || '';
+        document.getElementById('empresaNit').value = d.nit || '';
+        document.getElementById('empresaDireccion').value = d.direccion || '';
+        document.getElementById('empresaTelefono').value = d.telefono || '';
+      });
   }
 
   async function confirmarGuardarBloqueoFecha() {
