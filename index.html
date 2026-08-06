@@ -2893,8 +2893,6 @@
   <div class="filtro-tipo" style="margin-bottom:16px;flex-wrap:wrap;">
     <button class="chip-filtro activo" onclick="mostrarPantallaLogoEmpresa()">🖼️ Logo</button>
     <button class="chip-filtro" onclick="mostrarPantallaRosinaImagenes()">🐑 Imágenes de Rosina</button>
-    <button class="chip-filtro" onclick="mostrarPantallaLogoEmpresa()">🖼️ Logo</button>
-    <button class="chip-filtro" onclick="mostrarPantallaRosinaImagenes()">🐑 Imágenes de Rosina</button>
     <button class="chip-filtro" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
     <button class="chip-filtro" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
     <button class="chip-filtro" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
@@ -13452,7 +13450,7 @@
 
     cont.innerHTML = `
       <div class="rosina-bubble">
-        <div class="icon">🐑</div>
+        <div class="icon db-avatar-rosina" style="width:38px;height:38px;font-size:0;"></div>
         <p><strong>Rosina te cuenta:</strong> ${texto[0].toUpperCase() + texto.slice(1)}</p>
       </div>
     `;
@@ -15452,7 +15450,7 @@
   }
 
   function filaEstadoFin(etiqueta, valor, esTotal) {
-    return `<div class="resumen-fila${esTotal ? ' total' : ''}"><span>${etiqueta}</span><strong>${formatearMoneda(valor)}</strong></div>`;
+    return `<div class="resumen-fila${esTotal ? ' total' : ''}"><span>${escaparHtml(String(etiqueta))}</span><strong>${formatearMoneda(valor)}</strong></div>`;
   }
 
   let cacheEstadoResultados = null;
