@@ -9682,11 +9682,14 @@
     opciones.innerHTML = `
       <button onclick="elegirOpcionRapidaIA('como_hacer')" style="text-align:left;padding:9px 12px;border-radius:10px;border:1.5px solid var(--rosa-medio);background:white;font-size:12.5px;cursor:pointer;">❓ Cómo hago algo en el sistema</button>
       ${rolActual === 'administrador' ? `
-      <button onclick="elegirOpcionRapidaIA('cotizaciones')" style="text-align:left;padding:9px 12px;border-radius:10px;border:1.5px solid var(--rosa-medio);background:white;font-size:12.5px;cursor:pointer;">📎 Comparar cotizaciones</button>
-      <button onclick="elegirOpcionRapidaIA('numeros')" style="text-align:left;padding:9px 12px;border-radius:10px;border:1.5px solid var(--rosa-medio);background:white;font-size:12.5px;cursor:pointer;">📊 Cómo van mis números</button>
-      <button onclick="elegirOpcionRapidaIA('fondo_emprender')" style="text-align:left;padding:9px 12px;border-radius:10px;border:1.5px solid var(--rosa-medio);background:white;font-size:12.5px;cursor:pointer;">🏦 Asesoría de Fondo Emprender</button>
+      <button onclick="elegirOpcionRapidaIA('cotizaciones')" style="text-align:left;padding:9px 12px;border-radius:10px;border:1.5px solid var(--rosa-medio);background:white;font-size:12.5px;cursor:pointer;">📎 Comparar cotizaciones de proveedores</button>
+      <button onclick="elegirOpcionRapidaIA('ventas_mes')" style="text-align:left;padding:9px 12px;border-radius:10px;border:1.5px solid var(--rosa-medio);background:white;font-size:12.5px;cursor:pointer;">📊 Ventas del mes</button>
+      <button onclick="elegirOpcionRapidaIA('rotacion')" style="text-align:left;padding:9px 12px;border-radius:10px;border:1.5px solid var(--rosa-medio);background:white;font-size:12.5px;cursor:pointer;">📦 Qué producto rota mejor</button>
+      <button onclick="elegirOpcionRapidaIA('presupuesto')" style="text-align:left;padding:9px 12px;border-radius:10px;border:1.5px solid var(--rosa-medio);background:white;font-size:12.5px;cursor:pointer;">💰 Presupuesto vs. lo gastado</button>
+      <button onclick="elegirOpcionRapidaIA('fe_contrapartida')" style="text-align:left;padding:9px 12px;border-radius:10px;border:1.5px solid var(--rosa-medio);background:white;font-size:12.5px;cursor:pointer;">🏦 Fórmula de contrapartida (Fondo Emprender)</button>
+      <button onclick="elegirOpcionRapidaIA('fe_condonacion')" style="text-align:left;padding:9px 12px;border-radius:10px;border:1.5px solid var(--rosa-medio);background:white;font-size:12.5px;cursor:pointer;">🏦 Requisitos para condonación (Fondo Emprender)</button>
       ` : ''}
-      <button onclick="elegirOpcionRapidaIA('otro')" style="text-align:left;padding:9px 12px;border-radius:10px;border:1.5px solid var(--rosa-medio);background:white;font-size:12.5px;cursor:pointer;">💬 Otra pregunta</button>
+      <button onclick="elegirOpcionRapidaIA('otro')" style="text-align:left;padding:9px 12px;border-radius:10px;border:1.5px dashed var(--rosa-principal);background:var(--rosa-suave);font-size:12.5px;cursor:pointer;font-weight:600;">💬 Escribir mi propia pregunta</button>
     `;
     cont.appendChild(opciones);
     cont.scrollTop = cont.scrollHeight;
@@ -9705,10 +9708,16 @@
       input.focus();
       return;
     }
-    if (opcion === 'numeros') {
-      input.value = '¿Cómo van mis números este mes? Cuéntame ventas, qué está rotando bien y el presupuesto.';
-    } else if (opcion === 'fondo_emprender') {
-      input.value = 'Tengo dudas sobre la normatividad de Fondo Emprender, ¿me puedes orientar?';
+    if (opcion === 'ventas_mes') {
+      input.value = '¿Cuánto he vendido este mes en total, en Tienda, WhatsApp/Redes y Academia?';
+    } else if (opcion === 'rotacion') {
+      input.value = 'De los productos de Tienda, ¿cuáles están rotando mejor y cuáles casi no se venden?';
+    } else if (opcion === 'presupuesto') {
+      input.value = '¿Cómo voy este mes contra el presupuesto? Cuéntame por categoría.';
+    } else if (opcion === 'fe_contrapartida') {
+      input.value = '¿Cuál es la fórmula exacta para calcular la contrapartida de Fondo Emprender?';
+    } else if (opcion === 'fe_condonacion') {
+      input.value = '¿Qué necesito cumplir para que me condonen los recursos de Fondo Emprender?';
     } else if (opcion === 'como_hacer') {
       input.value = '¿Cómo hago para ';
       input.focus();
