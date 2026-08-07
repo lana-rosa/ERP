@@ -962,7 +962,7 @@
   </div>
   <div class="tarjeta">
     <label for="inputMontoApertura">Efectivo inicial en caja (COP)</label>
-    <input type="number" id="inputMontoApertura" placeholder="0" min="0" step="1000">
+    <input type="number" id="inputMontoApertura" placeholder="0" min="0" step="1">
     <button class="btn-principal" id="btnAbrirTurno" onclick="abrirTurno()">Abrir turno</button>
     <div class="mensaje" id="mensajeAbrirTurno"></div>
   </div>
@@ -1168,7 +1168,7 @@
       <label for="pedidoCantidad">Cantidad</label>
       <input type="number" id="pedidoCantidad" placeholder="1" min="1" step="1" value="1">
       <label for="pedidoValorProducto">Valor de este producto (COP)</label>
-      <input type="number" id="pedidoValorProducto" placeholder="0" min="0" step="1000">
+      <input type="number" id="pedidoValorProducto" placeholder="0" min="0" step="1">
       <button type="button" class="btn-secundario" style="margin-top:8px;" onclick="agregarProductoAPedido()">+ Agregar producto a la lista</button>
 
       <div id="listaProductosPedido" style="margin-top:10px;"></div>
@@ -1188,7 +1188,7 @@
       </div>
 
       <label for="pedidoValorEnvio" style="margin-top:14px;">Valor del envío (COP) <span style="font-size:10px;opacity:0.6;">(se calcula solo según la ciudad, pero puedes ajustarlo)</span></label>
-      <input type="number" id="pedidoValorEnvio" placeholder="0" min="0" step="1000" oninput="actualizarResumenAnticipoPedido()">
+      <input type="number" id="pedidoValorEnvio" placeholder="0" min="0" step="1" oninput="actualizarResumenAnticipoPedido()">
 
       <div id="resumenAnticipoPedido" class="resumen-cierre" style="margin-top:12px;"></div>
 
@@ -1220,7 +1220,7 @@
         <label for="academiaDescripcion">Descripción</label>
         <input type="text" id="academiaDescripcion" placeholder="Ej: Curso de amigurumis nivel 1 — María P.">
         <label for="academiaMonto">Valor (COP)</label>
-        <input type="number" id="academiaMonto" placeholder="0" min="1" step="1000">
+        <input type="number" id="academiaMonto" placeholder="0" min="1" step="1">
         <label for="academiaDuracionHoras">Duración de la clase (horas) <span style="font-size:10px;opacity:0.6;">(para calcular el margen de utilidad)</span></label>
         <input type="number" id="academiaDuracionHoras" placeholder="2" min="0.5" step="0.5" value="2">
         <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-weight:400;">
@@ -1443,9 +1443,9 @@
         <option value="rollo">Rollo</option>
       </select>
       <label for="invPrecioVenta">Precio de venta (COP)</label>
-      <input type="number" id="invPrecioVenta" placeholder="0" min="0" step="1000">
+      <input type="number" id="invPrecioVenta" placeholder="0" min="0" step="1">
       <label for="invCostoPromedio">Costo aproximado (COP, opcional)</label>
-      <input type="number" id="invCostoPromedio" placeholder="0" min="0" step="1000">
+      <input type="number" id="invCostoPromedio" placeholder="0" min="0" step="1">
       <label for="invStockInicial">Stock inicial</label>
       <input type="number" id="invStockInicial" placeholder="0" min="0" step="1">
       <label for="invStockMinimo">Stock mínimo (para alertas)</label>
@@ -1468,7 +1468,7 @@
         <label for="kitNombre">Nombre del kit</label>
         <input type="text" id="kitNombre" placeholder="Ej: Kit amigurumi básico">
         <label for="kitPrecioVenta">Precio de venta (por kit, sin empaque ni descuento)</label>
-        <input type="number" id="kitPrecioVenta" min="0" step="1000" placeholder="0" oninput="actualizarPrecioFinalKit()">
+        <input type="number" id="kitPrecioVenta" min="0" step="1" placeholder="0" oninput="actualizarPrecioFinalKit()">
         <label for="kitValorEmpaque">Valor del empaque <span style="font-size:10px;opacity:0.6;">(opcional, se suma al precio)</span></label>
         <input type="number" id="kitValorEmpaque" min="0" step="500" placeholder="0" oninput="actualizarPrecioFinalKit()">
         <label for="kitDescuento">Descuento <span style="font-size:10px;opacity:0.6;">(opcional, se resta del precio)</span></label>
@@ -1838,7 +1838,7 @@
       <label for="honDescripcion">Descripción</label>
       <input type="text" id="honDescripcion" placeholder="Ej: Asesoría contable mes de julio">
       <label for="honMontoBruto">Valor del servicio (COP, bruto)</label>
-      <input type="number" id="honMontoBruto" min="0" step="1000" oninput="calcularNetoHonorarios()">
+      <input type="number" id="honMontoBruto" min="0" step="1" oninput="calcularNetoHonorarios()">
       <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-weight:400;">
         <input type="checkbox" id="honAplicaRetencion" style="width:auto;" onchange="calcularNetoHonorarios()">
         <span>Aplicar retención en la fuente</span>
@@ -1875,7 +1875,7 @@
       <label for="facCreditoDescripcion">Descripción</label>
       <input type="text" id="facCreditoDescripcion" placeholder="Ej: Compra de lana e hilos">
       <label for="facCreditoMonto">Monto (COP)</label>
-      <input type="number" id="facCreditoMonto" min="0" step="1000">
+      <input type="number" id="facCreditoMonto" min="0" step="1">
       <label for="facCreditoFecha">Fecha de la factura</label>
       <input type="date" id="facCreditoFecha">
       <label for="facCreditoPlazo">Días de plazo <span style="font-size:10px;opacity:0.6;">(se autocompleta con el plazo del proveedor, editable)</span></label>
@@ -1900,7 +1900,7 @@
       <label for="pagoAdminDescripcion">Detalle</label>
       <input type="text" id="pagoAdminDescripcion" placeholder="Ej: Factura de energía enero 2026">
       <label for="pagoAdminMonto">Monto (COP)</label>
-      <input type="number" id="pagoAdminMonto" placeholder="0" min="1" step="1000">
+      <input type="number" id="pagoAdminMonto" placeholder="0" min="1" step="1">
       <label for="pagoAdminMetodoPago">Método de pago</label>
       <select id="pagoAdminMetodoPago">
         <option value="efectivo">Efectivo (se descuenta del arqueo de caja)</option>
@@ -1946,7 +1946,7 @@
       <label for="gastoDescripcion">¿Qué se compró?</label>
       <input type="text" id="gastoDescripcion" placeholder="Ej: Lana acrílica varios colores">
       <label for="gastoMonto">Monto (COP)</label>
-      <input type="number" id="gastoMonto" placeholder="0" min="1" step="1000">
+      <input type="number" id="gastoMonto" placeholder="0" min="1" step="1">
 
       <label style="margin-top:14px;">¿Cómo se pagó esta compra?</label>
       <div style="display:flex;gap:10px;margin-bottom:10px;">
@@ -2108,7 +2108,7 @@
         <input type="number" id="simUtilidadDeseada" min="0" step="10000" value="0" oninput="recalcularSimulacionPresupuesto()">
 
         <label for="simPrecioPromedio">Precio promedio por pieza <span style="font-size:10px;opacity:0.6;">(opcional, para traducir a unidades)</span></label>
-        <input type="number" id="simPrecioPromedio" min="0" step="1000" oninput="recalcularSimulacionPresupuesto()">
+        <input type="number" id="simPrecioPromedio" min="0" step="1" oninput="recalcularSimulacionPresupuesto()">
 
         <button class="btn-secundario" style="width:auto;margin-top:10px;" onclick="restablecerSimulacionPresupuesto()">↺ Restablecer a mis números reales</button>
       </div>
@@ -2225,7 +2225,7 @@
         <label for="empFechaNacimiento">Fecha de nacimiento</label>
         <input type="date" id="empFechaNacimiento">
         <label for="empSalario">Salario básico mensual (COP)</label>
-        <input type="number" id="empSalario" placeholder="0" min="1" step="1000">
+        <input type="number" id="empSalario" placeholder="0" min="1" step="1">
         <label for="empFechaIngreso">Fecha de ingreso</label>
         <input type="date" id="empFechaIngreso">
         <label for="empDepartamento">Departamento</label>
@@ -3140,9 +3140,9 @@
       <select id="afCentroCosto"></select>
 
       <label for="afValorCompra">Valor de compra (COP)</label>
-      <input type="number" id="afValorCompra" min="0" step="1000" placeholder="0">
+      <input type="number" id="afValorCompra" min="0" step="1" placeholder="0">
       <label for="afValorResidual">Valor residual <span style="font-size:10px;opacity:0.6;">(lo que valdría al final de su vida útil — opcional, 0 si no aplica)</span></label>
-      <input type="number" id="afValorResidual" min="0" step="1000" placeholder="0">
+      <input type="number" id="afValorResidual" min="0" step="1" placeholder="0">
       <label for="afVidaUtil">Vida útil (años) <span style="font-size:10px;opacity:0.6;">(autocompletada según la categoría — editable)</span></label>
       <input type="number" id="afVidaUtil" min="1" step="1">
 
@@ -3205,7 +3205,7 @@
       <div style="display:flex;gap:8px;margin-top:6px;">
         <input type="text" id="cotNuevoItemDesc" placeholder="Descripción" style="flex:2;">
         <input type="number" id="cotNuevoItemCant" placeholder="Cant." min="1" value="1" style="flex:1;">
-        <input type="number" id="cotNuevoItemPrecio" placeholder="Precio" min="0" step="1000" style="flex:1;">
+        <input type="number" id="cotNuevoItemPrecio" placeholder="Precio" min="0" step="1" style="flex:1;">
         <button type="button" class="btn-mini editar" onclick="agregarItemCotizacion()">+ Agregar</button>
       </div>
 
@@ -3215,7 +3215,7 @@
           <option value="monto">$ Monto</option>
           <option value="porcentaje">% Porcentaje</option>
         </select>
-        <input type="number" id="cotDescuento" min="0" step="1000" value="0" oninput="actualizarTotalCotizacion()" style="flex:1;">
+        <input type="number" id="cotDescuento" min="0" step="1" value="0" oninput="actualizarTotalCotizacion()" style="flex:1;">
       </div>
       <div id="totalCotizacion" style="font-size:15px;font-weight:700;color:var(--rosa-principal);margin-top:4px;"></div>
 
@@ -3272,13 +3272,13 @@
       <label for="ncdDescripcion">Descripción</label>
       <input type="text" id="ncdDescripcion" placeholder="Ej: Devolución de amigurumi con defecto">
       <label for="ncdValor">Valor (COP)</label>
-      <input type="number" id="ncdValor" min="1" step="1000">
+      <input type="number" id="ncdValor" min="1" step="1">
       <label for="ncdFecha">Fecha</label>
       <input type="date" id="ncdFecha">
       <label for="ncdReferencia">Documento de referencia <span style="font-size:10px;opacity:0.6;">(N° de venta/factura que origina el ajuste)</span></label>
       <input type="text" id="ncdReferencia" placeholder="Ej: PED-2026-00012">
       <label for="ncdValorOriginal">Valor de ese documento original (COP) <span style="font-size:10px;opacity:0.6;">(opcional — si lo escribes, no se deja hacer una nota crédito por más de eso)</span></label>
-      <input type="number" id="ncdValorOriginal" min="0" step="1000">
+      <input type="number" id="ncdValorOriginal" min="0" step="1">
 
       <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-weight:400;">
         <input type="checkbox" id="ncdAfectaCaja" style="width:auto;" onchange="document.getElementById('bloqueMetodoPagoNCD').classList.toggle('oculto', !this.checked)">
@@ -3328,7 +3328,7 @@
       <div style="display:flex;gap:8px;margin-top:6px;">
         <input type="text" id="ocNuevoItemDesc" placeholder="Descripción" style="flex:2;">
         <input type="number" id="ocNuevoItemCant" placeholder="Cant." min="1" value="1" style="flex:1;">
-        <input type="number" id="ocNuevoItemPrecio" placeholder="Precio estimado" min="0" step="1000" style="flex:1;">
+        <input type="number" id="ocNuevoItemPrecio" placeholder="Precio estimado" min="0" step="1" style="flex:1;">
         <button type="button" class="btn-mini editar" onclick="agregarItemOrdenCompra()">+ Agregar</button>
       </div>
       <div id="totalOrdenCompra" style="font-size:15px;font-weight:700;color:var(--rosa-principal);margin-top:8px;"></div>
@@ -3399,7 +3399,7 @@
       <label for="tiCentroCosto">Departamento</label>
       <select id="tiCentroCosto"></select>
       <label for="tiMonto">Monto (COP)</label>
-      <input type="number" id="tiMonto" min="1" step="1000">
+      <input type="number" id="tiMonto" min="1" step="1">
       <label for="tiFecha">Fecha</label>
       <input type="date" id="tiFecha">
       <label for="tiDescripcion">Descripción</label>
@@ -3435,7 +3435,7 @@
       <option value="salida">Salida (dinero que salió)</option>
     </select>
     <label for="concValor">Valor (COP)</label>
-    <input type="number" id="concValor" min="1" step="1000">
+    <input type="number" id="concValor" min="1" step="1">
     <button class="btn-principal" onclick="confirmarRegistrarMovimientoExtracto()">Registrar</button>
     <div class="mensaje" id="mensajeConciliacion"></div>
   </div>
@@ -3511,7 +3511,7 @@
       <label for="cxcFechaFactura">Fecha de la factura</label>
       <input type="date" id="cxcFechaFactura">
       <label for="cxcMonto">Monto (COP)</label>
-      <input type="number" id="cxcMonto" min="0" step="1000">
+      <input type="number" id="cxcMonto" min="0" step="1">
       <label for="cxcVencimiento">Fecha de vencimiento</label>
       <input type="date" id="cxcVencimiento">
       <button class="btn-principal" onclick="confirmarCrearCuentaPendiente()">Registrar</button>
@@ -3927,7 +3927,7 @@
       <label for="feNombreProyecto">Nombre del proyecto</label>
       <input type="text" id="feNombreProyecto" placeholder="Lana Rosa Crochet">
       <label for="feMontoAsignado">Monto total asignado (COP)</label>
-      <input type="number" id="feMontoAsignado" min="0" step="1000">
+      <input type="number" id="feMontoAsignado" min="0" step="1">
       <label for="feFechaInicio">Fecha de inicio de ejecución</label>
       <input type="date" id="feFechaInicio">
       <label for="feInterventorNombre">Nombre del interventor</label>
@@ -4013,7 +4013,7 @@
         <option value="no_responsable">No responsable de IVA</option>
       </select>
       <label for="feDocMonto">Monto (COP)</label>
-      <input type="number" id="feDocMonto" min="0" step="1000">
+      <input type="number" id="feDocMonto" min="0" step="1">
       <label for="feDocFechaExpedicion">Fecha de expedición</label>
       <input type="date" id="feDocFechaExpedicion">
       <div id="feChecklistContenedor" style="margin-top:10px;"></div>
@@ -4090,7 +4090,7 @@
       </div>
       <div style="flex:1;min-width:120px;">
         <label for="feIngresoMonto">Monto recibido (COP)</label>
-        <input type="number" id="feIngresoMonto" min="0" step="1000">
+        <input type="number" id="feIngresoMonto" min="0" step="1">
       </div>
       <div style="flex:1;min-width:140px;">
         <label for="feIngresoFecha">Fecha</label>
@@ -4114,7 +4114,7 @@
       </div>
       <div style="flex:1;min-width:120px;">
         <label for="feDesembolsoMonto">Monto (COP)</label>
-        <input type="number" id="feDesembolsoMonto" min="0" step="1000">
+        <input type="number" id="feDesembolsoMonto" min="0" step="1">
       </div>
       <div style="flex:1;min-width:140px;">
         <label for="feDesembolsoFecha">Fecha</label>
@@ -4191,7 +4191,7 @@
   </div>
   <div class="tarjeta">
     <label for="inputMontoDeclarado">Efectivo contado físicamente (COP)</label>
-    <input type="number" id="inputMontoDeclarado" placeholder="0" min="0" step="1000">
+    <input type="number" id="inputMontoDeclarado" placeholder="0" min="0" step="1">
     <label for="inputObservaciones">Observaciones (opcional)</label>
     <input type="text" id="inputObservaciones" placeholder="Ej: faltaron $2.000 de cambio">
     <button class="btn-principal" id="btnCerrarTurno" onclick="cerrarTurno()">Confirmar cierre</button>
@@ -5629,8 +5629,8 @@
             <option value="credito_directo" ${pago.metodo_pago === 'credito_directo' ? 'selected' : ''}>📋 Crédito directo al cliente</option>
           </select>
           ${pago.metodo_pago === 'efectivo'
-            ? `<input type="number" placeholder="¿Cuánto te dio?" min="0" step="1000" value="${pago.recibido || ''}" oninput="actualizarFilaPago(${indice}, 'recibido', this.value)" style="flex:1;">`
-            : `<input type="number" placeholder="Monto" min="0" step="1000" value="${pago.monto}" oninput="actualizarFilaPago(${indice}, 'monto', this.value)" style="flex:1;">`
+            ? `<input type="number" placeholder="¿Cuánto te dio?" min="0" step="1" value="${pago.recibido || ''}" oninput="actualizarFilaPago(${indice}, 'recibido', this.value)" style="flex:1;">`
+            : `<input type="number" placeholder="Monto" min="0" step="1" value="${pago.monto}" oninput="actualizarFilaPago(${indice}, 'monto', this.value)" style="flex:1;">`
           }
           ${filasPago.length > 1 ? `<button class="btn-quitar-pago" onclick="quitarFilaPago(${indice})">✕</button>` : ''}
         </div>
@@ -6791,8 +6791,8 @@
           <label>Proveedor</label>
           <select id="edit-proveedor-${item.id}">${opcionesProveedor}</select>
           <div class="grid-campos-inventario">
-            <div class="campo-mini"><label>Precio de venta</label><input type="number" min="0" step="1000" value="${item.precio_venta}" id="edit-precio-${item.id}"></div>
-            <div class="campo-mini"><label>Costo aproximado</label><input type="number" min="0" step="1000" value="${item.costo_promedio_ponderado}" id="edit-costo-${item.id}"></div>
+            <div class="campo-mini"><label>Precio de venta</label><input type="number" min="0" step="1" value="${item.precio_venta}" id="edit-precio-${item.id}"></div>
+            <div class="campo-mini"><label>Costo aproximado</label><input type="number" min="0" step="1" value="${item.costo_promedio_ponderado}" id="edit-costo-${item.id}"></div>
             <div class="campo-mini"><label>Stock actual</label><input type="number" min="0" step="1" value="${item.stock_actual}" id="edit-stock-${item.id}"></div>
             <div class="campo-mini"><label>Stock mínimo</label><input type="number" min="0" step="1" value="${item.stock_minimo}" id="edit-stockmin-${item.id}"></div>
           </div>
@@ -12634,7 +12634,7 @@
             <label style="margin-top:8px;">Fecha de nacimiento</label>
             <input type="date" id="edit-emp-nacimiento-${e.id}" value="${fechaNacimientoValor}">
             <label style="margin-top:8px;">Salario básico mensual (COP)</label>
-            <input type="number" id="edit-emp-salario-${e.id}" min="1" step="1000" value="${e.salario_basico}">
+            <input type="number" id="edit-emp-salario-${e.id}" min="1" step="1" value="${e.salario_basico}">
             <div style="font-size:10.5px;opacity:0.6;margin-top:3px;">Cambiar esto solo afecta las próximas liquidaciones — las que ya se hicieron quedan intactas. El cambio queda guardado en el historial de salario.</div>
             <label style="margin-top:8px;">Fecha de ingreso</label>
             <input type="date" id="edit-emp-fecha-${e.id}" value="${fechaIngresoValor}">
@@ -12945,11 +12945,11 @@
           <div class="grid-campos-inventario" style="margin-top:6px;">
             <div class="campo-mini">
               <label>Monto total (COP)</label>
-              <input type="number" id="prest-monto-${empleadoId}" min="1" step="1000" style="font-size:12px;padding:7px 9px;">
+              <input type="number" id="prest-monto-${empleadoId}" min="1" step="1" style="font-size:12px;padding:7px 9px;">
             </div>
             <div class="campo-mini">
               <label>Cuota por período (COP)</label>
-              <input type="number" id="prest-cuota-${empleadoId}" min="1" step="1000" style="font-size:12px;padding:7px 9px;">
+              <input type="number" id="prest-cuota-${empleadoId}" min="1" step="1" style="font-size:12px;padding:7px 9px;">
             </div>
           </div>
           <button class="btn-mini guardar" style="width:100%;margin-top:8px;" onclick="crearPrestamo('${empleadoId}')">+ Registrar préstamo</button>
@@ -14378,7 +14378,7 @@
       <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f4eef2;font-size:12.5px;">
         <span>${escaparHtml(i.nombre)} <span style="opacity:0.5;">(normal: ${formatearMoneda(i.precio_venta)})</span></span>
         <span style="display:flex;gap:4px;">
-          <input type="number" id="precioNuevoLista-${i.id}" placeholder="Precio" min="0" step="1000" style="width:90px;padding:5px;">
+          <input type="number" id="precioNuevoLista-${i.id}" placeholder="Precio" min="0" step="1" style="width:90px;padding:5px;">
           <button class="btn-mini guardar" onclick="confirmarAgregarPrecioALista('${i.id}')">Agregar</button>
         </span>
       </div>
