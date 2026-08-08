@@ -1694,6 +1694,7 @@
     <div class="panel" style="max-width:none;">
       <h2>Pedidos listos para generar guía</h2>
       <div class="subtitulo">Pedidos en estado "Listo despacho" que todavía no tienen guía de envío.</div>
+      <div class="mensaje" id="mensajeGenerarGuia"></div>
       <div id="listaPedidosParaEnvio"><div class="cargando">Cargando...</div></div>
     </div>
     <div class="panel" style="max-width:none;max-height:none;margin-top:20px;">
@@ -11727,25 +11728,33 @@
       return;
     }
 
-    contenedor.innerHTML = pendientes.map(p => `
-      <div class="fila-inventario-editable">
-        <div class="fila-inventario-titulo">
-          <span class="fila-inventario-nombre">${escaparHtml(p.consecutivo)} — ${p.cantidad}x ${escaparHtml(p.descripcion_producto)}</span>
+    contenedor.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:130px 1fr 90px 160px;">
+          <span>PEDIDO</span><span>PRODUCTO</span><span>CANT.</span><span></span>
         </div>
-        <button class="btn-mini guardar" style="margin-top:8px;" onclick="generarGuiaEnvio('${p.id}')">📮 Generar guía de envío</button>
+        ${pendientes.map(p => `
+          <div class="tabla-lista-fila" style="grid-template-columns:130px 1fr 90px 160px;">
+            <span style="font-weight:600;">${escaparHtml(p.consecutivo)}</span>
+            <span style="opacity:0.75;">${escaparHtml(p.descripcion_producto)}</span>
+            <span>${p.cantidad}</span>
+            <span><button class="btn-mini guardar" onclick="generarGuiaEnvio('${p.id}')">📮 Generar guía</button></span>
+          </div>
+        `).join('')}
       </div>
-    `).join('');
+    `;
   }
 
   async function generarGuiaEnvio(pedidoCanalId) {
+    ocultarMensaje('mensajeGenerarGuia');
     const resp = await fetch(WORKER_URL + '/api/pos/envios', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ pedido_canal_id: pedidoCanalId })
     });
     const datos = await resp.json();
-    if (!resp.ok) { alert('No se pudo generar la guía: ' + (datos.error || 'Error desconocido')); return; }
-    alert('✅ Guía de envío generada.');
+    if (!resp.ok) { mostrarMensaje('mensajeGenerarGuia', 'No se pudo generar la guía: ' + (datos.error || 'Error desconocido'), 'error'); return; }
+    mostrarMensaje('mensajeGenerarGuia', '✅ Guía de envío generada.', 'exito');
     await cargarEnvios();
   }
 
