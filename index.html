@@ -1619,6 +1619,7 @@
 
     <div class="panel" style="max-width:none;">
       <h2 id="tituloPanelSolicitudesPendientes">Solicitudes pendientes por aprobar y despachar</h2>
+      <div class="mensaje" id="mensajeSolicitudesInsumo"></div>
       <div id="listaSolicitudesPendientes"><div class="cargando">Cargando solicitudes...</div></div>
       <button class="btn-secundario" onclick="irAInicioSegunRol()" style="margin-top:14px;">Volver</button>
     </div>
@@ -2884,6 +2885,7 @@
     </div>
     <div class="panel">
       <h2>Códigos existentes</h2>
+      <div class="mensaje" id="mensajeCodigosDescuento"></div>
       <div id="listaCodigosDescuento"><div class="cargando">Cargando...</div></div>
     </div>
   </div>
@@ -7896,38 +7898,39 @@
 
     const puedeEnviar = rolActual === 'cajero' || rolActual === 'administrador';
 
-    contenedor.innerHTML = solicitudes.map(s => {
-      const item = s.inventario_items || {};
-      const fecha = new Date(s.fecha_solicitud).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
-      return `
-        <div class="fila-inventario-editable" style="margin-bottom:10px;">
-          <div class="fila-inventario-titulo">
-            <span class="fila-inventario-nombre">${escaparHtml(item.nombre || 'Insumo')}</span>
-            <span class="fila-inventario-tipo-tag" style="background:#fff3cd;color:#856404;">Pendiente</span>
-          </div>
-          <div style="font-size:13px;margin-top:4px;">
-            <strong>${s.cantidad} ${item.unidad_medida || ''}</strong> para el pedido <strong>${escaparHtml(s.numero_pedido_crm)}</strong><br>
-            <span style="opacity:0.6;font-size:12px;">${fecha} · Stock actual en Tienda: ${item.stock_actual ?? '—'}</span>
-          </div>
-          ${puedeEnviar ? `
-            <div class="fila-inventario-acciones" style="margin-top:10px;">
-              <button class="btn-mini guardar" onclick="confirmarEnviarInsumoATaller('${s.id}')">✅ Enviado al taller</button>
-            </div>
-          ` : ''}
+    contenedor.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:1fr 100px 150px 130px 90px${puedeEnviar ? ' 140px' : ''};">
+          <span>INSUMO</span><span>CANTIDAD</span><span>PEDIDO</span><span>FECHA</span><span>STOCK</span>${puedeEnviar ? '<span></span>' : ''}
         </div>
-      `;
-    }).join('');
+        ${solicitudes.map(s => {
+          const item = s.inventario_items || {};
+          const fecha = new Date(s.fecha_solicitud).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
+          return `
+            <div class="tabla-lista-fila" style="grid-template-columns:1fr 100px 150px 130px 90px${puedeEnviar ? ' 140px' : ''};">
+              <span style="font-weight:600;">${escaparHtml(item.nombre || 'Insumo')} <span style="font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:999px;background:#fff3cd;color:#856404;display:inline-block;">Pendiente</span></span>
+              <span>${s.cantidad} ${item.unidad_medida || ''}</span>
+              <span style="opacity:0.75;">${escaparHtml(s.numero_pedido_crm)}</span>
+              <span style="opacity:0.75;font-size:11.5px;">${fecha}</span>
+              <span style="opacity:0.75;">${item.stock_actual ?? '—'}</span>
+              ${puedeEnviar ? `<span><button class="btn-mini guardar" onclick="confirmarEnviarInsumoATaller('${s.id}')">✅ Enviado</button></span>` : ''}
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
   }
 
   async function confirmarEnviarInsumoATaller(solicitudId) {
+    ocultarMensaje('mensajeSolicitudesInsumo');
     const resp = await fetch(WORKER_URL + '/api/pos/insumo-pedido/enviar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ solicitud_id: solicitudId })
     });
     const datos = await resp.json();
-    if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudo despachar')); return; }
-    alert('✅ Insumo descontado de la Tienda y enviado al Taller. Ya aparece en "Material que tengo en uso ahora" de ese pedido.');
+    if (!resp.ok) { mostrarMensaje('mensajeSolicitudesInsumo', 'Error: ' + (datos.error || 'No se pudo despachar'), 'error'); return; }
+    mostrarMensaje('mensajeSolicitudesInsumo', '✅ Insumo descontado de la Tienda y enviado al Taller. Ya aparece en "Material que tengo en uso ahora" de ese pedido.', 'exito');
     await cargarSolicitudesPendientesInsumo();
     await cargarHistorialSolicitudesInsumo();
   }
@@ -9405,31 +9408,33 @@
     const { codigos } = await resp.json();
     if (!codigos || codigos.length === 0) { contenedor.innerHTML = '<div class="cargando">Todavía no has creado ningún código.</div>'; return; }
 
-    contenedor.innerHTML = codigos.map(c => `
-      <div class="fila-inventario-editable" style="margin-bottom:8px;${c.activo ? '' : 'opacity:0.5;'}">
-        <div class="fila-inventario-titulo">
-          <span class="fila-inventario-nombre">${escaparHtml(c.codigo)} ${!c.activo ? '<span class="badge-inactivo">Inactivo</span>' : ''}</span>
-          <span class="fila-inventario-tipo-tag">${c.tipo === 'porcentaje' ? c.valor + '%' : formatearMoneda(c.valor)}</span>
+    contenedor.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:150px 90px 1fr 130px 130px 110px;">
+          <span>CÓDIGO</span><span>VALOR</span><span>DESCRIPCIÓN</span><span>USOS</span><span>VENCE</span><span></span>
         </div>
-        <div style="font-size:12px;opacity:0.65;margin-top:2px;">
-          ${c.descripcion ? escaparHtml(c.descripcion) + ' · ' : ''}
-          Usado ${c.usos_actuales}${c.usos_maximos ? ' de ' + c.usos_maximos : ''} vez(es)
-          ${c.fecha_fin ? ' · Vence: ' + new Date(c.fecha_fin + 'T00:00:00').toLocaleDateString('es-CO') : ''}
-        </div>
-        <div class="fila-inventario-acciones" style="margin-top:8px;">
-          <button class="btn-mini ${c.activo ? 'desactivar' : 'guardar'}" onclick="toggleCodigoDescuento('${c.id}', ${!c.activo})">${c.activo ? 'Desactivar' : 'Reactivar'}</button>
-        </div>
+        ${codigos.map(c => `
+          <div class="tabla-lista-fila" style="grid-template-columns:150px 90px 1fr 130px 130px 110px;${c.activo ? '' : 'opacity:0.5;'}">
+            <span style="font-weight:600;">${escaparHtml(c.codigo)}${!c.activo ? ' <span class="badge-inactivo">Inactivo</span>' : ''}</span>
+            <span>${c.tipo === 'porcentaje' ? c.valor + '%' : formatearMoneda(c.valor)}</span>
+            <span style="opacity:0.75;">${c.descripcion ? escaparHtml(c.descripcion) : '—'}</span>
+            <span style="opacity:0.75;">${c.usos_actuales}${c.usos_maximos ? ' de ' + c.usos_maximos : ''}</span>
+            <span style="opacity:0.75;">${c.fecha_fin ? new Date(c.fecha_fin + 'T00:00:00').toLocaleDateString('es-CO') : '—'}</span>
+            <span><button class="btn-mini ${c.activo ? 'desactivar' : 'guardar'}" onclick="toggleCodigoDescuento('${c.id}', ${!c.activo})">${c.activo ? 'Desactivar' : 'Reactivar'}</button></span>
+          </div>
+        `).join('')}
       </div>
-    `).join('');
+    `;
   }
 
   async function toggleCodigoDescuento(id, activo) {
+    ocultarMensaje('mensajeCodigosDescuento');
     const resp = await fetch(WORKER_URL + '/api/pos/descuentos/estado', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ id, activo })
     });
-    if (!resp.ok) { alert('No se pudo actualizar.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeCodigosDescuento', 'No se pudo actualizar.', 'error'); return; }
     await cargarCodigosDescuento();
   }
 
