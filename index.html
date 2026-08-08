@@ -8084,25 +8084,34 @@
       if (!data || data.length === 0) { contenedor.innerHTML = '<div class="cargando">No se encontraron productos.</div>'; return; }
 
       contenedor.innerHTML = data.map(p => `
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f4eef2;font-size:12.5px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f4eef2;font-size:12.5px;gap:8px;">
           <span>${escaparHtml(p.nombre)}${p.sku ? ' <span style="opacity:0.5;">(' + escaparHtml(p.sku) + ')</span>' : ' <span style="color:var(--rojo-error);">— sin SKU</span>'}</span>
-          <button class="btn-mini editar" onclick='agregarProductoAEtiquetas(${JSON.stringify(p).replace(/'/g, "&#39;")})'>+ Agregar</button>
+          ${p.sku
+            ? `<button class="btn-mini editar" onclick='agregarProductoAEtiquetas(${JSON.stringify(p).replace(/'/g, "&#39;")})'>+ Agregar</button>`
+            : `<span style="display:flex;gap:4px;flex-shrink:0;">
+                 <input type="text" id="skuNuevo-${p.id}" placeholder="Asignar SKU" style="width:110px;padding:5px;font-size:12px;">
+                 <button class="btn-mini editar" onclick='guardarSkuYAgregarEtiqueta(${JSON.stringify(p).replace(/'/g, "&#39;")})'>Guardar</button>
+               </span>`
+          }
         </div>
       `).join('');
     }, 300);
   }
 
+  async function guardarSkuYAgregarEtiqueta(producto) {
+    const campo = document.getElementById(`skuNuevo-${producto.id}`);
+    const nuevoSku = (campo?.value || '').trim();
+    if (!nuevoSku) { campo?.focus(); return; }
+    producto.sku = nuevoSku;
+    await fetch(WORKER_URL + '/api/pos/inventario/asignar-sku', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ inventario_item_id: producto.id, sku: producto.sku })
+    });
+    agregarProductoAEtiquetas(producto);
+  }
+
   async function agregarProductoAEtiquetas(producto) {
-    if (!producto.sku) {
-      const nuevoSku = prompt(`"${producto.nombre}" todavía no tiene código de barras (SKU). Escríbelo para asignárselo:`);
-      if (!nuevoSku) return;
-      producto.sku = nuevoSku.trim();
-      await fetch(WORKER_URL + '/api/pos/inventario/asignar-sku', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-        body: JSON.stringify({ inventario_item_id: producto.id, sku: producto.sku })
-      });
-    }
     const yaEsta = etiquetasSeleccionadas.find(e => e.id === producto.id);
     if (yaEsta) { yaEsta.cantidad += 1; }
     else { etiquetasSeleccionadas.push({ ...producto, cantidad: 1 }); }
@@ -14342,6 +14351,7 @@
         <input type="text" id="lpBuscarProducto" placeholder="🔍 Buscar producto por nombre..." style="flex:1;" oninput="debounceBuscarProductoParaLista()">
       </div>
       <div id="resultadosBuscarProductoLista" style="margin-bottom:10px;"></div>
+      <div class="mensaje" id="mensajeAgregarPrecioLista"></div>
       <div id="listaPreciosDeListaActual">
         ${(precios || []).length === 0 ? '<div style="font-size:12px;opacity:0.6;">Sin precios especiales agregados todavía.</div>' :
           precios.map(p => `
@@ -14386,17 +14396,19 @@
   }
 
   async function confirmarAgregarPrecioALista(inventarioItemId) {
+    ocultarMensaje('mensajeAgregarPrecioLista');
     const precio = Number(document.getElementById(`precioNuevoLista-${inventarioItemId}`).value);
-    if (!precio || precio <= 0) { alert('Escribe un precio válido.'); return; }
+    if (!precio || precio <= 0) { mostrarMensaje('mensajeAgregarPrecioLista', 'Escribe un precio válido.', 'error'); return; }
 
     const resp = await fetch(WORKER_URL + '/api/pos/listas-precios/items', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ lista_id: listaPrecioSeleccionadaId, inventario_item_id: inventarioItemId, precio })
     });
-    if (!resp.ok) { alert('No se pudo agregar.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeAgregarPrecioLista', 'No se pudo agregar.', 'error'); return; }
     document.getElementById('lpBuscarProducto').value = '';
     document.getElementById('resultadosBuscarProductoLista').innerHTML = '';
+    mostrarMensaje('mensajeAgregarPrecioLista', '✅ Precio agregado.', 'exito');
     const lista = listasPreciosCache.find(l => l.id === listaPrecioSeleccionadaId);
     await seleccionarListaPrecio(listaPrecioSeleccionadaId, lista ? lista.nombre : '');
   }
