@@ -2481,11 +2481,24 @@
     <h1>👤 Clientes</h1>
     <div class="subtitulo">Directorio de clientes con su historial completo de compras (Tienda, WhatsApp/Redes). Incluye también los clientes registrados en el CRM.</div>
   </div>
-  <div style="margin-bottom:16px;">
-    <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="confirmarSincronizarClientesCrm()">🔄 Sincronizar clientes del CRM</button>
-    <span id="mensajeSincronizarClientesCrm" style="font-size:12px;margin-left:10px;"></span>
+  <div class="filtro-tipo" style="margin-bottom:16px;">
+    <button class="chip-filtro activo" data-subtab-btn="clientes" onclick="mostrarSubTabGrupo('clientes', 'subtabClientesListado', this)">📋 Listado</button>
+    <button class="chip-filtro" data-subtab-btn="clientes" onclick="mostrarSubTabGrupo('clientes', 'subtabClientesAgregar', this)">+ Agregar cliente</button>
   </div>
-  <div class="grilla-2">
+
+  <div id="subtabClientesListado" data-subtab-grupo="clientes">
+    <div style="margin-bottom:16px;">
+      <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="confirmarSincronizarClientesCrm()">🔄 Sincronizar clientes del CRM</button>
+      <span id="mensajeSincronizarClientesCrm" style="font-size:12px;margin-left:10px;"></span>
+    </div>
+    <div class="panel" style="max-width:none;max-height:none;">
+      <h2>Buscar cliente</h2>
+      <div class="barra-busqueda"><input type="text" id="buscarClienteDir" placeholder="🔍 Nombre, cédula o teléfono..." oninput="debounceBuscarClientes()"></div>
+      <div id="listaClientesDir" style="margin-top:10px;"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+
+  <div id="subtabClientesAgregar" data-subtab-grupo="clientes" class="oculto">
     <div class="panel">
       <h2>+ Agregar cliente</h2>
       <label for="clienteDirNombre">Nombre completo</label>
@@ -2508,11 +2521,6 @@
       </label>
       <button class="btn-principal" onclick="confirmarCrearCliente()">Agregar cliente</button>
       <div class="mensaje" id="mensajeCrearCliente"></div>
-    </div>
-    <div class="panel">
-      <h2>Buscar cliente</h2>
-      <div class="barra-busqueda"><input type="text" id="buscarClienteDir" placeholder="🔍 Nombre, cédula o teléfono..." oninput="debounceBuscarClientes()"></div>
-      <div id="listaClientesDir" style="margin-top:10px;"><div class="cargando">Cargando...</div></div>
     </div>
   </div>
 </div>
