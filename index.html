@@ -2531,7 +2531,20 @@
     <h1>🏭 Proveedores</h1>
     <div class="subtitulo">Directorio de proveedores con lo que se les ha comprado (gastos registrados).</div>
   </div>
-  <div class="grilla-2">
+  <div class="filtro-tipo" style="margin-bottom:16px;">
+    <button class="chip-filtro activo" data-subtab-btn="proveedores" onclick="mostrarSubTabGrupo('proveedores', 'subtabProveedoresListado', this)">📋 Listado</button>
+    <button class="chip-filtro" data-subtab-btn="proveedores" onclick="mostrarSubTabGrupo('proveedores', 'subtabProveedoresAgregar', this)">+ Agregar proveedor</button>
+  </div>
+
+  <div id="subtabProveedoresListado" data-subtab-grupo="proveedores">
+    <div class="panel" style="max-width:none;max-height:none;">
+      <h2>Buscar proveedor</h2>
+      <div class="barra-busqueda"><input type="text" id="buscarProveedorDir" placeholder="🔍 Nombre, NIT o teléfono..." oninput="debounceBuscarProveedores()"></div>
+      <div id="listaProveedoresDir" style="margin-top:10px;"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+
+  <div id="subtabProveedoresAgregar" data-subtab-grupo="proveedores" class="oculto">
     <div class="panel">
       <h2>+ Agregar proveedor</h2>
       <label for="proveedorDirNombre">Nombre / Razón social</label>
@@ -2552,11 +2565,6 @@
       <input type="number" id="proveedorDirPlazo" min="0" step="1" placeholder="Ej: 30">
       <button class="btn-principal" onclick="confirmarCrearProveedor()">Agregar proveedor</button>
       <div class="mensaje" id="mensajeCrearProveedor"></div>
-    </div>
-    <div class="panel">
-      <h2>Buscar proveedor</h2>
-      <div class="barra-busqueda"><input type="text" id="buscarProveedorDir" placeholder="🔍 Nombre, NIT o teléfono..." oninput="debounceBuscarProveedores()"></div>
-      <div id="listaProveedoresDir" style="margin-top:10px;"><div class="cargando">Cargando...</div></div>
     </div>
   </div>
 </div>
@@ -10697,17 +10705,24 @@
     const { terceros } = await resp.json();
     if (!terceros || terceros.length === 0) { contenedor.innerHTML = '<div class="cargando">No se encontraron proveedores.</div>'; return; }
 
-    contenedor.innerHTML = terceros.map(p => `
-      <div class="fila-inventario-editable" style="margin-bottom:8px;">
-        <div class="fila-inventario-titulo">
-          <span class="fila-inventario-nombre" style="cursor:pointer;" onclick="alternarHistorialProveedor('${p.id}')">${escaparHtml(p.nombre_completo)}</span>
-          <button class="btn-mini editar" onclick="event.stopPropagation(); abrirEdicionProveedor('${p.id}')">✏️ Editar</button>
+    contenedor.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:1.3fr 130px 130px 160px 90px;">
+          <span>NOMBRE</span><span>NIT/DOCUMENTO</span><span>TELÉFONO</span><span>CONTACTO</span><span></span>
         </div>
-        <div style="font-size:12px;opacity:0.65;">${escaparHtml(p.numero_documento || 'Sin NIT')} · ${escaparHtml(p.telefono || 'Sin teléfono')}${p.persona_contacto ? ' · 👤 ' + escaparHtml(p.persona_contacto) : ''}</div>
-        <div id="edicionProveedor-${p.id}" class="oculto" style="margin-top:8px;padding:10px;background:var(--rosa-suave);border-radius:9px;"></div>
-        <div id="historialProveedor-${p.id}" class="oculto" style="margin-top:8px;"></div>
+        ${terceros.map(p => `
+          <div class="tabla-lista-fila" style="grid-template-columns:1.3fr 130px 130px 160px 90px;cursor:pointer;" onclick="alternarHistorialProveedor('${p.id}')">
+            <span style="font-weight:600;">${escaparHtml(p.nombre_completo)}</span>
+            <span style="opacity:0.75;">${escaparHtml(p.numero_documento || '—')}</span>
+            <span style="opacity:0.75;">${escaparHtml(p.telefono || '—')}</span>
+            <span style="opacity:0.75;">${p.persona_contacto ? '👤 ' + escaparHtml(p.persona_contacto) : '—'}</span>
+            <span><button class="btn-mini editar" onclick="event.stopPropagation(); abrirEdicionProveedor('${p.id}')">✏️ Editar</button></span>
+          </div>
+          <div id="edicionProveedor-${p.id}" class="oculto tabla-lista-detalle"></div>
+          <div id="historialProveedor-${p.id}" class="oculto tabla-lista-detalle"></div>
+        `).join('')}
       </div>
-    `).join('');
+    `;
     proveedoresDirCache = terceros;
   }
 
