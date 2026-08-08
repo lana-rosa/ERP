@@ -6818,6 +6818,7 @@
             <button class="btn-mini desactivar" onclick="cancelarEdicionProducto()">Cancelar</button>
             <button class="btn-mini desactivar" onclick="alternarActivoProducto('${item.id}', ${item.activo})">${item.activo ? 'Desactivar' : 'Reactivar'}</button>
           </div>
+          <div class="mensaje" id="mensajeEdicionInventario-${item.id}"></div>
           <div id="kardexProducto-${item.id}" class="oculto" style="margin-top:12px;"></div>
         </div>
       `;
@@ -6923,6 +6924,7 @@
   }
 
   async function guardarEdicionProducto(itemId) {
+    ocultarMensaje(`mensajeEdicionInventario-${itemId}`);
     const nombre = document.getElementById(`edit-nombre-${itemId}`).value.trim();
     const precioVenta = Number(document.getElementById(`edit-precio-${itemId}`).value);
     const costo = Number(document.getElementById(`edit-costo-${itemId}`).value);
@@ -6931,7 +6933,7 @@
     const categoriaEl = document.getElementById(`edit-categoria-${itemId}`);
     const proveedorEl = document.getElementById(`edit-proveedor-${itemId}`);
 
-    if (!nombre) { alert('El nombre del producto no puede quedar vacío.'); return; }
+    if (!nombre) { mostrarMensaje(`mensajeEdicionInventario-${itemId}`, 'El nombre del producto no puede quedar vacío.', 'error'); return; }
 
     const cambios = {
       nombre: nombre,
@@ -6950,7 +6952,7 @@
       .eq('id', itemId);
 
     if (error) {
-      alert('No se pudo guardar el cambio: ' + error.message);
+      mostrarMensaje(`mensajeEdicionInventario-${itemId}`, 'No se pudo guardar el cambio: ' + error.message, 'error');
       return;
     }
     itemInventarioEditandoId = null;
@@ -6964,7 +6966,7 @@
       .eq('id', itemId);
 
     if (error) {
-      alert('No se pudo actualizar: ' + error.message);
+      mostrarMensaje(`mensajeEdicionInventario-${itemId}`, 'No se pudo actualizar: ' + error.message, 'error');
       return;
     }
     await cargarInventarioGestion();
