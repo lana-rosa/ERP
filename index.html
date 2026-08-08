@@ -10524,18 +10524,25 @@
     const { terceros } = await resp.json();
     if (!terceros || terceros.length === 0) { contenedor.innerHTML = '<div class="cargando">No se encontraron clientes.</div>'; return; }
 
-    contenedor.innerHTML = terceros.map(c => `
-      <div class="fila-inventario-editable" style="margin-bottom:8px;">
-        <div class="fila-inventario-titulo">
-          <span class="fila-inventario-nombre" style="cursor:pointer;" onclick="alternarHistorialCliente('${c.id}')">${escaparHtml(c.nombre_completo)}</span>
-          <button class="btn-mini editar" onclick="event.stopPropagation(); abrirEdicionCliente('${c.id}')">✏️ Editar</button>
+    contenedor.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:1.4fr 120px 120px 80px 160px 90px;">
+          <span>NOMBRE</span><span>DOCUMENTO</span><span>TELÉFONO</span><span>PUNTOS</span><span>DATOS PERSONALES</span><span></span>
         </div>
-        <div style="font-size:12px;opacity:0.65;">${escaparHtml(c.numero_documento || 'Sin documento')} · ${escaparHtml(c.telefono || 'Sin teléfono')}${c.puntos_fidelizacion > 0 ? ` · ⭐ ${c.puntos_fidelizacion} puntos` : ''}</div>
-        <div style="font-size:10.5px;opacity:0.5;margin-top:2px;">${c.acepta_tratamiento_datos ? '✅' : '⚠️'} Datos personales: ${escaparHtml(c.medio_autorizacion || 'Sin registrar')}${c.fecha_aceptacion_datos ? ' — ' + new Date(c.fecha_aceptacion_datos).toLocaleDateString('es-CO') : ''}</div>
-        <div id="edicionCliente-${c.id}" class="oculto" style="margin-top:8px;padding:10px;background:var(--rosa-suave);border-radius:9px;"></div>
-        <div id="historialCliente-${c.id}" class="oculto" style="margin-top:8px;"></div>
+        ${terceros.map(c => `
+          <div class="tabla-lista-fila" style="grid-template-columns:1.4fr 120px 120px 80px 160px 90px;cursor:pointer;" onclick="alternarHistorialCliente('${c.id}')">
+            <span style="font-weight:600;">${escaparHtml(c.nombre_completo)}</span>
+            <span style="opacity:0.75;">${escaparHtml(c.numero_documento || '—')}</span>
+            <span style="opacity:0.75;">${escaparHtml(c.telefono || '—')}</span>
+            <span>${c.puntos_fidelizacion > 0 ? `⭐ ${c.puntos_fidelizacion}` : '—'}</span>
+            <span style="font-size:11px;opacity:0.65;" title="${escaparHtml(c.medio_autorizacion || 'Sin registrar')}">${c.acepta_tratamiento_datos ? '✅' : '⚠️'} ${escaparHtml(c.medio_autorizacion || 'Sin registrar')}</span>
+            <span><button class="btn-mini editar" onclick="event.stopPropagation(); abrirEdicionCliente('${c.id}')">✏️ Editar</button></span>
+          </div>
+          <div id="edicionCliente-${c.id}" class="oculto tabla-lista-detalle"></div>
+          <div id="historialCliente-${c.id}" class="oculto tabla-lista-detalle"></div>
+        `).join('')}
       </div>
-    `).join('');
+    `;
     clientesDirCache = terceros;
   }
 
