@@ -10048,7 +10048,7 @@
     });
     if (!resp.ok) { mostrarMensaje('mensajeBloqueoFecha', 'No se pudo aplicar el bloqueo.', 'error'); return; }
     mostrarMensaje('mensajeBloqueoFecha', '✅ Bloqueo aplicado.', 'exito');
-    mostrarPantallaApariencia();
+    cargarPantallaBloqueoFecha();
   }
 
   async function confirmarQuitarBloqueoFecha() {
@@ -10062,7 +10062,7 @@
     });
     if (!resp.ok) { mostrarMensaje('mensajeBloqueoFecha', 'No se pudo quitar el bloqueo.', 'error'); return; }
     mostrarMensaje('mensajeBloqueoFecha', '✅ Bloqueo retirado.', 'exito');
-    mostrarPantallaApariencia();
+    cargarPantallaBloqueoFecha();
   }
 
   async function guardarDatosFiscalesEmpresa() {
