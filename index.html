@@ -2496,6 +2496,7 @@
   </div>
 
   <div id="subtabClientesListado" data-subtab-grupo="clientes">
+    <div id="estadisticasClientes" style="margin-bottom:16px;"></div>
     <div style="margin-bottom:16px;">
       <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="confirmarSincronizarClientesCrm()">🔄 Sincronizar clientes del CRM</button>
       <span id="mensajeSincronizarClientesCrm" style="font-size:12px;margin-left:10px;"></span>
@@ -10618,11 +10619,39 @@
   let clienteDirAbiertoId = null;
   let clientesDirCache = [];
 
+  async function cargarEstadisticasClientes() {
+    const cont = document.getElementById('estadisticasClientes');
+    const resp = await fetch(WORKER_URL + '/api/pos/clientes/estadisticas', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { cont.innerHTML = ''; return; }
+    const d = await resp.json();
+    const pct = (n) => d.total_clientes > 0 ? Math.round((n / d.total_clientes) * 100) : 0;
+
+    cont.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:14px;">
+        <div class="kpi-card-nuevo" style="--barra:var(--rosa-principal);">
+          <div class="kpi-label">Clientes totales</div>
+          <div class="kpi-valor">${d.total_clientes}</div>
+        </div>
+        <div class="kpi-card-nuevo" style="--barra:var(--verde-exito);">
+          <div class="kpi-label">Nuevos este mes</div>
+          <div class="kpi-valor">${d.nuevos_mes}</div>
+          <div class="kpi-delta">${pct(d.nuevos_mes)}% del total</div>
+        </div>
+        <div class="kpi-card-nuevo" style="--barra:var(--azul-acero);">
+          <div class="kpi-label">Clientes frecuentes</div>
+          <div class="kpi-valor">${d.clientes_frecuentes}</div>
+          <div class="kpi-delta">${pct(d.clientes_frecuentes)}% del total · 2+ compras</div>
+        </div>
+      </div>
+    `;
+  }
+
   async function mostrarPantallaClientes() {
     mostrarPantalla('pantallaClientes');
     document.getElementById('buscarClienteDir').value = '';
     ocultarMensaje('mensajeCrearCliente');
     await cargarClientesDir();
+    await cargarEstadisticasClientes();
   }
 
   // ============================================================
