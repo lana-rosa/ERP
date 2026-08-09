@@ -1699,6 +1699,7 @@
     </div>
     <div class="panel" style="max-width:none;max-height:none;margin-top:20px;">
       <h2>Guías de envío</h2>
+      <div class="mensaje" id="mensajeListaEnvios"></div>
       <div id="listaEnvios"><div class="cargando">Cargando...</div></div>
     </div>
   </div>
@@ -2313,6 +2314,7 @@
 
     <div class="panel" style="max-height:none;">
       <h2>Liquidaciones del período seleccionado</h2>
+      <div class="mensaje" id="mensajeLiquidacionesNomina"></div>
       <div id="listaLiquidacionesNomina"><div class="cargando">Selecciona un período arriba para ver sus liquidaciones.</div></div>
     </div>
 
@@ -2627,6 +2629,7 @@
 
     <div class="panel">
       <h2>Usuarios del sistema</h2>
+      <div class="mensaje" id="mensajeUsuarios"></div>
       <div id="listaUsuarios"><div class="cargando">Cargando...</div></div>
     </div>
   </div>
@@ -7256,20 +7259,25 @@
     const etiquetasCanalHist = { whatsapp: '💬 WhatsApp', instagram: '📷 Instagram', facebook: '👍 Facebook', tienda_virtual: '🛍️ Tienda virtual' };
     const etiquetasEstadoHist = { esperando_pago: '⏳ Esperando pago', en_preparacion: '🧵 En preparación', listo_despacho: '📦 Listo despacho', entregado: '✅ Entregado' };
 
-    contenedor.innerHTML = pedidos.map(p => {
-      const nombreCliente = p.tercero?.nombre_completo || 'Sin datos de cliente';
-      const detalleContacto = p.tercero ? ` (${[p.tercero.numero_documento, p.tercero.telefono].filter(Boolean).join(' · ')})` : '';
-      return `
-        <div class="fila-historial" style="margin-bottom:9px;">
-          <div class="fila-historial-encabezado">
-            <span class="fila-historial-consecutivo">${etiquetasCanalHist[p.canal] || p.canal} — ${escaparHtml(p.consecutivo || '')}</span>
-            <span class="fila-historial-total">${formatearMoneda(p.total_pedido)}</span>
-          </div>
-          <div class="fila-historial-fecha">${new Date(p.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })} · ${escaparHtml(nombreCliente)}${escaparHtml(detalleContacto)}</div>
-          <div class="fila-historial-detalle">${escaparHtml(p.descripcion_producto || '')} — ${etiquetasEstadoHist[p.estado] || p.estado}</div>
+    contenedor.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:170px 1fr 110px 200px;">
+          <span>PEDIDO</span><span>CLIENTE / PRODUCTO</span><span style="text-align:right;">TOTAL</span><span>FECHA / ESTADO</span>
         </div>
-      `;
-    }).join('');
+        ${pedidos.map(p => {
+          const nombreCliente = p.tercero?.nombre_completo || 'Sin datos de cliente';
+          const detalleContacto = p.tercero ? ` (${[p.tercero.numero_documento, p.tercero.telefono].filter(Boolean).join(' · ')})` : '';
+          return `
+            <div class="tabla-lista-fila" style="grid-template-columns:170px 1fr 110px 200px;">
+              <span style="font-weight:600;">${etiquetasCanalHist[p.canal] || p.canal}<br><span style="font-weight:400;font-size:11px;opacity:0.7;">${escaparHtml(p.consecutivo || '')}</span></span>
+              <span style="opacity:0.75;font-size:11.5px;">${escaparHtml(nombreCliente)}${escaparHtml(detalleContacto)}<br>${escaparHtml(p.descripcion_producto || '')}</span>
+              <span style="text-align:right;font-weight:700;">${formatearMoneda(p.total_pedido)}</span>
+              <span style="opacity:0.75;font-size:11px;">${new Date(p.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}<br>${etiquetasEstadoHist[p.estado] || p.estado}</span>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
   }
 
   async function mostrarPantallaHistorial(codigoDeptoForzado) {
@@ -7971,19 +7979,24 @@
     const { solicitudes } = await resp.json();
     if (!solicitudes || solicitudes.length === 0) { contenedor.innerHTML = '<div class="cargando">Sin solicitudes despachadas todavía.</div>'; return; }
 
-    contenedor.innerHTML = solicitudes.map(s => {
-      const item = s.inventario_items || {};
-      const fecha = s.fecha_envio ? new Date(s.fecha_envio).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }) : '';
-      return `
-        <div class="fila-historial" style="margin-bottom:9px;">
-          <div class="fila-historial-encabezado">
-            <span class="fila-historial-consecutivo">${escaparHtml(s.numero_pedido_crm)}</span>
-            <span style="font-size:11px;font-weight:700;color:var(--verde-exito);">✅ Solicitud aprobada y despachada al taller</span>
-          </div>
-          <div class="fila-historial-fecha">${escaparHtml(item.nombre || 'Insumo')} — ${s.cantidad} ${item.unidad_medida || ''} · ${fecha}</div>
+    contenedor.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:130px 1fr 130px;">
+          <span>PEDIDO</span><span>INSUMO</span><span>FECHA</span>
         </div>
-      `;
-    }).join('');
+        ${solicitudes.map(s => {
+          const item = s.inventario_items || {};
+          const fecha = s.fecha_envio ? new Date(s.fecha_envio).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }) : '';
+          return `
+            <div class="tabla-lista-fila" style="grid-template-columns:130px 1fr 130px;">
+              <span style="font-weight:600;">${escaparHtml(s.numero_pedido_crm)}</span>
+              <span style="opacity:0.75;font-size:11.5px;">✅ ${escaparHtml(item.nombre || 'Insumo')} — ${s.cantidad} ${item.unidad_medida || ''}</span>
+              <span style="opacity:0.75;font-size:11px;">${fecha}</span>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
   }
 
   // ============================================================================
@@ -8092,16 +8105,21 @@
 
     if (!transferencias || transferencias.length === 0) { contenedor.innerHTML = '<div class="cargando">Sin transferencias registradas todavía.</div>'; return; }
 
-    contenedor.innerHTML = transferencias.map(t => `
-      <div class="fila-historial" style="margin-bottom:9px;">
-        <div class="fila-historial-encabezado">
-          <span class="fila-historial-consecutivo">${escaparHtml(t.item ? t.item.nombre : 'Producto')}</span>
-          <span class="fila-historial-total">${t.cantidad}</span>
+    contenedor.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:1fr 80px 1.4fr 200px;">
+          <span>PRODUCTO</span><span>CANT.</span><span>ORIGEN → DESTINO</span><span>FECHA</span>
         </div>
-        <div class="fila-historial-fecha">${new Date(t.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}${t.registrado_por_nombre ? ' — solicitado por ' + escaparHtml(t.registrado_por_nombre) : ''}</div>
-        <div class="fila-historial-detalle">${escaparHtml(t.origen ? t.origen.nombre : '?')} → ${escaparHtml(t.destino ? t.destino.nombre : '?')}${t.observaciones ? ' — ' + escaparHtml(t.observaciones) : ''}</div>
+        ${transferencias.map(t => `
+          <div class="tabla-lista-fila" style="grid-template-columns:1fr 80px 1.4fr 200px;">
+            <span style="font-weight:600;">${escaparHtml(t.item ? t.item.nombre : 'Producto')}</span>
+            <span>${t.cantidad}</span>
+            <span style="opacity:0.75;font-size:11.5px;">${escaparHtml(t.origen ? t.origen.nombre : '?')} → ${escaparHtml(t.destino ? t.destino.nombre : '?')}${t.observaciones ? ' — ' + escaparHtml(t.observaciones) : ''}</span>
+            <span style="opacity:0.75;font-size:11px;">${new Date(t.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}${t.registrado_por_nombre ? '<br>por ' + escaparHtml(t.registrado_por_nombre) : ''}</span>
+          </div>
+        `).join('')}
       </div>
-    `).join('');
+    `;
   }
 
   async function mostrarPantallaEtiquetas() {
@@ -9490,7 +9508,7 @@
     contenedorLista.innerHTML = rolesPersonalizadosCache.map(r => `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f4eef2;font-size:13px;">
         <span><strong>${escaparHtml(r.nombre)}</strong> <span style="opacity:0.6;font-size:11px;">— basado en ${escaparHtml(r.rol_base)}${r.descripcion ? ' · ' + escaparHtml(r.descripcion) : ''}</span></span>
-        <button class="btn-mini desactivar" onclick="eliminarRolPersonalizado('${r.id}', '${escaparHtml(r.nombre)}')">Eliminar</button>
+        <button class="btn-mini desactivar" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => eliminarRolPersonalizado('${r.id}', '${escaparHtml(r.nombre)}'))">Eliminar</button>
       </div>
     `).join('');
   }
@@ -9537,13 +9555,12 @@
   }
 
   async function eliminarRolPersonalizado(id, nombre) {
-    if (!confirm(`¿Eliminar el rol "${nombre}"? Los usuarios que lo tengan asignado quedarán con su rol base normal.`)) return;
     const resp = await fetch(WORKER_URL + '/api/pos/roles-personalizados/eliminar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ id })
     });
-    if (!resp.ok) { alert('No se pudo eliminar.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeUsuarios', 'No se pudo eliminar.', 'error'); return; }
     await cargarRolesPersonalizados();
     await cargarListaUsuarios();
   }
@@ -9560,45 +9577,60 @@
 
     const etiquetasRol = { administrador: 'Administrador', cajero: 'Cajero', taller: 'Taller', contador: 'Contador' };
 
-    contenedor.innerHTML = usuariosCache.map(u => `
-      <div class="fila-inventario-editable" style="margin-bottom:10px;${u.activo ? '' : 'opacity:0.5;'}">
-        <div class="fila-inventario-titulo">
-          <span class="fila-inventario-nombre">${escaparHtml(u.nombre_completo || 'Sin nombre')} ${!u.activo ? '<span class="badge-inactivo">Inactivo</span>' : ''}</span>
+    contenedor.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:1.2fr 1.4fr 160px 100px;">
+          <span>NOMBRE</span><span>CORREO</span><span>ROL PRINCIPAL</span><span>ESTADO</span>
         </div>
-        <div style="font-size:12px;opacity:0.65;margin-top:2px;">${escaparHtml(u.correo || 'Sin correo')}</div>
-        ${u.roles_personalizados ? `<div style="font-size:11.5px;margin-top:4px;color:var(--rosa-principal);font-weight:600;">🎭 ${escaparHtml(u.roles_personalizados.nombre)}</div>` : ''}
-        <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-          <label style="margin:0;font-size:11px;">Rol principal:</label>
-          <select onchange="cambiarRolPrincipalUsuario('${u.user_id}', this.value)" style="width:auto;padding:6px 8px;font-size:12px;">
-            ${Object.keys(etiquetasRol).map(r => `<option value="${r}" ${u.rol === r ? 'selected' : ''}>${etiquetasRol[r]}</option>`).join('')}
-          </select>
-        </div>
-        <div style="margin-top:6px;font-size:11px;">
-          Roles adicionales:
-          ${Object.keys(etiquetasRol).filter(r => r !== u.rol).map(r => `
-            <label style="display:inline-flex;align-items:center;gap:4px;font-weight:400;margin-right:10px;">
-              <input type="checkbox" style="width:auto;" ${u.roles_adicionales.includes(r) ? 'checked' : ''} onchange="toggleRolAdicionalUsuario('${u.user_id}', '${r}', this.checked)"> ${etiquetasRol[r]}
-            </label>
-          `).join('')}
-        </div>
-        <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:11px;">
-          <label style="display:flex;align-items:center;gap:4px;font-weight:400;margin:0;">
-            <input type="checkbox" style="width:auto;" ${u.es_jefe_departamento ? 'checked' : ''} onchange="toggleLiderazgoUsuario('${u.user_id}', this.checked, this)"> Es líder/jefe de departamento
-          </label>
-          <select class="selectDeptoLiderado-${u.user_id}" onchange="toggleLiderazgoUsuario('${u.user_id}', true, null, this.value)" style="width:auto;padding:5px 7px;font-size:11px;${u.es_jefe_departamento ? '' : 'display:none;'}">
-            <option value="01" ${u.centro_costo_liderado_id && u.centros_costo && u.centros_costo.nombre === 'Tienda/Mercería' ? 'selected' : ''}>Tienda/Mercería</option>
-            <option value="03" ${u.centros_costo && u.centros_costo.nombre === 'Taller de Tejido' ? 'selected' : ''}>Taller</option>
-            <option value="04" ${u.centros_costo && u.centros_costo.nombre === 'Lana Rosa Academy' ? 'selected' : ''}>Lana Rosa Academy</option>
-          </select>
-          ${u.es_jefe_departamento && u.centros_costo ? `<span style="opacity:0.6;">→ Líder de ${escaparHtml(u.centros_costo.nombre)}</span>` : ''}
-        </div>
-        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
-          <button class="btn-mini editar" onclick="abrirPermisosUsuario('${u.user_id}', '${escaparHtml(u.nombre_completo || '')}')">⚙️ Permisos</button>
-          <button class="btn-mini editar" onclick="resetearPasswordUsuario('${u.user_id}', '${escaparHtml(u.nombre_completo || '')}')">🔑 Resetear contraseña</button>
-          <button class="btn-mini ${u.activo ? 'desactivar' : 'guardar'}" onclick="activarDesactivarUsuario('${u.user_id}', ${!u.activo})">${u.activo ? '🚫 Desactivar' : '✅ Activar'}</button>
-        </div>
+        ${usuariosCache.map(u => `
+          <div class="tabla-lista-fila" style="grid-template-columns:1.2fr 1.4fr 160px 100px;cursor:pointer;${u.activo ? '' : 'opacity:0.5;'}" onclick="alternarDetalleUsuario('${u.user_id}')">
+            <span style="font-weight:600;">${escaparHtml(u.nombre_completo || 'Sin nombre')}${u.roles_personalizados ? ' <span style="font-size:10.5px;color:var(--rosa-principal);">🎭 ' + escaparHtml(u.roles_personalizados.nombre) + '</span>' : ''}</span>
+            <span style="opacity:0.75;font-size:11.5px;">${escaparHtml(u.correo || 'Sin correo')}</span>
+            <span style="opacity:0.75;">${etiquetasRol[u.rol] || u.rol}</span>
+            <span>${u.activo ? '✅ Activo' : '<span class="badge-inactivo">Inactivo</span>'}</span>
+          </div>
+          <div id="detalleUsuario-${u.user_id}" class="oculto tabla-lista-detalle">
+            <div style="margin-top:0;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <label style="margin:0;font-size:11px;">Rol principal:</label>
+              <select onchange="cambiarRolPrincipalUsuario('${u.user_id}', this.value)" style="width:auto;padding:6px 8px;font-size:12px;">
+                ${Object.keys(etiquetasRol).map(r => `<option value="${r}" ${u.rol === r ? 'selected' : ''}>${etiquetasRol[r]}</option>`).join('')}
+              </select>
+            </div>
+            <div style="margin-top:8px;font-size:11px;">
+              Roles adicionales:
+              ${Object.keys(etiquetasRol).filter(r => r !== u.rol).map(r => `
+                <label style="display:inline-flex;align-items:center;gap:4px;font-weight:400;margin-right:10px;">
+                  <input type="checkbox" style="width:auto;" ${u.roles_adicionales.includes(r) ? 'checked' : ''} onchange="toggleRolAdicionalUsuario('${u.user_id}', '${r}', this.checked)"> ${etiquetasRol[r]}
+                </label>
+              `).join('')}
+            </div>
+            <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:11px;">
+              <label style="display:flex;align-items:center;gap:4px;font-weight:400;margin:0;">
+                <input type="checkbox" style="width:auto;" ${u.es_jefe_departamento ? 'checked' : ''} onchange="toggleLiderazgoUsuario('${u.user_id}', this.checked, this)"> Es líder/jefe de departamento
+              </label>
+              <select class="selectDeptoLiderado-${u.user_id}" onchange="toggleLiderazgoUsuario('${u.user_id}', true, null, this.value)" style="width:auto;padding:5px 7px;font-size:11px;${u.es_jefe_departamento ? '' : 'display:none;'}">
+                <option value="01" ${u.centro_costo_liderado_id && u.centros_costo && u.centros_costo.nombre === 'Tienda/Mercería' ? 'selected' : ''}>Tienda/Mercería</option>
+                <option value="03" ${u.centros_costo && u.centros_costo.nombre === 'Taller de Tejido' ? 'selected' : ''}>Taller</option>
+                <option value="04" ${u.centros_costo && u.centros_costo.nombre === 'Lana Rosa Academy' ? 'selected' : ''}>Lana Rosa Academy</option>
+              </select>
+              ${u.es_jefe_departamento && u.centros_costo ? `<span style="opacity:0.6;">→ Líder de ${escaparHtml(u.centros_costo.nombre)}</span>` : ''}
+            </div>
+            <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
+              <button class="btn-mini editar" onclick="event.stopPropagation(); abrirPermisosUsuario('${u.user_id}', '${escaparHtml(u.nombre_completo || '')}')">⚙️ Permisos</button>
+              <button class="btn-mini editar" onclick="event.stopPropagation(); resetearPasswordUsuario('${u.user_id}', '${escaparHtml(u.nombre_completo || '')}')">🔑 Resetear contraseña</button>
+              <button class="btn-mini ${u.activo ? 'desactivar' : 'guardar'}" onclick="event.stopPropagation(); activarDesactivarUsuario('${u.user_id}', ${!u.activo})">${u.activo ? '🚫 Desactivar' : '✅ Activar'}</button>
+            </div>
+          </div>
+        `).join('')}
       </div>
-    `).join('');
+    `;
+  }
+
+  function alternarDetalleUsuario(userId) {
+    const panel = document.getElementById(`detalleUsuario-${userId}`);
+    const estabaAbierto = !panel.classList.contains('oculto');
+    document.querySelectorAll('[id^="detalleUsuario-"]').forEach(p => p.classList.add('oculto'));
+    if (!estabaAbierto) panel.classList.remove('oculto');
   }
 
   // ============================================================
@@ -11793,35 +11825,41 @@
     const { envios } = await resp.json();
     if (!envios || envios.length === 0) { contenedor.innerHTML = '<div class="cargando">Todavía no hay guías generadas.</div>'; return; }
 
-    contenedor.innerHTML = envios.map(e => `
-      <div class="fila-historial" style="margin-bottom:10px;">
-        <div class="fila-historial-encabezado">
-          <span class="fila-historial-consecutivo">${escaparHtml(e.consecutivo)}</span>
-          <span style="font-size:11px;font-weight:700;">${etiquetasEstadoEnvio[e.estado]}</span>
+    contenedor.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:120px 1fr 1fr 130px;">
+          <span>GUÍA</span><span>PEDIDO</span><span>DESTINATARIO</span><span>ESTADO</span>
         </div>
-        <div class="fila-historial-fecha">
-          ${e.pedidos_canal_venta ? escaparHtml(e.pedidos_canal_venta.consecutivo) + ' — ' + e.pedidos_canal_venta.cantidad + 'x ' + escaparHtml(e.pedidos_canal_venta.descripcion_producto) : ''}
-        </div>
-        <div style="font-size:12.5px;margin-top:6px;">
-          👤 ${escaparHtml(e.destinatario_nombre || 'Sin nombre')}<br>
-          📍 ${escaparHtml(e.direccion_envio || 'Sin dirección')}${e.municipio ? ' — ' + escaparHtml(e.municipio) : ''}<br>
-          📞 ${escaparHtml(e.telefono_contacto || '—')}${e.correo_electronico ? ' · ' + escaparHtml(e.correo_electronico) : ''}
-        </div>
-        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center;">
-          <input type="text" placeholder="Transportadora" value="${escaparHtml(e.transportadora || '')}" id="transportadora-${e.id}" style="flex:1;min-width:120px;padding:8px 10px;font-size:12.5px;">
-          <input type="text" placeholder="N° de guía" value="${escaparHtml(e.numero_guia || '')}" id="guia-${e.id}" style="flex:1;min-width:120px;padding:8px 10px;font-size:12.5px;">
-          <button class="btn-mini editar" onclick="guardarDatosGuia('${e.id}')">Guardar</button>
-        </div>
-        <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
-          ${e.estado === 'pendiente' ? `<button class="btn-mini guardar" onclick="cambiarEstadoEnvio('${e.id}', 'enviado')">🚚 Marcar enviado</button>` : ''}
-          ${e.estado === 'enviado' ? `<button class="btn-mini guardar" onclick="cambiarEstadoEnvio('${e.id}', 'entregado')">✅ Marcar entregado</button>` : ''}
-          ${(e.estado === 'pendiente' || e.estado === 'enviado') ? `<button class="btn-mini desactivar" onclick="cambiarEstadoEnvio('${e.id}', 'devuelto')">↩️ Marcar devuelto</button>` : ''}
-        </div>
+        ${envios.map(e => `
+          <div class="tabla-lista-fila" style="grid-template-columns:120px 1fr 1fr 130px;">
+            <span style="font-weight:600;">${escaparHtml(e.consecutivo)}</span>
+            <span style="opacity:0.75;font-size:11.5px;">${e.pedidos_canal_venta ? escaparHtml(e.pedidos_canal_venta.consecutivo) + ' — ' + e.pedidos_canal_venta.cantidad + 'x ' + escaparHtml(e.pedidos_canal_venta.descripcion_producto) : ''}</span>
+            <span style="opacity:0.75;font-size:11.5px;">👤 ${escaparHtml(e.destinatario_nombre || 'Sin nombre')}</span>
+            <span style="font-size:11px;font-weight:700;">${etiquetasEstadoEnvio[e.estado]}</span>
+          </div>
+          <div class="tabla-lista-detalle" style="display:block;">
+            <div style="font-size:12.5px;margin-bottom:8px;">
+              📍 ${escaparHtml(e.direccion_envio || 'Sin dirección')}${e.municipio ? ' — ' + escaparHtml(e.municipio) : ''}<br>
+              📞 ${escaparHtml(e.telefono_contacto || '—')}${e.correo_electronico ? ' · ' + escaparHtml(e.correo_electronico) : ''}
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <input type="text" placeholder="Transportadora" value="${escaparHtml(e.transportadora || '')}" id="transportadora-${e.id}" style="flex:1;min-width:120px;padding:8px 10px;font-size:12.5px;">
+              <input type="text" placeholder="N° de guía" value="${escaparHtml(e.numero_guia || '')}" id="guia-${e.id}" style="flex:1;min-width:120px;padding:8px 10px;font-size:12.5px;">
+              <button class="btn-mini editar" onclick="guardarDatosGuia('${e.id}')">Guardar</button>
+            </div>
+            <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+              ${e.estado === 'pendiente' ? `<button class="btn-mini guardar" onclick="cambiarEstadoEnvio('${e.id}', 'enviado')">🚚 Marcar enviado</button>` : ''}
+              ${e.estado === 'enviado' ? `<button class="btn-mini guardar" onclick="cambiarEstadoEnvio('${e.id}', 'entregado')">✅ Marcar entregado</button>` : ''}
+              ${(e.estado === 'pendiente' || e.estado === 'enviado') ? `<button class="btn-mini desactivar" onclick="cambiarEstadoEnvio('${e.id}', 'devuelto')">↩️ Marcar devuelto</button>` : ''}
+            </div>
+          </div>
+        `).join('')}
       </div>
-    `).join('');
+    `;
   }
 
   async function guardarDatosGuia(envioId) {
+    ocultarMensaje('mensajeListaEnvios');
     const transportadora = document.getElementById(`transportadora-${envioId}`).value.trim();
     const numeroGuia = document.getElementById(`guia-${envioId}`).value.trim();
     const resp = await fetch(WORKER_URL + '/api/pos/envios/actualizar', {
@@ -11829,17 +11867,18 @@
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ envio_id: envioId, transportadora, numero_guia: numeroGuia })
     });
-    if (!resp.ok) { alert('No se pudo guardar.'); return; }
-    alert('✅ Datos de la guía guardados.');
+    if (!resp.ok) { mostrarMensaje('mensajeListaEnvios', 'No se pudo guardar.', 'error'); return; }
+    mostrarMensaje('mensajeListaEnvios', '✅ Datos de la guía guardados.', 'exito');
   }
 
   async function cambiarEstadoEnvio(envioId, estado) {
+    ocultarMensaje('mensajeListaEnvios');
     const resp = await fetch(WORKER_URL + '/api/pos/envios/actualizar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ envio_id: envioId, estado })
     });
-    if (!resp.ok) { alert('No se pudo actualizar.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeListaEnvios', 'No se pudo actualizar.', 'error'); return; }
     await cargarListaEnvios();
   }
 
@@ -11864,63 +11903,65 @@
       return;
     }
 
-    const etiquetasCanal = { whatsapp: '💬 WhatsApp', instagram: '📷 Instagram', facebook: '👍 Facebook', tienda_virtual: '🛍️ Tienda virtual' };
-    const etiquetasEstado = { esperando_pago: '⏳ Esperando pago', en_preparacion: '🧵 En preparación', listo_despacho: '📦 Listo despacho', entregado: '✅ Entregado' };
-
-    contenedor.innerHTML = pedidos.map(p => {
-      const fecha = new Date(p.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
-      const cliente = p.nombre_cliente || 'Sin datos de cliente';
-      let acciones = '';
-
-      if (p.estado === 'esperando_pago') {
-        acciones = `
-          <div style="font-size:11.5px;margin-top:6px;">Cobrar anticipo: <strong>${formatearMoneda(p.monto_anticipo_requerido)}</strong></div>
-          <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
-            ${['efectivo','nequi','daviplata','transferencia','credito_financiera'].map(m => `<button class="btn-mini guardar" onclick="registrarPagoAnticipoPedido('${p.id}', '${m}')">${m === 'credito_financiera' ? '🏦 crédito' : m}</button>`).join('')}
-          </div>
-        `;
-      } else if (p.estado === 'en_preparacion') {
-        const avisoStock = !p.disponible_en_stock
-          ? `<div style="font-size:11.5px;color:var(--rojo-error);margin-top:4px;">⚠️ No estaba en stock — pídelo al Taller desde "Cajas y ventas internas".${p.fecha_estimada_entrega ? ' Entrega estimada: <strong>' + new Date(p.fecha_estimada_entrega + 'T00:00:00').toLocaleDateString('es-CO') + '</strong>.' : ''}</div>`
-          : '';
-        acciones = `${avisoStock}<button class="btn-mini guardar" style="margin-top:8px;" onclick="marcarPedidoListoUI('${p.id}')">📦 Marcar listo para despachar</button>`;
-      } else if (p.estado === 'listo_despacho') {
-        if (p.monto_saldo_requerido > 0 && !p.saldo_pagado) {
-          acciones = `
-            <div style="font-size:11.5px;margin-top:6px;">Cobrar saldo + envío: <strong>${formatearMoneda(p.monto_saldo_requerido)}</strong></div>
-            <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
-              ${['efectivo','nequi','daviplata','transferencia','credito_financiera'].map(m => `<button class="btn-mini guardar" onclick="registrarPagoSaldoPedido('${p.id}', '${m}')">${m === 'credito_financiera' ? '🏦 crédito' : m}</button>`).join('')}
-            </div>
-          `;
-        } else {
-          acciones = `<button class="btn-mini guardar" onclick="entregarPedidoSinSaldoUI('${p.id}')">✅ Marcar como entregado</button>`;
-        }
-      }
-
-      return `
-        <div class="fila-historial">
-          <div class="fila-historial-encabezado">
-            <span class="fila-historial-consecutivo">${p.consecutivo}</span>
-            <span class="fila-historial-total">${formatearMoneda(p.total_pedido)}</span>
-          </div>
-          <div class="fila-historial-fecha">${etiquetasCanal[p.canal] || p.canal} · ${fecha}</div>
-          <div class="fila-historial-detalle">${escaparHtml(p.descripcion_producto)} (x${p.cantidad}) — ${escaparHtml(cliente)}</div>
-          <div style="margin-top:6px;"><span class="badge-rol">${etiquetasEstado[p.estado] || p.estado}</span></div>
-          ${acciones}
+    contenedor.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:110px 130px 1fr 100px 130px;">
+          <span>PEDIDO</span><span>CANAL</span><span>CLIENTE / PRODUCTO</span><span style="text-align:right;">TOTAL</span><span>ESTADO</span>
         </div>
-      `;
-    }).join('');
+        ${pedidos.map(p => {
+          const fecha = new Date(p.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
+          const cliente = p.nombre_cliente || 'Sin datos de cliente';
+          let acciones = '';
+
+          if (p.estado === 'esperando_pago') {
+            acciones = `
+              <div style="font-size:11.5px;">Cobrar anticipo: <strong>${formatearMoneda(p.monto_anticipo_requerido)}</strong></div>
+              <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+                ${['efectivo','nequi','daviplata','transferencia','credito_financiera'].map(m => `<button class="btn-mini guardar" onclick="pedirConfirmacionBoton(this, '¿Ya pagó?', () => registrarPagoAnticipoPedido('${p.id}', '${m}'))">${m === 'credito_financiera' ? '🏦 crédito' : m}</button>`).join('')}
+              </div>
+            `;
+          } else if (p.estado === 'en_preparacion') {
+            const avisoStock = !p.disponible_en_stock
+              ? `<div style="font-size:11.5px;color:var(--rojo-error);margin-bottom:6px;">⚠️ No estaba en stock — pídelo al Taller desde "Cajas y ventas internas".${p.fecha_estimada_entrega ? ' Entrega estimada: <strong>' + new Date(p.fecha_estimada_entrega + 'T00:00:00').toLocaleDateString('es-CO') + '</strong>.' : ''}</div>`
+              : '';
+            acciones = `${avisoStock}<button class="btn-mini guardar" onclick="marcarPedidoListoUI('${p.id}')">📦 Marcar listo para despachar</button>`;
+          } else if (p.estado === 'listo_despacho') {
+            if (p.monto_saldo_requerido > 0 && !p.saldo_pagado) {
+              acciones = `
+                <div style="font-size:11.5px;">Cobrar saldo + envío: <strong>${formatearMoneda(p.monto_saldo_requerido)}</strong></div>
+                <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+                  ${['efectivo','nequi','daviplata','transferencia','credito_financiera'].map(m => `<button class="btn-mini guardar" onclick="pedirConfirmacionBoton(this, '¿Ya pagó?', () => registrarPagoSaldoPedido('${p.id}', '${m}'))">${m === 'credito_financiera' ? '🏦 crédito' : m}</button>`).join('')}
+                </div>
+              `;
+            } else {
+              acciones = `<button class="btn-mini guardar" onclick="entregarPedidoSinSaldoUI('${p.id}')">✅ Marcar como entregado</button>`;
+            }
+          }
+
+          return `
+            <div class="tabla-lista-fila" style="grid-template-columns:110px 130px 1fr 100px 130px;">
+              <span style="font-weight:600;">${p.consecutivo}</span>
+              <span style="opacity:0.75;font-size:11.5px;">${etiquetasCanal[p.canal] || p.canal}<br>${fecha}</span>
+              <span style="opacity:0.75;">${escaparHtml(cliente)}<br><span style="font-size:11px;">${escaparHtml(p.descripcion_producto)} (x${p.cantidad})</span></span>
+              <span style="text-align:right;font-weight:700;">${formatearMoneda(p.total_pedido)}</span>
+              <span><span class="badge-rol">${etiquetasEstado[p.estado] || p.estado}</span></span>
+            </div>
+            ${acciones ? `<div class="tabla-lista-detalle" style="display:block;">${acciones}</div>` : ''}
+          `;
+        }).join('')}
+      </div>
+      <div class="mensaje" id="mensajePedidosCanal"></div>
+    `;
   }
 
   async function registrarPagoAnticipoPedido(pedidoId, metodo) {
-    if (!confirm(`¿Confirmas que el cliente ya pagó el anticipo por ${metodo}?`)) return;
     const resp = await fetch(WORKER_URL + '/api/pos/pedidos-canal/pagar-anticipo', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ pedido_id: pedidoId, metodo_pago: metodo })
     });
     const datos = await resp.json();
-    if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudo registrar el anticipo')); return; }
+    if (!resp.ok) { mostrarMensaje('mensajePedidosCanal', 'Error: ' + (datos.error || 'No se pudo registrar el anticipo'), 'error'); return; }
     await cargarPedidosCanal();
   }
 
@@ -11931,19 +11972,18 @@
       body: JSON.stringify({ pedido_id: pedidoId })
     });
     const datos = await resp.json();
-    if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudo actualizar')); return; }
+    if (!resp.ok) { mostrarMensaje('mensajePedidosCanal', 'Error: ' + (datos.error || 'No se pudo actualizar'), 'error'); return; }
     await cargarPedidosCanal();
   }
 
   async function registrarPagoSaldoPedido(pedidoId, metodo) {
-    if (!confirm(`¿Confirmas que el cliente ya pagó el saldo + envío por ${metodo}?`)) return;
     const resp = await fetch(WORKER_URL + '/api/pos/pedidos-canal/pagar-saldo', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ pedido_id: pedidoId, metodo_pago: metodo })
     });
     const datos = await resp.json();
-    if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudo registrar el pago')); return; }
+    if (!resp.ok) { mostrarMensaje('mensajePedidosCanal', 'Error: ' + (datos.error || 'No se pudo registrar el pago'), 'error'); return; }
     await cargarPedidosCanal();
   }
 
@@ -11954,7 +11994,7 @@
       body: JSON.stringify({ pedido_id: pedidoId })
     });
     const datos = await resp.json();
-    if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudo marcar como entregado')); return; }
+    if (!resp.ok) { mostrarMensaje('mensajePedidosCanal', 'Error: ' + (datos.error || 'No se pudo marcar como entregado'), 'error'); return; }
     await cargarPedidosCanal();
   }
 
@@ -11995,33 +12035,40 @@
       return;
     }
 
-    contenedor.innerHTML = pendientes.map(s => {
-      const pedido = s.pedidos_canal_venta || {};
-      return `
-        <div class="fila-historial" style="margin-bottom:10px;">
-          <div class="fila-historial-encabezado">
-            <span class="fila-historial-consecutivo">${escaparHtml(pedido.consecutivo || '—')}</span>
-            <span style="font-size:11px;font-weight:700;">${etiquetasEstadoElaboracion[s.estado]}</span>
-          </div>
-          <div class="fila-historial-fecha">${etiquetasCanalPedido[pedido.canal] || pedido.canal || ''} — ${s.cantidad || 1}x ${escaparHtml(s.descripcion || '')}</div>
-          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
-            ${s.estado === 'pendiente' ? `<button class="btn-mini editar" onclick="actualizarEstadoElaboracion('${s.id}', 'en_proceso')">🧶 Empezar a tejer</button>` : ''}
-            ${s.estado === 'en_proceso' ? `<button class="btn-mini guardar" onclick="actualizarEstadoElaboracion('${s.id}', 'terminado')">✅ Marcar terminado</button>` : ''}
-          </div>
+    contenedor.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:130px 1fr 140px 200px;">
+          <span>PEDIDO</span><span>DESCRIPCIÓN</span><span>ESTADO</span><span></span>
         </div>
-      `;
-    }).join('');
+        ${pendientes.map(s => {
+          const pedido = s.pedidos_canal_venta || {};
+          return `
+            <div class="tabla-lista-fila" style="grid-template-columns:130px 1fr 140px 200px;">
+              <span style="font-weight:600;">${escaparHtml(pedido.consecutivo || '—')}</span>
+              <span style="opacity:0.75;font-size:11.5px;">${etiquetasCanalPedido[pedido.canal] || pedido.canal || ''} — ${s.cantidad || 1}x ${escaparHtml(s.descripcion || '')}</span>
+              <span style="font-size:11px;font-weight:700;">${etiquetasEstadoElaboracion[s.estado]}</span>
+              <span>
+                ${s.estado === 'pendiente' ? `<button class="btn-mini editar" onclick="actualizarEstadoElaboracion('${s.id}', 'en_proceso')">🧶 Empezar</button>` : ''}
+                ${s.estado === 'en_proceso' ? `<button class="btn-mini guardar" onclick="actualizarEstadoElaboracion('${s.id}', 'terminado')">✅ Terminado</button>` : ''}
+              </span>
+            </div>
+          `;
+        }).join('')}
+      </div>
+      <div class="mensaje" id="mensajeElaboracion"></div>
+    `;
   }
 
   async function actualizarEstadoElaboracion(solicitudId, estado) {
+    ocultarMensaje('mensajeElaboracion');
     const resp = await fetch(WORKER_URL + '/api/pos/elaboracion/actualizar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ solicitud_id: solicitudId, estado })
     });
-    if (!resp.ok) { alert('No se pudo actualizar.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeElaboracion', 'No se pudo actualizar.', 'error'); return; }
     if (estado === 'terminado') {
-      alert('✅ Marcado como terminado. El pedido ya queda disponible en stock, y si el saldo estaba pagado, pasa directo a "Listo despacho".');
+      mostrarMensaje('mensajeElaboracion', '✅ Marcado como terminado. El pedido ya queda disponible en stock, y si el saldo estaba pagado, pasa directo a "Listo despacho".', 'exito');
     }
     await cargarSolicitudesElaboracion();
   }
@@ -12042,22 +12089,27 @@
       return;
     }
 
-    contenedor.innerHTML = pedidos.map(p => {
-      const filasInsumo = p.insumos.map(i => {
-        const consumidoTexto = i.estado === 'finalizado'
-          ? `${i.cantidad_consumida} ${i.unidad_medida} consumidos (tomó ${i.cantidad_tomada}, devolvió ${i.cantidad_devuelta})`
-          : `${i.cantidad_tomada} ${i.unidad_medida} tomados — aún en uso`;
-        return `<div style="font-size:12.5px;padding:4px 0;border-bottom:1px dashed #f0e8ee;">${escaparHtml(i.nombre)}: ${consumidoTexto}</div>`;
-      }).join('');
-      return `
-        <div class="fila-historial" style="margin-bottom:10px;">
-          <div class="fila-historial-encabezado">
-            <span class="fila-historial-consecutivo">${escaparHtml(p.numero_pedido_crm || p.pedido_crm_id.slice(0,8))}</span>
-          </div>
-          <div style="margin-top:6px;">${filasInsumo}</div>
+    contenedor.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:1fr;">
+          <span>PEDIDO</span>
         </div>
-      `;
-    }).join('');
+        ${pedidos.map(p => {
+          const filasInsumo = p.insumos.map(i => {
+            const consumidoTexto = i.estado === 'finalizado'
+              ? `${i.cantidad_consumida} ${i.unidad_medida} consumidos (tomó ${i.cantidad_tomada}, devolvió ${i.cantidad_devuelta})`
+              : `${i.cantidad_tomada} ${i.unidad_medida} tomados — aún en uso`;
+            return `<div style="font-size:12.5px;padding:4px 0;border-bottom:1px dashed #f0e8ee;">${escaparHtml(i.nombre)}: ${consumidoTexto}</div>`;
+          }).join('');
+          return `
+            <div class="tabla-lista-fila" style="grid-template-columns:1fr;">
+              <span style="font-weight:600;">${escaparHtml(p.numero_pedido_crm || p.pedido_crm_id.slice(0,8))}</span>
+            </div>
+            <div class="tabla-lista-detalle" style="display:block;">${filasInsumo}</div>
+          `;
+        }).join('')}
+      </div>
+    `;
   }
 
   async function cargarInsumosTallerCache() {
@@ -12405,6 +12457,13 @@
   let empleadosActivosCache = [];
   let empleadoEditandoId = null;
   let empleadoBeneficiariosAbiertoId = null;
+  let empleadosDetalleAbiertoIds = new Set();
+
+  function alternarDetalleEmpleado(id) {
+    if (empleadosDetalleAbiertoIds.has(id)) empleadosDetalleAbiertoIds.delete(id);
+    else empleadosDetalleAbiertoIds.add(id);
+    renderizarListaEmpleados();
+  }
   let beneficiariosPorEmpleadoCache = {};
 
   function calcularEdad(fechaNacimientoStr) {
@@ -12683,11 +12742,24 @@
       { valor: 'V', texto: 'Clase V — Riesgo máximo' },
     ];
 
-    contenedor.innerHTML = empleadosActivosCache.map(e => {
+    contenedor.innerHTML = '<div class="tabla-lista"><div class="tabla-lista-header" style="grid-template-columns:1fr 170px 140px 90px;"><span>NOMBRE</span><span>DEPARTAMENTO</span><span>SALARIO</span><span>EDAD</span></div>' + empleadosActivosCache.map(e => {
       const nombreDepto = e.centros_costo ? e.centros_costo.nombre : 'Sin departamento';
       const estaEditando = empleadoEditandoId === e.id;
       const edad = calcularEdad(e.fecha_nacimiento);
       const beneficiariosAbiertos = empleadoBeneficiariosAbiertoId === e.id;
+      const detalleVisible = estaEditando || beneficiariosAbiertos
+        || empleadoPrestamosAbiertoId === e.id || historialSalarioAbierto === e.id
+        || documentosRhAbierto === e.id || empleadoNovedadesAbiertoId === e.id
+        || empleadosDetalleAbiertoIds.has(e.id);
+      const filaResumen = `
+        <div class="tabla-lista-fila" style="grid-template-columns:1fr 170px 140px 90px;cursor:pointer;" onclick="alternarDetalleEmpleado('${e.id}')">
+          <span style="font-weight:600;">${escaparHtml(e.nombre_completo)}</span>
+          <span style="opacity:0.75;">🏢 ${escaparHtml(nombreDepto)}</span>
+          <span style="opacity:0.75;">${formatearMoneda(e.salario_basico)}</span>
+          <span style="opacity:0.75;">${edad !== null ? edad + ' años' : '—'}</span>
+        </div>
+        <div id="detalleEmpleado-${e.id}" class="tabla-lista-detalle" style="${detalleVisible ? 'display:block;' : 'display:none;'}">
+      `;
 
       if (estaEditando) {
         const opcionesDepto = '<option value="">Sin departamento específico</option>' +
@@ -12697,7 +12769,7 @@
         const fechaNacimientoValor = e.fecha_nacimiento ? e.fecha_nacimiento.slice(0, 10) : '';
         const opcionesTipoDoc = ['CC','CE','TI','PASAPORTE'].map(t => `<option value="${t}" ${t === (e.tipo_documento || 'CC') ? 'selected' : ''}>${t}</option>`).join('');
 
-        return `
+        return `${filaResumen}
           <div class="fila-inventario-editable" style="border-color:var(--rosa-medio);">
             <label>Nombre completo</label>
             <input type="text" id="edit-emp-nombre-${e.id}" value="${escaparHtml(e.nombre_completo)}">
@@ -12754,6 +12826,7 @@
               <button class="btn-mini desactivar" onclick="cancelarEdicionEmpleado()">Cancelar</button>
             </div>
           </div>
+        </div>
         `;
       }
 
@@ -12762,7 +12835,7 @@
       const prestamosAbiertos = empleadoPrestamosAbiertoId === e.id;
 
       if (e.es_propietario) {
-        return `
+        return `${filaResumen}
           <div class="fila-inventario-editable" style="border-color:var(--azul-acero);">
             <div class="fila-inventario-titulo">
               <span class="fila-inventario-nombre">${escaparHtml(e.nombre_completo)}</span>
@@ -12782,10 +12855,11 @@
             ${historialSalarioAbierto === e.id ? renderizarPanelHistorialSalario(e.id) : ''}
             ${documentosRhAbierto === e.id ? renderizarPanelDocumentos(e.id, true) : ''}
           </div>
+        </div>
         `;
       }
 
-      return `
+      return `${filaResumen}
         <div class="fila-inventario-editable">
           <div class="fila-inventario-titulo">
             <span class="fila-inventario-nombre">${escaparHtml(e.nombre_completo)}</span>
@@ -12814,8 +12888,9 @@
           ${historialSalarioAbierto === e.id ? renderizarPanelHistorialSalario(e.id) : ''}
           ${documentosRhAbierto === e.id ? renderizarPanelDocumentos(e.id, true) : ''}
         </div>
+      </div>
       `;
-    }).join('');
+    }).join('') + '</div>';
   }
 
   // ============================================================
@@ -13456,16 +13531,21 @@
 
     if (!revisiones || revisiones.length === 0) { cont.innerHTML = '<div class="cargando">Todavía no hay revisiones registradas.</div>'; return; }
 
-    cont.innerHTML = revisiones.map(r => `
-      <div class="fila-historial" style="margin-bottom:9px;">
-        <div class="fila-historial-encabezado">
-          <span class="fila-historial-consecutivo">✅ ${escaparHtml(r.nombre_contador)}</span>
-          <span class="fila-historial-total">${new Date(r.fecha_revision + 'T00:00:00').toLocaleDateString('es-CO')}</span>
+    cont.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:1fr 190px 110px 1fr;">
+          <span>CONTADOR</span><span>PERÍODO REVISADO</span><span>FECHA</span><span>OBSERVACIONES</span>
         </div>
-        <div class="fila-historial-fecha">Período: ${new Date(r.periodo_desde + 'T00:00:00').toLocaleDateString('es-CO')} — ${new Date(r.periodo_hasta + 'T00:00:00').toLocaleDateString('es-CO')}${r.numero_tarjeta_profesional ? ' · T.P. ' + escaparHtml(r.numero_tarjeta_profesional) : ''}</div>
-        ${r.observaciones ? `<div class="fila-historial-detalle">${escaparHtml(r.observaciones)}</div>` : ''}
+        ${revisiones.map(r => `
+          <div class="tabla-lista-fila" style="grid-template-columns:1fr 190px 110px 1fr;">
+            <span style="font-weight:600;">✅ ${escaparHtml(r.nombre_contador)}${r.numero_tarjeta_profesional ? ' <span style="font-weight:400;opacity:0.6;font-size:10.5px;">T.P. ' + escaparHtml(r.numero_tarjeta_profesional) + '</span>' : ''}</span>
+            <span style="opacity:0.75;font-size:11.5px;">${new Date(r.periodo_desde + 'T00:00:00').toLocaleDateString('es-CO')} — ${new Date(r.periodo_hasta + 'T00:00:00').toLocaleDateString('es-CO')}</span>
+            <span style="opacity:0.75;font-size:11.5px;">${new Date(r.fecha_revision + 'T00:00:00').toLocaleDateString('es-CO')}</span>
+            <span style="opacity:0.75;font-size:11.5px;">${r.observaciones ? escaparHtml(r.observaciones) : '—'}</span>
+          </div>
+        `).join('')}
       </div>
-    `).join('');
+    `;
   }
 
   async function confirmarRegistrarRevisionContable() {
@@ -14571,15 +14651,21 @@
 
     if (!transferencias || transferencias.length === 0) { cont.innerHTML = '<div class="cargando">Sin transferencias registradas todavía.</div>'; return; }
 
-    cont.innerHTML = transferencias.map(t => `
-      <div class="fila-historial" style="margin-bottom:9px;">
-        <div class="fila-historial-encabezado">
-          <span class="fila-historial-consecutivo">${t.tipo === 'caja_a_banco' ? '💵→🏦' : '🏦→💵'} ${escaparHtml(t.consecutivo)}</span>
-          <span class="fila-historial-total">${formatearMoneda(t.monto)}</span>
+    cont.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:150px 130px 1fr 100px;">
+          <span>N.°</span><span style="text-align:right;">MONTO</span><span>DEPARTAMENTO / DETALLE</span><span>FECHA</span>
         </div>
-        <div class="fila-historial-fecha">${new Date(t.fecha + 'T00:00:00').toLocaleDateString('es-CO')} — ${escaparHtml(t.centro_costo ? t.centro_costo.nombre : '')} — ${escaparHtml(t.descripcion)}</div>
+        ${transferencias.map(t => `
+          <div class="tabla-lista-fila" style="grid-template-columns:150px 130px 1fr 100px;">
+            <span style="font-weight:600;">${t.tipo === 'caja_a_banco' ? '💵→🏦' : '🏦→💵'} ${escaparHtml(t.consecutivo)}</span>
+            <span style="text-align:right;font-weight:700;">${formatearMoneda(t.monto)}</span>
+            <span style="opacity:0.75;font-size:11.5px;">${escaparHtml(t.centro_costo ? t.centro_costo.nombre : '')} — ${escaparHtml(t.descripcion)}</span>
+            <span style="opacity:0.75;font-size:11.5px;">${new Date(t.fecha + 'T00:00:00').toLocaleDateString('es-CO')}</span>
+          </div>
+        `).join('')}
       </div>
-    `).join('');
+    `;
   }
 
   async function mostrarPantallaConciliacion() {
@@ -17077,19 +17163,25 @@
       return;
     }
 
-    contenedor.innerHTML = ventas.map(v => {
-      const fecha = new Date(v.fecha + 'T00:00:00').toLocaleDateString('es-CO');
-      return `
-        <div class="fila-historial" style="margin-bottom:9px;">
-          <div class="fila-historial-encabezado">
-            <span class="fila-historial-consecutivo">${etiquetasSubareaAcademia[v.area_formacion] || v.area_formacion}</span>
-            <span class="fila-historial-total">${formatearMoneda(v.monto)}</span>
-          </div>
-          <div class="fila-historial-fecha">${fecha}${v.cliente_nombre ? ' · ' + escaparHtml(v.cliente_nombre) : ''}${[v.cliente_identificacion, v.cliente_telefono].filter(Boolean).length ? ' (' + [v.cliente_identificacion, v.cliente_telefono].filter(Boolean).map(x => escaparHtml(x)).join(' · ') + ')' : ''}</div>
-          <div class="fila-historial-detalle">${escaparHtml(v.descripcion)}</div>
+    contenedor.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:150px 1fr 1fr 110px 100px;">
+          <span>ÁREA</span><span>DESCRIPCIÓN</span><span>CLIENTE</span><span style="text-align:right;">MONTO</span><span>FECHA</span>
         </div>
-      `;
-    }).join('');
+        ${ventas.map(v => {
+          const fecha = new Date(v.fecha + 'T00:00:00').toLocaleDateString('es-CO');
+          return `
+            <div class="tabla-lista-fila" style="grid-template-columns:150px 1fr 1fr 110px 100px;">
+              <span style="font-weight:600;">${etiquetasSubareaAcademia[v.area_formacion] || v.area_formacion}</span>
+              <span style="opacity:0.75;font-size:11.5px;">${escaparHtml(v.descripcion)}</span>
+              <span style="opacity:0.75;font-size:11.5px;">${v.cliente_nombre ? escaparHtml(v.cliente_nombre) : '—'}${[v.cliente_identificacion, v.cliente_telefono].filter(Boolean).length ? '<br>' + [v.cliente_identificacion, v.cliente_telefono].filter(Boolean).map(x => escaparHtml(x)).join(' · ') : ''}</span>
+              <span style="text-align:right;font-weight:700;">${formatearMoneda(v.monto)}</span>
+              <span style="opacity:0.75;font-size:11.5px;">${fecha}</span>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
   }
 
   async function cargarInformeAcademia() {
@@ -17694,7 +17786,7 @@
       <div style="padding:12px;border-radius:9px;background:${colorEstado}15;border:1.5px solid ${colorEstado};">
         <div style="font-weight:700;color:${colorEstado};">${v.estado_validacion.replace(/_/g,' ')}</div>
         ${v.resultado.length > 0 ? v.resultado.map(r => `<div style="font-size:12px;margin-top:4px;">⚠️ ${escaparHtml(r.observacion)}</div>`).join('') : '<div style="font-size:12px;margin-top:4px;">Sin observaciones.</div>'}
-        ${v.estado_validacion === 'CUMPLE' ? `<button class="btn-mini guardar" style="width:100%;margin-top:10px;" onclick="comprometerPresupuestoFe('${datos.doc_id}')">💰 Comprometer presupuesto</button>` : ''}
+        ${v.estado_validacion === 'CUMPLE' ? `<button class="btn-mini guardar" style="width:100%;margin-top:10px;" onclick="pedirConfirmacionBoton(this, '¿Confirmar?', () => comprometerPresupuestoFe('${datos.doc_id}'))">💰 Comprometer presupuesto</button>` : ''}
       </div>
     `;
     mostrarMensaje('mensajeDocFe', '✅ Documento validado.', 'exito');
@@ -17702,16 +17794,16 @@
   }
 
   async function comprometerPresupuestoFe(docId) {
-    if (!confirm('¿Confirmas comprometer el presupuesto por este documento? Esto descuenta del saldo disponible de la convocatoria.')) return;
     const resp = await fetch(WORKER_URL + '/api/pos/fe/comprometer', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ doc_id: docId })
     });
     const datos = await resp.json();
-    if (!resp.ok) { alert('No se pudo comprometer: ' + (datos.error || 'Error desconocido')); return; }
-    alert('✅ Presupuesto comprometido. Se creó automáticamente el entregable de "Solicitud de pago" en el calendario.');
+    if (!resp.ok) { mostrarMensaje('mensajeDocFe', 'No se pudo comprometer: ' + (datos.error || 'Error desconocido'), 'error'); return; }
+    mostrarMensaje('mensajeDocFe', '✅ Presupuesto comprometido. Se creó automáticamente el entregable de "Solicitud de pago" en el calendario.', 'exito');
     document.getElementById('resultadoValidacionFe').innerHTML = '';
+    await cargarDocumentosFe();
   }
 
   async function cargarDocumentosFe() {
@@ -17723,15 +17815,21 @@
     if (!documentos || documentos.length === 0) { contenedor.innerHTML = '<div class="cargando">Sin documentos validados todavía.</div>'; return; }
 
     const colorEstado = { CUMPLE: 'var(--verde-exito)', RECHAZADO: 'var(--rojo-error)', NO_CUMPLE_CON_OBSERVACIONES: '#e0922f' };
-    contenedor.innerHTML = documentos.map(d => `
-      <div class="fila-historial" style="margin-bottom:9px;">
-        <div class="fila-historial-encabezado">
-          <span class="fila-historial-consecutivo">${d.tipo_documento === 'COTIZACION' ? 'Cotización' : 'Factura'} — ${escaparHtml(d.proveedor_razon_social || 'Sin proveedor')}</span>
-          <span class="fila-historial-total">${formatearMoneda(d.monto)}</span>
+    contenedor.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:1.2fr 1fr 130px 200px;">
+          <span>TIPO / PROVEEDOR</span><span>RUBRO</span><span style="text-align:right;">MONTO</span><span>ESTADO</span>
         </div>
-        <div class="fila-historial-fecha">${d.fe_catalogo_rubros ? escaparHtml(d.fe_catalogo_rubros.nombre) : ''} · <span style="color:${colorEstado[d.estado_validacion] || '#999'};font-weight:700;">${(d.estado_validacion || 'Pendiente').replace(/_/g,' ')}</span></div>
+        ${documentos.map(d => `
+          <div class="tabla-lista-fila" style="grid-template-columns:1.2fr 1fr 130px 200px;">
+            <span style="font-weight:600;">${d.tipo_documento === 'COTIZACION' ? 'Cotización' : 'Factura'} — ${escaparHtml(d.proveedor_razon_social || 'Sin proveedor')}</span>
+            <span style="opacity:0.75;font-size:11.5px;">${d.fe_catalogo_rubros ? escaparHtml(d.fe_catalogo_rubros.nombre) : ''}</span>
+            <span style="text-align:right;font-weight:700;">${formatearMoneda(d.monto)}</span>
+            <span style="font-weight:700;color:${colorEstado[d.estado_validacion] || '#999'};">${(d.estado_validacion || 'Pendiente').replace(/_/g,' ')}</span>
+          </div>
+        `).join('')}
       </div>
-    `).join('');
+    `;
   }
 
   // --- Ejecución presupuestal ---
@@ -18048,27 +18146,33 @@
     if (!commitments || commitments.length === 0) { contenedor.innerHTML = '<div class="cargando">Sin compromisos registrados todavía.</div>'; return; }
 
     const etiquetaEstado = { PRESUPUESTO_COMPROMISORIO: '🔵 Comprometido', EJECUTADO: '✅ Ejecutado (pagado)', LIBERADO: '⚪ Liberado' };
-    contenedor.innerHTML = commitments.map(c => `
-      <div class="fila-historial" style="margin-bottom:9px;">
-        <div class="fila-historial-encabezado">
-          <span class="fila-historial-consecutivo">${escaparHtml(c.fe_catalogo_rubros ? c.fe_catalogo_rubros.nombre : 'Rubro')}</span>
-          <span class="fila-historial-total">${formatearMoneda(c.monto_comprometido)}</span>
+    contenedor.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:1fr 1fr 130px 150px 220px;">
+          <span>RUBRO</span><span>DESCRIPCIÓN</span><span style="text-align:right;">MONTO</span><span>ESTADO</span><span></span>
         </div>
-        <div class="fila-historial-fecha">${escaparHtml(c.descripcion || '')} · ${etiquetaEstado[c.estado]}</div>
-        <div style="display:flex;gap:6px;margin-top:8px;">
-          ${c.estado === 'PRESUPUESTO_COMPROMISORIO' ? `<button class="btn-mini guardar" onclick="cambiarEstadoCommitmentFe('${c.commitment_id}', 'EJECUTADO')">Marcar pagado</button><button class="btn-mini desactivar" onclick="cambiarEstadoCommitmentFe('${c.commitment_id}', 'LIBERADO')">Liberar</button>` : ''}
-        </div>
+        ${commitments.map(c => `
+          <div class="tabla-lista-fila" style="grid-template-columns:1fr 1fr 130px 150px 220px;">
+            <span style="font-weight:600;">${escaparHtml(c.fe_catalogo_rubros ? c.fe_catalogo_rubros.nombre : 'Rubro')}</span>
+            <span style="opacity:0.75;font-size:11.5px;">${escaparHtml(c.descripcion || '')}</span>
+            <span style="text-align:right;font-weight:700;">${formatearMoneda(c.monto_comprometido)}</span>
+            <span style="font-size:11.5px;">${etiquetaEstado[c.estado]}</span>
+            <span>${c.estado === 'PRESUPUESTO_COMPROMISORIO' ? `<button class="btn-mini guardar" onclick="cambiarEstadoCommitmentFe('${c.commitment_id}', 'EJECUTADO')">Pagado</button> <button class="btn-mini desactivar" onclick="cambiarEstadoCommitmentFe('${c.commitment_id}', 'LIBERADO')">Liberar</button>` : ''}</span>
+          </div>
+        `).join('')}
       </div>
-    `).join('');
+      <div class="mensaje" id="mensajeCommitmentsFe"></div>
+    `;
   }
 
   async function cambiarEstadoCommitmentFe(commitmentId, estado) {
+    ocultarMensaje('mensajeCommitmentsFe');
     const resp = await fetch(WORKER_URL + '/api/pos/fe/commitments/estado', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ commitment_id: commitmentId, estado })
     });
-    if (!resp.ok) { alert('No se pudo actualizar.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeCommitmentsFe', 'No se pudo actualizar.', 'error'); return; }
     await cargarCommitmentsFe();
     await cargarSaldoFe('resumenSaldoFe2');
   }
@@ -19130,7 +19234,7 @@
           ${pagado
             ? '<div style="margin-top:8px;"><span class="badge-rol" style="background:#eaf6ef;color:var(--verde-exito);">✅ Pagado</span></div>'
             : `<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
-                ${['efectivo','nequi','daviplata','transferencia'].map(m => `<button class="btn-mini guardar" onclick="confirmarPagoNomina('${l.id}', '${m}')">${m}</button>`).join('')}
+                ${['efectivo','nequi','daviplata','transferencia'].map(m => `<button class="btn-mini guardar" onclick="pedirConfirmacionBoton(this, '¿Ya pagó?', () => confirmarPagoNomina('${l.id}', '${m}'))">${m}</button>`).join('')}
               </div>`
           }
         </div>
@@ -19330,8 +19434,7 @@
   }
 
   async function confirmarPagoNomina(liquidacionId, metodo) {
-    if (!confirm(`¿Confirmas que ya se pagó por ${metodo}?`)) return;
-
+    ocultarMensaje('mensajeLiquidacionesNomina');
     const resp = await fetch(WORKER_URL + '/api/pos/nomina/pagar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
@@ -19339,7 +19442,7 @@
     });
 
     const datos = await resp.json();
-    if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudo registrar el pago')); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeLiquidacionesNomina', 'Error: ' + (datos.error || 'No se pudo registrar el pago'), 'error'); return; }
 
     await verLiquidacionesPeriodo(periodoNominaSeleccionadoId);
   }
