@@ -3252,6 +3252,7 @@
         <button class="chip-filtro" data-filtro-cot="enviada" onclick="cambiarFiltroCotizaciones('enviada', this)">Enviadas</button>
         <button class="chip-filtro" data-filtro-cot="aprobada" onclick="cambiarFiltroCotizaciones('aprobada', this)">Aprobadas</button>
       </div>
+      <div class="mensaje" id="mensajeCotizaciones"></div>
       <div id="listaCotizaciones"><div class="cargando">Cargando...</div></div>
     </div>
   </div>
@@ -4493,6 +4494,27 @@
     const el = document.getElementById(idMensaje);
     el.textContent = texto;
     el.className = 'mensaje visible ' + tipo;
+  }
+
+  // Reemplaza confirm() nativo para acciones destructivas (eliminar, etc.):
+  // el primer clic pone el botón en modo "¿Seguro?" por 3 segundos; si se
+  // vuelve a hacer clic en ese lapso, ejecuta la acción de verdad.
+  function pedirConfirmacionBoton(boton, textoConfirmar, accion) {
+    if (boton.dataset.confirmando === '1') {
+      clearTimeout(Number(boton.dataset.timeoutId));
+      accion();
+      return;
+    }
+    boton.dataset.confirmando = '1';
+    boton.dataset.textoOriginal = boton.textContent;
+    boton.textContent = textoConfirmar;
+    boton.style.background = '#f8d7da';
+    const timeoutId = setTimeout(() => {
+      boton.dataset.confirmando = '0';
+      boton.textContent = boton.dataset.textoOriginal;
+      boton.style.background = '';
+    }, 3000);
+    boton.dataset.timeoutId = timeoutId;
   }
 
   function ocultarMensaje(idMensaje) {
@@ -13914,30 +13936,37 @@
 
     const etiquetasEstado = { enviada: '📤 Enviada', aprobada: '✅ Aprobada', rechazada: '❌ Rechazada', vencida: '⏰ Vencida', convertida: '🔄 Convertida en pedido' };
 
-    cont.innerHTML = cotizaciones.map(c => `
-      <div class="fila-historial" style="margin-bottom:9px;">
-        <div class="fila-historial-encabezado">
-          <span class="fila-historial-consecutivo">${escaparHtml(c.consecutivo)} — ${escaparHtml(c.tercero ? c.tercero.nombre_completo : c.cliente_nombre_libre || '')}</span>
-          <span class="fila-historial-total">${formatearMoneda(c.total)}</span>
+    cont.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:110px 1fr 110px 140px 100px 300px;">
+          <span>N.°</span><span>CLIENTE</span><span style="text-align:right;">TOTAL</span><span>ESTADO</span><span>VENCE</span><span></span>
         </div>
-        <div class="fila-historial-fecha">Válida hasta: ${new Date(c.fecha_vencimiento + 'T00:00:00').toLocaleDateString('es-CO')} — ${etiquetasEstado[c.estado] || c.estado}</div>
-        <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
-          ${c.estado === 'enviada' ? `
-            <button class="btn-mini guardar" onclick="cambiarEstadoCotizacion('${c.id}', 'aprobada')">✅ Aprobada</button>
-            <button class="btn-mini desactivar" onclick="cambiarEstadoCotizacion('${c.id}', 'rechazada')">❌ Rechazada</button>
-          ` : ''}
-          <button class="btn-mini editar" onclick="enviarCotizacionWhatsApp('${c.id}')">📱 Enviar por WhatsApp</button>
-          <button class="btn-mini editar" onclick="imprimirCotizacion('${c.id}')">🖨️ Imprimir</button>
-          ${c.estado === 'aprobada' ? `<button class="btn-mini guardar" onclick="convertirCotizacionEnPedido('${c.id}')">🔄 Convertir en pedido</button>` : ''}
-          <button class="btn-mini desactivar" onclick="eliminarCotizacion('${c.id}')">🗑️</button>
-        </div>
+        ${cotizaciones.map(c => `
+          <div class="tabla-lista-fila" style="grid-template-columns:110px 1fr 110px 140px 100px 300px;">
+            <span style="font-weight:600;">${escaparHtml(c.consecutivo)}</span>
+            <span style="opacity:0.75;">${escaparHtml(c.tercero ? c.tercero.nombre_completo : c.cliente_nombre_libre || '')}</span>
+            <span style="text-align:right;font-weight:700;">${formatearMoneda(c.total)}</span>
+            <span style="opacity:0.75;">${etiquetasEstado[c.estado] || c.estado}</span>
+            <span style="opacity:0.75;font-size:11.5px;">${new Date(c.fecha_vencimiento + 'T00:00:00').toLocaleDateString('es-CO')}</span>
+            <span style="display:flex;gap:5px;flex-wrap:wrap;">
+              ${c.estado === 'enviada' ? `
+                <button class="btn-mini guardar" onclick="cambiarEstadoCotizacion('${c.id}', 'aprobada')">✅</button>
+                <button class="btn-mini desactivar" onclick="cambiarEstadoCotizacion('${c.id}', 'rechazada')">❌</button>
+              ` : ''}
+              <button class="btn-mini editar" onclick="enviarCotizacionWhatsApp('${c.id}')">📱</button>
+              <button class="btn-mini editar" onclick="imprimirCotizacion('${c.id}')">🖨️</button>
+              ${c.estado === 'aprobada' ? `<button class="btn-mini guardar" onclick="convertirCotizacionEnPedido('${c.id}')">🔄 Convertir</button>` : ''}
+              <button class="btn-mini desactivar" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => eliminarCotizacion('${c.id}'))">🗑️</button>
+            </span>
+          </div>
+        `).join('')}
       </div>
-    `).join('');
+    `;
   }
 
   async function imprimirCotizacion(id) {
     const c = cotizacionesCache.find(x => x.id === id);
-    if (!c) { alert('No se encontró la cotización.'); return; }
+    if (!c) { mostrarMensaje('mensajeCotizaciones', 'No se encontró la cotización.', 'error'); return; }
 
     const respEmpresa = await fetch(WORKER_URL + '/api/pos/config-empresa', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
     const empresa = respEmpresa.ok ? await respEmpresa.json() : {};
@@ -13998,13 +14027,12 @@
   }
 
   async function eliminarCotizacion(id) {
-    if (!confirm('¿Eliminar esta cotización?')) return;
     const resp = await fetch(WORKER_URL + '/api/pos/cotizaciones/eliminar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ id })
     });
-    if (!resp.ok) { alert('No se pudo eliminar.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeCotizaciones', 'No se pudo eliminar.', 'error'); return; }
     await cargarCotizaciones();
   }
 
@@ -14268,43 +14296,50 @@
 
     const etiquetasEstado = { enviada: '📤 Enviada', recibida: '✅ Recibida', cancelada: '❌ Cancelada' };
 
-    cont.innerHTML = ordenes.map(o => `
-      <div class="fila-historial" style="margin-bottom:9px;">
-        <div class="fila-historial-encabezado">
-          <span class="fila-historial-consecutivo">${escaparHtml(o.numero_orden)} — ${escaparHtml(o.proveedor ? o.proveedor.nombre_completo : '')}</span>
-          <span class="fila-historial-total">${formatearMoneda(o.total_estimado)}</span>
+    cont.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:130px 1fr 130px 200px 200px;">
+          <span>N.° ORDEN</span><span>PROVEEDOR</span><span style="text-align:right;">TOTAL</span><span>ENTREGA / ESTADO</span><span></span>
         </div>
-        <div class="fila-historial-fecha">${o.fecha_entrega_esperada ? 'Entrega esperada: ' + new Date(o.fecha_entrega_esperada + 'T00:00:00').toLocaleDateString('es-CO') + ' — ' : ''}${etiquetasEstado[o.estado] || o.estado}</div>
-        <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
-          ${o.estado === 'enviada' ? `
-            <button class="btn-mini guardar" onclick="cambiarEstadoOrdenCompra('${o.id}', 'recibida')">✅ Marcar recibida</button>
-            <button class="btn-mini desactivar" onclick="cambiarEstadoOrdenCompra('${o.id}', 'cancelada')">❌ Cancelar</button>
-          ` : ''}
-          <button class="btn-mini desactivar" onclick="eliminarOrdenCompra('${o.id}')">🗑️</button>
-        </div>
+        ${ordenes.map(o => `
+          <div class="tabla-lista-fila" style="grid-template-columns:130px 1fr 130px 200px 200px;">
+            <span style="font-weight:600;">${escaparHtml(o.numero_orden)}</span>
+            <span style="opacity:0.75;">${escaparHtml(o.proveedor ? o.proveedor.nombre_completo : '')}</span>
+            <span style="text-align:right;font-weight:700;">${formatearMoneda(o.total_estimado)}</span>
+            <span style="opacity:0.75;font-size:11.5px;">${o.fecha_entrega_esperada ? new Date(o.fecha_entrega_esperada + 'T00:00:00').toLocaleDateString('es-CO') + ' — ' : ''}${etiquetasEstado[o.estado] || o.estado}</span>
+            <span style="display:flex;gap:5px;flex-wrap:wrap;">
+              ${o.estado === 'enviada' ? `
+                <button class="btn-mini guardar" onclick="cambiarEstadoOrdenCompra('${o.id}', 'recibida')">✅ Recibida</button>
+                <button class="btn-mini desactivar" onclick="cambiarEstadoOrdenCompra('${o.id}', 'cancelada')">❌ Cancelar</button>
+              ` : ''}
+              <button class="btn-mini desactivar" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => eliminarOrdenCompra('${o.id}'))">🗑️</button>
+            </span>
+          </div>
+        `).join('')}
       </div>
-    `).join('');
+      <div class="mensaje" id="mensajeOrdenesCompra"></div>
+    `;
   }
 
   async function cambiarEstadoOrdenCompra(id, estado) {
+    ocultarMensaje('mensajeOrdenesCompra');
     const resp = await fetch(WORKER_URL + '/api/pos/ordenes-compra/estado', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ id, estado })
     });
-    if (!resp.ok) { alert('No se pudo actualizar.'); return; }
-    if (estado === 'recibida') alert('Recuerda registrar la compra real en "Registro de compras y gastos" para que quede contabilizada.');
+    if (!resp.ok) { mostrarMensaje('mensajeOrdenesCompra', 'No se pudo actualizar.', 'error'); return; }
+    if (estado === 'recibida') mostrarMensaje('mensajeOrdenesCompra', '✅ Marcada como recibida. Recuerda registrar la compra real en "Registro de compras y gastos" para que quede contabilizada.', 'exito');
     await cargarOrdenesCompra();
   }
 
   async function eliminarOrdenCompra(id) {
-    if (!confirm('¿Eliminar esta orden de compra?')) return;
     const resp = await fetch(WORKER_URL + '/api/pos/ordenes-compra/eliminar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ id })
     });
-    if (!resp.ok) { alert('No se pudo eliminar.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeOrdenesCompra', 'No se pudo eliminar.', 'error'); return; }
     await cargarOrdenesCompra();
   }
 
