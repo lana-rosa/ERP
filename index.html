@@ -2753,6 +2753,7 @@
 
   <div class="panel" style="max-width:none;max-height:none;margin-top:20px;">
     <h2>Documentos guardados</h2>
+    <div class="mensaje" id="mensajeDocumentosEmpresa"></div>
     <div id="listaDocumentosEmpresa"><div class="cargando">Cargando...</div></div>
   </div>
 </div>
@@ -3539,6 +3540,7 @@
     </div>
     <div class="panel">
       <h2>Pendientes</h2>
+      <div class="mensaje" id="mensajeCuentasPendientes"></div>
       <div id="listaCuentasPendientes"><div class="cargando">Cargando...</div></div>
     </div>
   </div>
@@ -9254,26 +9256,28 @@
     if (!documentos || documentos.length === 0) { cont.innerHTML = '<div class="cargando">Sin documentos guardados todavía.</div>'; return; }
 
     const hoy = new Date().toISOString().slice(0, 10);
-    cont.innerHTML = documentos.map(d => {
-      const vencido = d.fecha_vencimiento && d.fecha_vencimiento < hoy;
-      const porVencer = d.fecha_vencimiento && !vencido && d.fecha_vencimiento < new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
-      return `
-        <div class="fila-historial" style="margin-bottom:9px;${vencido ? 'border-left:3px solid var(--rojo-error);' : porVencer ? 'border-left:3px solid #e6a700;' : ''}">
-          <div class="fila-historial-encabezado">
-            <span class="fila-historial-consecutivo">📄 ${escaparHtml(d.nombre)}</span>
-            <span style="font-size:11px;opacity:0.6;">${etiquetasTipoDocEmpresa[d.tipo_documento] || d.tipo_documento}</span>
-          </div>
-          <div class="fila-historial-fecha">
-            ${d.descripcion ? escaparHtml(d.descripcion) + ' — ' : ''}
-            ${d.fecha_vencimiento ? `Vence: ${new Date(d.fecha_vencimiento + 'T00:00:00').toLocaleDateString('es-CO')}${vencido ? ' ⚠️ VENCIDO' : porVencer ? ' 🟡 Por vencer' : ''}` : 'Sin fecha de vencimiento'}
-          </div>
-          <div style="display:flex;gap:6px;margin-top:6px;">
-            <button class="btn-mini guardar" onclick="descargarDocumentoEmpresa('${d.id}')">⬇️ Descargar</button>
-            <button class="btn-mini desactivar" onclick="confirmarEliminarDocumentoEmpresa('${d.id}')">🗑️ Eliminar</button>
-          </div>
+    cont.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:1fr 140px 200px 170px;">
+          <span>DOCUMENTO</span><span>TIPO</span><span>VENCIMIENTO</span><span></span>
         </div>
-      `;
-    }).join('');
+        ${documentos.map(d => {
+          const vencido = d.fecha_vencimiento && d.fecha_vencimiento < hoy;
+          const porVencer = d.fecha_vencimiento && !vencido && d.fecha_vencimiento < new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+          return `
+            <div class="tabla-lista-fila" style="grid-template-columns:1fr 140px 200px 170px;${vencido ? 'border-left:3px solid var(--rojo-error);' : porVencer ? 'border-left:3px solid #e6a700;' : ''}">
+              <span style="font-weight:600;">📄 ${escaparHtml(d.nombre)}${d.descripcion ? ` <span style="font-weight:400;opacity:0.6;font-size:11px;">— ${escaparHtml(d.descripcion)}</span>` : ''}</span>
+              <span style="opacity:0.75;font-size:11.5px;">${etiquetasTipoDocEmpresa[d.tipo_documento] || d.tipo_documento}</span>
+              <span style="opacity:0.75;font-size:11.5px;">${d.fecha_vencimiento ? `${new Date(d.fecha_vencimiento + 'T00:00:00').toLocaleDateString('es-CO')}${vencido ? ' ⚠️ VENCIDO' : porVencer ? ' 🟡 Por vencer' : ''}` : 'Sin fecha'}</span>
+              <span style="display:flex;gap:5px;">
+                <button class="btn-mini guardar" onclick="descargarDocumentoEmpresa('${d.id}')">⬇️</button>
+                <button class="btn-mini desactivar" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => confirmarEliminarDocumentoEmpresa('${d.id}'))">🗑️</button>
+              </span>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
   }
 
   async function descargarDocumentoEmpresa(documentoId) {
@@ -9284,13 +9288,12 @@
   }
 
   async function confirmarEliminarDocumentoEmpresa(documentoId) {
-    if (!confirm('¿Eliminar este documento? No se puede deshacer.')) return;
     const resp = await fetch(WORKER_URL + '/api/pos/documentos-empresa/eliminar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ documento_id: documentoId })
     });
-    if (!resp.ok) { alert('No se pudo eliminar.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeDocumentosEmpresa', 'No se pudo eliminar.', 'error'); return; }
     await cargarDocumentosEmpresa();
   }
 
@@ -14172,28 +14175,38 @@
 
     const etiquetasConcepto = { devolucion: 'Devolución', descuento_posventa: 'Descuento posterior', correccion: 'Corrección', cargo_adicional: 'Cargo adicional', otro: 'Otro' };
 
-    cont.innerHTML = notas.map(n => `
-      <div class="fila-historial" style="margin-bottom:9px;${n.estado === 'anulada' ? 'opacity:0.5;' : ''}">
-        <div class="fila-historial-encabezado">
-          <span class="fila-historial-consecutivo">${n.tipo === 'credito' ? '🟢' : '🔴'} ${escaparHtml(n.consecutivo)} — ${escaparHtml(n.tercero ? n.tercero.nombre_completo : '')}</span>
-          <span class="fila-historial-total">${formatearMoneda(n.valor)}</span>
+    cont.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:150px 1fr 150px 120px 100px 110px;">
+          <span>N.°</span><span>TERCERO / DETALLE</span><span>CONCEPTO</span><span style="text-align:right;">VALOR</span><span>FECHA</span><span></span>
         </div>
-        <div class="fila-historial-fecha">${new Date(n.fecha + 'T00:00:00').toLocaleDateString('es-CO')} — ${etiquetasConcepto[n.concepto] || n.concepto} — ${escaparHtml(n.descripcion)}${n.documento_referencia ? ' (ref: ' + escaparHtml(n.documento_referencia) + ')' : ''}</div>
-        <div class="fila-historial-fecha">${n.aplica_a === 'cliente' ? 'Cliente' : 'Proveedor'} · ${n.afecta_caja ? '💵 Se pagó/devolvió ya (' + (n.metodo_pago || '') + ')' : '📋 Solo ajustó lo que debía'} ${n.estado === 'anulada' ? '· ⚠️ ANULADA' : ''}</div>
-        ${n.estado !== 'anulada' ? `<button class="btn-mini desactivar" style="margin-top:6px;" onclick="confirmarAnularNotaCD('${n.id}')">Anular</button>` : ''}
+        ${notas.map(n => `
+          <div class="tabla-lista-fila" style="grid-template-columns:150px 1fr 150px 120px 100px 110px;${n.estado === 'anulada' ? 'opacity:0.5;' : ''}">
+            <span style="font-weight:600;">${n.tipo === 'credito' ? '🟢' : '🔴'} ${escaparHtml(n.consecutivo)}</span>
+            <span>
+              <div>${escaparHtml(n.tercero ? n.tercero.nombre_completo : '')}</div>
+              <div style="font-size:10.5px;opacity:0.6;">${escaparHtml(n.descripcion)}${n.documento_referencia ? ' (ref: ' + escaparHtml(n.documento_referencia) + ')' : ''} — ${n.afecta_caja ? '💵 Ya se pagó/devolvió' : '📋 Solo ajustó lo que debía'}${n.estado === 'anulada' ? ' · ⚠️ ANULADA' : ''}</div>
+            </span>
+            <span style="opacity:0.75;font-size:11.5px;">${etiquetasConcepto[n.concepto] || n.concepto}</span>
+            <span style="text-align:right;font-weight:700;">${formatearMoneda(n.valor)}</span>
+            <span style="opacity:0.75;font-size:11.5px;">${new Date(n.fecha + 'T00:00:00').toLocaleDateString('es-CO')}</span>
+            <span>${n.estado !== 'anulada' ? `<button class="btn-mini desactivar" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => confirmarAnularNotaCD('${n.id}'))">Anular</button>` : ''}</span>
+          </div>
+        `).join('')}
       </div>
-    `).join('');
+      <div class="mensaje" id="mensajeNotasCD"></div>
+    `;
   }
 
   async function confirmarAnularNotaCD(id) {
-    if (!confirm('¿Anular esta nota? Se generará un reverso contable — el historial completo queda visible en el Libro Diario, no se borra nada.')) return;
     const resp = await fetch(WORKER_URL + '/api/pos/notas-cd/anular', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ id })
     });
     const datos = await resp.json();
-    if (!resp.ok) { alert(datos.error || 'No se pudo anular.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeNotasCD', datos.error || 'No se pudo anular.', 'error'); return; }
+    mostrarMensaje('mensajeNotasCD', '✅ Nota anulada. El reverso contable ya quedó registrado en el Libro Diario.', 'exito');
     await cargarNotasCD();
   }
 
@@ -15048,29 +15061,36 @@
     if (!cuentas || cuentas.length === 0) { cont.innerHTML = '<div class="cargando">Sin cuentas que coincidan.</div>'; return; }
 
     const hoy = new Date().toISOString().slice(0, 10);
-    cont.innerHTML = cuentas.map(c => {
-      const vencida = c.estado !== 'pagado' && c.fecha_vencimiento < hoy;
-      const saldoPendiente = Number(c.monto) - Number(c.monto_abonado || 0);
-      const esEmpresarial = c.tercero && c.tercero.tipo_documento === 'NIT';
-      return `
-        <div class="fila-historial" style="margin-bottom:9px;${vencida ? 'border-left:3px solid var(--rojo-error);' : ''}">
-          <div class="fila-historial-encabezado">
-            <span class="fila-historial-consecutivo">${escaparHtml(c.tercero ? c.tercero.nombre_completo : c.descripcion)}${c.numero_factura ? ' · ' + escaparHtml(c.numero_factura) : ''}</span>
-            <span class="fila-historial-total">${formatearMoneda(c.monto)}</span>
-          </div>
-          <div class="fila-historial-fecha">${escaparHtml(c.descripcion)}</div>
-          <div class="fila-historial-fecha">Vence: ${new Date(c.fecha_vencimiento + 'T00:00:00').toLocaleDateString('es-CO')} ${vencida ? '⚠️ VENCIDA' : ''} — ${c.estado === 'pagado' ? '✅ Pagada el ' + new Date(c.fecha_pago + 'T00:00:00').toLocaleDateString('es-CO') : `⏳ Pendiente (abonado: ${formatearMoneda(c.monto_abonado || 0)}, saldo: ${formatearMoneda(saldoPendiente)})`}</div>
-          ${c.estado !== 'pagado' ? `
-            <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
-              <button class="btn-mini guardar" onclick="abrirAbonoCuentaPendiente('${c.id}', ${saldoPendiente})">💵 Registrar abono</button>
-              <button class="btn-mini editar" onclick="verHistorialAbonosCuenta('${c.id}')">📜 Ver abonos</button>
-              ${esEmpresarial && filtroCxCActual === 'por_cobrar' ? `<button class="btn-mini editar" onclick="generarCuentaDeCobro('${c.id}')">🧾 Generar cuenta de cobro</button>` : ''}
-              ${vencida && filtroCxCActual === 'por_cobrar' && c.tercero && c.tercero.telefono ? `<button class="btn-mini desactivar" onclick="enviarWhatsappMoraCliente('${c.id}')">📱 Avisar por WhatsApp</button>` : ''}
-            </div>
-          ` : ''}
+    cont.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:1.1fr 1fr 110px 220px 280px;">
+          <span>TERCERO / FACTURA</span><span>DESCRIPCIÓN</span><span style="text-align:right;">MONTO</span><span>VENCIMIENTO / ESTADO</span><span></span>
         </div>
-      `;
-    }).join('');
+        ${cuentas.map(c => {
+          const vencida = c.estado !== 'pagado' && c.fecha_vencimiento < hoy;
+          const saldoPendiente = Number(c.monto) - Number(c.monto_abonado || 0);
+          const esEmpresarial = c.tercero && c.tercero.tipo_documento === 'NIT';
+          return `
+            <div class="tabla-lista-fila" style="grid-template-columns:1.1fr 1fr 110px 220px 280px;${vencida ? 'border-left:3px solid var(--rojo-error);' : ''}">
+              <span style="font-weight:600;">${escaparHtml(c.tercero ? c.tercero.nombre_completo : c.descripcion)}${c.numero_factura ? ' · ' + escaparHtml(c.numero_factura) : ''}</span>
+              <span style="opacity:0.75;font-size:11.5px;">${escaparHtml(c.descripcion)}</span>
+              <span style="text-align:right;font-weight:700;">${formatearMoneda(c.monto)}</span>
+              <span style="font-size:11px;opacity:0.75;">${new Date(c.fecha_vencimiento + 'T00:00:00').toLocaleDateString('es-CO')} ${vencida ? '⚠️ VENCIDA' : ''}<br>${c.estado === 'pagado' ? '✅ Pagada el ' + new Date(c.fecha_pago + 'T00:00:00').toLocaleDateString('es-CO') : `⏳ Saldo: ${formatearMoneda(saldoPendiente)}`}</span>
+              <span style="display:flex;gap:5px;flex-wrap:wrap;">
+                ${c.estado !== 'pagado' ? `
+                  <button class="btn-mini guardar" onclick="abrirAbonoCuentaPendiente('${c.id}', ${saldoPendiente})">💵 Abono</button>
+                  <button class="btn-mini editar" onclick="verHistorialAbonosCuenta('${c.id}')">📜</button>
+                  ${esEmpresarial && filtroCxCActual === 'por_cobrar' ? `<button class="btn-mini editar" onclick="generarCuentaDeCobro('${c.id}')">🧾</button>` : ''}
+                  ${vencida && filtroCxCActual === 'por_cobrar' && c.tercero && c.tercero.telefono ? `<button class="btn-mini desactivar" onclick="enviarWhatsappMoraCliente('${c.id}')">📱</button>` : ''}
+                ` : ''}
+              </span>
+            </div>
+            <div id="panelAbono-${c.id}" class="oculto tabla-lista-detalle"></div>
+            <div id="panelHistorialAbonos-${c.id}" class="oculto tabla-lista-detalle"></div>
+          `;
+        }).join('')}
+      </div>
+    `;
 
     // Consolidado vigente (todo lo pendiente, no solo lo que muestra el filtro de fecha)
     const respTodo = await fetch(`${WORKER_URL}/api/pos/finanzas/cuentas-pendientes?tipo=${filtroCxCActual}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
@@ -15278,14 +15298,41 @@
     `;
   }
 
-  async function abrirAbonoCuentaPendiente(cuentaId, saldoPendiente) {
-    const montoStr = prompt(`Saldo pendiente: ${formatearMoneda(saldoPendiente)}\n¿Cuánto vas a abonar?`, saldoPendiente);
-    if (!montoStr) return;
-    const monto = Number(montoStr);
-    if (isNaN(monto) || monto <= 0) { alert('Monto inválido.'); return; }
+  function abrirAbonoCuentaPendiente(cuentaId, saldoPendiente) {
+    const panel = document.getElementById(`panelAbono-${cuentaId}`);
+    const estabaAbierto = !panel.classList.contains('oculto');
+    document.querySelectorAll('[id^="panelAbono-"]').forEach(p => p.classList.add('oculto'));
+    if (estabaAbierto) return;
+    panel.classList.remove('oculto');
+    panel.innerHTML = `
+      <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+        <div>
+          <label style="font-size:11px;">Saldo pendiente: ${formatearMoneda(saldoPendiente)}<br>¿Cuánto vas a abonar?</label>
+          <input type="number" id="abonoMonto-${cuentaId}" min="0" step="1" value="${saldoPendiente}" style="width:140px;">
+        </div>
+        <div>
+          <label style="font-size:11px;">Método de pago</label>
+          <select id="abonoMetodo-${cuentaId}" style="width:auto;">
+            <option value="efectivo">Efectivo</option>
+            <option value="nequi">Nequi</option>
+            <option value="daviplata">Daviplata</option>
+            <option value="transferencia">Transferencia</option>
+            <option value="tarjeta_debito">Tarjeta débito</option>
+            <option value="tarjeta_credito">Tarjeta crédito</option>
+            <option value="credito_financiera">Crédito (CrediLondon)</option>
+          </select>
+        </div>
+        <button class="btn-mini guardar" onclick="confirmarRegistrarAbonoCuenta('${cuentaId}')">Registrar abono</button>
+      </div>
+      <div class="mensaje" id="mensajeAbono-${cuentaId}"></div>
+    `;
+  }
 
-    const metodoPago = prompt('Método de pago: efectivo, nequi, daviplata, transferencia, tarjeta_debito, tarjeta_credito, credito_financiera (CrediLondon)', 'efectivo');
-    if (!metodoPago) return;
+  async function confirmarRegistrarAbonoCuenta(cuentaId) {
+    ocultarMensaje(`mensajeAbono-${cuentaId}`);
+    const monto = Number(document.getElementById(`abonoMonto-${cuentaId}`).value);
+    const metodoPago = document.getElementById(`abonoMetodo-${cuentaId}`).value;
+    if (isNaN(monto) || monto <= 0) { mostrarMensaje(`mensajeAbono-${cuentaId}`, 'Escribe un monto válido.', 'error'); return; }
 
     const resp = await fetch(WORKER_URL + '/api/pos/finanzas/cuentas-pendientes/abonar', {
       method: 'POST',
@@ -15293,25 +15340,41 @@
       body: JSON.stringify({ cuenta_id: cuentaId, monto, metodo_pago: metodoPago })
     });
     const datos = await resp.json();
-    if (!resp.ok) { alert(datos.error || 'No se pudo registrar el abono.'); return; }
+    if (!resp.ok) { mostrarMensaje(`mensajeAbono-${cuentaId}`, datos.error || 'No se pudo registrar el abono.', 'error'); return; }
+
+    mostrarMensaje(`mensajeAbono-${cuentaId}`, `✅ Abono registrado (recibo ${datos.numero_recibo}).${datos.paz_y_salvo ? ' El cliente queda a paz y salvo.' : ''}`, 'exito');
+    const panelMensaje = document.getElementById(`mensajeAbono-${cuentaId}`);
+    const botonImprimir = document.createElement('button');
+    botonImprimir.className = 'btn-mini editar';
+    botonImprimir.style.marginTop = '6px';
+    botonImprimir.textContent = '🖨️ Imprimir recibo';
+    botonImprimir.onclick = () => imprimirReciboAbono(datos);
+    panelMensaje.appendChild(document.createElement('br'));
+    panelMensaje.appendChild(botonImprimir);
 
     if (document.getElementById('listaCuentasPendientes')) await cargarCuentasPendientes();
     if (document.getElementById('carteraVentaBuscarCliente') && document.getElementById('carteraVentaBuscarCliente').value.trim()) {
       await buscarClienteCarteraVenta();
       document.getElementById('cuentasClienteCarteraVenta').innerHTML = '';
     }
-    if (confirm(`✅ Abono registrado (recibo ${datos.numero_recibo}).${datos.paz_y_salvo ? ' El cliente queda a paz y salvo.' : ''}\n\n¿Quieres imprimir el recibo ahora?`)) {
-      imprimirReciboAbono(datos);
-    }
   }
 
   async function verHistorialAbonosCuenta(cuentaId) {
+    const panel = document.getElementById(`panelHistorialAbonos-${cuentaId}`);
+    const estabaAbierto = !panel.classList.contains('oculto');
+    document.querySelectorAll('[id^="panelHistorialAbonos-"]').forEach(p => p.classList.add('oculto'));
+    if (estabaAbierto) return;
+
+    panel.classList.remove('oculto');
+    panel.innerHTML = '<div class="cargando">Cargando...</div>';
     const resp = await fetch(`${WORKER_URL}/api/pos/finanzas/cuentas-pendientes/abonos?cuenta_id=${cuentaId}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
-    if (!resp.ok) { alert('No se pudo cargar el historial.'); return; }
+    if (!resp.ok) { panel.innerHTML = '<div class="mensaje visible error">No se pudo cargar el historial.</div>'; return; }
     const { abonos } = await resp.json();
-    if (!abonos || abonos.length === 0) { alert('Todavía no hay abonos registrados para esta cuenta.'); return; }
-    const texto = abonos.map(a => `${new Date(a.fecha + 'T00:00:00').toLocaleDateString('es-CO')} — ${formatearMoneda(a.monto)} (${a.metodo_pago})`).join('\n');
-    alert('Historial de abonos:\n\n' + texto);
+    if (!abonos || abonos.length === 0) { panel.innerHTML = '<div style="font-size:12px;opacity:0.6;padding:6px 0;">Todavía no hay abonos registrados para esta cuenta.</div>'; return; }
+    panel.innerHTML = `
+      <div style="font-size:11.5px;font-weight:600;margin-bottom:4px;opacity:0.7;">Historial de abonos</div>
+      ${abonos.map(a => `<div style="font-size:12px;padding:3px 0;">${new Date(a.fecha + 'T00:00:00').toLocaleDateString('es-CO')} — ${formatearMoneda(a.monto)} (${a.metodo_pago})</div>`).join('')}
+    `;
   }
 
   async function confirmarPagarCuentaPendiente(cuentaId) {
@@ -15412,14 +15475,15 @@
 
 
   async function generarCuentaDeCobro(cuentaId) {
+    ocultarMensaje('mensajeCuentasPendientes');
     const c = cuentasPendientesCache.find(x => x.id === cuentaId);
-    if (!c) { alert('No se encontró la cuenta.'); return; }
+    if (!c) { mostrarMensaje('mensajeCuentasPendientes', 'No se encontró la cuenta.', 'error'); return; }
 
     const respEmpresa = await fetch(WORKER_URL + '/api/pos/config-empresa', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
     const empresa = respEmpresa.ok ? await respEmpresa.json() : {};
 
     if (!empresa.nit || !empresa.razon_social) {
-      alert('Antes de generar la cuenta de cobro, completa los datos de tu empresa (razón social y NIT) en Configuración → Apariencia → "Datos de la empresa".');
+      mostrarMensaje('mensajeCuentasPendientes', 'Antes de generar la cuenta de cobro, completa los datos de tu empresa (razón social y NIT) en Configuración → Datos de la empresa.', 'error');
       return;
     }
 
