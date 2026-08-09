@@ -6849,7 +6849,7 @@
       }
       html += `
         <div class="tabla-lista">
-          <div class="tabla-lista-header" style="grid-template-columns:1.5fr 100px 90px 100px 130px 150px 30px;">
+          <div class="tabla-lista-header header-rosa" style="grid-template-columns:1.5fr 100px 90px 100px 130px 150px 30px;">
             <span>PRODUCTO</span><span>CATEGORÍA</span><span style="text-align:center;">CANTIDAD</span><span style="text-align:right;">PRECIO</span><span>PROVEEDOR</span><span>ESTADO</span><span></span>
           </div>
           ${itemsGrupo.map(item => renderizarFilaInventarioItem(item, grupo.icono)).join('')}
@@ -7311,7 +7311,7 @@
 
     contenedor.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:170px 1fr 110px 200px;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:170px 1fr 110px 200px;">
           <span>PEDIDO</span><span>CLIENTE / PRODUCTO</span><span style="text-align:right;">TOTAL</span><span>FECHA / ESTADO</span>
         </div>
         ${pedidos.map(p => {
@@ -7584,7 +7584,7 @@
             <div style="font-weight:700;color:var(--rosa-principal);">${formatearMoneda(totalTurno)}</div>
           </div>
           <div class="tabla-lista" style="margin-left:8px;">
-            <div class="tabla-lista-header">
+            <div class="tabla-lista-header header-rosa">
               <span>RECIBO</span><span>FECHA</span><span>CLIENTE</span><span>PRODUCTO</span><span style="text-align:right;">VALOR</span><span>PAGO</span><span></span>
             </div>
       `;
@@ -7622,7 +7622,7 @@
             <div style="font-weight:700;color:var(--rosa-principal);">${formatearMoneda(totalGrupo)}</div>
           </div>
           <div class="tabla-lista" style="margin-left:8px;">
-            <div class="tabla-lista-header">
+            <div class="tabla-lista-header header-rosa">
               <span>RECIBO</span><span>FECHA</span><span>CLIENTE</span><span>PRODUCTO</span><span style="text-align:right;">VALOR</span><span>PAGO</span><span></span>
             </div>
       `;
@@ -7983,7 +7983,7 @@
 
     contenedor.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:1fr 100px 150px 130px 90px${puedeEnviar ? ' 140px' : ''};">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:1fr 100px 150px 130px 90px${puedeEnviar ? ' 140px' : ''};">
           <span>INSUMO</span><span>CANTIDAD</span><span>PEDIDO</span><span>FECHA</span><span>STOCK</span>${puedeEnviar ? '<span></span>' : ''}
         </div>
         ${solicitudes.map(s => {
@@ -8031,7 +8031,7 @@
 
     contenedor.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:130px 1fr 130px;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:130px 1fr 130px;">
           <span>PEDIDO</span><span>INSUMO</span><span>FECHA</span>
         </div>
         ${solicitudes.map(s => {
@@ -8157,7 +8157,7 @@
 
     contenedor.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:1fr 80px 1.4fr 200px;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:1fr 80px 1.4fr 200px;">
           <span>PRODUCTO</span><span>CANT.</span><span>ORIGEN → DESTINO</span><span>FECHA</span>
         </div>
         ${transferencias.map(t => `
@@ -8512,7 +8512,7 @@
 
     contenedor.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:100px 130px 1fr 110px 110px 20px;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:100px 130px 1fr 110px 110px 20px;">
           <span>CIERRE</span><span>CAJERO</span><span>N.° VENTAS</span><span style="text-align:right;">TOTAL</span><span style="text-align:right;">NOVEDAD</span><span></span>
         </div>
         ${reportes.map(rep => {
@@ -9062,7 +9062,7 @@
 
     contenedor.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:95px 1fr 140px 100px 90px 90px;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:95px 1fr 140px 100px 90px 90px;">
           <span>FECHA</span><span>PRODUCTO</span><span>PROVEEDOR</span><span style="text-align:right;">VALOR</span><span>APROBÓ</span><span></span>
         </div>
         ${compras.map(c => `
@@ -9240,7 +9240,7 @@
 
     contenedor.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:1fr 90px 90px 90px 90px;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:1fr 90px 90px 90px 90px;">
           <span>EMPLEADO</span><span>FECHA</span><span>ENTRADA</span><span>SALIDA</span><span style="text-align:right;">HORAS</span>
         </div>
         ${registros.map(r => `
@@ -9326,7 +9326,7 @@
     const hoy = new Date().toISOString().slice(0, 10);
     cont.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:1fr 140px 200px 170px;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:1fr 140px 200px 170px;">
           <span>DOCUMENTO</span><span>TIPO</span><span>VENCIMIENTO</span><span></span>
         </div>
         ${documentos.map(d => {
@@ -9504,7 +9504,7 @@
 
     contenedor.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:150px 90px 1fr 130px 130px 110px;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:150px 90px 1fr 130px 130px 110px;">
           <span>CÓDIGO</span><span>VALOR</span><span>DESCRIPCIÓN</span><span>USOS</span><span>VENCE</span><span></span>
         </div>
         ${codigos.map(c => `
@@ -9629,7 +9629,7 @@
 
     contenedor.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:1.2fr 1.4fr 160px 100px;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:1.2fr 1.4fr 160px 100px;">
           <span>NOMBRE</span><span>CORREO</span><span>ROL PRINCIPAL</span><span>ESTADO</span>
         </div>
         ${usuariosCache.map(u => `
@@ -10596,7 +10596,7 @@
 
     contenedor.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:90px 130px 150px 1fr;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:90px 130px 150px 1fr;">
           <span>FECHA</span><span>USUARIO</span><span>MÓDULO</span><span>DETALLE</span>
         </div>
         ${registros.map(r => `
@@ -10836,12 +10836,12 @@
 
     contenedor.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:1.4fr 120px 120px 80px 160px 90px;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:1.4fr 120px 120px 80px 160px 90px;">
           <span>NOMBRE</span><span>DOCUMENTO</span><span>TELÉFONO</span><span>PUNTOS</span><span>AUTORIZACIÓN DE DATOS</span><span></span>
         </div>
         ${terceros.map(c => `
           <div class="tabla-lista-fila" style="grid-template-columns:1.4fr 120px 120px 80px 160px 90px;cursor:pointer;" onclick="alternarHistorialCliente('${c.id}')">
-            <span style="font-weight:600;">${escaparHtml(c.nombre_completo)}</span>
+            <span style="font-weight:600;display:flex;align-items:center;gap:8px;">${avatarIniciales(c.nombre_completo)}${escaparHtml(c.nombre_completo)}</span>
             <span style="opacity:0.75;">${escaparHtml(c.numero_documento || '—')}</span>
             <span style="opacity:0.75;">${escaparHtml(c.telefono || '—')}</span>
             <span>${c.puntos_fidelizacion > 0 ? `⭐ ${c.puntos_fidelizacion}` : '—'}</span>
@@ -11001,12 +11001,12 @@
 
     contenedor.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:1.3fr 130px 130px 160px 90px;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:1.3fr 130px 130px 160px 90px;">
           <span>NOMBRE</span><span>NIT/DOCUMENTO</span><span>TELÉFONO</span><span>CONTACTO</span><span></span>
         </div>
         ${terceros.map(p => `
           <div class="tabla-lista-fila" style="grid-template-columns:1.3fr 130px 130px 160px 90px;cursor:pointer;" onclick="alternarHistorialProveedor('${p.id}')">
-            <span style="font-weight:600;">${escaparHtml(p.nombre_completo)}</span>
+            <span style="font-weight:600;display:flex;align-items:center;gap:8px;">${avatarIniciales(p.nombre_completo)}${escaparHtml(p.nombre_completo)}</span>
             <span style="opacity:0.75;">${escaparHtml(p.numero_documento || '—')}</span>
             <span style="opacity:0.75;">${escaparHtml(p.telefono || '—')}</span>
             <span style="opacity:0.75;">${p.persona_contacto ? '👤 ' + escaparHtml(p.persona_contacto) : '—'}</span>
@@ -11165,7 +11165,7 @@
       <div class="panel" style="max-width:none;max-height:none;">
         <h2>Por empleado</h2>
         <div class="tabla-lista">
-          <div class="tabla-lista-header" style="grid-template-columns:1fr 100px 100px 100px 100px 100px 120px;">
+          <div class="tabla-lista-header header-rosa" style="grid-template-columns:1fr 100px 100px 100px 100px 100px 120px;">
             <span>EMPLEADO</span><span style="text-align:right;">CESANTÍAS</span><span style="text-align:right;">INTERESES</span><span style="text-align:right;">PRIMA</span><span style="text-align:right;">VACACIONES</span><span style="text-align:right;">DOTACIÓN</span><span style="text-align:right;">TOTAL</span>
           </div>
           ${provisiones.map(p => `
@@ -11249,7 +11249,7 @@
 
     cont.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:1.6fr 90px 100px 90px 100px 110px;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:1.6fr 90px 100px 90px 100px 110px;">
           <span>BIMESTRE</span><span style="text-align:right;">TIENDA</span><span style="text-align:right;">WHATSAPP/REDES</span><span style="text-align:right;">ACADEMY</span><span style="text-align:right;">TOTAL</span><span style="text-align:right;">ACUMULADO AÑO</span>
         </div>
         ${d.bimestres.map(b => `
@@ -11411,7 +11411,7 @@
       const contA = document.getElementById('listaCosteoAmigurumis');
       contA.innerHTML = productos.length === 0 ? '<div class="cargando">Sin pedidos con precio registrado en el CRM.</div>' : `
         <div class="tabla-lista">
-          <div class="tabla-lista-header" style="grid-template-columns:1fr 90px 100px 100px 100px 100px 90px 90px;">
+          <div class="tabla-lista-header header-rosa" style="grid-template-columns:1fr 90px 100px 100px 100px 100px 90px 90px;">
             <span>PRODUCTO</span><span style="text-align:right;">HORAS</span><span style="text-align:right;">MANO DE OBRA</span><span style="text-align:right;">MATERIALES</span><span style="text-align:right;">COSTO TOTAL</span><span style="text-align:right;">PRECIO VENTA</span><span style="text-align:right;">MARGEN</span><span style="text-align:right;">%</span>
           </div>
           ${productos.map(p => `
@@ -11435,7 +11435,7 @@
       const contC = document.getElementById('listaCosteoClases');
       contC.innerHTML = clases.length === 0 ? '<div class="cargando">Sin clases registradas.</div>' : `
         <div class="tabla-lista">
-          <div class="tabla-lista-header" style="grid-template-columns:1fr 90px 110px 110px 100px 90px;">
+          <div class="tabla-lista-header header-rosa" style="grid-template-columns:1fr 90px 110px 110px 100px 90px;">
             <span>CLASE/CURSO</span><span style="text-align:right;">HORAS</span><span style="text-align:right;">MANO DE OBRA</span><span style="text-align:right;">VALOR CLASE</span><span style="text-align:right;">MARGEN</span><span style="text-align:right;">%</span>
           </div>
           ${clases.map(c => `
@@ -11484,7 +11484,7 @@
         <h2>${titulo}</h2>
         ${filas.length === 0 ? '<div class="cargando">Sin datos en este período.</div>' : `
         <div class="tabla-lista">
-          <div class="tabla-lista-header" style="grid-template-columns:${columnas.map(() => '1fr').join(' ')};">
+          <div class="tabla-lista-header header-rosa" style="grid-template-columns:${columnas.map(() => '1fr').join(' ')};">
             ${columnas.map(c => `<span${c.derecha ? ' style="text-align:right;"' : ''}>${c.titulo}</span>`).join('')}
           </div>
           ${filas.map(f => `
@@ -12016,7 +12016,7 @@
 
     contenedor.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:130px 1fr 90px 160px;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:130px 1fr 90px 160px;">
           <span>PEDIDO</span><span>PRODUCTO</span><span>CANT.</span><span></span>
         </div>
         ${pendientes.map(p => `
@@ -12056,7 +12056,7 @@
 
     contenedor.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:120px 1fr 1fr 130px;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:120px 1fr 1fr 130px;">
           <span>GUÍA</span><span>PEDIDO</span><span>DESTINATARIO</span><span>ESTADO</span>
         </div>
         ${envios.map(e => `
@@ -12277,7 +12277,7 @@
 
     contenedor.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:130px 1fr 140px 200px;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:130px 1fr 140px 200px;">
           <span>PEDIDO</span><span>DESCRIPCIÓN</span><span>ESTADO</span><span></span>
         </div>
         ${pendientes.map(s => {
@@ -12331,7 +12331,7 @@
 
     contenedor.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:1fr;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:1fr;">
           <span>PEDIDO</span>
         </div>
         ${pedidos.map(p => {
@@ -12982,7 +12982,7 @@
       { valor: 'V', texto: 'Clase V — Riesgo máximo' },
     ];
 
-    contenedor.innerHTML = '<div class="tabla-lista"><div class="tabla-lista-header" style="grid-template-columns:1fr 170px 140px 90px;"><span>NOMBRE</span><span>DEPARTAMENTO</span><span>SALARIO</span><span>EDAD</span></div>' + empleadosActivosCache.map(e => {
+    contenedor.innerHTML = '<div class="tabla-lista"><div class="tabla-lista-header header-rosa" style="grid-template-columns:1fr 170px 140px 90px;"><span>NOMBRE</span><span>DEPARTAMENTO</span><span>SALARIO</span><span>EDAD</span></div>' + empleadosActivosCache.map(e => {
       const nombreDepto = e.centros_costo ? e.centros_costo.nombre : 'Sin departamento';
       const estaEditando = empleadoEditandoId === e.id;
       const edad = calcularEdad(e.fecha_nacimiento);
@@ -13773,7 +13773,7 @@
 
     cont.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:1fr 190px 110px 1fr;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:1fr 190px 110px 1fr;">
           <span>CONTADOR</span><span>PERÍODO REVISADO</span><span>FECHA</span><span>OBSERVACIONES</span>
         </div>
         ${revisiones.map(r => `
@@ -14261,15 +14261,25 @@
 
     cont.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:110px 1fr 110px 140px 100px 300px;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:110px 1fr 110px 140px 100px 300px;">
           <span>N.°</span><span>CLIENTE</span><span style="text-align:right;">TOTAL</span><span>ESTADO</span><span>VENCE</span><span></span>
         </div>
-        ${cotizaciones.map(c => `
+        ${cotizaciones.map(c => {
+          const nombreCliente = c.tercero ? c.tercero.nombre_completo : c.cliente_nombre_libre || '';
+          const coloresEstadoCot = {
+            enviada: { bg: '#dce8f5', color: '#2d5a8c' },
+            aprobada: { bg: '#e0f2e6', color: 'var(--verde-exito)' },
+            rechazada: { bg: '#fbe1de', color: 'var(--rojo-error)' },
+            vencida: { bg: '#f0f0f0', color: '#888' },
+            convertida: { bg: '#f3ddf4', color: 'var(--rosa-principal)' },
+          };
+          const colorCot = coloresEstadoCot[c.estado] || { bg: 'var(--rosa-suave)', color: 'var(--rosa-principal)' };
+          return `
           <div class="tabla-lista-fila" style="grid-template-columns:110px 1fr 110px 140px 100px 300px;">
             <span style="font-weight:600;">${escaparHtml(c.consecutivo)}</span>
-            <span style="opacity:0.75;">${escaparHtml(c.tercero ? c.tercero.nombre_completo : c.cliente_nombre_libre || '')}</span>
+            <span style="opacity:0.9;display:flex;align-items:center;gap:8px;">${avatarIniciales(nombreCliente)}${escaparHtml(nombreCliente)}</span>
             <span style="text-align:right;font-weight:700;">${formatearMoneda(c.total)}</span>
-            <span style="opacity:0.75;">${etiquetasEstado[c.estado] || c.estado}</span>
+            <span><span class="badge-estado-pedido" style="background:${colorCot.bg};color:${colorCot.color};">${etiquetasEstado[c.estado] || c.estado}</span></span>
             <span style="opacity:0.75;font-size:11.5px;">${new Date(c.fecha_vencimiento + 'T00:00:00').toLocaleDateString('es-CO')}</span>
             <span style="display:flex;gap:5px;flex-wrap:wrap;">
               ${c.estado === 'enviada' ? `
@@ -14282,7 +14292,8 @@
               <button class="btn-mini desactivar" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => eliminarCotizacion('${c.id}'))">🗑️</button>
             </span>
           </div>
-        `).join('')}
+        `;
+        }).join('')}
       </div>
     `;
   }
@@ -14497,7 +14508,7 @@
 
     cont.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:150px 1fr 150px 120px 100px 110px;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:150px 1fr 150px 120px 100px 110px;">
           <span>N.°</span><span>TERCERO / DETALLE</span><span>CONCEPTO</span><span style="text-align:right;">VALOR</span><span>FECHA</span><span></span>
         </div>
         ${notas.map(n => `
@@ -14631,15 +14642,22 @@
 
     cont.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:130px 1fr 130px 200px 200px;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:130px 1fr 130px 200px 200px;">
           <span>N.° ORDEN</span><span>PROVEEDOR</span><span style="text-align:right;">TOTAL</span><span>ENTREGA / ESTADO</span><span></span>
         </div>
-        ${ordenes.map(o => `
+        ${ordenes.map(o => {
+          const coloresEstadoOC = {
+            enviada: { bg: '#dce8f5', color: '#2d5a8c' },
+            recibida: { bg: '#e0f2e6', color: 'var(--verde-exito)' },
+            cancelada: { bg: '#fbe1de', color: 'var(--rojo-error)' },
+          };
+          const colorOC = coloresEstadoOC[o.estado] || { bg: 'var(--rosa-suave)', color: 'var(--rosa-principal)' };
+          return `
           <div class="tabla-lista-fila" style="grid-template-columns:130px 1fr 130px 200px 200px;">
             <span style="font-weight:600;">${escaparHtml(o.numero_orden)}</span>
-            <span style="opacity:0.75;">${escaparHtml(o.proveedor ? o.proveedor.nombre_completo : '')}</span>
+            <span style="opacity:0.9;display:flex;align-items:center;gap:8px;">${avatarIniciales(o.proveedor ? o.proveedor.nombre_completo : '?')}${escaparHtml(o.proveedor ? o.proveedor.nombre_completo : '')}</span>
             <span style="text-align:right;font-weight:700;">${formatearMoneda(o.total_estimado)}</span>
-            <span style="opacity:0.75;font-size:11.5px;">${o.fecha_entrega_esperada ? new Date(o.fecha_entrega_esperada + 'T00:00:00').toLocaleDateString('es-CO') + ' — ' : ''}${etiquetasEstado[o.estado] || o.estado}</span>
+            <span style="font-size:11.5px;">${o.fecha_entrega_esperada ? new Date(o.fecha_entrega_esperada + 'T00:00:00').toLocaleDateString('es-CO') + ' ' : ''}<span class="badge-estado-pedido" style="background:${colorOC.bg};color:${colorOC.color};">${etiquetasEstado[o.estado] || o.estado}</span></span>
             <span style="display:flex;gap:5px;flex-wrap:wrap;">
               ${o.estado === 'enviada' ? `
                 <button class="btn-mini guardar" onclick="cambiarEstadoOrdenCompra('${o.id}', 'recibida')">✅ Recibida</button>
@@ -14648,7 +14666,8 @@
               <button class="btn-mini desactivar" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => eliminarOrdenCompra('${o.id}'))">🗑️</button>
             </span>
           </div>
-        `).join('')}
+        `;
+        }).join('')}
       </div>
       <div class="mensaje" id="mensajeOrdenesCompra"></div>
     `;
@@ -14893,7 +14912,7 @@
 
     cont.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:150px 130px 1fr 100px;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:150px 130px 1fr 100px;">
           <span>N.°</span><span style="text-align:right;">MONTO</span><span>DEPARTAMENTO / DETALLE</span><span>FECHA</span>
         </div>
         ${transferencias.map(t => `
@@ -15094,7 +15113,7 @@
 
     contenedor.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:1.4fr 100px 90px 100px 100px 100px 90px;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:1.4fr 100px 90px 100px 100px 100px 90px;">
           <span>NOMBRE</span><span>F. COMPRA</span><span>N° RECIBO</span><span style="text-align:right;">VALOR COMPRA</span><span style="text-align:right;">DEPRECIADO</span><span style="text-align:right;">VALOR NETO</span><span></span>
         </div>
         ${activos.map(a => `
@@ -15389,7 +15408,7 @@
     const hoy = new Date().toISOString().slice(0, 10);
     cont.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:1.1fr 1fr 110px 220px 280px;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:1.1fr 1fr 110px 220px 280px;">
           <span>TERCERO / FACTURA</span><span>DESCRIPCIÓN</span><span style="text-align:right;">MONTO</span><span>VENCIMIENTO / ESTADO</span><span></span>
         </div>
         ${cuentas.map(c => {
@@ -16075,7 +16094,7 @@
 
     cont.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:80px 1.3fr 90px 100px 100px;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:80px 1.3fr 90px 100px 100px;">
           <span>FECHA</span><span>CUENTA / CONCEPTO</span><span>ORIGEN</span><span style="text-align:right;">DEBE</span><span style="text-align:right;">HABER</span>
         </div>
         ${d.movimientos.map(m => `
@@ -16143,7 +16162,7 @@
 
     cont.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:1.3fr 100px 90px 90px 100px;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:1.3fr 100px 90px 90px 100px;">
           <span>CUENTA</span><span style="text-align:right;">SALDO INICIAL</span><span style="text-align:right;">DÉBITOS</span><span style="text-align:right;">CRÉDITOS</span><span style="text-align:right;">SALDO FINAL</span>
         </div>
         ${d.cuentas.map(c => `
@@ -16250,7 +16269,7 @@
 
     cont.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:80px 1fr 90px 90px 100px;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:80px 1fr 90px 90px 100px;">
           <span>FECHA</span><span>CONCEPTO</span><span style="text-align:right;">DÉBITO</span><span style="text-align:right;">CRÉDITO</span><span style="text-align:right;">SALDO</span>
         </div>
         <div class="tabla-lista-fila" style="grid-template-columns:80px 1fr 90px 90px 100px;cursor:default;opacity:0.7;">
@@ -17405,7 +17424,7 @@
 
     contenedor.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:150px 1fr 1fr 110px 100px;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:150px 1fr 1fr 110px 100px;">
           <span>ÁREA</span><span>DESCRIPCIÓN</span><span>CLIENTE</span><span style="text-align:right;">MONTO</span><span>FECHA</span>
         </div>
         ${ventas.map(v => {
@@ -17561,7 +17580,7 @@
     const cont = document.getElementById('listaConteoTomaInventario');
     cont.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:1fr 100px 110px 90px;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:1fr 100px 110px 90px;">
           <span>PRODUCTO</span><span style="text-align:right;">SISTEMA</span><span>CONTADO</span><span>DIF.</span>
         </div>
         ${(detalle || []).map(d => {
@@ -18057,7 +18076,7 @@
     const colorEstado = { CUMPLE: 'var(--verde-exito)', RECHAZADO: 'var(--rojo-error)', NO_CUMPLE_CON_OBSERVACIONES: '#e0922f' };
     contenedor.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:1.2fr 1fr 130px 200px;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:1.2fr 1fr 130px 200px;">
           <span>TIPO / PROVEEDOR</span><span>RUBRO</span><span style="text-align:right;">MONTO</span><span>ESTADO</span>
         </div>
         ${documentos.map(d => `
@@ -18332,7 +18351,7 @@
 
     contenedor.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:1fr 100px 100px 100px 90px 70px;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:1fr 100px 100px 100px 90px 70px;">
           <span>CONCEPTO</span><span style="text-align:right;">APROBADO</span><span style="text-align:right;">EJECUTADO</span><span style="text-align:right;">DISPONIBLE</span><span>TIPO</span><span></span>
         </div>
         ${conceptosCacheFe.map(c => {
@@ -18388,7 +18407,7 @@
     const etiquetaEstado = { PRESUPUESTO_COMPROMISORIO: '🔵 Comprometido', EJECUTADO: '✅ Ejecutado (pagado)', LIBERADO: '⚪ Liberado' };
     contenedor.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:1fr 1fr 130px 150px 220px;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:1fr 1fr 130px 150px 220px;">
           <span>RUBRO</span><span>DESCRIPCIÓN</span><span style="text-align:right;">MONTO</span><span>ESTADO</span><span></span>
         </div>
         ${commitments.map(c => `
