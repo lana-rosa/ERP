@@ -667,6 +667,9 @@
     gap: 10px; padding: 10px 12px; align-items: center; font-size: 12.5px;
   }
   .tabla-lista-header { background: #faf7f8; font-size: 10.5px; font-weight: 700; opacity: 0.55; letter-spacing: 0.3px; }
+  .tabla-lista-header.header-rosa { background: var(--rosa-suave); color: var(--rosa-principal); opacity: 1; font-size: 11px; padding-top: 10px; padding-bottom: 10px; }
+  .avatar-iniciales { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 12px; flex-shrink: 0; }
+  .badge-estado-pedido { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 4px 11px; border-radius: 20px; white-space: nowrap; }
   .tabla-lista-fila { border-top: 1px solid #f4eef2; cursor: pointer; transition: background 0.12s; }
   .tabla-lista-fila:hover { background: var(--rosa-suave); }
   .tabla-lista-chevron { opacity: 0.4; font-size: 11px; text-align: center; }
@@ -815,6 +818,7 @@
         <button class="nav-btn" id="nav-ventas" onclick="mostrarPantallaVentas()"><span class="nav-icon">🛒</span> Registrar venta</button>
         <button class="nav-btn" id="nav-historial" onclick="mostrarPantallaHistorial('01')"><span class="nav-icon">📋</span> Historial ventas</button>
         <button class="nav-btn" id="nav-clientes-dir" onclick="mostrarPantallaClientes()"><span class="nav-icon">👤</span> Clientes</button>
+        <button class="nav-btn" id="nav-oportunidades" onclick="mostrarPantallaOportunidades()"><span class="nav-icon">🎯</span> Oportunidades</button>
         <button class="nav-btn" id="nav-pedidos-canal" onclick="mostrarPantallaPedidosCanal()"><span class="nav-icon">📱</span> Pedidos WhatsApp/Redes</button>
         <button class="nav-btn" id="nav-notas-cd" onclick="mostrarPantallaNotasCD()"><span class="nav-icon">📄</span> Notas crédito/débito</button>
         <button class="nav-btn" id="nav-cuentas-pendientes" onclick="mostrarPantallaCuentasPendientes()"><span class="nav-icon">📋</span> Cartera</button>
@@ -2529,8 +2533,41 @@
   </div>
 </div>
 
+<!-- ===== PANTALLA: OPORTUNIDADES (KANBAN) ===== -->
+<div id="pantallaOportunidades" class="oculto contenido">
+  <div class="page-header">
+    <h1>🎯 Oportunidades</h1>
+    <div class="subtitulo">Lleva el pulso de negociaciones grandes (mayoristas, corporativos, ferias, colegios) antes de que existan como cotización o pedido. Esto NO reemplaza Cotizaciones — es lo que pasa antes.</div>
+  </div>
+
+  <button class="btn-secundario" style="width:auto;margin-bottom:16px;" onclick="mostrarFormularioOportunidad()">+ Nueva oportunidad</button>
+
+  <div id="formularioOportunidad" class="panel oculto" style="margin-bottom:20px;">
+    <h2>+ Nueva oportunidad</h2>
+    <label for="opBuscarCliente">Cliente (busca uno existente, o escribe el nombre abajo si es nuevo)</label>
+    <input type="text" id="opBuscarCliente" placeholder="🔍 Buscar cliente existente..." oninput="debounceBuscarClienteOportunidad()">
+    <div id="resultadosBuscarClienteOportunidad" style="margin-bottom:8px;"></div>
+    <div id="clienteSeleccionadoOportunidad" style="font-size:12.5px;"></div>
+    <label for="opNombreLibre">O nombre del cliente/prospecto nuevo</label>
+    <input type="text" id="opNombreLibre" placeholder="Ej: Colegio San José">
+    <label for="opTelefonoLibre">Teléfono <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+    <input type="tel" id="opTelefonoLibre">
+    <label for="opDescripcion">¿Qué le interesa?</label>
+    <input type="text" id="opDescripcion" placeholder="Ej: 50 llaveros personalizados para regalo corporativo">
+    <label for="opMonto">Monto estimado (COP)</label>
+    <input type="number" id="opMonto" min="0" step="1" placeholder="Ej: 1500000">
+    <label for="opNotas">Notas <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+    <input type="text" id="opNotas">
+    <button class="btn-principal" onclick="confirmarCrearOportunidad()">Crear oportunidad</button>
+    <div class="mensaje" id="mensajeCrearOportunidad"></div>
+  </div>
+
+  <div id="tableroOportunidades"><div class="cargando">Cargando...</div></div>
+</div>
+
 <!-- ===== PANTALLA: PROVEEDORES ===== -->
 <div id="pantallaProveedores" class="oculto contenido">
+
   <div class="page-header">
     <h1>🏭 Proveedores</h1>
     <div class="subtitulo">Directorio de proveedores con lo que se les ha comprado (gastos registrados).</div>
@@ -4453,7 +4490,7 @@
   });
 
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -5444,6 +5481,19 @@
     const div = document.createElement('div');
     div.textContent = texto;
     return div.innerHTML;
+  }
+
+  // Genera un círculo con las iniciales de un nombre, con un color siempre
+  // igual para la misma persona (no cambia entre recargas).
+  const PALETA_AVATARES = ['#d8017c', '#ff8fd4', '#85a3c0', '#e0922f', '#7a5c9e', '#2E8B57', '#c0526b'];
+  function avatarIniciales(nombre) {
+    const texto = (nombre || '?').trim();
+    const partes = texto.split(/\s+/).filter(Boolean);
+    const iniciales = ((partes[0]?.[0] || '') + (partes[1]?.[0] || '')).toUpperCase() || '?';
+    let hash = 0;
+    for (let i = 0; i < texto.length; i++) hash = texto.charCodeAt(i) + ((hash << 5) - hash);
+    const color = PALETA_AVATARES[Math.abs(hash) % PALETA_AVATARES.length];
+    return `<span class="avatar-iniciales" style="background:${color};">${iniciales}</span>`;
   }
 
   // ============================================================================
@@ -10574,6 +10624,185 @@
     await cargarClientesDir();
   }
 
+  // ============================================================
+  // OPORTUNIDADES (Kanban de prospectos y clientes corporativos)
+  // ============================================================
+  let clienteSeleccionadoOportunidadId = null;
+  let clienteSeleccionadoOportunidadNombre = null;
+
+  async function mostrarPantallaOportunidades() {
+    mostrarPantalla('pantallaOportunidades');
+    document.getElementById('formularioOportunidad').classList.add('oculto');
+    await cargarOportunidades();
+  }
+
+  function mostrarFormularioOportunidad() {
+    const panel = document.getElementById('formularioOportunidad');
+    panel.classList.toggle('oculto');
+    if (!panel.classList.contains('oculto')) {
+      document.getElementById('opBuscarCliente').value = '';
+      document.getElementById('opNombreLibre').value = '';
+      document.getElementById('opTelefonoLibre').value = '';
+      document.getElementById('opDescripcion').value = '';
+      document.getElementById('opMonto').value = '';
+      document.getElementById('opNotas').value = '';
+      document.getElementById('clienteSeleccionadoOportunidad').innerHTML = '';
+      document.getElementById('resultadosBuscarClienteOportunidad').innerHTML = '';
+      clienteSeleccionadoOportunidadId = null;
+      ocultarMensaje('mensajeCrearOportunidad');
+    }
+  }
+
+  let timeoutBuscarClienteOportunidad = null;
+  function debounceBuscarClienteOportunidad() {
+    clearTimeout(timeoutBuscarClienteOportunidad);
+    timeoutBuscarClienteOportunidad = setTimeout(buscarClienteOportunidad, 350);
+  }
+
+  async function buscarClienteOportunidad() {
+    const q = document.getElementById('opBuscarCliente').value.trim();
+    const cont = document.getElementById('resultadosBuscarClienteOportunidad');
+    if (q.length < 2) { cont.innerHTML = ''; return; }
+
+    const { data } = await supabaseClient
+      .from('terceros')
+      .select('id, nombre_completo, telefono')
+      .eq('tipo', 'cliente')
+      .ilike('nombre_completo', `%${q}%`)
+      .limit(5);
+
+    cont.innerHTML = (data || []).map(c => `
+      <div style="padding:7px 10px;border:1px solid var(--rosa-suave);border-radius:8px;margin-top:4px;cursor:pointer;font-size:12.5px;" onclick="seleccionarClienteOportunidad('${c.id}', '${escaparHtml(c.nombre_completo).replace(/'/g, "&#39;")}')">
+        ${escaparHtml(c.nombre_completo)}${c.telefono ? ' · ' + escaparHtml(c.telefono) : ''}
+      </div>
+    `).join('') || '<div style="font-size:11.5px;opacity:0.6;padding:4px 0;">Sin coincidencias — puedes escribir el nombre abajo como cliente nuevo.</div>';
+  }
+
+  function seleccionarClienteOportunidad(id, nombre) {
+    clienteSeleccionadoOportunidadId = id;
+    clienteSeleccionadoOportunidadNombre = nombre;
+    document.getElementById('opBuscarCliente').value = '';
+    document.getElementById('resultadosBuscarClienteOportunidad').innerHTML = '';
+    document.getElementById('clienteSeleccionadoOportunidad').innerHTML = `✅ Cliente seleccionado: <strong>${escaparHtml(nombre)}</strong> <button class="btn-mini desactivar" onclick="quitarClienteSeleccionadoOportunidad()" style="padding:2px 8px;">Quitar</button>`;
+  }
+
+  function quitarClienteSeleccionadoOportunidad() {
+    clienteSeleccionadoOportunidadId = null;
+    document.getElementById('clienteSeleccionadoOportunidad').innerHTML = '';
+  }
+
+  async function confirmarCrearOportunidad() {
+    ocultarMensaje('mensajeCrearOportunidad');
+    const nombreLibre = document.getElementById('opNombreLibre').value.trim();
+    const telefonoLibre = document.getElementById('opTelefonoLibre').value.trim();
+    const descripcion = document.getElementById('opDescripcion').value.trim();
+    const monto = Number(document.getElementById('opMonto').value) || 0;
+    const notas = document.getElementById('opNotas').value.trim();
+
+    if (!clienteSeleccionadoOportunidadId && !nombreLibre) { mostrarMensaje('mensajeCrearOportunidad', 'Selecciona un cliente existente o escribe el nombre de uno nuevo.', 'error'); return; }
+    if (!descripcion) { mostrarMensaje('mensajeCrearOportunidad', 'Escribe qué le interesa al cliente.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/oportunidades', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({
+        tercero_id: clienteSeleccionadoOportunidadId || undefined,
+        cliente_nombre_libre: clienteSeleccionadoOportunidadId ? undefined : nombreLibre,
+        cliente_telefono_libre: telefonoLibre || undefined,
+        descripcion, monto_estimado: monto, notas: notas || undefined,
+      })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeCrearOportunidad', datos.error || 'No se pudo crear.', 'error'); return; }
+
+    mostrarMensaje('mensajeCrearOportunidad', '✅ Oportunidad creada.', 'exito');
+    document.getElementById('formularioOportunidad').classList.add('oculto');
+    await cargarOportunidades();
+  }
+
+  const ETAPAS_OPORTUNIDAD = [
+    { valor: 'prospecto', titulo: '👀 Prospecto', color: '#85a3c0' },
+    { valor: 'calificado', titulo: '✅ Calificado', color: '#e0922f' },
+    { valor: 'propuesta', titulo: '📄 Propuesta', color: '#d8017c' },
+    { valor: 'cierre', titulo: '🏁 Cierre', color: '#2E8B57' },
+  ];
+
+  async function cargarOportunidades() {
+    const cont = document.getElementById('tableroOportunidades');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/oportunidades', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const { oportunidades } = await resp.json();
+
+    const porEtapa = { prospecto: [], calificado: [], propuesta: [], cierre: [] };
+    (oportunidades || []).forEach(o => {
+      const col = (o.etapa === 'cierre_ganado' || o.etapa === 'cierre_perdido') ? 'cierre' : o.etapa;
+      if (porEtapa[col]) porEtapa[col].push(o);
+    });
+
+    cont.innerHTML = `
+      <div style="display:flex;gap:14px;overflow-x:auto;padding-bottom:12px;align-items:flex-start;">
+        ${ETAPAS_OPORTUNIDAD.map(et => `
+          <div style="flex:1;min-width:250px;background:#faf7f8;border-radius:12px;padding:12px;">
+            <div style="font-weight:700;font-size:13px;color:${et.color};margin-bottom:10px;">${et.titulo} <span style="opacity:0.6;font-weight:400;">(${porEtapa[et.valor].length})</span></div>
+            ${porEtapa[et.valor].map(o => renderizarTarjetaOportunidad(o, et.valor)).join('') || '<div style="font-size:11px;opacity:0.5;padding:8px 0;">Sin oportunidades aquí.</div>'}
+          </div>
+        `).join('')}
+      </div>
+      <div class="mensaje" id="mensajeOportunidades"></div>
+    `;
+  }
+
+  function renderizarTarjetaOportunidad(o, columna) {
+    const nombreCliente = o.tercero ? o.tercero.nombre_completo : (o.cliente_nombre_libre || 'Sin nombre');
+    const esGanada = o.etapa === 'cierre_ganado';
+    const esPerdida = o.etapa === 'cierre_perdido';
+    const idxEtapa = ['prospecto', 'calificado', 'propuesta'].indexOf(o.etapa);
+    const siguienteEtapa = idxEtapa >= 0 && idxEtapa < 2 ? ['calificado', 'propuesta'][idxEtapa] : 'propuesta';
+
+    return `
+      <div style="background:white;border-radius:10px;padding:10px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,0.08);${esPerdida ? 'opacity:0.55;' : ''}">
+        <div style="font-weight:600;font-size:12.5px;">${escaparHtml(nombreCliente)}</div>
+        <div style="font-size:11.5px;opacity:0.7;margin:3px 0;">${escaparHtml(o.descripcion)}</div>
+        <div style="font-weight:700;font-size:13px;color:var(--rosa-principal);">${formatearMoneda(o.monto_estimado)}</div>
+        ${o.notas ? `<div style="font-size:10.5px;opacity:0.55;margin-top:3px;">${escaparHtml(o.notas)}</div>` : ''}
+        ${columna === 'cierre' ? `
+          <div style="margin-top:6px;font-size:11px;font-weight:700;color:${esGanada ? 'var(--verde-exito)' : esPerdida ? 'var(--rojo-error)' : '#999'};">
+            ${esGanada ? '🎉 Ganada' : esPerdida ? '❌ Perdida' : '⏳ Sin definir'}
+          </div>
+        ` : ''}
+        <div style="display:flex;gap:5px;margin-top:8px;flex-wrap:wrap;">
+          ${o.etapa === 'prospecto' || o.etapa === 'calificado' ? `<button class="btn-mini guardar" style="font-size:10.5px;padding:4px 8px;" onclick="avanzarEtapaOportunidad('${o.id}', '${siguienteEtapa}')">→ ${siguienteEtapa === 'calificado' ? 'Calificar' : 'Propuesta'}</button>` : ''}
+          ${o.etapa === 'propuesta' ? `
+            <button class="btn-mini guardar" style="font-size:10.5px;padding:4px 8px;" onclick="avanzarEtapaOportunidad('${o.id}', 'cierre_ganado')">🎉 Ganada</button>
+            <button class="btn-mini desactivar" style="font-size:10.5px;padding:4px 8px;" onclick="avanzarEtapaOportunidad('${o.id}', 'cierre_perdido')">❌ Perdida</button>
+          ` : ''}
+          <button class="btn-mini desactivar" style="font-size:10.5px;padding:4px 8px;" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => eliminarOportunidadUI('${o.id}'))">🗑️</button>
+        </div>
+      </div>
+    `;
+  }
+
+  async function avanzarEtapaOportunidad(id, etapa) {
+    ocultarMensaje('mensajeOportunidades');
+    const resp = await fetch(WORKER_URL + '/api/pos/oportunidades/etapa', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ id, etapa })
+    });
+    if (!resp.ok) { mostrarMensaje('mensajeOportunidades', 'No se pudo mover.', 'error'); return; }
+    await cargarOportunidades();
+  }
+
+  async function eliminarOportunidadUI(id) {
+    ocultarMensaje('mensajeOportunidades');
+    const resp = await fetch(WORKER_URL + '/api/pos/oportunidades/eliminar', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ id })
+    });
+    if (!resp.ok) { mostrarMensaje('mensajeOportunidades', 'No se pudo eliminar.', 'error'); return; }
+    await cargarOportunidades();
+  }
+
   let timeoutBuscarClientesDir = null;
   function debounceBuscarClientes() {
     clearTimeout(timeoutBuscarClientesDir);
@@ -11905,7 +12134,7 @@
 
     contenedor.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header" style="grid-template-columns:110px 130px 1fr 100px 130px;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:110px 130px 1fr 100px 130px;">
           <span>PEDIDO</span><span>CANAL</span><span>CLIENTE / PRODUCTO</span><span style="text-align:right;">TOTAL</span><span>ESTADO</span>
         </div>
         ${pedidos.map(p => {
@@ -11938,13 +12167,24 @@
             }
           }
 
+          const coloresEstadoPedido = {
+            esperando_pago: { bg: '#fdecd2', color: '#a5690a' },
+            en_preparacion: { bg: '#dce8f5', color: '#2d5a8c' },
+            listo_despacho: { bg: '#f3ddf4', color: 'var(--rosa-principal)' },
+            entregado: { bg: '#e0f2e6', color: 'var(--verde-exito)' },
+          };
+          const colorEstado = coloresEstadoPedido[p.estado] || { bg: 'var(--rosa-suave)', color: 'var(--rosa-principal)' };
+
           return `
             <div class="tabla-lista-fila" style="grid-template-columns:110px 130px 1fr 100px 130px;">
               <span style="font-weight:600;">${p.consecutivo}</span>
               <span style="opacity:0.75;font-size:11.5px;">${etiquetasCanal[p.canal] || p.canal}<br>${fecha}</span>
-              <span style="opacity:0.75;">${escaparHtml(cliente)}<br><span style="font-size:11px;">${escaparHtml(p.descripcion_producto)} (x${p.cantidad})</span></span>
+              <span style="display:flex;align-items:center;gap:8px;opacity:0.9;">
+                ${avatarIniciales(cliente)}
+                <span>${escaparHtml(cliente)}<br><span style="font-size:11px;opacity:0.75;">${escaparHtml(p.descripcion_producto)} (x${p.cantidad})</span></span>
+              </span>
               <span style="text-align:right;font-weight:700;">${formatearMoneda(p.total_pedido)}</span>
-              <span><span class="badge-rol">${etiquetasEstado[p.estado] || p.estado}</span></span>
+              <span><span class="badge-estado-pedido" style="background:${colorEstado.bg};color:${colorEstado.color};">${etiquetasEstado[p.estado] || p.estado}</span></span>
             </div>
             ${acciones ? `<div class="tabla-lista-detalle" style="display:block;">${acciones}</div>` : ''}
           `;
