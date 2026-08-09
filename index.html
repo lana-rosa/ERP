@@ -12059,12 +12059,20 @@
         <div class="tabla-lista-header header-rosa" style="grid-template-columns:120px 1fr 1fr 130px;">
           <span>GUÍA</span><span>PEDIDO</span><span>DESTINATARIO</span><span>ESTADO</span>
         </div>
-        ${envios.map(e => `
+        ${envios.map(e => {
+          const coloresEstadoEnvio = {
+            pendiente: { bg: '#fdecd2', color: '#a5690a' },
+            enviado: { bg: '#dce8f5', color: '#2d5a8c' },
+            entregado: { bg: '#e0f2e6', color: 'var(--verde-exito)' },
+            devuelto: { bg: '#f0f0f0', color: '#888' },
+          };
+          const colorEnvio = coloresEstadoEnvio[e.estado] || { bg: 'var(--rosa-suave)', color: 'var(--rosa-principal)' };
+          return `
           <div class="tabla-lista-fila" style="grid-template-columns:120px 1fr 1fr 130px;">
             <span style="font-weight:600;">${escaparHtml(e.consecutivo)}</span>
             <span style="opacity:0.75;font-size:11.5px;">${e.pedidos_canal_venta ? escaparHtml(e.pedidos_canal_venta.consecutivo) + ' — ' + e.pedidos_canal_venta.cantidad + 'x ' + escaparHtml(e.pedidos_canal_venta.descripcion_producto) : ''}</span>
-            <span style="opacity:0.75;font-size:11.5px;">👤 ${escaparHtml(e.destinatario_nombre || 'Sin nombre')}</span>
-            <span style="font-size:11px;font-weight:700;">${etiquetasEstadoEnvio[e.estado]}</span>
+            <span style="opacity:0.9;display:flex;align-items:center;gap:8px;">${avatarIniciales(e.destinatario_nombre || '?')}${escaparHtml(e.destinatario_nombre || 'Sin nombre')}</span>
+            <span><span class="badge-estado-pedido" style="background:${colorEnvio.bg};color:${colorEnvio.color};">${etiquetasEstadoEnvio[e.estado]}</span></span>
           </div>
           <div class="tabla-lista-detalle" style="display:block;">
             <div style="font-size:12.5px;margin-bottom:8px;">
@@ -12082,7 +12090,8 @@
               ${(e.estado === 'pendiente' || e.estado === 'enviado') ? `<button class="btn-mini desactivar" onclick="cambiarEstadoEnvio('${e.id}', 'devuelto')">↩️ Marcar devuelto</button>` : ''}
             </div>
           </div>
-        `).join('')}
+        `;
+        }).join('')}
       </div>
     `;
   }
@@ -12282,11 +12291,17 @@
         </div>
         ${pendientes.map(s => {
           const pedido = s.pedidos_canal_venta || {};
+          const coloresEstadoElab = {
+            pendiente: { bg: '#fdecd2', color: '#a5690a' },
+            en_proceso: { bg: '#dce8f5', color: '#2d5a8c' },
+            terminado: { bg: '#e0f2e6', color: 'var(--verde-exito)' },
+          };
+          const colorElab = coloresEstadoElab[s.estado] || { bg: 'var(--rosa-suave)', color: 'var(--rosa-principal)' };
           return `
             <div class="tabla-lista-fila" style="grid-template-columns:130px 1fr 140px 200px;">
               <span style="font-weight:600;">${escaparHtml(pedido.consecutivo || '—')}</span>
               <span style="opacity:0.75;font-size:11.5px;">${etiquetasCanalPedido[pedido.canal] || pedido.canal || ''} — ${s.cantidad || 1}x ${escaparHtml(s.descripcion || '')}</span>
-              <span style="font-size:11px;font-weight:700;">${etiquetasEstadoElaboracion[s.estado]}</span>
+              <span><span class="badge-estado-pedido" style="background:${colorElab.bg};color:${colorElab.color};">${etiquetasEstadoElaboracion[s.estado]}</span></span>
               <span>
                 ${s.estado === 'pendiente' ? `<button class="btn-mini editar" onclick="actualizarEstadoElaboracion('${s.id}', 'en_proceso')">🧶 Empezar</button>` : ''}
                 ${s.estado === 'en_proceso' ? `<button class="btn-mini guardar" onclick="actualizarEstadoElaboracion('${s.id}', 'terminado')">✅ Terminado</button>` : ''}
@@ -14514,9 +14529,12 @@
         ${notas.map(n => `
           <div class="tabla-lista-fila" style="grid-template-columns:150px 1fr 150px 120px 100px 110px;${n.estado === 'anulada' ? 'opacity:0.5;' : ''}">
             <span style="font-weight:600;">${n.tipo === 'credito' ? '🟢' : '🔴'} ${escaparHtml(n.consecutivo)}</span>
-            <span>
-              <div>${escaparHtml(n.tercero ? n.tercero.nombre_completo : '')}</div>
-              <div style="font-size:10.5px;opacity:0.6;">${escaparHtml(n.descripcion)}${n.documento_referencia ? ' (ref: ' + escaparHtml(n.documento_referencia) + ')' : ''} — ${n.afecta_caja ? '💵 Ya se pagó/devolvió' : '📋 Solo ajustó lo que debía'}${n.estado === 'anulada' ? ' · ⚠️ ANULADA' : ''}</div>
+            <span style="display:flex;align-items:center;gap:8px;">
+              ${avatarIniciales(n.tercero ? n.tercero.nombre_completo : '?')}
+              <span>
+                <div>${escaparHtml(n.tercero ? n.tercero.nombre_completo : '')}</div>
+                <div style="font-size:10.5px;opacity:0.6;">${escaparHtml(n.descripcion)}${n.documento_referencia ? ' (ref: ' + escaparHtml(n.documento_referencia) + ')' : ''} — ${n.afecta_caja ? '💵 Ya se pagó/devolvió' : '📋 Solo ajustó lo que debía'}${n.estado === 'anulada' ? ' · ⚠️ ANULADA' : ''}</div>
+              </span>
             </span>
             <span style="opacity:0.75;font-size:11.5px;">${etiquetasConcepto[n.concepto] || n.concepto}</span>
             <span style="text-align:right;font-weight:700;">${formatearMoneda(n.valor)}</span>
@@ -15415,12 +15433,14 @@
           const vencida = c.estado !== 'pagado' && c.fecha_vencimiento < hoy;
           const saldoPendiente = Number(c.monto) - Number(c.monto_abonado || 0);
           const esEmpresarial = c.tercero && c.tercero.tipo_documento === 'NIT';
+          const nombreTercero = c.tercero ? c.tercero.nombre_completo : c.descripcion;
+          const colorVencCartera = c.estado === 'pagado' ? { bg: '#e0f2e6', color: 'var(--verde-exito)' } : vencida ? { bg: '#fbe1de', color: 'var(--rojo-error)' } : { bg: '#fdecd2', color: '#a5690a' };
           return `
             <div class="tabla-lista-fila" style="grid-template-columns:1.1fr 1fr 110px 220px 280px;${vencida ? 'border-left:3px solid var(--rojo-error);' : ''}">
-              <span style="font-weight:600;">${escaparHtml(c.tercero ? c.tercero.nombre_completo : c.descripcion)}${c.numero_factura ? ' · ' + escaparHtml(c.numero_factura) : ''}</span>
+              <span style="font-weight:600;display:flex;align-items:center;gap:8px;">${avatarIniciales(nombreTercero)}<span>${escaparHtml(nombreTercero)}${c.numero_factura ? ' · ' + escaparHtml(c.numero_factura) : ''}</span></span>
               <span style="opacity:0.75;font-size:11.5px;">${escaparHtml(c.descripcion)}</span>
               <span style="text-align:right;font-weight:700;">${formatearMoneda(c.monto)}</span>
-              <span style="font-size:11px;opacity:0.75;">${new Date(c.fecha_vencimiento + 'T00:00:00').toLocaleDateString('es-CO')} ${vencida ? '⚠️ VENCIDA' : ''}<br>${c.estado === 'pagado' ? '✅ Pagada el ' + new Date(c.fecha_pago + 'T00:00:00').toLocaleDateString('es-CO') : `⏳ Saldo: ${formatearMoneda(saldoPendiente)}`}</span>
+              <span style="font-size:11px;opacity:0.75;">${new Date(c.fecha_vencimiento + 'T00:00:00').toLocaleDateString('es-CO')}<br><span class="badge-estado-pedido" style="background:${colorVencCartera.bg};color:${colorVencCartera.color};">${c.estado === 'pagado' ? '✅ Pagada' : vencida ? '⚠️ Vencida' : '⏳ ' + formatearMoneda(saldoPendiente)}</span></span>
               <span style="display:flex;gap:5px;flex-wrap:wrap;">
                 ${c.estado !== 'pagado' ? `
                   <button class="btn-mini guardar" onclick="abrirAbonoCuentaPendiente('${c.id}', ${saldoPendiente})">💵 Abono</button>
