@@ -1475,9 +1475,9 @@
         <label for="kitPrecioVenta">Precio de venta (por kit, sin empaque ni descuento)</label>
         <input type="number" id="kitPrecioVenta" min="0" step="1" placeholder="0" oninput="actualizarPrecioFinalKit()">
         <label for="kitValorEmpaque">Valor del empaque <span style="font-size:10px;opacity:0.6;">(opcional, se suma al precio)</span></label>
-        <input type="number" id="kitValorEmpaque" min="0" step="500" placeholder="0" oninput="actualizarPrecioFinalKit()">
+        <input type="number" id="kitValorEmpaque" min="0" step="1" placeholder="0" oninput="actualizarPrecioFinalKit()">
         <label for="kitDescuento">Descuento <span style="font-size:10px;opacity:0.6;">(opcional, se resta del precio)</span></label>
-        <input type="number" id="kitDescuento" min="0" step="500" placeholder="0" oninput="actualizarPrecioFinalKit()">
+        <input type="number" id="kitDescuento" min="0" step="1" placeholder="0" oninput="actualizarPrecioFinalKit()">
         <div id="resumenPrecioFinalKit" style="font-size:12.5px;font-weight:600;color:var(--rosa-principal);margin-top:4px;"></div>
         <label for="kitCantidadKits">¿Cuántos kits vas a armar?</label>
         <input type="number" id="kitCantidadKits" min="1" step="1" value="1">
@@ -1504,7 +1504,7 @@
         <div id="listaConteoTomaInventario"></div>
         <div style="display:flex;gap:10px;margin-top:14px;">
           <button class="btn-principal" style="width:auto;" onclick="confirmarFinalizarTomaInventario()">✅ Finalizar y ajustar diferencias</button>
-          <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="confirmarCancelarTomaInventario()">Cancelar toma</button>
+          <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => confirmarCancelarTomaInventario())">Cancelar toma</button>
         </div>
         <div class="mensaje" id="mensajeTomaInventario"></div>
       </div>
@@ -1572,6 +1572,7 @@
 
     <div class="panel">
       <h2>Pedidos en producción (CRM)</h2>
+      <div class="mensaje" id="mensajeConsumoTaller"></div>
       <div id="listaPedidosCrmActivos"><div class="cargando">Cargando pedidos...</div></div>
     </div>
 
@@ -1656,7 +1657,7 @@
     <label for="inputCantidadNueva">¿Cuántas unidades entraron?</label>
     <input type="number" id="inputCantidadNueva" placeholder="0" min="1" step="1" oninput="actualizarPrevisualizacionCostoPonderado()">
     <label for="inputCostoUnitarioEntrada">Costo de compra por unidad (COP) <span style="font-size:10px;opacity:0.6;">(recomendado — actualiza el costo promedio para que la utilidad se calcule bien)</span></label>
-    <input type="number" id="inputCostoUnitarioEntrada" placeholder="0" min="0" step="100" oninput="actualizarPrevisualizacionCostoPonderado()">
+    <input type="number" id="inputCostoUnitarioEntrada" placeholder="0" min="0" step="1" oninput="actualizarPrevisualizacionCostoPonderado()">
     <div id="previsualizacionCostoPonderado" style="font-size:11.5px;opacity:0.7;margin-top:-8px;margin-bottom:8px;"></div>
     <button class="btn-principal" id="btnConfirmarAjusteStock" onclick="confirmarAjusteStock()">Registrar entrada</button>
     <button class="btn-secundario" onclick="irATurnoActivo()">Cancelar</button>
@@ -1747,6 +1748,7 @@
       <button class="chip-filtro" data-vista-historial="mes" onclick="cambiarVistaHistorial('mes', this)">Por mes</button>
     </div>
     <div class="panel" style="max-height:none;">
+      <div class="mensaje" id="mensajeHistorialVentas"></div>
       <div id="listaHistorialVentas"><div class="cargando">Cargando historial...</div></div>
     </div>
   </div>
@@ -2116,7 +2118,7 @@
         <div style="font-size:10.5px;opacity:0.6;margin-top:-8px;margin-bottom:10px;">De cada $100 que vendes, cuánto te queda después de materiales/mano de obra directa (antes de gastos fijos).</div>
 
         <label for="simUtilidadDeseada">Utilidad que quieres ganar ese mes <span style="font-size:10px;opacity:0.6;">(opcional, 0 = solo cubrir gastos)</span></label>
-        <input type="number" id="simUtilidadDeseada" min="0" step="10000" value="0" oninput="recalcularSimulacionPresupuesto()">
+        <input type="number" id="simUtilidadDeseada" min="0" step="1" value="0" oninput="recalcularSimulacionPresupuesto()">
 
         <label for="simPrecioPromedio">Precio promedio por pieza <span style="font-size:10px;opacity:0.6;">(opcional, para traducir a unidades)</span></label>
         <input type="number" id="simPrecioPromedio" min="0" step="1" oninput="recalcularSimulacionPresupuesto()">
@@ -2209,6 +2211,7 @@
     <div id="subtabEmpListado" data-subtab-grupo="empNomina">
       <div class="panel" style="max-width:none;">
         <h2>Empleados activos</h2>
+        <div class="mensaje" id="mensajeEmpleados"></div>
         <div id="listaEmpleados"><div class="cargando">Cargando...</div></div>
       </div>
     </div>
@@ -2315,6 +2318,7 @@
       <div class="panel">
         <h2>Períodos de nómina</h2>
         <div style="font-size:11.5px;opacity:0.65;margin-bottom:10px;">Al liquidar un período, todos los empleados activos se liquidan por el mes completo automáticamente. Si alguien tuvo vacaciones, incapacidad, licencia, préstamo, o ingresó a mitad de mes, liquídalo primero como caso especial (en la pestaña Empleados) — el resto del período los tomará normal.</div>
+        <div class="mensaje" id="mensajePeriodosNomina"></div>
         <div id="listaPeriodosNomina"><div class="cargando">Cargando...</div></div>
       </div>
 
@@ -2329,6 +2333,7 @@
     <div class="panel" style="max-height:none;margin-top:20px;">
       <h2>👑 Liquidación de retiro de utilidades (Sara)</h2>
       <div class="subtitulo">Retiro de utilidades + cotización como trabajadora independiente (salud, pensión y ARL opcional), separado de la nómina formal. Se provisiona también un "adelanto de utilidades" equivalente a prima, cesantías y vacaciones, solo como referencia financiera — no son prestaciones sociales legales.</div>
+      <div class="mensaje" id="mensajeRetirosPropietario"></div>
       <div id="listaRetirosPropietario"><div class="cargando">Selecciona un período arriba.</div></div>
     </div>
 
@@ -2343,7 +2348,7 @@
       <div class="subtitulo">Lana Rosa Crochet está registrada en Cámara de Comercio como persona natural (solo Sara), pero en la práctica hay 2 socias reales. Escribe el monto TOTAL de utilidad a repartir en el período seleccionado arriba, y el sistema lo divide automáticamente según el % de participación de cada una, liquidando la cotización de independiente de cada socia por separado.</div>
       <div id="listaSociasParticipacion" style="margin-bottom:14px;"></div>
       <label for="montoTotalUtilidadRepartir">Monto total de utilidad a repartir este período</label>
-      <input type="number" id="montoTotalUtilidadRepartir" min="0" step="10000" placeholder="Ej: 1500000">
+      <input type="number" id="montoTotalUtilidadRepartir" min="0" step="1" placeholder="Ej: 1500000">
       <button class="btn-principal" onclick="confirmarRepartirUtilidadesSocias()">Repartir según participación</button>
       <div class="mensaje" id="mensajeRepartirUtilidades"></div>
     </div>
@@ -2709,7 +2714,7 @@
     <div id="listaPermisosModulos"></div>
     <div style="display:flex;gap:10px;margin-top:14px;">
       <button class="btn-principal" style="margin-top:0;" onclick="guardarPermisosUsuarioActual()">Guardar permisos</button>
-      <button class="btn-secundario" style="margin-top:0;" onclick="restablecerPermisosUsuarioActual()">Restablecer al valor por defecto del rol</button>
+      <button class="btn-secundario" style="margin-top:0;" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => restablecerPermisosUsuarioActual())">Restablecer al valor por defecto del rol</button>
     </div>
     <div class="mensaje" id="mensajePermisosUsuario"></div>
   </div>
@@ -2738,7 +2743,7 @@
       <label for="nuevaTarifaCiudad">Ciudad</label>
       <input type="text" id="nuevaTarifaCiudad" placeholder="Ej: Manizales">
       <label for="nuevaTarifaValor">Valor del envío (COP)</label>
-      <input type="number" id="nuevaTarifaValor" min="0" step="500" placeholder="0">
+      <input type="number" id="nuevaTarifaValor" min="0" step="1" placeholder="0">
       <button class="btn-principal" onclick="confirmarGuardarTarifaEnvio()">Guardar</button>
       <div class="mensaje" id="mensajeTarifaEnvio"></div>
     </div>
@@ -2885,9 +2890,9 @@
   </div>
   <div class="panel" style="max-width:420px;">
     <label for="fidelizacionPesosPorPunto">El cliente gana 1 punto por cada... (COP gastados)</label>
-    <input type="number" id="fidelizacionPesosPorPunto" min="1" step="100">
+    <input type="number" id="fidelizacionPesosPorPunto" min="1" step="1">
     <label for="fidelizacionValorPunto">Cada punto vale al canjear (COP de descuento)</label>
-    <input type="number" id="fidelizacionValorPunto" min="0" step="10">
+    <input type="number" id="fidelizacionValorPunto" min="0" step="1">
     <button class="btn-principal" onclick="confirmarGuardarParametrosFidelizacion()">Guardar</button>
     <div class="mensaje" id="mensajeFidelizacion"></div>
   </div>
@@ -3012,6 +3017,19 @@
 </div>
 
 <!-- ===== PANTALLA: MI PERFIL ===== -->
+<div id="modalAutorizacion" class="oculto" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:700;display:flex;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fff;border-radius:14px;max-width:420px;width:100%;padding:24px;">
+    <h2 id="modalAutorizacionTitulo" style="margin-top:0;">🔒 Se necesita autorización</h2>
+    <div id="modalAutorizacionMensaje" style="font-size:13px;line-height:1.5;margin-bottom:14px;"></div>
+    <label id="modalAutorizacionLabel" for="modalAutorizacionInput">Código de autorización</label>
+    <input type="password" id="modalAutorizacionInput" placeholder="••••••" onkeydown="if(event.key==='Enter') confirmarCodigoAutorizacionModal();">
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button class="btn-principal" style="margin-top:0;" onclick="confirmarCodigoAutorizacionModal()">Confirmar</button>
+      <button class="btn-secundario" style="margin-top:0;" onclick="cancelarCodigoAutorizacionModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <div id="modalPoliticaDatos" class="oculto" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:600;display:flex;align-items:center;justify-content:center;padding:20px;">
   <div style="background:#fff;border-radius:14px;max-width:600px;width:100%;max-height:85vh;overflow-y:auto;padding:28px;">
     <h2 style="margin-top:0;">📋 Política de Tratamiento de Datos Personales — Lana Rosa Crochet</h2>
@@ -3608,6 +3626,7 @@
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabBloqueoFecha', this); cargarPantallaBloqueoFecha();">🔐 Bloqueo de período</button>
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabRevisionContador', this); cargarRevisionesContables();">✅ Revisión del contador</button>
   </div>
+  <div class="mensaje" id="mensajeEstadosFinancieros"></div>
 
   <div id="subtabEstadoResultados" data-subtab-grupo="estadosFin">
     <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
@@ -3912,6 +3931,7 @@
       </div>
     </div>
     <div id="gridCalendario" class="gcal-grid"></div>
+    <div class="mensaje" id="mensajeCalendario"></div>
     <div id="listaEventosDelDia" style="margin-top:16px;"></div>
   </div>
 
@@ -4048,6 +4068,7 @@
     </div>
     <div class="panel">
       <h2>Próximos entregables</h2>
+      <div class="mensaje" id="mensajeEventosFe"></div>
       <div id="listaEventosFe"><div class="cargando">Cargando...</div></div>
     </div>
   </div>
@@ -4193,6 +4214,7 @@
     </div>
     <div class="mensaje" id="mensajeDesembolsoFe"></div>
 
+    <div class="mensaje" id="mensajeConceptosFe"></div>
     <div id="listaConceptosFe" style="margin-top:14px;"><div class="cargando">Cargando...</div></div>
   </div>
 
@@ -4564,6 +4586,77 @@
     boton.dataset.timeoutId = timeoutId;
   }
 
+  // Reemplaza prompt() nativo para pedir un código de autorización (venta a
+  // sí mismo, devoluciones, cambios, anular venta). Se usa con await:
+  //   const codigo = await pedirCodigoAutorizacion('mensaje explicando por qué');
+  //   if (!codigo) return; // la persona canceló
+  let _resolverAutorizacion = null;
+  // Misma ventana, en modo "solo confirmar" (sin campo de texto) — para
+  // explicaciones largas antes de una acción importante, como liquidar un
+  // retiro de utilidades. Devuelve true/false.
+  function pedirConfirmacionModal(mensaje, tituloBoton) {
+    document.getElementById('modalAutorizacionTitulo').textContent = '⚠️ Confirmar';
+    document.getElementById('modalAutorizacionLabel').style.display = 'none';
+    document.getElementById('modalAutorizacionInput').style.display = 'none';
+    const botonConfirmar = document.querySelector('#modalAutorizacion .btn-principal');
+    botonConfirmar.textContent = tituloBoton || 'Sí, confirmar';
+    return new Promise((resolve) => {
+      document.getElementById('modalAutorizacionMensaje').style.whiteSpace = 'pre-line';
+      document.getElementById('modalAutorizacionMensaje').textContent = mensaje;
+      document.getElementById('modalAutorizacion').classList.remove('oculto');
+      _resolverAutorizacion = (valor) => {
+        document.getElementById('modalAutorizacionLabel').style.display = '';
+        document.getElementById('modalAutorizacionInput').style.display = '';
+        document.getElementById('modalAutorizacionMensaje').style.whiteSpace = '';
+        botonConfirmar.textContent = 'Confirmar';
+        resolve(!!valor);
+      };
+    });
+  }
+  function pedirCodigoAutorizacion(mensaje) {
+    document.getElementById('modalAutorizacionTitulo').textContent = '🔒 Se necesita autorización';
+    document.getElementById('modalAutorizacionLabel').textContent = 'Código de autorización';
+    document.getElementById('modalAutorizacionInput').type = 'password';
+    document.getElementById('modalAutorizacionInput').placeholder = '••••••';
+    return new Promise((resolve) => {
+      document.getElementById('modalAutorizacionMensaje').textContent = mensaje;
+      const input = document.getElementById('modalAutorizacionInput');
+      input.value = '';
+      document.getElementById('modalAutorizacion').classList.remove('oculto');
+      setTimeout(() => input.focus(), 50);
+      _resolverAutorizacion = resolve;
+    });
+  }
+  // Misma ventana, para pedir un dato de texto simple (no una contraseña) —
+  // ej. un número de teléfono, una fecha, o un valor que falta.
+  // Uso: await pedirTexto('mensaje', 'Teléfono', 'Ej: 3001234567')
+  //      await pedirTexto('mensaje', 'Nueva fecha', '', '2026-08-20', 'date')
+  function pedirTexto(mensaje, etiquetaCampo, placeholder, valorInicial, tipo) {
+    document.getElementById('modalAutorizacionTitulo').textContent = '✏️ Falta un dato';
+    document.getElementById('modalAutorizacionLabel').textContent = etiquetaCampo || 'Dato';
+    const input = document.getElementById('modalAutorizacionInput');
+    input.type = tipo || 'text';
+    input.placeholder = placeholder || '';
+    return new Promise((resolve) => {
+      document.getElementById('modalAutorizacionMensaje').textContent = mensaje;
+      input.value = valorInicial || '';
+      document.getElementById('modalAutorizacion').classList.remove('oculto');
+      setTimeout(() => input.focus(), 50);
+      _resolverAutorizacion = resolve;
+    });
+  }
+  function confirmarCodigoAutorizacionModal() {
+    const input = document.getElementById('modalAutorizacionInput');
+    const esSoloConfirmacion = input.style.display === 'none';
+    const codigo = input.value.trim();
+    document.getElementById('modalAutorizacion').classList.add('oculto');
+    if (_resolverAutorizacion) { _resolverAutorizacion(esSoloConfirmacion ? true : (codigo || null)); _resolverAutorizacion = null; }
+  }
+  function cancelarCodigoAutorizacionModal() {
+    document.getElementById('modalAutorizacion').classList.add('oculto');
+    if (_resolverAutorizacion) { _resolverAutorizacion(null); _resolverAutorizacion = null; }
+  }
+
   function ocultarMensaje(idMensaje) {
     document.getElementById(idMensaje).className = 'mensaje';
   }
@@ -4851,7 +4944,6 @@
 
   function mostrarCierreTurno() {
     if (!turnoActivoActual || !turnoActivoActual.id) {
-      alert('No hay un turno activo para cerrar.');
       irATurnoActivo();
       return;
     }
@@ -5081,16 +5173,20 @@
       cont.innerHTML = `
         <div style="font-size:11px;color:rgba(255,255,255,0.7);margin-bottom:6px;">🟢 Entrada marcada: ${desde}</div>
         <button class="nav-btn" style="background:rgba(255,255,255,0.08);" onclick="marcarSalidaHorasClick()">⏱️ Marcar salida</button>
+        <div class="mensaje" id="mensajeWidgetHoras" style="font-size:10.5px;"></div>
       `;
     } else {
-      cont.innerHTML = `<button class="nav-btn" style="background:rgba(255,255,255,0.08);" onclick="marcarEntradaHorasClick()">⏱️ Marcar entrada</button>`;
+      cont.innerHTML = `
+        <button class="nav-btn" style="background:rgba(255,255,255,0.08);" onclick="marcarEntradaHorasClick()">⏱️ Marcar entrada</button>
+        <div class="mensaje" id="mensajeWidgetHoras" style="font-size:10.5px;"></div>
+      `;
     }
   }
 
   async function marcarEntradaHorasClick() {
     const resp = await fetch(WORKER_URL + '/api/pos/horas/marcar-entrada', { method: 'POST', headers: { Authorization: 'Bearer ' + sesionActual.token } });
     const datos = await resp.json();
-    if (!resp.ok) { alert(datos.error || 'No se pudo marcar la entrada.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeWidgetHoras', datos.error || 'No se pudo marcar la entrada.', 'error'); return; }
     await cargarWidgetHorasTrabajadas();
   }
 
@@ -5101,9 +5197,10 @@
       body: JSON.stringify({})
     });
     const datos = await resp.json();
-    if (!resp.ok) { alert(datos.error || 'No se pudo marcar la salida.'); return; }
-    alert(`✅ Salida marcada. Trabajaste ${datos.horas_trabajadas} horas.`);
+    if (!resp.ok) { mostrarMensaje('mensajeWidgetHoras', datos.error || 'No se pudo marcar la salida.', 'error'); return; }
+    const horasTrabajadas = datos.horas_trabajadas;
     await cargarWidgetHorasTrabajadas();
+    mostrarMensaje('mensajeWidgetHoras', `✅ Salida marcada. Trabajaste ${horasTrabajadas} horas.`, 'exito');
   }
 
   async function cargarRolesYPermisosPropios() {
@@ -5196,7 +5293,7 @@
   let contadorVentaEspera = 0;
 
   function ponerVentaEnEspera() {
-    if (carrito.length === 0) { alert('No hay nada en el carrito para poner en espera.'); return; }
+    if (carrito.length === 0) { mostrarMensaje('mensajeVenta', 'No hay nada en el carrito para poner en espera.', 'error'); return; }
 
     contadorVentaEspera++;
     ventasEnEspera.push({
@@ -5248,7 +5345,7 @@
               <div style="background:var(--fondo-panel);border-radius:8px;padding:8px 10px;font-size:12px;display:flex;align-items:center;gap:8px;border:1px solid #f0d98c;">
                 <span>${escaparHtml(nombreCliente)} — ${formatearMoneda(totalV)} <span style="opacity:0.6;">(${hora})</span></span>
                 <button class="btn-mini guardar" style="padding:5px 10px;" onclick="reanudarVentaEnEspera(${v.idEspera})">Reanudar</button>
-                <button class="btn-mini desactivar" style="padding:5px 8px;" onclick="eliminarVentaEnEspera(${v.idEspera})">✕</button>
+                <button class="btn-mini desactivar" style="padding:5px 8px;" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => eliminarVentaEnEspera(${v.idEspera}))">✕</button>
               </div>
             `;
           }).join('')}
@@ -5259,7 +5356,6 @@
 
   function reanudarVentaEnEspera(idEspera) {
     if (carrito.length > 0) {
-      if (!confirm('Ya tienes una venta activa en el carrito. Si reanudas otra, la actual se pondrá en espera automáticamente. ¿Continuar?')) return;
       ponerVentaEnEspera();
     }
 
@@ -5286,7 +5382,6 @@
   }
 
   function eliminarVentaEnEspera(idEspera) {
-    if (!confirm('¿Descartar esta venta en espera? Se perderá lo que llevaba en el carrito.')) return;
     ventasEnEspera = ventasEnEspera.filter(v => v.idEspera !== idEspera);
     renderizarVentasEnEspera();
   }
@@ -5360,8 +5455,8 @@
   async function mostrarPantallaVentas() {
     // Guardia: verificar que hay un turno activo antes de permitir ventas
     if (!turnoActivoActual) {
-      alert('Debes abrir un turno de caja antes de registrar ventas.');
       mostrarPantallaAbrirTurno();
+      mostrarMensaje('mensajeAbrirTurno', 'Debes abrir un turno de caja antes de registrar ventas.', 'error');
       return;
     }
 
@@ -5574,9 +5669,10 @@
   }
 
   async function canjearPuntosEnVenta() {
+    ocultarMensaje('mensajeVenta');
     const puntos = Number(document.getElementById('inputCanjearPuntos').value);
-    if (!clienteVentaTerceroId) { alert('Primero busca al cliente por su identificación.'); return; }
-    if (!puntos || puntos <= 0) { alert('Escribe una cantidad de puntos válida.'); return; }
+    if (!clienteVentaTerceroId) { mostrarMensaje('mensajeVenta', 'Primero busca al cliente por su identificación.', 'error'); return; }
+    if (!puntos || puntos <= 0) { mostrarMensaje('mensajeVenta', 'Escribe una cantidad de puntos válida.', 'error'); return; }
 
     const resp = await fetch(WORKER_URL + '/api/pos/fidelizacion/canjear', {
       method: 'POST',
@@ -5584,7 +5680,7 @@
       body: JSON.stringify({ tercero_id: clienteVentaTerceroId, puntos })
     });
     const datos = await resp.json();
-    if (!resp.ok) { alert(datos.error || 'No se pudo canjear.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeVenta', datos.error || 'No se pudo canjear.', 'error'); return; }
 
     puntosCanjeadosActual = { puntos, valorDescuento: datos.valor_descuento };
     document.getElementById('textoPuntosCanjeados').textContent = `✅ ${puntos} puntos canjeados = -${formatearMoneda(datos.valor_descuento)} de descuento`;
@@ -5844,7 +5940,7 @@
         (miPropiaIdentidad.nombre && nombreCliente && nombreCliente === miPropiaIdentidad.nombre.toLowerCase());
 
       if (esVentaPropia) {
-        const codigo = prompt('⚠️ Esta venta parece ser para ti mismo/a. Por seguridad, un cajero no puede venderse a sí mismo sin autorización.\n\nPídele a Sara (o a quien ella autorice) que ingrese su código de autorización para continuar:');
+        const codigo = await pedirCodigoAutorizacion('⚠️ Esta venta parece ser para ti mismo/a. Por seguridad, un cajero no puede venderse a sí mismo sin autorización.\n\nPídele a Sara (o a quien ella autorice) que ingrese su código de autorización para continuar:');
         if (!codigo) {
           mostrarMensaje('mensajeVenta', 'Venta cancelada: se necesita autorización de un supervisor.', 'error');
           return false;
@@ -6219,20 +6315,27 @@
 
   function verReciboHistorial(ventaId) {
     const recibo = construirReciboDesdeHistorial(ventaId);
-    if (!recibo) { alert('No se pudo generar el recibo.'); return; }
+    if (!recibo) { mostrarMensaje('mensajeHistorialVentas', 'No se pudo generar el recibo.', 'error'); return; }
     ultimaVentaCache = recibo;
     imprimirReciboVenta();
   }
 
   function enviarReciboHistorialWhatsapp(ventaId) {
     const recibo = construirReciboDesdeHistorial(ventaId);
-    if (!recibo) { alert('No se pudo generar el recibo.'); return; }
+    if (!recibo) { mostrarMensaje('mensajeHistorialVentas', 'No se pudo generar el recibo.', 'error'); return; }
     ultimaVentaCache = recibo;
     enviarReciboVentaWhatsapp();
   }
 
+  // imprimirReciboVenta/enviarReciboVentaWhatsapp se llaman desde Registrar
+  // venta y desde el Historial — cada una tiene su propio contenedor de mensaje.
+  function idMensajeReciboActivo() {
+    const pantallaVentas = document.getElementById('pantallaVentas');
+    return (pantallaVentas && !pantallaVentas.classList.contains('oculto')) ? 'mensajeVenta' : 'mensajeHistorialVentas';
+  }
+
   function imprimirReciboVenta() {
-    if (!ultimaVentaCache) { alert('Todavía no hay una venta registrada para imprimir.'); return; }
+    if (!ultimaVentaCache) { mostrarMensaje(idMensajeReciboActivo(), 'Todavía no hay una venta registrada para imprimir.', 'error'); return; }
     const ventana = window.open('', '_blank');
     ventana.document.write(generarHtmlReciboVenta(ultimaVentaCache));
     ventana.document.close();
@@ -6274,11 +6377,12 @@
   }
 
   async function enviarReciboVentaWhatsapp() {
-    if (!ultimaVentaCache) { alert('Todavía no hay una venta registrada para enviar.'); return; }
+    const idMensaje = idMensajeReciboActivo();
+    if (!ultimaVentaCache) { mostrarMensaje(idMensaje, 'Todavía no hay una venta registrada para enviar.', 'error'); return; }
     const v = ultimaVentaCache;
 
     if (!v.cliente.telefono) {
-      const numeroManual = prompt('Este cliente no tiene teléfono guardado. Escribe el número de WhatsApp (con indicativo, ej: 573001234567):');
+      const numeroManual = await pedirTexto('Este cliente no tiene teléfono guardado. Escribe el número de WhatsApp:', 'Teléfono', 'Ej: 573001234567');
       if (!numeroManual) return;
       v.cliente.telefono = numeroManual;
     }
@@ -6291,7 +6395,7 @@
       const mensaje = `Hola${v.cliente.nombre ? ' ' + v.cliente.nombre : ''} 👋 Aquí está tu recibo de compra en Lana Rosa Crochet — Recibo N.° ${v.consecutivo}. ¡Gracias por tu compra! 🐑💕`;
       await compartirImagenPorWhatsapp(blob, v.cliente.telefono, `recibo_${v.consecutivo}.png`, mensaje);
     } catch (err) {
-      alert('No se pudo generar la imagen del recibo: ' + err.message);
+      mostrarMensaje(idMensaje, 'No se pudo generar la imagen del recibo: ' + err.message, 'error');
     } finally {
       if (btn) { btn.disabled = false; btn.innerHTML = '<span class="nav-icon"></span>📱 Enviar WhatsApp'; btn.textContent = '📱 Enviar WhatsApp'; }
     }
@@ -7120,6 +7224,7 @@
           <button class="btn-mini desactivar" style="flex:1;" onclick="cerrarPanelCambioArticulo('${ventaId}')">Cancelar</button>
         </div>
         <div style="font-size:10.5px;opacity:0.6;margin-top:6px;">Se restaura el stock del artículo devuelto y se descuenta el nuevo. El recibo original se actualiza para reflejar lo que realmente se entregó.</div>
+        <div class="mensaje" id="mensajeCambio-${ventaId}"></div>
       </div>
     `;
   }
@@ -7169,6 +7274,7 @@
           <button class="btn-mini desactivar" style="flex:1;" onclick="cerrarPanelCambioArticulo('${ventaId}')">Cancelar</button>
         </div>
         <div style="font-size:10.5px;opacity:0.6;margin-top:6px;">Se descuenta el valor de este artículo del total de la venta y, si marcas la casilla, se regresa al inventario. No se cambia por otro producto.</div>
+        <div class="mensaje" id="mensajeDevolucion-${ventaId}"></div>
       </div>
     `;
   }
@@ -7178,11 +7284,11 @@
     const metodoPago = document.getElementById(`devolucionMetodoPago-${ventaId}`).value;
     const reintegrar = document.getElementById(`devolucionReintegrar-${ventaId}`).checked;
 
-    if (!detalleId) { alert('Selecciona qué artículo se devuelve.'); return; }
+    if (!detalleId) { mostrarMensaje(`mensajeDevolucion-${ventaId}`, 'Selecciona qué artículo se devuelve.', 'error'); return; }
 
     let codigoAutorizacion = null;
     if (rolActual !== 'administrador') {
-      codigoAutorizacion = prompt('Devolver dinero de una venta ya registrada requiere autorización. Pídele a Sara (o a quien ella autorice) que ingrese su código:');
+      codigoAutorizacion = await pedirCodigoAutorizacion('Devolver dinero de una venta ya registrada requiere autorización. Pídele a Sara (o a quien ella autorice) que ingrese su código:');
       if (!codigoAutorizacion) return;
     }
 
@@ -7193,10 +7299,10 @@
     });
 
     const datos = await resp.json();
-    if (!resp.ok) { alert('No se pudo procesar la devolución: ' + (datos.error || 'Error desconocido')); return; }
+    if (!resp.ok) { mostrarMensaje(`mensajeDevolucion-${ventaId}`, 'No se pudo procesar la devolución: ' + (datos.error || 'Error desconocido'), 'error'); return; }
 
-    alert(`✅ Devolución realizada. Se devolvieron ${formatearMoneda(datos.monto_devuelto)}.`);
-    cerrarPanelCambioArticulo(ventaId);
+    mostrarMensaje(`mensajeDevolucion-${ventaId}`, `✅ Devolución realizada. Se devolvieron ${formatearMoneda(datos.monto_devuelto)}.`, 'exito');
+    setTimeout(() => cerrarPanelCambioArticulo(ventaId), 1500);
     await cargarHistorialVentas();
   }
 
@@ -7206,11 +7312,11 @@
     const nuevaCantidad = Number(document.getElementById(`cambioNuevaCantidad-${ventaId}`).value);
     const estaDanado = document.getElementById(`cambioDanado-${ventaId}`).checked;
 
-    if (!nuevaCantidad || nuevaCantidad <= 0) { alert('Escribe una cantidad válida.'); return; }
+    if (!nuevaCantidad || nuevaCantidad <= 0) { mostrarMensaje(`mensajeCambio-${ventaId}`, 'Escribe una cantidad válida.', 'error'); return; }
 
     let codigoAutorizacion = null;
     if (rolActual !== 'administrador') {
-      codigoAutorizacion = prompt('Cambiar un artículo de una venta ya registrada requiere autorización. Pídele a Sara (o a quien ella autorice) que ingrese su código:');
+      codigoAutorizacion = await pedirCodigoAutorizacion('Cambiar un artículo de una venta ya registrada requiere autorización. Pídele a Sara (o a quien ella autorice) que ingrese su código:');
       if (!codigoAutorizacion) return;
     }
 
@@ -7221,15 +7327,15 @@
     });
 
     const datos = await resp.json();
-    if (!resp.ok) { alert('No se pudo hacer el cambio: ' + (datos.error || 'Error desconocido')); return; }
+    if (!resp.ok) { mostrarMensaje(`mensajeCambio-${ventaId}`, 'No se pudo hacer el cambio: ' + (datos.error || 'Error desconocido'), 'error'); return; }
 
     const diferencia = datos.diferencia;
     if (Math.abs(diferencia) < 1) {
-      alert('✅ Cambio realizado. El nuevo artículo cuesta lo mismo, no hay diferencia que cobrar ni devolver.');
+      mostrarMensaje(`mensajeCambio-${ventaId}`, '✅ Cambio realizado. El nuevo artículo cuesta lo mismo, no hay diferencia que cobrar ni devolver.', 'exito');
     } else if (diferencia > 0) {
-      alert(`✅ Cambio realizado. El cliente debe pagar ${formatearMoneda(diferencia)} adicionales por la diferencia.`);
+      mostrarMensaje(`mensajeCambio-${ventaId}`, `✅ Cambio realizado. El cliente debe pagar ${formatearMoneda(diferencia)} adicionales por la diferencia.`, 'exito');
     } else {
-      alert(`✅ Cambio realizado. Debes devolverle al cliente ${formatearMoneda(Math.abs(diferencia))} de diferencia.`);
+      mostrarMensaje(`mensajeCambio-${ventaId}`, `✅ Cambio realizado. Debes devolverle al cliente ${formatearMoneda(Math.abs(diferencia))} de diferencia.`, 'exito');
     }
 
     panelCambioAbiertoVentaId = null;
@@ -7237,11 +7343,9 @@
   }
 
   async function anularVenta(ventaId, consecutivo) {
-    if (!confirm(`¿Estás segura de que quieres anular la venta ${consecutivo}? Esta acción no se puede deshacer.`)) return;
-
     let codigoAutorizacion = null;
     if (rolActual !== 'administrador') {
-      codigoAutorizacion = prompt('Esta acción requiere autorización. Pídele a Sara (o a quien ella autorice) que ingrese su código de autorización:');
+      codigoAutorizacion = await pedirCodigoAutorizacion('Esta acción requiere autorización. Pídele a Sara (o a quien ella autorice) que ingrese su código de autorización:');
       if (!codigoAutorizacion) return;
     }
 
@@ -7253,11 +7357,11 @@
 
     const datos = await resp.json();
     if (!resp.ok) {
-      alert('No se pudo anular la venta: ' + (datos.error || 'Error desconocido'));
+      mostrarMensaje('mensajeHistorialVentas', 'No se pudo anular la venta: ' + (datos.error || 'Error desconocido'), 'error');
       return;
     }
 
-    alert(`✅ Venta ${consecutivo} anulada correctamente. El stock fue restaurado.`);
+    mostrarMensaje('mensajeHistorialVentas', `✅ Venta ${consecutivo} anulada correctamente. El stock fue restaurado.`, 'exito');
     await cargarHistorialVentas();
   }
 
@@ -7645,7 +7749,7 @@
       <div id="filaExpandidaVenta-${venta.id}" class="oculto tabla-lista-detalle">
         ${textoCliente !== '—' && tercero ? `<div style="font-size:12px;margin-bottom:8px;">👤 <strong>${textoCliente}</strong>${tercero.numero_documento ? ' — Doc: ' + escaparHtml(tercero.numero_documento) : ''}${tercero.telefono ? ' — Tel: ' + escaparHtml(tercero.telefono) : ''}</div>` : ''}
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          ${puedeAnular ? `<button class="btn-mini desactivar" onclick="event.stopPropagation(); anularVenta('${venta.id}', '${venta.consecutivo}')">❌ Anular venta</button>` : ''}
+          ${puedeAnular ? `<button class="btn-mini desactivar" onclick="event.stopPropagation(); pedirConfirmacionBoton(this, '¿Seguro?', () => anularVenta('${venta.id}', '${venta.consecutivo}'))">❌ Anular venta</button>` : ''}
           ${venta.estado === 'completada' ? `<button class="btn-mini editar" onclick="event.stopPropagation(); abrirCambioArticulo('${venta.id}', '${venta.consecutivo}')">🔄 Cambiar artículo</button>` : ''}
           ${venta.estado === 'completada' ? `<button class="btn-mini desactivar" onclick="event.stopPropagation(); abrirDevolucionSimple('${venta.id}', '${venta.consecutivo}')">💵 Devolver dinero</button>` : ''}
           <button class="btn-mini editar" onclick="event.stopPropagation(); verReciboHistorial('${venta.id}')">🖨️ Ver / imprimir recibo</button>
@@ -9770,7 +9874,7 @@
             <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
               <button class="btn-mini editar" onclick="event.stopPropagation(); abrirPermisosUsuario('${u.user_id}', '${escaparHtml(u.nombre_completo || '')}')">⚙️ Permisos</button>
               <button class="btn-mini editar" onclick="event.stopPropagation(); resetearPasswordUsuario('${u.user_id}', '${escaparHtml(u.nombre_completo || '')}')">🔑 Resetear contraseña</button>
-              <button class="btn-mini ${u.activo ? 'desactivar' : 'guardar'}" onclick="event.stopPropagation(); activarDesactivarUsuario('${u.user_id}', ${!u.activo})">${u.activo ? '🚫 Desactivar' : '✅ Activar'}</button>
+              <button class="btn-mini ${u.activo ? 'desactivar' : 'guardar'}" onclick="event.stopPropagation(); pedirConfirmacionBoton(this, '¿Seguro?', () => activarDesactivarUsuario('${u.user_id}', ${!u.activo}))">${u.activo ? '🚫 Desactivar' : '✅ Activar'}</button>
             </div>
           </div>
         `).join('')}
@@ -10101,7 +10205,7 @@
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ user_id: userId, rol })
     });
-    if (!resp.ok) { alert('No se pudo cambiar el rol.'); await cargarListaUsuarios(); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeUsuarios', 'No se pudo cambiar el rol.', 'error'); await cargarListaUsuarios(); return; }
     await cargarListaUsuarios();
   }
 
@@ -10112,7 +10216,7 @@
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ user_id: userId, rol })
     });
-    if (!resp.ok) { alert('No se pudo actualizar el rol adicional.'); }
+    if (!resp.ok) { mostrarMensaje('mensajeUsuarios', 'No se pudo actualizar el rol adicional.', 'error'); }
     await cargarListaUsuarios();
   }
 
@@ -10126,32 +10230,32 @@
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ user_id: userId, es_jefe_departamento: esLider, codigo_centro_costo: esLider ? codigoDepto : null })
     });
-    if (!resp.ok) { alert('No se pudo actualizar el liderazgo.'); }
+    if (!resp.ok) { mostrarMensaje('mensajeUsuarios', 'No se pudo actualizar el liderazgo.', 'error'); }
     await cargarListaUsuarios();
   }
 
   async function resetearPasswordUsuario(userId, nombre) {
-    const nueva = prompt(`Escribe la nueva contraseña temporal para ${nombre} (mínimo 6 caracteres):`);
+    ocultarMensaje('mensajeUsuarios');
+    const nueva = await pedirTexto(`Escribe la nueva contraseña temporal para ${nombre} (mínimo 6 caracteres):`, 'Contraseña temporal');
     if (!nueva) return;
-    if (nueva.length < 6) { alert('Debe tener al menos 6 caracteres.'); return; }
+    if (nueva.length < 6) { mostrarMensaje('mensajeUsuarios', 'Debe tener al menos 6 caracteres.', 'error'); return; }
 
     const resp = await fetch(WORKER_URL + '/api/pos/usuarios/resetear-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ user_id: userId, nueva_contrasena_temporal: nueva })
     });
-    if (!resp.ok) { alert('No se pudo resetear la contraseña.'); return; }
-    alert(`✅ Contraseña actualizada. Nueva contraseña temporal: ${nueva}`);
+    if (!resp.ok) { mostrarMensaje('mensajeUsuarios', 'No se pudo resetear la contraseña.', 'error'); return; }
+    mostrarMensaje('mensajeUsuarios', `✅ Contraseña actualizada. Nueva contraseña temporal de ${nombre}: ${nueva}`, 'exito');
   }
 
   async function activarDesactivarUsuario(userId, activo) {
-    if (!confirm(activo ? '¿Reactivar este usuario?' : '¿Desactivar este usuario? No podrá iniciar sesión.')) return;
     const resp = await fetch(WORKER_URL + '/api/pos/usuarios/activar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ user_id: userId, activo })
     });
-    if (!resp.ok) { alert('No se pudo actualizar.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeUsuarios', 'No se pudo actualizar.', 'error'); return; }
     await cargarListaUsuarios();
   }
 
@@ -10192,7 +10296,6 @@
 
   async function restablecerPermisosUsuarioActual() {
     if (!usuarioPermisosAbiertoId) return;
-    if (!confirm('¿Quitar todos los permisos personalizados? Esta persona volverá a regirse solo por su rol.')) return;
 
     const resp = await fetch(WORKER_URL + '/api/pos/usuarios/permisos', {
       method: 'POST',
@@ -12695,8 +12798,9 @@
     const insumoId = document.getElementById(`insumo-tomar-${pedidoId}`).value;
     const cantidad = Number(document.getElementById(`cantidad-tomar-${pedidoId}`).value);
 
-    if (!insumoId) { alert('Selecciona un insumo.'); return; }
-    if (!cantidad || cantidad <= 0) { alert('Escribe una cantidad válida.'); return; }
+    ocultarMensaje('mensajeConsumoTaller');
+    if (!insumoId) { mostrarMensaje('mensajeConsumoTaller', 'Selecciona un insumo.', 'error'); return; }
+    if (!cantidad || cantidad <= 0) { mostrarMensaje('mensajeConsumoTaller', 'Escribe una cantidad válida.', 'error'); return; }
 
     const resp = await fetch(WORKER_URL + '/api/pos/crm/tomar-material', {
       method: 'POST',
@@ -12710,7 +12814,7 @@
     });
 
     const datos = await resp.json();
-    if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudo registrar')); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeConsumoTaller', 'Error: ' + (datos.error || 'No se pudo registrar'), 'error'); return; }
 
     pedidoCrmAbiertoId = null;
     await cargarInsumosTallerCache();
@@ -12759,8 +12863,9 @@
     const inputEl = document.getElementById(`devolver-${consumoId}`);
     const cantidadDevuelta = Number(inputEl.value);
 
+    ocultarMensaje('mensajeConsumoTaller');
     if (inputEl.value === '' || isNaN(cantidadDevuelta) || cantidadDevuelta < 0) {
-      alert('Escribe cuánto sobró (puede ser 0 si no sobró nada).');
+      mostrarMensaje('mensajeConsumoTaller', 'Escribe cuánto sobró (puede ser 0 si no sobró nada).', 'error');
       return;
     }
 
@@ -12771,9 +12876,9 @@
     });
 
     const datos = await resp.json();
-    if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudo registrar la devolución')); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeConsumoTaller', 'Error: ' + (datos.error || 'No se pudo registrar la devolución'), 'error'); return; }
 
-    alert('✅ Consumo registrado correctamente.');
+    mostrarMensaje('mensajeConsumoTaller', '✅ Consumo registrado correctamente.', 'exito');
     await cargarInsumosTallerCache();
     await cargarPedidosCrmActivos();
     await cargarConsumosEnCurso();
@@ -13412,16 +13517,17 @@
   }
 
   async function confirmarLiquidarConNovedad(empleadoId, nombreEmpleado) {
-    if (!periodoNominaSeleccionadoId) { alert('Selecciona un período primero.'); return; }
+    ocultarMensaje('mensajeLiquidacionesNomina');
+    if (!periodoNominaSeleccionadoId) { mostrarMensaje('mensajeLiquidacionesNomina', 'Selecciona un período primero.', 'error'); return; }
 
     const tipo = document.getElementById(`nov-tipo-${empleadoId}`).value;
     const diasNovedad = tipo !== 'ninguna' ? Number(document.getElementById(`nov-dias-novedad-${empleadoId}`).value) || 0 : 0;
     const diasTrabajados = Number(document.getElementById(`nov-dias-trabajados-${empleadoId}`).value) || 0;
     const prestamoId = document.getElementById(`nov-prestamo-${empleadoId}`).value || null;
 
-    if (tipo !== 'ninguna' && diasNovedad <= 0) { alert('Escribe cuántos días tuvo la novedad.'); return; }
+    if (tipo !== 'ninguna' && diasNovedad <= 0) { mostrarMensaje('mensajeLiquidacionesNomina', 'Escribe cuántos días tuvo la novedad.', 'error'); return; }
     if (diasTrabajados + diasNovedad <= 0 || diasTrabajados + diasNovedad > 30) {
-      alert('Días trabajados + días de la novedad deben sumar entre 1 y 30.');
+      mostrarMensaje('mensajeLiquidacionesNomina', 'Días trabajados + días de la novedad deben sumar entre 1 y 30.', 'error');
       return;
     }
 
@@ -13433,7 +13539,8 @@
     const textoConfirmacion = tipo === 'ninguna'
       ? `¿Confirmas liquidar a ${nombreEmpleado} con ${diasTrabajados} días trabajados?`
       : `¿Confirmas liquidar a ${nombreEmpleado} con ${diasTrabajados} días trabajados y ${diasNovedad} días de ${etiquetasNovedad[tipo]}?`;
-    if (!confirm(textoConfirmacion)) return;
+    const confirmado = await pedirConfirmacionModal(textoConfirmacion, 'Sí, liquidar');
+    if (!confirmado) return;
 
     const body = {
       periodo_nomina_id: periodoNominaSeleccionadoId,
@@ -13458,10 +13565,10 @@
     });
 
     const datos = await resp.json();
-    if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudo liquidar')); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeLiquidacionesNomina', 'Error: ' + (datos.error || 'No se pudo liquidar'), 'error'); return; }
 
     empleadoNovedadesAbiertoId = null;
-    alert(`✅ ${nombreEmpleado} fue liquidado correctamente.`);
+    mostrarMensaje('mensajeLiquidacionesNomina', `✅ ${nombreEmpleado} fue liquidado correctamente.`, 'exito');
     await verLiquidacionesPeriodo(periodoNominaSeleccionadoId);
     await cargarPeriodosNomina();
     await cargarAlertasVacaciones();
@@ -13606,7 +13713,7 @@
             <div style="border:1px solid #f0e8ee;border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:12px;">
               <div style="display:flex;justify-content:space-between;">
                 <strong>${escaparHtml(b.nombre_completo)}</strong>
-                <button class="btn-quitar" onclick="eliminarBeneficiario('${b.id}', '${empleadoId}')" title="Eliminar">✕</button>
+                <button class="btn-quitar" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => eliminarBeneficiario('${b.id}', '${empleadoId}'))" title="Eliminar">✕</button>
               </div>
               <div style="opacity:0.7;margin-top:2px;">${etiquetasParentesco[b.parentesco] || b.parentesco}${edadBen !== null ? ' · ' + edadBen + ' años' : ''} · ${tags}</div>
             </div>
@@ -13650,19 +13757,21 @@
             </label>
           </div>
           <button class="btn-mini guardar" style="width:100%;margin-top:8px;" onclick="agregarBeneficiario('${empleadoId}')">+ Agregar beneficiario</button>
+          <div class="mensaje" id="mensajeBeneficiarios-${empleadoId}"></div>
         </div>
       </div>
     `;
   }
 
   async function agregarBeneficiario(empleadoId) {
+    ocultarMensaje(`mensajeBeneficiarios-${empleadoId}`);
     const nombre = document.getElementById(`ben-nombre-${empleadoId}`).value.trim();
     const parentesco = document.getElementById(`ben-parentesco-${empleadoId}`).value;
     const fechaNacimiento = document.getElementById(`ben-nacimiento-${empleadoId}`).value;
     const aplicaSalud = document.getElementById(`ben-salud-${empleadoId}`).checked;
     const aplicaCcf = document.getElementById(`ben-ccf-${empleadoId}`).checked;
 
-    if (!nombre) { alert('Escribe el nombre del beneficiario.'); return; }
+    if (!nombre) { mostrarMensaje(`mensajeBeneficiarios-${empleadoId}`, 'Escribe el nombre del beneficiario.', 'error'); return; }
 
     const resp = await fetch(WORKER_URL + '/api/pos/nomina/beneficiarios', {
       method: 'POST',
@@ -13679,7 +13788,7 @@
 
     if (!resp.ok) {
       const datos = await resp.json().catch(() => ({}));
-      alert('No se pudo agregar el beneficiario: ' + (datos.error || 'Error desconocido'));
+      mostrarMensaje(`mensajeBeneficiarios-${empleadoId}`, 'No se pudo agregar el beneficiario: ' + (datos.error || 'Error desconocido'), 'error');
       return;
     }
 
@@ -13687,13 +13796,12 @@
   }
 
   async function eliminarBeneficiario(beneficiarioId, empleadoId) {
-    if (!confirm('¿Quitar este beneficiario?')) return;
     const resp = await fetch(WORKER_URL + '/api/pos/nomina/beneficiarios/eliminar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ beneficiario_id: beneficiarioId })
     });
-    if (!resp.ok) { alert('No se pudo eliminar.'); return; }
+    if (!resp.ok) { mostrarMensaje(`mensajeBeneficiarios-${empleadoId}`, 'No se pudo eliminar.', 'error'); return; }
     await cargarBeneficiariosEmpleado(empleadoId);
   }
 
@@ -13703,7 +13811,7 @@
     const resp = await fetch(`${WORKER_URL}/api/pos/nomina/liquidaciones-empleado?empleado_id=${empleadoId}`, {
       headers: { Authorization: 'Bearer ' + sesionActual.token }
     });
-    if (!resp.ok) { if (ventana) ventana.close(); alert('No se pudieron cargar las liquidaciones.'); return; }
+    if (!resp.ok) { if (ventana) ventana.document.body.innerHTML = '<p style="font-family:Arial,sans-serif;padding:20px;color:#c0392b;">No se pudieron cargar las liquidaciones.</p>'; return; }
 
     const { liquidaciones } = await resp.json();
 
@@ -14336,8 +14444,8 @@
     const desc = document.getElementById('cotNuevoItemDesc').value.trim();
     const cant = Number(document.getElementById('cotNuevoItemCant').value) || 1;
     const precio = Number(document.getElementById('cotNuevoItemPrecio').value);
-    if (!desc) { alert('Escribe la descripción del ítem.'); return; }
-    if (!precio || precio <= 0) { alert('Escribe un precio válido.'); return; }
+    if (!desc) { mostrarMensaje('mensajeCotizacion', 'Escribe la descripción del ítem.', 'error'); return; }
+    if (!precio || precio <= 0) { mostrarMensaje('mensajeCotizacion', 'Escribe un precio válido.', 'error'); return; }
 
     carritoCotizacion.push({ descripcion: desc, cantidad: cant, precio_unitario: precio });
     document.getElementById('cotNuevoItemDesc').value = '';
@@ -14469,7 +14577,7 @@
               ` : ''}
               <button class="btn-mini editar" onclick="enviarCotizacionWhatsApp('${c.id}')">📱</button>
               <button class="btn-mini editar" onclick="imprimirCotizacion('${c.id}')">🖨️</button>
-              ${c.estado === 'aprobada' ? `<button class="btn-mini guardar" onclick="convertirCotizacionEnPedido('${c.id}')">🔄 Convertir</button>` : ''}
+              ${c.estado === 'aprobada' ? `<button class="btn-mini guardar" onclick="pedirConfirmacionBoton(this, '¿Continuar?', () => convertirCotizacionEnPedido('${c.id}'))">🔄 Convertir</button>` : ''}
               <button class="btn-mini desactivar" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => eliminarCotizacion('${c.id}'))">🗑️</button>
             </span>
           </div>
@@ -14537,7 +14645,7 @@
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ id, estado })
     });
-    if (!resp.ok) { alert('No se pudo actualizar.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeCotizaciones', 'No se pudo actualizar.', 'error'); return; }
     await cargarCotizaciones();
   }
 
@@ -14555,7 +14663,7 @@
     const c = cotizacionesCache.find(x => x.id === id);
     if (!c) return;
     const telefono = c.tercero ? c.tercero.telefono : c.cliente_telefono_libre;
-    if (!telefono) { alert('Este cliente no tiene teléfono registrado.'); return; }
+    if (!telefono) { mostrarMensaje('mensajeCotizaciones', 'Este cliente no tiene teléfono registrado.', 'error'); return; }
 
     const nombreCliente = c.tercero ? c.tercero.nombre_completo : c.cliente_nombre_libre;
     let mensaje = `Hola ${nombreCliente}, aquí tienes tu cotización de Lana Rosa Crochet (${c.consecutivo}):\n\n`;
@@ -14571,7 +14679,6 @@
   function convertirCotizacionEnPedido(id) {
     const c = cotizacionesCache.find(x => x.id === id);
     if (!c) return;
-    if (!confirm(`Esto te llevará a "Registrar venta → WhatsApp/Redes" con los datos de ${c.consecutivo} precargados, para que confirmes el pedido. ¿Continuar?`)) return;
 
     window._cotizacionParaConvertir = c;
     mostrarPantallaVentas();
@@ -14596,7 +14703,7 @@
     const campoValor = document.getElementById('pedidoValorProducto');
     if (campoValor) { campoValor.value = c.total; campoValor.dispatchEvent(new Event('input')); }
 
-    alert(`Datos de ${c.consecutivo} precargados — recuerda marcar esta cotización como convertida una vez confirmes el pedido, desde la pantalla de Cotizaciones.`);
+    mostrarMensaje('mensajeVenta', `Datos de ${c.consecutivo} precargados — recuerda marcar esta cotización como convertida una vez confirmes el pedido, desde la pantalla de Cotizaciones.`, 'exito');
     window._cotizacionParaConvertir = null;
   }
 
@@ -15180,7 +15287,7 @@
               <span class="fila-historial-consecutivo">${new Date(m.fecha + 'T00:00:00').toLocaleDateString('es-CO')} — ${escaparHtml(m.descripcion)}</span>
               <span class="fila-historial-total" style="color:${m.tipo === 'entrada' ? 'var(--verde-exito)' : 'var(--rojo-error)'};">${m.tipo === 'entrada' ? '+' : '-'}${formatearMoneda(m.valor)}</span>
             </div>
-            <button class="btn-mini desactivar" style="margin-top:4px;" onclick="event.stopPropagation(); eliminarMovimientoExtracto('${m.id}')">🗑️ Eliminar</button>
+            <button class="btn-mini desactivar" style="margin-top:4px;" onclick="event.stopPropagation(); pedirConfirmacionBoton(this, '¿Seguro?', () => eliminarMovimientoExtracto('${m.id}'))">🗑️ Eliminar</button>
           </div>
         `).join('');
     }
@@ -15212,7 +15319,7 @@
         soloConciliados.map(m => `
           <div class="resumen-fila">
             <span>${new Date(m.fecha + 'T00:00:00').toLocaleDateString('es-CO')} — ${escaparHtml(m.descripcion)}</span>
-            <span><strong>${formatearMoneda(m.valor)}</strong> <button class="btn-mini desactivar" onclick="confirmarDesconciliarMovimiento('${m.id}')">Deshacer</button></span>
+            <span><strong>${formatearMoneda(m.valor)}</strong> <button class="btn-mini desactivar" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => confirmarDesconciliarMovimiento('${m.id}'))">Deshacer</button></span>
           </div>
         `).join('');
     }
@@ -15225,7 +15332,7 @@
 
   async function intentarConciliar(apunteId) {
     if (!movimientoExtractoSeleccionado) {
-      alert('Primero selecciona (toca) el movimiento del extracto bancario, del lado izquierdo, y luego toca aquí el registro del sistema con el que coincide.');
+      mostrarMensaje('mensajeConciliacion', 'Primero selecciona (toca) el movimiento del extracto bancario, del lado izquierdo, y luego toca aquí el registro del sistema con el que coincide.', 'error');
       return;
     }
     const resp = await fetch(WORKER_URL + '/api/pos/conciliacion/conciliar', {
@@ -15233,30 +15340,28 @@
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ movimiento_id: movimientoExtractoSeleccionado, apunte_contable_id: apunteId })
     });
-    if (!resp.ok) { alert('No se pudo conciliar.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeConciliacion', 'No se pudo conciliar.', 'error'); return; }
     movimientoExtractoSeleccionado = null;
     await cargarPantallaConciliacionCompleta();
   }
 
   async function confirmarDesconciliarMovimiento(movimientoId) {
-    if (!confirm('¿Deshacer esta conciliación?')) return;
     const resp = await fetch(WORKER_URL + '/api/pos/conciliacion/desconciliar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ movimiento_id: movimientoId })
     });
-    if (!resp.ok) { alert('No se pudo deshacer.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeConciliacion', 'No se pudo deshacer.', 'error'); return; }
     await cargarPantallaConciliacionCompleta();
   }
 
   async function eliminarMovimientoExtracto(id) {
-    if (!confirm('¿Eliminar este movimiento del extracto? No se puede deshacer.')) return;
     const resp = await fetch(WORKER_URL + '/api/pos/conciliacion/movimientos/eliminar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ id })
     });
-    if (!resp.ok) { alert('No se pudo eliminar.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeConciliacion', 'No se pudo eliminar.', 'error'); return; }
     await cargarPantallaConciliacionCompleta();
   }
 
@@ -15390,9 +15495,10 @@
   }
 
   async function confirmarDarDeBajaActivo(activoId) {
-    const motivo = prompt('¿Por qué se da de baja este activo? (vendido, dañado, obsoleto...)');
+    ocultarMensaje('mensajeActivoFijo');
+    const motivo = await pedirTexto('¿Por qué se da de baja este activo?', 'Motivo', 'Ej: vendido, dañado, obsoleto...');
     if (motivo === null) return;
-    const fechaBaja = prompt('Fecha de la baja (AAAA-MM-DD):', new Date().toISOString().slice(0, 10));
+    const fechaBaja = await pedirTexto('Fecha en que se dio de baja:', 'Fecha de la baja', '', new Date().toISOString().slice(0, 10), 'date');
     if (!fechaBaja) return;
 
     const resp = await fetch(WORKER_URL + '/api/pos/activos-fijos/dar-de-baja', {
@@ -15400,7 +15506,7 @@
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ activo_id: activoId, fecha_baja: fechaBaja, motivo: motivo || null })
     });
-    if (!resp.ok) { alert('No se pudo dar de baja el activo.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeActivoFijo', 'No se pudo dar de baja el activo.', 'error'); return; }
     await cargarActivosFijos();
   }
 
@@ -15671,7 +15777,7 @@
   }
 
   function exportarCxCExcel() {
-    if (!cuentasPendientesCache || cuentasPendientesCache.length === 0) { alert('No hay datos para exportar.'); return; }
+    if (!cuentasPendientesCache || cuentasPendientesCache.length === 0) { mostrarMensaje('mensajeCuentasPendientes', 'No hay datos para exportar.', 'error'); return; }
     const filas = [
       [filtroCxCActual === 'por_cobrar' ? 'Cuentas por Cobrar' : 'Cuentas por Pagar', '', '', '', '', ''],
       ['Cliente/Proveedor', 'N° Factura', 'Descripción', 'Monto', 'Abonado', 'Saldo', 'Vencimiento', 'Estado'],
@@ -15688,7 +15794,7 @@
   }
 
   function imprimirListadoCxC() {
-    if (!cuentasPendientesCache || cuentasPendientesCache.length === 0) { alert('No hay datos para imprimir.'); return; }
+    if (!cuentasPendientesCache || cuentasPendientesCache.length === 0) { mostrarMensaje('mensajeCuentasPendientes', 'No hay datos para imprimir.', 'error'); return; }
     const titulo = filtroCxCActual === 'por_cobrar' ? 'Cuentas por Cobrar' : 'Cuentas por Pagar';
     const filasHtml = cuentasPendientesCache.map(c => {
       const saldo = Number(c.monto) - Number(c.monto_abonado || 0);
@@ -16518,7 +16624,7 @@
   }
 
   function exportarEstadoResultadosExcel() {
-    if (!cacheEstadoResultados) { alert('Espera a que cargue el reporte primero.'); return; }
+    if (!cacheEstadoResultados) { mostrarMensaje('mensajeEstadosFinancieros', 'Espera a que cargue el reporte primero.', 'error'); return; }
     const d = cacheEstadoResultados;
     const filas = [
       ['Lana Rosa Crochet — Estado de Resultados'],
@@ -16546,7 +16652,7 @@
   }
 
   function exportarBalanceGeneralExcel() {
-    if (!cacheBalanceGeneral) { alert('Espera a que cargue el reporte primero.'); return; }
+    if (!cacheBalanceGeneral) { mostrarMensaje('mensajeEstadosFinancieros', 'Espera a que cargue el reporte primero.', 'error'); return; }
     const d = cacheBalanceGeneral;
     const filas = [
       ['Lana Rosa Crochet — Balance General'],
@@ -16574,7 +16680,7 @@
   }
 
   function exportarFlujoCajaExcel() {
-    if (!cacheFlujoCaja) { alert('Espera a que cargue el reporte primero.'); return; }
+    if (!cacheFlujoCaja) { mostrarMensaje('mensajeEstadosFinancieros', 'Espera a que cargue el reporte primero.', 'error'); return; }
     const d = cacheFlujoCaja;
     const filas = [
       ['Lana Rosa Crochet — Flujo de Caja'],
@@ -16648,7 +16754,7 @@
 
   async function imprimirAvisoPrivacidadFisico() {
     const texto = document.getElementById('textoAvisoPrivacidadFisico').value.trim();
-    if (!texto) { alert('Escribe el texto del aviso antes de imprimirlo.'); return; }
+    if (!texto) { mostrarMensaje('mensajePoliticasLegales', 'Escribe el texto del aviso antes de imprimirlo.', 'error'); return; }
 
     const respEmpresa = await fetch(WORKER_URL + '/api/pos/config-empresa', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
     const empresa = respEmpresa.ok ? await respEmpresa.json() : {};
@@ -16770,7 +16876,6 @@
 
     if (!archivo) { mostrarMensaje('mensajeRestaurarDatos', 'Selecciona el archivo .json del respaldo.', 'error'); return; }
     if (confirmacion !== 'RESTAURAR DATOS') { mostrarMensaje('mensajeRestaurarDatos', 'Escribe exactamente: RESTAURAR DATOS', 'error'); return; }
-    if (!confirm('¿Confirmas que quieres restaurar este respaldo? Esto trae de vuelta lo que falte, sin borrar lo que ya existe.')) return;
 
     const btn = document.getElementById('btnRestaurarDatos');
     btn.disabled = true;
@@ -16809,7 +16914,7 @@
 
   function exportarConsolidadoExcel() {
     if (!consolidadoNominaCache || consolidadoNominaCache.length === 0) {
-      alert('No hay datos para exportar. Carga el consolidado primero.');
+      mostrarMensaje('mensajeLiquidacionesNomina', 'No hay datos para exportar. Carga el consolidado primero.', 'error');
       return;
     }
 
@@ -16893,7 +16998,7 @@
     const resp = await fetch(`${WORKER_URL}/api/pos/nomina/retiros-propietario-empleado?empleado_id=${empleadoId}`, {
       headers: { Authorization: 'Bearer ' + sesionActual.token }
     });
-    if (!resp.ok) { if (ventanaRetiros) ventanaRetiros.close(); alert('No se pudieron cargar los retiros.'); return; }
+    if (!resp.ok) { if (ventanaRetiros) ventanaRetiros.document.body.innerHTML = '<p style="font-family:Arial,sans-serif;padding:20px;color:#c0392b;">No se pudieron cargar los retiros.</p>'; return; }
 
     const { retiros } = await resp.json();
     let filas = '<p style="opacity:0.6;">Sin retiros registrados todavía.</p>';
@@ -16978,7 +17083,7 @@
               </div>
               <div style="display:flex;gap:6px;">
                 <button class="btn-mini editar" onclick="verDocumentoRh('${d.id}')">👁️ Ver</button>
-                ${soloLectura ? '' : `<button class="btn-mini desactivar" onclick="eliminarDocumentoRh('${d.id}', '${empleadoId}')">✕</button>`}
+                ${soloLectura ? '' : `<button class="btn-mini desactivar" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => eliminarDocumentoRh('${d.id}', '${empleadoId}'))">✕</button>`}
               </div>
             </div>
           `).join('');
@@ -17013,17 +17118,19 @@
         <div style="font-size:12.5px;font-weight:700;margin-bottom:8px;">📁 Documentos${soloLectura ? ' (solo lectura)' : ''}</div>
         ${filas}
         ${formularioSubida}
+        <div class="mensaje" id="mensajeDocRh-${empleadoId}"></div>
       </div>
     `;
   }
 
   async function subirDocumentoRh(empleadoId) {
+    ocultarMensaje(`mensajeDocRh-${empleadoId}`);
     const tipo = document.getElementById(`doc-tipo-${empleadoId}`).value;
     const inputArchivo = document.getElementById(`doc-archivo-${empleadoId}`);
     const archivo = inputArchivo.files[0];
 
-    if (!archivo) { alert('Selecciona un archivo primero.'); return; }
-    if (archivo.size > 10 * 1024 * 1024) { alert('El archivo no puede pesar más de 10 MB.'); return; }
+    if (!archivo) { mostrarMensaje(`mensajeDocRh-${empleadoId}`, 'Selecciona un archivo primero.', 'error'); return; }
+    if (archivo.size > 10 * 1024 * 1024) { mostrarMensaje(`mensajeDocRh-${empleadoId}`, 'El archivo no puede pesar más de 10 MB.', 'error'); return; }
 
     const form = new FormData();
     form.append('empleado_id', empleadoId);
@@ -17038,7 +17145,7 @@
 
     if (!resp.ok) {
       const datos = await resp.json().catch(() => ({}));
-      alert('No se pudo subir el documento: ' + (datos.error || 'Error desconocido'));
+      mostrarMensaje(`mensajeDocRh-${empleadoId}`, 'No se pudo subir el documento: ' + (datos.error || 'Error desconocido'), 'error');
       return;
     }
 
@@ -17051,20 +17158,19 @@
     const resp = await fetch(`${WORKER_URL}/api/pos/rh/documentos/url?documento_id=${documentoId}`, {
       headers: { Authorization: 'Bearer ' + sesionActual.token }
     });
-    if (!resp.ok) { if (ventanaDoc) ventanaDoc.close(); alert('No se pudo generar el enlace del documento.'); return; }
+    if (!resp.ok) { if (ventanaDoc) ventanaDoc.document.body.innerHTML = '<p style="font-family:Arial,sans-serif;padding:20px;color:#c0392b;">No se pudo generar el enlace del documento.</p>'; return; }
     const { url } = await resp.json();
     if (ventanaDoc) ventanaDoc.location.href = url;
     else window.open(url, '_blank');
   }
 
   async function eliminarDocumentoRh(documentoId, empleadoId) {
-    if (!confirm('¿Eliminar este documento? Esta acción no se puede deshacer.')) return;
     const resp = await fetch(WORKER_URL + '/api/pos/rh/documentos/eliminar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ documento_id: documentoId })
     });
-    if (!resp.ok) { alert('No se pudo eliminar.'); return; }
+    if (!resp.ok) { mostrarMensaje(`mensajeDocRh-${empleadoId}`, 'No se pudo eliminar.', 'error'); return; }
     await cargarDocumentosEmpleado(empleadoId);
   }
 
@@ -17690,10 +17796,10 @@
       return `
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
           <span style="flex:1;font-size:13px;">${etiquetasSubareaAcademia[area]}</span>
-          <input type="number" min="0" step="10000" value="${actual ? actual.meta_monto : 0}" id="meta-${area}" style="flex:1;">
+          <input type="number" min="0" step="1" value="${actual ? actual.meta_monto : 0}" id="meta-${area}" style="flex:1;">
         </div>
       `;
-    }).join('') + `<button class="btn-mini guardar" style="width:100%;margin-top:10px;" onclick="guardarMetasAcademia()">Guardar metas del mes</button>`;
+    }).join('') + `<button class="btn-mini guardar" style="width:100%;margin-top:10px;" onclick="guardarMetasAcademia()">Guardar metas del mes</button><div class="mensaje" id="mensajeMetasAcademia"></div>`;
   }
 
   // ============================================================
@@ -17806,8 +17912,9 @@
   }
 
   async function confirmarFinalizarTomaInventario() {
-    if (!confirm('¿Finalizar el conteo? Se ajustará el stock de todos los productos que tengan un conteo registrado y difieran del sistema. Los productos sin contar se dejan como están.')) return;
     ocultarMensaje('mensajeTomaInventario');
+    const confirmado = await pedirConfirmacionModal('¿Finalizar el conteo? Se ajustará el stock de todos los productos que tengan un conteo registrado y difieran del sistema. Los productos sin contar se dejan como están.', 'Sí, finalizar');
+    if (!confirmado) return;
 
     const resp = await fetch(WORKER_URL + '/api/pos/tomas-inventario/finalizar', {
       method: 'POST',
@@ -17817,18 +17924,17 @@
     const datos = await resp.json();
     if (!resp.ok) { mostrarMensaje('mensajeTomaInventario', datos.error || 'No se pudo finalizar.', 'error'); return; }
 
-    alert(`✅ Toma finalizada. ${datos.ajustados} producto(s) ajustado(s).${datos.sin_contar > 0 ? ' ' + datos.sin_contar + ' producto(s) quedaron sin contar (no se tocaron).' : ''}`);
+    mostrarMensaje('mensajeTomaInventario', `✅ Toma finalizada. ${datos.ajustados} producto(s) ajustado(s).${datos.sin_contar > 0 ? ' ' + datos.sin_contar + ' producto(s) quedaron sin contar (no se tocaron).' : ''}`, 'exito');
     await cargarTomasInventario();
   }
 
   async function confirmarCancelarTomaInventario() {
-    if (!confirm('¿Cancelar esta toma de inventario? No se ajustará nada.')) return;
     const resp = await fetch(WORKER_URL + '/api/pos/tomas-inventario/cancelar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ toma_id: tomaInventarioActivaId })
     });
-    if (!resp.ok) { alert('No se pudo cancelar.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeTomaInventario', 'No se pudo cancelar.', 'error'); return; }
     await cargarTomasInventario();
   }
 
@@ -17951,7 +18057,7 @@
       });
     }
 
-    alert('✅ Metas guardadas correctamente.');
+    mostrarMensaje('mensajeMetasAcademia', '✅ Metas guardadas correctamente.', 'exito');
     await cargarInformeAcademia();
   }
 
@@ -18106,7 +18212,7 @@
             ${ev.estado === 'EN_REVISION_INTERVENTOR' ? `<button class="btn-mini guardar" onclick="actualizarEstadoEventoFe('${ev.event_id}', 'APROBADO')">Marcar aprobado</button><button class="btn-mini desactivar" onclick="actualizarEstadoEventoFe('${ev.event_id}', 'RECHAZADO')">Marcar rechazado</button>` : ''}
             ${ev.estado === 'RECHAZADO' ? `<button class="btn-mini editar" onclick="actualizarEstadoEventoFe('${ev.event_id}', 'PENDIENTE')">Reabrir (nueva versión)</button>` : ''}
             <button class="btn-mini editar" onclick="reprogramarEventoFe('${ev.event_id}', '${ev.fecha_limite}')">📅 Reprogramar fecha</button>
-            <button class="btn-mini desactivar" onclick="confirmarEliminarEventoFe('${ev.event_id}')">🗑️ Eliminar</button>
+            <button class="btn-mini desactivar" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => confirmarEliminarEventoFe('${ev.event_id}'))">🗑️ Eliminar</button>
           </div>
         </div>
       `;
@@ -18119,32 +18225,31 @@
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ event_id: eventId, estado })
     });
-    if (!resp.ok) { alert('No se pudo actualizar.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeEventosFe', 'No se pudo actualizar.', 'error'); return; }
     await cargarEventosFe();
   }
 
   async function reprogramarEventoFe(eventId, fechaActual) {
-    const nuevaFecha = prompt('Nueva fecha límite (AAAA-MM-DD):', fechaActual);
+    const nuevaFecha = await pedirTexto('Nueva fecha límite para este entregable:', 'Fecha límite', '', fechaActual, 'date');
     if (!nuevaFecha) return;
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(nuevaFecha)) { alert('Formato de fecha inválido — usa AAAA-MM-DD.'); return; }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(nuevaFecha)) { mostrarMensaje('mensajeEventosFe', 'Formato de fecha inválido — usa AAAA-MM-DD.', 'error'); return; }
 
     const resp = await fetch(WORKER_URL + '/api/pos/fe/eventos/actualizar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ event_id: eventId, fecha_limite: nuevaFecha })
     });
-    if (!resp.ok) { alert('No se pudo reprogramar.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeEventosFe', 'No se pudo reprogramar.', 'error'); return; }
     await cargarEventosFe();
   }
 
   async function confirmarEliminarEventoFe(eventId) {
-    if (!confirm('¿Eliminar este entregable del calendario? Esta acción no se puede deshacer.')) return;
     const resp = await fetch(WORKER_URL + '/api/pos/fe/eventos/eliminar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ event_id: eventId })
     });
-    if (!resp.ok) { alert('No se pudo eliminar.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeEventosFe', 'No se pudo eliminar.', 'error'); return; }
     await cargarEventosFe();
   }
 
@@ -18351,7 +18456,7 @@
           </div>
           <div style="text-align:center;font-size:18px;font-weight:700;color:${color};margin-top:6px;">${pct}%</div>
           <button class="btn-mini editar" style="width:100%;margin-top:10px;" onclick="actualizarValorIndicadorFe('${i.id}', ${i.valor_actual})">Actualizar valor</button>
-          <button class="btn-mini desactivar" style="width:100%;margin-top:6px;" onclick="confirmarEliminarIndicadorFe('${i.id}')">Eliminar</button>
+          <button class="btn-mini desactivar" style="width:100%;margin-top:6px;" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => confirmarEliminarIndicadorFe('${i.id}'))">Eliminar</button>
         </div>
       `;
     }).join('') + `</div>`;
@@ -18383,28 +18488,28 @@
   }
 
   async function actualizarValorIndicadorFe(id, valorActual) {
-    const nuevo = prompt('¿Cuál es el valor actual de este indicador?', valorActual);
+    ocultarMensaje('mensajeIndicadorFe');
+    const nuevo = await pedirTexto('¿Cuál es el valor actual de este indicador?', 'Valor actual', '', valorActual, 'number');
     if (nuevo === null) return;
     const valor = Number(nuevo);
-    if (isNaN(valor)) { alert('Escribe un número válido.'); return; }
+    if (isNaN(valor)) { mostrarMensaje('mensajeIndicadorFe', 'Escribe un número válido.', 'error'); return; }
 
     const resp = await fetch(WORKER_URL + '/api/pos/fe/indicadores/actualizar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ id, valor_actual: valor })
     });
-    if (!resp.ok) { alert('No se pudo actualizar.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeIndicadorFe', 'No se pudo actualizar.', 'error'); return; }
     await cargarIndicadoresFe();
   }
 
   async function confirmarEliminarIndicadorFe(id) {
-    if (!confirm('¿Eliminar este indicador?')) return;
     const resp = await fetch(WORKER_URL + '/api/pos/fe/indicadores/eliminar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ id })
     });
-    if (!resp.ok) { alert('No se pudo eliminar.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeIndicadorFe', 'No se pudo eliminar.', 'error'); return; }
     await cargarIndicadoresFe();
   }
 
@@ -18491,24 +18596,23 @@
   async function abrirEdicionConceptoFe(conceptoId) {
     const c = conceptosCacheFe.find(x => x.id === conceptoId);
     if (!c) return;
+    ocultarMensaje('mensajeConceptosFe');
 
-    const nuevoNombre = prompt('Nombre del concepto:', c.concepto);
+    const nuevoNombre = await pedirTexto('Nombre del concepto:', 'Concepto', '', c.concepto);
     if (nuevoNombre === null) return;
 
-    const nuevoMonto = prompt(`Monto total aprobado (COP) — ya ejecutado: ${formatearMoneda(c.monto_ejecutado)}, no puede quedar por debajo de eso:`, c.monto_total_aprobado);
+    const nuevoMonto = await pedirTexto(`Monto total aprobado (COP) — ya ejecutado: ${formatearMoneda(c.monto_ejecutado)}, no puede quedar por debajo de eso:`, 'Monto total aprobado', '', c.monto_total_aprobado, 'number');
     if (nuevoMonto === null) return;
     const montoNum = Number(nuevoMonto);
-    if (isNaN(montoNum) || montoNum <= 0) { alert('El monto no es válido.'); return; }
+    if (isNaN(montoNum) || montoNum <= 0) { mostrarMensaje('mensajeConceptosFe', 'El monto no es válido.', 'error'); return; }
 
+    const textoActual = (c.cronograma_meses || Array(12).fill(0)).join(', ');
+    const respuesta = await pedirTexto('Cronograma de referencia — cómo se reparte ese monto mes a mes. Deja el valor tal cual si no lo quieres cambiar.', '12 valores separados por coma (Mes 1 a Mes 12)', '', textoActual);
     let cronogramaNuevo = c.cronograma_meses;
-    if (confirm('¿Quieres también actualizar cómo se reparte ese monto mes a mes (el cronograma de referencia)? Si dices que no, se deja igual.')) {
-      const textoActual = (c.cronograma_meses || Array(12).fill(0)).join(', ');
-      const respuesta = prompt('Escribe los 12 valores separados por coma (Mes 1 a Mes 12):', textoActual);
-      if (respuesta !== null) {
-        const valores = respuesta.split(',').map(v => Number(v.trim()) || 0);
-        if (valores.length !== 12) { alert('Deben ser exactamente 12 valores — no se actualizó el cronograma, solo el monto y el nombre.'); }
-        else { cronogramaNuevo = valores; }
-      }
+    if (respuesta !== null && respuesta !== textoActual) {
+      const valores = respuesta.split(',').map(v => Number(v.trim()) || 0);
+      if (valores.length !== 12) { mostrarMensaje('mensajeConceptosFe', 'El cronograma debe tener exactamente 12 valores — no se actualizó, solo el monto y el nombre.', 'error'); }
+      else { cronogramaNuevo = valores; }
     }
 
     const cuerpo = { id: conceptoId, concepto: nuevoNombre.trim(), monto_total_aprobado: montoNum };
@@ -18520,8 +18624,9 @@
       body: JSON.stringify(cuerpo)
     });
     const datos = await resp.json();
-    if (!resp.ok) { alert(datos.error || 'No se pudo actualizar.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeConceptosFe', datos.error || 'No se pudo actualizar.', 'error'); return; }
 
+    mostrarMensaje('mensajeConceptosFe', '✅ Concepto actualizado.', 'exito');
     await cargarConceptosFe();
     await cargarCronogramaFe();
   }
@@ -18893,7 +18998,7 @@
             ${ev.origen === 'fe' ? '<div style="font-size:11px;opacity:0.5;margin-top:6px;">Se gestiona desde Fondo Emprender</div>' : ev.origen === 'crm_tejedora' ? '<div style="font-size:11px;opacity:0.5;margin-top:6px;">Se gestiona desde el CRM de pedidos</div>' : (ev.origen === 'personal' || rolActual === 'administrador' || esLiderDepartamentoActual) ? `
               <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
                 <button class="btn-mini editar" style="max-width:140px;" onclick="${ev.origen === 'personal' ? `reprogramarTareaPersonal('${ev.id}', '${ev.fecha_inicio}')` : `reprogramarEventoCalendario('${ev.id}', '${ev.fecha_inicio}')`}">🔄 Reprogramar</button>
-                <button class="btn-mini desactivar" style="max-width:140px;" onclick="${ev.origen === 'personal' ? `eliminarTareaPersonal('${ev.id}')` : `eliminarEventoCalendario('${ev.id}')`}">${ev.origen === 'personal' ? 'Eliminar' : '❌ Cancelar evento'}</button>
+                <button class="btn-mini desactivar" style="max-width:140px;" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => ${ev.origen === 'personal' ? `eliminarTareaPersonal('${ev.id}')` : `eliminarEventoCalendario('${ev.id}')`})">${ev.origen === 'personal' ? 'Eliminar' : '❌ Cancelar evento'}</button>
               </div>
             ` : ''}
           </div>
@@ -18938,30 +19043,30 @@
   }
 
   async function eliminarTareaPersonal(tareaId) {
-    if (!confirm('¿Eliminar esta tarea?')) return;
     const resp = await fetch(WORKER_URL + '/api/pos/calendario/tareas/eliminar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ id: tareaId })
     });
-    if (!resp.ok) { alert('No se pudo eliminar.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeCalendario', 'No se pudo eliminar.', 'error'); return; }
     await cargarEventosCalendario();
   }
 
   async function reprogramarTareaPersonal(tareaId, fechaActualISO) {
+    ocultarMensaje('mensajeCalendario');
     const actual = new Date(fechaActualISO);
     const valorLocal = new Date(actual.getTime() - actual.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-    const nuevaFechaHora = prompt('Nueva fecha y hora (AAAA-MM-DDTHH:MM):', valorLocal);
+    const nuevaFechaHora = await pedirTexto('Nueva fecha y hora para esta tarea:', 'Fecha y hora', '', valorLocal, 'datetime-local');
     if (!nuevaFechaHora) return;
     const nuevaFecha = new Date(nuevaFechaHora);
-    if (isNaN(nuevaFecha.getTime())) { alert('Fecha/hora inválida.'); return; }
+    if (isNaN(nuevaFecha.getTime())) { mostrarMensaje('mensajeCalendario', 'Fecha/hora inválida.', 'error'); return; }
 
     const resp = await fetch(WORKER_URL + '/api/pos/calendario/tareas/actualizar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ id: tareaId, fecha_inicio: nuevaFecha.toISOString(), fecha_fin: nuevaFecha.toISOString() })
     });
-    if (!resp.ok) { alert('No se pudo reprogramar.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeCalendario', 'No se pudo reprogramar.', 'error'); return; }
     diaSeleccionadoCalendario = nuevaFecha.toISOString().slice(0, 10);
     await cargarEventosCalendario();
   }
@@ -19016,23 +19121,23 @@
   }
 
   async function eliminarEventoCalendario(eventoId) {
-    if (!confirm('¿Cancelar este evento? Se quitará del calendario para todo el equipo.')) return;
     const resp = await fetch(WORKER_URL + '/api/pos/rh/calendario/eventos/eliminar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ evento_id: eventoId })
     });
-    if (!resp.ok) { alert('No tienes permiso para eliminar este evento, o ya fue eliminado.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeCalendario', 'No tienes permiso para eliminar este evento, o ya fue eliminado.', 'error'); return; }
     await cargarEventosCalendario();
   }
 
   async function reprogramarEventoCalendario(eventoId, fechaActualISO) {
+    ocultarMensaje('mensajeCalendario');
     const actual = new Date(fechaActualISO);
     const valorLocal = new Date(actual.getTime() - actual.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-    const nuevaFechaHora = prompt('Nueva fecha y hora de inicio (AAAA-MM-DDTHH:MM) — el evento conserva su misma duración:', valorLocal);
+    const nuevaFechaHora = await pedirTexto('Nueva fecha y hora de inicio — el evento conserva su misma duración:', 'Fecha y hora', '', valorLocal, 'datetime-local');
     if (!nuevaFechaHora) return;
     const nuevaFechaInicio = new Date(nuevaFechaHora);
-    if (isNaN(nuevaFechaInicio.getTime())) { alert('Fecha/hora inválida.'); return; }
+    if (isNaN(nuevaFechaInicio.getTime())) { mostrarMensaje('mensajeCalendario', 'Fecha/hora inválida.', 'error'); return; }
 
     const eventoOriginal = todosLosEventosCalendario.find(e => e.id === eventoId);
     let nuevaFechaFin = nuevaFechaInicio;
@@ -19046,21 +19151,23 @@
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ evento_id: eventoId, fecha_inicio: nuevaFechaInicio.toISOString(), fecha_fin: nuevaFechaFin.toISOString() })
     });
-    if (!resp.ok) { alert('No se pudo reprogramar.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeCalendario', 'No se pudo reprogramar.', 'error'); return; }
     diaSeleccionadoCalendario = nuevaFechaInicio.toISOString().slice(0, 10);
     await cargarEventosCalendario();
   }
 
   async function registrarRetiroPropietaria(empleadoId, nombre, salarioBasico) {
-    const montoTexto = prompt(`¿Cuánto retira ${nombre} en este período como retiro de utilidades? (Por ahora, salario mínimo — más adelante puedes cambiarlo aquí)`, String(salarioBasico));
+    ocultarMensaje('mensajeRetirosPropietario');
+    const montoTexto = await pedirTexto(`¿Cuánto retira ${nombre} en este período como retiro de utilidades? (Por ahora, salario mínimo — más adelante puedes cambiarlo aquí)`, 'Monto del retiro', '', String(salarioBasico), 'number');
     if (montoTexto === null) return;
     const monto = Number(montoTexto);
-    if (isNaN(monto) || monto <= 0) { alert('Escribe un monto válido.'); return; }
+    if (isNaN(monto) || monto <= 0) { mostrarMensaje('mensajeRetirosPropietario', 'Escribe un monto válido.', 'error'); return; }
 
-    const claseTexto = prompt('Clase de riesgo ARL (I, II, III, IV o V):', 'I');
+    const claseTexto = await pedirTexto('Clase de riesgo ARL para esta socia:', 'Clase de riesgo (I, II, III, IV o V)', 'Ej: I', 'I');
     const claseRiesgo = (claseTexto && ['I','II','III','IV','V'].includes(claseTexto.trim().toUpperCase())) ? claseTexto.trim().toUpperCase() : 'I';
 
-    if (!confirm(`¿Confirmas liquidar el retiro de utilidades de ${nombre} por ${formatearMoneda(monto)} en este período? Se calculará su cotización como independiente (salud, pensión y ARL clase ${claseRiesgo}) sobre el 40% de ese monto, más el adelanto de utilidades equivalente a prestaciones (prima, cesantías, intereses, vacaciones y dotación).`)) return;
+    const confirmado = await pedirConfirmacionModal(`¿Confirmas liquidar el retiro de utilidades de ${nombre} por ${formatearMoneda(monto)} en este período?\n\nSe calculará su cotización como independiente (salud, pensión y ARL clase ${claseRiesgo}) sobre el 40% de ese monto, más el adelanto de utilidades equivalente a prestaciones (prima, cesantías, intereses, vacaciones y dotación).`, 'Sí, liquidar');
+    if (!confirmado) return;
 
     const resp = await fetch(WORKER_URL + '/api/pos/nomina/retiro-propietario', {
       method: 'POST',
@@ -19075,9 +19182,9 @@
     });
 
     const datos = await resp.json();
-    if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudo liquidar el retiro')); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeRetirosPropietario', 'Error: ' + (datos.error || 'No se pudo liquidar el retiro'), 'error'); return; }
 
-    alert(`✅ Retiro de utilidades liquidado para ${nombre}.`);
+    mostrarMensaje('mensajeRetirosPropietario', `✅ Retiro de utilidades liquidado para ${nombre}.`, 'exito');
     await cargarRetirosPropietario(periodoNominaSeleccionadoId);
   }
 
@@ -19099,7 +19206,8 @@
 
     const socias = (empleadosActivosCache || []).filter(e => e.porcentaje_participacion_socia);
     const previa = socias.map(s => `${escaparHtml(s.nombre_completo)}: ${formatearMoneda(Math.round(monto * s.porcentaje_participacion_socia / 100))} (${s.porcentaje_participacion_socia}%)`).join('\n');
-    if (!confirm(`¿Repartir ${formatearMoneda(monto)} de utilidad en este período así?\n\n${previa}\n\nSe liquidará la cotización de independiente de cada socia por separado. No se puede deshacer.`)) return;
+    const confirmado = await pedirConfirmacionModal(`¿Repartir ${formatearMoneda(monto)} de utilidad en este período así?\n\n${previa}\n\nSe liquidará la cotización de independiente de cada socia por separado. No se puede deshacer.`, 'Sí, repartir');
+    if (!confirmado) return;
 
     const resp = await fetch(WORKER_URL + '/api/pos/nomina/repartir-utilidades-socias', {
       method: 'POST',
@@ -19291,16 +19399,17 @@
   }
 
   async function enviarDesprendiblePorWhatsapp(liquidacionId) {
+    ocultarMensaje('mensajeLiquidacionesNomina');
     const resp = await fetch(`${WORKER_URL}/api/pos/nomina/desprendible?liquidacion_id=${liquidacionId}`, {
       headers: { Authorization: 'Bearer ' + sesionActual.token }
     });
-    if (!resp.ok) { alert('No se pudo cargar la información del desprendible.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeLiquidacionesNomina', 'No se pudo cargar la información del desprendible.', 'error'); return; }
 
     const { liquidacion: l, empleador } = await resp.json();
     const emp = l.empleados || {};
     const periodo = l.periodos_nomina || {};
 
-    if (!emp.telefono) { alert('Este empleado no tiene teléfono registrado.'); return; }
+    if (!emp.telefono) { mostrarMensaje('mensajeLiquidacionesNomina', 'Este empleado no tiene teléfono registrado.', 'error'); return; }
 
     try {
       const blob = await generarImagenDesprendible(l, empleador, emp, periodo);
@@ -19308,7 +19417,7 @@
       const mensaje = `Hola ${emp.nombre_completo || ''} 👋 Aquí está tu desprendible de pago de ${empleador.razon_social || 'Lana Rosa Crochet'} — período ${fechaInicio}. ¡Gracias por tu trabajo! 🐑💕`;
       await compartirImagenPorWhatsapp(blob, emp.telefono, `desprendible_${(emp.nombre_completo || 'empleado').replace(/\s+/g,'_')}.png`, mensaje);
     } catch (err) {
-      alert('No se pudo generar la imagen del desprendible: ' + err.message);
+      mostrarMensaje('mensajeLiquidacionesNomina', 'No se pudo generar la imagen del desprendible: ' + err.message, 'error');
     }
   }
 
@@ -19360,9 +19469,10 @@
     const aplicaRetencion = document.getElementById(`edit-emp-retencion-${empleadoId}`).checked;
     const deduccionesUvt = Number(document.getElementById(`edit-emp-deduccionesuvt-${empleadoId}`).value) || 0;
 
-    if (!nombre) { alert('El nombre no puede quedar vacío.'); return; }
-    if (!salario || salario <= 0) { alert('Escribe un salario válido.'); return; }
-    if (!fechaIngreso) { alert('Escribe la fecha de ingreso.'); return; }
+    ocultarMensaje('mensajeEmpleados');
+    if (!nombre) { mostrarMensaje('mensajeEmpleados', 'El nombre no puede quedar vacío.', 'error'); return; }
+    if (!salario || salario <= 0) { mostrarMensaje('mensajeEmpleados', 'Escribe un salario válido.', 'error'); return; }
+    if (!fechaIngreso) { mostrarMensaje('mensajeEmpleados', 'Escribe la fecha de ingreso.', 'error'); return; }
 
     const resp = await fetch(WORKER_URL + '/api/pos/nomina/empleados/actualizar', {
       method: 'POST',
@@ -19393,7 +19503,7 @@
 
     if (!resp.ok) {
       const datos = await resp.json().catch(() => ({}));
-      alert('No se pudo guardar el cambio: ' + (datos.error || 'Error desconocido'));
+      mostrarMensaje('mensajeEmpleados', 'No se pudo guardar el cambio: ' + (datos.error || 'Error desconocido'), 'error');
       return;
     }
 
@@ -19402,11 +19512,13 @@
   }
 
   async function desactivarEmpleado(empleadoId) {
+    ocultarMensaje('mensajeEmpleados');
     const nombreEmp = (empleadosActivosCache.find(e => e.id === empleadoId) || {}).nombre_completo || 'este empleado';
 
-    if (!confirm(`¿Confirmas que ${nombreEmp} ya no trabaja aquí? Se le calculará automáticamente la liquidación definitiva del contrato (cesantías del año en curso, intereses, prima del semestre y vacaciones no disfrutadas), según la normatividad colombiana. No se le incluirá en las próximas nóminas.`)) return;
+    const confirmado = await pedirConfirmacionModal(`¿Confirmas que ${nombreEmp} ya no trabaja aquí? Se le calculará automáticamente la liquidación definitiva del contrato (cesantías del año en curso, intereses, prima del semestre y vacaciones no disfrutadas), según la normatividad colombiana. No se le incluirá en las próximas nóminas.`, 'Sí, retirar');
+    if (!confirmado) return;
 
-    const fechaRetiro = prompt('Fecha de retiro (el último día trabajado):', new Date().toISOString().slice(0, 10));
+    const fechaRetiro = await pedirTexto('Fecha de retiro (el último día trabajado):', 'Fecha de retiro', '', new Date().toISOString().slice(0, 10), 'date');
     if (fechaRetiro === null) return;
 
     const resp = await fetch(WORKER_URL + '/api/pos/nomina/liquidar-retiro', {
@@ -19416,9 +19528,9 @@
     });
 
     const datos = await resp.json();
-    if (!resp.ok) { alert('No se pudo generar la liquidación de retiro: ' + (datos.error || 'Error desconocido')); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeEmpleados', 'No se pudo generar la liquidación de retiro: ' + (datos.error || 'Error desconocido'), 'error'); return; }
 
-    alert(`✅ ${nombreEmp} fue retirado y su liquidación definitiva quedó calculada. A continuación se abre el detalle para revisar, descargar en PDF o exportar a Excel.`);
+    mostrarMensaje('mensajeEmpleados', `✅ ${nombreEmp} fue retirado y su liquidación definitiva quedó calculada. A continuación se abre el detalle para revisar, descargar en PDF o exportar a Excel.`, 'exito');
     await verLiquidacionRetiro(datos.liquidacion_retiro_id);
     await cargarEmpleados();
   }
@@ -19431,7 +19543,7 @@
     const resp = await fetch(`${WORKER_URL}/api/pos/nomina/liquidacion-retiro?liquidacion_retiro_id=${liquidacionRetiroId}`, {
       headers: { Authorization: 'Bearer ' + sesionActual.token }
     });
-    if (!resp.ok) { if (ventanaRetiro) ventanaRetiro.close(); alert('No se pudo cargar la liquidación de retiro.'); return; }
+    if (!resp.ok) { if (ventanaRetiro) ventanaRetiro.document.body.innerHTML = '<p style="font-family:Arial,sans-serif;padding:20px;color:#c0392b;">No se pudo cargar la liquidación de retiro.</p>'; return; }
 
     const { liquidacion: l, empleador } = await resp.json();
     liquidacionRetiroCache = { l, empleador };
@@ -19586,7 +19698,9 @@
   }
 
   async function confirmarEliminarPeriodo(periodoId, etiquetaPeriodo) {
-    if (!confirm(`¿Eliminar el período ${etiquetaPeriodo}? Esto borra todas sus liquidaciones (nómina y retiros de la propietaria), revierte los gastos que se hayan generado en las cajas de los departamentos, y restaura el saldo de cualquier préstamo que se haya descontado. Esta acción no se puede deshacer.`)) return;
+    ocultarMensaje('mensajePeriodosNomina');
+    const confirmado = await pedirConfirmacionModal(`¿Eliminar el período ${etiquetaPeriodo}? Esto borra todas sus liquidaciones (nómina y retiros de la propietaria), revierte los gastos que se hayan generado en las cajas de los departamentos, y restaura el saldo de cualquier préstamo que se haya descontado. Esta acción no se puede deshacer.`, 'Sí, eliminar');
+    if (!confirmado) return;
 
     const resp = await fetch(WORKER_URL + '/api/pos/nomina/periodos/eliminar', {
       method: 'POST',
@@ -19595,9 +19709,9 @@
     });
 
     const datos = await resp.json();
-    if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudo eliminar el período')); return; }
+    if (!resp.ok) { mostrarMensaje('mensajePeriodosNomina', 'Error: ' + (datos.error || 'No se pudo eliminar el período'), 'error'); return; }
 
-    alert('✅ Período eliminado correctamente.');
+    mostrarMensaje('mensajePeriodosNomina', '✅ Período eliminado correctamente.', 'exito');
     if (periodoNominaSeleccionadoId === periodoId) {
       periodoNominaSeleccionadoId = null;
       document.getElementById('listaLiquidacionesNomina').innerHTML = '<div class="cargando">Selecciona un período arriba para ver sus liquidaciones.</div>';
@@ -19607,7 +19721,9 @@
   }
 
   async function confirmarLiquidarPeriodo(periodoId) {
-    if (!confirm('¿Confirmas que quieres liquidar este período? Se calculará la nómina completa de todos los empleados activos. (Si necesitas corregir algo después, puedes eliminar el período y volver a crearlo).')) return;
+    ocultarMensaje('mensajePeriodosNomina');
+    const confirmado = await pedirConfirmacionModal('¿Confirmas que quieres liquidar este período? Se calculará la nómina completa de todos los empleados activos. (Si necesitas corregir algo después, puedes eliminar el período y volver a crearlo).', 'Sí, liquidar');
+    if (!confirmado) return;
 
     const resp = await fetch(WORKER_URL + '/api/pos/nomina/liquidar', {
       method: 'POST',
@@ -19616,9 +19732,9 @@
     });
 
     const datos = await resp.json();
-    if (!resp.ok) { alert('Error: ' + (datos.error || 'No se pudo liquidar')); return; }
+    if (!resp.ok) { mostrarMensaje('mensajePeriodosNomina', 'Error: ' + (datos.error || 'No se pudo liquidar'), 'error'); return; }
 
-    alert('✅ Nómina liquidada correctamente.');
+    mostrarMensaje('mensajePeriodosNomina', '✅ Nómina liquidada correctamente.', 'exito');
     await cargarPeriodosNomina();
     await verLiquidacionesPeriodo(periodoId);
   }
