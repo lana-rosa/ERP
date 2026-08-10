@@ -1724,6 +1724,7 @@
   </div>
 
   <div id="subhistorialTienda">
+    <div id="dashboardHistorialTienda" style="margin-bottom:16px;"></div>
     <div class="subtitulo" style="margin-bottom:12px;">Si buscas por cliente o N° de recibo, la búsqueda revisa todo el historial del departamento, no solo lo más reciente.</div>
     <div class="filtro-tipo" id="filtroDeptoHistorial" style="margin-bottom:16px;"></div>
     <div class="barra-busqueda" style="margin-bottom:12px;">
@@ -1751,6 +1752,7 @@
   </div>
 
   <div id="subhistorialRedes" class="oculto">
+    <div id="dashboardHistorialRedes" style="margin-bottom:16px;"></div>
     <div style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;font-size:12px;margin-bottom:14px;">
       ℹ️ Esto solo trae las ventas <strong>ya entregadas</strong> del CRM para que queden reflejadas en tu contabilidad — no gestiona envíos aquí (eso lo sigues haciendo en el CRM, como ya lo vienes haciendo).
       <button class="btn-secundario" style="width:auto;margin-top:8px;display:block;" onclick="sincronizarVentasContablesCrm(this)">🔄 Traer ventas entregadas del CRM</button>
@@ -1776,6 +1778,7 @@
   </div>
 
   <div id="subhistorialClases" class="oculto">
+    <div id="dashboardHistorialClases" style="margin-bottom:16px;"></div>
     <div class="barra-busqueda" style="margin-bottom:12px;">
       <input type="text" id="inputBuscarHistorialClases" placeholder="🔍 Buscar por nombre, cédula o teléfono del cliente..." oninput="debounceBusquedaHistorialClases()">
     </div>
@@ -7332,6 +7335,102 @@
     `;
   }
 
+  async function cargarDashboardHistorialVentas() {
+    const resp = await fetch(WORKER_URL + '/api/pos/reportes/dashboard-historial-ventas', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) return;
+    const d = await resp.json();
+
+    const flechita = (pct) => pct === null ? '' : (pct >= 0 ? `<span style="color:var(--verde-exito);">▲ ${pct}%</span>` : `<span style="color:var(--rojo-error);">▼ ${Math.abs(pct)}%</span>`);
+    const variacion = (actual, anterior) => anterior === 0 ? null : Math.round(((actual - anterior) / anterior) * 100);
+    const ticketProm = (total, num) => num > 0 ? formatearMoneda(Math.round(total / num)) : formatearMoneda(0);
+
+    // Tienda
+    const varTotalTienda = variacion(d.tienda.mes_actual.total, d.tienda.mes_anterior.total);
+    const varNumTienda = variacion(d.tienda.mes_actual.num, d.tienda.mes_anterior.num);
+    document.getElementById('dashboardHistorialTienda').innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));gap:12px;">
+        <div class="kpi-card-nuevo" style="--barra:var(--rosa-principal);">
+          <div class="kpi-label">Total vendido este mes</div>
+          <div class="kpi-valor" style="font-size:19px;">${formatearMoneda(d.tienda.mes_actual.total)}</div>
+          <div class="kpi-delta">${flechita(varTotalTienda)} vs. mes anterior</div>
+        </div>
+        <div class="kpi-card-nuevo" style="--barra:var(--azul-acero);">
+          <div class="kpi-label">N.° de ventas</div>
+          <div class="kpi-valor" style="font-size:19px;">${d.tienda.mes_actual.num}</div>
+          <div class="kpi-delta">${flechita(varNumTienda)} vs. mes anterior</div>
+        </div>
+        <div class="kpi-card-nuevo" style="--barra:var(--verde-exito);">
+          <div class="kpi-label">Ticket promedio</div>
+          <div class="kpi-valor" style="font-size:19px;">${ticketProm(d.tienda.mes_actual.total, d.tienda.mes_actual.num)}</div>
+        </div>
+        <div class="kpi-card-nuevo" style="--barra:#e0922f;">
+          <div class="kpi-label">Producto más vendido</div>
+          <div class="kpi-valor" style="font-size:15px;">${d.tienda.top_producto ? escaparHtml(d.tienda.top_producto.nombre) : '—'}</div>
+          <div class="kpi-delta">${d.tienda.top_producto ? d.tienda.top_producto.cantidad + ' unidades' : ''}</div>
+        </div>
+      </div>
+    `;
+
+    // Redes
+    const varTotalRedes = variacion(d.redes.mes_actual.total, d.redes.mes_anterior.total);
+    const varNumRedes = variacion(d.redes.mes_actual.num, d.redes.mes_anterior.num);
+    const etiquetasCanalDash = { whatsapp: '💬 WhatsApp', instagram: '📷 Instagram', facebook: '👍 Facebook', tienda_virtual: '🛍️ Tienda virtual' };
+    document.getElementById('dashboardHistorialRedes').innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));gap:12px;">
+        <div class="kpi-card-nuevo" style="--barra:var(--rosa-principal);">
+          <div class="kpi-label">Total vendido este mes</div>
+          <div class="kpi-valor" style="font-size:19px;">${formatearMoneda(d.redes.mes_actual.total)}</div>
+          <div class="kpi-delta">${flechita(varTotalRedes)} vs. mes anterior</div>
+        </div>
+        <div class="kpi-card-nuevo" style="--barra:var(--azul-acero);">
+          <div class="kpi-label">N.° de ventas</div>
+          <div class="kpi-valor" style="font-size:19px;">${d.redes.mes_actual.num}</div>
+          <div class="kpi-delta">${flechita(varNumRedes)} vs. mes anterior</div>
+        </div>
+        <div class="kpi-card-nuevo" style="--barra:var(--verde-exito);">
+          <div class="kpi-label">Ticket promedio</div>
+          <div class="kpi-valor" style="font-size:19px;">${ticketProm(d.redes.mes_actual.total, d.redes.mes_actual.num)}</div>
+        </div>
+        <div class="kpi-card-nuevo" style="--barra:#e0922f;">
+          <div class="kpi-label">Por canal este mes</div>
+          <div style="font-size:12px;line-height:1.7;margin-top:4px;">
+            ${d.redes.por_canal.length === 0 ? '<span style="opacity:0.5;">Sin ventas todavía</span>' :
+              d.redes.por_canal.sort((a,b) => b.total - a.total).map(c => `<div>${etiquetasCanalDash[c.canal] || c.canal}: <strong>${formatearMoneda(c.total)}</strong></div>`).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Clases
+    const varTotalClases = variacion(d.clases.mes_actual.total, d.clases.mes_anterior.total);
+    const varNumClases = variacion(d.clases.mes_actual.num, d.clases.mes_anterior.num);
+    document.getElementById('dashboardHistorialClases').innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));gap:12px;">
+        <div class="kpi-card-nuevo" style="--barra:var(--rosa-principal);">
+          <div class="kpi-label">Total vendido este mes</div>
+          <div class="kpi-valor" style="font-size:19px;">${formatearMoneda(d.clases.mes_actual.total)}</div>
+          <div class="kpi-delta">${flechita(varTotalClases)} vs. mes anterior</div>
+        </div>
+        <div class="kpi-card-nuevo" style="--barra:var(--azul-acero);">
+          <div class="kpi-label">N.° de ventas</div>
+          <div class="kpi-valor" style="font-size:19px;">${d.clases.mes_actual.num}</div>
+          <div class="kpi-delta">${flechita(varNumClases)} vs. mes anterior</div>
+        </div>
+        <div class="kpi-card-nuevo" style="--barra:var(--verde-exito);">
+          <div class="kpi-label">Ticket promedio</div>
+          <div class="kpi-valor" style="font-size:19px;">${ticketProm(d.clases.mes_actual.total, d.clases.mes_actual.num)}</div>
+        </div>
+        <div class="kpi-card-nuevo" style="--barra:#e0922f;">
+          <div class="kpi-label">Por área este mes</div>
+          <div style="font-size:12px;line-height:1.7;margin-top:4px;">
+            ${d.clases.por_area.length === 0 ? '<span style="opacity:0.5;">Sin ventas todavía</span>' :
+              d.clases.por_area.sort((a,b) => b.total - a.total).map(a => `<div>${escaparHtml(etiquetasSubareaAcademia[a.area_formacion] || a.area_formacion)}: <strong>${formatearMoneda(a.total)}</strong></div>`).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   async function mostrarPantallaHistorial(codigoDeptoForzado) {
     mostrarPantalla('pantallaHistorial');
     limiteHistorialVentas = 100;
@@ -7340,6 +7439,7 @@
     document.getElementById('subhistorialTienda').classList.remove('oculto');
     document.getElementById('subhistorialRedes').classList.add('oculto');
     document.getElementById('subhistorialClases').classList.add('oculto');
+    cargarDashboardHistorialVentas();
 
     const { data: centros } = await supabaseClient
       .from('centros_costo')
