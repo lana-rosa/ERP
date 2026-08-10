@@ -6733,25 +6733,27 @@
         <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
           <input type="text" value="${escaparHtml(c.nombre)}" id="cat-nombre-${c.id}" style="font-size:12px;padding:6px 8px;flex:1;">
           <button class="btn-mini guardar" style="max-width:60px;padding:6px;" onclick="renombrarCategoria('${c.id}')">Guardar</button>
-          <button class="btn-mini desactivar" style="max-width:36px;padding:6px;" onclick="eliminarCategoria('${c.id}')">✕</button>
+          <button class="btn-mini desactivar" style="max-width:36px;padding:6px;" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => eliminarCategoria('${c.id}'))">✕</button>
         </div>
       `).join('')}
       <div style="display:flex;gap:6px;margin-top:8px;">
         <input type="text" id="nuevaCategoriaNombre" placeholder="Nueva categoría..." style="font-size:12px;padding:6px 8px;flex:1;">
         <button class="btn-mini guardar" onclick="crearCategoria()">+ Agregar</button>
       </div>
+      <div class="mensaje" id="mensajeCategorias"></div>
     `;
   }
 
   async function crearCategoria() {
+    ocultarMensaje('mensajeCategorias');
     const tipo = document.getElementById('invTipo').value;
     const nombre = document.getElementById('nuevaCategoriaNombre').value.trim();
-    if (!nombre) { alert('Escribe el nombre de la categoría.'); return; }
+    if (!nombre) { mostrarMensaje('mensajeCategorias', 'Escribe el nombre de la categoría.', 'error'); return; }
 
     const { error } = await supabaseClient.from('categorias_inventario').insert({
       tipo, nombre, orden: (categoriasInventarioCache[tipo] || []).length + 1
     });
-    if (error) { alert('No se pudo crear la categoría: ' + error.message); return; }
+    if (error) { mostrarMensaje('mensajeCategorias', 'No se pudo crear la categoría: ' + error.message, 'error'); return; }
 
     await cargarCategoriasInventario();
     cargarCategoriasParaFormulario();
@@ -6759,11 +6761,12 @@
   }
 
   async function renombrarCategoria(categoriaId) {
+    ocultarMensaje('mensajeCategorias');
     const nuevoNombre = document.getElementById(`cat-nombre-${categoriaId}`).value.trim();
-    if (!nuevoNombre) { alert('El nombre no puede quedar vacío.'); return; }
+    if (!nuevoNombre) { mostrarMensaje('mensajeCategorias', 'El nombre no puede quedar vacío.', 'error'); return; }
 
     const { error } = await supabaseClient.from('categorias_inventario').update({ nombre: nuevoNombre }).eq('id', categoriaId);
-    if (error) { alert('No se pudo renombrar: ' + error.message); return; }
+    if (error) { mostrarMensaje('mensajeCategorias', 'No se pudo renombrar: ' + error.message, 'error'); return; }
 
     await cargarCategoriasInventario();
     cargarCategoriasParaFormulario();
@@ -6772,9 +6775,8 @@
   }
 
   async function eliminarCategoria(categoriaId) {
-    if (!confirm('¿Eliminar esta categoría? Los productos que la tengan asignada quedarán sin categoría.')) return;
     const { error } = await supabaseClient.from('categorias_inventario').update({ activo: false }).eq('id', categoriaId);
-    if (error) { alert('No se pudo eliminar: ' + error.message); return; }
+    if (error) { mostrarMensaje('mensajeCategorias', 'No se pudo eliminar: ' + error.message, 'error'); return; }
 
     await cargarCategoriasInventario();
     cargarCategoriasParaFormulario();
@@ -10682,15 +10684,15 @@
   }
 
   async function confirmarActivarModoProduccion() {
-    const confirmacion = prompt('Esto es permanente y no se puede deshacer. Escribe "ACTIVAR PRODUCCION" para confirmar:');
+    const confirmacion = await pedirTexto('Esto es permanente y no se puede deshacer.', 'Escribe exactamente: ACTIVAR PRODUCCION');
     if (confirmacion !== 'ACTIVAR PRODUCCION') {
-      if (confirmacion !== null) alert('No coincide con el texto exacto — no se activó nada.');
+      if (confirmacion !== null) mostrarMensaje('mensajeReinicioProduccion', 'No coincide con el texto exacto — no se activó nada.', 'error');
       return;
     }
     const resp = await fetch(WORKER_URL + '/api/pos/admin/modo-produccion/activar', {
       method: 'POST', headers: { Authorization: 'Bearer ' + sesionActual.token },
     });
-    if (!resp.ok) { alert('No se pudo activar.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeReinicioProduccion', 'No se pudo activar.', 'error'); return; }
     await cargarPanelModoProduccion();
   }
 
@@ -10728,7 +10730,8 @@
     const texto = document.getElementById('confirmacionReinicioTexto').value.trim();
     if (texto !== 'BORRAR VENTAS DE PRUEBA') return;
 
-    if (!confirm('Esta es tu última oportunidad de cancelar. Se van a borrar TODAS las ventas, pedidos y turnos de prueba, sin poder deshacerlo. ¿Confirmas?')) return;
+    const confirmado = await pedirConfirmacionModal('Esta es tu última oportunidad de cancelar. Se van a borrar TODAS las ventas, pedidos y turnos de prueba, sin poder deshacerlo.', 'Sí, borrar todo');
+    if (!confirmado) return;
 
     const btn = document.getElementById('btnReiniciarDatosPrueba');
     btn.disabled = true;
@@ -16029,14 +16032,15 @@
   }
 
   async function imprimirCertificadoLaboral(empleadoId) {
+    ocultarMensaje('mensajeEmpleados');
     const e = empleadosActivosCache.find(x => x.id === empleadoId);
-    if (!e) { alert('No se encontró el empleado.'); return; }
+    if (!e) { mostrarMensaje('mensajeEmpleados', 'No se encontró el empleado.', 'error'); return; }
 
     const respEmpresa = await fetch(WORKER_URL + '/api/pos/config-empresa', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
     const empresa = respEmpresa.ok ? await respEmpresa.json() : {};
 
     if (!empresa.nit || !empresa.razon_social) {
-      alert('Antes de generar el certificado, completa los datos de tu empresa (razón social y NIT) en Configuración → Apariencia → "Datos de la empresa".');
+      mostrarMensaje('mensajeEmpleados', 'Antes de generar el certificado, completa los datos de tu empresa (razón social y NIT) en Configuración → Datos de la empresa.', 'error');
       return;
     }
 
@@ -17451,9 +17455,10 @@
     const agendar = document.getElementById('chkAgendarClase').checked;
     const fechaInicio = document.getElementById('claseFechaInicio').value;
 
-    if (!descripcion) { alert('Escribe una descripción para la clase/curso.'); return; }
-    if (!monto || monto <= 0) { alert('Escribe un monto válido.'); return; }
-    if (agendar && !fechaInicio) { alert('Escribe la fecha y hora de la clase, o desmarca "Agendar".'); return; }
+    ocultarMensaje('mensajeVentaAcademia');
+    if (!descripcion) { mostrarMensaje('mensajeVentaAcademia', 'Escribe una descripción para la clase/curso.', 'error'); return; }
+    if (!monto || monto <= 0) { mostrarMensaje('mensajeVentaAcademia', 'Escribe un monto válido.', 'error'); return; }
+    if (agendar && !fechaInicio) { mostrarMensaje('mensajeVentaAcademia', 'Escribe la fecha y hora de la clase, o desmarca "Agendar".', 'error'); return; }
 
     carritoAcademia.push({ tipo: 'clase', subarea, descripcion, monto, duracionHoras, agendar, fechaInicio });
 
@@ -17471,9 +17476,10 @@
     const cantidad = Number(document.getElementById('academiaKitCantidad').value);
     const kit = kitsDisponiblesCache.find(k => k.id === kitId);
 
-    if (!kit) { alert('Selecciona un kit válido.'); return; }
-    if (!cantidad || cantidad <= 0) { alert('Escribe una cantidad válida.'); return; }
-    if (cantidad > kit.stock_actual) { alert(`Solo hay ${kit.stock_actual} de este kit en stock.`); return; }
+    ocultarMensaje('mensajeVentaAcademia');
+    if (!kit) { mostrarMensaje('mensajeVentaAcademia', 'Selecciona un kit válido.', 'error'); return; }
+    if (!cantidad || cantidad <= 0) { mostrarMensaje('mensajeVentaAcademia', 'Escribe una cantidad válida.', 'error'); return; }
+    if (cantidad > kit.stock_actual) { mostrarMensaje('mensajeVentaAcademia', `Solo hay ${kit.stock_actual} de este kit en stock.`, 'error'); return; }
 
     const yaEnCarrito = carritoAcademia.find(i => i.tipo === 'kit' && i.kitId === kitId);
     if (yaEnCarrito) { yaEnCarrito.cantidad += cantidad; }
