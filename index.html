@@ -3795,6 +3795,13 @@
       <button class="btn-secundario" onclick="imprimirAvisoPrivacidadFisico()">🖨️ Ver / imprimir el afiche</button>
     </div>
   </div>
+
+  <div class="panel" style="max-width:700px;margin-top:20px;">
+    <h2>Política de cambios y devoluciones</h2>
+    <div class="subtitulo">Este texto aparece al final de cada recibo de venta (impreso, PDF, o enviado por WhatsApp). La ley colombiana no obliga a aceptar cambios por gusto o talla — tú decides el plazo y las condiciones.</div>
+    <textarea id="textoPoliticaCambios" rows="4" style="width:100%;font-family:inherit;font-size:13px;padding:12px;border-radius:8px;border:1px solid #e5dde2;line-height:1.5;"></textarea>
+    <button class="btn-principal" onclick="guardarPoliticasLegales()" style="margin-top:10px;">💾 Guardar cambios</button>
+  </div>
 </div>
 
 <div id="pantallaCopiaSeguridad" class="oculto contenido">
@@ -5102,6 +5109,7 @@
   // ============================================================================
   let rolesAdicionalesActual = [];
   let logoEmpresaCache = null;
+  let politicaCambiosCache = null;
 
   async function cargarLogoEmpresa() {
     try {
@@ -5109,6 +5117,7 @@
       if (resp.ok) {
         const datos = await resp.json();
         logoEmpresaCache = datos.logo_url || null;
+        politicaCambiosCache = datos.politica_cambios || null;
         if (datos.imagen_rosina_principal) aplicarImagenRosinaPrincipal(datos.imagen_rosina_principal);
         if (datos.imagen_rosina_dashboard) aplicarImagenRosinaDashboard(datos.imagen_rosina_dashboard);
       }
@@ -6219,6 +6228,12 @@
       <div style="margin-top:16px;font-size:10.5px;color:#888;text-align:center;">
         Recibo de venta — Lana Rosa Crochet no está obligada a expedir factura electrónica (persona natural, ingresos bajo el tope de la DIAN). Este documento sirve como comprobante de pago.
       </div>
+
+      ${politicaCambiosCache ? `
+        <div style="margin-top:8px;padding-top:8px;border-top:1px dashed #ccc;font-size:10.5px;color:#888;text-align:center;">
+          🔄 ${escaparHtml(politicaCambiosCache)}
+        </div>
+      ` : ''}
     `;
   }
 
@@ -16740,6 +16755,7 @@
       const d = await resp.json();
       document.getElementById('textoPoliticaTratamientoDatos').value = d.politica_tratamiento_datos || '';
       document.getElementById('textoAvisoPrivacidadFisico').value = d.aviso_privacidad_fisico || '';
+      document.getElementById('textoPoliticaCambios').value = d.politica_cambios || '';
     }
   }
 
@@ -16747,21 +16763,23 @@
     ocultarMensaje('mensajePoliticasLegales');
     const politica = document.getElementById('textoPoliticaTratamientoDatos').value.trim();
     const aviso = document.getElementById('textoAvisoPrivacidadFisico').value.trim();
+    const cambios = document.getElementById('textoPoliticaCambios').value.trim();
 
-    if (!politica || !aviso) { mostrarMensaje('mensajePoliticasLegales', 'Ninguno de los 2 textos puede quedar vacío.', 'error'); return; }
+    if (!politica || !aviso) { mostrarMensaje('mensajePoliticasLegales', 'Ninguno de los 2 textos de datos personales puede quedar vacío.', 'error'); return; }
 
     const resp = await fetch(WORKER_URL + '/api/pos/config-empresa/politicas-legales', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ politica_tratamiento_datos: politica, aviso_privacidad_fisico: aviso })
+      body: JSON.stringify({ politica_tratamiento_datos: politica, aviso_privacidad_fisico: aviso, politica_cambios: cambios })
     });
     const datos = await resp.json();
     if (!resp.ok) { mostrarMensaje('mensajePoliticasLegales', datos.error || 'No se pudo guardar.', 'error'); return; }
 
     // Se refresca la caché local para que el modal de la casilla de
-    // autorización (Directorio → Clientes) use el texto nuevo de inmediato,
-    // sin tener que recargar toda la página.
+    // autorización (Directorio → Clientes) y los recibos nuevos usen el
+    // texto actualizado de inmediato, sin tener que recargar toda la página.
     politicaTratamientoDatosCache = politica;
+    politicaCambiosCache = cambios || null;
     mostrarMensaje('mensajePoliticasLegales', '✅ Guardado. Los cambios ya se ven reflejados en todo el sistema.', 'exito');
   }
 
