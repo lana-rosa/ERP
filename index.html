@@ -1549,6 +1549,7 @@
         <div class="subtitulo">Si sobró material, regístralo aquí.</div>
         <label for="devolucionBuscar">Buscar insumo a devolver</label>
         <input type="text" id="devolucionBuscar" placeholder="Ej: lana rosa..." oninput="renderizarCatalogoDevolucion()">
+        <div class="mensaje" id="mensajeDevolucionTaller"></div>
         <div id="listaCatalogoDevolucion" style="margin-top:10px;"></div>
       </div>
     </div>
@@ -1823,6 +1824,7 @@
     <button class="btn-mini editar" onclick="imprimirReportesTurno()" style="margin-bottom:1px;">🖨️ Imprimir / PDF</button>
   </div>
   <div class="panel" style="max-height:none;">
+    <div class="mensaje" id="mensajeReportesTurno"></div>
     <div id="listaReportesTurno"><div class="cargando">Cargando reportes...</div></div>
   </div>
 </div>
@@ -2749,6 +2751,7 @@
     </div>
     <div class="panel">
       <h2>Ciudades configuradas</h2>
+      <div class="mensaje" id="mensajeTarifasEnvio"></div>
       <div id="listaTarifasEnvio"><div class="cargando">Cargando...</div></div>
     </div>
   </div>
@@ -4330,11 +4333,11 @@
   async function instalarAppPWA() {
     const esIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
     if (esIOS) {
-      alert('En iPhone/iPad: toca el botón "Compartir" (el cuadrito con la flecha hacia arriba) en Safari, y luego "Agregar a pantalla de inicio".');
+      await pedirConfirmacionModal('En iPhone/iPad: toca el botón "Compartir" (el cuadrito con la flecha hacia arriba) en Safari, y luego "Agregar a pantalla de inicio".', 'Entendido');
       return;
     }
     if (!eventoInstalacionPWA) {
-      alert('Tu navegador ya debería tener la opción de "Instalar app" en el menú (los 3 puntos, arriba a la derecha).');
+      await pedirConfirmacionModal('Tu navegador ya debería tener la opción de "Instalar app" en el menú (los 3 puntos, arriba a la derecha).', 'Entendido');
       return;
     }
     eventoInstalacionPWA.prompt();
@@ -7955,8 +7958,9 @@
     const cantidad = Number(inputCantidad.value);
     const nota = inputNota ? inputNota.value.trim() || null : null;
 
+    ocultarMensaje('mensajeDevolucionTaller');
     if (!cantidad || cantidad <= 0) {
-      alert('Escribe una cantidad válida mayor a cero.');
+      mostrarMensaje('mensajeDevolucionTaller', 'Escribe una cantidad válida mayor a cero.', 'error');
       return;
     }
 
@@ -7968,7 +7972,7 @@
     });
 
     if (error) {
-      alert('No se pudo registrar el consumo: ' + error.message);
+      mostrarMensaje('mensajeDevolucionTaller', 'No se pudo registrar el consumo: ' + error.message, 'error');
       return;
     }
 
@@ -8026,8 +8030,9 @@
     const inputCantidad = document.getElementById(`cantidad-devolucion-${itemId}`);
     const cantidad = Number(inputCantidad.value);
 
+    ocultarMensaje('mensajeDevolucionTaller');
     if (!cantidad || cantidad <= 0) {
-      alert('Escribe una cantidad válida mayor a cero.');
+      mostrarMensaje('mensajeDevolucionTaller', 'Escribe una cantidad válida mayor a cero.', 'error');
       return;
     }
 
@@ -8039,7 +8044,7 @@
     });
 
     if (error) {
-      alert('No se pudo registrar la devolución: ' + error.message);
+      mostrarMensaje('mensajeDevolucionTaller', 'No se pudo registrar la devolución: ' + error.message, 'error');
       return;
     }
 
@@ -8321,7 +8326,7 @@
     const nombreOrigen = document.getElementById('transferenciaDepartamentoOrigen').selectedOptions[0].textContent.trim();
     const nombreDestino = document.getElementById('transferenciaDepartamentoDestino').selectedOptions[0].textContent.trim();
 
-    const codigoLiderOrigen = prompt(`Autorización de ${nombreOrigen}: pídele a su líder que escriba su código para confirmar que autoriza que salga este insumo.`);
+    const codigoLiderOrigen = await pedirCodigoAutorizacion(`Autorización de ${nombreOrigen}: pídele a su líder que escriba su código para confirmar que autoriza que salga este insumo.`);
     if (!codigoLiderOrigen) { mostrarMensaje('mensajeTransferirStock', 'Se necesita la autorización del líder de origen para continuar.', 'error'); return; }
     const respAutOrigen = await fetch(WORKER_URL + '/api/pos/autorizaciones/verificar-lider-departamento', {
       method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
@@ -8330,7 +8335,7 @@
     const autOrigen = await respAutOrigen.json();
     if (!autOrigen.valido) { mostrarMensaje('mensajeTransferirStock', `Código inválido para autorizar la salida desde ${nombreOrigen}.`, 'error'); return; }
 
-    const codigoLiderDestino = prompt(`Autorización de ${nombreDestino}: pídele a su líder que escriba su código para confirmar que autoriza recibir este insumo.`);
+    const codigoLiderDestino = await pedirCodigoAutorizacion(`Autorización de ${nombreDestino}: pídele a su líder que escriba su código para confirmar que autoriza recibir este insumo.`);
     if (!codigoLiderDestino) { mostrarMensaje('mensajeTransferirStock', 'Se necesita la autorización del líder de destino para continuar.', 'error'); return; }
     const respAutDestino = await fetch(WORKER_URL + '/api/pos/autorizaciones/verificar-lider-departamento', {
       method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
@@ -8628,8 +8633,9 @@
       mostrarMensaje('mensajeAjusteStock', 'Escribe cuántas unidades entraron (debe ser mayor a cero).', 'error');
       return;
     }
-    if (!costoUnitario && !confirm('No escribiste el costo de compra — el costo promedio de este producto NO se actualizará, y eso puede afectar tu utilidad calculada más adelante. ¿Continuar de todas formas?')) {
-      return;
+    if (!costoUnitario) {
+      const continuar = await pedirConfirmacionModal('No escribiste el costo de compra — el costo promedio de este producto NO se actualizará, y eso puede afectar tu utilidad calculada más adelante.', 'Sí, continuar así');
+      if (!continuar) return;
     }
 
     const btn = document.getElementById('btnConfirmarAjusteStock');
@@ -8763,7 +8769,7 @@
 
   function exportarReportesTurnoExcel() {
     const reportes = reportesTurnoFiltrados();
-    if (reportes.length === 0) { alert('No hay reportes para exportar con este filtro.'); return; }
+    if (reportes.length === 0) { mostrarMensaje('mensajeReportesTurno', 'No hay reportes para exportar con este filtro.', 'error'); return; }
 
     const filas = reportes.map(rep => ({
       'Fecha apertura': new Date(rep.fecha_apertura).toLocaleString('es-CO'),
@@ -8787,7 +8793,7 @@
 
   function imprimirReportesTurno() {
     const reportes = reportesTurnoFiltrados();
-    if (reportes.length === 0) { alert('No hay reportes para imprimir con este filtro.'); return; }
+    if (reportes.length === 0) { mostrarMensaje('mensajeReportesTurno', 'No hay reportes para imprimir con este filtro.', 'error'); return; }
 
     const filas = reportes.map(rep => `
       <tr>
@@ -9394,7 +9400,7 @@
         <span style="display:flex;align-items:center;gap:10px;">
           ${formatearMoneda(t.valor)}
           <button class="btn-mini editar" onclick="editarTarifaEnvio('${escaparHtml(t.ciudad)}', ${t.valor})">Editar</button>
-          <button class="btn-mini desactivar" onclick="eliminarTarifaEnvio('${t.id}', '${escaparHtml(t.ciudad)}')">Eliminar</button>
+          <button class="btn-mini desactivar" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => eliminarTarifaEnvio('${t.id}', '${escaparHtml(t.ciudad)}'))">Eliminar</button>
         </span>
       </div>
     `).join('');
@@ -9407,13 +9413,12 @@
   }
 
   async function eliminarTarifaEnvio(id, ciudad) {
-    if (!confirm(`¿Eliminar la tarifa de ${ciudad}?`)) return;
     const resp = await fetch(WORKER_URL + '/api/pos/tarifas-envio/eliminar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ id })
     });
-    if (!resp.ok) { alert('No se pudo eliminar.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeTarifasEnvio', 'No se pudo eliminar.', 'error'); return; }
     await cargarListaTarifasEnvioAdmin();
   }
 
@@ -9558,7 +9563,7 @@
 
   async function descargarDocumentoEmpresa(documentoId) {
     const resp = await fetch(`${WORKER_URL}/api/pos/documentos-empresa/url?documento_id=${documentoId}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
-    if (!resp.ok) { alert('No se pudo generar el enlace de descarga.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeDocumentosEmpresa', 'No se pudo generar el enlace de descarga.', 'error'); return; }
     const { url } = await resp.json();
     window.open(url, '_blank');
   }
@@ -10386,7 +10391,8 @@
     const fecha = document.getElementById('inputFechaBloqueo').value;
     ocultarMensaje('mensajeBloqueoFecha');
     if (!fecha) { mostrarMensaje('mensajeBloqueoFecha', 'Escribe la fecha hasta la que quieres bloquear.', 'error'); return; }
-    if (!confirm(`¿Bloquear todo movimiento contable con fecha igual o anterior al ${new Date(fecha + 'T00:00:00').toLocaleDateString('es-CO')}? Ni tú misma podrás registrar nada en esas fechas hasta que quites el bloqueo.`)) return;
+    const confirmado = await pedirConfirmacionModal(`¿Bloquear todo movimiento contable con fecha igual o anterior al ${new Date(fecha + 'T00:00:00').toLocaleDateString('es-CO')}? Ni tú misma podrás registrar nada en esas fechas hasta que quites el bloqueo.`, 'Sí, bloquear');
+    if (!confirmado) return;
 
     const resp = await fetch(WORKER_URL + '/api/pos/config-empresa/bloqueo-fecha', {
       method: 'POST',
@@ -10400,7 +10406,6 @@
 
   async function confirmarQuitarBloqueoFecha() {
     ocultarMensaje('mensajeBloqueoFecha');
-    if (!confirm('¿Quitar el bloqueo de período contable? Se podrá volver a registrar con cualquier fecha.')) return;
 
     const resp = await fetch(WORKER_URL + '/api/pos/config-empresa/bloqueo-fecha', {
       method: 'POST',
@@ -10622,7 +10627,8 @@
     const mensajeConfirmacion = tipo === 'temporal'
       ? `¿Confirmas ceder los permisos de administrador a ${nombreDestino} hasta el ${fechaFin}?`
       : `¿Confirmas ceder PERMANENTEMENTE los permisos de administrador a ${nombreDestino}? Esta acción no se revierte sola.`;
-    if (!confirm(mensajeConfirmacion)) return;
+    const confirmado = await pedirConfirmacionModal(mensajeConfirmacion, 'Sí, ceder permisos');
+    if (!confirmado) return;
 
     // Verificación obligatoria de la contraseña antes de ejecutar la cesión
     const { error: errorReauth } = await supabaseClient.auth.signInWithPassword({ email: sesionActual.email, password });
@@ -10637,8 +10643,8 @@
     if (!resp.ok) { mostrarMensaje('mensajeCederPermisos', datos.error || 'No se pudo completar la cesión.', 'error'); return; }
 
     if (datos.cuenta_propia_desactivada) {
-      alert('✅ Permisos cedidos correctamente. Tu propia cuenta quedó desactivada, como marcaste. Se cerrará tu sesión ahora.');
-      await cerrarSesion();
+      mostrarMensaje('mensajeCederPermisos', '✅ Permisos cedidos correctamente. Tu propia cuenta quedó desactivada, como marcaste. Se cerrará tu sesión ahora.', 'exito');
+      setTimeout(() => cerrarSesion(), 2500);
       return;
     }
 
@@ -11542,7 +11548,7 @@
   }
 
   function exportarIngresosBimestralesExcel() {
-    if (!cacheIngresosBimestrales) { alert('No hay datos para exportar.'); return; }
+    if (!cacheIngresosBimestrales) { mostrarMensaje('mensajeEstadosFinancieros', 'No hay datos para exportar.', 'error'); return; }
     const d = cacheIngresosBimestrales;
     const filas = [
       [`Lana Rosa Crochet — Ingresos brutos bimestrales ${d.anio} (Régimen Simple — Formulario 2593)`],
@@ -12005,9 +12011,10 @@
     const cantidad = Number(document.getElementById('pedidoCantidad').value);
     const valor = Number(document.getElementById('pedidoValorProducto').value);
 
-    if (!descripcion) { alert('Describe el producto.'); return; }
-    if (!cantidad || cantidad <= 0) { alert('Escribe una cantidad válida.'); return; }
-    if (!valor || valor <= 0) { alert('Escribe el valor de este producto.'); return; }
+    ocultarMensaje('mensajePedidoCanal');
+    if (!descripcion) { mostrarMensaje('mensajePedidoCanal', 'Describe el producto.', 'error'); return; }
+    if (!cantidad || cantidad <= 0) { mostrarMensaje('mensajePedidoCanal', 'Escribe una cantidad válida.', 'error'); return; }
+    if (!valor || valor <= 0) { mostrarMensaje('mensajePedidoCanal', 'Escribe el valor de este producto.', 'error'); return; }
 
     carritoPedidoCanal.push({ descripcion, cantidad, valor });
     document.getElementById('pedidoDescripcionProducto').value = '';
@@ -13639,18 +13646,20 @@
             </div>
           </div>
           <button class="btn-mini guardar" style="width:100%;margin-top:8px;" onclick="crearPrestamo('${empleadoId}')">+ Registrar préstamo</button>
+          <div class="mensaje" id="mensajePrestamos-${empleadoId}"></div>
         </div>
       </div>
     `;
   }
 
   async function crearPrestamo(empleadoId) {
+    ocultarMensaje(`mensajePrestamos-${empleadoId}`);
     const descripcion = document.getElementById(`prest-desc-${empleadoId}`).value.trim();
     const monto = Number(document.getElementById(`prest-monto-${empleadoId}`).value);
     const cuota = Number(document.getElementById(`prest-cuota-${empleadoId}`).value);
 
-    if (!monto || monto <= 0) { alert('Escribe el monto total del préstamo.'); return; }
-    if (!cuota || cuota <= 0) { alert('Escribe la cuota por período.'); return; }
+    if (!monto || monto <= 0) { mostrarMensaje(`mensajePrestamos-${empleadoId}`, 'Escribe el monto total del préstamo.', 'error'); return; }
+    if (!cuota || cuota <= 0) { mostrarMensaje(`mensajePrestamos-${empleadoId}`, 'Escribe la cuota por período.', 'error'); return; }
 
     const resp = await fetch(WORKER_URL + '/api/pos/nomina/prestamos', {
       method: 'POST',
@@ -13660,7 +13669,7 @@
 
     if (!resp.ok) {
       const datos = await resp.json().catch(() => ({}));
-      alert('No se pudo crear el préstamo: ' + (datos.error || 'Error desconocido'));
+      mostrarMensaje(`mensajePrestamos-${empleadoId}`, 'No se pudo crear el préstamo: ' + (datos.error || 'Error desconocido'), 'error');
       return;
     }
 
@@ -14038,7 +14047,8 @@
     ocultarMensaje('mensajeCierreContable');
 
     if (!desde || !hasta) { mostrarMensaje('mensajeCierreContable', 'Escribe ambas fechas.', 'error'); return; }
-    if (!confirm(`¿Realizar el cierre contable ${tipo} del ${desde} al ${hasta}? Esto traslada la utilidad o pérdida del período a Utilidades acumuladas, y NO se puede deshacer. ¿Continuar?`)) return;
+    const confirmado = await pedirConfirmacionModal(`¿Realizar el cierre contable ${tipo} del ${desde} al ${hasta}? Esto traslada la utilidad o pérdida del período a Utilidades acumuladas, y NO se puede deshacer.`, 'Sí, cerrar');
+    if (!confirmado) return;
 
     const resp = await fetch(WORKER_URL + '/api/pos/finanzas/cierre-contable', {
       method: 'POST',
@@ -14863,8 +14873,8 @@
     const desc = document.getElementById('ocNuevoItemDesc').value.trim();
     const cant = Number(document.getElementById('ocNuevoItemCant').value) || 1;
     const precio = Number(document.getElementById('ocNuevoItemPrecio').value);
-    if (!desc) { alert('Escribe la descripción.'); return; }
-    if (!precio || precio <= 0) { alert('Escribe un precio estimado válido.'); return; }
+    if (!desc) { mostrarMensaje('mensajeOrdenCompra', 'Escribe la descripción.', 'error'); return; }
+    if (!precio || precio <= 0) { mostrarMensaje('mensajeOrdenCompra', 'Escribe un precio estimado válido.', 'error'); return; }
 
     carritoOrdenCompra.push({ descripcion: desc, cantidad: cant, precio_unitario_estimado: precio });
     document.getElementById('ocNuevoItemDesc').value = '';
@@ -15042,19 +15052,18 @@
           <span class="fila-historial-consecutivo">${escaparHtml(l.nombre)}</span>
         </div>
         ${l.descripcion ? `<div class="fila-historial-fecha">${escaparHtml(l.descripcion)}</div>` : ''}
-        <button class="btn-mini desactivar" style="margin-top:6px;" onclick="event.stopPropagation(); confirmarDesactivarListaPrecio('${l.id}')">Desactivar lista</button>
+        <button class="btn-mini desactivar" style="margin-top:6px;" onclick="event.stopPropagation(); pedirConfirmacionBoton(this, '¿Seguro?', () => confirmarDesactivarListaPrecio('${l.id}'))">Desactivar lista</button>
       </div>
     `).join('');
   }
 
   async function confirmarDesactivarListaPrecio(id) {
-    if (!confirm('¿Desactivar esta lista de precios? Los clientes que la tengan asignada volverán al precio normal.')) return;
     const resp = await fetch(WORKER_URL + '/api/pos/listas-precios/desactivar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ id })
     });
-    if (!resp.ok) { alert('No se pudo desactivar.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeListaPrecio', 'No se pudo desactivar.', 'error'); return; }
     if (listaPrecioSeleccionadaId === id) {
       listaPrecioSeleccionadaId = null;
       document.getElementById('contenidoPreciosDeLista').innerHTML = '<div style="font-size:12px;opacity:0.6;">Selecciona una lista de la izquierda para ver/editar sus precios.</div>';
@@ -15146,7 +15155,7 @@
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ id })
     });
-    if (!resp.ok) { alert('No se pudo quitar.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeListaPrecio', 'No se pudo quitar.', 'error'); return; }
     const lista = listasPreciosCache.find(l => l.id === listaPrecioSeleccionadaId);
     await seleccionarListaPrecio(listaPrecioSeleccionadaId, lista ? lista.nombre : '');
   }
@@ -16413,7 +16422,7 @@
   }
 
   function exportarLibroDiarioExcel() {
-    if (!cacheLibroDiario || !cacheLibroDiario.movimientos.length) { alert('No hay datos para exportar.'); return; }
+    if (!cacheLibroDiario || !cacheLibroDiario.movimientos.length) { mostrarMensaje('mensajeEstadosFinancieros', 'No hay datos para exportar.', 'error'); return; }
     const filas = [
       ['Lana Rosa Crochet — Libro Diario'],
       [`Período: ${cacheLibroDiario.periodo.desde} a ${cacheLibroDiario.periodo.hasta}`],
@@ -16475,7 +16484,7 @@
   }
 
   function exportarLibroMayorExcel() {
-    if (!cacheLibroMayor || !cacheLibroMayor.cuentas.length) { alert('No hay datos para exportar.'); return; }
+    if (!cacheLibroMayor || !cacheLibroMayor.cuentas.length) { mostrarMensaje('mensajeEstadosFinancieros', 'No hay datos para exportar.', 'error'); return; }
     const filas = [
       ['Lana Rosa Crochet — Libro Mayor y Balances'],
       [`Período: ${cacheLibroMayor.periodo.desde} a ${cacheLibroMayor.periodo.hasta}`],
@@ -17219,7 +17228,7 @@
     contenedor.innerHTML = codigos.map(c => `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f4eef2;font-size:13px;">
         <span>🔐 ${escaparHtml(c.nombre_autorizador)} <span style="opacity:0.5;font-size:11px;">(creado ${new Date(c.created_at).toLocaleDateString('es-CO')})</span></span>
-        <button class="btn-mini desactivar" onclick="eliminarCodigoAutorizacion('${c.id}')">Quitar</button>
+        <button class="btn-mini desactivar" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => eliminarCodigoAutorizacion('${c.id}'))">Quitar</button>
       </div>
     `).join('');
   }
@@ -17250,13 +17259,12 @@
   }
 
   async function eliminarCodigoAutorizacion(id) {
-    if (!confirm('¿Quitar este código? Esa persona ya no podrá usarlo para autorizar acciones.')) return;
     const resp = await fetch(WORKER_URL + '/api/pos/autorizaciones/codigos/eliminar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ id })
     });
-    if (!resp.ok) { alert('No se pudo quitar el código.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeCodigoAutorizacion', 'No se pudo quitar el código.', 'error'); return; }
     await cargarCodigosAutorizacion();
   }
 
@@ -17322,7 +17330,7 @@
       ${autorizados.length === 0 ? '<div style="font-size:12px;opacity:0.6;">Por ahora solo la administradora puede programar eventos.</div>' : autorizados.map(a => `
         <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f4eef2;font-size:13px;">
           <span>${escaparHtml(a.nombre_completo || 'Usuario')} <span style="opacity:0.6;">(${etiquetaRol(a.rol || '')})</span></span>
-          <button class="btn-mini desactivar" onclick="revocarAutorizacionCalendario('${a.user_id}')">Quitar</button>
+          <button class="btn-mini desactivar" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => revocarAutorizacionCalendario('${a.user_id}'))">Quitar</button>
         </div>
       `).join('')}
       ${opciones ? `
@@ -17343,18 +17351,17 @@
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ user_id: userId })
     });
-    if (!resp.ok) { alert('No se pudo autorizar.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeCalendario', 'No se pudo autorizar.', 'error'); return; }
     await cargarAutorizadosCalendario();
   }
 
   async function revocarAutorizacionCalendario(userId) {
-    if (!confirm('¿Quitar el permiso de programar eventos a esta persona?')) return;
     const resp = await fetch(WORKER_URL + '/api/pos/rh/calendario/revocar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
       body: JSON.stringify({ user_id: userId })
     });
-    if (!resp.ok) { alert('No se pudo quitar el permiso.'); return; }
+    if (!resp.ok) { mostrarMensaje('mensajeCalendario', 'No se pudo quitar el permiso.', 'error'); return; }
     await cargarAutorizadosCalendario();
   }
 
@@ -19834,7 +19841,7 @@
     const resp = await fetch(`${WORKER_URL}/api/pos/nomina/desprendible?liquidacion_id=${liquidacionId}`, {
       headers: { Authorization: 'Bearer ' + sesionActual.token }
     });
-    if (!resp.ok) { if (ventanaDesp) ventanaDesp.close(); alert('No se pudo cargar el desprendible.'); return; }
+    if (!resp.ok) { if (ventanaDesp) ventanaDesp.document.body.innerHTML = '<p style="font-family:Arial,sans-serif;padding:20px;color:#c0392b;">No se pudo cargar el desprendible.</p>'; return; }
 
     const { liquidacion: l, empleador } = await resp.json();
     const emp = l.empleados || {};
