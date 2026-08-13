@@ -12448,9 +12448,8 @@
           if (p.estado === 'esperando_pago') {
             acciones = `
               <div style="font-size:11.5px;">Cobrar anticipo: <strong>${formatearMoneda(p.monto_anticipo_requerido)}</strong></div>
-              <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
-                ${['efectivo','nequi','daviplata','transferencia','credito_financiera'].map(m => `<button class="btn-mini guardar" onclick="pedirConfirmacionBoton(this, '¿Ya pagó?', () => registrarPagoAnticipoPedido('${p.id}', '${m}'))">${m === 'credito_financiera' ? '🏦 crédito' : m}</button>`).join('')}
-              </div>
+              <button class="btn-mini guardar" style="margin-top:6px;" onclick="abrirPanelPagoPedido('${p.id}', 'anticipo', ${p.monto_anticipo_requerido})">💵 Cobrar anticipo</button>
+              <div id="panelPagoPedido-${p.id}" class="oculto" style="margin-top:8px;"></div>
             `;
           } else if (p.estado === 'en_preparacion') {
             const avisoStock = !p.disponible_en_stock
@@ -12461,9 +12460,8 @@
             if (p.monto_saldo_requerido > 0 && !p.saldo_pagado) {
               acciones = `
                 <div style="font-size:11.5px;">Cobrar saldo + envío: <strong>${formatearMoneda(p.monto_saldo_requerido)}</strong></div>
-                <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
-                  ${['efectivo','nequi','daviplata','transferencia','credito_financiera'].map(m => `<button class="btn-mini guardar" onclick="pedirConfirmacionBoton(this, '¿Ya pagó?', () => registrarPagoSaldoPedido('${p.id}', '${m}'))">${m === 'credito_financiera' ? '🏦 crédito' : m}</button>`).join('')}
-                </div>
+                <button class="btn-mini guardar" style="margin-top:6px;" onclick="abrirPanelPagoPedido('${p.id}', 'saldo', ${p.monto_saldo_requerido})">💵 Cobrar saldo + envío</button>
+                <div id="panelPagoPedido-${p.id}" class="oculto" style="margin-top:8px;"></div>
               `;
             } else {
               acciones = `<button class="btn-mini guardar" onclick="entregarPedidoSinSaldoUI('${p.id}')">✅ Marcar como entregado</button>`;
@@ -12497,16 +12495,183 @@
     `;
   }
 
-  async function registrarPagoAnticipoPedido(pedidoId, metodo) {
-    const resp = await fetch(WORKER_URL + '/api/pos/pedidos-canal/pagar-anticipo', {
+  // ============================================================
+  // PAGO COMBINADO de anticipo/saldo en Pedidos por canal — mismo patrón
+  // que el pago combinado de Registrar Venta, pero contra un monto fijo
+  // (el anticipo o el saldo+envío) en vez del total de un carrito.
+  // ============================================================
+  let filasPagoPedido = [];
+  let pedidoPagoContexto = null; // { pedidoId, tipoPago, montoRequerido }
+
+  function abrirPanelPagoPedido(pedidoId, tipoPago, montoRequerido) {
+    const panel = document.getElementById(`panelPagoPedido-${pedidoId}`);
+    const yaAbierto = !panel.classList.contains('oculto');
+    document.querySelectorAll('[id^="panelPagoPedido-"]').forEach(p => p.classList.add('oculto'));
+    if (yaAbierto) { pedidoPagoContexto = null; return; }
+
+    pedidoPagoContexto = { pedidoId, tipoPago, montoRequerido };
+    filasPagoPedido = [{ metodo_pago: 'efectivo', monto: montoRequerido, referencia: '' }];
+    panel.classList.remove('oculto');
+    panel.innerHTML = `
+      <div style="background:var(--rosa-suave);border-radius:10px;padding:12px;">
+        <div id="listaPagosPedido"></div>
+        <button class="btn-mini editar" style="margin-top:6px;" onclick="agregarFilaPagoPedidoUI()">+ Agregar otro método</button>
+        <div id="resumenPagosPedido" style="margin-top:8px;font-size:12.5px;"></div>
+        <button class="btn-mini guardar" style="width:100%;margin-top:8px;" onclick="confirmarPagoPedidoCombinado()">Confirmar pago</button>
+        <div id="panelAbrirTurnoPedido"></div>
+        <div class="mensaje" id="mensajePanelPagoPedido"></div>
+      </div>
+    `;
+    renderizarFilasPagoPedidoUI();
+  }
+
+  function agregarFilaPagoPedidoUI() {
+    filasPagoPedido.push({ metodo_pago: 'efectivo', monto: '', referencia: '' });
+    renderizarFilasPagoPedidoUI();
+  }
+
+  function quitarFilaPagoPedidoUI(indice) {
+    if (filasPagoPedido.length === 1) return;
+    filasPagoPedido.splice(indice, 1);
+    renderizarFilasPagoPedidoUI();
+  }
+
+  function actualizarFilaPagoPedidoUI(indice, campo, valor) {
+    filasPagoPedido[indice][campo] = valor;
+
+    if (campo === 'recibido') {
+      const total = pedidoPagoContexto.montoRequerido;
+      const sumaOtrasFilas = filasPagoPedido.reduce((acc, p, i) => i === indice ? acc : acc + (Number(p.monto) || 0), 0);
+      const faltantePorCubrir = Math.max(total - sumaOtrasFilas, 0);
+      const recibido = Number(valor) || 0;
+      filasPagoPedido[indice].monto = Math.min(recibido, faltantePorCubrir);
+      filasPagoPedido[indice].cambio = Math.max(recibido - faltantePorCubrir, 0);
+
+      const cajaCambio = document.getElementById(`cajaCambioPedido-${indice}`);
+      if (cajaCambio) {
+        if (filasPagoPedido[indice].recibido) {
+          cajaCambio.style.display = 'block';
+          cajaCambio.style.background = filasPagoPedido[indice].cambio > 0 ? '#eaf6ef' : '#fafafa';
+          cajaCambio.style.color = filasPagoPedido[indice].cambio > 0 ? 'var(--verde-exito)' : 'var(--texto-oscuro)';
+          cajaCambio.innerHTML = `Cobrado: ${formatearMoneda(filasPagoPedido[indice].monto)} ${filasPagoPedido[indice].cambio > 0 ? `· 💵 Cambio a devolver: <strong>${formatearMoneda(filasPagoPedido[indice].cambio)}</strong>` : ''}`;
+        } else {
+          cajaCambio.style.display = 'none';
+        }
+      }
+      actualizarResumenPagosPedido();
+      return;
+    }
+
+    renderizarFilasPagoPedidoUI();
+  }
+
+  function renderizarFilasPagoPedidoUI() {
+    const contenedor = document.getElementById('listaPagosPedido');
+    contenedor.innerHTML = filasPagoPedido.map((pago, indice) => `
+      <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px;">
+        <div style="display:flex;gap:8px;">
+          <select onchange="actualizarFilaPagoPedidoUI(${indice}, 'metodo_pago', this.value)" style="flex:1.2;">
+            <option value="efectivo" ${pago.metodo_pago === 'efectivo' ? 'selected' : ''}>Efectivo</option>
+            <option value="nequi" ${pago.metodo_pago === 'nequi' ? 'selected' : ''}>Nequi</option>
+            <option value="daviplata" ${pago.metodo_pago === 'daviplata' ? 'selected' : ''}>Daviplata</option>
+            <option value="transferencia" ${pago.metodo_pago === 'transferencia' ? 'selected' : ''}>Transferencia</option>
+            <option value="tarjeta_debito" ${pago.metodo_pago === 'tarjeta_debito' ? 'selected' : ''}>Tarjeta débito</option>
+            <option value="tarjeta_credito" ${pago.metodo_pago === 'tarjeta_credito' ? 'selected' : ''}>Tarjeta crédito</option>
+            <option value="credito_financiera" ${pago.metodo_pago === 'credito_financiera' ? 'selected' : ''}>🏦 Crédito (CrediLondon)</option>
+          </select>
+          ${pago.metodo_pago === 'efectivo'
+            ? `<input type="number" placeholder="¿Cuánto te dio?" min="0" step="1" value="${pago.recibido || ''}" oninput="actualizarFilaPagoPedidoUI(${indice}, 'recibido', this.value)" style="flex:1;">`
+            : `<input type="number" placeholder="Monto" min="0" step="1" value="${pago.monto}" oninput="actualizarFilaPagoPedidoUI(${indice}, 'monto', this.value)" style="flex:1;">`
+          }
+          ${filasPagoPedido.length > 1 ? `<button class="btn-quitar-pago" onclick="quitarFilaPagoPedidoUI(${indice})">✕</button>` : ''}
+        </div>
+        <div id="cajaCambioPedido-${indice}" style="font-size:12px;padding:6px 10px;border-radius:6px;display:${pago.metodo_pago === 'efectivo' && pago.recibido ? 'block' : 'none'};background:${pago.cambio > 0 ? '#eaf6ef' : '#fafafa'};color:${pago.cambio > 0 ? 'var(--verde-exito)' : 'var(--texto-oscuro)'};">
+          Cobrado: ${formatearMoneda(pago.monto)} ${pago.cambio > 0 ? `· 💵 Cambio a devolver: <strong>${formatearMoneda(pago.cambio)}</strong>` : ''}
+        </div>
+      </div>
+    `).join('');
+    actualizarResumenPagosPedido();
+  }
+
+  function actualizarResumenPagosPedido() {
+    const total = pedidoPagoContexto.montoRequerido;
+    const sumaAsignada = filasPagoPedido.reduce((acc, p) => acc + (Number(p.monto) || 0), 0);
+    const faltante = total - sumaAsignada;
+    const resumen = document.getElementById('resumenPagosPedido');
+    if (!resumen) return;
+    resumen.innerHTML = `
+      <div>Total a cobrar: <strong>${formatearMoneda(total)}</strong></div>
+      <div>Ya asignado: <strong>${formatearMoneda(sumaAsignada)}</strong></div>
+      ${faltante > 0.5 ? `<div style="color:var(--rojo-error);">Falta asignar: <strong>${formatearMoneda(faltante)}</strong></div>` : faltante < -0.5 ? `<div style="color:var(--rojo-error);">Te pasaste por ${formatearMoneda(-faltante)}</div>` : `<div style="color:var(--verde-exito);">✅ Cuadra exacto</div>`}
+    `;
+  }
+
+  async function confirmarPagoPedidoCombinado() {
+    ocultarMensaje('mensajePanelPagoPedido');
+    const { pedidoId, tipoPago, montoRequerido } = pedidoPagoContexto;
+    const pagos = filasPagoPedido.map(p => ({ metodo_pago: p.metodo_pago, monto: Number(p.monto) || 0 })).filter(p => p.monto > 0);
+    const suma = pagos.reduce((acc, p) => acc + p.monto, 0);
+
+    if (Math.round((suma - montoRequerido) * 100) !== 0) {
+      mostrarMensaje('mensajePanelPagoPedido', 'La suma de los pagos debe coincidir exactamente con el monto a cobrar.', 'error');
+      return;
+    }
+
+    // Si va a entrar efectivo y no hay un turno de caja abierto, hay que
+    // abrirlo primero — así el dinero que trae el mensajero queda guardado.
+    const hayEfectivo = pagos.some(p => p.metodo_pago === 'efectivo');
+    if (hayEfectivo && !turnoActivoActual) {
+      document.getElementById('panelAbrirTurnoPedido').innerHTML = `
+        <div style="margin-top:8px;padding:10px;background:#fff3cd;border-radius:8px;font-size:12.5px;">
+          ⚠️ No tienes un turno de caja abierto — hay que abrirlo antes de guardar este efectivo.<br>
+          <label style="margin-top:6px;">¿Con cuánto empieza la caja?</label>
+          <input type="number" id="inputMontoAperturaPedido" min="0" step="1" value="0" style="margin-top:4px;">
+          <button class="btn-mini guardar" style="width:100%;margin-top:6px;" onclick="abrirTurnoDesdePedido()">Abrir caja y continuar</button>
+        </div>
+      `;
+      return;
+    }
+
+    const resp = await fetch(WORKER_URL + `/api/pos/pedidos-canal/pagar-${tipoPago}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ pedido_id: pedidoId, metodo_pago: metodo })
+      body: JSON.stringify({ pedido_id: pedidoId, pagos })
     });
     const datos = await resp.json();
-    if (!resp.ok) { mostrarMensaje('mensajePedidosCanal', 'Error: ' + (datos.error || 'No se pudo registrar el anticipo'), 'error'); return; }
-    await cargarPedidosCanal();
+    if (!resp.ok) { mostrarMensaje('mensajePanelPagoPedido', 'Error: ' + (datos.error || 'No se pudo registrar el pago'), 'error'); return; }
+
+    ultimoPagoPedidoCache = datos.recibo;
+    mostrarMensaje('mensajePanelPagoPedido', `✅ ${tipoPago === 'anticipo' ? 'Anticipo' : 'Saldo'} registrado correctamente.`, 'exito');
+    const panel = document.getElementById(`panelPagoPedido-${pedidoId}`);
+    const botonesRecibo = document.createElement('div');
+    botonesRecibo.style.cssText = 'display:flex;gap:6px;margin-top:8px;';
+    botonesRecibo.innerHTML = `
+      <button class="btn-mini editar">🖨️ Imprimir recibo</button>
+      <button class="btn-mini editar">📱 Enviar por WhatsApp</button>
+    `;
+    botonesRecibo.children[0].onclick = () => imprimirReciboPedido(datos.recibo);
+    botonesRecibo.children[1].onclick = () => enviarReciboPedidoWhatsapp(datos.recibo);
+    panel.appendChild(botonesRecibo);
+
+    pedidoPagoContexto = null;
+    setTimeout(() => cargarPedidosCanal(), 2500);
   }
+
+  async function abrirTurnoDesdePedido() {
+    const monto = Number(document.getElementById('inputMontoAperturaPedido').value) || 0;
+    const resp = await fetch(WORKER_URL + '/api/pos/turnos/abrir', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ monto_apertura: monto })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajePanelPagoPedido', datos.error || 'No se pudo abrir el turno.', 'error'); return; }
+    turnoActivoActual = { id: datos.turno_id };
+    document.getElementById('panelAbrirTurnoPedido').innerHTML = '';
+    await confirmarPagoPedidoCombinado();
+  }
+
+  let ultimoPagoPedidoCache = null;
 
   async function marcarPedidoListoUI(pedidoId) {
     const resp = await fetch(WORKER_URL + '/api/pos/pedidos-canal/marcar-listo', {
@@ -12519,17 +12684,6 @@
     await cargarPedidosCanal();
   }
 
-  async function registrarPagoSaldoPedido(pedidoId, metodo) {
-    const resp = await fetch(WORKER_URL + '/api/pos/pedidos-canal/pagar-saldo', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ pedido_id: pedidoId, metodo_pago: metodo })
-    });
-    const datos = await resp.json();
-    if (!resp.ok) { mostrarMensaje('mensajePedidosCanal', 'Error: ' + (datos.error || 'No se pudo registrar el pago'), 'error'); return; }
-    await cargarPedidosCanal();
-  }
-
   async function entregarPedidoSinSaldoUI(pedidoId) {
     const resp = await fetch(WORKER_URL + '/api/pos/pedidos-canal/entregar-sin-saldo', {
       method: 'POST',
@@ -12539,6 +12693,74 @@
     const datos = await resp.json();
     if (!resp.ok) { mostrarMensaje('mensajePedidosCanal', 'Error: ' + (datos.error || 'No se pudo marcar como entregado'), 'error'); return; }
     await cargarPedidosCanal();
+  }
+
+  // Genera el recibo (impreso o imagen para WhatsApp) del pago de un pedido
+  // — reutiliza el mismo diseño del recibo de venta de Tienda.
+  function generarContenidoReciboPedido(recibo) {
+    const p = recibo.pedido;
+    const cliente = p.tercero ? p.tercero.nombre_completo : 'Cliente';
+    const telefono = p.tercero ? p.tercero.telefono : null;
+    const etiquetaTipo = recibo.tipo_pago === 'anticipo' ? 'Recibo de anticipo' : 'Recibo de saldo final';
+    const totalPago = recibo.pagos.reduce((acc, x) => acc + Number(x.monto), 0);
+
+    return `
+      <div style="text-align:center;margin-bottom:14px;">
+        ${logoEmpresaCache ? `<img src="${logoEmpresaCache}" style="max-height:60px;margin-bottom:8px;">` : ''}
+        <div style="font-size:16px;font-weight:700;color:#d8017c;">Lana Rosa Crochet</div>
+        <div style="font-size:12px;opacity:0.7;">${etiquetaTipo}</div>
+      </div>
+      <div style="font-size:12.5px;line-height:1.6;">
+        <div>Pedido: <strong>${escaparHtml(p.consecutivo)}</strong></div>
+        <div>Cliente: ${escaparHtml(cliente)}</div>
+        <div>Producto: ${escaparHtml(p.descripcion_producto)} (x${p.cantidad})</div>
+        <div>Fecha: ${new Date().toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}</div>
+      </div>
+      <div style="margin-top:10px;padding-top:10px;border-top:1px dashed #ccc;">
+        ${recibo.pagos.map(x => `<div style="display:flex;justify-content:space-between;font-size:12.5px;"><span>${x.metodo_pago}</span><span>${formatearMoneda(x.monto)}</span></div>`).join('')}
+      </div>
+      <div style="margin-top:10px;padding-top:10px;border-top:2px solid #333;display:flex;justify-content:space-between;font-size:15px;font-weight:700;">
+        <span>Total pagado</span><span>${formatearMoneda(totalPago)}</span>
+      </div>
+      ${recibo.tipo_pago === 'anticipo' ? `<div style="margin-top:8px;font-size:11.5px;opacity:0.75;">Saldo pendiente a la entrega (incluye envío): <strong>${formatearMoneda(p.monto_saldo_requerido)}</strong></div>` : ''}
+      <div style="margin-top:16px;font-size:10.5px;color:#888;text-align:center;">
+        Lana Rosa Crochet no está obligada a expedir factura electrónica (persona natural). Este documento sirve como comprobante de pago.
+      </div>
+      ${politicaCambiosCache ? `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed #ccc;font-size:10.5px;color:#888;text-align:center;">🔄 ${escaparHtml(politicaCambiosCache)}</div>` : ''}
+    `;
+  }
+
+  function imprimirReciboPedido(recibo) {
+    const ventana = window.open('', '_blank');
+    ventana.document.write(`
+      <html><head><title>Recibo ${recibo.pedido.consecutivo}</title><meta charset="utf-8">
+      <style>body{font-family:Arial,sans-serif;max-width:320px;margin:0 auto;padding:16px;}</style>
+      </head><body>${generarContenidoReciboPedido(recibo)}
+      <script>window.onload = () => window.print();<\/script>
+      </body></html>
+    `);
+    ventana.document.close();
+  }
+
+  async function enviarReciboPedidoWhatsapp(recibo) {
+    const telefono = recibo.pedido.tercero ? recibo.pedido.tercero.telefono : null;
+    let numeroFinal = telefono;
+    if (!numeroFinal) {
+      numeroFinal = await pedirTexto('Este cliente no tiene teléfono guardado. Escribe el número de WhatsApp:', 'Teléfono', 'Ej: 573001234567');
+      if (!numeroFinal) return;
+    }
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'position:fixed;left:-9999px;width:320px;padding:16px;background:white;font-family:Arial,sans-serif;';
+    wrapper.innerHTML = generarContenidoReciboPedido(recibo);
+    document.body.appendChild(wrapper);
+    try {
+      const canvas = await html2canvas(wrapper, { scale: 2, backgroundColor: '#ffffff' });
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      const mensaje = `Hola 👋 Aquí está tu recibo de ${recibo.tipo_pago === 'anticipo' ? 'anticipo' : 'pago final'} — Pedido ${recibo.pedido.consecutivo}. ¡Gracias por tu compra! 🐑💕`;
+      await compartirImagenPorWhatsapp(blob, numeroFinal, `recibo_${recibo.pedido.consecutivo}.png`, mensaje);
+    } finally {
+      document.body.removeChild(wrapper);
+    }
   }
 
   // ============================================================================
