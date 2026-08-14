@@ -12617,6 +12617,7 @@
             <option value="tarjeta_debito" ${pago.metodo_pago === 'tarjeta_debito' ? 'selected' : ''}>Tarjeta débito</option>
             <option value="tarjeta_credito" ${pago.metodo_pago === 'tarjeta_credito' ? 'selected' : ''}>Tarjeta crédito</option>
             <option value="credito_financiera" ${pago.metodo_pago === 'credito_financiera' ? 'selected' : ''}>🏦 Crédito (CrediLondon)</option>
+            <option value="credito_directo" ${pago.metodo_pago === 'credito_directo' ? 'selected' : ''}>📋 Crédito directo al cliente</option>
           </select>
           ${pago.metodo_pago === 'efectivo'
             ? `<input type="number" placeholder="¿Cuánto te dio?" min="0" step="1" value="${pago.recibido || ''}" oninput="actualizarFilaPagoPedidoUI(${indice}, 'recibido', this.value)" style="flex:1;">`
@@ -18098,6 +18099,7 @@
             <option value="tarjeta_debito" ${pago.metodo_pago === 'tarjeta_debito' ? 'selected' : ''}>Tarjeta débito</option>
             <option value="tarjeta_credito" ${pago.metodo_pago === 'tarjeta_credito' ? 'selected' : ''}>Tarjeta crédito</option>
             <option value="credito_financiera" ${pago.metodo_pago === 'credito_financiera' ? 'selected' : ''}>🏦 Crédito (CrediLondon)</option>
+            <option value="credito_directo" ${pago.metodo_pago === 'credito_directo' ? 'selected' : ''}>📋 Crédito directo al cliente</option>
             <option value="hotmart" ${pago.metodo_pago === 'hotmart' ? 'selected' : ''}>Hotmart</option>
             <option value="youtube_adsense" ${pago.metodo_pago === 'youtube_adsense' ? 'selected' : ''}>YouTube AdSense</option>
             <option value="otro" ${pago.metodo_pago === 'otro' ? 'selected' : ''}>Otro</option>
@@ -18160,6 +18162,10 @@
       mostrarMensaje('mensajeVentaAcademia', 'Abre un turno de caja antes de cobrar en efectivo una clase presencial.', 'error');
       return;
     }
+    if (pagos.some(p => p.metodo_pago === 'credito_directo') && (!cliente || !identificacion)) {
+      mostrarMensaje('mensajeVentaAcademia', 'Para dar crédito directo, escribe al menos el nombre y la cédula/NIT del cliente — así queda la cuenta por cobrar bien enlazada a esa persona.', 'error');
+      return;
+    }
 
     const btn = document.getElementById('btnRegistrarVentaAcademia');
     btn.disabled = true;
@@ -18175,6 +18181,7 @@
         cliente_identificacion: identificacion || null,
         cliente_telefono: telefono || null,
         cliente_correo: correo || null,
+        cliente_acepta_tratamiento_datos: aceptaTratamientoDatos,
         monto: montoTotal,
         pagos: pagos,
         turno_id: turnoActivoActual ? turnoActivoActual.id : null,
