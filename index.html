@@ -6502,6 +6502,19 @@
 
       clienteVentaTerceroId = data.id;
       await aplicarListaPrecioAlCarrito(data.id);
+
+      // Última compra — revisa tanto ventas de Tienda como pedidos de
+      // WhatsApp/Redes, y muestra la más reciente de las dos.
+      const [{ data: ultimaTienda }, { data: ultimoPedido }] = await Promise.all([
+        supabaseClient.from('ventas_pos').select('fecha').eq('tercero_id', data.id).eq('estado', 'completada').order('fecha', { ascending: false }).limit(1),
+        supabaseClient.from('pedidos_canal_venta').select('created_at').eq('tercero_id', data.id).order('created_at', { ascending: false }).limit(1)
+      ]);
+      const fechas = [ultimaTienda?.[0]?.fecha, ultimoPedido?.[0]?.created_at].filter(Boolean).map(f => new Date(f));
+      const textoUltimaCompra = fechas.length
+        ? 'Última compra: ' + new Date(Math.max(...fechas)).toLocaleDateString('es-CO')
+        : 'Sin compras registradas todavía';
+      msgEl.innerHTML = `✅ Cliente encontrado — datos precargados<br><span style="opacity:0.8;">${textoUltimaCompra}</span>`;
+
       const puntos = data.puntos_fidelizacion || 0;
       const bloquePuntos = document.getElementById('bloquePuntosCliente');
       if (puntos > 0) {
@@ -11961,7 +11974,7 @@
 
       const { data, error } = await supabaseClient
         .from('terceros')
-        .select('nombre_completo, telefono, direccion, ciudad, email')
+        .select('id, nombre_completo, telefono, direccion, ciudad, email')
         .eq('numero_documento', identificacion)
         .limit(1)
         .single();
@@ -11974,6 +11987,18 @@
       document.getElementById('pedidoMunicipioCliente').value = data.ciudad || '';
       document.getElementById('pedidoCorreoCliente').value = data.email || '';
       msgEl.style.display = 'block';
+
+      // Última compra — revisa tanto Tienda como pedidos anteriores de
+      // WhatsApp/Redes, y muestra la más reciente de las dos.
+      const [{ data: ultimaTienda }, { data: ultimoPedido }] = await Promise.all([
+        supabaseClient.from('ventas_pos').select('fecha').eq('tercero_id', data.id).eq('estado', 'completada').order('fecha', { ascending: false }).limit(1),
+        supabaseClient.from('pedidos_canal_venta').select('created_at').eq('tercero_id', data.id).order('created_at', { ascending: false }).limit(1)
+      ]);
+      const fechas = [ultimaTienda?.[0]?.fecha, ultimoPedido?.[0]?.created_at].filter(Boolean).map(f => new Date(f));
+      const textoUltimaCompra = fechas.length
+        ? 'Última compra: ' + new Date(Math.max(...fechas)).toLocaleDateString('es-CO')
+        : 'Sin compras registradas todavía';
+      msgEl.innerHTML = `✅ Cliente encontrado — datos precargados<br><span style="opacity:0.8;">${textoUltimaCompra}</span>`;
     }, 400);
   }
 
