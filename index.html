@@ -887,6 +887,7 @@
       <button class="sidebar-depto-header" id="headerDeptoReportes" onclick="toggleSidebarDepto('deptoReportesSubmenu', 'headerDeptoReportes')">📈 Reportes e Indicadores <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoReportesSubmenu">
         <button class="nav-btn" id="nav-reportes-financieros" onclick="mostrarPantallaReportesFinancieros()"><span class="nav-icon">📊</span> Informes de Ventas</button>
+        <button class="nav-btn" id="nav-presupuesto-empresa" onclick="mostrarPantallaPresupuestoEmpresa()"><span class="nav-icon">💰</span> Presupuesto</button>
       </div>
     </div>
 
@@ -2046,14 +2047,13 @@
 <div id="pantallaReportesFinancieros" class="oculto contenido">
   <div class="page-header">
     <h1>Informes de Ventas</h1>
-    <div class="subtitulo">Consolidado de ventas por canal, indicadores de rotación/margen, costeo real, y simulación de presupuesto.</div>
+    <div class="subtitulo">Consolidado de ventas por canal, indicadores de rotación/margen, y costeo real.</div>
   </div>
 
   <div class="filtro-tipo" style="margin-bottom:20px;">
     <button class="chip-filtro activo" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinConsolidado', this); cargarConsolidadoVentas();">📊 Consolidado de ventas</button>
     <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinIndicadores', this); cargarIndicadoresVentas();">📈 Indicadores de ventas</button>
     <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinCosteo', this); cargarCosteoReal();">🧮 Costeo real (materiales + mano de obra)</button>
-    <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinPresupuesto', this); cargarBasePresupuestoSimulacion();">💡 Presupuesto y simulación</button>
     <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinRanking', this); cargarRankingVentas();">🏆 Ranking (productos, clientes, vendedoras)</button>
     <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinBimestral', this); cargarIngresosBimestralesRST();">📅 Ingresos bimestrales (RST)</button>
   </div>
@@ -2110,49 +2110,6 @@
     </div>
   </div>
 
-  <div id="subtabFinPresupuesto" data-subtab-grupo="reportesFin" class="oculto">
-    <div style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;">
-      ℹ️ Esto no es un presupuesto fijo que hay que llenar cada mes — es un <strong>simulador</strong>. Trae tus números reales de los últimos 30 días como punto de partida, y puedes moverlos para ver "¿qué pasaría si...?" antes de tomar una decisión (subir precios, contratar, o si un gasto nuevo es sostenible).
-    </div>
-
-    <div class="panel" style="max-width:none;max-height:none;margin-bottom:20px;">
-      <h2>📌 Tu punto de partida real (últimos 30 días)</h2>
-      <div id="baseRealPresupuesto"><div class="cargando">Cargando...</div></div>
-    </div>
-
-    <div class="grilla-2">
-      <div class="panel">
-        <h2>🎛️ Simulador</h2>
-        <label for="simCostosFijos">Costos fijos mensuales (COP)</label>
-        <input type="text" inputmode="decimal" id="simCostosFijos" placeholder="Ej: 800000+150000+95000" oninput="recalcularSimulacionPresupuesto()" onblur="resolverSumaCostosFijos()">
-        <div style="font-size:10.5px;opacity:0.6;margin-top:-8px;margin-bottom:10px;">Arriendo, nómina fija, servicios — lo que pagas sin importar cuánto vendas.</div>
-
-        <label for="simMargenContribucion">Margen de contribución (%)</label>
-        <input type="number" id="simMargenContribucion" min="1" max="99" step="1" oninput="recalcularSimulacionPresupuesto()">
-        <div style="font-size:10.5px;opacity:0.6;margin-top:-8px;margin-bottom:10px;">De cada $100 que vendes, cuánto te queda después de materiales/mano de obra directa (antes de gastos fijos).</div>
-
-        <label for="simUtilidadDeseada">Utilidad que quieres ganar ese mes <span style="font-size:10px;opacity:0.6;">(opcional, 0 = solo cubrir gastos)</span></label>
-        <input type="number" id="simUtilidadDeseada" min="0" step="1" value="0" oninput="recalcularSimulacionPresupuesto()">
-
-        <label for="simPrecioPromedio">Precio promedio por pieza <span style="font-size:10px;opacity:0.6;">(opcional, para traducir a unidades)</span></label>
-        <input type="number" id="simPrecioPromedio" min="0" step="1" oninput="recalcularSimulacionPresupuesto()">
-
-        <button class="btn-secundario" style="width:auto;margin-top:10px;" onclick="restablecerSimulacionPresupuesto()">↺ Restablecer a mis números reales</button>
-      </div>
-
-      <div class="panel">
-        <h2>📊 Resultado de la simulación</h2>
-        <div id="resultadoSimulacionPresupuesto"></div>
-
-        <div style="margin-top:16px;padding-top:14px;border-top:1px solid #f0e5ec;">
-          <div style="font-size:11px;font-weight:700;opacity:0.6;margin-bottom:6px;">REFERENCIA — TU META COMPROMETIDA CON FONDO EMPRENDER</div>
-          <div class="resumen-fila"><span>Ventas comprometidas Año 1</span><strong>$137.400.000</strong></div>
-          <div class="resumen-fila"><span>Promedio mensual necesario</span><strong id="metaMensualFeReferencia">$11.450.000</strong></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <div id="subtabFinRanking" data-subtab-grupo="reportesFin" class="oculto">
     <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
       <div><label for="rkFechaDesde" style="font-size:11px;">Desde</label><input type="date" id="rkFechaDesde" onchange="cargarRankingVentas()" style="padding:9px 10px;"></div>
@@ -2195,6 +2152,74 @@
   </div>
 
   <div id="subtabFinPresupuestos" class="oculto"></div>
+</div>
+
+<!-- ===== PANTALLA: PRESUPUESTO DE LA EMPRESA ===== -->
+<div id="pantallaPresupuestoEmpresa" class="oculto contenido">
+  <div class="page-header">
+    <h1>Presupuesto</h1>
+    <div class="subtitulo">El presupuesto real de la empresa por partidas, y el simulador de "¿qué pasaría si...?" para decisiones de precio o contratación.</div>
+  </div>
+
+  <div class="filtro-tipo" style="margin-bottom:20px;">
+    <button class="chip-filtro activo" data-subtab-btn="presupuestoEmpresa" onclick="mostrarSubTabGrupo('presupuestoEmpresa', 'subtabPresupuestoReal', this); cargarPresupuestoEmpresa();">📋 Presupuesto</button>
+    <button class="chip-filtro" data-subtab-btn="presupuestoEmpresa" onclick="mostrarSubTabGrupo('presupuestoEmpresa', 'subtabPresupuestoSimulacion', this); cargarBasePresupuestoSimulacion();">🎛️ Simulación</button>
+  </div>
+
+  <div id="subtabPresupuestoReal" data-subtab-grupo="presupuestoEmpresa">
+    <div style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;">
+      ℹ️ Esta es tu configuración de costos fijos mensuales — se actualiza cuando cambie un valor real (subió el arriendo, cambiaste de plan de internet, etc.), no es algo que llenes cada mes desde cero.
+    </div>
+    <div class="mensaje" id="mensajePresupuestoEmpresa"></div>
+    <div id="listaPresupuestoEmpresa"><div class="cargando">Cargando...</div></div>
+    <div class="panel" style="max-width:none;margin-top:16px;">
+      <h2>Total presupuesto mensual</h2>
+      <div id="totalPresupuestoEmpresa" style="font-size:26px;font-weight:800;color:var(--rosa-principal);">$0</div>
+    </div>
+  </div>
+
+  <div id="subtabPresupuestoSimulacion" data-subtab-grupo="presupuestoEmpresa" class="oculto">
+    <div style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;">
+      ℹ️ Esto no es un presupuesto fijo que hay que llenar cada mes — es un <strong>simulador</strong>. Trae tus números reales de los últimos 30 días como punto de partida, y puedes moverlos para ver "¿qué pasaría si...?" antes de tomar una decisión (subir precios, contratar, o si un gasto nuevo es sostenible).
+    </div>
+
+    <div class="panel" style="max-width:none;max-height:none;margin-bottom:20px;">
+      <h2>📌 Tu punto de partida real (últimos 30 días)</h2>
+      <div id="baseRealPresupuesto"><div class="cargando">Cargando...</div></div>
+    </div>
+
+    <div class="grilla-2">
+      <div class="panel">
+        <h2>🎛️ Simulador</h2>
+        <label for="simCostosFijos">Costos fijos mensuales (COP)</label>
+        <input type="text" inputmode="decimal" id="simCostosFijos" placeholder="Ej: 800000+150000+95000" oninput="recalcularSimulacionPresupuesto()" onblur="resolverSumaCostosFijos()">
+        <div style="font-size:10.5px;opacity:0.6;margin-top:-8px;margin-bottom:10px;">Arriendo, nómina fija, servicios — lo que pagas sin importar cuánto vendas. <a href="#" onclick="mostrarSubTabGrupo('presupuestoEmpresa', 'subtabPresupuestoReal', document.querySelector('[data-subtab-btn=presupuestoEmpresa]')); return false;" style="color:var(--rosa-principal);">Ver tu presupuesto real →</a></div>
+
+        <label for="simMargenContribucion">Margen de contribución (%)</label>
+        <input type="number" id="simMargenContribucion" min="1" max="99" step="1" oninput="recalcularSimulacionPresupuesto()">
+        <div style="font-size:10.5px;opacity:0.6;margin-top:-8px;margin-bottom:10px;">De cada $100 que vendes, cuánto te queda después de materiales/mano de obra directa (antes de gastos fijos).</div>
+
+        <label for="simUtilidadDeseada">Utilidad que quieres ganar ese mes <span style="font-size:10px;opacity:0.6;">(opcional, 0 = solo cubrir gastos)</span></label>
+        <input type="number" id="simUtilidadDeseada" min="0" step="1" value="0" oninput="recalcularSimulacionPresupuesto()">
+
+        <label for="simPrecioPromedio">Precio promedio por pieza <span style="font-size:10px;opacity:0.6;">(opcional, para traducir a unidades)</span></label>
+        <input type="number" id="simPrecioPromedio" min="0" step="1" oninput="recalcularSimulacionPresupuesto()">
+
+        <button class="btn-secundario" style="width:auto;margin-top:10px;" onclick="restablecerSimulacionPresupuesto()">↺ Restablecer a mis números reales</button>
+      </div>
+
+      <div class="panel">
+        <h2>📊 Resultado de la simulación</h2>
+        <div id="resultadoSimulacionPresupuesto"></div>
+
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid #f0e5ec;">
+          <div style="font-size:11px;font-weight:700;opacity:0.6;margin-bottom:6px;">REFERENCIA — TU META COMPROMETIDA CON FONDO EMPRENDER</div>
+          <div class="resumen-fila"><span>Ventas comprometidas Año 1</span><strong>$137.400.000</strong></div>
+          <div class="resumen-fila"><span>Promedio mensual necesario</span><strong id="metaMensualFeReferencia">$11.450.000</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ===== PANTALLA: NÓMINA (solo Admin) ===== -->
@@ -4563,6 +4588,7 @@
       pantallaTurnoActivo: 'nav-turno',
       pantallaReportes: 'nav-reportes',
       pantallaReportesFinancieros: 'nav-reportes-financieros',
+      pantallaPresupuestoEmpresa: 'nav-presupuesto-empresa',
       pantallaNomina: 'nav-nomina',
       pantallaTalentoHumano: 'nav-talento-humano',
       pantallaCalendario: 'nav-calendario',
@@ -4931,6 +4957,7 @@
     mostrar('nav-nomina', esAdmin);
     mostrar('nav-talento-humano', esAdmin);
     mostrar('nav-reportes-financieros', esAdmin || esContador);
+    mostrar('nav-presupuesto-empresa', esAdmin || esContador);
     mostrar('nav-estados-financieros', esAdmin || esContador);
     mostrar('nav-cuentas-pendientes', esAdmin || esContador);
     mostrar('nav-activos-fijos', esAdmin);
@@ -9385,6 +9412,7 @@
     { clave: 'nav-transferencias-internas', etiqueta: '　　Transferencias caja/banco' },
     { clave: 'deptoReportesGrupo', etiqueta: '📈 Reportes e Indicadores (grupo completo)' },
     { clave: 'nav-reportes-financieros', etiqueta: '　　Informes de Ventas' },
+    { clave: 'nav-presupuesto-empresa', etiqueta: '　　Presupuesto' },
     { clave: 'deptoFondoEmprenderGrupo', etiqueta: '🏦 Fondo Emprender (grupo completo)' },
     { clave: 'nav-calendario', etiqueta: '📅 Calendario del equipo' },
   ];
@@ -11445,6 +11473,98 @@
     document.getElementById('consolidadoFechaDesde').value = '';
     document.getElementById('consolidadoFechaHasta').value = '';
     await cargarConsolidadoVentas();
+  }
+
+  async function mostrarPantallaPresupuestoEmpresa() {
+    mostrarPantalla('pantallaPresupuestoEmpresa');
+    mostrarSubTabGrupo('presupuestoEmpresa', 'subtabPresupuestoReal', document.querySelector('[data-subtab-btn="presupuestoEmpresa"]'));
+    await cargarPresupuestoEmpresa();
+  }
+
+  let presupuestoEmpresaCache = [];
+
+  async function cargarPresupuestoEmpresa() {
+    const cont = document.getElementById('listaPresupuestoEmpresa');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    const resp = await fetch(WORKER_URL + '/api/pos/presupuesto-empresa', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar el presupuesto.</div>'; return; }
+    const { items } = await resp.json();
+    presupuestoEmpresaCache = items || [];
+    renderizarPresupuestoEmpresa();
+  }
+
+  function renderizarPresupuestoEmpresa() {
+    const cont = document.getElementById('listaPresupuestoEmpresa');
+    const categorias = [...new Set(presupuestoEmpresaCache.map(i => i.categoria))];
+
+    if (categorias.length === 0) {
+      cont.innerHTML = '<div style="font-size:12.5px;opacity:0.6;">Todavía no hay ítems en el presupuesto.</div>';
+    } else {
+      cont.innerHTML = categorias.map(cat => {
+        const items = presupuestoEmpresaCache.filter(i => i.categoria === cat).sort((a, b) => a.orden - b.orden);
+        const subtotal = items.reduce((acc, i) => acc + Number(i.valor_mensual), 0);
+        return `
+          <div class="panel" style="max-width:none;margin-bottom:14px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <h2 style="margin:0;">${escaparHtml(cat)}</h2>
+              <strong style="color:var(--rosa-principal);">${formatearMoneda(subtotal)}</strong>
+            </div>
+            ${items.map(item => `
+              <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+                <input type="text" value="${escaparHtml(item.nombre_item)}" onblur="actualizarItemPresupuestoEmpresa('${item.id}', 'nombre_item', this.value)" style="flex:2;font-size:13px;padding:8px 10px;">
+                <input type="number" value="${item.valor_mensual}" min="0" step="1" onblur="actualizarItemPresupuestoEmpresa('${item.id}', 'valor_mensual', this.value)" style="flex:1;font-size:13px;padding:8px 10px;">
+                <button class="btn-quitar-pago" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => eliminarItemPresupuestoEmpresa('${item.id}'))" title="Eliminar">✕</button>
+              </div>
+            `).join('')}
+            <button class="btn-mini editar" style="margin-top:4px;" onclick="agregarItemPresupuestoEmpresa('${escaparHtml(cat)}')">+ Agregar ítem</button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    const totalGeneral = presupuestoEmpresaCache.reduce((acc, i) => acc + Number(i.valor_mensual), 0);
+    document.getElementById('totalPresupuestoEmpresa').textContent = formatearMoneda(totalGeneral);
+  }
+
+  async function actualizarItemPresupuestoEmpresa(id, campo, valor) {
+    ocultarMensaje('mensajePresupuestoEmpresa');
+    const cuerpo = { id };
+    cuerpo[campo] = campo === 'valor_mensual' ? (Number(valor) || 0) : valor.trim();
+
+    const item = presupuestoEmpresaCache.find(i => i.id === id);
+    if (item) item[campo] = cuerpo[campo];
+    renderizarPresupuestoEmpresa();
+
+    const resp = await fetch(WORKER_URL + '/api/pos/presupuesto-empresa/actualizar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify(cuerpo)
+    });
+    if (!resp.ok) mostrarMensaje('mensajePresupuestoEmpresa', 'No se pudo guardar el cambio.', 'error');
+  }
+
+  async function agregarItemPresupuestoEmpresa(categoria) {
+    ocultarMensaje('mensajePresupuestoEmpresa');
+    const nombre = await pedirTexto(`Nuevo ítem dentro de "${categoria}":`, 'Nombre del ítem', 'Ej: Plan de celular');
+    if (!nombre) return;
+
+    const resp = await fetch(WORKER_URL + '/api/pos/presupuesto-empresa', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ categoria, nombre_item: nombre })
+    });
+    if (!resp.ok) { mostrarMensaje('mensajePresupuestoEmpresa', 'No se pudo agregar el ítem.', 'error'); return; }
+    await cargarPresupuestoEmpresa();
+  }
+
+  async function eliminarItemPresupuestoEmpresa(id) {
+    const resp = await fetch(WORKER_URL + '/api/pos/presupuesto-empresa/eliminar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ id })
+    });
+    if (!resp.ok) { mostrarMensaje('mensajePresupuestoEmpresa', 'No se pudo eliminar.', 'error'); return; }
+    await cargarPresupuestoEmpresa();
   }
 
   function limpiarFiltroConsolidado() {
