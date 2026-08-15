@@ -10105,7 +10105,12 @@
             <div style="margin-top:0;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
               <label style="margin:0;font-size:11px;">Rol principal:</label>
               <select onchange="cambiarRolPrincipalUsuario('${u.user_id}', this.value)" style="width:auto;padding:6px 8px;font-size:12px;">
-                ${Object.keys(etiquetasRol).map(r => `<option value="${r}" ${u.rol === r ? 'selected' : ''}>${etiquetasRol[r]}</option>`).join('')}
+                <optgroup label="Roles básicos">
+                  ${Object.keys(etiquetasRol).map(r => `<option value="base:${r}" ${u.rol === r && !u.rol_personalizado_id ? 'selected' : ''}>${etiquetasRol[r]}</option>`).join('')}
+                </optgroup>
+                ${rolesPersonalizadosCache.length ? `<optgroup label="Roles personalizados">
+                  ${rolesPersonalizadosCache.map(r => `<option value="custom:${r.id}" ${u.rol_personalizado_id === r.id ? 'selected' : ''}>${escaparHtml(r.nombre)}</option>`).join('')}
+                </optgroup>` : ''}
               </select>
             </div>
             <div style="margin-top:8px;font-size:11px;">
@@ -10514,11 +10519,15 @@
     await cargarListaUsuarios();
   }
 
-  async function cambiarRolPrincipalUsuario(userId, rol) {
+  async function cambiarRolPrincipalUsuario(userId, valorSelect) {
+    const [tipo, valor] = valorSelect.split(':');
+    const cuerpo = tipo === 'custom'
+      ? { user_id: userId, rol_personalizado_id: valor }
+      : { user_id: userId, rol: valor };
     const resp = await fetch(WORKER_URL + '/api/pos/usuarios/rol-principal', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ user_id: userId, rol })
+      body: JSON.stringify(cuerpo)
     });
     if (!resp.ok) { mostrarMensaje('mensajeUsuarios', 'No se pudo cambiar el rol.', 'error'); await cargarListaUsuarios(); return; }
     await cargarListaUsuarios();
