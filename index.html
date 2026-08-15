@@ -10280,21 +10280,73 @@
   function mostrarOpcionesRapidasIA() {
     const cont = document.getElementById('mensajesChatAsistenteIA');
     const opciones = document.createElement('div');
+    opciones.id = 'bloqueOpcionesRapidasIA';
     opciones.style.cssText = 'display:flex;flex-direction:column;gap:6px;margin:4px 0 12px 0;';
     opciones.innerHTML = `
-      <button onclick="elegirOpcionRapidaIA('como_hacer')" style="text-align:left;padding:9px 12px;border-radius:10px;border:1.5px solid var(--rosa-medio);background:white;font-size:12.5px;cursor:pointer;">❓ Cómo hago algo en el sistema</button>
+      <button onclick="mostrarSubOpcionesIA('sistema')" style="text-align:left;padding:10px 12px;border-radius:10px;border:1.5px solid var(--rosa-medio);background:white;font-size:13px;font-weight:600;cursor:pointer;">⚙️ ¿Cómo funciona el sistema?</button>
       ${rolActual === 'administrador' ? `
-      <button onclick="elegirOpcionRapidaIA('cotizaciones')" style="text-align:left;padding:9px 12px;border-radius:10px;border:1.5px solid var(--rosa-medio);background:white;font-size:12.5px;cursor:pointer;">📎 Comparar cotizaciones de proveedores</button>
-      <button onclick="elegirOpcionRapidaIA('ventas_mes')" style="text-align:left;padding:9px 12px;border-radius:10px;border:1.5px solid var(--rosa-medio);background:white;font-size:12.5px;cursor:pointer;">📊 Ventas del mes</button>
-      <button onclick="elegirOpcionRapidaIA('rotacion')" style="text-align:left;padding:9px 12px;border-radius:10px;border:1.5px solid var(--rosa-medio);background:white;font-size:12.5px;cursor:pointer;">📦 Qué producto rota mejor</button>
-      <button onclick="elegirOpcionRapidaIA('presupuesto')" style="text-align:left;padding:9px 12px;border-radius:10px;border:1.5px solid var(--rosa-medio);background:white;font-size:12.5px;cursor:pointer;">💰 Presupuesto vs. lo gastado</button>
-      <button onclick="elegirOpcionRapidaIA('fe_contrapartida')" style="text-align:left;padding:9px 12px;border-radius:10px;border:1.5px solid var(--rosa-medio);background:white;font-size:12.5px;cursor:pointer;">🏦 Fórmula de contrapartida (Fondo Emprender)</button>
-      <button onclick="elegirOpcionRapidaIA('fe_condonacion')" style="text-align:left;padding:9px 12px;border-radius:10px;border:1.5px solid var(--rosa-medio);background:white;font-size:12.5px;cursor:pointer;">🏦 Requisitos para condonación (Fondo Emprender)</button>
+      <button onclick="mostrarSubOpcionesIA('numeros')" style="text-align:left;padding:10px 12px;border-radius:10px;border:1.5px solid var(--rosa-medio);background:white;font-size:13px;font-weight:600;cursor:pointer;">📊 ¿Cómo van mis números?</button>
+      <button onclick="mostrarSubOpcionesIA('fondo_emprender')" style="text-align:left;padding:10px 12px;border-radius:10px;border:1.5px solid var(--rosa-medio);background:white;font-size:13px;font-weight:600;cursor:pointer;">🏦 Fondo Emprender</button>
       ` : ''}
-      <button onclick="elegirOpcionRapidaIA('otro')" style="text-align:left;padding:9px 12px;border-radius:10px;border:1.5px dashed var(--rosa-principal);background:var(--rosa-suave);font-size:12.5px;cursor:pointer;font-weight:600;">💬 Escribir mi propia pregunta</button>
     `;
     cont.appendChild(opciones);
     cont.scrollTop = cont.scrollHeight;
+  }
+
+  const SUBOPCIONES_IA = {
+    sistema: {
+      titulo: '⚙️ ¿Cómo funciona el sistema? — elige un módulo:',
+      opciones: [
+        { valor: 'mod_ventas', texto: '🛍️ Punto de Venta' },
+        { valor: 'mod_compras', texto: '🛒 Compras y Gastos' },
+        { valor: 'mod_inventario', texto: '📦 Inventarios y Productos' },
+        { valor: 'mod_contabilidad', texto: '📊 Contabilidad e Impuestos' },
+        { valor: 'mod_talento', texto: '🗂️ Talento Humano' },
+        { valor: 'mod_bancos', texto: '🏦 Bancos y Tesorería' },
+        { valor: 'mod_reportes', texto: '📈 Reportes e Indicadores' },
+        { valor: 'como_hacer', texto: '❓ Otra duda de cómo hacer algo' },
+      ],
+    },
+    numeros: {
+      titulo: '📊 ¿Cómo van mis números? — elige una pregunta:',
+      opciones: [
+        { valor: 'ventas_mes', texto: '📊 Ventas del mes' },
+        { valor: 'rotacion', texto: '📦 Qué producto rota mejor' },
+        { valor: 'presupuesto', texto: '💰 Presupuesto vs. lo gastado' },
+      ],
+    },
+    fondo_emprender: {
+      titulo: '🏦 Fondo Emprender — elige una pregunta:',
+      opciones: [
+        { valor: 'cotizaciones', texto: '📎 Comparar cotizaciones de proveedores' },
+        { valor: 'fe_contrapartida', texto: '🏦 Fórmula de contrapartida' },
+        { valor: 'fe_condonacion', texto: '🏦 Requisitos para condonación' },
+      ],
+    },
+  };
+
+  function mostrarSubOpcionesIA(categoria) {
+    const bloqueAnterior = document.getElementById('bloqueOpcionesRapidasIA');
+    if (bloqueAnterior) bloqueAnterior.remove();
+
+    const cont = document.getElementById('mensajesChatAsistenteIA');
+    const grupo = SUBOPCIONES_IA[categoria];
+    const opciones = document.createElement('div');
+    opciones.id = 'bloqueOpcionesRapidasIA';
+    opciones.style.cssText = 'display:flex;flex-direction:column;gap:6px;margin:4px 0 12px 0;';
+    opciones.innerHTML = `
+      <div style="font-size:11.5px;opacity:0.6;font-weight:600;margin-bottom:2px;">${grupo.titulo}</div>
+      ${grupo.opciones.map(o => `<button onclick="elegirOpcionRapidaIA('${o.valor}')" style="text-align:left;padding:9px 12px;border-radius:10px;border:1.5px solid var(--rosa-medio);background:white;font-size:12.5px;cursor:pointer;">${o.texto}</button>`).join('')}
+      <button onclick="volverOpcionesPrincipalesIA()" style="text-align:left;padding:9px 12px;border-radius:10px;border:1.5px dashed var(--rosa-principal);background:var(--rosa-suave);font-size:12px;cursor:pointer;">← Volver</button>
+    `;
+    cont.appendChild(opciones);
+    cont.scrollTop = cont.scrollHeight;
+  }
+
+  function volverOpcionesPrincipalesIA() {
+    const bloqueAnterior = document.getElementById('bloqueOpcionesRapidasIA');
+    if (bloqueAnterior) bloqueAnterior.remove();
+    mostrarOpcionesRapidasIA();
   }
 
   function elegirOpcionRapidaIA(opcion) {
@@ -10324,6 +10376,13 @@
       input.value = '¿Cómo hago para ';
       input.focus();
       return;
+    } else if (opcion.startsWith('mod_')) {
+      const nombresModulo = {
+        mod_ventas: 'Punto de Venta', mod_compras: 'Compras y Gastos', mod_inventario: 'Inventarios y Productos',
+        mod_contabilidad: 'Contabilidad e Impuestos', mod_talento: 'Talento Humano', mod_bancos: 'Bancos y Tesorería',
+        mod_reportes: 'Reportes e Indicadores',
+      };
+      input.value = `Explícame cómo funciona el módulo de ${nombresModulo[opcion]} — qué pantallas tiene y para qué sirve cada una.`;
     } else {
       input.focus();
       return;
