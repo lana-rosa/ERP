@@ -2145,26 +2145,39 @@
     <div class="subtitulo">Costo de materiales + mano de obra por producto, comparado contra el precio de venta, para ver el margen real de cada pieza.</div>
   </div>
 
-  <div id="valorHoraManoObra" style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;margin-bottom:12px;font-size:12.5px;font-weight:600;"></div>
-
-  <div class="panel" style="max-width:420px;margin-bottom:20px;">
-    <h2>🧶 Precio por gramo de hilo</h2>
-    <div class="subtitulo">Se usa para estimar el costo de materiales cuando el Taller no registró el consumo real de un pedido específico — configura el peso, el costo de ojos y de empaque de cada producto terminado desde Inventario.</div>
-    <input type="number" id="inputPrecioGramoHilo" min="0" step="1" placeholder="Ej: 45">
-    <button class="btn-secundario" style="width:auto;margin-top:8px;" onclick="guardarPrecioGramoHilo()">Guardar</button>
-    <div class="mensaje" id="mensajePrecioGramoHilo"></div>
+  <div class="filtro-tipo" style="margin-bottom:20px;">
+    <button class="chip-filtro activo" data-subtab-btn="costeoReal" onclick="mostrarSubTabGrupo('costeoReal', 'subtabCosteoAmigurumis', this)">🧶 Amigurumis y productos tejidos</button>
+    <button class="chip-filtro" data-subtab-btn="costeoReal" onclick="mostrarSubTabGrupo('costeoReal', 'subtabCosteoClases', this)">🎓 Cursos y clases</button>
+    <button class="chip-filtro" data-subtab-btn="costeoReal" onclick="mostrarSubTabGrupo('costeoReal', 'subtabCosteoConfig', this)">⚙️ Configuración</button>
   </div>
 
-  <div class="panel" style="max-width:none;max-height:none;margin-bottom:20px;">
-    <h2>🧶 Amigurumis y productos tejidos (del CRM)</h2>
-    <div class="subtitulo">Costo de mano de obra = horas de tejido registradas en el CRM × valor de la hora (SMLV + prestaciones + ARL + parafiscales). Costo de materiales = lo consumido real del inventario para ese pedido — o, si no se registró, un estimado por el peso configurado del producto (marcado como "estimado").</div>
-    <div id="listaCosteoAmigurumis" style="margin-top:10px;"><div class="cargando">Cargando...</div></div>
+  <div id="subtabCosteoAmigurumis" data-subtab-grupo="costeoReal">
+    <div id="valorHoraManoObra" style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;margin-bottom:12px;font-size:12.5px;font-weight:600;"></div>
+    <div class="panel" style="max-width:none;max-height:none;">
+      <h2>🧶 Amigurumis y productos tejidos (del CRM)</h2>
+      <div class="subtitulo">Costo de mano de obra = horas de tejido registradas en el CRM × valor de la hora (SMLV + prestaciones + ARL + parafiscales). Costo de materiales = lo consumido real del inventario para ese pedido — o, si no se registró, un estimado por el peso configurado del producto (marcado como "estimado").</div>
+      <input type="text" id="buscarCosteoAmigurumis" placeholder="🔍 Buscar por nombre de producto..." oninput="filtrarCosteoAmigurumis()" style="margin-bottom:10px;">
+      <div id="listaCosteoAmigurumis"><div class="cargando">Cargando...</div></div>
+    </div>
   </div>
 
-  <div class="panel" style="max-width:none;max-height:none;">
-    <h2>🎓 Cursos y clases</h2>
-    <div class="subtitulo">Margen = valor de la clase − costo de mano de obra (según la duración registrada al vender la clase).</div>
-    <div id="listaCosteoClases" style="margin-top:10px;"><div class="cargando">Cargando...</div></div>
+  <div id="subtabCosteoClases" data-subtab-grupo="costeoReal" class="oculto">
+    <div class="panel" style="max-width:none;max-height:none;">
+      <h2>🎓 Cursos y clases</h2>
+      <div class="subtitulo">Margen = valor de la clase − costo de mano de obra (según la duración registrada al vender la clase).</div>
+      <input type="text" id="buscarCosteoClases" placeholder="🔍 Buscar por nombre de clase/curso..." oninput="filtrarCosteoClases()" style="margin-bottom:10px;">
+      <div id="listaCosteoClases"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+
+  <div id="subtabCosteoConfig" data-subtab-grupo="costeoReal" class="oculto">
+    <div class="panel" style="max-width:420px;">
+      <h2>🧶 Precio por gramo de hilo</h2>
+      <div class="subtitulo">Se usa para estimar el costo de materiales cuando el Taller no registró el consumo real de un pedido específico — configura el peso, el costo de ojos y de empaque de cada producto terminado desde Inventario.</div>
+      <input type="number" id="inputPrecioGramoHilo" min="0" step="1" placeholder="Ej: 45">
+      <button class="btn-secundario" style="width:auto;margin-top:8px;" onclick="guardarPrecioGramoHilo()">Guardar</button>
+      <div class="mensaje" id="mensajePrecioGramoHilo"></div>
+    </div>
   </div>
 </div>
 
@@ -2998,6 +3011,7 @@
     <div class="panel">
       <h2>Códigos existentes</h2>
       <div class="mensaje" id="mensajeCodigosDescuento"></div>
+      <input type="text" id="buscarCodigoDescuento" placeholder="🔍 Código o descripción..." oninput="filtrarCodigosDescuento()" style="margin-bottom:10px;">
       <div id="listaCodigosDescuento"><div class="cargando">Cargando...</div></div>
     </div>
   </div>
@@ -3504,6 +3518,7 @@
         <button class="chip-filtro" data-filtro-oc="enviada" onclick="cambiarFiltroOrdenesCompra('enviada', this)">Enviadas</button>
         <button class="chip-filtro" data-filtro-oc="recibida" onclick="cambiarFiltroOrdenesCompra('recibida', this)">Recibidas</button>
       </div>
+      <input type="text" id="buscarOrdenCompra" placeholder="🔍 N° orden o proveedor..." oninput="filtrarOrdenesCompra()" style="margin-bottom:10px;">
       <div id="listaOrdenesCompra"><div class="cargando">Cargando...</div></div>
     </div>
   </div>
@@ -3991,6 +4006,7 @@
     <button class="btn-mini desactivar" onclick="limpiarFiltrosTrazabilidad()" style="margin-bottom:1px;">Quitar filtros</button>
   </div>
   <div class="panel" style="max-width:none;max-height:none;">
+    <input type="text" id="buscarTrazabilidad" placeholder="🔍 Buscar en el detalle..." oninput="filtrarTrazabilidad()" style="margin-bottom:10px;">
     <div id="listaTrazabilidad"><div class="cargando">Cargando...</div></div>
   </div>
 </div>
@@ -9883,6 +9899,8 @@
     await cargarCodigosDescuento();
   }
 
+  let codigosDescuentoCache = [];
+
   async function cargarCodigosDescuento() {
     const contenedor = document.getElementById('listaCodigosDescuento');
     contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
@@ -9890,7 +9908,21 @@
     const resp = await fetch(WORKER_URL + '/api/pos/descuentos', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
     if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
     const { codigos } = await resp.json();
-    if (!codigos || codigos.length === 0) { contenedor.innerHTML = '<div class="cargando">Todavía no has creado ningún código.</div>'; return; }
+    codigosDescuentoCache = codigos || [];
+    renderizarCodigosDescuento(codigosDescuentoCache);
+  }
+
+  function filtrarCodigosDescuento() {
+    const texto = document.getElementById('buscarCodigoDescuento').value.trim().toLowerCase();
+    if (!texto) { renderizarCodigosDescuento(codigosDescuentoCache); return; }
+    renderizarCodigosDescuento(codigosDescuentoCache.filter(c =>
+      (c.codigo || '').toLowerCase().includes(texto) || (c.descripcion || '').toLowerCase().includes(texto)
+    ));
+  }
+
+  function renderizarCodigosDescuento(codigos) {
+    const contenedor = document.getElementById('listaCodigosDescuento');
+    if (!codigos || codigos.length === 0) { contenedor.innerHTML = '<div class="cargando">Sin códigos que coincidan.</div>'; return; }
 
     contenedor.innerHTML = `
       <div class="tabla-lista">
@@ -10965,6 +10997,8 @@
     cargarTrazabilidad();
   }
 
+  let trazabilidadCache = [];
+
   async function cargarTrazabilidad() {
     const contenedor = document.getElementById('listaTrazabilidad');
     contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
@@ -10983,6 +11017,18 @@
     if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
 
     const { registros } = await resp.json();
+    trazabilidadCache = registros || [];
+    renderizarTrazabilidad(trazabilidadCache);
+  }
+
+  function filtrarTrazabilidad() {
+    const texto = document.getElementById('buscarTrazabilidad').value.trim().toLowerCase();
+    if (!texto) { renderizarTrazabilidad(trazabilidadCache); return; }
+    renderizarTrazabilidad(trazabilidadCache.filter(r => (r.detalle || '').toLowerCase().includes(texto) || (r.usuario_nombre || '').toLowerCase().includes(texto)));
+  }
+
+  function renderizarTrazabilidad(registros) {
+    const contenedor = document.getElementById('listaTrazabilidad');
     if (!registros || registros.length === 0) { contenedor.innerHTML = '<div class="cargando">No hay actividad registrada con estos filtros.</div>'; return; }
 
     contenedor.innerHTML = `
@@ -11995,7 +12041,25 @@
 
   async function mostrarPantallaCosteoReal() {
     mostrarPantalla('pantallaCosteoReal');
+    mostrarSubTabGrupo('costeoReal', 'subtabCosteoAmigurumis', document.querySelector('[data-subtab-btn="costeoReal"]'));
+    document.getElementById('buscarCosteoAmigurumis').value = '';
+    document.getElementById('buscarCosteoClases').value = '';
     await cargarCosteoReal();
+  }
+
+  let costeoAmigurumisCache = [];
+  let costeoClasesCache = [];
+
+  function filtrarCosteoAmigurumis() {
+    const texto = document.getElementById('buscarCosteoAmigurumis').value.trim().toLowerCase();
+    const filtrados = texto ? costeoAmigurumisCache.filter(p => (p.descripcion || '').toLowerCase().includes(texto)) : costeoAmigurumisCache;
+    renderizarCosteoAmigurumis(filtrados);
+  }
+
+  function filtrarCosteoClases() {
+    const texto = document.getElementById('buscarCosteoClases').value.trim().toLowerCase();
+    const filtradas = texto ? costeoClasesCache.filter(c => (c.descripcion || '').toLowerCase().includes(texto)) : costeoClasesCache;
+    renderizarCosteoClases(filtradas);
   }
 
   async function cargarCosteoReal() {
@@ -12011,49 +12075,59 @@
       const inputPrecioGramo = document.getElementById('inputPrecioGramoHilo');
       if (inputPrecioGramo && document.activeElement !== inputPrecioGramo) inputPrecioGramo.value = precioGramoHiloCache || '';
 
-      const contA = document.getElementById('listaCosteoAmigurumis');
-      contA.innerHTML = productos.length === 0 ? '<div class="cargando">Sin pedidos con precio registrado en el CRM.</div>' : `
-        <div class="tabla-lista">
-          <div class="tabla-lista-header header-rosa" style="grid-template-columns:1fr 90px 100px 100px 100px 100px 90px 90px;">
-            <span>PRODUCTO</span><span style="text-align:right;">HORAS</span><span style="text-align:right;">MANO DE OBRA</span><span style="text-align:right;">MATERIALES</span><span style="text-align:right;">COSTO TOTAL</span><span style="text-align:right;">PRECIO VENTA</span><span style="text-align:right;">MARGEN</span><span style="text-align:right;">%</span>
-          </div>
-          ${productos.map(p => `
-            <div class="tabla-lista-fila" style="grid-template-columns:1fr 90px 100px 100px 100px 100px 90px 90px;cursor:default;">
-              <span>${escaparHtml(p.descripcion || 'Sin descripción')}${p.numero_pedido ? ' <span style="opacity:0.5;">#' + escaparHtml(p.numero_pedido) + '</span>' : ''}</span>
-              <span style="text-align:right;">${p.horas_tejido}</span>
-              <span style="text-align:right;">${formatearMoneda(p.mano_obra)}</span>
-              <span style="text-align:right;">${formatearMoneda(p.materiales)}${p.materiales_son_estimados ? ' <span style="font-size:9.5px;opacity:0.6;" title="No hay consumo real registrado en el Taller — este valor es un estimado por el peso configurado del producto.">(estimado)</span>' : ''}</span>
-              <span style="text-align:right;font-weight:700;">${formatearMoneda(p.costo_total)}</span>
-              <span style="text-align:right;">${formatearMoneda(p.precio_venta)}</span>
-              <span style="text-align:right;color:${p.margen >= 0 ? 'var(--verde-exito)' : 'var(--rojo-error)'};font-weight:700;">${formatearMoneda(p.margen)}</span>
-              <span style="text-align:right;">${p.margen_pct}%</span>
-            </div>
-          `).join('')}
-        </div>
-      `;
+      costeoAmigurumisCache = productos || [];
+      renderizarCosteoAmigurumis(costeoAmigurumisCache);
     }
 
     if (respClases.ok) {
       const { clases } = await respClases.json();
-      const contC = document.getElementById('listaCosteoClases');
-      contC.innerHTML = clases.length === 0 ? '<div class="cargando">Sin clases registradas.</div>' : `
-        <div class="tabla-lista">
-          <div class="tabla-lista-header header-rosa" style="grid-template-columns:1fr 90px 110px 110px 100px 90px;">
-            <span>CLASE/CURSO</span><span style="text-align:right;">HORAS</span><span style="text-align:right;">MANO DE OBRA</span><span style="text-align:right;">VALOR CLASE</span><span style="text-align:right;">MARGEN</span><span style="text-align:right;">%</span>
-          </div>
-          ${clases.map(c => `
-            <div class="tabla-lista-fila" style="grid-template-columns:1fr 90px 110px 110px 100px 90px;cursor:default;">
-              <span>${escaparHtml(c.descripcion)}</span>
-              <span style="text-align:right;">${c.duracion_horas}</span>
-              <span style="text-align:right;">${formatearMoneda(c.mano_obra)}</span>
-              <span style="text-align:right;">${formatearMoneda(c.valor_clase)}</span>
-              <span style="text-align:right;color:${c.margen >= 0 ? 'var(--verde-exito)' : 'var(--rojo-error)'};font-weight:700;">${formatearMoneda(c.margen)}</span>
-              <span style="text-align:right;">${c.margen_pct}%</span>
-            </div>
-          `).join('')}
-        </div>
-      `;
+      costeoClasesCache = clases || [];
+      renderizarCosteoClases(costeoClasesCache);
     }
+  }
+
+  function renderizarCosteoAmigurumis(productos) {
+    const contA = document.getElementById('listaCosteoAmigurumis');
+    contA.innerHTML = productos.length === 0 ? '<div class="cargando">Sin productos que coincidan.</div>' : `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:1fr 90px 100px 100px 100px 100px 90px 90px;">
+          <span>PRODUCTO</span><span style="text-align:right;">HORAS</span><span style="text-align:right;">MANO DE OBRA</span><span style="text-align:right;">MATERIALES</span><span style="text-align:right;">COSTO TOTAL</span><span style="text-align:right;">PRECIO VENTA</span><span style="text-align:right;">MARGEN</span><span style="text-align:right;">%</span>
+        </div>
+        ${productos.map(p => `
+          <div class="tabla-lista-fila" style="grid-template-columns:1fr 90px 100px 100px 100px 100px 90px 90px;cursor:default;">
+            <span>${escaparHtml(p.descripcion || 'Sin descripción')}${p.numero_pedido ? ' <span style="opacity:0.5;">#' + escaparHtml(p.numero_pedido) + '</span>' : ''}</span>
+            <span style="text-align:right;">${p.horas_tejido}</span>
+            <span style="text-align:right;">${formatearMoneda(p.mano_obra)}</span>
+            <span style="text-align:right;">${formatearMoneda(p.materiales)}${p.materiales_son_estimados ? ' <span style="font-size:9.5px;opacity:0.6;" title="No hay consumo real registrado en el Taller — este valor es un estimado por el peso configurado del producto.">(estimado)</span>' : ''}</span>
+            <span style="text-align:right;font-weight:700;">${formatearMoneda(p.costo_total)}</span>
+            <span style="text-align:right;">${formatearMoneda(p.precio_venta)}</span>
+            <span style="text-align:right;color:${p.margen >= 0 ? 'var(--verde-exito)' : 'var(--rojo-error)'};font-weight:700;">${formatearMoneda(p.margen)}</span>
+            <span style="text-align:right;">${p.margen_pct}%</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  function renderizarCosteoClases(clases) {
+    const contC = document.getElementById('listaCosteoClases');
+    contC.innerHTML = clases.length === 0 ? '<div class="cargando">Sin clases que coincidan.</div>' : `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:1fr 90px 110px 110px 100px 90px;">
+          <span>CLASE/CURSO</span><span style="text-align:right;">HORAS</span><span style="text-align:right;">MANO DE OBRA</span><span style="text-align:right;">VALOR CLASE</span><span style="text-align:right;">MARGEN</span><span style="text-align:right;">%</span>
+        </div>
+        ${clases.map(c => `
+          <div class="tabla-lista-fila" style="grid-template-columns:1fr 90px 110px 110px 100px 90px;cursor:default;">
+            <span>${escaparHtml(c.descripcion)}</span>
+            <span style="text-align:right;">${c.duracion_horas}</span>
+            <span style="text-align:right;">${formatearMoneda(c.mano_obra)}</span>
+            <span style="text-align:right;">${formatearMoneda(c.valor_clase)}</span>
+            <span style="text-align:right;color:${c.margen >= 0 ? 'var(--verde-exito)' : 'var(--rojo-error)'};font-weight:700;">${formatearMoneda(c.margen)}</span>
+            <span style="text-align:right;">${c.margen_pct}%</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
   }
 
   let canalIndicadorActual = 'tienda';
@@ -15569,8 +15643,22 @@
     if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
     const { ordenes } = await resp.json();
     ordenesCompraCache = ordenes || [];
+    renderizarOrdenesCompra(ordenesCompraCache);
+  }
 
-    if (ordenes.length === 0) { cont.innerHTML = '<div class="cargando">Sin órdenes todavía.</div>'; return; }
+  function filtrarOrdenesCompra() {
+    const texto = document.getElementById('buscarOrdenCompra').value.trim().toLowerCase();
+    if (!texto) { renderizarOrdenesCompra(ordenesCompraCache); return; }
+    const filtradas = ordenesCompraCache.filter(o => {
+      const proveedor = (o.proveedor ? o.proveedor.nombre_completo : '').toLowerCase();
+      return proveedor.includes(texto) || (o.numero_orden || '').toLowerCase().includes(texto);
+    });
+    renderizarOrdenesCompra(filtradas);
+  }
+
+  function renderizarOrdenesCompra(ordenes) {
+    const cont = document.getElementById('listaOrdenesCompra');
+    if (!ordenes || ordenes.length === 0) { cont.innerHTML = '<div class="cargando">Sin órdenes que coincidan.</div>'; return; }
 
     const etiquetasEstado = { enviada: '📤 Enviada', recibida: '✅ Recibida', cancelada: '❌ Cancelada' };
 
