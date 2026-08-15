@@ -887,6 +887,7 @@
       <button class="sidebar-depto-header" id="headerDeptoReportes" onclick="toggleSidebarDepto('deptoReportesSubmenu', 'headerDeptoReportes')">📈 Reportes e Indicadores <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoReportesSubmenu">
         <button class="nav-btn" id="nav-reportes-financieros" onclick="mostrarPantallaReportesFinancieros()"><span class="nav-icon">📊</span> Informes de Ventas</button>
+        <button class="nav-btn" id="nav-costeo-real" onclick="mostrarPantallaCosteoReal()"><span class="nav-icon">🧮</span> Costeo Real</button>
         <button class="nav-btn" id="nav-presupuesto-empresa" onclick="mostrarPantallaPresupuestoEmpresa()"><span class="nav-icon">💰</span> Presupuesto</button>
       </div>
     </div>
@@ -2053,7 +2054,6 @@
   <div class="filtro-tipo" style="margin-bottom:20px;">
     <button class="chip-filtro activo" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinConsolidado', this); cargarConsolidadoVentas();">📊 Consolidado de ventas</button>
     <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinIndicadores', this); cargarIndicadoresVentas();">📈 Indicadores de ventas</button>
-    <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinCosteo', this); cargarCosteoReal();">🧮 Costeo real (materiales + mano de obra)</button>
     <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinRanking', this); cargarRankingVentas();">🏆 Ranking (productos, clientes, vendedoras)</button>
     <button class="chip-filtro" data-subtab-btn="reportesFin" onclick="mostrarSubTabGrupo('reportesFin', 'subtabFinBimestral', this); cargarIngresosBimestralesRST();">📅 Ingresos bimestrales (RST)</button>
   </div>
@@ -2092,22 +2092,6 @@
     </div>
     <div id="notaIndicadoresVentas" class="oculto" style="background:#fff3cd;color:#856404;border-radius:9px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;"></div>
     <div id="listaIndicadoresVentas"><div class="cargando">Cargando...</div></div>
-  </div>
-
-  <div id="subtabFinCosteo" data-subtab-grupo="reportesFin" class="oculto">
-    <div id="valorHoraManoObra" style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;font-weight:600;"></div>
-
-    <div class="panel" style="max-width:none;max-height:none;margin-bottom:20px;">
-      <h2>🧶 Amigurumis y productos tejidos (del CRM)</h2>
-      <div class="subtitulo">Costo de mano de obra = horas de tejido registradas en el CRM × valor de la hora (SMLV + prestaciones + ARL + parafiscales). Costo de materiales = lo consumido del inventario para ese pedido.</div>
-      <div id="listaCosteoAmigurumis" style="margin-top:10px;"><div class="cargando">Cargando...</div></div>
-    </div>
-
-    <div class="panel" style="max-width:none;max-height:none;">
-      <h2>🎓 Cursos y clases</h2>
-      <div class="subtitulo">Margen = valor de la clase − costo de mano de obra (según la duración registrada al vender la clase).</div>
-      <div id="listaCosteoClases" style="margin-top:10px;"><div class="cargando">Cargando...</div></div>
-    </div>
   </div>
 
   <div id="subtabFinRanking" data-subtab-grupo="reportesFin" class="oculto">
@@ -2152,6 +2136,36 @@
   </div>
 
   <div id="subtabFinPresupuestos" class="oculto"></div>
+</div>
+
+<!-- ===== PANTALLA: COSTEO REAL ===== -->
+<div id="pantallaCosteoReal" class="oculto contenido">
+  <div class="page-header">
+    <h1>🧮 Costeo Real</h1>
+    <div class="subtitulo">Costo de materiales + mano de obra por producto, comparado contra el precio de venta, para ver el margen real de cada pieza.</div>
+  </div>
+
+  <div id="valorHoraManoObra" style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;margin-bottom:12px;font-size:12.5px;font-weight:600;"></div>
+
+  <div class="panel" style="max-width:420px;margin-bottom:20px;">
+    <h2>🧶 Precio por gramo de hilo</h2>
+    <div class="subtitulo">Se usa para estimar el costo de materiales cuando el Taller no registró el consumo real de un pedido específico — configura el peso, el costo de ojos y de empaque de cada producto terminado desde Inventario.</div>
+    <input type="number" id="inputPrecioGramoHilo" min="0" step="1" placeholder="Ej: 45">
+    <button class="btn-secundario" style="width:auto;margin-top:8px;" onclick="guardarPrecioGramoHilo()">Guardar</button>
+    <div class="mensaje" id="mensajePrecioGramoHilo"></div>
+  </div>
+
+  <div class="panel" style="max-width:none;max-height:none;margin-bottom:20px;">
+    <h2>🧶 Amigurumis y productos tejidos (del CRM)</h2>
+    <div class="subtitulo">Costo de mano de obra = horas de tejido registradas en el CRM × valor de la hora (SMLV + prestaciones + ARL + parafiscales). Costo de materiales = lo consumido real del inventario para ese pedido — o, si no se registró, un estimado por el peso configurado del producto (marcado como "estimado").</div>
+    <div id="listaCosteoAmigurumis" style="margin-top:10px;"><div class="cargando">Cargando...</div></div>
+  </div>
+
+  <div class="panel" style="max-width:none;max-height:none;">
+    <h2>🎓 Cursos y clases</h2>
+    <div class="subtitulo">Margen = valor de la clase − costo de mano de obra (según la duración registrada al vender la clase).</div>
+    <div id="listaCosteoClases" style="margin-top:10px;"><div class="cargando">Cargando...</div></div>
+  </div>
 </div>
 
 <!-- ===== PANTALLA: PRESUPUESTO DE LA EMPRESA ===== -->
@@ -4590,7 +4604,7 @@
   });
 
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -4614,6 +4628,7 @@
       pantallaTurnoActivo: 'nav-turno',
       pantallaReportes: 'nav-reportes',
       pantallaReportesFinancieros: 'nav-reportes-financieros',
+      pantallaCosteoReal: 'nav-costeo-real',
       pantallaPresupuestoEmpresa: 'nav-presupuesto-empresa',
       pantallaNomina: 'nav-nomina',
       pantallaTalentoHumano: 'nav-talento-humano',
@@ -4983,6 +4998,7 @@
     mostrar('nav-nomina', esAdmin);
     mostrar('nav-talento-humano', esAdmin);
     mostrar('nav-reportes-financieros', esAdmin || esContador);
+    mostrar('nav-costeo-real', esAdmin || esContador);
     mostrar('nav-presupuesto-empresa', esAdmin || esContador);
     mostrar('nav-estados-financieros', esAdmin || esContador);
     mostrar('nav-cuentas-pendientes', esAdmin || esContador);
@@ -6702,6 +6718,7 @@
     await cargarCategoriasInventario();
     cargarCategoriasParaFormulario();
     await cargarProveedoresParaSelectorInventario();
+    await cargarPrecioGramoHilo();
 
     // El Taller ya no maneja inventario de producto terminado — solo insumos/mercería.
     const esTallerForzado = codigoDeptoForzado === '03';
@@ -6987,7 +7004,7 @@
 
     const { data, error } = await supabaseClient
       .from('inventario_items')
-      .select('id, tipo, nombre, sku, stock_actual, stock_minimo, precio_venta, costo_promedio_ponderado, unidad_medida, activo, centro_costo_id, categoria_id, proveedor_tercero_id, proveedor:proveedor_tercero_id(nombre_completo)')
+      .select('id, tipo, nombre, sku, stock_actual, stock_minimo, precio_venta, costo_promedio_ponderado, unidad_medida, activo, centro_costo_id, categoria_id, proveedor_tercero_id, peso_gramos, costo_ojos, costo_empaque, proveedor:proveedor_tercero_id(nombre_completo)')
       .order('nombre', { ascending: true });
 
     if (error) {
@@ -7099,6 +7116,17 @@
             <div class="campo-mini"><label>Stock actual</label><input type="number" min="0" step="1" value="${item.stock_actual}" id="edit-stock-${item.id}"></div>
             <div class="campo-mini"><label>Stock mínimo</label><input type="number" min="0" step="1" value="${item.stock_minimo}" id="edit-stockmin-${item.id}"></div>
           </div>
+          ${item.tipo === 'producto_terminado' ? `
+            <div style="margin-top:10px;padding:10px 12px;background:var(--rosa-suave);border-radius:9px;">
+              <div style="font-size:11.5px;font-weight:700;opacity:0.7;margin-bottom:6px;">🧶 Costeo por peso (opcional — se usa como respaldo cuando el Taller no registró el consumo real de un pedido)</div>
+              <div class="grid-campos-inventario">
+                <div class="campo-mini"><label>Peso (gramos)</label><input type="number" min="0" step="1" value="${item.peso_gramos || ''}" id="edit-peso-${item.id}" oninput="actualizarCostoEstimadoPeso('${item.id}')" placeholder="Ej: 120"></div>
+                <div class="campo-mini"><label>Costo ojos</label><input type="number" min="0" step="1" value="${item.costo_ojos || ''}" id="edit-ojos-${item.id}" oninput="actualizarCostoEstimadoPeso('${item.id}')" placeholder="Ej: 1500"></div>
+                <div class="campo-mini"><label>Costo empaque</label><input type="number" min="0" step="1" value="${item.costo_empaque || ''}" id="edit-empaque-${item.id}" oninput="actualizarCostoEstimadoPeso('${item.id}')" placeholder="Ej: 2000"></div>
+              </div>
+              <div style="font-size:12px;margin-top:6px;">Costo de materiales estimado: <strong id="costoEstimadoPeso-${item.id}">${formatearMoneda(calcularCostoEstimadoPeso(item.peso_gramos, item.costo_ojos, item.costo_empaque))}</strong></div>
+            </div>
+          ` : ''}
           <div class="fila-inventario-acciones">
             <button class="btn-mini guardar" onclick="guardarEdicionProducto('${item.id}')">Guardar cambios</button>
             <button class="btn-mini editar" onclick="event.stopPropagation(); mostrarKardexProducto('${item.id}', '${escaparHtml(item.nombre)}')">📖 Ver Kardex</button>
@@ -7199,6 +7227,46 @@
     `;
   }
 
+  let precioGramoHiloCache = 0;
+
+  async function cargarPrecioGramoHilo() {
+    const resp = await fetch(WORKER_URL + '/api/pos/config-empresa', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (resp.ok) {
+      const datos = await resp.json();
+      precioGramoHiloCache = Number(datos.precio_gramo_hilo) || 0;
+    }
+  }
+
+  function calcularCostoEstimadoPeso(pesoGramos, costoOjos, costoEmpaque) {
+    return (Number(pesoGramos) || 0) * precioGramoHiloCache + (Number(costoOjos) || 0) + (Number(costoEmpaque) || 0);
+  }
+
+  function actualizarCostoEstimadoPeso(itemId) {
+    const peso = document.getElementById(`edit-peso-${itemId}`).value;
+    const ojos = document.getElementById(`edit-ojos-${itemId}`).value;
+    const empaque = document.getElementById(`edit-empaque-${itemId}`).value;
+    document.getElementById(`costoEstimadoPeso-${itemId}`).textContent = formatearMoneda(calcularCostoEstimadoPeso(peso, ojos, empaque));
+  }
+
+  async function guardarPrecioGramoHilo() {
+    ocultarMensaje('mensajePrecioGramoHilo');
+    const valor = Number(document.getElementById('inputPrecioGramoHilo').value);
+    if (isNaN(valor) || valor < 0) { mostrarMensaje('mensajePrecioGramoHilo', 'Escribe un precio por gramo válido.', 'error'); return; }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/config-empresa/precio-gramo-hilo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ precio_gramo_hilo: valor })
+    });
+    if (!resp.ok) { mostrarMensaje('mensajePrecioGramoHilo', 'No se pudo guardar.', 'error'); return; }
+
+    precioGramoHiloCache = valor;
+    mostrarMensaje('mensajePrecioGramoHilo', '✅ Guardado — ya aplica a todos los cálculos de costeo por peso.', 'exito');
+    if (typeof cargarCosteoReal === 'function' && document.getElementById('pantallaCosteoReal') && !document.getElementById('pantallaCosteoReal').classList.contains('oculto')) {
+      await cargarCosteoReal();
+    }
+  }
+
   function activarEdicionProducto(itemId) {
     if (rolActual !== 'administrador') return;
     itemInventarioEditandoId = itemInventarioEditandoId === itemId ? null : itemId;
@@ -7232,6 +7300,16 @@
       proveedor_tercero_id: proveedorEl ? (proveedorEl.value || null) : null,
       updated_at: new Date().toISOString()
     };
+
+    const itemActual = inventarioGestionCompleto.find(i => i.id === itemId);
+    if (itemActual && itemActual.tipo === 'producto_terminado') {
+      const pesoEl = document.getElementById(`edit-peso-${itemId}`);
+      const ojosEl = document.getElementById(`edit-ojos-${itemId}`);
+      const empaqueEl = document.getElementById(`edit-empaque-${itemId}`);
+      if (pesoEl) cambios.peso_gramos = pesoEl.value ? Number(pesoEl.value) : null;
+      if (ojosEl) cambios.costo_ojos = ojosEl.value ? Number(ojosEl.value) : null;
+      if (empaqueEl) cambios.costo_empaque = empaqueEl.value ? Number(empaqueEl.value) : null;
+    }
 
     const { error } = await supabaseClient
       .from('inventario_items')
@@ -9438,6 +9516,7 @@
     { clave: 'nav-transferencias-internas', etiqueta: '　　Transferencias caja/banco' },
     { clave: 'deptoReportesGrupo', etiqueta: '📈 Reportes e Indicadores (grupo completo)' },
     { clave: 'nav-reportes-financieros', etiqueta: '　　Informes de Ventas' },
+    { clave: 'nav-costeo-real', etiqueta: '　　Costeo Real' },
     { clave: 'nav-presupuesto-empresa', etiqueta: '　　Presupuesto' },
     { clave: 'deptoFondoEmprenderGrupo', etiqueta: '🏦 Fondo Emprender (grupo completo)' },
     { clave: 'nav-calendario', etiqueta: '📅 Calendario del equipo' },
@@ -11910,6 +11989,11 @@
   }
 
 
+  async function mostrarPantallaCosteoReal() {
+    mostrarPantalla('pantallaCosteoReal');
+    await cargarCosteoReal();
+  }
+
   async function cargarCosteoReal() {
     const [respAmigurumis, respClases] = await Promise.all([
       fetch(WORKER_URL + '/api/pos/crm/costos-productos', { headers: { Authorization: 'Bearer ' + sesionActual.token } }),
@@ -11917,8 +12001,11 @@
     ]);
 
     if (respAmigurumis.ok) {
-      const { valor_hora_mano_obra, productos } = await respAmigurumis.json();
+      const { valor_hora_mano_obra, precio_gramo_hilo, productos } = await respAmigurumis.json();
       document.getElementById('valorHoraManoObra').textContent = `💰 Valor de la hora de mano de obra (SMLV + prestaciones + ARL + parafiscales): ${formatearMoneda(valor_hora_mano_obra)}`;
+      precioGramoHiloCache = Number(precio_gramo_hilo) || 0;
+      const inputPrecioGramo = document.getElementById('inputPrecioGramoHilo');
+      if (inputPrecioGramo && document.activeElement !== inputPrecioGramo) inputPrecioGramo.value = precioGramoHiloCache || '';
 
       const contA = document.getElementById('listaCosteoAmigurumis');
       contA.innerHTML = productos.length === 0 ? '<div class="cargando">Sin pedidos con precio registrado en el CRM.</div>' : `
@@ -11931,7 +12018,7 @@
               <span>${escaparHtml(p.descripcion || 'Sin descripción')}${p.numero_pedido ? ' <span style="opacity:0.5;">#' + escaparHtml(p.numero_pedido) + '</span>' : ''}</span>
               <span style="text-align:right;">${p.horas_tejido}</span>
               <span style="text-align:right;">${formatearMoneda(p.mano_obra)}</span>
-              <span style="text-align:right;">${formatearMoneda(p.materiales)}</span>
+              <span style="text-align:right;">${formatearMoneda(p.materiales)}${p.materiales_son_estimados ? ' <span style="font-size:9.5px;opacity:0.6;" title="No hay consumo real registrado en el Taller — este valor es un estimado por el peso configurado del producto.">(estimado)</span>' : ''}</span>
               <span style="text-align:right;font-weight:700;">${formatearMoneda(p.costo_total)}</span>
               <span style="text-align:right;">${formatearMoneda(p.precio_venta)}</span>
               <span style="text-align:right;color:${p.margen >= 0 ? 'var(--verde-exito)' : 'var(--rojo-error)'};font-weight:700;">${formatearMoneda(p.margen)}</span>
