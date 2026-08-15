@@ -3246,6 +3246,11 @@
         <input type="checkbox" id="checkIncluirActivosBaja" style="width:auto;" onchange="cargarActivosFijos()">
         <span>Incluir los dados de baja</span>
       </label>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
+        <input type="text" id="buscarActivoFijo" placeholder="🔍 Nombre, categoría o N° de recibo..." oninput="filtrarActivosFijos()" style="flex:1;min-width:200px;">
+        <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarActivosFijosExcel()">📥 Excel</button>
+      </div>
+      <div class="mensaje" id="mensajeActivosFijosListado"></div>
       <div id="listaActivosFijos"><div class="cargando">Cargando...</div></div>
     </div>
   </div>
@@ -3547,6 +3552,7 @@
     </div>
     <div class="panel">
       <h2>Historial</h2>
+      <input type="text" id="buscarTransferenciaInterna" placeholder="🔍 Departamento, descripción o N°..." oninput="filtrarTransferenciasInternas()" style="margin-bottom:10px;">
       <div id="listaTransferenciasInternas"><div class="cargando">Cargando...</div></div>
     </div>
   </div>
@@ -3596,6 +3602,10 @@
 
   <div class="panel" style="max-width:none;max-height:none;margin-top:20px;">
     <h2>✅ Ya conciliados</h2>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+      <input type="text" id="buscarConciliados" placeholder="🔍 Buscar por descripción..." oninput="filtrarYaConciliados()" style="flex:1;min-width:200px;">
+      <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarConciliadosExcel()">📥 Excel</button>
+    </div>
     <div id="listaYaConciliados"><div class="cargando">Cargando...</div></div>
   </div>
 </div>
@@ -3743,7 +3753,9 @@
       <div id="bloqueLaTercero" class="oculto"><label for="laTercero" style="font-size:11px;">Cliente/Proveedor</label><select id="laTercero" onchange="cargarLibroAuxiliar()" style="padding:9px 10px;"></select></div>
       <div><label for="laFechaDesde" style="font-size:11px;">Desde</label><input type="date" id="laFechaDesde" onchange="cargarLibroAuxiliar()" style="padding:9px 10px;"></div>
       <div><label for="laFechaHasta" style="font-size:11px;">Hasta</label><input type="date" id="laFechaHasta" onchange="cargarLibroAuxiliar()" style="padding:9px 10px;"></div>
+      <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarLibroAuxiliarExcel()">📥 Excel</button>
     </div>
+    <div class="mensaje" id="mensajeLibroAuxiliar"></div>
     <div id="contenidoLibroAuxiliar"><div class="cargando">Selecciona una cuenta o un tercero para ver su historial.</div></div>
   </div>
 
@@ -4578,7 +4590,7 @@
   });
 
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -15731,14 +15743,31 @@
     await mostrarPantallaTransferenciasInternas();
   }
 
+  let transferenciasInternasCache = [];
+
   async function cargarTransferenciasInternas() {
     const cont = document.getElementById('listaTransferenciasInternas');
     cont.innerHTML = '<div class="cargando">Cargando...</div>';
     const resp = await fetch(WORKER_URL + '/api/pos/transferencias-internas', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
     if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
     const { transferencias } = await resp.json();
+    transferenciasInternasCache = transferencias || [];
+    renderizarTransferenciasInternas(transferenciasInternasCache);
+  }
 
-    if (!transferencias || transferencias.length === 0) { cont.innerHTML = '<div class="cargando">Sin transferencias registradas todavía.</div>'; return; }
+  function filtrarTransferenciasInternas() {
+    const texto = document.getElementById('buscarTransferenciaInterna').value.trim().toLowerCase();
+    if (!texto) { renderizarTransferenciasInternas(transferenciasInternasCache); return; }
+    const filtradas = transferenciasInternasCache.filter(t => {
+      const depto = (t.centro_costo ? t.centro_costo.nombre : '').toLowerCase();
+      return depto.includes(texto) || (t.descripcion || '').toLowerCase().includes(texto) || (t.consecutivo || '').toLowerCase().includes(texto);
+    });
+    renderizarTransferenciasInternas(filtradas);
+  }
+
+  function renderizarTransferenciasInternas(transferencias) {
+    const cont = document.getElementById('listaTransferenciasInternas');
+    if (!transferencias || transferencias.length === 0) { cont.innerHTML = '<div class="cargando">Sin transferencias que coincidan.</div>'; return; }
 
     cont.innerHTML = `
       <div class="tabla-lista">
@@ -15850,18 +15879,45 @@
 
     // Ya conciliados
     const respConciliados = await fetch(`${WORKER_URL}/api/pos/conciliacion/movimientos?fecha_desde=${desde}&fecha_hasta=${hasta}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
-    const contConciliados = document.getElementById('listaYaConciliados');
     if (respConciliados.ok) {
       const { movimientos } = await respConciliados.json();
-      const soloConciliados = (movimientos || []).filter(m => m.conciliado);
-      contConciliados.innerHTML = soloConciliados.length === 0 ? '<div class="cargando">Todavía no has conciliado nada en este rango.</div>' :
-        soloConciliados.map(m => `
-          <div class="resumen-fila">
-            <span>${new Date(m.fecha + 'T00:00:00').toLocaleDateString('es-CO')} — ${escaparHtml(m.descripcion)}</span>
-            <span><strong>${formatearMoneda(m.valor)}</strong> <button class="btn-mini desactivar" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => confirmarDesconciliarMovimiento('${m.id}'))">Deshacer</button></span>
-          </div>
-        `).join('');
+      yaConciliadosCache = (movimientos || []).filter(m => m.conciliado);
+      renderizarYaConciliados(yaConciliadosCache);
     }
+  }
+
+  let yaConciliadosCache = [];
+
+  function filtrarYaConciliados() {
+    const texto = document.getElementById('buscarConciliados').value.trim().toLowerCase();
+    if (!texto) { renderizarYaConciliados(yaConciliadosCache); return; }
+    renderizarYaConciliados(yaConciliadosCache.filter(m => (m.descripcion || '').toLowerCase().includes(texto)));
+  }
+
+  function renderizarYaConciliados(movimientos) {
+    const contConciliados = document.getElementById('listaYaConciliados');
+    contConciliados.innerHTML = !movimientos || movimientos.length === 0 ? '<div class="cargando">Todavía no has conciliado nada en este rango.</div>' :
+      movimientos.map(m => `
+        <div class="resumen-fila">
+          <span>${new Date(m.fecha + 'T00:00:00').toLocaleDateString('es-CO')} — ${escaparHtml(m.descripcion)}</span>
+          <span><strong>${formatearMoneda(m.valor)}</strong> <button class="btn-mini desactivar" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => confirmarDesconciliarMovimiento('${m.id}'))">Deshacer</button></span>
+        </div>
+      `).join('');
+  }
+
+  function exportarConciliadosExcel() {
+    if (!yaConciliadosCache || yaConciliadosCache.length === 0) { mostrarMensaje('mensajeConciliacion', 'No hay movimientos conciliados para exportar en este rango.', 'error'); return; }
+    const filas = [
+      ['Lana Rosa Crochet — Movimientos Conciliados'],
+      [`Desde: ${document.getElementById('concFiltroDesde').value || 'Inicio'}  Hasta: ${document.getElementById('concFiltroHasta').value || 'Hoy'}`],
+      [],
+      ['Fecha', 'Descripción', 'Tipo', 'Valor'],
+      ...yaConciliadosCache.map(m => [m.fecha, m.descripcion || '', m.tipo === 'entrada' ? 'Entrada' : 'Salida', Number(m.valor)])
+    ];
+    const hoja = XLSX.utils.aoa_to_sheet(filas);
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Conciliados');
+    XLSX.writeFile(libro, `LanaRosa_Conciliados_${new Date().toISOString().slice(0, 10)}.xlsx`);
   }
 
   function seleccionarMovimientoExtracto(id) {
@@ -15911,6 +15967,9 @@
     await cargarActivosFijos();
   }
 
+  let activosFijosCache = [];
+  const etiquetasCategoriaActivo = { muebles_enseres: 'Muebles y enseres', equipo_computo: 'Equipo de cómputo', maquinaria_equipo: 'Maquinaria y equipo', equipo_comunicacion: 'Equipo de comunicación', vehiculos: 'Vehículos', edificaciones: 'Edificaciones', otros: 'Otros' };
+
   async function cargarActivosFijos() {
     const contenedor = document.getElementById('listaActivosFijos');
     contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
@@ -15919,6 +15978,7 @@
     const resp = await fetch(`${WORKER_URL}/api/pos/activos-fijos?incluir_baja=${incluirBaja}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
     if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
     const { activos, totales } = await resp.json();
+    activosFijosCache = activos || [];
 
     document.getElementById('resumenTotalesActivosFijos').innerHTML = `
       <div class="panel" style="max-height:none;text-align:center;">
@@ -15935,9 +15995,22 @@
       </div>
     `;
 
-    if (!activos || activos.length === 0) { contenedor.innerHTML = '<div class="cargando">Sin activos registrados todavía.</div>'; return; }
+    renderizarActivosFijos(activosFijosCache);
+  }
 
-    const etiquetasCategoria = { muebles_enseres: 'Muebles y enseres', equipo_computo: 'Equipo de cómputo', maquinaria_equipo: 'Maquinaria y equipo', equipo_comunicacion: 'Equipo de comunicación', vehiculos: 'Vehículos', edificaciones: 'Edificaciones', otros: 'Otros' };
+  function filtrarActivosFijos() {
+    const texto = document.getElementById('buscarActivoFijo').value.trim().toLowerCase();
+    if (!texto) { renderizarActivosFijos(activosFijosCache); return; }
+    const filtrados = activosFijosCache.filter(a => {
+      const categoria = (etiquetasCategoriaActivo[a.categoria] || a.categoria || '').toLowerCase();
+      return (a.nombre || '').toLowerCase().includes(texto) || categoria.includes(texto) || (a.numero_factura || '').toLowerCase().includes(texto);
+    });
+    renderizarActivosFijos(filtrados);
+  }
+
+  function renderizarActivosFijos(activos) {
+    const contenedor = document.getElementById('listaActivosFijos');
+    if (!activos || activos.length === 0) { contenedor.innerHTML = '<div class="cargando">Sin activos que coincidan.</div>'; return; }
 
     contenedor.innerHTML = `
       <div class="tabla-lista">
@@ -15946,7 +16019,7 @@
         </div>
         ${activos.map(a => `
           <div class="tabla-lista-fila" style="grid-template-columns:1.4fr 100px 90px 100px 100px 100px 90px;cursor:default;">
-            <span>${escaparHtml(a.nombre)}<div style="font-size:10px;opacity:0.55;">${etiquetasCategoria[a.categoria] || a.categoria}${a.proveedor ? ' · ' + escaparHtml(a.proveedor.nombre_completo) : ''}${a.estado !== 'activo' ? ' · ⚠️ DADO DE BAJA' : ''}</div></span>
+            <span>${escaparHtml(a.nombre)}<div style="font-size:10px;opacity:0.55;">${etiquetasCategoriaActivo[a.categoria] || a.categoria}${a.proveedor ? ' · ' + escaparHtml(a.proveedor.nombre_completo) : ''}${a.estado !== 'activo' ? ' · ⚠️ DADO DE BAJA' : ''}</div></span>
             <span>${new Date(a.fecha_compra + 'T00:00:00').toLocaleDateString('es-CO')}</span>
             <span>${escaparHtml(a.numero_factura || '—')}</span>
             <span style="text-align:right;">${formatearMoneda(a.valor_compra)}</span>
@@ -15957,6 +16030,24 @@
         `).join('')}
       </div>
     `;
+  }
+
+  function exportarActivosFijosExcel() {
+    if (!activosFijosCache || activosFijosCache.length === 0) { mostrarMensaje('mensajeActivosFijosListado', 'No hay activos para exportar.', 'error'); return; }
+    const filas = [
+      ['Lana Rosa Crochet — Activos Fijos'],
+      [],
+      ['Nombre', 'Categoría', 'F. Compra', 'N° Recibo', 'Proveedor', 'Valor Compra', 'Depreciado', '% Depreciado', 'Valor Neto', 'Estado'],
+      ...activosFijosCache.map(a => [
+        a.nombre, etiquetasCategoriaActivo[a.categoria] || a.categoria, a.fecha_compra, a.numero_factura || '',
+        a.proveedor ? a.proveedor.nombre_completo : '', Number(a.valor_compra), Number(a.depreciacion_acumulada),
+        a.porcentaje_depreciado, Number(a.valor_en_libros), a.estado === 'activo' ? 'Activo' : 'Dado de baja'
+      ])
+    ];
+    const hoja = XLSX.utils.aoa_to_sheet(filas);
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Activos Fijos');
+    XLSX.writeFile(libro, `LanaRosa_ActivosFijos_${new Date().toISOString().slice(0, 10)}.xlsx`);
   }
 
   async function prepararFormularioActivoFijo() {
@@ -17070,11 +17161,14 @@
     document.getElementById('contenidoLibroAuxiliar').innerHTML = '<div class="cargando">Selecciona una cuenta o un tercero para ver su historial.</div>';
   }
 
+  let cacheLibroAuxiliar = null;
+
   async function cargarLibroAuxiliar() {
     const modo = document.getElementById('laModo').value;
     const desde = document.getElementById('laFechaDesde').value;
     const hasta = document.getElementById('laFechaHasta').value;
     const cont = document.getElementById('contenidoLibroAuxiliar');
+    cacheLibroAuxiliar = null;
 
     const params = new URLSearchParams({ fecha_desde: desde, fecha_hasta: hasta });
     if (modo === 'cuenta') {
@@ -17091,6 +17185,7 @@
     const resp = await fetch(`${WORKER_URL}/api/pos/finanzas/libro-auxiliar?${params.toString()}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
     if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
     const d = await resp.json();
+    cacheLibroAuxiliar = { ...d, modo };
 
     if (!d.movimientos || d.movimientos.length === 0) {
       cont.innerHTML = Number(d.saldo_inicial) !== 0
@@ -17122,6 +17217,32 @@
         </div>
       </div>
     `;
+  }
+
+  function exportarLibroAuxiliarExcel() {
+    if (!cacheLibroAuxiliar || !cacheLibroAuxiliar.movimientos || cacheLibroAuxiliar.movimientos.length === 0) {
+      mostrarMensaje('mensajeLibroAuxiliar', 'Espera a que cargue el libro auxiliar primero.', 'error');
+      return;
+    }
+    const d = cacheLibroAuxiliar;
+    const filas = [
+      ['Lana Rosa Crochet — Libro Auxiliar'],
+      [`Desde: ${document.getElementById('laFechaDesde').value || 'Inicio'}  Hasta: ${document.getElementById('laFechaHasta').value || 'Hoy'}`],
+      [],
+      ['Fecha', 'Concepto', d.modo === 'tercero' ? 'Cuenta' : 'Tercero', 'Débito', 'Crédito', 'Saldo'],
+      ['', 'Saldo inicial', '', '', '', Number(d.saldo_inicial)],
+      ...d.movimientos.map(m => [
+        m.fecha, m.concepto || '',
+        d.modo === 'tercero' ? `${m.cuenta_codigo} — ${m.cuenta_nombre}` : (m.tercero || ''),
+        Number(m.debito) || 0, Number(m.credito) || 0, Number(m.saldo)
+      ]),
+      [],
+      ['', 'SALDO FINAL', '', '', '', Number(d.saldo_final)]
+    ];
+    const hoja = XLSX.utils.aoa_to_sheet(filas);
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Libro Auxiliar');
+    XLSX.writeFile(libro, `LanaRosa_LibroAuxiliar_${new Date().toISOString().slice(0, 10)}.xlsx`);
   }
 
 
