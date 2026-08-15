@@ -7004,7 +7004,7 @@
 
     const { data, error } = await supabaseClient
       .from('inventario_items')
-      .select('id, tipo, nombre, sku, stock_actual, stock_minimo, precio_venta, costo_promedio_ponderado, unidad_medida, activo, centro_costo_id, categoria_id, proveedor_tercero_id, peso_gramos, costo_ojos, costo_empaque, proveedor:proveedor_tercero_id(nombre_completo)')
+      .select('id, tipo, nombre, sku, stock_actual, stock_minimo, precio_venta, costo_promedio_ponderado, unidad_medida, activo, centro_costo_id, categoria_id, proveedor_tercero_id, peso_gramos, costo_ojos, costo_empaque, costo_otros_accesorios, proveedor:proveedor_tercero_id(nombre_completo)')
       .order('nombre', { ascending: true });
 
     if (error) {
@@ -7123,8 +7123,9 @@
                 <div class="campo-mini"><label>Peso (gramos)</label><input type="number" min="0" step="1" value="${item.peso_gramos || ''}" id="edit-peso-${item.id}" oninput="actualizarCostoEstimadoPeso('${item.id}')" placeholder="Ej: 120"></div>
                 <div class="campo-mini"><label>Costo ojos</label><input type="number" min="0" step="1" value="${item.costo_ojos || ''}" id="edit-ojos-${item.id}" oninput="actualizarCostoEstimadoPeso('${item.id}')" placeholder="Ej: 1500"></div>
                 <div class="campo-mini"><label>Costo empaque</label><input type="number" min="0" step="1" value="${item.costo_empaque || ''}" id="edit-empaque-${item.id}" oninput="actualizarCostoEstimadoPeso('${item.id}')" placeholder="Ej: 2000"></div>
+                <div class="campo-mini"><label>Otros accesorios <span style="font-size:9.5px;opacity:0.6;">(llavero, gafas, etc.)</span></label><input type="number" min="0" step="1" value="${item.costo_otros_accesorios || ''}" id="edit-otros-${item.id}" oninput="actualizarCostoEstimadoPeso('${item.id}')" placeholder="Ej: 800"></div>
               </div>
-              <div style="font-size:12px;margin-top:6px;">Costo de materiales estimado: <strong id="costoEstimadoPeso-${item.id}">${formatearMoneda(calcularCostoEstimadoPeso(item.peso_gramos, item.costo_ojos, item.costo_empaque))}</strong></div>
+              <div style="font-size:12px;margin-top:6px;">Costo de materiales estimado: <strong id="costoEstimadoPeso-${item.id}">${formatearMoneda(calcularCostoEstimadoPeso(item.peso_gramos, item.costo_ojos, item.costo_empaque, item.costo_otros_accesorios))}</strong></div>
             </div>
           ` : ''}
           <div class="fila-inventario-acciones">
@@ -7237,15 +7238,16 @@
     }
   }
 
-  function calcularCostoEstimadoPeso(pesoGramos, costoOjos, costoEmpaque) {
-    return (Number(pesoGramos) || 0) * precioGramoHiloCache + (Number(costoOjos) || 0) + (Number(costoEmpaque) || 0);
+  function calcularCostoEstimadoPeso(pesoGramos, costoOjos, costoEmpaque, costoOtros) {
+    return (Number(pesoGramos) || 0) * precioGramoHiloCache + (Number(costoOjos) || 0) + (Number(costoEmpaque) || 0) + (Number(costoOtros) || 0);
   }
 
   function actualizarCostoEstimadoPeso(itemId) {
     const peso = document.getElementById(`edit-peso-${itemId}`).value;
     const ojos = document.getElementById(`edit-ojos-${itemId}`).value;
     const empaque = document.getElementById(`edit-empaque-${itemId}`).value;
-    document.getElementById(`costoEstimadoPeso-${itemId}`).textContent = formatearMoneda(calcularCostoEstimadoPeso(peso, ojos, empaque));
+    const otros = document.getElementById(`edit-otros-${itemId}`).value;
+    document.getElementById(`costoEstimadoPeso-${itemId}`).textContent = formatearMoneda(calcularCostoEstimadoPeso(peso, ojos, empaque, otros));
   }
 
   async function guardarPrecioGramoHilo() {
@@ -7306,9 +7308,11 @@
       const pesoEl = document.getElementById(`edit-peso-${itemId}`);
       const ojosEl = document.getElementById(`edit-ojos-${itemId}`);
       const empaqueEl = document.getElementById(`edit-empaque-${itemId}`);
+      const otrosEl = document.getElementById(`edit-otros-${itemId}`);
       if (pesoEl) cambios.peso_gramos = pesoEl.value ? Number(pesoEl.value) : null;
       if (ojosEl) cambios.costo_ojos = ojosEl.value ? Number(ojosEl.value) : null;
       if (empaqueEl) cambios.costo_empaque = empaqueEl.value ? Number(empaqueEl.value) : null;
+      if (otrosEl) cambios.costo_otros_accesorios = otrosEl.value ? Number(otrosEl.value) : null;
     }
 
     const { error } = await supabaseClient
