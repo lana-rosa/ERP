@@ -1353,6 +1353,7 @@
     </div>
     <div class="panel">
       <h2>Historial de transferencias</h2>
+      <input type="text" id="buscarTransferenciaStock" placeholder="🔍 Producto o departamento..." oninput="filtrarHistorialTransferencias()" style="margin-bottom:10px;">
       <div id="listaTransferenciasStock"><div class="cargando">Cargando...</div></div>
     </div>
   </div>
@@ -1608,6 +1609,7 @@
   <div class="panel" style="max-height:none;margin-top:20px;">
     <h2>Historial de mis consumos</h2>
     <div class="subtitulo">Todos los pedidos tejidos hasta ahora, con los insumos que se consumieron en cada uno.</div>
+    <input type="text" id="buscarHistorialConsumosTaller" placeholder="🔍 N° de pedido o insumo..." oninput="filtrarHistorialConsumosTaller()" style="margin-bottom:10px;">
     <div id="listaHistorialConsumosTaller"><div class="cargando">Cargando...</div></div>
   </div>
 </div>
@@ -1649,6 +1651,7 @@
 
   <div class="panel" style="max-width:none;max-height:none;margin-top:20px;">
     <h2>Historial de solicitudes</h2>
+    <input type="text" id="buscarHistorialSolicitudes" placeholder="🔍 N° pedido o insumo..." oninput="filtrarHistorialSolicitudesInsumo()" style="margin-bottom:10px;">
     <div id="listaHistorialSolicitudesInsumo"><div class="cargando">Cargando...</div></div>
   </div>
 </div>
@@ -8422,6 +8425,8 @@
     await cargarHistorialSolicitudesInsumo();
   }
 
+  let historialSolicitudesInsumoCache = [];
+
   async function cargarHistorialSolicitudesInsumo() {
     const contenedor = document.getElementById('listaHistorialSolicitudesInsumo');
     if (!contenedor) return;
@@ -8431,7 +8436,23 @@
     if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
 
     const { solicitudes } = await resp.json();
-    if (!solicitudes || solicitudes.length === 0) { contenedor.innerHTML = '<div class="cargando">Sin solicitudes despachadas todavía.</div>'; return; }
+    historialSolicitudesInsumoCache = solicitudes || [];
+    renderizarHistorialSolicitudesInsumo(historialSolicitudesInsumoCache);
+  }
+
+  function filtrarHistorialSolicitudesInsumo() {
+    const texto = document.getElementById('buscarHistorialSolicitudes').value.trim().toLowerCase();
+    if (!texto) { renderizarHistorialSolicitudesInsumo(historialSolicitudesInsumoCache); return; }
+    const filtradas = historialSolicitudesInsumoCache.filter(s => {
+      const item = s.inventario_items || {};
+      return (s.numero_pedido_crm || '').toLowerCase().includes(texto) || (item.nombre || '').toLowerCase().includes(texto);
+    });
+    renderizarHistorialSolicitudesInsumo(filtradas);
+  }
+
+  function renderizarHistorialSolicitudesInsumo(solicitudes) {
+    const contenedor = document.getElementById('listaHistorialSolicitudesInsumo');
+    if (!solicitudes || solicitudes.length === 0) { contenedor.innerHTML = '<div class="cargando">Sin solicitudes que coincidan.</div>'; return; }
 
     contenedor.innerHTML = `
       <div class="tabla-lista">
@@ -8550,14 +8571,33 @@
     await cargarHistorialTransferencias();
   }
 
+  let transferenciasStockCache = [];
+
   async function cargarHistorialTransferencias() {
     const contenedor = document.getElementById('listaTransferenciasStock');
     contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
     const resp = await fetch(WORKER_URL + '/api/pos/inventario/transferencias', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
     if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
     const { transferencias } = await resp.json();
+    transferenciasStockCache = transferencias || [];
+    renderizarHistorialTransferencias(transferenciasStockCache);
+  }
 
-    if (!transferencias || transferencias.length === 0) { contenedor.innerHTML = '<div class="cargando">Sin transferencias registradas todavía.</div>'; return; }
+  function filtrarHistorialTransferencias() {
+    const texto = document.getElementById('buscarTransferenciaStock').value.trim().toLowerCase();
+    if (!texto) { renderizarHistorialTransferencias(transferenciasStockCache); return; }
+    const filtradas = transferenciasStockCache.filter(t => {
+      const producto = (t.item ? t.item.nombre : '').toLowerCase();
+      const origen = (t.origen ? t.origen.nombre : '').toLowerCase();
+      const destino = (t.destino ? t.destino.nombre : '').toLowerCase();
+      return producto.includes(texto) || origen.includes(texto) || destino.includes(texto);
+    });
+    renderizarHistorialTransferencias(filtradas);
+  }
+
+  function renderizarHistorialTransferencias(transferencias) {
+    const contenedor = document.getElementById('listaTransferenciasStock');
+    if (!transferencias || transferencias.length === 0) { contenedor.innerHTML = '<div class="cargando">Sin transferencias que coincidan.</div>'; return; }
 
     contenedor.innerHTML = `
       <div class="tabla-lista">
@@ -13243,6 +13283,8 @@
     await cargarSolicitudesElaboracion();
   }
 
+  let historialConsumosTallerCache = [];
+
   async function cargarHistorialConsumosTaller() {
     const contenedor = document.getElementById('listaHistorialConsumosTaller');
     if (!contenedor) return;
@@ -13254,8 +13296,25 @@
     if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
 
     const { pedidos } = await resp.json();
+    historialConsumosTallerCache = pedidos || [];
+    renderizarHistorialConsumosTaller(historialConsumosTallerCache);
+  }
+
+  function filtrarHistorialConsumosTaller() {
+    const texto = document.getElementById('buscarHistorialConsumosTaller').value.trim().toLowerCase();
+    if (!texto) { renderizarHistorialConsumosTaller(historialConsumosTallerCache); return; }
+    const filtrados = historialConsumosTallerCache.filter(p => {
+      const numero = (p.numero_pedido_crm || p.pedido_crm_id || '').toLowerCase();
+      const insumos = (p.insumos || []).map(i => i.nombre).join(' ').toLowerCase();
+      return numero.includes(texto) || insumos.includes(texto);
+    });
+    renderizarHistorialConsumosTaller(filtrados);
+  }
+
+  function renderizarHistorialConsumosTaller(pedidos) {
+    const contenedor = document.getElementById('listaHistorialConsumosTaller');
     if (!pedidos || pedidos.length === 0) {
-      contenedor.innerHTML = '<div class="cargando">Todavía no se ha tejido ningún pedido con material registrado.</div>';
+      contenedor.innerHTML = '<div class="cargando">Sin pedidos que coincidan.</div>';
       return;
     }
 
