@@ -830,10 +830,10 @@
     <div class="sidebar-depto" id="deptoComprasGrupo" style="display:none;">
       <button class="sidebar-depto-header" id="headerDeptoCompras" onclick="toggleSidebarDepto('deptoComprasSubmenu', 'headerDeptoCompras')">🛒 Compras y Gastos <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoComprasSubmenu">
-        <button class="nav-btn" id="nav-cotizaciones" onclick="mostrarPantallaCotizaciones()"><span class="nav-icon">📝</span> Cotizaciones</button>
-        <button class="nav-btn" id="nav-proveedores-dir" onclick="mostrarPantallaProveedores()"><span class="nav-icon">🏭</span> Proveedores</button>
-        <button class="nav-btn" id="nav-ordenes-compra" onclick="mostrarPantallaOrdenesCompra()"><span class="nav-icon">📦</span> Órdenes de compra</button>
         <button class="nav-btn" id="nav-compras-gastos" onclick="mostrarPantallaPagosPendientes('01')"><span class="nav-icon">📈</span> Registro de compras y gastos</button>
+        <button class="nav-btn" id="nav-proveedores-dir" onclick="mostrarPantallaProveedores()"><span class="nav-icon">🏭</span> Proveedores</button>
+        <button class="nav-btn" id="nav-cotizaciones" onclick="mostrarPantallaCotizaciones()"><span class="nav-icon">📝</span> Cotizaciones</button>
+        <button class="nav-btn" id="nav-ordenes-compra" onclick="mostrarPantallaOrdenesCompra()"><span class="nav-icon">📦</span> Órdenes de compra</button>
       </div>
     </div>
 
@@ -2591,6 +2591,10 @@
 
   <button class="btn-secundario" style="width:auto;margin-bottom:16px;" onclick="mostrarFormularioOportunidad()">+ Nueva oportunidad</button>
 
+  <div class="barra-busqueda" style="margin-bottom:16px;">
+    <input type="text" id="buscarOportunidad" placeholder="🔍 Buscar por nombre del cliente o descripción..." oninput="filtrarOportunidades()">
+  </div>
+
   <div id="formularioOportunidad" class="panel oculto" style="margin-bottom:20px;">
     <h2>+ Nueva oportunidad</h2>
     <label for="opBuscarCliente">Cliente (busca uno existente, o escribe el nombre abajo si es nuevo)</label>
@@ -2630,6 +2634,8 @@
     <div class="panel" style="max-width:none;max-height:none;">
       <h2>Buscar proveedor</h2>
       <div class="barra-busqueda"><input type="text" id="buscarProveedorDir" placeholder="🔍 Nombre, NIT o teléfono..." oninput="debounceBuscarProveedores()"></div>
+      <button class="btn-secundario" style="width:auto;margin-top:10px;" onclick="exportarProveedoresExcel()">📥 Exportar a Excel</button>
+      <div class="mensaje" id="mensajeProveedores"></div>
       <div id="listaProveedoresDir" style="margin-top:10px;"><div class="cargando">Cargando...</div></div>
     </div>
   </div>
@@ -3325,8 +3331,8 @@
 
       <label style="margin-top:10px;">Ítems de la cotización</label>
       <div id="listaItemsCotizacion"></div>
-      <div style="display:flex;gap:8px;margin-top:6px;">
-        <input type="text" id="cotNuevoItemDesc" placeholder="Descripción" style="flex:2;">
+      <div style="display:flex;gap:8px;margin-top:6px;align-items:flex-start;">
+        <textarea id="cotNuevoItemDesc" placeholder="Descripción" rows="1" style="flex:2;resize:vertical;min-height:38px;"></textarea>
         <input type="number" id="cotNuevoItemCant" placeholder="Cant." min="1" value="1" style="flex:1;">
         <input type="number" id="cotNuevoItemPrecio" placeholder="Precio" min="0" step="1" style="flex:1;">
         <button type="button" class="btn-mini editar" onclick="agregarItemCotizacion()">+ Agregar</button>
@@ -3355,6 +3361,14 @@
         <button class="chip-filtro activo" data-filtro-cot="" onclick="cambiarFiltroCotizaciones('', this)">Todas</button>
         <button class="chip-filtro" data-filtro-cot="enviada" onclick="cambiarFiltroCotizaciones('enviada', this)">Enviadas</button>
         <button class="chip-filtro" data-filtro-cot="aprobada" onclick="cambiarFiltroCotizaciones('aprobada', this)">Aprobadas</button>
+      </div>
+      <div class="barra-busqueda" style="margin-bottom:10px;">
+        <input type="text" id="buscarCotizacion" placeholder="🔍 Nombre, cédula o producto..." oninput="filtrarCotizaciones()">
+      </div>
+      <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px;">
+        <div><label for="cotInformeDesde" style="font-size:11px;">Desde</label><input type="date" id="cotInformeDesde" style="padding:9px 10px;"></div>
+        <div><label for="cotInformeHasta" style="font-size:11px;">Hasta</label><input type="date" id="cotInformeHasta" style="padding:9px 10px;"></div>
+        <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarCotizacionesExcel()">📥 Exportar a Excel</button>
       </div>
       <div class="mensaje" id="mensajeCotizaciones"></div>
       <div id="listaCotizaciones"><div class="cargando">Cargando...</div></div>
@@ -3449,8 +3463,8 @@
 
       <label style="margin-top:10px;">Ítems solicitados</label>
       <div id="listaItemsOrdenCompra"></div>
-      <div style="display:flex;gap:8px;margin-top:6px;">
-        <input type="text" id="ocNuevoItemDesc" placeholder="Descripción" style="flex:2;">
+      <div style="display:flex;gap:8px;margin-top:6px;align-items:flex-start;">
+        <textarea id="ocNuevoItemDesc" placeholder="Descripción" rows="1" style="flex:2;resize:vertical;min-height:38px;"></textarea>
         <input type="number" id="ocNuevoItemCant" placeholder="Cant." min="1" value="1" style="flex:1;">
         <input type="number" id="ocNuevoItemPrecio" placeholder="Precio estimado" min="0" step="1" style="flex:1;">
         <button type="button" class="btn-mini editar" onclick="agregarItemOrdenCompra()">+ Agregar</button>
@@ -10943,6 +10957,7 @@
   async function mostrarPantallaOportunidades() {
     mostrarPantalla('pantallaOportunidades');
     document.getElementById('formularioOportunidad').classList.add('oculto');
+    document.getElementById('buscarOportunidad').value = '';
     await cargarOportunidades();
   }
 
@@ -11036,6 +11051,8 @@
     { valor: 'cierre', titulo: '🏁 Cierre', color: '#2E8B57' },
   ];
 
+  let oportunidadesCache = [];
+
   async function cargarOportunidades() {
     const cont = document.getElementById('tableroOportunidades');
     cont.innerHTML = '<div class="cargando">Cargando...</div>';
@@ -11043,7 +11060,23 @@
     const resp = await fetch(WORKER_URL + '/api/pos/oportunidades', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
     if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
     const { oportunidades } = await resp.json();
+    oportunidadesCache = oportunidades || [];
+    renderizarTableroOportunidades(oportunidadesCache);
+  }
 
+  function filtrarOportunidades() {
+    const texto = document.getElementById('buscarOportunidad').value.trim().toLowerCase();
+    if (!texto) { renderizarTableroOportunidades(oportunidadesCache); return; }
+    const filtradas = oportunidadesCache.filter(o => {
+      const nombre = (o.tercero ? o.tercero.nombre_completo : (o.cliente_nombre_libre || '')).toLowerCase();
+      const descripcion = (o.descripcion || '').toLowerCase();
+      return nombre.includes(texto) || descripcion.includes(texto);
+    });
+    renderizarTableroOportunidades(filtradas);
+  }
+
+  function renderizarTableroOportunidades(oportunidades) {
+    const cont = document.getElementById('tableroOportunidades');
     const porEtapa = { prospecto: [], calificado: [], propuesta: [], cierre: [] };
     (oportunidades || []).forEach(o => {
       const col = (o.etapa === 'cierre_ganado' || o.etapa === 'cierre_perdido') ? 'cierre' : o.etapa;
@@ -11061,6 +11094,16 @@
       </div>
       <div class="mensaje" id="mensajeOportunidades"></div>
     `;
+  }
+
+  function enviarMensajeOportunidad(id) {
+    const o = oportunidadesCache.find(x => x.id === id);
+    if (!o) return;
+    const telefono = o.tercero ? o.tercero.telefono : o.cliente_telefono_libre;
+    const nombre = o.tercero ? o.tercero.nombre_completo : (o.cliente_nombre_libre || '');
+    if (!telefono) { mostrarMensaje('mensajeOportunidades', 'Este contacto no tiene teléfono guardado.', 'error'); return; }
+    const mensaje = `Hola${nombre ? ' ' + nombre.split(' ')[0] : ''} 👋 Te escribo de Lana Rosa Crochet sobre "${o.descripcion}". ¿Cómo vamos con eso?`;
+    abrirWhatsAppTexto(telefono, mensaje);
   }
 
   function renderizarTarjetaOportunidad(o, columna) {
@@ -11082,6 +11125,7 @@
           </div>
         ` : ''}
         <div style="display:flex;gap:5px;margin-top:8px;flex-wrap:wrap;">
+          <button class="btn-mini editar" style="font-size:10.5px;padding:4px 8px;" onclick="enviarMensajeOportunidad('${o.id}')">💬 WhatsApp</button>
           ${o.etapa === 'prospecto' || o.etapa === 'calificado' ? `<button class="btn-mini guardar" style="font-size:10.5px;padding:4px 8px;" onclick="avanzarEtapaOportunidad('${o.id}', '${siguienteEtapa}')">→ ${siguienteEtapa === 'calificado' ? 'Calificar' : 'Propuesta'}</button>` : ''}
           ${o.etapa === 'propuesta' ? `
             <button class="btn-mini guardar" style="font-size:10.5px;padding:4px 8px;" onclick="avanzarEtapaOportunidad('${o.id}', 'cierre_ganado')">🎉 Ganada</button>
@@ -11100,6 +11144,7 @@
       body: JSON.stringify({ id, etapa })
     });
     if (!resp.ok) { mostrarMensaje('mensajeOportunidades', 'No se pudo mover.', 'error'); return; }
+    document.getElementById('buscarOportunidad').value = '';
     await cargarOportunidades();
   }
 
@@ -11364,6 +11409,23 @@
       </div>
     `;
     proveedoresDirCache = terceros;
+  }
+
+  function exportarProveedoresExcel() {
+    if (!proveedoresDirCache || proveedoresDirCache.length === 0) { mostrarMensaje('mensajeProveedores', 'No hay proveedores para exportar.', 'error'); return; }
+    const filas = [
+      ['Lana Rosa Crochet — Directorio de Proveedores'],
+      [],
+      ['Nombre', 'NIT/Documento', 'Teléfono', 'Correo', 'Persona de contacto', 'Dirección', 'Ciudad'],
+      ...proveedoresDirCache.map(p => [
+        p.nombre_completo || '', p.numero_documento || '', p.telefono || '',
+        p.email || '', p.persona_contacto || '', p.direccion || '', p.ciudad || ''
+      ])
+    ];
+    const hoja = XLSX.utils.aoa_to_sheet(filas);
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Proveedores');
+    XLSX.writeFile(libro, `LanaRosa_Proveedores_${new Date().toISOString().slice(0, 10)}.xlsx`);
   }
 
   function abrirEdicionProveedor(id) {
@@ -14826,6 +14888,9 @@
     document.getElementById('cotDescuento').value = '0';
     document.getElementById('cotTipoDescuento').value = 'monto';
     document.getElementById('cotNotas').value = '';
+    document.getElementById('buscarCotizacion').value = '';
+    document.getElementById('cotInformeDesde').value = '';
+    document.getElementById('cotInformeHasta').value = '';
     const en15dias = new Date(Date.now() + 15 * 86400000);
     document.getElementById('cotFechaVencimiento').value = en15dias.toISOString().slice(0, 10);
     ocultarMensaje('mensajeCotizacion');
@@ -14953,14 +15018,30 @@
     if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
     const { cotizaciones } = await resp.json();
     cotizacionesCache = cotizaciones || [];
+    renderizarListaCotizaciones(cotizacionesCache);
+  }
 
-    if (cotizaciones.length === 0) { cont.innerHTML = '<div class="cargando">Sin cotizaciones todavía.</div>'; return; }
+  function filtrarCotizaciones() {
+    const texto = document.getElementById('buscarCotizacion').value.trim().toLowerCase();
+    if (!texto) { renderizarListaCotizaciones(cotizacionesCache); return; }
+    const filtradas = cotizacionesCache.filter(c => {
+      const nombre = (c.tercero ? c.tercero.nombre_completo : c.cliente_nombre_libre || '').toLowerCase();
+      const cedula = (c.tercero && c.tercero.numero_documento || '').toLowerCase();
+      const productos = (c.items || []).map(i => i.descripcion).join(' ').toLowerCase();
+      return nombre.includes(texto) || cedula.includes(texto) || productos.includes(texto);
+    });
+    renderizarListaCotizaciones(filtradas);
+  }
+
+  function renderizarListaCotizaciones(cotizaciones) {
+    const cont = document.getElementById('listaCotizaciones');
+    if (!cotizaciones || cotizaciones.length === 0) { cont.innerHTML = '<div class="cargando">Sin cotizaciones con este filtro.</div>'; return; }
 
     const etiquetasEstado = { enviada: '📤 Enviada', aprobada: '✅ Aprobada', rechazada: '❌ Rechazada', vencida: '⏰ Vencida', convertida: '🔄 Convertida en pedido' };
 
     cont.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header header-rosa" style="grid-template-columns:110px 1fr 110px 140px 100px 300px;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:110px 1fr 110px 140px 100px 340px;">
           <span>N.°</span><span>CLIENTE</span><span style="text-align:right;">TOTAL</span><span>ESTADO</span><span>VENCE</span><span></span>
         </div>
         ${cotizaciones.map(c => {
@@ -14974,7 +15055,7 @@
           };
           const colorCot = coloresEstadoCot[c.estado] || { bg: 'var(--rosa-suave)', color: 'var(--rosa-principal)' };
           return `
-          <div class="tabla-lista-fila" style="grid-template-columns:110px 1fr 110px 140px 100px 300px;">
+          <div class="tabla-lista-fila" style="grid-template-columns:110px 1fr 110px 140px 100px 340px;">
             <span style="font-weight:600;">${escaparHtml(c.consecutivo)}</span>
             <span style="opacity:0.9;display:flex;align-items:center;gap:8px;">${avatarIniciales(nombreCliente)}${escaparHtml(nombreCliente)}</span>
             <span style="text-align:right;font-weight:700;">${formatearMoneda(c.total)}</span>
@@ -14985,8 +15066,9 @@
                 <button class="btn-mini guardar" onclick="cambiarEstadoCotizacion('${c.id}', 'aprobada')">✅</button>
                 <button class="btn-mini desactivar" onclick="cambiarEstadoCotizacion('${c.id}', 'rechazada')">❌</button>
               ` : ''}
-              <button class="btn-mini editar" onclick="enviarCotizacionWhatsApp('${c.id}')">📱</button>
-              <button class="btn-mini editar" onclick="imprimirCotizacion('${c.id}')">🖨️</button>
+              <button class="btn-mini editar" onclick="enviarCotizacionWhatsApp('${c.id}')" title="Enviar por WhatsApp">📱</button>
+              <button class="btn-mini editar" onclick="enviarCotizacionCorreo('${c.id}')" title="Enviar por correo">✉️</button>
+              <button class="btn-mini editar" onclick="imprimirCotizacion('${c.id}')" title="Imprimir">🖨️</button>
               ${c.estado === 'aprobada' ? `<button class="btn-mini guardar" onclick="pedirConfirmacionBoton(this, '¿Continuar?', () => convertirCotizacionEnPedido('${c.id}'))">🔄 Convertir</button>` : ''}
               <button class="btn-mini desactivar" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => eliminarCotizacion('${c.id}'))">🗑️</button>
             </span>
@@ -14995,6 +15077,54 @@
         }).join('')}
       </div>
     `;
+  }
+
+  async function enviarCotizacionCorreo(id) {
+    ocultarMensaje('mensajeCotizaciones');
+    const c = cotizacionesCache.find(x => x.id === id);
+    if (!c) return;
+    let correo = c.tercero ? c.tercero.email : null;
+    if (!correo) {
+      correo = await pedirTexto('Este cliente no tiene correo guardado. Escribe el correo al que se la vas a enviar:', 'Correo', 'correo@gmail.com');
+      if (!correo) return;
+    }
+    const nombreCliente = c.tercero ? c.tercero.nombre_completo : (c.cliente_nombre_libre || 'Cliente');
+    const cuerpoItems = (c.items || []).map(i => `- ${i.descripcion} (x${i.cantidad}): ${formatearMoneda(i.cantidad * i.precio_unitario)}`).join('%0D%0A');
+    const asunto = encodeURIComponent(`Cotización ${c.consecutivo} — Lana Rosa Crochet`);
+    const cuerpo = `Hola ${nombreCliente},%0D%0A%0D%0AAquí está el detalle de tu cotización ${c.consecutivo}:%0D%0A%0D%0A${cuerpoItems}%0D%0A%0D%0ATotal: ${encodeURIComponent(formatearMoneda(c.total))}%0D%0AVálida hasta: ${new Date(c.fecha_vencimiento + 'T00:00:00').toLocaleDateString('es-CO')}%0D%0A%0D%0A¡Gracias por tu interés! 🐑💕%0D%0ALana Rosa Crochet`;
+    window.open(`mailto:${correo}?subject=${asunto}&body=${cuerpo}`, '_blank');
+  }
+
+  function exportarCotizacionesExcel() {
+    const desde = document.getElementById('cotInformeDesde').value;
+    const hasta = document.getElementById('cotInformeHasta').value;
+    let datos = cotizacionesCache;
+    if (desde) datos = datos.filter(c => c.fecha_cotizacion >= desde);
+    if (hasta) datos = datos.filter(c => c.fecha_cotizacion <= hasta);
+
+    if (datos.length === 0) { mostrarMensaje('mensajeCotizaciones', 'No hay cotizaciones en ese rango para exportar.', 'error'); return; }
+
+    const filas = [
+      ['Lana Rosa Crochet — Cotizaciones'],
+      [`Período: ${desde || 'Inicio'} a ${hasta || 'Hoy'}`],
+      [],
+      ['N.°', 'Cliente', 'Cédula/NIT', 'Fecha', 'Vence', 'Estado', 'Total'],
+      ...datos.map(c => [
+        c.consecutivo,
+        c.tercero ? c.tercero.nombre_completo : (c.cliente_nombre_libre || ''),
+        c.tercero ? c.tercero.numero_documento || '' : '',
+        c.fecha_cotizacion,
+        c.fecha_vencimiento,
+        c.estado,
+        Number(c.total)
+      ]),
+      [],
+      ['Total cotizado en el período', '', '', '', '', '', datos.reduce((acc, c) => acc + Number(c.total), 0)]
+    ];
+    const hoja = XLSX.utils.aoa_to_sheet(filas);
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Cotizaciones');
+    XLSX.writeFile(libro, `LanaRosa_Cotizaciones_${new Date().toISOString().slice(0, 10)}.xlsx`);
   }
 
   async function imprimirCotizacion(id) {
