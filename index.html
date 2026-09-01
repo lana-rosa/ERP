@@ -1632,6 +1632,12 @@
     <label for="inputCostoUnitarioEntrada">Costo de compra por unidad (COP) <span style="font-size:10px;opacity:0.6;">(recomendado — actualiza el costo promedio para que la utilidad se calcule bien)</span></label>
     <input type="number" id="inputCostoUnitarioEntrada" placeholder="0" min="0" step="1" oninput="actualizarPrevisualizacionCostoPonderado()">
     <div id="previsualizacionCostoPonderado" style="font-size:11.5px;opacity:0.7;margin-top:-8px;margin-bottom:8px;"></div>
+    <label for="entradaProveedor">Proveedor <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+    <select id="entradaProveedor"><option value="">Sin proveedor asignado</option></select>
+    <label for="entradaNumeroFactura">N.° de factura <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+    <input type="text" id="entradaNumeroFactura" placeholder="Ej: FE-4521">
+    <label for="entradaFechaCompra">Fecha de compra</label>
+    <input type="date" id="entradaFechaCompra">
     <button class="btn-principal" id="btnConfirmarAjusteStock" onclick="confirmarAjusteStock()">Registrar entrada</button>
     <button class="btn-secundario" onclick="irATurnoActivo()">Cancelar</button>
     <div class="mensaje" id="mensajeAjusteStock"></div>
@@ -6787,13 +6793,16 @@
 
   async function cargarProveedoresParaSelectorInventario() {
     const resp = await fetch(WORKER_URL + '/api/pos/terceros?tipo=proveedor', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
-    const select = document.getElementById('invProveedor');
-    if (!select) return;
     if (!resp.ok) return;
     const { terceros } = await resp.json();
     proveedoresParaEdicionCache = terceros || [];
-    select.innerHTML = '<option value="">Sin proveedor asignado</option>' +
+    const opciones = '<option value="">Sin proveedor asignado</option>' +
       (terceros || []).map(p => `<option value="${p.id}">${escaparHtml(p.nombre_completo)}</option>`).join('');
+
+    const select = document.getElementById('invProveedor');
+    if (select) select.innerHTML = opciones;
+    const selectEntrada = document.getElementById('entradaProveedor');
+    if (selectEntrada) selectEntrada.innerHTML = opciones;
   }
 
   async function cargarDepartamentosParaInventario(codigoDeptoForzado) {
@@ -7266,6 +7275,7 @@
     const resp = await fetch(`${WORKER_URL}/api/pos/inventario/kardex?inventario_item_id=${itemId}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
     if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar el Kardex.</div>'; return; }
     const { movimientos } = await resp.json();
+    kardexActualCache = movimientos || [];
 
     if (!movimientos || movimientos.length === 0) {
       cont.innerHTML = `<div class="cargando">Sin movimientos registrados todavía para "${escaparHtml(nombreProducto)}" — el Kardex empezó a registrarse recientemente, así que solo mostrará cambios desde ahora en adelante.</div>`;
@@ -7284,7 +7294,10 @@
     };
 
     cont.innerHTML = `
-      <div class="fredoka" style="font-size:13px;color:var(--rosa-principal);margin-bottom:8px;">Historial Kardex — ${escaparHtml(nombreProducto)}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div class="fredoka" style="font-size:13px;color:var(--rosa-principal);">Historial Kardex — ${escaparHtml(nombreProducto)}</div>
+        <button type="button" class="btn-mini editar" onclick="exportarKardexExcel('${escaparHtml(nombreProducto)}')">📥 Excel</button>
+      </div>
       <div style="background:#fff;border-radius:10px;overflow:hidden;border:1px solid #f1e2ec;">
         <table style="width:100%;border-collapse:collapse;">
           <thead>
@@ -7292,6 +7305,7 @@
               <th style="font-size:10.5px;text-transform:uppercase;color:var(--texto-suave);text-align:left;padding:8px 12px;border-bottom:1px solid #f1e2ec;">Fecha</th>
               <th style="font-size:10.5px;text-transform:uppercase;color:var(--texto-suave);text-align:left;padding:8px 12px;border-bottom:1px solid #f1e2ec;">Tipo</th>
               <th style="font-size:10.5px;text-transform:uppercase;color:var(--texto-suave);text-align:left;padding:8px 12px;border-bottom:1px solid #f1e2ec;">Movimiento</th>
+              <th style="font-size:10.5px;text-transform:uppercase;color:var(--texto-suave);text-align:left;padding:8px 12px;border-bottom:1px solid #f1e2ec;">Factura / Proveedor</th>
               <th style="font-size:10.5px;text-transform:uppercase;color:var(--texto-suave);text-align:right;padding:8px 12px;border-bottom:1px solid #f1e2ec;">Cantidad</th>
               <th style="font-size:10.5px;text-transform:uppercase;color:var(--texto-suave);text-align:right;padding:8px 12px;border-bottom:1px solid #f1e2ec;">Saldo</th>
             </tr>
@@ -7300,11 +7314,16 @@
             ${movimientos.map(m => {
               const c = colorTipo(m.tipo);
               const esEntrada = m.tipo.includes('entrada') || m.tipo === 'compra_proveedor';
+              const detalleFactura = [
+                m.numero_factura ? 'N.° ' + m.numero_factura : null,
+                m.proveedor ? m.proveedor.nombre_completo : null,
+              ].filter(Boolean).join(' — ');
               return `
                 <tr>
                   <td style="padding:8px 12px;font-size:12px;border-bottom:1px solid #f7eff5;">${new Date(m.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: '2-digit' })} ${new Date(m.created_at).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}</td>
                   <td style="padding:8px 12px;border-bottom:1px solid #f7eff5;"><span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:999px;background:${c.bg};color:${c.color};">${etiquetasTipo[m.tipo] || m.tipo}</span></td>
                   <td style="padding:8px 12px;font-size:12px;border-bottom:1px solid #f7eff5;">${escaparHtml(m.observaciones || '—')}</td>
+                  <td style="padding:8px 12px;font-size:11.5px;border-bottom:1px solid #f7eff5;opacity:0.75;">${detalleFactura ? escaparHtml(detalleFactura) : '—'}</td>
                   <td style="padding:8px 12px;font-size:12px;text-align:right;border-bottom:1px solid #f7eff5;color:${c.color};font-weight:600;">${esEntrada ? '+' : '-'}${m.cantidad}</td>
                   <td style="padding:8px 12px;font-size:12px;text-align:right;border-bottom:1px solid #f7eff5;font-weight:700;">${m.stock_despues}</td>
                 </tr>
@@ -7314,6 +7333,39 @@
         </table>
       </div>
     `;
+  }
+
+  let kardexActualCache = [];
+  const etiquetasTipoKardexExcel = {
+    consumo_taller: 'Salida (Taller)', ajuste_manual: 'Ajuste', compra_proveedor: 'Entrada (compra)',
+    entrada_automatica: 'Entrada', salida_automatica: 'Salida',
+  };
+
+  function exportarKardexExcel(nombreProducto) {
+    if (!kardexActualCache || kardexActualCache.length === 0) return;
+    const filas = [
+      [`Lana Rosa Crochet — Kardex de ${nombreProducto}`],
+      [],
+      ['Fecha', 'Tipo', 'Movimiento', 'N.° Factura', 'Proveedor', 'Cantidad', 'Saldo'],
+      ...kardexActualCache.slice().reverse().map(m => {
+        const esEntrada = m.tipo.includes('entrada') || m.tipo === 'compra_proveedor';
+        return [
+          new Date(m.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }),
+          etiquetasTipoKardexExcel[m.tipo] || m.tipo,
+          m.observaciones || '',
+          m.numero_factura || '',
+          m.proveedor ? m.proveedor.nombre_completo : '',
+          (esEntrada ? 1 : -1) * Number(m.cantidad),
+          Number(m.stock_despues)
+        ];
+      }),
+      [],
+      ['', '', '', '', 'TOTAL / SALDO ACTUAL', '', Number(kardexActualCache[0]?.stock_despues || 0)]
+    ];
+    const hoja = XLSX.utils.aoa_to_sheet(filas);
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Kardex');
+    XLSX.writeFile(libro, `LanaRosa_Kardex_${nombreProducto.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().slice(0, 10)}.xlsx`);
   }
 
   let precioGramoHiloCache = 0;
@@ -8846,11 +8898,15 @@
     document.getElementById('inputSkuAjuste').value = '';
     document.getElementById('inputCantidadNueva').value = '';
     document.getElementById('inputCostoUnitarioEntrada').value = '';
+    document.getElementById('entradaProveedor').value = '';
+    document.getElementById('entradaNumeroFactura').value = '';
+    document.getElementById('entradaFechaCompra').value = new Date().toISOString().slice(0, 10);
     document.getElementById('previsualizacionCostoPonderado').textContent = '';
     document.getElementById('sugerenciasEntrada').style.display = 'none';
     document.getElementById('productoSeleccionadoInfo').style.display = 'none';
     productoEntradaSeleccionado = null;
     ocultarMensaje('mensajeAjusteStock');
+    await cargarProveedoresParaSelectorInventario();
     setTimeout(() => document.getElementById('inputSkuAjuste').focus(), 100);
   }
 
@@ -8923,6 +8979,9 @@
   async function confirmarAjusteStock() {
     const cantidadEntrada = Number(document.getElementById('inputCantidadNueva').value);
     const costoUnitario = Number(document.getElementById('inputCostoUnitarioEntrada').value) || null;
+    const proveedorId = document.getElementById('entradaProveedor').value || null;
+    const numeroFactura = document.getElementById('entradaNumeroFactura').value.trim() || null;
+    const fechaCompra = document.getElementById('entradaFechaCompra').value || null;
     ocultarMensaje('mensajeAjusteStock');
 
     if (!productoEntradaSeleccionado) {
@@ -8945,7 +9004,14 @@
     const resp = await fetch(WORKER_URL + '/api/pos/inventario/entrada-stock', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ inventario_item_id: productoEntradaSeleccionado.id, cantidad_entrada: cantidadEntrada, costo_unitario: costoUnitario })
+      body: JSON.stringify({
+        inventario_item_id: productoEntradaSeleccionado.id,
+        cantidad_entrada: cantidadEntrada,
+        costo_unitario: costoUnitario,
+        proveedor_tercero_id: proveedorId,
+        numero_factura: numeroFactura,
+        fecha_compra: fechaCompra
+      })
     });
 
     btn.disabled = false;
@@ -8963,6 +9029,9 @@
     document.getElementById('inputSkuAjuste').value = '';
     document.getElementById('inputCantidadNueva').value = '';
     document.getElementById('inputCostoUnitarioEntrada').value = '';
+    document.getElementById('entradaProveedor').value = '';
+    document.getElementById('entradaNumeroFactura').value = '';
+    document.getElementById('entradaFechaCompra').value = new Date().toISOString().slice(0, 10);
     document.getElementById('previsualizacionCostoPonderado').textContent = '';
     document.getElementById('productoSeleccionadoInfo').style.display = 'none';
     productoEntradaSeleccionado = null;
