@@ -17347,7 +17347,9 @@
             <span style="text-align:right;">${f.horas} h</span>
             <span style="text-align:right;font-weight:700;">${formatearMoneda(f.valor_a_pagar)}</span>
             <span>${f.pagado
-              ? `<span style="color:var(--verde-exito);font-size:11.5px;">✅ ${f.metodo_pago === 'efectivo' ? 'Efectivo' : 'Bancos'} — ${new Date(f.fecha_pago).toLocaleDateString('es-CO')}</span>`
+              ? (f.metodo_pago === 'taller_lana_rosa'
+                  ? `<span style="color:var(--rosa-principal);font-size:11.5px;">🧶 Taller Lana Rosa — ${new Date(f.fecha_pago).toLocaleDateString('es-CO')}</span>`
+                  : `<span style="color:var(--verde-exito);font-size:11.5px;">✅ ${f.metodo_pago === 'efectivo' ? 'Efectivo' : 'Bancos'} — ${new Date(f.fecha_pago).toLocaleDateString('es-CO')}</span>`)
               : `<div id="pagoInline-${f.pedido_crm_id}"><label style="display:flex;align-items:center;gap:6px;font-weight:400;margin:0;"><input type="checkbox" style="width:auto;" onchange="alternarPagoInlineHonorario('${f.pedido_crm_id}', this.checked)"><span style="font-size:12px;">Marcar como pagado</span></label></div>`
             }</span>
           </div>
@@ -17367,6 +17369,7 @@
         <select id="metodoPagoHonorario-${pedidoCrmId}" style="flex:1;padding:6px 8px;font-size:12px;">
           <option value="efectivo">Efectivo (Caja)</option>
           <option value="transferencia">Bancos</option>
+          <option value="taller_lana_rosa">🧶 Taller Lana Rosa (nómina, sin descuento)</option>
         </select>
         <button class="btn-mini guardar" onclick="confirmarPagoHonorarioTejedora('${pedidoCrmId}')">Confirmar</button>
       </div>
@@ -17389,13 +17392,17 @@
         producto: fila.producto,
         proveedor: fila.proveedor,
         monto: fila.valor_a_pagar,
+        horas: fila.horas,
         metodo_pago: metodoPago
       })
     });
     const datos = await resp.json();
     if (!resp.ok) { mostrarMensaje('mensajeHonorariosTejedoras', datos.error || 'No se pudo registrar el pago.', 'error'); return; }
 
-    mostrarMensaje('mensajeHonorariosTejedoras', `✅ Pago de ${formatearMoneda(fila.valor_a_pagar)} a ${fila.proveedor} registrado — ya se descontó de ${metodoPago === 'efectivo' ? 'Caja' : 'Bancos'}.`, 'exito');
+    const mensajeExito = metodoPago === 'taller_lana_rosa'
+      ? `✅ "${fila.producto}" (${fila.radicado}) marcado como parte del trabajo habitual de ${fila.proveedor} en el Taller — no se descontó dinero.`
+      : `✅ Pago de ${formatearMoneda(fila.valor_a_pagar)} a ${fila.proveedor} registrado — ya se descontó de ${metodoPago === 'efectivo' ? 'Caja' : 'Bancos'}.`;
+    mostrarMensaje('mensajeHonorariosTejedoras', mensajeExito, 'exito');
     await cargarHonorariosTejedoras();
   }
 
