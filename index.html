@@ -857,6 +857,8 @@
     <div class="sidebar-depto" id="deptoContabilidadGrupo" style="display:none;">
       <button class="sidebar-depto-header" id="headerDeptoContabilidad" onclick="toggleSidebarDepto('deptoContabilidadSubmenu', 'headerDeptoContabilidad')">📊 Contabilidad e Impuestos <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoContabilidadSubmenu">
+        <button class="nav-btn" id="nav-dashboard-contable" onclick="mostrarPantallaDashboardContable()"><span class="nav-icon">💹</span> Dashboard Contable</button>
+        <button class="nav-btn" id="nav-honorarios-tejedoras" onclick="mostrarPantallaHonorariosTejedoras()"><span class="nav-icon">🧵</span> Honorarios Tejedoras</button>
         <button class="nav-btn" id="nav-estados-financieros" onclick="mostrarPantallaEstadosFinancieros()"><span class="nav-icon">📑</span> Estados financieros y libros</button>
         <button class="nav-btn" id="nav-activos-fijos" onclick="mostrarPantallaActivosFijos()"><span class="nav-icon">🪑</span> Activos fijos</button>
       </div>
@@ -1004,7 +1006,7 @@
 
   <div class="filtro-tipo" style="margin-bottom:20px;">
     <button class="chip-filtro activo" data-subtab-btn="registrarVenta" onclick="mostrarSubTabGrupo('registrarVenta', 'subtabVentaProductos', this)">🛒 Productos</button>
-    <button class="chip-filtro" data-subtab-btn="registrarVenta" onclick="mostrarSubTabGrupo('registrarVenta', 'subtabVentaWhatsapp', this); cargarTarifasEnvioParaPedido();">📱 WhatsApp/Redes</button>
+    <button class="chip-filtro" data-subtab-btn="registrarVenta" onclick="mostrarSubTabGrupo('registrarVenta', 'subtabVentaWhatsapp', this);">📱 WhatsApp/Redes</button>
     <button class="chip-filtro" data-subtab-btn="registrarVenta" onclick="mostrarSubTabGrupo('registrarVenta', 'subtabVentaAcademia', this); prepararPestanaVentaAcademia();">🎓 Cursos y clases</button>
     <button class="chip-filtro" data-subtab-btn="registrarVenta" onclick="mostrarSubTabGrupo('registrarVenta', 'subtabVentaCartera', this);">📋 Cartera</button>
   </div>
@@ -1134,78 +1136,16 @@
 
   <div id="subtabVentaWhatsapp" data-subtab-grupo="registrarVenta" class="oculto">
     <div class="panel" style="max-width:520px;">
-      <h2>Nuevo pedido por WhatsApp/Redes</h2>
-      <label for="pedidoCanal">Canal</label>
-      <select id="pedidoCanal" onchange="actualizarResumenAnticipoPedido()">
-        <option value="whatsapp">WhatsApp</option>
-        <option value="instagram">Instagram</option>
-        <option value="facebook">Facebook</option>
-        <option value="tienda_virtual">Tienda virtual</option>
-      </select>
-
-      <label for="pedidoIdentificacionCliente">N° de identificación del cliente *</label>
-      <input type="text" id="pedidoIdentificacionCliente" placeholder="CC, CE, NIT..." oninput="autocompletarClientePedido()">
-      <label for="pedidoNombreCliente">Nombre completo *</label>
-      <input type="text" id="pedidoNombreCliente" placeholder="Nombre del cliente" style="text-transform:uppercase;" oninput="this.value = this.value.toUpperCase()">
-      <label for="pedidoTelefonoCliente">Teléfono *</label>
-      <input type="tel" id="pedidoTelefonoCliente" placeholder="300 000 0000">
-      <label for="pedidoCorreoCliente">Correo electrónico <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
-      <input type="email" id="pedidoCorreoCliente" placeholder="correo@gmail.com">
-      <label for="pedidoDireccionCliente">Dirección de envío *</label>
-      <input type="text" id="pedidoDireccionCliente" placeholder="Calle, carrera, número, barrio...">
-      <label for="pedidoMunicipioCliente">Ciudad / Municipio *</label>
-      <select id="pedidoMunicipioCliente" onchange="calcularEnvioAutomatico()"><option value="">Selecciona...</option></select>
-      <div id="mensajeAutocompletadoPedido" style="font-size:12px;color:var(--verde-exito);margin-top:4px;display:none;">✅ Cliente encontrado</div>
-      <div style="font-size:11px;opacity:0.55;margin-top:2px;">* Estos datos son obligatorios: los pedidos se envían por correo certificado.</div>
-
-      <label style="display:flex;align-items:flex-start;gap:8px;margin-top:10px;font-weight:400;">
-        <input type="checkbox" id="pedidoAceptaTratamientoDatos" style="width:auto;margin-top:3px;">
-        <span style="font-size:12px;">El cliente autorizó el tratamiento de sus datos personales (según el aviso enviado en la confirmación del pedido)</span>
-      </label>
-
-      <label for="pedidoBuscarProducto">Buscar producto en el inventario de Tienda <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
-      <div style="position:relative;">
-        <input type="text" id="pedidoBuscarProducto" placeholder="Si ya existe en stock, búscalo aquí..." oninput="buscarProductoPedido()" autocomplete="off">
-        <div id="sugerenciasPedidoProducto" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--fondo-panel);border:1.5px solid var(--rosa-medio);border-radius:9px;margin-top:4px;max-height:200px;overflow-y:auto;z-index:50;box-shadow:var(--sombra);"></div>
+      <h2>📱 Pedidos por WhatsApp/Redes</h2>
+      <div style="background:var(--rosa-suave);border-radius:9px;padding:14px 16px;font-size:13px;line-height:1.6;">
+        Los pedidos nuevos por WhatsApp, Instagram, Facebook o Tienda virtual se registran en el <strong>CRM</strong>, no aquí — así el seguimiento de la conversación y el historial de cada cliente queda completo en un solo lugar.
+        <br><br>
+        Una vez el pedido esté listo allá, tráelo al ERP con el botón <strong>"🔄 Cargar pedidos nuevos del CRM"</strong> en <strong>Pedidos WhatsApp/Redes</strong> (menú lateral) — desde ahí se cobra el anticipo, el saldo, y se despacha.
       </div>
-      <div id="pedidoProductoInfo" style="display:none;margin-top:8px;padding:9px 11px;background:var(--rosa-suave);border-radius:9px;font-size:12.5px;"></div>
-
-      <label for="pedidoDescripcionProducto">Descripción del producto</label>
-      <input type="text" id="pedidoDescripcionProducto" placeholder="Ej: Amigurumi personalizado conejo azul">
-      <label for="pedidoCantidad">Cantidad</label>
-      <input type="number" id="pedidoCantidad" placeholder="1" min="1" step="1" value="1">
-      <label for="pedidoValorProducto">Valor de este producto (COP)</label>
-      <input type="number" id="pedidoValorProducto" placeholder="0" min="0" step="1">
-      <button type="button" class="btn-secundario" style="margin-top:8px;" onclick="agregarProductoAPedido()">+ Agregar producto a la lista</button>
-
-      <div id="listaProductosPedido" style="margin-top:10px;"></div>
-
-      <label for="pedidoFechaEstimadaEntrega" style="margin-top:10px;">Fecha estimada de entrega <span style="font-size:10px;opacity:0.6;">(si algún producto de la lista se va a elaborar — déjalo vacío si todo está listo ya)</span></label>
-      <input type="date" id="pedidoFechaEstimadaEntrega">
-
-      <div id="bloqueDescuentoPedido" style="margin-top:10px;">
-        <button type="button" class="btn-mini editar" id="btnMostrarDescuentoPedido" onclick="alternarDescuentoPedido()">🏷️ Aplicar código de descuento</button>
-        <div id="formDescuentoPedido" class="oculto" style="margin-top:8px;display:flex;gap:8px;align-items:center;">
-          <input type="text" id="codigoDescuentoPedidoInput" placeholder="Código de descuento" style="flex:1;text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
-          <button type="button" class="btn-mini editar" onclick="aplicarCodigoDescuentoPedido()">Aplicar</button>
-          <button type="button" class="btn-quitar-pago" onclick="quitarDescuentoPedido()" title="Quitar descuento">✕</button>
-        </div>
-        <div id="textoDescuentoPedidoAplicado" class="oculto" style="font-size:12.5px;color:var(--rosa-principal);font-weight:600;margin-top:6px;"></div>
-        <div id="mensajeCodigoDescuentoPedido" style="font-size:11.5px;margin-top:4px;"></div>
-      </div>
-
-      <label for="pedidoValorEnvio" style="margin-top:14px;">Valor del envío (COP) <span style="font-size:10px;opacity:0.6;">(se calcula solo según la ciudad, pero puedes ajustarlo)</span></label>
-      <input type="number" id="pedidoValorEnvio" placeholder="0" min="0" step="1" oninput="actualizarResumenAnticipoPedido()">
-
-      <div id="resumenAnticipoPedido" class="resumen-cierre" style="margin-top:12px;"></div>
-
-      <button class="btn-principal" id="btnCrearPedido" onclick="confirmarCrearPedidoCanal()">Crear pedido</button>
-      <div class="mensaje" id="mensajePedidoCanal"></div>
-      <div style="display:flex;gap:8px;margin-top:10px;">
-        <button class="btn-secundario" style="margin-top:0;" onclick="imprimirReciboVenta()" id="btnImprimirReciboPedido" disabled title="Se activa después de crear un pedido">🖨️ Imprimir recibo</button>
-        <button class="btn-secundario" style="margin-top:0;" onclick="enviarReciboVentaWhatsapp()" id="btnWhatsappReciboPedido" disabled title="Se activa después de crear un pedido">📱 Enviar WhatsApp</button>
-      </div>
-      <div style="font-size:11.5px;opacity:0.6;margin-top:10px;">Para ver o gestionar pedidos ya creados, ve a "Pedidos WhatsApp/Redes" en el menú.</div>
+      <a href="https://lana-rosa.github.io/CRM/" target="_blank" style="display:block;margin-top:14px;">
+        <button class="btn-principal" type="button">🔗 Ir al CRM a crear el pedido</button>
+      </a>
+      <button class="btn-secundario" style="margin-top:10px;" onclick="mostrarPantallaPedidosCanal()">📱 Ir a Pedidos WhatsApp/Redes (gestionar los que ya existen)</button>
     </div>
   </div>
 
@@ -1437,41 +1377,56 @@
   </div>
 
   <div id="subtabInvAgregar" data-subtab-grupo="invPantalla" class="oculto">
-    <div class="panel" style="max-width:520px;">
+    <div class="panel" style="max-width:none;max-height:none;">
       <h2>Agregar producto o insumo</h2>
-      <label for="invNombre">Nombre</label>
-      <input type="text" id="invNombre" placeholder="Ej: Amigurumi conejo personalizado">
-      <label for="invSku">SKU / Código de barras <span style="font-size:10px;opacity:0.6;">(opcional — escanea o escribe)</span></label>
-      <div style="display:flex;gap:8px;">
-        <input type="text" id="invSku" placeholder="Ej: AMI-001" style="flex:1;">
-        <button type="button" class="btn-mini editar" style="max-width:80px;" onclick="abrirEscanerCodigoBarras('invSku')">📷 Escanear</button>
+      <div class="grilla-2">
+        <div>
+          <label for="invNombre">Nombre</label>
+          <input type="text" id="invNombre" placeholder="Ej: Amigurumi conejo personalizado">
+          <label for="invSku">SKU / Código de barras <span style="font-size:10px;opacity:0.6;">(opcional — escanea o escribe)</span></label>
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="invSku" placeholder="Ej: AMI-001" style="flex:1;">
+            <button type="button" class="btn-mini editar" style="max-width:80px;" onclick="abrirEscanerCodigoBarras('invSku')">📷 Escanear</button>
+          </div>
+          <label for="invTipo">Tipo</label>
+          <select id="invTipo" onchange="cargarCategoriasParaFormulario()">
+            <option value="producto_terminado" id="opcionInvTipoProductoTerminado">Producto tejido</option>
+            <option value="merceria">Mercería / Insumo</option>
+          </select>
+          <label for="invCategoria">Categoría</label>
+          <select id="invCategoria"><option value="">Cargando categorías...</option></select>
+          <button type="button" class="btn-mini editar" style="width:100%;margin-top:6px;" onclick="alternarGestionCategorias()">⚙️ Agregar o editar categorías</button>
+          <div id="panelGestionCategorias" class="oculto" style="margin-top:8px;padding:10px;background:var(--rosa-suave);border-radius:9px;"></div>
+          <label for="invUnidad" style="margin-top:14px;">Unidad de medida</label>
+          <select id="invUnidad">
+            <option value="unidad">Unidad</option>
+            <option value="metro">Metro</option>
+            <option value="gramo">Gramo</option>
+            <option value="rollo">Rollo</option>
+          </select>
+          <label for="invProveedor">Proveedor <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+          <select id="invProveedor"><option value="">Sin proveedor asignado</option></select>
+        </div>
+        <div>
+          <label for="invPrecioVenta">Precio de venta (COP)</label>
+          <input type="number" id="invPrecioVenta" placeholder="0" min="0" step="1">
+          <label for="invCostoPromedio">Costo aproximado (COP, opcional)</label>
+          <input type="number" id="invCostoPromedio" placeholder="0" min="0" step="1">
+          <label for="invStockInicial">Stock inicial</label>
+          <input type="number" id="invStockInicial" placeholder="0" min="0" step="1">
+          <label for="invStockMinimo">Stock mínimo (para alertas)</label>
+          <input type="number" id="invStockMinimo" placeholder="0" min="0" step="1">
+          <div class="grid-campos-inventario" style="margin-top:14px;">
+            <div class="campo-mini"><label>Marca <span style="font-size:10px;opacity:0.6;">(opcional)</span></label><input type="text" id="invMarca" placeholder="Ej: Anchor"></div>
+            <div class="campo-mini"><label>Color <span style="font-size:10px;opacity:0.6;">(opcional)</span></label><input type="text" id="invColor" placeholder="Ej: Rosa fuerte"></div>
+            <div class="campo-mini"><label>Peso (gramos) <span style="font-size:10px;opacity:0.6;">(opcional)</span></label><input type="number" id="invPeso" min="0" step="1" placeholder="Ej: 120"></div>
+            <div class="campo-mini"><label>Material <span style="font-size:10px;opacity:0.6;">(opcional)</span></label><input type="text" id="invMaterial" placeholder="Ej: Estambre acrílico"></div>
+          </div>
+          <label for="invFoto" style="margin-top:14px;">Foto de referencia <span style="font-size:10px;opacity:0.6;">(opcional, se sube al guardar)</span></label>
+          <input type="file" id="invFoto" accept="image/*" onchange="previsualizarFotoProducto()">
+          <img id="previsualizacionFotoProducto" class="oculto" style="max-width:160px;border-radius:10px;margin-top:8px;">
+        </div>
       </div>
-      <label for="invTipo">Tipo</label>
-      <select id="invTipo" onchange="cargarCategoriasParaFormulario()">
-        <option value="producto_terminado" id="opcionInvTipoProductoTerminado">Producto tejido</option>
-        <option value="merceria">Mercería / Insumo</option>
-      </select>
-      <label for="invCategoria">Categoría</label>
-      <select id="invCategoria"><option value="">Cargando categorías...</option></select>
-      <button type="button" class="btn-mini editar" style="width:100%;margin-top:6px;" onclick="alternarGestionCategorias()">⚙️ Agregar o editar categorías</button>
-      <div id="panelGestionCategorias" class="oculto" style="margin-top:8px;padding:10px;background:var(--rosa-suave);border-radius:9px;"></div>
-      <label for="invUnidad" style="margin-top:14px;">Unidad de medida</label>
-      <select id="invUnidad">
-        <option value="unidad">Unidad</option>
-        <option value="metro">Metro</option>
-        <option value="gramo">Gramo</option>
-        <option value="rollo">Rollo</option>
-      </select>
-      <label for="invPrecioVenta">Precio de venta (COP)</label>
-      <input type="number" id="invPrecioVenta" placeholder="0" min="0" step="1">
-      <label for="invCostoPromedio">Costo aproximado (COP, opcional)</label>
-      <input type="number" id="invCostoPromedio" placeholder="0" min="0" step="1">
-      <label for="invStockInicial">Stock inicial</label>
-      <input type="number" id="invStockInicial" placeholder="0" min="0" step="1">
-      <label for="invStockMinimo">Stock mínimo (para alertas)</label>
-      <input type="number" id="invStockMinimo" placeholder="0" min="0" step="1">
-      <label for="invProveedor">Proveedor <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
-      <select id="invProveedor"><option value="">Sin proveedor asignado</option></select>
       <button class="btn-principal" id="btnGuardarProducto" onclick="guardarNuevoProducto()">Agregar al inventario</button>
       <div class="mensaje" id="mensajeInventarioForm"></div>
     </div>
@@ -3705,6 +3660,69 @@
   </div>
 </div>
 
+<!-- ===== PANTALLA: DASHBOARD CONTABLE ===== -->
+<div id="pantallaDashboardContable" class="oculto contenido">
+  <div class="page-header">
+    <h1>💹 Dashboard Contable</h1>
+    <div class="subtitulo">Cuánto hay en caja, en bancos, lo que te deben, y lo que debes — de un vistazo.</div>
+  </div>
+
+  <div id="avisoCrmDashboardContable" class="oculto" style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;"></div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:14px;margin-bottom:16px;">
+    <div class="panel" style="max-height:none;text-align:center;">
+      <div style="font-size:11.5px;opacity:0.65;">💵 CAJA (EFECTIVO)</div>
+      <div id="dcCaja" style="font-size:22px;font-weight:700;margin-top:4px;">$0</div>
+      <div style="font-size:10.5px;opacity:0.6;margin-top:2px;">Según los libros contables</div>
+    </div>
+    <div class="panel" style="max-height:none;text-align:center;">
+      <div style="font-size:11.5px;opacity:0.65;">🏦 BANCOS</div>
+      <div id="dcBancos" style="font-size:22px;font-weight:700;margin-top:4px;">$0</div>
+      <div style="font-size:10.5px;opacity:0.6;margin-top:2px;">Según los libros contables</div>
+    </div>
+    <div class="panel" style="max-height:none;text-align:center;">
+      <div style="font-size:11.5px;opacity:0.65;">📥 CUENTAS POR COBRAR</div>
+      <div id="dcCuentasPorCobrar" style="font-size:22px;font-weight:700;margin-top:4px;color:var(--rosa-principal);">$0</div>
+      <div id="dcDesgloseCxC" style="font-size:10.5px;opacity:0.6;margin-top:2px;"></div>
+    </div>
+    <div class="panel" style="max-height:none;text-align:center;">
+      <div style="font-size:11.5px;opacity:0.65;">📤 CUENTAS POR PAGAR</div>
+      <div id="dcCuentasPorPagar" style="font-size:22px;font-weight:700;margin-top:4px;color:var(--rojo-error);">$0</div>
+      <div style="font-size:10.5px;opacity:0.6;margin-top:2px;">A proveedores</div>
+    </div>
+  </div>
+
+  <div class="panel" style="max-width:none;max-height:none;">
+    <h2>📊 Ventas de este mes</h2>
+    <div class="subtitulo">Incluye lo ya registrado en el ERP, más lo que existe en el CRM y todavía no se ha traído.</div>
+    <div id="dcVentasMes" style="font-size:26px;font-weight:800;color:var(--rosa-principal);margin-top:6px;"></div>
+    <div id="dcDesgloseVentas" style="font-size:12px;opacity:0.7;margin-top:4px;"></div>
+  </div>
+</div>
+
+<!-- ===== PANTALLA: HONORARIOS TEJEDORAS ===== -->
+<div id="pantallaHonorariosTejedoras" class="oculto contenido">
+  <div class="page-header">
+    <h1>🧵 Honorarios Tejedoras</h1>
+    <div class="subtitulo">Pago por producto elaborado, según el tiempo real de tejido registrado en el CRM — al valor de la hora/fracción de hora (SMLV + prestaciones).</div>
+  </div>
+
+  <div id="valorHoraHonorarios" style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;font-weight:600;"></div>
+
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+    <input type="text" id="buscarHonorariosTejedoras" placeholder="🔍 Radicado, producto o tejedora..." oninput="filtrarHonorariosTejedoras()" style="flex:1;">
+    <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarHonorariosTejedorasExcel()">📥 Excel</button>
+  </div>
+  <div class="filtro-tipo" style="margin-bottom:16px;">
+    <button class="chip-filtro activo" data-filtro-hon="pendientes" onclick="cambiarFiltroHonorarios('pendientes', this)">Pendientes</button>
+    <button class="chip-filtro" data-filtro-hon="pagados" onclick="cambiarFiltroHonorarios('pagados', this)">Ya pagados</button>
+    <button class="chip-filtro" data-filtro-hon="todos" onclick="cambiarFiltroHonorarios('todos', this)">Todos</button>
+  </div>
+
+  <div class="mensaje" id="mensajeHonorariosTejedoras"></div>
+  <div id="listaHonorariosTejedoras"><div class="cargando">Cargando...</div></div>
+</div>
+
 <div id="pantallaEstadosFinancieros" class="oculto contenido">
   <div class="page-header">
     <h1>📑 Estados financieros</h1>
@@ -4623,7 +4641,7 @@
   });
 
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -4649,6 +4667,8 @@
       pantallaReportesFinancieros: 'nav-reportes-financieros',
       pantallaCosteoReal: 'nav-costeo-real',
       pantallaPresupuestoEmpresa: 'nav-presupuesto-empresa',
+      pantallaDashboardContable: 'nav-dashboard-contable',
+      pantallaHonorariosTejedoras: 'nav-honorarios-tejedoras',
       pantallaNomina: 'nav-nomina',
       pantallaTalentoHumano: 'nav-talento-humano',
       pantallaCalendario: 'nav-calendario',
@@ -5019,6 +5039,8 @@
     mostrar('nav-reportes-financieros', esAdmin || esContador);
     mostrar('nav-costeo-real', esAdmin || esContador);
     mostrar('nav-presupuesto-empresa', esAdmin || esContador);
+    mostrar('nav-dashboard-contable', esAdmin || esContador);
+    mostrar('nav-honorarios-tejedoras', esAdmin || esContador);
     mostrar('nav-estados-financieros', esAdmin || esContador);
     mostrar('nav-cuentas-pendientes', esAdmin || esContador);
     mostrar('nav-activos-fijos', esAdmin);
@@ -6952,9 +6974,25 @@
     document.getElementById('invCostoPromedio').value = '';
     document.getElementById('invStockInicial').value = '';
     document.getElementById('invStockMinimo').value = '';
+    document.getElementById('invMarca').value = '';
+    document.getElementById('invColor').value = '';
+    document.getElementById('invPeso').value = '';
+    document.getElementById('invMaterial').value = '';
+    document.getElementById('invFoto').value = '';
+    document.getElementById('previsualizacionFotoProducto').classList.add('oculto');
+    document.getElementById('previsualizacionFotoProducto').src = '';
     document.getElementById('panelGestionCategorias').classList.add('oculto');
     ocultarMensaje('mensajeInventarioForm');
     cargarCategoriasParaFormulario();
+  }
+
+  function previsualizarFotoProducto() {
+    const archivo = document.getElementById('invFoto').files[0];
+    const img = document.getElementById('previsualizacionFotoProducto');
+    if (!archivo) { img.classList.add('oculto'); return; }
+    const lector = new FileReader();
+    lector.onload = (e) => { img.src = e.target.result; img.classList.remove('oculto'); };
+    lector.readAsDataURL(archivo);
   }
 
   async function guardarNuevoProducto() {
@@ -6969,6 +7007,11 @@
     const stockInicial = Number(document.getElementById('invStockInicial').value) || 0;
     const stockMinimo = Number(document.getElementById('invStockMinimo').value) || 0;
     const proveedorId = document.getElementById('invProveedor').value || null;
+    const marca = document.getElementById('invMarca').value.trim() || null;
+    const color = document.getElementById('invColor').value.trim() || null;
+    const peso = document.getElementById('invPeso').value ? Number(document.getElementById('invPeso').value) : null;
+    const material = document.getElementById('invMaterial').value.trim() || null;
+    const archivoFoto = document.getElementById('invFoto').files[0] || null;
 
     ocultarMensaje('mensajeInventarioForm');
 
@@ -6989,7 +7032,7 @@
     btn.disabled = true;
     btn.textContent = 'Guardando...';
 
-    const { error } = await supabaseClient.from('inventario_items').insert({
+    const { data: nuevoItem, error } = await supabaseClient.from('inventario_items').insert({
       nombre,
       sku,
       tipo,
@@ -7001,16 +7044,42 @@
       stock_actual: stockInicial,
       stock_minimo: stockMinimo,
       proveedor_tercero_id: proveedorId,
+      marca,
+      color,
+      peso_gramos: peso,
+      material,
       activo: true
-    });
-
-    btn.disabled = false;
-    btn.textContent = 'Agregar al inventario';
+    }).select('id').single();
 
     if (error) {
+      btn.disabled = false;
+      btn.textContent = 'Agregar al inventario';
       mostrarMensaje('mensajeInventarioForm', 'No se pudo guardar: ' + error.message, 'error');
       return;
     }
+
+    if (archivoFoto && nuevoItem) {
+      btn.textContent = 'Subiendo foto...';
+      const formFoto = new FormData();
+      formFoto.append('item_id', nuevoItem.id);
+      formFoto.append('archivo', archivoFoto);
+      const respFoto = await fetch(WORKER_URL + '/api/pos/inventario/foto', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + sesionActual.token },
+        body: formFoto
+      });
+      if (!respFoto.ok) {
+        mostrarMensaje('mensajeInventarioForm', '✅ Producto agregado, pero la foto no se pudo subir. Puedes intentarlo de nuevo editando el producto.', 'exito');
+        btn.disabled = false;
+        btn.textContent = 'Agregar al inventario';
+        limpiarFormularioProducto();
+        await cargarInventarioGestion();
+        return;
+      }
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Agregar al inventario';
 
     mostrarMensaje('mensajeInventarioForm', '✅ Producto agregado correctamente.', 'exito');
     limpiarFormularioProducto();
@@ -7023,7 +7092,7 @@
 
     const { data, error } = await supabaseClient
       .from('inventario_items')
-      .select('id, tipo, nombre, sku, stock_actual, stock_minimo, precio_venta, costo_promedio_ponderado, unidad_medida, activo, centro_costo_id, categoria_id, proveedor_tercero_id, peso_gramos, costo_ojos, costo_empaque, costo_otros_accesorios, proveedor:proveedor_tercero_id(nombre_completo)')
+      .select('id, tipo, nombre, sku, stock_actual, stock_minimo, precio_venta, costo_promedio_ponderado, unidad_medida, activo, centro_costo_id, categoria_id, proveedor_tercero_id, peso_gramos, costo_ojos, costo_empaque, costo_otros_accesorios, marca, color, material, foto_url, proveedor:proveedor_tercero_id(nombre_completo)')
       .order('nombre', { ascending: true });
 
     if (error) {
@@ -9564,6 +9633,8 @@
     { clave: 'nav-solicitudes-tienda', etiqueta: '　　Solicitud de insumos del Taller' },
     { clave: 'nav-consumotaller', etiqueta: '　　Consumo de material (Taller)' },
     { clave: 'deptoContabilidadGrupo', etiqueta: '📊 Contabilidad e Impuestos (grupo completo)' },
+    { clave: 'nav-dashboard-contable', etiqueta: '　　Dashboard Contable' },
+    { clave: 'nav-honorarios-tejedoras', etiqueta: '　　Honorarios Tejedoras' },
     { clave: 'nav-estados-financieros', etiqueta: '　　Estados financieros y libros' },
     { clave: 'nav-activos-fijos', etiqueta: '　　Activos fijos' },
     { clave: 'deptoTalentoGrupo', etiqueta: '🗂️ Talento Humano (grupo completo)' },
@@ -10105,12 +10176,7 @@
             <div style="margin-top:0;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
               <label style="margin:0;font-size:11px;">Rol principal:</label>
               <select onchange="cambiarRolPrincipalUsuario('${u.user_id}', this.value)" style="width:auto;padding:6px 8px;font-size:12px;">
-                <optgroup label="Roles básicos">
-                  ${Object.keys(etiquetasRol).map(r => `<option value="base:${r}" ${u.rol === r && !u.rol_personalizado_id ? 'selected' : ''}>${etiquetasRol[r]}</option>`).join('')}
-                </optgroup>
-                ${rolesPersonalizadosCache.length ? `<optgroup label="Roles personalizados">
-                  ${rolesPersonalizadosCache.map(r => `<option value="custom:${r.id}" ${u.rol_personalizado_id === r.id ? 'selected' : ''}>${escaparHtml(r.nombre)}</option>`).join('')}
-                </optgroup>` : ''}
+                ${Object.keys(etiquetasRol).map(r => `<option value="${r}" ${u.rol === r ? 'selected' : ''}>${etiquetasRol[r]}</option>`).join('')}
               </select>
             </div>
             <div style="margin-top:8px;font-size:11px;">
@@ -10519,15 +10585,11 @@
     await cargarListaUsuarios();
   }
 
-  async function cambiarRolPrincipalUsuario(userId, valorSelect) {
-    const [tipo, valor] = valorSelect.split(':');
-    const cuerpo = tipo === 'custom'
-      ? { user_id: userId, rol_personalizado_id: valor }
-      : { user_id: userId, rol: valor };
+  async function cambiarRolPrincipalUsuario(userId, rol) {
     const resp = await fetch(WORKER_URL + '/api/pos/usuarios/rol-principal', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify(cuerpo)
+      body: JSON.stringify({ user_id: userId, rol })
     });
     if (!resp.ok) { mostrarMensaje('mensajeUsuarios', 'No se pudo cambiar el rol.', 'error'); await cargarListaUsuarios(); return; }
     await cargarListaUsuarios();
@@ -17183,6 +17245,176 @@
   }
 
 
+
+  async function mostrarPantallaDashboardContable() {
+    mostrarPantalla('pantallaDashboardContable');
+    const cont = document.getElementById('avisoCrmDashboardContable');
+    cont.classList.add('oculto');
+
+    const resp = await fetch(WORKER_URL + '/api/pos/contabilidad/dashboard', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) {
+      document.getElementById('dcCaja').textContent = 'Error';
+      document.getElementById('dcBancos').textContent = 'Error';
+      return;
+    }
+    const d = await resp.json();
+
+    document.getElementById('dcCaja').textContent = formatearMoneda(d.caja);
+    document.getElementById('dcBancos').textContent = formatearMoneda(d.bancos);
+    document.getElementById('dcCuentasPorPagar').textContent = formatearMoneda(d.cuentas_por_pagar);
+
+    document.getElementById('dcCuentasPorCobrar').textContent = formatearMoneda(d.cuentas_por_cobrar.total);
+    document.getElementById('dcDesgloseCxC').innerHTML = d.cuentas_por_cobrar.pendiente_crm > 0
+      ? `ERP: ${formatearMoneda(d.cuentas_por_cobrar.erp)} + CRM sin traer: ${formatearMoneda(d.cuentas_por_cobrar.pendiente_crm)}`
+      : 'Registradas en el ERP';
+
+    document.getElementById('dcVentasMes').textContent = formatearMoneda(d.ventas_mes.total);
+    document.getElementById('dcDesgloseVentas').innerHTML = d.ventas_mes.pendiente_crm > 0
+      ? `Ya registradas en el ERP: <strong>${formatearMoneda(d.ventas_mes.erp)}</strong> · Pendientes por traer del CRM: <strong>${formatearMoneda(d.ventas_mes.pendiente_crm)}</strong>`
+      : `Ya registradas en el ERP: <strong>${formatearMoneda(d.ventas_mes.erp)}</strong>`;
+
+    if (d.pedidos_pendientes_por_traer_crm > 0) {
+      cont.classList.remove('oculto');
+      cont.innerHTML = `ℹ️ Hay <strong>${d.pedidos_pendientes_por_traer_crm} pedido(s)</strong> en el CRM que todavía no se han traído al ERP — sus valores ya están sumados arriba (marcados como "CRM sin traer"), pero para cobrarlos y que queden contabilizados de verdad, ve a <strong>Pedidos WhatsApp/Redes</strong> y usa el botón "🔄 Cargar pedidos nuevos del CRM".`;
+    }
+  }
+
+  // ============================================================
+  // HONORARIOS TEJEDORAS
+  // ============================================================
+  let honorariosTejedorasCache = [];
+  let filtroHonorariosActual = 'pendientes';
+
+  async function mostrarPantallaHonorariosTejedoras() {
+    mostrarPantalla('pantallaHonorariosTejedoras');
+    document.getElementById('buscarHonorariosTejedoras').value = '';
+    await cargarHonorariosTejedoras();
+  }
+
+  async function cargarHonorariosTejedoras() {
+    const cont = document.getElementById('listaHonorariosTejedoras');
+    cont.innerHTML = '<div class="cargando">Cargando desde el CRM...</div>';
+    ocultarMensaje('mensajeHonorariosTejedoras');
+
+    const resp = await fetch(WORKER_URL + '/api/pos/contabilidad/honorarios-tejedoras', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const d = await resp.json();
+
+    document.getElementById('valorHoraHonorarios').textContent = `💰 Valor de la hora/fracción de hora (SMLV + prestaciones + ARL + parafiscales): ${formatearMoneda(d.valor_hora_mano_obra)}`;
+    honorariosTejedorasCache = d.filas || [];
+    renderizarHonorariosTejedoras();
+  }
+
+  function cambiarFiltroHonorarios(filtro, botonEl) {
+    filtroHonorariosActual = filtro;
+    document.querySelectorAll('[data-filtro-hon]').forEach(b => b.classList.remove('activo'));
+    botonEl.classList.add('activo');
+    renderizarHonorariosTejedoras();
+  }
+
+  function filtrarHonorariosTejedoras() {
+    renderizarHonorariosTejedoras();
+  }
+
+  function renderizarHonorariosTejedoras() {
+    const texto = document.getElementById('buscarHonorariosTejedoras').value.trim().toLowerCase();
+    let filas = honorariosTejedorasCache;
+
+    if (filtroHonorariosActual === 'pendientes') filas = filas.filter(f => !f.pagado);
+    else if (filtroHonorariosActual === 'pagados') filas = filas.filter(f => f.pagado);
+
+    if (texto) {
+      filas = filas.filter(f =>
+        f.radicado.toLowerCase().includes(texto) ||
+        (f.producto || '').toLowerCase().includes(texto) ||
+        (f.proveedor || '').toLowerCase().includes(texto)
+      );
+    }
+
+    const cont = document.getElementById('listaHonorariosTejedoras');
+    if (filas.length === 0) { cont.innerHTML = '<div class="cargando">Sin registros que coincidan.</div>'; return; }
+
+    cont.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:110px 1fr 140px 80px 110px 250px;">
+          <span>RADICADO</span><span>PRODUCTO</span><span>PROVEEDOR</span><span style="text-align:right;">TIEMPO</span><span style="text-align:right;">VALOR</span><span>PAGO</span>
+        </div>
+        ${filas.map(f => `
+          <div class="tabla-lista-fila" style="grid-template-columns:110px 1fr 140px 80px 110px 250px;cursor:default;">
+            <span style="font-weight:600;">${escaparHtml(f.radicado)}</span>
+            <span>${escaparHtml(f.producto)}</span>
+            <span style="display:flex;align-items:center;gap:6px;">${avatarIniciales(f.proveedor)}${escaparHtml(f.proveedor)}</span>
+            <span style="text-align:right;">${f.horas} h</span>
+            <span style="text-align:right;font-weight:700;">${formatearMoneda(f.valor_a_pagar)}</span>
+            <span>${f.pagado
+              ? `<span style="color:var(--verde-exito);font-size:11.5px;">✅ ${f.metodo_pago === 'efectivo' ? 'Efectivo' : 'Bancos'} — ${new Date(f.fecha_pago).toLocaleDateString('es-CO')}</span>`
+              : `<div id="pagoInline-${f.pedido_crm_id}"><label style="display:flex;align-items:center;gap:6px;font-weight:400;margin:0;"><input type="checkbox" style="width:auto;" onchange="alternarPagoInlineHonorario('${f.pedido_crm_id}', this.checked)"><span style="font-size:12px;">Marcar como pagado</span></label></div>`
+            }</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  function alternarPagoInlineHonorario(pedidoCrmId, marcado) {
+    const cont = document.getElementById(`pagoInline-${pedidoCrmId}`);
+    if (!marcado) {
+      cont.innerHTML = `<label style="display:flex;align-items:center;gap:6px;font-weight:400;margin:0;"><input type="checkbox" style="width:auto;" onchange="alternarPagoInlineHonorario('${pedidoCrmId}', this.checked)"><span style="font-size:12px;">Marcar como pagado</span></label>`;
+      return;
+    }
+    cont.innerHTML = `
+      <div style="display:flex;gap:6px;align-items:center;">
+        <select id="metodoPagoHonorario-${pedidoCrmId}" style="flex:1;padding:6px 8px;font-size:12px;">
+          <option value="efectivo">Efectivo (Caja)</option>
+          <option value="transferencia">Bancos</option>
+        </select>
+        <button class="btn-mini guardar" onclick="confirmarPagoHonorarioTejedora('${pedidoCrmId}')">Confirmar</button>
+      </div>
+    `;
+  }
+
+  async function confirmarPagoHonorarioTejedora(pedidoCrmId) {
+    ocultarMensaje('mensajeHonorariosTejedoras');
+    const fila = honorariosTejedorasCache.find(f => f.pedido_crm_id === pedidoCrmId);
+    if (!fila) return;
+    const metodoPago = document.getElementById(`metodoPagoHonorario-${pedidoCrmId}`).value;
+
+    const resp = await fetch(WORKER_URL + '/api/pos/contabilidad/honorarios-tejedoras/pagar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({
+        pedido_crm_id: fila.pedido_crm_id,
+        tejedora_id: fila.tejedora_id,
+        radicado: fila.radicado,
+        producto: fila.producto,
+        proveedor: fila.proveedor,
+        monto: fila.valor_a_pagar,
+        metodo_pago: metodoPago
+      })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { mostrarMensaje('mensajeHonorariosTejedoras', datos.error || 'No se pudo registrar el pago.', 'error'); return; }
+
+    mostrarMensaje('mensajeHonorariosTejedoras', `✅ Pago de ${formatearMoneda(fila.valor_a_pagar)} a ${fila.proveedor} registrado — ya se descontó de ${metodoPago === 'efectivo' ? 'Caja' : 'Bancos'}.`, 'exito');
+    await cargarHonorariosTejedoras();
+  }
+
+  function exportarHonorariosTejedorasExcel() {
+    if (!honorariosTejedorasCache || honorariosTejedorasCache.length === 0) { mostrarMensaje('mensajeHonorariosTejedoras', 'No hay datos para exportar.', 'error'); return; }
+    const filas = [
+      ['Lana Rosa Crochet — Honorarios Tejedoras'],
+      [],
+      ['Radicado', 'Producto', 'Proveedor', 'Tiempo (h)', 'Valor a pagar', 'Pagado', 'Método de pago', 'Fecha de pago'],
+      ...honorariosTejedorasCache.map(f => [
+        f.radicado, f.producto, f.proveedor, f.horas, Number(f.valor_a_pagar),
+        f.pagado ? 'Sí' : 'No', f.metodo_pago || '', f.fecha_pago ? new Date(f.fecha_pago).toLocaleDateString('es-CO') : ''
+      ])
+    ];
+    const hoja = XLSX.utils.aoa_to_sheet(filas);
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Honorarios Tejedoras');
+    XLSX.writeFile(libro, `LanaRosa_HonorariosTejedoras_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  }
 
   async function mostrarPantallaEstadosFinancieros() {
     mostrarPantalla('pantallaEstadosFinancieros');
