@@ -1879,105 +1879,117 @@
   </div>
 
   <div id="subtabPagosAdmin" data-subtab-grupo="pagosPendientes" class="oculto">
-    <div class="panel" style="max-width:480px;">
+    <div class="panel" style="max-width:none;max-height:none;">
       <h2>Registrar pago administrativo</h2>
       <div class="subtitulo">Servicios públicos, arrendamiento, internet, papelería y otros gastos del local.</div>
-      <label for="pagoAdminCategoria">Concepto</label>
-      <select id="pagoAdminCategoria">
-        <option value="Servicios públicos">Servicios públicos</option>
-        <option value="Arrendamiento del local">Arrendamiento del local</option>
-        <option value="Internet">Internet</option>
-        <option value="Papelería">Papelería</option>
-        <option value="Otros">Otros</option>
-      </select>
-      <label for="pagoAdminDescripcion">Detalle</label>
-      <input type="text" id="pagoAdminDescripcion" placeholder="Ej: Factura de energía enero 2026">
-      <label for="pagoAdminMonto">Monto (COP)</label>
-      <input type="number" id="pagoAdminMonto" placeholder="0" min="1" step="1">
-      <label for="pagoAdminMetodoPago">Método de pago</label>
-      <select id="pagoAdminMetodoPago">
-        <option value="efectivo">Efectivo (se descuenta del arqueo de caja)</option>
-        <option value="nequi">Nequi</option>
-        <option value="daviplata">Daviplata</option>
-        <option value="transferencia">Transferencia</option>
-        <option value="tarjeta_debito">Tarjeta débito</option>
-        <option value="tarjeta_credito">Tarjeta crédito</option>
-      </select>
-      <label for="pagoAdminAprobadoPor">Aprobado por</label>
-      <select id="pagoAdminAprobadoPor"><option value="">Cargando...</option></select>
+      <div class="grilla-2">
+        <div>
+          <label for="pagoAdminCategoria">Concepto</label>
+          <select id="pagoAdminCategoria">
+            <option value="Servicios públicos">Servicios públicos</option>
+            <option value="Arrendamiento del local">Arrendamiento del local</option>
+            <option value="Internet">Internet</option>
+            <option value="Papelería">Papelería</option>
+            <option value="Otros">Otros</option>
+          </select>
+          <label for="pagoAdminDescripcion">Detalle</label>
+          <input type="text" id="pagoAdminDescripcion" placeholder="Ej: Factura de energía enero 2026">
+        </div>
+        <div>
+          <label for="pagoAdminMonto">Monto (COP)</label>
+          <input type="number" id="pagoAdminMonto" placeholder="0" min="1" step="1">
+          <label for="pagoAdminMetodoPago">Método de pago</label>
+          <select id="pagoAdminMetodoPago">
+            <option value="efectivo">Efectivo (se descuenta del arqueo de caja)</option>
+            <option value="nequi">Nequi</option>
+            <option value="daviplata">Daviplata</option>
+            <option value="transferencia">Transferencia</option>
+            <option value="tarjeta_debito">Tarjeta débito</option>
+            <option value="tarjeta_credito">Tarjeta crédito</option>
+          </select>
+          <label for="pagoAdminAprobadoPor">Aprobado por</label>
+          <select id="pagoAdminAprobadoPor"><option value="">Cargando...</option></select>
+        </div>
+      </div>
       <button class="btn-principal" id="btnRegistrarPagoAdmin" onclick="confirmarRegistrarPagoAdmin()">Registrar pago</button>
       <div class="mensaje" id="mensajePagoAdmin"></div>
     </div>
   </div>
 
   <div id="subtabPagosGastos" data-subtab-grupo="pagosPendientes">
-    <div class="panel" style="max-width:520px;">
+    <div class="panel" style="max-width:none;max-height:none;">
       <h2>Registrar compra / pago a proveedor</h2>
       <div class="subtitulo">Los datos del proveedor quedan guardados en el directorio de proveedores.</div>
 
-      <label for="gastoProveedorBuscar">Proveedor <span style="font-size:10px;opacity:0.6;">(busca uno ya existente, o completa los datos de uno nuevo abajo)</span></label>
-      <input type="text" id="gastoProveedorBuscar" placeholder="🔍 Buscar proveedor por nombre o NIT..." oninput="buscarProveedorParaGasto()" autocomplete="off">
-      <div id="sugerenciasProveedorGasto" style="display:none;position:relative;background:var(--fondo-panel);border:1.5px solid var(--rosa-medio);border-radius:9px;margin-top:4px;max-height:180px;overflow-y:auto;z-index:20;"></div>
-      <div id="proveedorGastoSeleccionado" class="oculto" style="margin-top:8px;padding:9px 11px;background:var(--rosa-suave);border-radius:9px;font-size:12.5px;"></div>
+      <div class="grilla-2">
+        <div>
+          <label for="gastoProveedorBuscar">Proveedor <span style="font-size:10px;opacity:0.6;">(busca uno ya existente, o completa los datos de uno nuevo abajo)</span></label>
+          <input type="text" id="gastoProveedorBuscar" placeholder="🔍 Buscar proveedor por nombre o NIT..." oninput="buscarProveedorParaGasto()" autocomplete="off">
+          <div id="sugerenciasProveedorGasto" style="display:none;position:relative;background:var(--fondo-panel);border:1.5px solid var(--rosa-medio);border-radius:9px;margin-top:4px;max-height:180px;overflow-y:auto;z-index:20;"></div>
+          <div id="proveedorGastoSeleccionado" class="oculto" style="margin-top:8px;padding:9px 11px;background:var(--rosa-suave);border-radius:9px;font-size:12.5px;"></div>
 
-      <div id="bloqueNuevoProveedorGasto">
-        <label for="gastoProveedorNombre">Nombre / Razón social</label>
-        <input type="text" id="gastoProveedorNombre" placeholder="Nombre del proveedor">
-        <label for="gastoProveedorNit">NIT / Documento</label>
-        <input type="text" id="gastoProveedorNit">
-        <label for="gastoProveedorTelefono">Teléfono</label>
-        <input type="tel" id="gastoProveedorTelefono">
-        <label for="gastoProveedorDireccion">Dirección <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
-        <input type="text" id="gastoProveedorDireccion">
+          <div id="bloqueNuevoProveedorGasto">
+            <label for="gastoProveedorNombre">Nombre / Razón social</label>
+            <input type="text" id="gastoProveedorNombre" placeholder="Nombre del proveedor">
+            <label for="gastoProveedorNit">NIT / Documento</label>
+            <input type="text" id="gastoProveedorNit">
+            <label for="gastoProveedorTelefono">Teléfono</label>
+            <input type="tel" id="gastoProveedorTelefono">
+            <label for="gastoProveedorDireccion">Dirección <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+            <input type="text" id="gastoProveedorDireccion">
+          </div>
+
+          <label for="gastoNumeroFactura" style="margin-top:14px;">Número de factura</label>
+          <input type="text" id="gastoNumeroFactura" placeholder="Ej: FV-00123 (o el N° de recibo/nota si el vendedor no factura)">
+          <label for="gastoFechaFactura">Fecha de la factura</label>
+          <input type="date" id="gastoFechaFactura">
+
+          <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-weight:400;">
+            <input type="checkbox" id="gastoEsDocumentoSoporte" style="width:auto;">
+            <span>Este proveedor no está obligado a facturar (persona natural, artesano, etc.)</span>
+          </label>
+          <div style="font-size:10.5px;opacity:0.6;">Genera un documento soporte interno con los datos que exige la norma — no reemplaza la transmisión electrónica a la DIAN, es un respaldo para tu contabilidad y tu contador.</div>
+        </div>
+
+        <div>
+          <label for="gastoCategoria">Categoría</label>
+          <select id="gastoCategoria">
+            <option value="insumos">Insumo</option>
+            <option value="otros_gastos">Gastos de almacén</option>
+          </select>
+          <label for="gastoDescripcion">¿Qué se compró?</label>
+          <input type="text" id="gastoDescripcion" placeholder="Ej: Lana acrílica varios colores">
+          <label for="gastoMonto">Monto (COP)</label>
+          <input type="number" id="gastoMonto" placeholder="0" min="1" step="1">
+
+          <label style="margin-top:14px;">¿Cómo se pagó esta compra?</label>
+          <div style="display:flex;gap:10px;margin-bottom:10px;">
+            <button type="button" class="btn-secundario" id="btnCompraPagoCompleto" style="flex:1;margin-top:0;" onclick="cambiarModoPagoCompra('completo')">✅ Pagado completo</button>
+            <button type="button" class="btn-secundario" id="btnCompraQuedoDebiendo" style="flex:1;margin-top:0;" onclick="cambiarModoPagoCompra('credito')">📅 Quedó debiendo</button>
+          </div>
+
+          <div id="bloqueCompraPagoCompleto">
+            <label for="gastoMetodoPago">Método de pago</label>
+            <select id="gastoMetodoPago">
+              <option value="efectivo">Efectivo (se descuenta del arqueo de caja)</option>
+              <option value="nequi">Nequi</option>
+              <option value="daviplata">Daviplata</option>
+              <option value="transferencia">Transferencia</option>
+              <option value="tarjeta_debito">Tarjeta débito</option>
+              <option value="tarjeta_credito">Tarjeta crédito</option>
+            </select>
+          </div>
+
+          <div id="bloqueCompraQuedoDebiendo" class="oculto">
+            <label for="gastoDiasPlazo">Días de plazo <span style="font-size:10px;opacity:0.6;">(se autocompleta con el plazo del proveedor, si lo tiene configurado)</span></label>
+            <input type="number" id="gastoDiasPlazo" min="0" step="1" placeholder="Ej: 30">
+            <div style="font-size:10.5px;opacity:0.6;">No se descuenta de la caja ahora — queda registrado en Cartera → Cuentas por pagar hasta que lo abones.</div>
+          </div>
+
+          <label for="gastoAprobadoPor" style="margin-top:14px;">Aprobado por</label>
+          <select id="gastoAprobadoPor"><option value="">Cargando...</option></select>
+        </div>
       </div>
-
-      <label for="gastoCategoria" style="margin-top:14px;">Categoría</label>
-      <select id="gastoCategoria">
-        <option value="insumos">Insumo</option>
-        <option value="otros_gastos">Gastos de almacén</option>
-      </select>
-      <label for="gastoDescripcion">¿Qué se compró?</label>
-      <input type="text" id="gastoDescripcion" placeholder="Ej: Lana acrílica varios colores">
-      <label for="gastoMonto">Monto (COP)</label>
-      <input type="number" id="gastoMonto" placeholder="0" min="1" step="1">
-
-      <label style="margin-top:14px;">¿Cómo se pagó esta compra?</label>
-      <div style="display:flex;gap:10px;margin-bottom:10px;">
-        <button type="button" class="btn-secundario" id="btnCompraPagoCompleto" style="flex:1;margin-top:0;" onclick="cambiarModoPagoCompra('completo')">✅ Pagado completo</button>
-        <button type="button" class="btn-secundario" id="btnCompraQuedoDebiendo" style="flex:1;margin-top:0;" onclick="cambiarModoPagoCompra('credito')">📅 Quedó debiendo</button>
-      </div>
-
-      <div id="bloqueCompraPagoCompleto">
-        <label for="gastoMetodoPago">Método de pago</label>
-        <select id="gastoMetodoPago">
-          <option value="efectivo">Efectivo (se descuenta del arqueo de caja)</option>
-          <option value="nequi">Nequi</option>
-          <option value="daviplata">Daviplata</option>
-          <option value="transferencia">Transferencia</option>
-          <option value="tarjeta_debito">Tarjeta débito</option>
-          <option value="tarjeta_credito">Tarjeta crédito</option>
-        </select>
-      </div>
-
-      <div id="bloqueCompraQuedoDebiendo" class="oculto">
-        <label for="gastoDiasPlazo">Días de plazo <span style="font-size:10px;opacity:0.6;">(se autocompleta con el plazo del proveedor, si lo tiene configurado)</span></label>
-        <input type="number" id="gastoDiasPlazo" min="0" step="1" placeholder="Ej: 30">
-        <div style="font-size:10.5px;opacity:0.6;">No se descuenta de la caja ahora — queda registrado en Cartera → Cuentas por pagar hasta que lo abones.</div>
-      </div>
-
-      <label for="gastoNumeroFactura" style="margin-top:14px;">Número de factura</label>
-      <input type="text" id="gastoNumeroFactura" placeholder="Ej: FV-00123 (o el N° de recibo/nota si el vendedor no factura)">
-      <label for="gastoFechaFactura">Fecha de la factura</label>
-      <input type="date" id="gastoFechaFactura">
-
-      <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-weight:400;">
-        <input type="checkbox" id="gastoEsDocumentoSoporte" style="width:auto;">
-        <span>Este proveedor no está obligado a facturar (persona natural, artesano, etc.)</span>
-      </label>
-      <div style="font-size:10.5px;opacity:0.6;margin-bottom:10px;">Genera un documento soporte interno con los datos que exige la norma — no reemplaza la transmisión electrónica a la DIAN, es un respaldo para tu contabilidad y tu contador.</div>
-
-      <label for="gastoAprobadoPor" style="margin-top:14px;">Aprobado por</label>
-      <select id="gastoAprobadoPor"><option value="">Cargando...</option></select>
 
       <button class="btn-principal" id="btnRegistrarGasto" onclick="confirmarRegistrarGasto()">Registrar compra</button>
       <div class="mensaje" id="mensajeGasto"></div>
@@ -3713,7 +3725,16 @@
     <div class="subtitulo">Pago por producto elaborado, según el tiempo real de tejido registrado en el CRM — al valor de la hora/fracción de hora (SMLV + prestaciones).</div>
   </div>
 
-  <div id="valorHoraHonorarios" style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;font-weight:600;"></div>
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;">
+    <div id="valorHoraHonorarios" style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;font-size:12.5px;font-weight:600;flex:1;"></div>
+    <button class="btn-mini editar" onclick="alternarConfigValorHoraHonorarios()">⚙️ Configurar</button>
+  </div>
+  <div id="panelConfigValorHoraHonorarios" class="oculto" style="background:#fff;border:1.5px solid var(--rosa-medio);border-radius:9px;padding:12px 14px;margin-bottom:16px;">
+    <label for="inputValorHoraHonorarios">Valor de la hora para Honorarios Tejedoras (COP) <span style="font-size:10px;opacity:0.6;">(déjalo vacío para volver a calcularlo automático con el SMLV — esto no afecta el valor que usa Costeo Real)</span></label>
+    <input type="number" id="inputValorHoraHonorarios" min="0" step="1" placeholder="Ej: 15000">
+    <button class="btn-mini guardar" style="margin-top:8px;" onclick="guardarValorHoraHonorarios()">Guardar</button>
+    <div class="mensaje" id="mensajeConfigValorHoraHonorarios"></div>
+  </div>
 
   <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
     <input type="text" id="buscarHonorariosTejedoras" placeholder="🔍 Radicado, producto o tejedora..." oninput="filtrarHonorariosTejedoras()" style="flex:1;">
@@ -7208,6 +7229,14 @@
           <label>Proveedor</label>
           <select id="edit-proveedor-${item.id}">${opcionesProveedor}</select>
           <div class="grid-campos-inventario">
+            <div class="campo-mini"><label>Marca</label><input type="text" value="${escaparHtml(item.marca || '')}" id="edit-marca-${item.id}"></div>
+            <div class="campo-mini"><label>Color</label><input type="text" value="${escaparHtml(item.color || '')}" id="edit-color-${item.id}"></div>
+            <div class="campo-mini"><label>Material</label><input type="text" value="${escaparHtml(item.material || '')}" id="edit-material-${item.id}"></div>
+          </div>
+          <label>Foto de referencia</label>
+          ${item.foto_url ? `<img src="${item.foto_url}" style="max-width:120px;border-radius:8px;display:block;margin-bottom:6px;">` : ''}
+          <input type="file" id="edit-foto-${item.id}" accept="image/*">
+          <div class="grid-campos-inventario">
             <div class="campo-mini"><label>Precio de venta</label><input type="number" min="0" step="1" value="${item.precio_venta}" id="edit-precio-${item.id}"></div>
             <div class="campo-mini"><label>Costo aproximado</label><input type="number" min="0" step="1" value="${item.costo_promedio_ponderado}" id="edit-costo-${item.id}"></div>
             <div class="campo-mini"><label>Stock actual</label><input type="number" min="0" step="1" value="${item.stock_actual}" id="edit-stock-${item.id}"></div>
@@ -7440,6 +7469,9 @@
       stock_minimo: stockMinimo,
       categoria_id: categoriaEl ? (categoriaEl.value || null) : null,
       proveedor_tercero_id: proveedorEl ? (proveedorEl.value || null) : null,
+      marca: document.getElementById(`edit-marca-${itemId}`).value.trim() || null,
+      color: document.getElementById(`edit-color-${itemId}`).value.trim() || null,
+      material: document.getElementById(`edit-material-${itemId}`).value.trim() || null,
       updated_at: new Date().toISOString()
     };
 
@@ -7464,6 +7496,24 @@
       mostrarMensaje(`mensajeEdicionInventario-${itemId}`, 'No se pudo guardar el cambio: ' + error.message, 'error');
       return;
     }
+
+    const archivoFotoNueva = document.getElementById(`edit-foto-${itemId}`).files[0];
+    if (archivoFotoNueva) {
+      const formFoto = new FormData();
+      formFoto.append('item_id', itemId);
+      formFoto.append('archivo', archivoFotoNueva);
+      const respFoto = await fetch(WORKER_URL + '/api/pos/inventario/foto', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + sesionActual.token },
+        body: formFoto
+      });
+      if (!respFoto.ok) {
+        mostrarMensaje(`mensajeEdicionInventario-${itemId}`, 'Los demás datos se guardaron, pero la foto no se pudo subir. Inténtalo de nuevo.', 'error');
+        await cargarInventarioGestion();
+        return;
+      }
+    }
+
     itemInventarioEditandoId = null;
     await cargarInventarioGestion();
   }
@@ -17369,9 +17419,37 @@
     if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
     const d = await resp.json();
 
-    document.getElementById('valorHoraHonorarios').textContent = `💰 Valor de la hora/fracción de hora (SMLV + prestaciones + ARL + parafiscales): ${formatearMoneda(d.valor_hora_mano_obra)}`;
+    document.getElementById('valorHoraHonorarios').textContent = d.valor_hora_manual
+      ? `💰 Valor de la hora/fracción de hora (configurado manualmente): ${formatearMoneda(d.valor_hora_mano_obra)}`
+      : `💰 Valor de la hora/fracción de hora (SMLV + prestaciones + ARL + parafiscales): ${formatearMoneda(d.valor_hora_mano_obra)}`;
+    const inputValorHora = document.getElementById('inputValorHoraHonorarios');
+    if (inputValorHora && document.activeElement !== inputValorHora) inputValorHora.value = d.valor_hora_manual || '';
     honorariosTejedorasCache = d.filas || [];
     renderizarHonorariosTejedoras();
+  }
+
+  function alternarConfigValorHoraHonorarios() {
+    document.getElementById('panelConfigValorHoraHonorarios').classList.toggle('oculto');
+  }
+
+  async function guardarValorHoraHonorarios() {
+    ocultarMensaje('mensajeConfigValorHoraHonorarios');
+    const valorTexto = document.getElementById('inputValorHoraHonorarios').value;
+    const valor = valorTexto === '' ? null : Number(valorTexto);
+    if (valor !== null && (isNaN(valor) || valor < 0)) {
+      mostrarMensaje('mensajeConfigValorHoraHonorarios', 'Escribe un valor válido, o déjalo vacío para volver al cálculo automático.', 'error');
+      return;
+    }
+
+    const resp = await fetch(WORKER_URL + '/api/pos/contabilidad/honorarios-tejedoras/valor-hora', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ valor_hora: valor })
+    });
+    if (!resp.ok) { mostrarMensaje('mensajeConfigValorHoraHonorarios', 'No se pudo guardar.', 'error'); return; }
+
+    mostrarMensaje('mensajeConfigValorHoraHonorarios', valor ? '✅ Guardado — ya se está usando este valor.' : '✅ Guardado — vuelve a calcularse automático con el SMLV.', 'exito');
+    await cargarHonorariosTejedoras();
   }
 
   function cambiarFiltroHonorarios(filtro, botonEl) {
