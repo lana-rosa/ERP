@@ -4092,60 +4092,72 @@
   </div>
 
   <div id="subtabNuevoEvento" data-subtab-grupo="calendarioForms">
-    <div class="panel" id="panelNuevoEvento" style="max-width:520px;">
+    <div class="panel" id="panelNuevoEvento" style="max-width:none;max-height:none;">
       <h2>+ Nuevo evento de equipo</h2>
-      <label for="eventoTitulo">Título</label>
-      <input type="text" id="eventoTitulo" placeholder="Ej: Reunión de equipo">
-      <label for="eventoTipo">Tipo</label>
-      <select id="eventoTipo">
-        <option value="reunion">🔵 Reunión</option>
-        <option value="capacitacion">🟢 Capacitación</option>
-        <option value="junta">🟠 Junta</option>
-        <option value="salida">🟣 Salida</option>
-        <option value="otro">⚪ Otro</option>
-      </select>
-      <label for="eventoFechaInicio">Fecha y hora de inicio</label>
-      <input type="datetime-local" id="eventoFechaInicio">
-      <label for="eventoFechaFin">Fecha y hora de fin</label>
-      <input type="datetime-local" id="eventoFechaFin">
-      <label for="eventoUbicacion">Ubicación <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
-      <input type="text" id="eventoUbicacion" placeholder="Ej: Taller, Google Meet...">
-      <label for="eventoDescripcion">Descripción <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
-      <input type="text" id="eventoDescripcion" placeholder="Detalles del evento">
-      <label for="eventoRecordatorio">Recordarme antes</label>
-      <select id="eventoRecordatorio">
-        <option value="">Sin recordatorio</option>
-        <option value="10">10 minutos antes</option>
-        <option value="30">30 minutos antes</option>
-        <option value="60">1 hora antes</option>
-        <option value="1440">1 día antes</option>
-      </select>
+      <div class="grilla-2">
+        <div>
+          <label for="eventoTitulo">Título</label>
+          <input type="text" id="eventoTitulo" placeholder="Ej: Reunión de equipo">
+          <label for="eventoTipo">Tipo</label>
+          <select id="eventoTipo">
+            <option value="reunion">🔵 Reunión</option>
+            <option value="capacitacion">🟢 Capacitación</option>
+            <option value="junta">🟠 Junta</option>
+            <option value="salida">🟣 Salida</option>
+            <option value="otro">⚪ Otro</option>
+          </select>
+          <label for="eventoFechaInicio">Fecha y hora de inicio</label>
+          <input type="datetime-local" id="eventoFechaInicio">
+          <label for="eventoFechaFin">Fecha y hora de fin</label>
+          <input type="datetime-local" id="eventoFechaFin">
+        </div>
+        <div>
+          <label for="eventoUbicacion">Ubicación <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+          <input type="text" id="eventoUbicacion" placeholder="Ej: Taller, Google Meet...">
+          <label for="eventoDescripcion">Descripción <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+          <input type="text" id="eventoDescripcion" placeholder="Detalles del evento">
+          <label for="eventoRecordatorio">Recordarme antes</label>
+          <select id="eventoRecordatorio">
+            <option value="">Sin recordatorio</option>
+            <option value="10">10 minutos antes</option>
+            <option value="30">30 minutos antes</option>
+            <option value="60">1 hora antes</option>
+            <option value="1440">1 día antes</option>
+          </select>
+        </div>
+      </div>
       <button class="btn-principal" id="btnCrearEvento" onclick="confirmarCrearEvento()">Programar evento</button>
       <div class="mensaje" id="mensajeEvento"></div>
     </div>
-    <div class="panel oculto" id="panelSinPermisoEvento" style="max-width:520px;">
+    <div class="panel oculto" id="panelSinPermisoEvento" style="max-width:none;">
       <div class="cargando">Solo la administradora o los líderes de cada área pueden programar eventos de equipo. Puedes agendar tu propia tarea personal en la otra pestaña.</div>
     </div>
   </div>
 
   <div id="subtabTareaPersonal" data-subtab-grupo="calendarioForms" class="oculto">
-    <div class="panel" id="panelNuevaTareaPersonal" style="max-width:520px;">
+    <div class="panel" id="panelNuevaTareaPersonal" style="max-width:none;max-height:none;">
       <h2>📝 Mi tarea personal</h2>
       <div class="subtitulo">Solo la ves tú — para organizar tus propias responsabilidades.</div>
-      <label for="tareaTitulo">¿Qué tienes que hacer?</label>
-      <input type="text" id="tareaTitulo" placeholder="Ej: Entregar pedido LR-2026-015">
-      <label for="tareaFechaInicio">Fecha y hora</label>
-      <input type="datetime-local" id="tareaFechaInicio">
-      <label for="tareaDescripcion">Notas <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
-      <input type="text" id="tareaDescripcion" placeholder="Detalles">
-      <label for="tareaRecordatorio">Recordarme antes</label>
-      <select id="tareaRecordatorio">
-        <option value="">Sin recordatorio</option>
-        <option value="10">10 minutos antes</option>
-        <option value="30">30 minutos antes</option>
-        <option value="60">1 hora antes</option>
-        <option value="1440">1 día antes</option>
-      </select>
+      <div class="grilla-2">
+        <div>
+          <label for="tareaTitulo">¿Qué tienes que hacer?</label>
+          <input type="text" id="tareaTitulo" placeholder="Ej: Entregar pedido LR-2026-015">
+          <label for="tareaFechaInicio">Fecha y hora</label>
+          <input type="datetime-local" id="tareaFechaInicio">
+        </div>
+        <div>
+          <label for="tareaDescripcion">Notas <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+          <input type="text" id="tareaDescripcion" placeholder="Detalles">
+          <label for="tareaRecordatorio">Recordarme antes</label>
+          <select id="tareaRecordatorio">
+            <option value="">Sin recordatorio</option>
+            <option value="10">10 minutos antes</option>
+            <option value="30">30 minutos antes</option>
+            <option value="60">1 hora antes</option>
+            <option value="1440">1 día antes</option>
+          </select>
+        </div>
+      </div>
       <button class="btn-principal" id="btnCrearTareaPersonal" onclick="confirmarCrearTareaPersonal()">Agendar tarea</button>
       <div class="mensaje" id="mensajeTareaPersonal"></div>
     </div>
