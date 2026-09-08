@@ -5969,6 +5969,15 @@
       return;
     }
 
+    // Igual que arriba: si es un método sin efectivo (Nequi, tarjeta, etc.),
+    // el monto se escribe directo — no hay que reconstruir todo el listado,
+    // solo recalcular el resumen (si no, el campo pierde el foco en cada
+    // tecla y solo deja escribir un dígito a la vez).
+    if (campo === 'monto') {
+      actualizarResumenPagos();
+      return;
+    }
+
     renderizarPagos();
   }
 
@@ -13248,6 +13257,10 @@
       actualizarResumenPagosPedido();
       return;
     }
+    if (campo === 'monto') {
+      actualizarResumenPagosPedido();
+      return;
+    }
 
     renderizarFilasPagoPedidoUI();
   }
@@ -19145,6 +19158,10 @@
       actualizarResumenPagosAcademia();
       return;
     }
+    if (campo === 'monto') {
+      actualizarResumenPagosAcademia();
+      return;
+    }
     renderizarFilasPagoAcademia();
   }
 
@@ -19359,23 +19376,35 @@
 
     contenedor.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header header-rosa" style="grid-template-columns:150px 1fr 1fr 110px 100px;">
-          <span>ÁREA</span><span>DESCRIPCIÓN</span><span>CLIENTE</span><span style="text-align:right;">MONTO</span><span>FECHA</span>
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:150px 1fr 1fr 110px 100px${rolActual === 'administrador' ? ' 40px' : ''};">
+          <span>ÁREA</span><span>DESCRIPCIÓN</span><span>CLIENTE</span><span style="text-align:right;">MONTO</span><span>FECHA</span>${rolActual === 'administrador' ? '<span></span>' : ''}
         </div>
         ${ventas.map(v => {
           const fecha = new Date(v.fecha + 'T00:00:00').toLocaleDateString('es-CO');
           return `
-            <div class="tabla-lista-fila" style="grid-template-columns:150px 1fr 1fr 110px 100px;">
+            <div class="tabla-lista-fila" style="grid-template-columns:150px 1fr 1fr 110px 100px${rolActual === 'administrador' ? ' 40px' : ''};">
               <span style="font-weight:600;">${etiquetasSubareaAcademia[v.area_formacion] || v.area_formacion}</span>
               <span style="opacity:0.75;font-size:11.5px;">${escaparHtml(v.descripcion)}</span>
               <span style="opacity:0.9;display:flex;align-items:center;gap:8px;">${v.cliente_nombre ? avatarIniciales(v.cliente_nombre) : ''}<span>${v.cliente_nombre ? escaparHtml(v.cliente_nombre) : '—'}${[v.cliente_identificacion, v.cliente_telefono].filter(Boolean).length ? '<br><span style="font-size:11px;opacity:0.75;">' + [v.cliente_identificacion, v.cliente_telefono].filter(Boolean).map(x => escaparHtml(x)).join(' · ') + '</span>' : ''}</span></span>
               <span style="text-align:right;font-weight:700;">${formatearMoneda(v.monto)}</span>
               <span style="opacity:0.75;font-size:11.5px;">${fecha}</span>
+              ${rolActual === 'administrador' ? `<span><button class="btn-mini desactivar" onclick="pedirConfirmacionBoton(this, '¿Eliminar esta venta? Se devuelve el dinero a la caja/banco de Academia.', () => eliminarVentaAcademiaUI('${v.id}'))" title="Eliminar venta">🗑️</button></span>` : ''}
             </div>
           `;
         }).join('')}
       </div>
     `;
+  }
+
+  async function eliminarVentaAcademiaUI(ventaId) {
+    const resp = await fetch(WORKER_URL + '/api/pos/academia/ventas/eliminar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ venta_id: ventaId })
+    });
+    const datos = await resp.json();
+    if (!resp.ok) { alert(datos.error || 'No se pudo eliminar la venta.'); return; }
+    await cargarVentasAcademia();
   }
 
   async function cargarInformeAcademia() {
