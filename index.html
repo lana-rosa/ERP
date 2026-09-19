@@ -17397,8 +17397,12 @@
 
     const resp = await fetch(WORKER_URL + '/api/pos/contabilidad/dashboard', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
     if (!resp.ok) {
+      let detalleError = 'No se pudo cargar (código ' + resp.status + ')';
+      try { const datosError = await resp.json(); if (datosError.error) detalleError = datosError.error; } catch {}
       document.getElementById('dcCaja').textContent = 'Error';
       document.getElementById('dcBancos').textContent = 'Error';
+      cont.classList.remove('oculto');
+      cont.innerHTML = `⚠️ No se pudo cargar el dashboard: ${escaparHtml(detalleError)}`;
       return;
     }
     const d = await resp.json();
