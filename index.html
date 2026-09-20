@@ -13120,6 +13120,8 @@
     await cargarListaEnvios();
   }
 
+  let pedidosCanalCache = [];
+
   async function cargarPedidosCanal() {
     const contenedor = document.getElementById('listaPedidosCanal');
     contenedor.innerHTML = '<div class="cargando">Cargando pedidos...</div>';
@@ -13135,6 +13137,7 @@
     }
 
     const { pedidos } = await resp.json();
+    pedidosCanalCache = pedidos || [];
 
     if (!pedidos || pedidos.length === 0) {
       contenedor.innerHTML = '<div class="cargando">No hay pedidos en este filtro.</div>';
@@ -13174,6 +13177,11 @@
             } else {
               acciones = `<button class="btn-mini guardar" onclick="entregarPedidoSinSaldoUI('${p.id}')">✅ Marcar como entregado</button>`;
             }
+          } else if (p.estado === 'entregado') {
+            acciones = `
+              <button class="btn-mini editar" onclick="imprimirReciboCompletoPedido('${p.id}')">🖨️ Imprimir recibo</button>
+              <button class="btn-mini editar" onclick="enviarReciboCompletoPedidoWhatsapp('${p.id}')">📱 Enviar por WhatsApp</button>
+            `;
           }
 
           const coloresEstadoPedido = {
@@ -13414,7 +13422,7 @@
     const p = recibo.pedido;
     const cliente = p.tercero ? p.tercero.nombre_completo : 'Cliente';
     const telefono = p.tercero ? p.tercero.telefono : null;
-    const etiquetaTipo = recibo.tipo_pago === 'anticipo' ? 'Recibo de anticipo' : 'Recibo de saldo final';
+    const etiquetaTipo = recibo.tipo_pago === 'anticipo' ? 'Recibo de anticipo' : recibo.tipo_pago === 'completo' ? 'Recibo de pago' : 'Recibo de saldo final';
     const totalPago = recibo.pagos.reduce((acc, x) => acc + Number(x.monto), 0);
 
     return `
@@ -13441,6 +13449,28 @@
       </div>
       ${politicaCambiosCache ? `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed #ccc;font-size:10.5px;color:#888;text-align:center;">🔄 ${escaparHtml(politicaCambiosCache)}</div>` : ''}
     `;
+  }
+
+  // Para un pedido que ya quedó entregado y pagado del todo (incluyendo los
+  // que llegan directo del CRM ya cerrados) — arma un recibo con el total
+  // de lo pagado, juntando anticipo + saldo si los hubo por separado.
+  function armarReciboCompletoPedido(pedidoId) {
+    const p = pedidosCanalCache.find(x => x.id === pedidoId);
+    if (!p) return null;
+    const pagos = (p.pagos && p.pagos.length) ? p.pagos : [{ metodo_pago: p.metodo_pago_anticipo || p.metodo_pago_saldo || 'efectivo', monto: p.total_pedido }];
+    return { pedido: p, tipo_pago: 'completo', pagos };
+  }
+
+  function imprimirReciboCompletoPedido(pedidoId) {
+    const recibo = armarReciboCompletoPedido(pedidoId);
+    if (!recibo) return;
+    imprimirReciboPedido(recibo);
+  }
+
+  async function enviarReciboCompletoPedidoWhatsapp(pedidoId) {
+    const recibo = armarReciboCompletoPedido(pedidoId);
+    if (!recibo) return;
+    await enviarReciboPedidoWhatsapp(recibo);
   }
 
   function imprimirReciboPedido(recibo) {
