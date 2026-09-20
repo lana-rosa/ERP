@@ -13153,7 +13153,7 @@
         </div>
         ${pedidos.map(p => {
           const fecha = new Date(p.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
-          const cliente = p.nombre_cliente || 'Sin datos de cliente';
+          const cliente = p.tercero ? p.tercero.nombre_completo : 'Sin datos de cliente';
           let acciones = '';
 
           if (p.estado === 'esperando_pago') {
