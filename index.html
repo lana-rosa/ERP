@@ -816,6 +816,7 @@
     <div class="sidebar-depto" id="deptoVentasGrupo" style="display:none;">
       <button class="sidebar-depto-header" id="headerDeptoVentas" onclick="toggleSidebarDepto('deptoVentasSubmenu', 'headerDeptoVentas')">🛍️ Punto de Venta <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoVentasSubmenu">
+        <button class="nav-btn" id="nav-turno" onclick="irATurnoActivo()"><span class="nav-icon">💵</span> Turno de caja</button>
         <button class="nav-btn" id="nav-ventas" onclick="mostrarPantallaVentas()"><span class="nav-icon">🛒</span> Registrar venta</button>
         <button class="nav-btn" id="nav-historial" onclick="mostrarPantallaHistorial('01')"><span class="nav-icon">📋</span> Historial ventas</button>
         <button class="nav-btn" id="nav-clientes-dir" onclick="mostrarPantallaClientes()"><span class="nav-icon">👤</span> Clientes</button>
@@ -853,14 +854,23 @@
       </div>
     </div>
 
-    <!-- 4. CONTABILIDAD E IMPUESTOS -->
+    <!-- 4. CONTABILIDAD (fusión de Contabilidad e Impuestos + Reportes e Indicadores + lo administrativo de Bancos y Tesorería) -->
     <div class="sidebar-depto" id="deptoContabilidadGrupo" style="display:none;">
-      <button class="sidebar-depto-header" id="headerDeptoContabilidad" onclick="toggleSidebarDepto('deptoContabilidadSubmenu', 'headerDeptoContabilidad')">📊 Contabilidad e Impuestos <span class="chevron">▾</span></button>
+      <button class="sidebar-depto-header" id="headerDeptoContabilidad" onclick="toggleSidebarDepto('deptoContabilidadSubmenu', 'headerDeptoContabilidad')">📊 Contabilidad <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoContabilidadSubmenu">
+        <div class="sidebar-seccion">Contabilidad e impuestos</div>
         <button class="nav-btn" id="nav-dashboard-contable" onclick="mostrarPantallaDashboardContable()"><span class="nav-icon">💹</span> Dashboard Contable</button>
         <button class="nav-btn" id="nav-honorarios-tejedoras" onclick="mostrarPantallaHonorariosTejedoras()"><span class="nav-icon">🧵</span> Honorarios Tejedoras</button>
         <button class="nav-btn" id="nav-estados-financieros" onclick="mostrarPantallaEstadosFinancieros()"><span class="nav-icon">📑</span> Estados financieros y libros</button>
         <button class="nav-btn" id="nav-activos-fijos" onclick="mostrarPantallaActivosFijos()"><span class="nav-icon">🪑</span> Activos fijos</button>
+        <div class="sidebar-seccion">Reportes e indicadores</div>
+        <button class="nav-btn" id="nav-reportes-financieros" onclick="mostrarPantallaReportesFinancieros()"><span class="nav-icon">📊</span> Informes de Ventas</button>
+        <button class="nav-btn" id="nav-costeo-real" onclick="mostrarPantallaCosteoReal()"><span class="nav-icon">🧮</span> Costeo Real</button>
+        <button class="nav-btn" id="nav-presupuesto-empresa" onclick="mostrarPantallaPresupuestoEmpresa()"><span class="nav-icon">💰</span> Presupuesto</button>
+        <div class="sidebar-seccion">Bancos y tesorería</div>
+        <button class="nav-btn" id="nav-reportes" onclick="mostrarPantallaReportes()"><span class="nav-icon">📈</span> Reportes de turno</button>
+        <button class="nav-btn" id="nav-conciliacion" onclick="mostrarPantallaConciliacion()"><span class="nav-icon">🏦</span> Conciliación bancaria</button>
+        <button class="nav-btn" id="nav-transferencias-internas" onclick="mostrarPantallaTransferenciasInternas()"><span class="nav-icon">🔄</span> Transferencias caja/banco</button>
       </div>
     </div>
 
@@ -870,27 +880,6 @@
       <div class="sidebar-depto-submenu" id="deptoTalentoSubmenu">
         <button class="nav-btn" id="nav-nomina" onclick="mostrarPantallaNomina()"><span class="nav-icon">👥</span> Nómina</button>
         <button class="nav-btn" id="nav-talento-humano" onclick="mostrarPantallaTalentoHumano()"><span class="nav-icon">📁</span> Carpetas por empleado</button>
-      </div>
-    </div>
-
-    <!-- 6. BANCOS Y TESORERÍA -->
-    <div class="sidebar-depto" id="deptoTesoreriaGrupo" style="display:none;">
-      <button class="sidebar-depto-header" id="headerDeptoTesoreria" onclick="toggleSidebarDepto('deptoTesoreriaSubmenu', 'headerDeptoTesoreria')">🏦 Bancos y Tesorería <span class="chevron">▾</span></button>
-      <div class="sidebar-depto-submenu" id="deptoTesoreriaSubmenu">
-        <button class="nav-btn" id="nav-turno" onclick="irATurnoActivo()"><span class="nav-icon">💵</span> Turno de caja</button>
-        <button class="nav-btn" id="nav-reportes" onclick="mostrarPantallaReportes()"><span class="nav-icon">📈</span> Reportes de turno</button>
-        <button class="nav-btn" id="nav-conciliacion" onclick="mostrarPantallaConciliacion()"><span class="nav-icon">🏦</span> Conciliación bancaria</button>
-        <button class="nav-btn" id="nav-transferencias-internas" onclick="mostrarPantallaTransferenciasInternas()"><span class="nav-icon">🔄</span> Transferencias caja/banco</button>
-      </div>
-    </div>
-
-    <!-- 7. REPORTES E INDICADORES -->
-    <div class="sidebar-depto" id="deptoReportesGrupo" style="display:none;">
-      <button class="sidebar-depto-header" id="headerDeptoReportes" onclick="toggleSidebarDepto('deptoReportesSubmenu', 'headerDeptoReportes')">📈 Reportes e Indicadores <span class="chevron">▾</span></button>
-      <div class="sidebar-depto-submenu" id="deptoReportesSubmenu">
-        <button class="nav-btn" id="nav-reportes-financieros" onclick="mostrarPantallaReportesFinancieros()"><span class="nav-icon">📊</span> Informes de Ventas</button>
-        <button class="nav-btn" id="nav-costeo-real" onclick="mostrarPantallaCosteoReal()"><span class="nav-icon">🧮</span> Costeo Real</button>
-        <button class="nav-btn" id="nav-presupuesto-empresa" onclick="mostrarPantallaPresupuestoEmpresa()"><span class="nav-icon">💰</span> Presupuesto</button>
       </div>
     </div>
 
@@ -5036,8 +5025,6 @@
     mostrar('deptoInventarioGrupo', esAdmin || esCajero || esTaller);
     mostrar('deptoContabilidadGrupo', esAdmin || esContador);
     mostrar('deptoTalentoGrupo', esAdmin);
-    mostrar('deptoTesoreriaGrupo', esAdmin || esCajero);
-    mostrar('deptoReportesGrupo', esAdmin || esContador);
     mostrar('deptoFondoEmprenderGrupo', esAdmin);
     // Configuración es visible para todos (Apariencia y Mi perfil son de
     // cualquiera), pero los ítems sensibles adentro quedan solo para admin.
@@ -9753,6 +9740,7 @@
     { clave: 'deptoVentasGrupo', etiqueta: '🛍️ Punto de Venta (grupo completo)' },
     { clave: 'nav-clientes-dir', etiqueta: '　　Clientes' },
     { clave: 'nav-cotizaciones', etiqueta: '　　Cotizaciones' },
+    { clave: 'nav-turno', etiqueta: '　　Turno de caja' },
     { clave: 'nav-ventas', etiqueta: '　　Registrar venta' },
     { clave: 'nav-historial', etiqueta: '　　Historial de ventas' },
     { clave: 'nav-pedidos-canal', etiqueta: '　　Pedidos WhatsApp/Redes' },
@@ -9772,23 +9760,20 @@
     { clave: 'nav-transferir-stock-taller', etiqueta: '　　Transferir stock (Taller)' },
     { clave: 'nav-solicitudes-tienda', etiqueta: '　　Solicitud de insumos del Taller' },
     { clave: 'nav-consumotaller', etiqueta: '　　Consumo de material (Taller)' },
-    { clave: 'deptoContabilidadGrupo', etiqueta: '📊 Contabilidad e Impuestos (grupo completo)' },
+    { clave: 'deptoContabilidadGrupo', etiqueta: '📊 Contabilidad (grupo completo)' },
     { clave: 'nav-dashboard-contable', etiqueta: '　　Dashboard Contable' },
     { clave: 'nav-honorarios-tejedoras', etiqueta: '　　Honorarios Tejedoras' },
     { clave: 'nav-estados-financieros', etiqueta: '　　Estados financieros y libros' },
     { clave: 'nav-activos-fijos', etiqueta: '　　Activos fijos' },
-    { clave: 'deptoTalentoGrupo', etiqueta: '🗂️ Talento Humano (grupo completo)' },
-    { clave: 'nav-nomina', etiqueta: '　　Nómina' },
-    { clave: 'nav-talento-humano', etiqueta: '　　Carpetas por empleado' },
-    { clave: 'deptoTesoreriaGrupo', etiqueta: '🏦 Bancos y Tesorería (grupo completo)' },
-    { clave: 'nav-turno', etiqueta: '　　Turno de caja' },
-    { clave: 'nav-reportes', etiqueta: '　　Reportes de turno' },
-    { clave: 'nav-conciliacion', etiqueta: '　　Conciliación bancaria' },
-    { clave: 'nav-transferencias-internas', etiqueta: '　　Transferencias caja/banco' },
-    { clave: 'deptoReportesGrupo', etiqueta: '📈 Reportes e Indicadores (grupo completo)' },
     { clave: 'nav-reportes-financieros', etiqueta: '　　Informes de Ventas' },
     { clave: 'nav-costeo-real', etiqueta: '　　Costeo Real' },
     { clave: 'nav-presupuesto-empresa', etiqueta: '　　Presupuesto' },
+    { clave: 'nav-reportes', etiqueta: '　　Reportes de turno' },
+    { clave: 'nav-conciliacion', etiqueta: '　　Conciliación bancaria' },
+    { clave: 'nav-transferencias-internas', etiqueta: '　　Transferencias caja/banco' },
+    { clave: 'deptoTalentoGrupo', etiqueta: '🗂️ Talento Humano (grupo completo)' },
+    { clave: 'nav-nomina', etiqueta: '　　Nómina' },
+    { clave: 'nav-talento-humano', etiqueta: '　　Carpetas por empleado' },
     { clave: 'deptoFondoEmprenderGrupo', etiqueta: '🏦 Fondo Emprender (grupo completo)' },
     { clave: 'nav-calendario', etiqueta: '📅 Calendario del equipo' },
   ];
