@@ -4205,6 +4205,10 @@
         <option value="INFORME_MENSUAL">Informe mensual (5 días calendario)</option>
         <option value="INFORME_BIMESTRAL">Informe bimestral (5 días calendario)</option>
         <option value="CONCEPTO_FINAL">Concepto final (5 días calendario)</option>
+        <option value="REINTEGRO_CONSIGNACION">Reintegro — consignar el valor (5 días hábiles)</option>
+        <option value="REINTEGRO_INFORME">Reintegro — informe de interventoría (10 días hábiles)</option>
+        <option value="AGENDA_ESPECIAL_INFORME">Agenda especial — informe de sustento (3 días hábiles)</option>
+        <option value="ENCUESTA_SATISFACCION">Encuesta de satisfacción (5 días calendario)</option>
       </select>
       <label for="feDescripcionEvento">Descripción</label>
       <input type="text" id="feDescripcionEvento" placeholder="Ej: Avance del mes de agosto">
@@ -4275,6 +4279,8 @@
     <h1>📊 Indicadores de cumplimiento</h1>
     <div class="subtitulo">Compara lo que se prometió en el plan de negocio contra lo que realmente se ha logrado.</div>
   </div>
+
+  <div id="panelSeguimientoMensualFe" class="panel" style="max-width:none;"></div>
 
   <div class="panel" style="max-width:560px;">
     <h2>+ Agregar indicador</h2>
@@ -20101,7 +20107,67 @@
   async function mostrarPantallaFeIndicadores() {
     mostrarPantalla('pantallaFeIndicadores');
     ocultarMensaje('mensajeIndicadorFe');
+    await cargarSeguimientoMensualFe();
     await cargarIndicadoresFe();
+  }
+
+  async function cargarSeguimientoMensualFe() {
+    const cont = document.getElementById('panelSeguimientoMensualFe');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/fe/seguimiento-mensual-produccion', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { cont.innerHTML = ''; return; }
+    const d = await resp.json();
+
+    if (!d.configurado) {
+      cont.innerHTML = `
+        <h2>📅 Seguimiento mensual de producción y ventas</h2>
+        <div class="subtitulo">Para comparar tu ritmo real contra la meta mes a mes (y avisarte a tiempo si vas atrasada), primero registra la fecha real del acta de inicio del contrato de cooperación.</div>
+        <label for="feFechaActaInicioInput">Fecha del acta de inicio</label>
+        <input type="date" id="feFechaActaInicioInput" style="max-width:220px;">
+        <button class="btn-principal" style="max-width:220px;" onclick="guardarFechaActaInicioFe()">Guardar</button>
+        <div class="mensaje" id="mensajeFechaActaInicioFe"></div>
+      `;
+      return;
+    }
+
+    const color = d.alerta ? 'var(--rojo-error)' : 'var(--verde-exito)';
+    cont.innerHTML = `
+      <h2>📅 Seguimiento mensual de producción y ventas — Mes ${d.mes_actual} de 12</h2>
+      <div class="subtitulo">Acta de inicio: ${new Date(d.fecha_acta_inicio + 'T00:00:00').toLocaleDateString('es-CO')}. Comparación acumulada desde entonces hasta hoy, según el ritmo mensual planeado en el plan de negocio.</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:14px;margin-top:10px;">
+        <div style="text-align:center;"><div style="font-size:11px;opacity:0.65;">UNIDADES QUE DEBERÍAS LLEVAR</div><div style="font-size:20px;font-weight:700;">${d.unidades_meta_acumulada}</div></div>
+        <div style="text-align:center;"><div style="font-size:11px;opacity:0.65;">VENTAS QUE DEBERÍAS LLEVAR</div><div style="font-size:20px;font-weight:700;">${formatearMoneda(d.ventas_meta_acumulada)}</div></div>
+        <div style="text-align:center;"><div style="font-size:11px;opacity:0.65;">VENTAS REALES</div><div style="font-size:20px;font-weight:700;">${formatearMoneda(d.ventas_reales_acumuladas)}</div></div>
+        <div style="text-align:center;"><div style="font-size:11px;opacity:0.65;">CUMPLIMIENTO</div><div style="font-size:20px;font-weight:700;color:${color};">${d.porcentaje_cumplimiento}%</div></div>
+      </div>
+      ${d.alerta ? `<div style="background:#fbe1de;color:var(--rojo-error);border-radius:9px;padding:10px 14px;margin-top:12px;font-size:12.5px;">⚠️ Vas por debajo del 90% del ritmo de ventas planeado para este punto del año — vale la pena revisar qué está pasando antes de que afecte el indicador de Gestión en Ventas (mínimo 55% para no ser determinante, pero mejor no acercarse).</div>` : ''}
+      <button class="btn-mini editar" style="margin-top:12px;" onclick="cambiarFechaActaInicioFe()">✏️ Cambiar fecha del acta de inicio</button>
+    `;
+  }
+
+  async function guardarFechaActaInicioFe() {
+    const fecha = document.getElementById('feFechaActaInicioInput').value;
+    if (!fecha) { mostrarMensaje('mensajeFechaActaInicioFe', 'Escoge una fecha.', 'error'); return; }
+    const resp = await fetch(WORKER_URL + '/api/pos/fe/config-proyecto/fecha-acta-inicio', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ fecha_acta_inicio: fecha })
+    });
+    if (!resp.ok) { mostrarMensaje('mensajeFechaActaInicioFe', 'No se pudo guardar.', 'error'); return; }
+    await cargarSeguimientoMensualFe();
+  }
+
+  async function cambiarFechaActaInicioFe() {
+    const nuevaFecha = await pedirTexto('Nueva fecha del acta de inicio:', 'Fecha', '', '', 'date');
+    if (!nuevaFecha) return;
+    const resp = await fetch(WORKER_URL + '/api/pos/fe/config-proyecto/fecha-acta-inicio', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ fecha_acta_inicio: nuevaFecha })
+    });
+    if (!resp.ok) { alert('No se pudo guardar.'); return; }
+    await cargarSeguimientoMensualFe();
   }
 
   async function calcularIndicadoresAutomaticosFe() {
