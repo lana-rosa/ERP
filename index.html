@@ -4191,6 +4191,9 @@
     <h1>📅 Calendario de entregables</h1>
     <div class="subtitulo">Plazos reales del Protocolo de Interventoría. Los días hábiles descuentan fines de semana y festivos colombianos automáticamente.</div>
   </div>
+
+  <div id="panelFechasClaveContratoFe" class="panel" style="max-width:none;"></div>
+
   <div class="grilla-2">
     <div class="panel">
       <h2>+ Nuevo entregable</h2>
@@ -19875,7 +19878,62 @@
   async function mostrarPantallaFeCalendario() {
     mostrarPantalla('pantallaFeCalendario');
     ocultarMensaje('mensajeEventoFe');
+    await cargarFechasClaveContratoFe();
     await cargarEventosFe();
+  }
+
+  async function cargarFechasClaveContratoFe() {
+    const cont = document.getElementById('panelFechasClaveContratoFe');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+
+    const resp = await fetch(WORKER_URL + '/api/pos/fe/fechas-clave-contrato', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+    if (!resp.ok) { cont.innerHTML = ''; return; }
+    const d = await resp.json();
+
+    if (!d.configurado) {
+      cont.innerHTML = `
+        <h2>🔑 Fechas clave de tu contrato</h2>
+        <div class="subtitulo">Para calcular cuándo son la 2ª y 3ª visita de interventoría, el fin del contrato, y el último día para pedir prórroga si la necesitas, primero registra la fecha del Acta de Inicio (Indicadores de cumplimiento tiene el mismo campo — solo hace falta llenarlo una vez).</div>
+        <label for="feFechaActaInicioInput2">Fecha del acta de inicio</label>
+        <input type="date" id="feFechaActaInicioInput2" style="max-width:220px;">
+        <button class="btn-principal" style="max-width:220px;" onclick="guardarFechaActaInicioDesdeCalendarioFe()">Guardar</button>
+        <div class="mensaje" id="mensajeFechaActaInicioFe2"></div>
+      `;
+      return;
+    }
+
+    cont.innerHTML = `
+      <h2>🔑 Fechas clave de tu contrato</h2>
+      <div class="subtitulo">Calculadas a partir del Acta de Inicio (${new Date(d.fecha_acta_inicio + 'T00:00:00').toLocaleDateString('es-CO')}) y de las reglas del contrato: 12 meses de plazo, visitas cada 4 meses, prórroga máximo 3 meses si se necesita.</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:12px;margin-top:10px;">
+        ${d.fechas.map(f => {
+          const vencido = f.dias_restantes < 0;
+          const proximo = f.dias_restantes >= 0 && f.dias_restantes <= 15;
+          const color = vencido ? 'var(--rojo-error)' : proximo ? '#e6a700' : 'var(--texto-oscuro)';
+          const fondo = vencido ? '#fbe1de' : proximo ? '#fff6e0' : '#fff';
+          return `
+            <div style="background:${fondo};border-radius:9px;padding:12px 14px;">
+              <div style="font-size:11.5px;opacity:0.75;">${escaparHtml(f.etiqueta)}</div>
+              <div style="font-size:15px;font-weight:700;margin-top:4px;">${new Date(f.fecha + 'T00:00:00').toLocaleDateString('es-CO')}</div>
+              <div style="font-size:12px;color:${color};font-weight:600;margin-top:2px;">${vencido ? `Hace ${Math.abs(f.dias_restantes)} días` : `Faltan ${f.dias_restantes} días`}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+      <button class="btn-mini editar" style="margin-top:12px;" onclick="cambiarFechaActaInicioFe()">✏️ Cambiar fecha del acta de inicio</button>
+    `;
+  }
+
+  async function guardarFechaActaInicioDesdeCalendarioFe() {
+    const fecha = document.getElementById('feFechaActaInicioInput2').value;
+    if (!fecha) { mostrarMensaje('mensajeFechaActaInicioFe2', 'Escoge una fecha.', 'error'); return; }
+    const resp = await fetch(WORKER_URL + '/api/pos/fe/config-proyecto/fecha-acta-inicio', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+      body: JSON.stringify({ fecha_acta_inicio: fecha })
+    });
+    if (!resp.ok) { mostrarMensaje('mensajeFechaActaInicioFe2', 'No se pudo guardar.', 'error'); return; }
+    await cargarFechasClaveContratoFe();
   }
 
   async function crearEventoFe() {
@@ -20167,7 +20225,8 @@
       body: JSON.stringify({ fecha_acta_inicio: nuevaFecha })
     });
     if (!resp.ok) { alert('No se pudo guardar.'); return; }
-    await cargarSeguimientoMensualFe();
+    if (document.getElementById('panelSeguimientoMensualFe')) await cargarSeguimientoMensualFe();
+    if (document.getElementById('panelFechasClaveContratoFe')) await cargarFechasClaveContratoFe();
   }
 
   async function calcularIndicadoresAutomaticosFe() {
