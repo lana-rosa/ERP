@@ -1,6 +1,6 @@
 {
-  "name": "Lana Rosa OS",
-  "short_name": "Lana Rosa OS",
+  "name": "Lana Rosa ERP",
+  "short_name": "Lana Rosa ERP",
   "description": "Sistema de gestión integral de Lana Rosa Crochet: ventas, inventario, nómina, contabilidad y Fondo Emprender",
   "start_url": "./index.html",
   "scope": "./",
