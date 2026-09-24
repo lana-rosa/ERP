@@ -19707,7 +19707,7 @@
 
   async function confirmarEliminarVentaAcademia(ventaId) {
     const confirmado = await pedirConfirmacionModal(
-      '¿Eliminar esta venta? El dinero se devuelve a la caja/banco de Academia, y el asiento contable se elimina. Esta acción no se puede deshacer.',
+      '¿Eliminar esta venta? El dinero se devuelve a la caja/banco de Academia y la contabilidad registra un asiento de reversión (el asiento original se conserva, como exige la norma contable). Esta acción no se puede deshacer.',
       'Sí, eliminar la venta'
     );
     if (!confirmado) return;
