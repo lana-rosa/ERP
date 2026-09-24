@@ -821,6 +821,7 @@
         <button class="nav-btn" id="nav-historial" onclick="mostrarPantallaHistorial('01')"><span class="nav-icon">📋</span> Historial ventas</button>
         <button class="nav-btn" id="nav-clientes-dir" onclick="mostrarPantallaClientes()"><span class="nav-icon">👤</span> Clientes</button>
         <button class="nav-btn" id="nav-oportunidades" onclick="mostrarPantallaOportunidades()"><span class="nav-icon">🎯</span> Oportunidades</button>
+        <button class="nav-btn" id="nav-resenas-web" onclick="mostrarPantallaResenasWeb()" style="display:none;"><span class="nav-icon">⭐</span> Reseñas web <span id="badgeResenasPendientes" style="display:none;margin-left:auto;background:#d8017c;color:#fff;border-radius:999px;font-size:10.5px;font-weight:700;padding:1px 8px;"></span></button>
         <button class="nav-btn" id="nav-pedidos-canal" onclick="mostrarPantallaPedidosCanal()"><span class="nav-icon">📱</span> Pedidos WhatsApp/Redes</button>
         <button class="nav-btn" id="nav-notas-cd" onclick="mostrarPantallaNotasCD()"><span class="nav-icon">📄</span> Notas crédito/débito</button>
         <button class="nav-btn" id="nav-cuentas-pendientes" onclick="mostrarPantallaCuentasPendientes()"><span class="nav-icon">📋</span> Cartera</button>
@@ -2608,6 +2609,18 @@
   </div>
 
   <div id="tableroOportunidades"><div class="cargando">Cargando...</div></div>
+</div>
+
+<!-- ===== PANTALLA: RESEÑAS WEB ===== -->
+<div id="pantallaResenasWeb" class="oculto contenido">
+  <div class="page-header">
+    <h1>⭐ Reseñas web</h1>
+    <div class="subtitulo">Reseñas que dejan las clientas en lanarosacrochet.com/tienda. Ninguna se publica sola: aparecen en la web solo cuando las apruebas aquí.</div>
+  </div>
+  <div id="resumenResenasWeb" style="margin-bottom:14px;"></div>
+  <div id="pestanasResenasWeb" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;"></div>
+  <div class="mensaje" id="mensajeResenasWeb"></div>
+  <div id="listaResenasWeb"><div class="cargando">Cargando...</div></div>
 </div>
 
 <!-- ===== PANTALLA: PROVEEDORES ===== -->
@@ -4678,7 +4691,7 @@
   });
 
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes'];
+    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -4696,6 +4709,7 @@
       pantallaVentas: 'nav-ventas',
       pantallaHistorial: 'nav-historial',
       pantallaPedidosCanal: 'nav-pedidos-canal',
+      pantallaResenasWeb: 'nav-resenas-web',
       pantallaAjustestock: 'nav-ajustestock',
       pantallaConsumoTaller: 'nav-consumotaller',
       pantallaPedidosCrm: 'nav-consumotaller',
@@ -5056,6 +5070,8 @@
     mostrar('nav-inventario-tienda', esAdmin || esCajero);
     mostrar('nav-cotizaciones', esAdmin || esCajero);
     mostrar('nav-notas-cd', esAdmin);
+    mostrar('nav-resenas-web', esAdmin);
+    if (esAdmin) actualizarBadgeResenasWeb();
     mostrar('nav-proveedores-dir', esAdmin);
     mostrar('nav-ordenes-compra', esAdmin);
     mostrar('nav-compras-gastos', esAdmin || esCajero);
@@ -9753,6 +9769,7 @@
     { clave: 'nav-ventas', etiqueta: '　　Registrar venta' },
     { clave: 'nav-historial', etiqueta: '　　Historial de ventas' },
     { clave: 'nav-pedidos-canal', etiqueta: '　　Pedidos WhatsApp/Redes' },
+    { clave: 'nav-resenas-web', etiqueta: '　　Reseñas web' },
     { clave: 'nav-notas-cd', etiqueta: '　　Notas crédito/débito' },
     { clave: 'nav-cuentas-pendientes', etiqueta: '　　Cartera' },
     { clave: 'deptoComprasGrupo', etiqueta: '🛒 Compras y Gastos (grupo completo)' },
@@ -11398,6 +11415,137 @@
   // ============================================================
   let clienteSeleccionadoOportunidadId = null;
   let clienteSeleccionadoOportunidadNombre = null;
+
+  // ============================================================
+  // RESEÑAS WEB (moderación de reseñas de la tienda en línea)
+  // ============================================================
+  const ESTADOS_RESENA_WEB = [
+    { valor: 'pendiente', titulo: '🕓 Pendientes' },
+    { valor: 'aprobada', titulo: '✅ Publicadas' },
+    { valor: 'rechazada', titulo: '🚫 Rechazadas' },
+  ];
+  let resenasWebCache = [];
+  let filtroResenasWeb = 'pendiente';
+
+  async function mostrarPantallaResenasWeb() {
+    mostrarPantalla('pantallaResenasWeb');
+    ocultarMensaje('mensajeResenasWeb');
+    await cargarResenasWeb();
+  }
+
+  async function cargarResenasWeb() {
+    const cont = document.getElementById('listaResenasWeb');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    const { data, error } = await supabaseClient
+      .from('resenas_web')
+      .select('id, producto_nombre, producto_categoria, cliente_nombre, cliente_telefono, calificacion, comentario, estado, compra_coincide, created_at, revisada_at')
+      .order('created_at', { ascending: false })
+      .limit(500);
+    if (error) { cont.innerHTML = '<div class="cargando">No se pudieron cargar las reseñas: ' + escaparHtml(error.message) + '</div>'; return; }
+    resenasWebCache = data || [];
+    renderizarResenasWeb();
+    pintarBadgeResenasWeb(resenasWebCache.filter(r => r.estado === 'pendiente').length);
+  }
+
+  function filtrarResenasWeb(estado) {
+    filtroResenasWeb = estado;
+    renderizarResenasWeb();
+  }
+
+  function estrellasResenaWeb(n) {
+    const r = Math.max(0, Math.min(5, Math.round(n)));
+    return '★'.repeat(r) + '☆'.repeat(5 - r);
+  }
+
+  function renderizarResenasWeb() {
+    const conteo = { pendiente: 0, aprobada: 0, rechazada: 0 };
+    resenasWebCache.forEach(r => { if (conteo[r.estado] !== undefined) conteo[r.estado]++; });
+
+    const aprobadas = resenasWebCache.filter(r => r.estado === 'aprobada');
+    const promedio = aprobadas.length ? aprobadas.reduce((s, r) => s + r.calificacion, 0) / aprobadas.length : 0;
+    document.getElementById('resumenResenasWeb').innerHTML = aprobadas.length
+      ? `<div style="display:inline-flex;align-items:center;gap:12px;background:#fff;border-radius:12px;padding:10px 16px;box-shadow:var(--sombra);">
+           <span style="font-size:26px;font-weight:700;color:#d8017c;">${promedio.toFixed(1).replace('.', ',')}</span>
+           <span><span style="color:#d8017c;">${estrellasResenaWeb(promedio)}</span><br><span style="font-size:12px;opacity:0.7;">Promedio publicado en la web · ${aprobadas.length} ${aprobadas.length === 1 ? 'reseña' : 'reseñas'}</span></span>
+         </div>`
+      : '';
+
+    document.getElementById('pestanasResenasWeb').innerHTML = ESTADOS_RESENA_WEB.map(e => `
+      <button class="btn-mini ${filtroResenasWeb === e.valor ? 'guardar' : 'editar'}" style="flex:0 0 auto;padding:8px 14px;" onclick="filtrarResenasWeb('${e.valor}')">${e.titulo} (${conteo[e.valor]})</button>
+    `).join('');
+
+    const lista = resenasWebCache.filter(r => r.estado === filtroResenasWeb);
+    const cont = document.getElementById('listaResenasWeb');
+    if (!lista.length) {
+      cont.innerHTML = `<div style="font-size:13px;opacity:0.6;padding:12px 0;">${filtroResenasWeb === 'pendiente' ? '🎉 No hay reseñas pendientes por revisar.' : 'No hay reseñas en esta lista.'}</div>`;
+      return;
+    }
+    cont.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;">${lista.map(renderizarTarjetaResenaWeb).join('')}</div>`;
+  }
+
+  function renderizarTarjetaResenaWeb(r) {
+    const fecha = new Date(r.created_at).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
+    const telefonoLimpio = String(r.cliente_telefono || '').replace(/\D/g, '');
+    const whatsapp = telefonoLimpio ? (telefonoLimpio.length === 10 ? '57' + telefonoLimpio : telefonoLimpio) : '';
+    const chip = (fondo, color, texto) => `<span style="display:inline-block;padding:3px 9px;border-radius:999px;font-weight:600;background:${fondo};color:${color};">${texto}</span>`;
+    const verificacion = r.compra_coincide === true
+      ? chip('#e4f5ec', '#2E8B57', '✅ Compró esta pieza')
+      : r.compra_coincide === false
+        ? chip('#fdf1de', '#b7791f', '⚠️ Clienta verificada, pero no encontramos esta pieza en sus compras')
+        : chip('#eef2f7', '#5a6b7d', 'Clienta verificada');
+    const botones = {
+      pendiente: `<button class="btn-mini guardar" onclick="cambiarEstadoResenaWeb('${r.id}', 'aprobada', this)">✅ Aprobar y publicar</button>
+                  <button class="btn-mini desactivar" onclick="cambiarEstadoResenaWeb('${r.id}', 'rechazada', this)">🚫 Rechazar</button>`,
+      aprobada: `<button class="btn-mini editar" onclick="cambiarEstadoResenaWeb('${r.id}', 'pendiente', this)">🙈 Quitar de la web</button>
+                 <button class="btn-mini desactivar" onclick="cambiarEstadoResenaWeb('${r.id}', 'rechazada', this)">🚫 Rechazar</button>`,
+      rechazada: `<button class="btn-mini guardar" onclick="cambiarEstadoResenaWeb('${r.id}', 'aprobada', this)">✅ Aprobar y publicar</button>`,
+    }[r.estado] || '';
+    return `
+      <div style="background:#fff;border-radius:14px;padding:16px;box-shadow:var(--sombra);display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+          <span style="color:#d8017c;font-size:18px;letter-spacing:1px;">${estrellasResenaWeb(r.calificacion)}</span>
+          <span style="font-size:11px;opacity:0.6;">${escaparHtml(fecha)}</span>
+        </div>
+        <div style="font-weight:700;font-size:14px;">${escaparHtml(r.cliente_nombre || '')}
+          ${whatsapp ? `<a href="https://wa.me/${whatsapp}" target="_blank" rel="noopener" style="font-weight:400;font-size:12px;margin-left:6px;">📱 ${escaparHtml(r.cliente_telefono)}</a>` : ''}
+        </div>
+        <div style="font-size:12.5px;"><strong>Pieza:</strong> ${escaparHtml(r.producto_nombre || 'No especificó')}${r.producto_categoria ? ' <span style="opacity:0.6;">· ' + escaparHtml(r.producto_categoria) + '</span>' : ''}</div>
+        <div style="font-size:11.5px;">${verificacion}</div>
+        <div style="font-size:13.5px;line-height:1.5;background:#faf7f8;border-radius:10px;padding:10px 12px;white-space:pre-wrap;">${escaparHtml(r.comentario || '')}</div>
+        <div style="display:flex;gap:8px;margin-top:4px;">${botones}</div>
+      </div>
+    `;
+  }
+
+  async function cambiarEstadoResenaWeb(id, estado, boton) {
+    if (boton) { boton.disabled = true; boton.textContent = 'Guardando...'; }
+    const { error } = await supabaseClient.from('resenas_web').update({ estado }).eq('id', id);
+    if (error) {
+      mostrarMensaje('mensajeResenasWeb', 'No se pudo actualizar la reseña: ' + error.message, 'error');
+      if (boton) boton.disabled = false;
+      return;
+    }
+    const textos = { aprobada: '✅ Reseña publicada en la tienda.', rechazada: '🚫 Reseña rechazada (no se publica).', pendiente: '🙈 Reseña retirada de la web; quedó en pendientes.' };
+    mostrarMensaje('mensajeResenasWeb', textos[estado] || 'Listo.', 'exito');
+    await cargarResenasWeb();
+  }
+
+  function pintarBadgeResenasWeb(cantidad) {
+    const badge = document.getElementById('badgeResenasPendientes');
+    if (!badge) return;
+    badge.textContent = cantidad;
+    badge.style.display = cantidad > 0 ? '' : 'none';
+  }
+
+  async function actualizarBadgeResenasWeb() {
+    try {
+      const { count, error } = await supabaseClient
+        .from('resenas_web')
+        .select('id', { count: 'exact', head: true })
+        .eq('estado', 'pendiente');
+      if (!error) pintarBadgeResenasWeb(count || 0);
+    } catch (e) { /* el badge es opcional */ }
+  }
 
   async function mostrarPantallaOportunidades() {
     mostrarPantalla('pantallaOportunidades');
