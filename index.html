@@ -1929,7 +1929,7 @@
   <div id="subtabHonorarios" data-subtab-grupo="pagosPendientes" class="oculto">
     <div class="panel" style="max-width:480px;">
       <div style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;font-size:12px;margin-bottom:14px;">
-        ℹ️ Para asesores externos que reciben pago por prestación de servicios (contador, abogado, etc.) — no es nómina. Antes de activar la retención, confírmalo con tu contador: como persona natural, es probable que hoy <strong>no</strong> estés obligada a retener, salvo que ingresos/patrimonio superen 30.000 UVT al año.
+        ℹ️ Para asesores externos que reciben pago por prestación de servicios (contador, abogado, etc.) — no es nómina. Lana Rosa está en el <strong>Régimen SIMPLE</strong>, que no practica retención en la fuente sobre honorarios (art. 911 del Estatuto Tributario), así que se paga el valor completo.
       </div>
       <label for="honProveedor">Asesor / proveedor de servicios</label>
       <select id="honProveedor"></select>
@@ -1937,7 +1937,7 @@
       <input type="text" id="honDescripcion" placeholder="Ej: Asesoría contable mes de julio">
       <label for="honMontoBruto">Valor del servicio (COP, bruto)</label>
       <input type="number" id="honMontoBruto" min="0" step="1" oninput="calcularNetoHonorarios()">
-      <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-weight:400;">
+      <label class="oculto" style="display:flex;align-items:center;gap:8px;margin-top:10px;font-weight:400;">
         <input type="checkbox" id="honAplicaRetencion" style="width:auto;" onchange="calcularNetoHonorarios()">
         <span>Aplicar retención en la fuente</span>
       </label>
