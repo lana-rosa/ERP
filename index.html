@@ -42,6 +42,56 @@
     --ambar: #e0a032;
     --texto-suave: #7a6670;
     --radio-grande: 20px;
+
+    /* ===== SISTEMA DE DISEÑO — LANA ROSA =====
+       Tokens nuevos, aditivos: no reemplazan las variables de arriba
+       (siguen usándose en miles de líneas), solo dan una escala formal
+       de tipografía, espaciado, radios y sombras para construir
+       componentes nuevos de forma consistente. */
+
+    /* Tipografía */
+    --font-display: 'Fredoka', sans-serif;
+    --font-texto: 'Poppins', sans-serif;
+    --fs-xs: 11px;
+    --fs-sm: 12.5px;
+    --fs-base: 14px;
+    --fs-md: 15px;
+    --fs-lg: 18px;
+    --fs-xl: 22px;
+    --fs-2xl: 28px;
+
+    /* Espaciado (escala de 4px) */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-8: 32px;
+
+    /* Radios de borde */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: var(--radio-grande);
+    --radius-pill: 999px;
+
+    /* Sombras (elevación) */
+    --shadow-sm: 0 1px 4px rgba(58, 44, 53, 0.06);
+    --shadow-md: var(--sombra);
+    --shadow-lg: 0 10px 28px rgba(216, 1, 124, 0.14);
+
+    /* Neutros suaves (para bordes y fondos sutiles, además de --blanco-hueso) */
+    --gris-borde: #f1e2ec;
+    --gris-fondo: #faf7f8;
+
+    /* Tintes pastel para tarjetas y estados, derivados del color de acento
+       de cada tarjeta (ver --barra en .kpi-card-nuevo) */
+    --tinte-rosa: #fdeef8;
+    --tinte-azul: #eaf1f8;
+    --tinte-verde: #eaf6ef;
+    --tinte-ambar: #fdf3e2;
+    --tinte-rojo: #fdecea;
   }
 
   .fredoka { font-family: 'Fredoka', sans-serif; font-weight: 600; }
@@ -61,30 +111,55 @@
     background-size: 20px 20px; background-repeat: repeat-x; background-position: top;
   }
   .kpi-card-nuevo {
-    background: #fff; border-radius: var(--radio-grande); padding: 18px 18px 16px;
-    border: 1px solid #f1e2ec; box-shadow: 0 4px 16px rgba(216,1,124,.05);
+    background: color-mix(in srgb, var(--barra, var(--rosa-principal)) 8%, #fff);
+    border-radius: var(--radius-xl); padding: var(--space-5) var(--space-5) var(--space-4);
+    border: 1px solid color-mix(in srgb, var(--barra, var(--rosa-principal)) 16%, #fff);
+    box-shadow: var(--shadow-sm);
     position: relative; overflow: hidden; transition: transform 0.12s, box-shadow 0.12s;
   }
-  .kpi-card-nuevo:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(216,1,124,.12); }
-  .kpi-card-nuevo::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background: var(--barra, var(--rosa-principal)); }
-  .kpi-card-nuevo .kpi-label { font-size: 11.5px; color: var(--texto-suave); font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
-  .kpi-card-nuevo .kpi-valor { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 24px; margin-top: 6px; }
-  .kpi-card-nuevo .kpi-delta { font-size: 11.5px; margin-top: 6px; font-weight: 600; }
+  .kpi-card-nuevo:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+  .kpi-card-nuevo .kpi-icono {
+    width: 36px; height: 36px; border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--barra, var(--rosa-principal)) 20%, #fff);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px; margin-bottom: var(--space-3);
+  }
+  .kpi-card-nuevo .kpi-label { font-size: var(--fs-xs); color: var(--texto-suave); font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
+  .kpi-card-nuevo .kpi-valor { font-family: var(--font-display); font-weight: 600; font-size: 23px; margin-top: 6px; color: var(--texto-oscuro); }
+  .kpi-card-nuevo .kpi-delta { margin-top: var(--space-2); }
+  .kpi-card-nuevo .kpi-delta:empty { display: none; }
+  .kpi-pill {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: var(--fs-xs); font-weight: 700;
+    padding: 2px 9px; border-radius: var(--radius-pill);
+  }
+  .kpi-pill.sube { background: var(--tinte-verde); color: var(--verde-exito); }
+  .kpi-pill.baja { background: var(--tinte-rojo); color: var(--rojo-error); }
   .rosina-bubble {
-    margin-top: 16px; background: #fff; border: 1.5px dashed var(--rosa-medio); border-radius: 18px;
-    padding: 14px 18px; display: flex; gap: 12px; align-items: flex-start;
+    margin-top: var(--space-4); background: var(--tinte-rosa); border: none; border-radius: var(--radius-lg);
+    padding: var(--space-4) var(--space-5); display: flex; gap: var(--space-3); align-items: flex-start;
   }
   .rosina-bubble .icon { font-size: 20px; flex-shrink: 0; }
-  .rosina-bubble p { font-size: 13px; line-height: 1.5; }
-  .rosina-bubble strong { color: var(--rosa-principal); font-family: 'Fredoka', sans-serif; font-weight: 600; }
-  .db-panel { background: #fff; border-radius: var(--radio-grande); padding: 20px; border: 1px solid #f1e2ec; box-shadow: 0 4px 16px rgba(216,1,124,.05); }
-  .db-panel h2 { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 15px; margin-bottom: 2px; }
-  .db-panel .db-panel-sub { font-size: 11.5px; color: var(--texto-suave); margin-bottom: 12px; }
-  .badge-antiguedad { padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; display: inline-block; }
-  .badge-antiguedad.al-dia { background: #e4f5ec; color: var(--verde-exito); }
-  .badge-antiguedad.b30 { background: #fdf1de; color: var(--ambar); }
+  .rosina-bubble p { font-size: var(--fs-base); line-height: 1.5; }
+  .rosina-bubble strong { color: var(--rosa-principal); font-family: var(--font-display); font-weight: 600; }
+  .db-panel { background: var(--fondo-panel); border-radius: var(--radius-xl); padding: var(--space-5); border: 1px solid var(--gris-borde); box-shadow: var(--shadow-sm); }
+  .db-panel h2 { font-family: var(--font-display); font-weight: 600; font-size: var(--fs-md); margin-bottom: 2px; }
+  .db-panel .db-panel-sub { font-size: var(--fs-xs); color: var(--texto-suave); margin-bottom: var(--space-3); }
+
+  /* Franja decorativa pastel detrás del encabezado del Dashboard */
+  .db-hero {
+    background: linear-gradient(135deg, var(--tinte-rosa) 0%, #fff 70%);
+    border-radius: var(--radius-xl);
+    padding: var(--space-5);
+    margin-bottom: var(--space-4);
+  }
+  .db-hero .db-topbar { margin-bottom: 0; }
+
+  .badge-antiguedad { padding: 4px 11px; border-radius: var(--radius-pill); font-size: var(--fs-xs); font-weight: 600; display: inline-block; }
+  .badge-antiguedad.al-dia { background: var(--tinte-verde); color: var(--verde-exito); }
+  .badge-antiguedad.b30 { background: var(--tinte-ambar); color: var(--ambar); }
   .badge-antiguedad.b60 { background: #fbe6de; color: #c9612b; }
-  .badge-antiguedad.b90 { background: #fdecea; color: var(--rojo-error); }
+  .badge-antiguedad.b90 { background: var(--tinte-rojo); color: var(--rojo-error); }
 
   /* ===== MODO OSCURO =====
      Reutiliza las mismas variables que ya usa casi toda la app (--blanco-hueso
@@ -98,6 +173,13 @@
     --fondo-input: #352b3d;
     --borde-input: #4a3d54;
     --sombra: 0 2px 14px rgba(0, 0, 0, 0.4);
+    --gris-borde: #3d3140;
+    --gris-fondo: #251d29;
+    --tinte-rosa: #3a2a38;
+    --tinte-azul: #26313d;
+    --tinte-verde: #223530;
+    --tinte-ambar: #3a3222;
+    --tinte-rojo: #3a2626;
   }
   html[data-tema="oscuro"] .cargando { color: #b8a8bc; }
   html[data-tema="oscuro"] .subtitulo { opacity: 0.75; }
@@ -173,7 +255,7 @@
     letter-spacing: 1px;
     text-transform: uppercase;
     color: rgba(255,255,255,0.3);
-    padding: 12px 8px 6px;
+    padding: var(--space-3) var(--space-2) 6px;
   }
 
   .nav-btn {
@@ -182,25 +264,33 @@
     gap: 10px;
     width: 100%;
     padding: 9px 12px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     border: none;
     background: none;
     color: var(--sidebar-texto);
-    font-family: 'Poppins', sans-serif;
+    font-family: var(--font-texto);
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
     text-align: left;
-    transition: background 0.15s ease;
+    transition: background 0.15s ease, transform 0.1s ease;
     opacity: 0.85;
   }
 
-  .nav-btn:hover { background: rgba(255,255,255,0.08); opacity: 1; }
-  .nav-btn.activo { background: var(--rosa-principal); color: white; opacity: 1; }
-  .nav-btn .nav-icon { font-size: 15px; width: 20px; text-align: center; }
+  .nav-btn:hover { background: rgba(255,255,255,0.08); opacity: 1; transform: translateX(1px); }
+  .nav-btn.activo {
+    background: var(--rosa-principal); color: white; opacity: 1;
+    box-shadow: 0 4px 12px rgba(216,1,124,.35);
+  }
+  .nav-btn .nav-icon {
+    font-size: 14px; width: 26px; height: 26px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: var(--radius-sm); background: rgba(255,255,255,0.06);
+  }
+  .nav-btn.activo .nav-icon { background: rgba(255,255,255,0.2); }
 
   .sidebar-footer {
-    padding: 12px 8px;
+    padding: var(--space-3) var(--space-2);
     border-top: 1px solid rgba(255,255,255,0.08);
   }
 
@@ -469,15 +559,15 @@
   input, select {
     width: 100%; padding: 11px 13px;
     border: 1.5px solid var(--borde-input);
-    border-radius: 9px;
-    font-family: 'Poppins', sans-serif;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-texto);
     font-size: 14px;
     background: var(--fondo-input);
     color: var(--texto-oscuro);
-    transition: border-color 0.15s ease;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
   }
 
-  input:focus, select:focus { outline: none; border-color: var(--rosa-medio); }
+  input:focus, select:focus { outline: none; border-color: var(--rosa-medio); box-shadow: 0 0 0 3px rgba(255,143,212,0.25); }
 
   /* ===== BOTONES ===== */
   .btn-principal {
@@ -485,26 +575,28 @@
     margin-top: 20px;
     background: var(--rosa-principal);
     color: white; border: none;
-    border-radius: 9px;
-    font-family: 'Poppins', sans-serif;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-texto);
     font-size: 14px; font-weight: 600;
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+    box-shadow: 0 4px 12px rgba(216,1,124,.2);
   }
 
-  .btn-principal:hover { background: #b80168; }
+  .btn-principal:hover { background: #b80168; box-shadow: 0 6px 16px rgba(216,1,124,.28); }
   .btn-principal:active { transform: scale(0.98); }
-  .btn-principal:disabled { background: #d9b8cb; cursor: not-allowed; }
+  .btn-principal:disabled { background: #d9b8cb; cursor: not-allowed; box-shadow: none; }
 
   .btn-secundario {
     width: 100%; padding: 12px;
     margin-top: 10px;
     background: var(--fondo-panel); color: var(--rosa-principal);
     border: 1.5px solid var(--rosa-principal);
-    border-radius: 9px;
-    font-family: 'Poppins', sans-serif;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-texto);
     font-size: 14px; font-weight: 600;
     cursor: pointer;
+    transition: background 0.15s ease;
   }
 
   .btn-secundario:hover { background: var(--rosa-suave); }
@@ -3176,16 +3268,17 @@
 <!-- ===== PANTALLA: ESTADOS FINANCIEROS ===== -->
 <!-- ===== PANTALLA: DASHBOARD EJECUTIVO ===== -->
 <div id="pantallaDashboard" class="oculto contenido">
-  <div class="db-topbar">
-    <div class="db-titulo-group">
-      <div class="db-avatar-rosina"></div>
-      <div>
-        <h1 class="fredoka" style="font-size:24px;">Dashboard</h1>
-        <div class="subtitulo">Lo esencial de tu negocio, de un vistazo — últimos 30 días.</div>
+  <div class="db-hero">
+    <div class="db-topbar">
+      <div class="db-titulo-group">
+        <div class="db-avatar-rosina"></div>
+        <div>
+          <h1 class="fredoka" style="font-size:24px;">Dashboard</h1>
+          <div class="subtitulo" style="margin-bottom:0;">Lo esencial de tu negocio, de un vistazo — últimos 30 días.</div>
+        </div>
       </div>
     </div>
   </div>
-  <div class="db-divider"></div>
 
   <div id="panelAlertasDashboard" style="margin-bottom:16px;"></div>
 
@@ -15393,30 +15486,35 @@
     const d = await resp.json();
     cacheComparativoParaInsight = d;
 
-    const flechita = (pct) => pct === null ? '' : (pct >= 0 ? `<span style="color:var(--verde-exito);">▲ ${pct}%</span>` : `<span style="color:var(--rojo-error);">▼ ${Math.abs(pct)}%</span>`);
+    const flechita = (pct) => pct === null ? '' : (pct >= 0 ? `<span class="kpi-pill sube">▲ ${pct}%</span>` : `<span class="kpi-pill baja">▼ ${Math.abs(pct)}%</span>`);
 
     kpisCont.innerHTML = `
       <div class="kpi-card-nuevo" style="--barra:var(--rosa-principal);cursor:pointer;" onclick="mostrarPantallaEstadosFinancieros()" title="Ver el detalle en Estados financieros">
+        <div class="kpi-icono">💰</div>
         <div class="kpi-label">Ingresos (30 días)</div>
         <div class="kpi-valor">${formatearMoneda(d.periodo_a.ingresos)}</div>
         <div class="kpi-delta">${flechita(d.variacion_pct.ingresos)}</div>
       </div>
       <div class="kpi-card-nuevo" style="--barra:var(--azul-acero);cursor:pointer;" onclick="mostrarPantallaEstadosFinancieros()" title="Ver el detalle en Estados financieros">
+        <div class="kpi-icono">💸</div>
         <div class="kpi-label">Gastos (30 días)</div>
         <div class="kpi-valor">${formatearMoneda(d.periodo_a.gastos)}</div>
         <div class="kpi-delta">${flechita(d.variacion_pct.gastos)}</div>
       </div>
       <div class="kpi-card-nuevo" style="--barra:${d.periodo_a.utilidad_neta >= 0 ? 'var(--verde-exito)' : 'var(--rojo-error)'};cursor:pointer;" onclick="mostrarPantallaEstadosFinancieros()" title="Ver el detalle en Estados financieros">
+        <div class="kpi-icono">📈</div>
         <div class="kpi-label">Utilidad neta (30 días)</div>
         <div class="kpi-valor" style="color:${d.periodo_a.utilidad_neta >= 0 ? 'var(--verde-exito)' : 'var(--rojo-error)'};">${formatearMoneda(d.periodo_a.utilidad_neta)}</div>
         <div class="kpi-delta">${flechita(d.variacion_pct.utilidad_neta)}</div>
       </div>
       <div class="kpi-card-nuevo" id="kpiCarteraPendiente" style="--barra:var(--ambar);cursor:pointer;" onclick="mostrarPantallaCuentasPendientes()" title="Ver el detalle en Cartera">
+        <div class="kpi-icono">🧾</div>
         <div class="kpi-label">Cartera pendiente</div>
         <div class="kpi-valor">Cargando...</div>
         <div class="kpi-delta"></div>
       </div>
       <div class="kpi-card-nuevo" id="kpiSaldoBancos" style="--barra:var(--azul-acero);cursor:pointer;" onclick="mostrarPantallaConciliacion()" title="Ver el detalle en Conciliación bancaria">
+        <div class="kpi-icono">🏦</div>
         <div class="kpi-label">Saldo en Bancos</div>
         <div class="kpi-valor">Cargando...</div>
         <div class="kpi-delta"></div>
