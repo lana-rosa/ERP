@@ -247,7 +247,13 @@
     flex: 1;
     padding: 12px 8px;
     overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.28) transparent;
   }
+  .sidebar-nav::-webkit-scrollbar { width: 6px; }
+  .sidebar-nav::-webkit-scrollbar-track { background: transparent; }
+  .sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.28); border-radius: 999px; }
+  .sidebar-nav::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.45); }
 
   .sidebar-seccion {
     font-size: 9.5px;
@@ -503,6 +509,8 @@
 
   @media (min-width: 901px) {
     .topbar-movil { display: none !important; }
+    /* El botón "+" flotaba encima del pie del menú y tapaba "Cerrar sesión". */
+    #btnCrearRapido { left: calc(var(--sidebar-width) + 22px) !important; }
   }
 
   .panel {
@@ -838,7 +846,7 @@
   .sidebar-depto-header .chevron { font-size: 10px; transition: transform 0.15s ease; opacity: 0.6; }
   .sidebar-depto-header.abierto .chevron { transform: rotate(180deg); }
   .sidebar-depto-submenu { padding-left: 6px; overflow: hidden; max-height: 0; transition: max-height 0.2s ease; }
-  .sidebar-depto-submenu.abierto { max-height: 600px; }
+  .sidebar-depto-submenu.abierto { max-height: none; } /* la altura exacta la pone abrirSidebarDepto para animar */
   .sidebar-depto-submenu .nav-btn { font-size: 12.5px; padding: 8px 12px; }
 
   /* ===== CALENDARIO ESTILO GOOGLE ===== */
@@ -5583,21 +5591,37 @@
     if (esTaller) abrirSidebarDepto('deptoInventarioSubmenu', 'headerDeptoInventario');
   }
 
+  // El submenú se anima hasta la altura real de su contenido (antes tenía un tope
+  // fijo de 600px y los grupos con muchas opciones, como Contabilidad, se cortaban).
   function toggleSidebarDepto(submenuId, headerId) {
     const submenu = document.getElementById(submenuId);
     const header = document.getElementById(headerId);
     const abierto = submenu.classList.contains('abierto');
     if (abierto) {
+      submenu.style.maxHeight = submenu.scrollHeight + 'px';
+      submenu.offsetHeight; // fija la altura actual antes de animar el cierre
       submenu.classList.remove('abierto');
+      submenu.style.maxHeight = '0px';
       header.classList.remove('abierto');
     } else {
+      // Un grupo a la vez: al abrir uno se cierran los demás para que el menú no crezca de más.
+      document.querySelectorAll('.sidebar-depto-submenu.abierto').forEach(otro => {
+        if (otro.id !== submenuId) toggleSidebarDepto(otro.id, otro.previousElementSibling.id);
+      });
       abrirSidebarDepto(submenuId, headerId);
+      // Lleva el grupo abierto a la vista, por si sus opciones quedaron por debajo del borde.
+      setTimeout(() => header.scrollIntoView({ behavior: 'smooth', block: 'start' }), 260);
     }
   }
 
   function abrirSidebarDepto(submenuId, headerId) {
-    document.getElementById(submenuId).classList.add('abierto');
+    const submenu = document.getElementById(submenuId);
+    if (submenu.classList.contains('abierto')) return;
+    submenu.classList.add('abierto');
+    submenu.style.maxHeight = submenu.scrollHeight + 'px';
     document.getElementById(headerId).classList.add('abierto');
+    // Al terminar la animación se libera la altura, por si cambian las opciones visibles.
+    setTimeout(() => { if (submenu.classList.contains('abierto')) submenu.style.maxHeight = 'none'; }, 250);
   }
 
   function mostrarCierreTurno() {
