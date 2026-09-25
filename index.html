@@ -978,6 +978,7 @@
         <button class="nav-btn" id="nav-dashboard-contable" onclick="mostrarPantallaDashboardContable()"><span class="nav-icon">💹</span> Dashboard Contable</button>
         <button class="nav-btn" id="nav-honorarios-tejedoras" onclick="mostrarPantallaHonorariosTejedoras()"><span class="nav-icon">🧵</span> Honorarios Tejedoras</button>
         <button class="nav-btn" id="nav-estados-financieros" onclick="mostrarPantallaEstadosFinancieros()"><span class="nav-icon">📑</span> Estados financieros y libros</button>
+        <button class="nav-btn" id="nav-contabilidad-impuestos" onclick="mostrarPantallaContabilidadImpuestos()"><span class="nav-icon">🧾</span> Impuestos, PUC y ajustes</button>
         <button class="nav-btn" id="nav-activos-fijos" onclick="mostrarPantallaActivosFijos()"><span class="nav-icon">🪑</span> Activos fijos</button>
         <div class="sidebar-seccion">Reportes e indicadores</div>
         <button class="nav-btn" id="nav-reportes-financieros" onclick="mostrarPantallaReportesFinancieros()"><span class="nav-icon">📊</span> Informes de Ventas</button>
@@ -3868,6 +3869,164 @@
   <div id="listaHonorariosTejedoras"><div class="cargando">Cargando...</div></div>
 </div>
 
+<!-- ===== PANTALLA: IMPUESTOS, PLAN DE CUENTAS Y AJUSTES ===== -->
+<div id="pantallaContabilidadImpuestos" class="oculto contenido">
+  <div class="page-header">
+    <h1>🧾 Impuestos, plan de cuentas y ajustes</h1>
+    <div class="subtitulo">Herramientas del contador: impuesto SIMPLE, plan de cuentas (PUC), asientos de ajuste y bitácora de auditoría. Todo queda registrado con fecha y usuario.</div>
+  </div>
+
+  <div class="filtro-tipo" style="margin-bottom:20px;">
+    <button class="chip-filtro activo" data-subtab-btn="contaImp" onclick="mostrarSubTabGrupo('contaImp', 'subtabCiSimple', this); cargarSimple();">🧾 Impuesto SIMPLE</button>
+    <button class="chip-filtro" data-subtab-btn="contaImp" onclick="mostrarSubTabGrupo('contaImp', 'subtabCiPuc', this); cargarPlanCuentas();">📒 Plan de cuentas</button>
+    <button class="chip-filtro" data-subtab-btn="contaImp" onclick="mostrarSubTabGrupo('contaImp', 'subtabCiAjuste', this); prepararAsientoAjuste();">✍️ Asiento de ajuste</button>
+    <button class="chip-filtro" data-subtab-btn="contaImp" onclick="mostrarSubTabGrupo('contaImp', 'subtabCiBitacora', this); cargarBitacoraContable();">🕵️ Bitácora</button>
+  </div>
+  <div class="mensaje" id="mensajeContaImp"></div>
+
+  <div id="subtabCiSimple" data-subtab-grupo="contaImp">
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+      <div><label for="ciSimpleAnio" style="font-size:11px;">Año gravable</label>
+        <select id="ciSimpleAnio" onchange="cargarSimple()" style="padding:9px 10px;"></select>
+      </div>
+    </div>
+
+    <div class="panel" style="max-width:none;max-height:none;margin-bottom:20px;">
+      <h2>Ingresos percibidos y anticipos por bimestre</h2>
+      <div class="subtitulo">En el Régimen SIMPLE la base son los ingresos brutos <strong>percibidos</strong> (art. 904 E.T.): lo cobrado en el bimestre, incluidos los anticipos de pedidos. Se calcula desde los libros contables.</div>
+      <div id="ciSimpleBimestres"><div class="cargando">Cargando...</div></div>
+    </div>
+
+    <div class="grilla-2" style="margin-bottom:20px;">
+      <div class="panel" style="max-height:none;">
+        <h2>Registrar pago de anticipo bimestral</h2>
+        <div class="subtitulo">Recibo electrónico SIMPLE (formulario 2593). Genera el asiento: débito 1355 Anticipo de impuestos, crédito caja o bancos.</div>
+        <label for="ciAntBimestre">Bimestre</label>
+        <select id="ciAntBimestre">
+          <option value="1">1 — Enero–Febrero</option><option value="2">2 — Marzo–Abril</option><option value="3">3 — Mayo–Junio</option>
+          <option value="4">4 — Julio–Agosto</option><option value="5">5 — Septiembre–Octubre</option><option value="6">6 — Noviembre–Diciembre</option>
+        </select>
+        <label for="ciAntMonto">Valor pagado (COP)</label>
+        <input type="number" id="ciAntMonto" min="1" step="1" placeholder="0">
+        <label for="ciAntFecha">Fecha de pago</label>
+        <input type="date" id="ciAntFecha">
+        <label for="ciAntMetodo">Pagado desde</label>
+        <select id="ciAntMetodo">
+          <option value="transferencia">Banco (transferencia / PSE)</option>
+          <option value="nequi">Nequi</option>
+          <option value="efectivo">Efectivo (caja)</option>
+        </select>
+        <label for="ciAntRecibo">N° de recibo 2593 <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+        <input type="text" id="ciAntRecibo" placeholder="Ej: 4910123456789">
+        <button class="btn-principal" onclick="confirmarAnticipoSimple()">Registrar pago de anticipo</button>
+      </div>
+
+      <div class="panel" style="max-height:none;">
+        <h2>Declaración anual (formulario 260)</h2>
+        <div class="subtitulo">Registra el impuesto a cargo que liquidó tu contador. El sistema causa el gasto (5405 contra 2404), le cruza los anticipos pagados y muestra el saldo.</div>
+        <div id="ciSimpleDeclaracion"></div>
+        <label for="ciDecImpuesto">Impuesto SIMPLE a cargo del año (COP)</label>
+        <input type="number" id="ciDecImpuesto" min="0" step="1" placeholder="0">
+        <label for="ciDecFecha">Fecha de presentación</label>
+        <input type="date" id="ciDecFecha">
+        <label for="ciDecFormulario">N° de formulario <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+        <input type="text" id="ciDecFormulario">
+        <button class="btn-principal" onclick="confirmarDeclaracionSimple()">Registrar declaración</button>
+
+        <h2 style="margin-top:22px;">Pago del saldo a cargo</h2>
+        <div class="grid-campos-inventario">
+          <div class="campo-mini"><label>Valor pagado</label><input type="number" id="ciSaldoMonto" min="1" step="1"></div>
+          <div class="campo-mini"><label>Fecha</label><input type="date" id="ciSaldoFecha"></div>
+        </div>
+        <label for="ciSaldoMetodo">Pagado desde</label>
+        <select id="ciSaldoMetodo">
+          <option value="transferencia">Banco (transferencia / PSE)</option>
+          <option value="nequi">Nequi</option>
+          <option value="efectivo">Efectivo (caja)</option>
+        </select>
+        <button class="btn-secundario" onclick="confirmarPagoSaldoSimple()">Registrar pago del saldo</button>
+      </div>
+    </div>
+
+    <div class="panel" style="max-width:none;max-height:none;">
+      <h2>Parámetros del año (los define tu contador)</h2>
+      <div class="subtitulo">Valor de la UVT y tarifa consolidada del SIMPLE para la actividad de Lana Rosa (art. 908 E.T.), por rangos de ingresos brutos anuales en UVT. Con esto el sistema estima el anticipo de cada bimestre (anualizando sus ingresos ×6). La cifra que vale es la del recibo que se paga.</div>
+      <div style="max-width:260px;">
+        <label for="ciUvt">Valor de la UVT (COP)</label>
+        <input type="number" id="ciUvt" min="1" step="1">
+      </div>
+      <label style="margin-top:14px;">Rangos de tarifa</label>
+      <div id="ciTarifas"></div>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+        <button class="btn-mini editar" style="flex:0 0 auto;padding:8px 14px;" onclick="agregarFilaTarifaSimple()">+ Agregar rango</button>
+        <button class="btn-mini guardar" style="flex:0 0 auto;padding:8px 14px;" onclick="guardarParametrosSimple()">Guardar parámetros</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="subtabCiPuc" data-subtab-grupo="contaImp" class="oculto">
+    <div class="grilla-2" style="grid-template-columns:1.6fr 1fr;align-items:start;">
+      <div class="panel" style="max-height:none;">
+        <h2>Plan Único de Cuentas</h2>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+          <input type="text" id="ciPucBuscar" placeholder="Buscar por código o nombre..." oninput="renderizarPlanCuentas()" style="flex:1;min-width:200px;">
+          <label style="display:flex;align-items:center;gap:6px;margin:0;font-weight:400;font-size:12.5px;">
+            <input type="checkbox" id="ciPucInactivas" style="width:auto;" onchange="renderizarPlanCuentas()"> Ver inactivas
+          </label>
+        </div>
+        <div id="ciPucLista"><div class="cargando">Cargando...</div></div>
+      </div>
+      <div class="panel" style="max-height:none;">
+        <h2>Nueva subcuenta o auxiliar</h2>
+        <div class="subtitulo">Subcuenta: 6 dígitos (ej. 530505 bajo 5305). Auxiliar: 8 dígitos (ej. 53050501 bajo 530505). Solo las cuentas del último nivel reciben movimientos.</div>
+        <label for="ciPucPadre">Cuenta padre (código)</label>
+        <input type="text" id="ciPucPadre" placeholder="Ej: 5305" inputmode="numeric">
+        <label for="ciPucCodigo">Código nuevo</label>
+        <input type="text" id="ciPucCodigo" placeholder="Ej: 530505" inputmode="numeric">
+        <label for="ciPucNombre">Nombre</label>
+        <input type="text" id="ciPucNombre" placeholder="Ej: Gastos bancarios">
+        <button class="btn-principal" onclick="confirmarCrearCuentaPuc()">Crear cuenta</button>
+        <div style="margin-top:14px;font-size:11.5px;color:var(--texto-suave);line-height:1.5;">
+          🔒 Las cuentas marcadas <strong>Sistema</strong> las usan los asientos automáticos (ventas, pedidos, gastos, nómina): no se les puede cambiar el código ni desactivar.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="subtabCiAjuste" data-subtab-grupo="contaImp" class="oculto">
+    <div class="panel" style="max-width:none;max-height:none;">
+      <h2>Asiento de ajuste o nota contable</h2>
+      <div class="subtitulo">Para reclasificaciones, correcciones y saldos iniciales. Debe cuadrar (débitos = créditos) y queda registrado con tu usuario; no se puede editar ni borrar después, solo revertir.</div>
+      <div class="grilla-2" style="grid-template-columns:200px 1fr;">
+        <div><label for="ciAjFecha">Fecha</label><input type="date" id="ciAjFecha"></div>
+        <div><label for="ciAjDescripcion">Descripción</label><input type="text" id="ciAjDescripcion" placeholder="Ej: Reclasificación de gasto de papelería"></div>
+      </div>
+      <label style="margin-top:14px;">Líneas del asiento</label>
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:2fr 1.2fr 1.2fr 120px 120px 36px;">
+          <span>CUENTA</span><span>CENTRO DE COSTO</span><span>TERCERO</span><span style="text-align:right;">DÉBITO</span><span style="text-align:right;">CRÉDITO</span><span></span>
+        </div>
+        <div id="ciAjLineas"></div>
+      </div>
+      <button class="btn-mini editar" style="flex:0 0 auto;padding:8px 14px;margin-top:10px;" onclick="agregarLineaAjuste()">+ Agregar línea</button>
+      <div id="ciAjTotales" style="margin-top:12px;"></div>
+      <button class="btn-principal" id="btnRegistrarAjuste" onclick="confirmarAsientoAjuste()">Registrar asiento</button>
+    </div>
+  </div>
+
+  <div id="subtabCiBitacora" data-subtab-grupo="contaImp" class="oculto">
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+      <div><label for="ciBitDesde" style="font-size:11px;">Desde</label><input type="date" id="ciBitDesde" onchange="cargarBitacoraContable()" style="padding:9px 10px;"></div>
+      <div><label for="ciBitHasta" style="font-size:11px;">Hasta</label><input type="date" id="ciBitHasta" onchange="cargarBitacoraContable()" style="padding:9px 10px;"></div>
+    </div>
+    <div class="panel" style="max-width:none;max-height:none;">
+      <h2>Bitácora de auditoría contable</h2>
+      <div class="subtitulo">Cada asiento creado, revertido o completado, y cada cambio al plan de cuentas o a los parámetros del SIMPLE. Esta bitácora no se puede modificar ni borrar.</div>
+      <div id="ciBitacoraLista"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+</div>
+
 <div id="pantallaEstadosFinancieros" class="oculto contenido">
   <div class="page-header">
     <h1>📑 Estados financieros</h1>
@@ -4818,7 +4977,7 @@
   });
 
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb'];
+    const pantallas = ['pantallaLogin', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -4846,6 +5005,7 @@
       pantallaCosteoReal: 'nav-costeo-real',
       pantallaPresupuestoEmpresa: 'nav-presupuesto-empresa',
       pantallaDashboardContable: 'nav-dashboard-contable',
+      pantallaContabilidadImpuestos: 'nav-contabilidad-impuestos',
       pantallaHonorariosTejedoras: 'nav-honorarios-tejedoras',
       pantallaNomina: 'nav-nomina',
       pantallaTalentoHumano: 'nav-talento-humano',
@@ -5220,9 +5380,10 @@
     mostrar('nav-dashboard-contable', esAdmin || esContador);
     mostrar('nav-honorarios-tejedoras', esAdmin || esContador);
     mostrar('nav-estados-financieros', esAdmin || esContador);
+    mostrar('nav-contabilidad-impuestos', esAdmin || esContador);
     mostrar('nav-cuentas-pendientes', esAdmin || esContador);
-    mostrar('nav-activos-fijos', esAdmin);
-    mostrar('nav-conciliacion', esAdmin);
+    mostrar('nav-activos-fijos', esAdmin || esContador);
+    mostrar('nav-conciliacion', esAdmin || esContador);
     mostrar('nav-transferencias-internas', esAdmin);
     mostrar('nav-dashboard', esAdmin);
     document.getElementById('btnAbrirAsistenteIA').style.display = 'flex';
@@ -9917,6 +10078,7 @@
     { clave: 'nav-dashboard-contable', etiqueta: '　　Dashboard Contable' },
     { clave: 'nav-honorarios-tejedoras', etiqueta: '　　Honorarios Tejedoras' },
     { clave: 'nav-estados-financieros', etiqueta: '　　Estados financieros y libros' },
+    { clave: 'nav-contabilidad-impuestos', etiqueta: '　　Impuestos, PUC y ajustes' },
     { clave: 'nav-activos-fijos', etiqueta: '　　Activos fijos' },
     { clave: 'nav-reportes-financieros', etiqueta: '　　Informes de Ventas' },
     { clave: 'nav-costeo-real', etiqueta: '　　Costeo Real' },
@@ -18079,6 +18241,8 @@
     if (!d.movimientos || d.movimientos.length === 0) { cont.innerHTML = '<div class="cargando">Sin movimientos contables en este período.</div>'; return; }
 
     const columnas = 'grid-template-columns:1.6fr 1fr 110px 110px;';
+    const rolesUsuario = [rolActual, ...(rolesAdicionalesActual || [])];
+    const puedeRevertir = rolesUsuario.includes('administrador') || rolesUsuario.includes('contador');
     let numeroActual = null;
     const filas = d.movimientos.map(m => {
       let encabezado = '';
@@ -18088,9 +18252,10 @@
           ? '<span class="badge-estado-pedido" style="background:var(--tinte-ambar);color:var(--ambar);margin-left:6px;">Revertido</span>'
           : (m.revierte_a ? `<span class="badge-estado-pedido" style="background:var(--tinte-azul);color:var(--azul-acero);margin-left:6px;">Reversión del #${m.revierte_a}</span>` : '');
         encabezado = `
-          <div class="tabla-lista-fila" style="grid-template-columns:1fr;cursor:default;background:var(--gris-fondo);">
+          <div class="tabla-lista-fila" style="grid-template-columns:1fr auto;cursor:default;background:var(--gris-fondo);">
             <span><strong>Comprobante #${m.numero}</strong> · ${new Date(m.fecha + 'T00:00:00').toLocaleDateString('es-CO')} · ${escaparHtml(m.asiento_descripcion || '')}${marca}
               <div style="font-size:10.5px;opacity:0.6;">Origen: ${escaparHtml(m.origen || '')} · Registrado por: ${escaparHtml(m.usuario || 'Sin usuario')}</div></span>
+            ${puedeRevertir && !m.revertido && !m.revierte_a ? `<button class="btn-mini desactivar" style="flex:0 0 auto;justify-self:end;" onclick="revertirAsientoUI('${m.asiento_id}', ${m.numero})">↩️ Revertir</button>` : ''}
           </div>`;
       }
       return encabezado + `
@@ -18203,6 +18368,447 @@
     const libro = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(libro, hoja, 'Libro Mayor');
     XLSX.writeFile(libro, `LanaRosa_LibroMayor_${cacheLibroMayor.periodo.desde}_a_${cacheLibroMayor.periodo.hasta}.xlsx`);
+  }
+
+  // ============================================================
+  // IMPUESTOS, PLAN DE CUENTAS Y AJUSTES (herramientas del contador)
+  // ============================================================
+  async function mostrarPantallaContabilidadImpuestos() {
+    mostrarPantalla('pantallaContabilidadImpuestos');
+    ocultarMensaje('mensajeContaImp');
+    mostrarSubTabGrupo('contaImp', 'subtabCiSimple', document.querySelector('[data-subtab-btn="contaImp"]'));
+    await cargarSimple();
+  }
+
+  function hoyIso() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  // ---------- Impuesto SIMPLE ----------
+  let cacheSimple = null;
+
+  async function cargarSimple() {
+    const selectAnio = document.getElementById('ciSimpleAnio');
+    if (selectAnio.options.length === 0) {
+      const anioActual = new Date().getFullYear();
+      selectAnio.innerHTML = [anioActual, anioActual - 1].map(a => `<option value="${a}">${a}</option>`).join('');
+    }
+    ['ciAntFecha', 'ciDecFecha', 'ciSaldoFecha'].forEach(id => { if (!document.getElementById(id).value) document.getElementById(id).value = hoyIso(); });
+    const anio = Number(selectAnio.value);
+    const cont = document.getElementById('ciSimpleBimestres');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+
+    let d;
+    try {
+      d = await llamarReporteContable('fn_simple_resumen', { p_anio: anio });
+    } catch (e) {
+      cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(e.message)}</div>`;
+      return;
+    }
+    cacheSimple = d;
+
+    const columnas = 'grid-template-columns:1.4fr 120px 120px 80px 120px 120px;';
+    const sinTarifa = !d.valor_uvt || !d.tarifas.length;
+    cont.innerHTML = `
+      ${sinTarifa ? '<div style="background:var(--tinte-ambar);color:var(--ambar);border-radius:var(--radius-md);padding:10px 14px;font-size:12.5px;margin-bottom:12px;">⚠️ Faltan los parámetros del año (UVT y tarifa): el anticipo estimado aparecerá cuando tu contador los registre abajo.</div>' : ''}
+      <div class="tabla-lista">
+        <div class="tabla-lista-header header-rosa" style="${columnas}">
+          <span>BIMESTRE</span><span style="text-align:right;">INGRESOS PERCIBIDOS</span><span style="text-align:right;">ACUMULADO</span><span style="text-align:right;">TARIFA</span><span style="text-align:right;">ANTICIPO ESTIMADO</span><span style="text-align:right;">ANTICIPO PAGADO</span>
+        </div>
+        ${d.bimestres.map(b => `
+          <div class="tabla-lista-fila" style="${columnas}cursor:default;">
+            <span>${b.numero} — ${escaparHtml(b.nombre)}${b.pagos.length ? `<div style="font-size:10.5px;opacity:0.6;">${b.pagos.map(p => `${new Date(p.fecha + 'T00:00:00').toLocaleDateString('es-CO')}${p.numero_recibo ? ' · recibo ' + escaparHtml(p.numero_recibo) : ''}`).join(' / ')}</div>` : ''}</span>
+            <span style="text-align:right;">${formatearMoneda(b.ingresos_percibidos)}</span>
+            <span style="text-align:right;">${formatearMoneda(b.acumulado)}</span>
+            <span style="text-align:right;">${b.tarifa_pct === null ? '—' : b.tarifa_pct + '%'}</span>
+            <span style="text-align:right;">${b.anticipo_estimado === null ? '—' : formatearMoneda(b.anticipo_estimado)}</span>
+            <span style="text-align:right;font-weight:700;">${Number(b.anticipo_pagado) > 0 ? formatearMoneda(b.anticipo_pagado) : '—'}</span>
+          </div>
+        `).join('')}
+        <div class="tabla-lista-fila" style="${columnas}font-weight:700;background:var(--gris-fondo);cursor:default;">
+          <span>TOTAL ${d.anio}</span><span style="text-align:right;">${formatearMoneda(d.total_ingresos_percibidos)}</span><span></span><span></span><span></span>
+          <span style="text-align:right;">${formatearMoneda(d.total_anticipos_pagados)}</span>
+        </div>
+      </div>
+    `;
+
+    const dec = d.declaracion;
+    document.getElementById('ciSimpleDeclaracion').innerHTML = `
+      ${dec
+        ? `<div class="resumen-cierre" style="margin-top:0;margin-bottom:6px;">
+             <div class="resumen-fila"><span>Impuesto a cargo ${d.anio}</span><strong>${formatearMoneda(dec.impuesto_a_cargo)}</strong></div>
+             <div class="resumen-fila"><span>Presentada</span><strong>${new Date(dec.fecha_presentacion + 'T00:00:00').toLocaleDateString('es-CO')}${dec.numero_formulario ? ' · ' + escaparHtml(dec.numero_formulario) : ''}</strong></div>
+           </div>`
+        : '<div class="cargando" style="padding:6px 0;">Aún no se ha registrado la declaración de este año.</div>'}
+      <div class="resumen-fila"><span>Anticipos disponibles (1355)</span><strong>${formatearMoneda(d.saldo_anticipos_1355)}</strong></div>
+      <div class="resumen-fila"><span>Impuesto por pagar (2404)</span><strong>${formatearMoneda(d.saldo_por_pagar_2404)}</strong></div>
+    `;
+
+    document.getElementById('ciUvt').value = d.valor_uvt || '';
+    const contTarifas = document.getElementById('ciTarifas');
+    contTarifas.innerHTML = '';
+    (d.tarifas.length ? d.tarifas : [{ desde_uvt: 0, hasta_uvt: '', tarifa_pct: '' }]).forEach(t => agregarFilaTarifaSimple(t));
+  }
+
+  function agregarFilaTarifaSimple(t) {
+    t = t || { desde_uvt: '', hasta_uvt: '', tarifa_pct: '' };
+    const fila = document.createElement('div');
+    fila.className = 'grid-campos-inventario fila-tarifa-simple';
+    fila.style.gridTemplateColumns = '1fr 1fr 1fr 40px';
+    fila.innerHTML = `
+      <div class="campo-mini"><label>Desde (UVT)</label><input type="number" min="0" step="1" class="tar-desde" value="${t.desde_uvt ?? ''}"></div>
+      <div class="campo-mini"><label>Hasta (UVT, vacío = en adelante)</label><input type="number" min="0" step="1" class="tar-hasta" value="${t.hasta_uvt ?? ''}"></div>
+      <div class="campo-mini"><label>Tarifa (%)</label><input type="number" min="0" max="100" step="0.01" class="tar-pct" value="${t.tarifa_pct ?? ''}"></div>
+      <button type="button" class="btn-quitar" title="Quitar rango" onclick="this.parentElement.remove()">✕</button>
+    `;
+    document.getElementById('ciTarifas').appendChild(fila);
+  }
+
+  async function guardarParametrosSimple() {
+    ocultarMensaje('mensajeContaImp');
+    const anio = Number(document.getElementById('ciSimpleAnio').value);
+    const uvt = Number(document.getElementById('ciUvt').value);
+    if (!uvt || uvt <= 0) { mostrarMensaje('mensajeContaImp', 'Escribe el valor de la UVT del año.', 'error'); return; }
+    const tarifas = [...document.querySelectorAll('.fila-tarifa-simple')]
+      .map(f => ({ desde_uvt: f.querySelector('.tar-desde').value, hasta_uvt: f.querySelector('.tar-hasta').value, tarifa_pct: f.querySelector('.tar-pct').value }))
+      .filter(t => t.desde_uvt !== '' && t.tarifa_pct !== '');
+    try {
+      await llamarReporteContable('fn_simple_guardar_parametros', { p_anio: anio, p_valor_uvt: uvt, p_tarifas: tarifas });
+    } catch (e) {
+      mostrarMensaje('mensajeContaImp', 'No se pudo guardar: ' + e.message, 'error');
+      return;
+    }
+    mostrarMensaje('mensajeContaImp', '✅ Parámetros del SIMPLE guardados.', 'exito');
+    await cargarSimple();
+  }
+
+  async function confirmarAnticipoSimple() {
+    ocultarMensaje('mensajeContaImp');
+    const monto = Number(document.getElementById('ciAntMonto').value);
+    const fecha = document.getElementById('ciAntFecha').value;
+    if (!monto || monto <= 0) { mostrarMensaje('mensajeContaImp', 'Escribe el valor pagado.', 'error'); return; }
+    if (!fecha) { mostrarMensaje('mensajeContaImp', 'Escribe la fecha de pago.', 'error'); return; }
+    try {
+      await llamarReporteContable('fn_simple_registrar_anticipo', {
+        p_anio: Number(document.getElementById('ciSimpleAnio').value),
+        p_bimestre: Number(document.getElementById('ciAntBimestre').value),
+        p_monto: monto, p_fecha: fecha,
+        p_metodo_pago: document.getElementById('ciAntMetodo').value,
+        p_numero_recibo: document.getElementById('ciAntRecibo').value.trim(),
+      });
+    } catch (e) {
+      mostrarMensaje('mensajeContaImp', 'No se pudo registrar: ' + e.message, 'error');
+      return;
+    }
+    document.getElementById('ciAntMonto').value = '';
+    document.getElementById('ciAntRecibo').value = '';
+    mostrarMensaje('mensajeContaImp', '✅ Anticipo registrado y contabilizado (1355 contra caja/bancos).', 'exito');
+    await cargarSimple();
+  }
+
+  async function confirmarDeclaracionSimple() {
+    ocultarMensaje('mensajeContaImp');
+    const impuesto = document.getElementById('ciDecImpuesto').value;
+    const fecha = document.getElementById('ciDecFecha').value;
+    if (impuesto === '' || Number(impuesto) < 0) { mostrarMensaje('mensajeContaImp', 'Escribe el impuesto a cargo (puede ser 0).', 'error'); return; }
+    if (!fecha) { mostrarMensaje('mensajeContaImp', 'Escribe la fecha de presentación.', 'error'); return; }
+    let r;
+    try {
+      r = await llamarReporteContable('fn_simple_registrar_declaracion', {
+        p_anio: Number(document.getElementById('ciSimpleAnio').value),
+        p_impuesto_a_cargo: Number(impuesto), p_fecha_presentacion: fecha,
+        p_numero_formulario: document.getElementById('ciDecFormulario').value.trim(),
+      });
+    } catch (e) {
+      mostrarMensaje('mensajeContaImp', 'No se pudo registrar: ' + e.message, 'error');
+      return;
+    }
+    const saldo = Number(r.saldo_a_pagar) > 0
+      ? `Saldo a pagar: ${formatearMoneda(r.saldo_a_pagar)}.`
+      : `Saldo a favor: ${formatearMoneda(r.saldo_a_favor)}.`;
+    mostrarMensaje('mensajeContaImp', `✅ Declaración registrada. Se aplicaron ${formatearMoneda(r.anticipos_aplicados)} de anticipos. ${saldo}`, 'exito');
+    if (Number(r.saldo_a_pagar) > 0) document.getElementById('ciSaldoMonto').value = Math.round(r.saldo_a_pagar);
+    await cargarSimple();
+  }
+
+  async function confirmarPagoSaldoSimple() {
+    ocultarMensaje('mensajeContaImp');
+    const monto = Number(document.getElementById('ciSaldoMonto').value);
+    const fecha = document.getElementById('ciSaldoFecha').value;
+    if (!monto || monto <= 0) { mostrarMensaje('mensajeContaImp', 'Escribe el valor pagado.', 'error'); return; }
+    try {
+      await llamarReporteContable('fn_simple_pagar_saldo', {
+        p_anio: Number(document.getElementById('ciSimpleAnio').value),
+        p_monto: monto, p_fecha: fecha, p_metodo_pago: document.getElementById('ciSaldoMetodo').value,
+      });
+    } catch (e) {
+      mostrarMensaje('mensajeContaImp', 'No se pudo registrar: ' + e.message, 'error');
+      return;
+    }
+    document.getElementById('ciSaldoMonto').value = '';
+    mostrarMensaje('mensajeContaImp', '✅ Pago del saldo registrado (2404 contra caja/bancos).', 'exito');
+    await cargarSimple();
+  }
+
+  // ---------- Plan de cuentas ----------
+  let cachePlanCuentas = [];
+
+  async function cargarPlanCuentas() {
+    const cont = document.getElementById('ciPucLista');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    const { data, error } = await supabaseClient
+      .from('plan_cuentas_puc')
+      .select('codigo, nombre, nivel, naturaleza, acepta_movimientos, activa, usada_por_sistema, nota_validacion')
+      .order('codigo', { ascending: true });
+    if (error) { cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(error.message)}</div>`; return; }
+    cachePlanCuentas = data || [];
+    renderizarPlanCuentas();
+  }
+
+  function renderizarPlanCuentas() {
+    const cont = document.getElementById('ciPucLista');
+    const texto = document.getElementById('ciPucBuscar').value.trim().toLowerCase();
+    const verInactivas = document.getElementById('ciPucInactivas').checked;
+    const cuentas = cachePlanCuentas.filter(c =>
+      (verInactivas || c.activa) &&
+      (!texto || c.codigo.startsWith(texto) || c.nombre.toLowerCase().includes(texto)));
+    if (!cuentas.length) { cont.innerHTML = '<div class="cargando">Sin cuentas que coincidan.</div>'; return; }
+
+    const etiquetaNivel = ['', 'Clase', 'Grupo', 'Cuenta', 'Subcuenta', 'Auxiliar'];
+    const badge = (texto, fondo, color) => `<span class="badge-estado-pedido" style="background:${fondo};color:${color};margin-left:4px;">${texto}</span>`;
+    cont.innerHTML = `
+      <div class="tabla-lista">
+        ${cuentas.map(c => `
+          <div class="tabla-lista-fila" style="grid-template-columns:1fr auto;cursor:default;${c.nivel === 1 ? 'background:var(--tinte-rosa);font-weight:700;' : c.nivel === 2 ? 'font-weight:600;' : ''}${c.activa ? '' : 'opacity:0.5;'}">
+            <span style="padding-left:${(c.nivel - 1) * 16}px;">
+              ${escaparHtml(c.codigo)} — ${escaparHtml(c.nombre)}
+              <div style="font-weight:400;margin-top:2px;">
+                ${badge(etiquetaNivel[c.nivel] || '', 'var(--gris-fondo)', 'var(--texto-suave)')}
+                ${badge(c.naturaleza === 'debito' ? 'Débito' : 'Crédito', 'var(--tinte-azul)', 'var(--azul-acero)')}
+                ${c.acepta_movimientos ? badge('Recibe movimientos', 'var(--tinte-verde)', 'var(--verde-exito)') : ''}
+                ${c.usada_por_sistema ? badge('🔒 Sistema', 'var(--tinte-rosa)', 'var(--rosa-principal)') : ''}
+                ${c.activa ? '' : badge('Inactiva', 'var(--tinte-rojo)', 'var(--rojo-error)')}
+                ${c.nota_validacion ? `<div style="font-size:10.5px;color:var(--ambar);margin-top:3px;">⚠️ ${escaparHtml(c.nota_validacion)}</div>` : ''}
+              </div>
+            </span>
+            <span style="display:flex;gap:6px;">
+              ${c.nivel >= 3 ? `<button class="btn-mini editar" style="flex:0 0 auto;" onclick="editarNombreCuentaPuc('${c.codigo}')">Renombrar</button>` : ''}
+              ${c.nivel >= 3 && !c.usada_por_sistema ? `<button class="btn-mini ${c.activa ? 'desactivar' : 'guardar'}" style="flex:0 0 auto;" onclick="alternarCuentaPucActiva('${c.codigo}')">${c.activa ? 'Desactivar' : 'Activar'}</button>` : ''}
+            </span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  async function confirmarCrearCuentaPuc() {
+    ocultarMensaje('mensajeContaImp');
+    const padre = document.getElementById('ciPucPadre').value.trim();
+    const codigo = document.getElementById('ciPucCodigo').value.trim();
+    const nombre = document.getElementById('ciPucNombre').value.trim();
+    if (!padre || !codigo || !nombre) { mostrarMensaje('mensajeContaImp', 'Completa cuenta padre, código y nombre.', 'error'); return; }
+    try {
+      await llamarReporteContable('fn_crear_cuenta_puc', { p_codigo: codigo, p_nombre: nombre, p_padre_codigo: padre });
+    } catch (e) {
+      mostrarMensaje('mensajeContaImp', 'No se pudo crear: ' + e.message, 'error');
+      return;
+    }
+    document.getElementById('ciPucCodigo').value = '';
+    document.getElementById('ciPucNombre').value = '';
+    mostrarMensaje('mensajeContaImp', `✅ Cuenta ${codigo} creada.`, 'exito');
+    await cargarPlanCuentas();
+  }
+
+  async function actualizarCuentaPuc(codigo, nombre, activa) {
+    ocultarMensaje('mensajeContaImp');
+    try {
+      await llamarReporteContable('fn_actualizar_cuenta_puc', { p_codigo: codigo, p_nombre: nombre, p_activa: activa });
+    } catch (e) {
+      mostrarMensaje('mensajeContaImp', 'No se pudo actualizar: ' + e.message, 'error');
+      return;
+    }
+    mostrarMensaje('mensajeContaImp', `✅ Cuenta ${codigo} actualizada.`, 'exito');
+    await cargarPlanCuentas();
+  }
+
+  async function editarNombreCuentaPuc(codigo) {
+    const cuenta = cachePlanCuentas.find(c => c.codigo === codigo);
+    const nombre = prompt(`Nuevo nombre para la cuenta ${codigo}:`, cuenta.nombre);
+    if (nombre === null || !nombre.trim()) return;
+    await actualizarCuentaPuc(codigo, nombre.trim(), cuenta.activa);
+  }
+
+  async function alternarCuentaPucActiva(codigo) {
+    const cuenta = cachePlanCuentas.find(c => c.codigo === codigo);
+    await actualizarCuentaPuc(codigo, cuenta.nombre, !cuenta.activa);
+  }
+
+  // ---------- Asiento de ajuste ----------
+  let cuentasMovimientoAjuste = [];
+  let centrosCostoAjuste = [];
+  let tercerosAjuste = [];
+
+  async function prepararAsientoAjuste() {
+    if (!document.getElementById('ciAjFecha').value) document.getElementById('ciAjFecha').value = hoyIso();
+    if (!cuentasMovimientoAjuste.length) {
+      const [cuentas, centros, terceros] = await Promise.all([
+        supabaseClient.from('plan_cuentas_puc').select('codigo, nombre').eq('acepta_movimientos', true).eq('activa', true).order('codigo', { ascending: true }),
+        supabaseClient.from('centros_costo').select('id, codigo, nombre').order('codigo', { ascending: true }),
+        supabaseClient.from('terceros').select('id, nombre_completo').order('nombre_completo', { ascending: true }),
+      ]);
+      cuentasMovimientoAjuste = cuentas.data || [];
+      centrosCostoAjuste = centros.data || [];
+      tercerosAjuste = terceros.data || [];
+    }
+    if (!document.querySelectorAll('.fila-ajuste').length) {
+      agregarLineaAjuste();
+      agregarLineaAjuste();
+    }
+    recalcularTotalesAjuste();
+  }
+
+  function agregarLineaAjuste() {
+    const fila = document.createElement('div');
+    fila.className = 'tabla-lista-fila fila-ajuste';
+    fila.style.cssText = 'grid-template-columns:2fr 1.2fr 1.2fr 120px 120px 36px;cursor:default;';
+    fila.innerHTML = `
+      <select class="aj-cuenta"><option value="">Cuenta...</option>${cuentasMovimientoAjuste.map(c => `<option value="${c.codigo}">${escaparHtml(c.codigo)} — ${escaparHtml(c.nombre)}</option>`).join('')}</select>
+      <select class="aj-centro">${centrosCostoAjuste.map(c => `<option value="${c.id}">${escaparHtml(c.codigo)} ${escaparHtml(c.nombre)}</option>`).join('')}</select>
+      <select class="aj-tercero"><option value="">Sin tercero</option>${tercerosAjuste.map(t => `<option value="${t.id}">${escaparHtml(t.nombre_completo)}</option>`).join('')}</select>
+      <input type="number" class="aj-debito" min="0" step="1" placeholder="0" oninput="recalcularTotalesAjuste()" style="text-align:right;">
+      <input type="number" class="aj-credito" min="0" step="1" placeholder="0" oninput="recalcularTotalesAjuste()" style="text-align:right;">
+      <button type="button" class="btn-quitar" title="Quitar línea" onclick="this.parentElement.remove(); recalcularTotalesAjuste();">✕</button>
+    `;
+    document.getElementById('ciAjLineas').appendChild(fila);
+  }
+
+  function lineasAsientoAjuste() {
+    return [...document.querySelectorAll('.fila-ajuste')].map(f => ({
+      cuenta_codigo: f.querySelector('.aj-cuenta').value,
+      centro_costo_id: f.querySelector('.aj-centro').value,
+      tercero_id: f.querySelector('.aj-tercero').value,
+      debito: Number(f.querySelector('.aj-debito').value || 0),
+      credito: Number(f.querySelector('.aj-credito').value || 0),
+    }));
+  }
+
+  function recalcularTotalesAjuste() {
+    const lineas = lineasAsientoAjuste();
+    const deb = lineas.reduce((a, l) => a + l.debito, 0);
+    const cre = lineas.reduce((a, l) => a + l.credito, 0);
+    const cuadra = deb > 0 && deb === cre;
+    document.getElementById('ciAjTotales').innerHTML = `
+      <div class="resumen-fila"><span>Total débitos</span><strong>${formatearMoneda(deb)}</strong></div>
+      <div class="resumen-fila"><span>Total créditos</span><strong>${formatearMoneda(cre)}</strong></div>
+      <div class="resumen-fila total"><span>Diferencia</span><strong style="color:${cuadra ? 'var(--verde-exito)' : 'var(--rojo-error)'};">${cuadra ? '✅ Cuadra' : formatearMoneda(deb - cre)}</strong></div>
+    `;
+  }
+
+  async function confirmarAsientoAjuste() {
+    ocultarMensaje('mensajeContaImp');
+    const fecha = document.getElementById('ciAjFecha').value;
+    const descripcion = document.getElementById('ciAjDescripcion').value.trim();
+    const lineas = lineasAsientoAjuste().filter(l => l.debito > 0 || l.credito > 0);
+    if (!fecha || !descripcion) { mostrarMensaje('mensajeContaImp', 'Escribe la fecha y la descripción del asiento.', 'error'); return; }
+    if (lineas.length < 2) { mostrarMensaje('mensajeContaImp', 'El asiento necesita al menos dos líneas con valor.', 'error'); return; }
+    if (lineas.some(l => !l.cuenta_codigo)) { mostrarMensaje('mensajeContaImp', 'Elige la cuenta de cada línea.', 'error'); return; }
+    if (lineas.some(l => l.debito > 0 && l.credito > 0)) { mostrarMensaje('mensajeContaImp', 'Cada línea va al débito o al crédito, no a ambos.', 'error'); return; }
+    const deb = lineas.reduce((a, l) => a + l.debito, 0);
+    const cre = lineas.reduce((a, l) => a + l.credito, 0);
+    if (deb !== cre) { mostrarMensaje('mensajeContaImp', 'El asiento no cuadra: débitos y créditos deben ser iguales.', 'error'); return; }
+
+    const btn = document.getElementById('btnRegistrarAjuste');
+    btn.disabled = true;
+    try {
+      await llamarReporteContable('fn_registrar_asiento_ajuste', { p_fecha: fecha, p_descripcion: descripcion, p_lineas: lineas });
+    } catch (e) {
+      mostrarMensaje('mensajeContaImp', 'No se pudo registrar: ' + e.message, 'error');
+      return;
+    } finally {
+      btn.disabled = false;
+    }
+    document.getElementById('ciAjDescripcion').value = '';
+    document.getElementById('ciAjLineas').innerHTML = '';
+    agregarLineaAjuste();
+    agregarLineaAjuste();
+    recalcularTotalesAjuste();
+    mostrarMensaje('mensajeContaImp', '✅ Asiento de ajuste registrado. Ya aparece en el Libro Diario.', 'exito');
+  }
+
+  // ---------- Bitácora ----------
+  async function cargarBitacoraContable() {
+    if (!document.getElementById('ciBitDesde').value) {
+      document.getElementById('ciBitDesde').value = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+      document.getElementById('ciBitHasta').value = hoyIso();
+    }
+    const cont = document.getElementById('ciBitacoraLista');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    let eventos;
+    try {
+      eventos = await llamarReporteContable('fn_bitacora_consulta', {
+        p_desde: document.getElementById('ciBitDesde').value, p_hasta: document.getElementById('ciBitHasta').value,
+      });
+    } catch (e) {
+      cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(e.message)}</div>`;
+      return;
+    }
+    if (!eventos.length) { cont.innerHTML = '<div class="cargando">Sin eventos en este rango.</div>'; return; }
+
+    const acciones = {
+      crear_asiento: '🆕 Asiento creado',
+      revertir_asiento: '↩️ Asiento revertido',
+      borrado_convertido_en_reversion: '🛡️ Intento de borrado → reversión',
+      completar_asiento_descuadrado: '🩹 Asiento descuadrado completado',
+      linea_agregada_a_asiento_descuadrado: '🩹 Línea faltante agregada',
+      insert_cuenta: '📒 Cuenta creada',
+      update_cuenta: '📒 Cuenta modificada',
+      delete_cuenta: '📒 Cuenta eliminada',
+      parametros_simple: '🧾 Parámetros SIMPLE',
+      reestructuracion_puc_fase1: '📒 Reestructuración del PUC',
+    };
+    const detalle = (ev) => {
+      const d = ev.datos || {};
+      if (ev.accion === 'crear_asiento') return `#${d.numero} · ${escaparHtml(d.descripcion || '')}`;
+      if (ev.accion === 'revertir_asiento' || ev.accion === 'completar_asiento_descuadrado' || ev.accion === 'borrado_convertido_en_reversion') return `Asiento #${d.numero}`;
+      if (ev.accion.endsWith('_cuenta')) {
+        const c = d.despues || d.antes || {};
+        return `${escaparHtml(c.codigo || '')} — ${escaparHtml(c.nombre || '')}`;
+      }
+      if (ev.accion === 'linea_agregada_a_asiento_descuadrado') return escaparHtml(d.motivo || '');
+      return '';
+    };
+    cont.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:150px 1fr 2fr 140px;">
+          <span>FECHA Y HORA</span><span>ACCIÓN</span><span>DETALLE</span><span>USUARIO</span>
+        </div>
+        ${eventos.map(ev => `
+          <div class="tabla-lista-fila" style="grid-template-columns:150px 1fr 2fr 140px;cursor:default;">
+            <span style="font-size:11.5px;">${new Date(ev.ocurrido_en).toLocaleString('es-CO')}</span>
+            <span>${acciones[ev.accion] || escaparHtml(ev.accion)}</span>
+            <span style="font-size:12px;">${detalle(ev)}</span>
+            <span style="font-size:12px;">${escaparHtml(ev.usuario)}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  // ---------- Reversión desde el Libro Diario ----------
+  async function revertirAsientoUI(asientoId, numero) {
+    const motivo = prompt(`Motivo de la reversión del comprobante #${numero} (obligatorio):`);
+    if (motivo === null) return;
+    if (!motivo.trim()) { alert('El motivo es obligatorio.'); return; }
+    const fecha = prompt('Fecha de la reversión (AAAA-MM-DD). Déjala vacía para usar la fecha original del asiento; si ese mes ya está cerrado, usa una fecha del período abierto:', '');
+    if (fecha === null) return;
+    try {
+      await llamarReporteContable('fn_revertir_asiento', { p_asiento_id: asientoId, p_motivo: motivo.trim(), p_fecha: fecha.trim() || null });
+    } catch (e) {
+      alert('No se pudo revertir: ' + e.message);
+      return;
+    }
+    mostrarMensaje('mensajeEstadosFinancieros', `✅ Comprobante #${numero} revertido. La reversión quedó registrada en el Libro Diario.`, 'exito');
+    await cargarLibroDiario();
   }
 
   // ============================================================
