@@ -1692,12 +1692,6 @@
   </div>
 
   <div class="panel" style="max-height:none;margin-top:20px;">
-    <h2>🧵 Pedidos de Tienda/WhatsApp por elaborar</h2>
-    <div class="subtitulo">Estos llegan automáticamente cuando un pedido (por WhatsApp/redes o del CRM) no tiene el producto disponible en stock.</div>
-    <div id="listaSolicitudesElaboracion"><div class="cargando">Cargando...</div></div>
-  </div>
-
-  <div class="panel" style="max-height:none;margin-top:20px;">
     <h2>Historial de mis consumos</h2>
     <div class="subtitulo">Todos los pedidos tejidos hasta ahora, con los insumos que se consumieron en cada uno.</div>
     <input type="text" id="buscarHistorialConsumosTaller" placeholder="🔍 N° de pedido o insumo..." oninput="filtrarHistorialConsumosTaller()" style="margin-bottom:10px;">
@@ -1716,12 +1710,18 @@
   <details class="panel no-exportar" style="max-width:none;max-height:none;margin-bottom:16px;font-size:13px;line-height:1.6;" open>
     <summary style="cursor:pointer;font-weight:700;font-size:14.5px;">❓ Cómo registrar lo que tejo (instructivo)</summary>
     <ol style="padding-left:18px;margin:10px 0 0 0;">
-      <li><strong>Abrir la orden:</strong> elige qué vas a tejer (o "Encargo personalizado" si no está en la lista), cuántas unidades y, si es para un pedido, cuál — y pulsa "Abrir orden".</li>
+      <li><strong>Abrir la orden:</strong> si el pedido aparece en "Pedidos de Tienda/WhatsApp por elaborar", pulsa "🧶 Empezar" y la orden se abre sola. Si no, elige qué vas a tejer (o "Encargo personalizado" si no está en la lista), cuántas unidades y, si es para un pedido, cuál — y pulsa "Abrir orden".</li>
       <li><strong>Entregar el material:</strong> en la orden que se abrió, pulsa "➕ Entregar material", elige qué usas (lana, ojos...) y cuánto, y pulsa "Entregar". Repite este paso cada vez que necesites más material para la misma orden.</li>
       <li><strong>Terminar la orden:</strong> cuando acabes de tejer, pulsa "✅ Terminar", escribe cuántas unidades quedaron listas y cuánto material sobró (0 si se usó todo), y pulsa "Terminar".</li>
     </ol>
     <div style="margin-top:8px;opacity:0.75;">Así el sistema calcula solo el costo de materiales de cada pieza — no hay que escribir pesos ni hacer cuentas. Si algo no sale bien o no encuentras el producto en la lista, avísale a la administradora.</div>
   </details>
+
+  <div class="panel no-exportar" style="max-width:none;max-height:none;margin-bottom:16px;">
+    <h2>🧵 Pedidos de Tienda/WhatsApp por elaborar</h2>
+    <div class="subtitulo">Llegan solos cuando un pedido (por WhatsApp/redes o del CRM) no tiene el producto disponible en stock. Al pulsar "🧶 Empezar" se abre su orden de producción para entregarle el material; al terminar esa orden, el pedido queda como terminado.</div>
+    <div id="listaSolicitudesElaboracion"><div class="cargando">Cargando...</div></div>
+  </div>
 
   <div class="panel no-exportar" style="max-width:none;max-height:none;margin-bottom:20px;">
     <h2>+ Abrir orden de producción</h2>
@@ -5459,9 +5459,9 @@
     actualizarSidebar();
     cargarLogoEmpresa();
 
-    // El rol Taller no maneja caja ni turnos: va directo al consumo de material por pedido.
+    // El rol Taller no maneja caja ni turnos: va directo a sus órdenes de producción.
     if (rolActual === 'taller') {
-      await mostrarPantallaPedidosCrm();
+      await mostrarPantallaOrdenesProduccion();
       return;
     }
 
@@ -5636,7 +5636,7 @@
     mostrar('nav-reportes', esAdmin);
     mostrar('nav-pedidos-canal', esAdmin || esCajero);
     mostrar('nav-solicitudes-tienda', false); // reemplazada por Trasladar entre Tienda y Taller
-    mostrar('nav-consumotaller', esAdmin || esTaller);
+    mostrar('nav-consumotaller', false); // reemplazada por Órdenes de producción
     mostrar('nav-ordenes-produccion', esAdmin || esTaller);
     mostrar('nav-kardex-etapas', esAdmin || esContador || esTaller);
     mostrar('nav-facturacion-electronica', esAdmin || esCajero);
@@ -9373,7 +9373,7 @@
     ocultarMensaje('mensajeOrdenesProd');
     await cargarIdsDepartamentosClave();
     await Promise.all([cargarOpcionesNuevaOrden(), cargarMaterialesParaOrdenes()]);
-    await cargarOrdenesProduccion();
+    await Promise.all([cargarOrdenesProduccion(), cargarSolicitudesElaboracion()]);
   }
 
   async function cargarOpcionesNuevaOrden() {
@@ -9632,9 +9632,11 @@
       }
       if (valor > 0) sobrantes.push({ inventario_item_id: input.dataset.item, cantidad: valor });
     }
-    await ejecutarAccionOrden(ordenId, 'fn_op_terminar', {
+    const orden = ordenesProduccionCache.find(o => o.id === ordenId);
+    const ok = await ejecutarAccionOrden(ordenId, 'fn_op_terminar', {
       p_orden_id: ordenId, p_cantidad_terminada: cantidad, p_sobrantes: sobrantes,
     }, '✅ Orden terminada: las unidades pasaron a productos terminados.');
+    if (ok) await terminarSolicitudDeOrden(orden);
   }
 
   async function confirmarAnularOrden(ordenId) {
@@ -10755,10 +10757,10 @@
   }
 
   // Navegación de "volver" consciente del rol: Taller no maneja turnos de caja,
-  // así que su botón de "volver" debe llevarlo a su pantalla de consumo, no a abrir caja.
+  // así que su botón de "volver" debe llevarlo a sus órdenes de producción, no a abrir caja.
   function irAInicioSegunRol() {
     if (rolActual === 'taller') {
-      mostrarPantallaPedidosCrm();
+      mostrarPantallaOrdenesProduccion();
     } else {
       irATurnoActivo();
     }
@@ -11245,7 +11247,6 @@
     { clave: 'nav-transferir-stock', etiqueta: '　　Trasladar Tienda ↔ Taller' },
     { clave: 'nav-transferir-stock-taller', etiqueta: '　　Trasladar Tienda ↔ Taller (menú del Taller)' },
     { clave: 'nav-solicitudes-tienda', etiqueta: '　　Solicitud de insumos del Taller' },
-    { clave: 'nav-consumotaller', etiqueta: '　　Consumo de material (Taller)' },
     { clave: 'nav-ordenes-produccion', etiqueta: '　　Órdenes de producción' },
     { clave: 'nav-kardex-etapas', etiqueta: '　　Kardex por etapas' },
     { clave: 'nav-facturacion-electronica', etiqueta: '　　Facturación electrónica DIAN' },
@@ -15393,7 +15394,6 @@
     await cargarPedidosCrmActivos();
     await cargarConsumosEnCurso();
     await cargarHistorialConsumosTaller();
-    await cargarSolicitudesElaboracion();
   }
 
   const etiquetasEstadoElaboracion = { pendiente: '⏳ Pendiente', en_proceso: '🧶 En proceso', terminado: '✅ Terminado' };
@@ -15408,6 +15408,7 @@
 
     const { solicitudes } = await resp.json();
     const pendientes = (solicitudes || []).filter(s => s.estado !== 'terminado');
+    solicitudesElaboracionCache = pendientes;
 
     if (pendientes.length === 0) {
       contenedor.innerHTML = '<div class="cargando">No hay pedidos pendientes de elaborar en este momento.</div>';
@@ -15433,7 +15434,7 @@
               <span style="opacity:0.75;font-size:11.5px;">${etiquetasCanalPedido[pedido.canal] || pedido.canal || ''} — ${s.cantidad || 1}x ${escaparHtml(s.descripcion || '')}</span>
               <span><span class="badge-estado-pedido" style="background:${colorElab.bg};color:${colorElab.color};">${etiquetasEstadoElaboracion[s.estado]}</span></span>
               <span>
-                ${s.estado === 'pendiente' ? `<button class="btn-mini editar" onclick="actualizarEstadoElaboracion('${s.id}', 'en_proceso')">🧶 Empezar</button>` : ''}
+                ${s.estado === 'pendiente' ? `<button class="btn-mini editar" onclick="empezarElaboracion('${s.id}', this)">🧶 Empezar</button>` : ''}
                 ${s.estado === 'en_proceso' ? `<button class="btn-mini guardar" onclick="actualizarEstadoElaboracion('${s.id}', 'terminado')">✅ Terminado</button>` : ''}
               </span>
             </div>
@@ -15442,6 +15443,45 @@
       </div>
       <div class="mensaje" id="mensajeElaboracion"></div>
     `;
+  }
+
+  let solicitudesElaboracionCache = [];
+
+  const pedidoCanalDeSolicitud = (s) => s.pedido_canal_id || (s.pedidos_canal_venta || {}).id || null;
+
+  async function empezarElaboracion(solicitudId, boton) {
+    const s = solicitudesElaboracionCache.find(x => x.id === solicitudId);
+    if (!s) return;
+    ocultarMensaje('mensajeElaboracion');
+    if (boton) boton.disabled = true;
+    const pedido = s.pedidos_canal_venta || {};
+    const { data: ordenId, error } = await supabaseClient.rpc('fn_op_abrir', {
+      p_producto_item_id: null,
+      p_descripcion: s.descripcion || ('Pedido ' + (pedido.consecutivo || '')),
+      p_cantidad: Number(s.cantidad) || 1,
+      p_pedido_canal_id: pedidoCanalDeSolicitud(s),
+      p_pedido_crm_id: null,
+      p_numero_pedido_crm: pedido.consecutivo || null,
+      p_observaciones: null,
+    });
+    if (error) {
+      if (boton) boton.disabled = false;
+      mostrarMensaje('mensajeElaboracion', 'No se pudo abrir la orden: ' + error.message, 'error');
+      return;
+    }
+    await actualizarEstadoElaboracion(solicitudId, 'en_proceso');
+    mostrarMensaje('mensajeOrdenesProd', '✅ Orden abierta para el pedido ' + (pedido.consecutivo || '') + '. Ahora entrégale el material que se va a usar.', 'exito');
+    ordenAccionAbierta = { id: ordenId, accion: 'entregar' };
+    filtrarOrdenesProduccion('en_proceso', document.querySelector('[data-filtro-op="en_proceso"]'));
+  }
+
+  // Al terminar una orden que salió de un pedido por elaborar, el pedido también queda terminado.
+  async function terminarSolicitudDeOrden(orden) {
+    if (!orden) return;
+    const s = solicitudesElaboracionCache.find(x => x.estado !== 'terminado' && (
+      (orden.pedido_canal_id && pedidoCanalDeSolicitud(x) === orden.pedido_canal_id) ||
+      (orden.pedido && (x.pedidos_canal_venta || {}).consecutivo === orden.pedido)));
+    if (s) await actualizarEstadoElaboracion(s.id, 'terminado');
   }
 
   async function actualizarEstadoElaboracion(solicitudId, estado) {
