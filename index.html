@@ -4256,6 +4256,7 @@
 
   <div class="filtro-tipo" style="margin-bottom:20px;">
     <button class="chip-filtro activo" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabEstadoResultados', this); cargarEstadoResultados();">📈 Estado de Resultados</button>
+    <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabEstadoCostos', this); cargarEstadoCostos();">📦 Estado de Costos</button>
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabBalanceGeneral', this); cargarBalanceGeneral();">⚖️ Balance General</button>
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabFlujoCaja', this); cargarFlujoCaja();">💵 Flujo de Caja</button>
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabLibroDiario', this); cargarLibroDiario();">📖 Libro Diario</button>
@@ -4276,6 +4277,16 @@
       <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirEstadoFinanciero('contenidoEstadoResultados', 'Estado de Resultados')">🖨️ Imprimir / PDF</button>
     </div>
     <div id="contenidoEstadoResultados"><div class="cargando">Cargando...</div></div>
+  </div>
+
+  <div id="subtabEstadoCostos" data-subtab-grupo="estadosFin" class="oculto">
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+      <div><label for="ecFechaDesde" style="font-size:11px;">Desde</label><input type="date" id="ecFechaDesde" onchange="cargarEstadoCostos()" style="padding:9px 10px;"></div>
+      <div><label for="ecFechaHasta" style="font-size:11px;">Hasta</label><input type="date" id="ecFechaHasta" onchange="cargarEstadoCostos()" style="padding:9px 10px;"></div>
+      <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarEstadoCostosExcel()">📥 Excel</button>
+      <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirEstadoFinanciero('contenidoEstadoCostos', 'Estado de Costos de Producción y Ventas')">🖨️ Imprimir / PDF</button>
+    </div>
+    <div id="contenidoEstadoCostos"><div class="cargando">Cargando...</div></div>
   </div>
 
   <div id="subtabBalanceGeneral" data-subtab-grupo="estadosFin" class="oculto">
@@ -20275,6 +20286,8 @@
     document.getElementById('bgFechaCorte').value = hoy;
     document.getElementById('fcFechaDesde').value = primerDiaMes;
     document.getElementById('fcFechaHasta').value = hoy;
+    document.getElementById('ecFechaDesde').value = new Date(new Date().getFullYear(), 0, 1).toISOString().slice(0, 10);
+    document.getElementById('ecFechaHasta').value = hoy;
     mostrarSubTabGrupo('estadosFin', 'subtabEstadoResultados', document.querySelector('[data-subtab-btn="estadosFin"]'));
     await cargarEstadoResultados();
   }
@@ -21722,7 +21735,7 @@
     ['consolidadoFechaDesde', 'consolidadoFechaHasta'], ['rkFechaDesde', 'rkFechaHasta'],
     ['repTurnoFechaDesde', 'repTurnoFechaHasta'], ['cxcFiltroFechaDesde', 'cxcFiltroFechaHasta'],
     ['keDesde', 'keHasta', 'cargarKardexEtapas'], ['feEmDesde', 'feEmHasta'], ['feDesde', 'feHasta'],
-    ['concFiltroDesde', 'concFiltroHasta'],
+    ['concFiltroDesde', 'concFiltroHasta'], ['ecFechaDesde', 'ecFechaHasta'],
   ];
   const CORTES_CON_SELECTOR_PERIODO = ['bgFechaCorte'];
 
@@ -22118,6 +22131,94 @@
     const libro = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(libro, hoja, 'Estado de Resultados');
     XLSX.writeFile(libro, `LanaRosa_EstadoResultados_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  }
+
+  let cacheEstadoCostos = null;
+
+  async function cargarEstadoCostos() {
+    const cont = document.getElementById('contenidoEstadoCostos');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    const desde = document.getElementById('ecFechaDesde').value;
+    const hasta = document.getElementById('ecFechaHasta').value;
+    let d;
+    try {
+      d = await llamarReporteContable('fn_estado_costos_produccion', { p_desde: desde, p_hasta: hasta });
+    } catch (e) {
+      cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(e.message)}</div>`;
+      return;
+    }
+    cacheEstadoCostos = d;
+
+    const nombreMes = (ym) => { const [a, m] = ym.split('-').map(Number); return MESES_ES[m - 1] + ' ' + a; };
+    const aviso = d.meses_sin_cerrar.length ? `
+      <div style="background:var(--tinte-ambar);color:var(--ambar);border-radius:var(--radius-md);padding:10px 14px;font-size:12.5px;margin-bottom:14px;">
+        ⚠️ <strong>${d.meses_sin_cerrar.length} mes(es) del período sin el cierre de costos registrado:</strong> ${d.meses_sin_cerrar.map(nombreMes).join(', ')}.
+        Mientras no se registre el cierre de esos meses (Contabilidad → Impuestos, PUC y ajustes → 🏭 Cierre de costos), este informe no va a mostrar su materia prima, mano de obra ni CIF — van a salir en $0, aunque sí hubo producción.
+      </div>` : '';
+
+    cont.innerHTML = `
+      <div class="panel" style="max-width:620px;max-height:none;">
+        <div class="subtitulo" style="margin-bottom:4px;">Solo la fabricación de amigurumis en el Taller (no incluye la mercería de reventa). Calculado a partir de los cierres de costos mensuales registrados en el Libro Diario.</div>
+        ${aviso}
+        ${seccionEstadoFin('Materia prima consumida (7120)', [{ nombre: '7120 — Materia prima consumida', valor: d.materia_prima_consumida }], 'Total materia prima', d.materia_prima_consumida, '')}
+        ${seccionEstadoFin('Mano de obra directa (7220, 7420)', [
+          { nombre: '7220 — Personal del Taller', valor: d.mano_obra_directa },
+          { nombre: '7420 — Honorarios tejedoras externas', valor: d.honorarios_tejedoras },
+        ], 'Total mano de obra directa', d.mano_obra_directa + d.honorarios_tejedoras, '')}
+        ${seccionEstadoFin('Costos indirectos de fabricación (7320)', [{ nombre: '7320 — CIF del Taller', valor: d.cif }], 'Total CIF', d.cif, '')}
+        ${filaEstadoFin('= Costo de producción del período', d.costo_produccion, true)}
+        ${bloque2('Productos en proceso (1410)', [['Inventario inicial', d.proceso_inicial], ['Inventario final', d.proceso_final], ['Variación', d.variacion_proceso]])}
+        ${filaEstadoFin('= Costo de artículos terminados', d.costo_articulos_terminados, true)}
+        ${bloque2('Productos terminados (1430)', [['Inventario inicial', d.terminados_inicial], ['Inventario final', d.terminados_final], ['Variación', d.variacion_terminados]])}
+        <div style="margin-top:16px;padding:14px;border-radius:10px;background:var(--tinte-rosa);text-align:center;">
+          <div style="font-size:12px;font-weight:600;opacity:0.75;">COSTO DE VENTAS DEL PERÍODO</div>
+          <div style="font-size:26px;font-weight:700;color:var(--rosa-principal);margin-top:4px;">${formatearMoneda(d.costo_ventas)}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function bloque2(titulo, filas) {
+    return `<h2 style="margin-top:18px;">${titulo}</h2>${filas.map(([e, v]) => filaEstadoFin(e, v)).join('')}`;
+  }
+
+  function exportarEstadoCostosExcel() {
+    if (!cacheEstadoCostos) { mostrarMensaje('mensajeEstadosFinancieros', 'Espera a que cargue el reporte primero.', 'error'); return; }
+    const d = cacheEstadoCostos;
+    const filas = [
+      ['Lana Rosa Crochet — Estado de Costos de Producción y Ventas'],
+      [`Período: ${d.periodo.desde || ''} a ${d.periodo.hasta || ''}`],
+      [],
+      ['MATERIA PRIMA CONSUMIDA (7120)', d.materia_prima_consumida],
+      [],
+      ['MANO DE OBRA DIRECTA', ''],
+      ['7220 — Personal del Taller', d.mano_obra_directa],
+      ['7420 — Honorarios tejedoras externas', d.honorarios_tejedoras],
+      ['Total mano de obra directa', d.mano_obra_directa + d.honorarios_tejedoras],
+      [],
+      ['COSTOS INDIRECTOS DE FABRICACIÓN (7320)', d.cif],
+      [],
+      ['= COSTO DE PRODUCCIÓN DEL PERÍODO', d.costo_produccion],
+      [],
+      ['PRODUCTOS EN PROCESO (1410)', ''],
+      ['Inventario inicial', d.proceso_inicial],
+      ['Inventario final', d.proceso_final],
+      ['Variación', d.variacion_proceso],
+      [],
+      ['= COSTO DE ARTÍCULOS TERMINADOS', d.costo_articulos_terminados],
+      [],
+      ['PRODUCTOS TERMINADOS (1430)', ''],
+      ['Inventario inicial', d.terminados_inicial],
+      ['Inventario final', d.terminados_final],
+      ['Variación', d.variacion_terminados],
+      [],
+      ['= COSTO DE VENTAS DEL PERÍODO', d.costo_ventas],
+    ];
+    if (d.meses_sin_cerrar.length) { filas.push([], [`Meses sin cierre de costos registrado: ${d.meses_sin_cerrar.join(', ')}`]); }
+    const hoja = XLSX.utils.aoa_to_sheet(filas);
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Estado de Costos');
+    XLSX.writeFile(libro, `LanaRosa_EstadoCostos_${new Date().toISOString().slice(0, 10)}.xlsx`);
   }
 
   function exportarBalanceGeneralExcel() {
