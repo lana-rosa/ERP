@@ -1711,8 +1711,8 @@
   <details class="panel no-exportar" style="max-width:none;max-height:none;margin-bottom:16px;font-size:13px;line-height:1.6;" open>
     <summary style="cursor:pointer;font-weight:700;font-size:14.5px;">❓ Cómo registrar lo que tejo (instructivo)</summary>
     <ol style="padding-left:18px;margin:10px 0 0 0;">
-      <li><strong>Abrir la orden:</strong> si el pedido aparece en "🧵 Pedidos por elaborar" (aquí abajo), pulsa "🧶 Empezar" y la orden se abre sola. Si no, elige qué vas a tejer (o "Encargo personalizado" si no está en la lista), cuántas unidades y, si es para un pedido, cuál — y pulsa "Abrir orden".</li>
-      <li><strong>Entregar el material:</strong> en la orden que se abrió, pulsa "➕ Entregar material", elige qué usas (lana, ojos...) y cuánto, y pulsa "Entregar". La lista muestra lo que hay en el inventario del Taller; si algo no está, tráelo primero con "🔄 Trasladar Tienda ↔ Taller". Repite este paso cada vez que necesites más material para la misma orden.</li>
+      <li><strong>Abrir la orden:</strong> si el pedido aparece en "🧵 Pedidos por elaborar" (aquí abajo), pulsa "🧶 Empezar" y la orden se abre sola. Si no, elige qué vas a tejer (o "Encargo personalizado" si no está en la lista), cuántas unidades y, si es para un pedido, cuál. Ahí mismo puedes agregar el material que vas a usar (una fila por insumo, con "+ Agregar otro material") y pulsa "Abrir orden".</li>
+      <li><strong>Entregar el material:</strong> en la orden que se abrió, pulsa "➕ Entregar material", pon una fila por cada insumo que usas (lana, ojos, relleno...) con su cantidad — "+ Agregar otro material" añade filas — y pulsa "Entregar". Si ya lo agregaste al abrir la orden, este paso es solo para lo que falte. La lista muestra lo que hay en el inventario del Taller; si algo no está, tráelo primero con "🔄 Trasladar Tienda ↔ Taller". Puedes volver a entregar material cuantas veces necesites mientras la orden esté en proceso.</li>
       <li><strong>Terminar la orden:</strong> cuando acabes de tejer, pulsa "✅ Terminar", escribe cuántas unidades quedaron listas y cuánto material sobró (0 si se usó todo), y pulsa "Terminar".</li>
     </ol>
     <div style="margin-top:8px;opacity:0.75;">Así el sistema calcula solo el costo de materiales de cada pieza — no hay que escribir pesos ni hacer cuentas. Si algo no sale bien o no encuentras el producto en la lista, avísale a la administradora.</div>
@@ -1748,6 +1748,11 @@
         <label for="opObservaciones">Observaciones <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
         <input type="text" id="opObservaciones" placeholder="Tejedora, colores, detalles...">
       </div>
+    </div>
+    <div style="margin-top:16px;padding-top:14px;border-top:1px dashed var(--gris-borde);">
+      <div style="font-size:13px;font-weight:600;">🧶 Material que se va a usar <span style="font-size:11px;opacity:0.6;font-weight:400;">(opcional: también se puede agregar después)</span></div>
+      <div style="font-size:11.5px;opacity:0.7;margin:2px 0 10px;">Una fila por cada insumo (lanas, ojos, relleno...). Al abrir la orden se descuentan del inventario y quedan cargados a la orden.</div>
+      <div id="filasMat-nueva"></div>
     </div>
     <button class="btn-principal" style="width:auto;" onclick="confirmarAbrirOrdenProduccion()">Abrir orden</button>
   </div>
@@ -9380,6 +9385,7 @@
     ocultarMensaje('mensajeOrdenesProd');
     await cargarIdsDepartamentosClave();
     await Promise.all([cargarOpcionesNuevaOrden(), cargarMaterialesParaOrdenes()]);
+    renderizarFilasMaterial('nueva');
     await Promise.all([cargarOrdenesProduccion(), cargarSolicitudesElaboracion()]);
     await cargarPedidosCrmSinOrden();
   }
@@ -9431,18 +9437,30 @@
     if (!productoId && !descripcion) { mostrarMensaje('mensajeOrdenesProd', 'Describe el encargo que se va a tejer.', 'error'); return; }
     if (!cantidad || cantidad <= 0) { mostrarMensaje('mensajeOrdenesProd', 'Escribe cuántas unidades se van a producir.', 'error'); return; }
 
-    const { data, error } = await supabaseClient.rpc('fn_op_abrir', {
+    const mat = materialesDeFilas('nueva');
+    if (mat.error) { mostrarMensaje('mensajeOrdenesProd', mat.error, 'error'); return; }
+
+    const { data, error } = await supabaseClient.rpc('fn_op_abrir_con_materiales', {
       p_producto_item_id: productoId, p_descripcion: productoId ? null : descripcion, p_cantidad: cantidad,
       p_pedido_canal_id: null, p_pedido_crm_id: pedidoId, p_numero_pedido_crm: numeroPedido,
       p_observaciones: document.getElementById('opObservaciones').value.trim() || null,
+      p_materiales: mat.materiales,
     });
     if (error) { mostrarMensaje('mensajeOrdenesProd', 'No se pudo abrir la orden: ' + error.message, 'error'); return; }
 
     document.getElementById('opDescripcion').value = '';
     document.getElementById('opObservaciones').value = '';
     document.getElementById('opCantidad').value = '1';
-    mostrarMensaje('mensajeOrdenesProd', '✅ Orden abierta. En la tarjeta resaltada de la orden, elige el material, escribe la cantidad y pulsa "Entregar".', 'exito');
-    ordenAccionAbierta = { id: data, accion: 'entregar' };
+    delete filasMaterialOrden.nueva;
+    await cargarMaterialesParaOrdenes();
+    renderizarFilasMaterial('nueva');
+    if (mat.materiales.length) {
+      mostrarMensaje('mensajeOrdenesProd', `✅ Orden abierta con ${mat.materiales.length} material(es) entregado(s). Si falta algo, agrégalo con "➕ Entregar material" en la tarjeta de la orden.`, 'exito');
+      ordenAccionAbierta = null;
+    } else {
+      mostrarMensaje('mensajeOrdenesProd', '✅ Orden abierta. En la tarjeta resaltada de la orden, elige el material, escribe la cantidad y pulsa "Entregar".', 'exito');
+      ordenAccionAbierta = { id: data, accion: 'entregar' };
+    }
     ordenRecienAbiertaId = data;
     const chip = document.querySelector('[data-filtro-op="en_proceso"]');
     filtrarOrdenesProduccion('en_proceso', chip);
@@ -9476,8 +9494,8 @@
       recien.scrollIntoView({ behavior: 'smooth', block: 'start' });
       recien.style.boxShadow = '0 0 0 3px var(--rosa-principal)';
       setTimeout(() => { recien.style.boxShadow = ''; }, 2500);
-      const cantidad = document.getElementById('opEntCant-' + recien.id.slice(3));
-      if (cantidad) cantidad.focus({ preventScroll: true });
+      const primerMaterial = document.getElementById('mat-' + recien.id.slice(3) + '-0-item');
+      if (primerMaterial) primerMaterial.focus({ preventScroll: true });
     }
   }
 
@@ -9549,12 +9567,6 @@
     renderizarOrdenesProduccion();
   }
 
-  function opcionesMaterialOrden(origen) {
-    const lista = materialesOrdenCache[origen] || [];
-    return lista.length
-      ? lista.map(i => `<option value="${i.id}">${escaparHtml(i.nombre)} (disponible: ${formatearCantidad(i.stock_actual)} ${escaparHtml(i.unidad_medida)})</option>`).join('')
-      : '<option value="">No hay material con existencias aquí</option>';
-  }
 
   function formularioAccionOrden(o, accion) {
     const caja = (contenido) => `<div style="margin-top:12px;padding:14px;border-radius:var(--radius-md);background:var(--gris-fondo);">${contenido}<div class="mensaje" id="mensajeAccionOp-${o.id}"></div></div>`;
@@ -9562,16 +9574,8 @@
     if (accion === 'entregar') {
       const puedeTienda = rolActual === 'administrador';
       return caja(`
-        <div class="grilla-2" style="gap:10px;">
-          <div><label>Sale de</label>
-            <select id="opEntOrigen-${o.id}" onchange="document.getElementById('opEntItem-${o.id}').innerHTML = opcionesMaterialOrden(this.value)">
-              <option value="Taller">Inventario del Taller</option>
-              ${puedeTienda ? '<option value="Tienda">Inventario de la Tienda</option>' : ''}
-            </select></div>
-          <div><label>Material</label><select id="opEntItem-${o.id}">${opcionesMaterialOrden('Taller')}</select></div>
-          <div><label>Cantidad</label><input type="number" id="opEntCant-${o.id}" min="0" step="0.1"></div>
-          <div><label>Nota <span style="font-size:10px;opacity:0.6;">(opcional)</span></label><input type="text" id="opEntNota-${o.id}"></div>
-        </div>
+        <div id="filasMat-${o.id}">${htmlFilasMaterial(o.id)}</div>
+        <div style="margin-top:10px;max-width:420px;"><label>Nota <span style="font-size:10px;opacity:0.6;">(opcional)</span></label><input type="text" id="opEntNota-${o.id}"></div>
         ${puedeTienda ? '' : '<div style="font-size:11.5px;opacity:0.7;margin-top:6px;">¿Falta material? Se trae de la Tienda en "Trasladar entre Tienda y Taller", y allí mismo se puede entregar a esta orden.</div>'}
         <button class="btn-principal" style="width:auto;" onclick="confirmarEntregaMaterialOrden('${o.id}')">Entregar a ${escaparHtml(o.orden)}</button>`);
     }
@@ -9619,14 +9623,99 @@
   }
 
   async function confirmarEntregaMaterialOrden(ordenId) {
-    const itemId = document.getElementById('opEntItem-' + ordenId).value;
-    const cantidad = Number(document.getElementById('opEntCant-' + ordenId).value);
-    if (!itemId) { mostrarMensaje('mensajeAccionOp-' + ordenId, 'Elige el material.', 'error'); return; }
-    if (!cantidad || cantidad <= 0) { mostrarMensaje('mensajeAccionOp-' + ordenId, 'Escribe una cantidad mayor a cero.', 'error'); return; }
-    await ejecutarAccionOrden(ordenId, 'fn_op_entregar_material', {
-      p_orden_id: ordenId, p_inventario_item_id: itemId, p_cantidad: cantidad,
+    const mat = materialesDeFilas(ordenId);
+    if (mat.error) { mostrarMensaje('mensajeAccionOp-' + ordenId, mat.error, 'error'); return; }
+    if (!mat.materiales.length) { mostrarMensaje('mensajeAccionOp-' + ordenId, 'Elige al menos un material y escribe su cantidad.', 'error'); return; }
+    const ok = await ejecutarAccionOrden(ordenId, 'fn_op_entregar_materiales', {
+      p_orden_id: ordenId, p_materiales: mat.materiales,
       p_observaciones: document.getElementById('opEntNota-' + ordenId).value.trim() || null,
-    }, '✅ Material entregado: salió del inventario y quedó en productos en proceso.');
+    }, `✅ ${mat.materiales.length} material(es) entregado(s): salieron del inventario y quedaron en productos en proceso.`);
+    if (ok) delete filasMaterialOrden[ordenId];
+  }
+
+  // Filas "material + cantidad" para entregar varios insumos a la vez (al abrir la orden o después)
+  const filasMaterialOrden = {};
+
+  function filasMaterial(ctx) {
+    if (!filasMaterialOrden[ctx]) filasMaterialOrden[ctx] = [{ origen: 'Taller', item: '', cantidad: '' }];
+    return filasMaterialOrden[ctx];
+  }
+
+  function leerFilasMaterialDelDom(ctx) {
+    filasMaterial(ctx).forEach((f, i) => {
+      const origen = document.getElementById(`mat-${ctx}-${i}-origen`);
+      const item = document.getElementById(`mat-${ctx}-${i}-item`);
+      const cant = document.getElementById(`mat-${ctx}-${i}-cant`);
+      if (origen) f.origen = origen.value;
+      if (item) f.item = item.value;
+      if (cant) f.cantidad = cant.value;
+    });
+  }
+
+  function htmlFilasMaterial(ctx) {
+    const puedeTienda = rolActual === 'administrador';
+    const filas = filasMaterial(ctx);
+    return filas.map((f, i) => {
+      const lista = materialesOrdenCache[f.origen] || [];
+      return `
+        <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:8px;">
+          ${puedeTienda ? `<div style="flex:0 0 120px;"><label style="font-size:11px;margin-top:0;">Sale de</label>
+            <select id="mat-${ctx}-${i}-origen" onchange="cambiarOrigenFilaMaterial('${ctx}', ${i})">
+              <option value="Taller" ${f.origen === 'Taller' ? 'selected' : ''}>Taller</option>
+              <option value="Tienda" ${f.origen === 'Tienda' ? 'selected' : ''}>Tienda</option>
+            </select></div>` : ''}
+          <div style="flex:1 1 240px;min-width:0;"><label style="font-size:11px;margin-top:0;">Material ${filas.length > 1 ? i + 1 : ''}</label>
+            <select id="mat-${ctx}-${i}-item">
+              <option value="">${lista.length ? '— Elige el material —' : 'No hay material con existencias aquí'}</option>
+              ${lista.map(x => `<option value="${x.id}" ${x.id === f.item ? 'selected' : ''}>${escaparHtml(x.nombre)} (disponible: ${formatearCantidad(x.stock_actual)} ${escaparHtml(x.unidad_medida)})</option>`).join('')}
+            </select></div>
+          <div style="flex:0 0 110px;"><label style="font-size:11px;margin-top:0;">Cantidad</label>
+            <input type="number" id="mat-${ctx}-${i}-cant" min="0" step="0.1" value="${escaparHtml(String(f.cantidad))}"></div>
+          <button type="button" class="btn-quitar-pago" title="Quitar este material" aria-label="Quitar este material" onclick="quitarFilaMaterial('${ctx}', ${i})" style="margin-bottom:6px;">✕</button>
+        </div>`;
+    }).join('') + `<button type="button" class="btn-mini editar" onclick="agregarFilaMaterial('${ctx}')">+ Agregar otro material</button>`;
+  }
+
+  function renderizarFilasMaterial(ctx) {
+    const cont = document.getElementById('filasMat-' + ctx);
+    if (cont) cont.innerHTML = htmlFilasMaterial(ctx);
+  }
+
+  function agregarFilaMaterial(ctx) {
+    leerFilasMaterialDelDom(ctx);
+    const filas = filasMaterial(ctx);
+    filas.push({ origen: filas[filas.length - 1].origen, item: '', cantidad: '' });
+    renderizarFilasMaterial(ctx);
+    const nuevo = document.getElementById(`mat-${ctx}-${filas.length - 1}-item`);
+    if (nuevo) nuevo.focus();
+  }
+
+  function quitarFilaMaterial(ctx, i) {
+    leerFilasMaterialDelDom(ctx);
+    const filas = filasMaterial(ctx);
+    filas.splice(i, 1);
+    if (!filas.length) filas.push({ origen: 'Taller', item: '', cantidad: '' });
+    renderizarFilasMaterial(ctx);
+  }
+
+  function cambiarOrigenFilaMaterial(ctx, i) {
+    leerFilasMaterialDelDom(ctx);
+    filasMaterial(ctx)[i].item = '';
+    renderizarFilasMaterial(ctx);
+  }
+
+  // Filas vacías se ignoran; una fila a medias (material sin cantidad o al revés) es un error.
+  function materialesDeFilas(ctx) {
+    leerFilasMaterialDelDom(ctx);
+    const materiales = [];
+    for (const [i, f] of filasMaterial(ctx).entries()) {
+      const cantidad = Number(f.cantidad);
+      if (!f.item && !f.cantidad) continue;
+      if (!f.item) return { error: `En la fila ${i + 1} falta elegir el material.` };
+      if (!cantidad || cantidad <= 0) return { error: `En la fila ${i + 1} escribe una cantidad mayor a cero.` };
+      materiales.push({ inventario_item_id: f.item, cantidad });
+    }
+    return { materiales };
   }
 
   async function confirmarDevolucionOrden(ordenId) {
