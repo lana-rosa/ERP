@@ -1,10 +1,9 @@
-// Envía correos desde la cuenta de Zoho de la empresa (recibos a clientes).
-// La contraseña de aplicación de Zoho NO está en el código ni en la base de
-// datos: se guarda como secreto de Edge Functions en Supabase con el nombre
-// ZOHO_SMTP_PASS (Project Settings → Edge Functions → Secrets).
+// Envía correos desde el dominio de la empresa (recibos a clientes) usando
+// Resend (https://resend.com). La clave de la API NO está en el código ni en
+// la base de datos: se guarda como secreto de Edge Functions en Supabase con
+// el nombre RESEND_API_KEY (Project Settings → Edge Functions → Secrets).
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
-import nodemailer from "npm:nodemailer@6.9.16";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -18,6 +17,7 @@ const TIPOS_ADJUNTO = ["image/png", "image/jpeg", "application/pdf"];
 const LIMITE_DIARIO_USUARIO = 60;
 const LIMITE_DIARIO_TOTAL = 150;
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+const RESEND_URL = "https://api.resend.com/emails";
 
 function responder(cuerpo: Record<string, unknown>, estado = 200) {
   return new Response(JSON.stringify(cuerpo), { status: estado, headers: { ...CORS, "Content-Type": "application/json" } });
@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
     }
   }
 
-  // 3. Límites diarios para no quemar la cuenta de Zoho
+  // 3. Límites diarios para no quemar el plan gratuito de Resend (3.000/mes, 100/día)
   const desde = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
   const { count: delUsuario } = await admin.from("correos_enviados").select("id", { count: "exact", head: true })
     .eq("enviado_por", userId).eq("estado", "enviado").gte("created_at", desde);
@@ -83,9 +83,9 @@ Deno.serve(async (req) => {
     return responder({ error: "Se alcanzó el límite de correos de las últimas 24 horas. Intenta más tarde." }, 429);
   }
 
-  const clave = Deno.env.get("ZOHO_SMTP_PASS");
-  if (!clave) {
-    const msg = "Falta la contraseña de aplicación de Zoho en Supabase (secreto ZOHO_SMTP_PASS).";
+  const claveResend = Deno.env.get("RESEND_API_KEY");
+  if (!claveResend) {
+    const msg = "Falta la clave de la API de Resend en Supabase (secreto RESEND_API_KEY).";
     await admin.from("configuracion_correo").update({ ultimo_error: msg }).eq("id", 1);
     return responder({ error: msg, codigo: "sin_secreto" }, 400);
   }
@@ -95,39 +95,43 @@ Deno.serve(async (req) => {
     ? `<div style="font-family:Arial,sans-serif;font-size:14px;color:#333;">✅ La conexión del ERP con el correo <strong>${escapar(cfg.remitente_email)}</strong> funciona.<br><br>Desde ahora el ERP puede enviar los recibos a los clientes desde esta cuenta.</div>`
     : html;
 
-  const transporte = nodemailer.createTransport({
-    host: cfg.smtp_host || "smtp.zoho.com",
-    port: 465,
-    secure: true,
-    auth: { user: cfg.smtp_usuario || cfg.remitente_email, pass: clave },
-  });
+  const payload: Record<string, unknown> = {
+    from: `${cfg.remitente_nombre || "Lana Rosa Crochet"} <${cfg.remitente_email}>`,
+    to: [para],
+    subject: asuntoFinal,
+  };
+  if (htmlFinal) payload.html = htmlFinal;
+  if (texto) payload.text = texto;
+  if (cfg.responder_a) payload.reply_to = cfg.responder_a;
+  if (tipo !== "prueba" && cfg.copia_oculta) payload.bcc = [cfg.copia_oculta];
+  if (adjuntos.length) {
+    payload.attachments = adjuntos.map((a: any, i: number) => ({
+      filename: String(a.nombre || `adjunto-${i + 1}`).slice(0, 100),
+      content: a.base64,
+      ...(a.cid ? { content_id: String(a.cid).slice(0, 60) } : {}),
+    }));
+  }
 
   try {
-    const info = await transporte.sendMail({
-      from: { name: cfg.remitente_nombre || "Lana Rosa Crochet", address: cfg.remitente_email },
-      to: para,
-      replyTo: cfg.responder_a || undefined,
-      bcc: tipo !== "prueba" && cfg.copia_oculta ? cfg.copia_oculta : undefined,
-      subject: asuntoFinal,
-      html: htmlFinal || undefined,
-      text: texto || undefined,
-      attachments: adjuntos.map((a: any, i: number) => ({
-        filename: String(a.nombre || `adjunto-${i + 1}`).slice(0, 100),
-        content: a.base64,
-        encoding: "base64",
-        contentType: a.tipo,
-        cid: a.cid ? String(a.cid).slice(0, 60) : undefined,
-      })),
+    const resp = await fetch(RESEND_URL, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${claveResend}`, "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
     });
+    const datos = await resp.json().catch(() => ({}));
+    if (!resp.ok) throw new Error(datos?.message || `Resend respondió ${resp.status}`);
+
     await admin.from("correos_enviados").insert({
-      enviado_por: userId, destinatario: para, asunto: asuntoFinal, tipo, referencia, estado: "enviado", message_id: info.messageId || null,
+      enviado_por: userId, destinatario: para, asunto: asuntoFinal, tipo, referencia, estado: "enviado", message_id: datos?.id || null,
     });
     if (tipo === "prueba") await admin.from("configuracion_correo").update({ verificado_en: new Date().toISOString(), ultimo_error: null }).eq("id", 1);
     return responder({ ok: true, destinatario: para });
   } catch (e) {
     const detalle = String((e as Error)?.message || e).slice(0, 500);
-    const msg = /auth|535|credentials|password/i.test(detalle)
-      ? "Zoho rechazó el usuario o la contraseña de aplicación. Revisa el correo remitente y el secreto ZOHO_SMTP_PASS."
+    const msg = /domain is not verified|not verified|verify/i.test(detalle)
+      ? "Resend rechazó el envío porque el dominio lanarosacrochet.com todavía no está verificado. Revisa los registros DNS en el panel de Resend."
+      : /invalid.*api.?key|unauthorized|401/i.test(detalle)
+      ? "Resend rechazó la clave de la API. Revisa el secreto RESEND_API_KEY en Supabase."
       : "No se pudo enviar el correo: " + detalle;
     await admin.from("correos_enviados").insert({
       enviado_por: userId, destinatario: para, asunto: asuntoFinal, tipo, referencia, estado: "error", error: detalle,
