@@ -5307,13 +5307,18 @@
     }
     boton.dataset.confirmando = '1';
     boton.dataset.textoOriginal = boton.textContent;
+    const fondoOriginal = boton.style.background;
+    const colorOriginal = boton.style.color;
     boton.textContent = textoConfirmar;
+    // Letra oscura: con el fondo claro de confirmación, la letra blanca de los botones rojos o rosados no se veía
     boton.style.background = '#f8d7da';
+    boton.style.color = '#842029';
     const timeoutId = setTimeout(() => {
       boton.dataset.confirmando = '0';
       boton.textContent = boton.dataset.textoOriginal;
-      boton.style.background = '';
-    }, 3000);
+      boton.style.background = fondoOriginal;
+      boton.style.color = colorOriginal;
+    }, 5000);
     boton.dataset.timeoutId = timeoutId;
   }
 
