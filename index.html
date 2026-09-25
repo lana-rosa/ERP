@@ -1262,7 +1262,7 @@
       <div style="background:var(--rosa-suave);border-radius:9px;padding:14px 16px;font-size:13px;line-height:1.6;">
         Los pedidos nuevos por WhatsApp, Instagram, Facebook o Tienda virtual se registran en el <strong>CRM</strong>, no aquí — así el seguimiento de la conversación y el historial de cada cliente queda completo en un solo lugar.
         <br><br>
-        Una vez el pedido esté listo allá, tráelo al ERP con el botón <strong>"🔄 Cargar pedidos nuevos del CRM"</strong> en <strong>Pedidos WhatsApp/Redes</strong> (menú lateral) — desde ahí se cobra el anticipo, el saldo, y se despacha.
+        Una vez el pedido esté listo allá, tráelo al ERP con el botón <strong>"🔄 Cargar pedidos nuevos del CRM"</strong> en <strong>Pedidos WhatsApp/Redes</strong> (menú lateral) — desde ahí se registra el cobro del anticipo y el saldo, y se marca como entregado (los envíos se siguen manejando en el CRM).
       </div>
       <a href="https://lana-rosa.github.io/CRM/" target="_blank" style="display:block;margin-top:14px;">
         <button class="btn-principal" type="button">🔗 Ir al CRM a crear el pedido</button>
@@ -1710,16 +1710,17 @@
   <details class="panel no-exportar" style="max-width:none;max-height:none;margin-bottom:16px;font-size:13px;line-height:1.6;" open>
     <summary style="cursor:pointer;font-weight:700;font-size:14.5px;">❓ Cómo registrar lo que tejo (instructivo)</summary>
     <ol style="padding-left:18px;margin:10px 0 0 0;">
-      <li><strong>Abrir la orden:</strong> si el pedido aparece en "Pedidos de Tienda/WhatsApp por elaborar", pulsa "🧶 Empezar" y la orden se abre sola. Si no, elige qué vas a tejer (o "Encargo personalizado" si no está en la lista), cuántas unidades y, si es para un pedido, cuál — y pulsa "Abrir orden".</li>
-      <li><strong>Entregar el material:</strong> en la orden que se abrió, pulsa "➕ Entregar material", elige qué usas (lana, ojos...) y cuánto, y pulsa "Entregar". Repite este paso cada vez que necesites más material para la misma orden.</li>
+      <li><strong>Abrir la orden:</strong> si el pedido aparece en "🧵 Pedidos por elaborar" (aquí abajo), pulsa "🧶 Empezar" y la orden se abre sola. Si no, elige qué vas a tejer (o "Encargo personalizado" si no está en la lista), cuántas unidades y, si es para un pedido, cuál — y pulsa "Abrir orden".</li>
+      <li><strong>Entregar el material:</strong> en la orden que se abrió, pulsa "➕ Entregar material", elige qué usas (lana, ojos...) y cuánto, y pulsa "Entregar". La lista muestra lo que hay en el inventario del Taller; si algo no está, tráelo primero con "🔄 Trasladar Tienda ↔ Taller". Repite este paso cada vez que necesites más material para la misma orden.</li>
       <li><strong>Terminar la orden:</strong> cuando acabes de tejer, pulsa "✅ Terminar", escribe cuántas unidades quedaron listas y cuánto material sobró (0 si se usó todo), y pulsa "Terminar".</li>
     </ol>
     <div style="margin-top:8px;opacity:0.75;">Así el sistema calcula solo el costo de materiales de cada pieza — no hay que escribir pesos ni hacer cuentas. Si algo no sale bien o no encuentras el producto en la lista, avísale a la administradora.</div>
   </details>
 
   <div class="panel no-exportar" style="max-width:none;max-height:none;margin-bottom:16px;">
-    <h2>🧵 Pedidos de Tienda/WhatsApp por elaborar</h2>
-    <div class="subtitulo">Llegan solos cuando un pedido (por WhatsApp/redes o del CRM) no tiene el producto disponible en stock. Al pulsar "🧶 Empezar" se abre su orden de producción para entregarle el material; al terminar esa orden, el pedido queda como terminado.</div>
+    <h2>🧵 Pedidos por elaborar</h2>
+    <div class="subtitulo">Aquí aparecen los pedidos del CRM que están en producción y todavía no tienen orden, y los pedidos de Tienda/WhatsApp que no tenían el producto en stock. Al pulsar "🧶 Empezar" se abre su orden de producción para entregarle el material.</div>
+    <div id="listaPedidosCrmSinOrden"></div>
     <div id="listaSolicitudesElaboracion"><div class="cargando">Cargando...</div></div>
   </div>
 
@@ -1926,17 +1927,12 @@
 <!-- ===== PANTALLA: PEDIDOS POR CANAL (WhatsApp/Instagram/Facebook/Tienda virtual) ===== -->
 <div id="pantallaPedidosCanal" class="oculto contenido">
   <div class="page-header">
-    <h1>Pedidos por WhatsApp, Instagram, Facebook y Tienda virtual</h1>
-    <div class="subtitulo">Todos se despachan y facturan desde la Tienda. Redes sociales cobran 50% de anticipo (sin envío); Tienda virtual cobra el 100% de una vez.</div>
+    <h1>Pedidos WhatsApp/Redes — cobros y entrega</h1>
+    <div class="subtitulo">Los pedidos se crean, se siguen y se envían en el CRM. Aquí llegan solos para registrar la plata que entra (anticipo y saldo) y marcarlos como entregados, así quedan en la contabilidad y en Facturación electrónica.</div>
   </div>
 
-  <div class="filtro-tipo" style="margin-bottom:20px;">
-    <button class="chip-filtro activo" data-subtab-btn="pedidosCanal" onclick="mostrarSubTabGrupo('pedidosCanal', 'subtabCanalActivos', this)">📋 Pedidos activos</button>
-    <button class="chip-filtro" data-subtab-btn="pedidosCanal" onclick="mostrarSubTabGrupo('pedidosCanal', 'subtabCanalEnvios', this); cargarEnvios();">📮 Envíos</button>
-  </div>
-
-  <div style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;">
-    ℹ️ Para crear un pedido nuevo, ve a <strong>Registrar venta → 📱 WhatsApp/Redes</strong>. Aquí solo se gestionan los que ya existen.
+  <div style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;line-height:1.6;">
+    ℹ️ Los pedidos nuevos del CRM se traen solos al abrir esta pantalla (o con el botón 🔄). Los envíos (transportadora y guía) se manejan en el CRM; lo que se le cobra al cliente por el envío va en el valor de envío del pedido y sale en la factura como una línea aparte.
   </div>
 
   <div id="subtabCanalActivos" data-subtab-grupo="pedidosCanal">
@@ -1954,19 +1950,6 @@
     </div>
   </div>
 
-  <div id="subtabCanalEnvios" data-subtab-grupo="pedidosCanal" class="oculto">
-    <div class="panel" style="max-width:none;">
-      <h2>Pedidos listos para generar guía</h2>
-      <div class="subtitulo">Pedidos en estado "Listo despacho" que todavía no tienen guía de envío.</div>
-      <div class="mensaje" id="mensajeGenerarGuia"></div>
-      <div id="listaPedidosParaEnvio"><div class="cargando">Cargando...</div></div>
-    </div>
-    <div class="panel" style="max-width:none;max-height:none;margin-top:20px;">
-      <h2>Guías de envío</h2>
-      <div class="mensaje" id="mensajeListaEnvios"></div>
-      <div id="listaEnvios"><div class="cargando">Cargando...</div></div>
-    </div>
-  </div>
 </div>
 
 <!-- ===== PANTALLA: HISTORIAL VENTAS ===== -->
@@ -9374,6 +9357,7 @@
     await cargarIdsDepartamentosClave();
     await Promise.all([cargarOpcionesNuevaOrden(), cargarMaterialesParaOrdenes()]);
     await Promise.all([cargarOrdenesProduccion(), cargarSolicitudesElaboracion()]);
+    await cargarPedidosCrmSinOrden();
   }
 
   async function cargarOpcionesNuevaOrden() {
@@ -14423,9 +14407,6 @@
 
   async function mostrarPantallaPedidosCanal() {
     mostrarPantalla('pantallaPedidosCanal');
-    mostrarSubTabGrupo('pedidosCanal', 'subtabCanalActivos', document.querySelector('[data-subtab-btn="pedidosCanal"]'));
-    limpiarFormularioPedidoCanal();
-    ocultarMensaje('mensajePedidoCanal');
     await cargarPedidosCanal();
     await sincronizarPedidosCrm(null, true); // silencioso, automático al entrar
   }
@@ -14851,142 +14832,6 @@
     cargarPedidosCanal();
   }
 
-  // ============================================================
-  // ENVÍOS
-  // ============================================================
-  const etiquetasEstadoEnvio = { pendiente: '⏳ Pendiente', enviado: '🚚 Enviado', entregado: '✅ Entregado', devuelto: '↩️ Devuelto' };
-
-  async function cargarEnvios() {
-    await Promise.all([cargarPedidosParaEnvio(), cargarListaEnvios()]);
-  }
-
-  async function cargarPedidosParaEnvio() {
-    const contenedor = document.getElementById('listaPedidosParaEnvio');
-    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
-
-    const { data: pedidos, error } = await supabaseClient
-      .from('pedidos_canal_venta')
-      .select('id, consecutivo, descripcion_producto, cantidad, total_pedido, tercero_id')
-      .eq('estado', 'listo_despacho')
-      .order('created_at', { ascending: false });
-
-    if (error) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
-
-    const { data: enviosExistentes } = await supabaseClient.from('envios').select('pedido_canal_id');
-    const idsConEnvio = new Set((enviosExistentes || []).map(e => e.pedido_canal_id));
-    const pendientes = (pedidos || []).filter(p => !idsConEnvio.has(p.id));
-
-    if (pendientes.length === 0) {
-      contenedor.innerHTML = '<div class="cargando">No hay pedidos pendientes de generar guía.</div>';
-      return;
-    }
-
-    contenedor.innerHTML = `
-      <div class="tabla-lista">
-        <div class="tabla-lista-header header-rosa" style="grid-template-columns:130px 1fr 90px 160px;">
-          <span>PEDIDO</span><span>PRODUCTO</span><span>CANT.</span><span></span>
-        </div>
-        ${pendientes.map(p => `
-          <div class="tabla-lista-fila" style="grid-template-columns:130px 1fr 90px 160px;">
-            <span style="font-weight:600;">${escaparHtml(p.consecutivo)}</span>
-            <span style="opacity:0.75;">${escaparHtml(p.descripcion_producto)}</span>
-            <span>${p.cantidad}</span>
-            <span><button class="btn-mini guardar" onclick="generarGuiaEnvio('${p.id}')">📮 Generar guía</button></span>
-          </div>
-        `).join('')}
-      </div>
-    `;
-  }
-
-  async function generarGuiaEnvio(pedidoCanalId) {
-    ocultarMensaje('mensajeGenerarGuia');
-    const resp = await fetch(WORKER_URL + '/api/pos/envios', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ pedido_canal_id: pedidoCanalId })
-    });
-    const datos = await resp.json();
-    if (!resp.ok) { mostrarMensaje('mensajeGenerarGuia', 'No se pudo generar la guía: ' + (datos.error || 'Error desconocido'), 'error'); return; }
-    mostrarMensaje('mensajeGenerarGuia', '✅ Guía de envío generada.', 'exito');
-    await cargarEnvios();
-  }
-
-  async function cargarListaEnvios() {
-    const contenedor = document.getElementById('listaEnvios');
-    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
-
-    const resp = await fetch(WORKER_URL + '/api/pos/envios', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
-    if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
-
-    const { envios } = await resp.json();
-    if (!envios || envios.length === 0) { contenedor.innerHTML = '<div class="cargando">Todavía no hay guías generadas.</div>'; return; }
-
-    contenedor.innerHTML = `
-      <div class="tabla-lista">
-        <div class="tabla-lista-header header-rosa" style="grid-template-columns:120px 1fr 1fr 130px;">
-          <span>GUÍA</span><span>PEDIDO</span><span>DESTINATARIO</span><span>ESTADO</span>
-        </div>
-        ${envios.map(e => {
-          const coloresEstadoEnvio = {
-            pendiente: { bg: '#fdecd2', color: '#a5690a' },
-            enviado: { bg: '#dce8f5', color: '#2d5a8c' },
-            entregado: { bg: '#e0f2e6', color: 'var(--verde-exito)' },
-            devuelto: { bg: '#f0f0f0', color: '#888' },
-          };
-          const colorEnvio = coloresEstadoEnvio[e.estado] || { bg: 'var(--rosa-suave)', color: 'var(--rosa-principal)' };
-          return `
-          <div class="tabla-lista-fila" style="grid-template-columns:120px 1fr 1fr 130px;">
-            <span style="font-weight:600;">${escaparHtml(e.consecutivo)}</span>
-            <span style="opacity:0.75;font-size:11.5px;">${e.pedidos_canal_venta ? escaparHtml(e.pedidos_canal_venta.consecutivo) + ' — ' + e.pedidos_canal_venta.cantidad + 'x ' + escaparHtml(e.pedidos_canal_venta.descripcion_producto) : ''}</span>
-            <span style="opacity:0.9;display:flex;align-items:center;gap:8px;">${avatarIniciales(e.destinatario_nombre || '?')}${escaparHtml(e.destinatario_nombre || 'Sin nombre')}</span>
-            <span><span class="badge-estado-pedido" style="background:${colorEnvio.bg};color:${colorEnvio.color};">${etiquetasEstadoEnvio[e.estado]}</span></span>
-          </div>
-          <div class="tabla-lista-detalle" style="display:block;">
-            <div style="font-size:12.5px;margin-bottom:8px;">
-              📍 ${escaparHtml(e.direccion_envio || 'Sin dirección')}${e.municipio ? ' — ' + escaparHtml(e.municipio) : ''}<br>
-              📞 ${escaparHtml(e.telefono_contacto || '—')}${e.correo_electronico ? ' · ' + escaparHtml(e.correo_electronico) : ''}
-            </div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-              <input type="text" placeholder="Transportadora" value="${escaparHtml(e.transportadora || '')}" id="transportadora-${e.id}" style="flex:1;min-width:120px;padding:8px 10px;font-size:12.5px;">
-              <input type="text" placeholder="N° de guía" value="${escaparHtml(e.numero_guia || '')}" id="guia-${e.id}" style="flex:1;min-width:120px;padding:8px 10px;font-size:12.5px;">
-              <button class="btn-mini editar" onclick="guardarDatosGuia('${e.id}')">Guardar</button>
-            </div>
-            <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
-              ${e.estado === 'pendiente' ? `<button class="btn-mini guardar" onclick="cambiarEstadoEnvio('${e.id}', 'enviado')">🚚 Marcar enviado</button>` : ''}
-              ${e.estado === 'enviado' ? `<button class="btn-mini guardar" onclick="cambiarEstadoEnvio('${e.id}', 'entregado')">✅ Marcar entregado</button>` : ''}
-              ${(e.estado === 'pendiente' || e.estado === 'enviado') ? `<button class="btn-mini desactivar" onclick="cambiarEstadoEnvio('${e.id}', 'devuelto')">↩️ Marcar devuelto</button>` : ''}
-            </div>
-          </div>
-        `;
-        }).join('')}
-      </div>
-    `;
-  }
-
-  async function guardarDatosGuia(envioId) {
-    ocultarMensaje('mensajeListaEnvios');
-    const transportadora = document.getElementById(`transportadora-${envioId}`).value.trim();
-    const numeroGuia = document.getElementById(`guia-${envioId}`).value.trim();
-    const resp = await fetch(WORKER_URL + '/api/pos/envios/actualizar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ envio_id: envioId, transportadora, numero_guia: numeroGuia })
-    });
-    if (!resp.ok) { mostrarMensaje('mensajeListaEnvios', 'No se pudo guardar.', 'error'); return; }
-    mostrarMensaje('mensajeListaEnvios', '✅ Datos de la guía guardados.', 'exito');
-  }
-
-  async function cambiarEstadoEnvio(envioId, estado) {
-    ocultarMensaje('mensajeListaEnvios');
-    const resp = await fetch(WORKER_URL + '/api/pos/envios/actualizar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ envio_id: envioId, estado })
-    });
-    if (!resp.ok) { mostrarMensaje('mensajeListaEnvios', 'No se pudo actualizar.', 'error'); return; }
-    await cargarListaEnvios();
-  }
-
   let pedidosCanalCache = [];
 
   async function cargarPedidosCanal() {
@@ -15012,6 +14857,7 @@
     }
 
     const etiquetasCanal = { whatsapp: '💬 WhatsApp', instagram: '📷 Instagram', facebook: '👍 Facebook', tienda_virtual: '🛍️ Tienda virtual' };
+    const etiquetasEstado = { esperando_pago: '⏳ Esperando pago', en_preparacion: '🧶 En preparación', listo_despacho: '📦 Listo', entregado: '✅ Entregado' };
 
     contenedor.innerHTML = `
       <div class="tabla-lista">
@@ -15031,9 +14877,9 @@
             `;
           } else if (p.estado === 'en_preparacion') {
             const avisoStock = !p.disponible_en_stock
-              ? `<div style="font-size:11.5px;color:var(--rojo-error);margin-bottom:6px;">⚠️ No estaba en stock — pídelo al Taller desde "Cajas y ventas internas".${p.fecha_estimada_entrega ? ' Entrega estimada: <strong>' + new Date(p.fecha_estimada_entrega + 'T00:00:00').toLocaleDateString('es-CO') + '</strong>.' : ''}</div>`
+              ? `<div style="font-size:11.5px;color:var(--rojo-error);margin-bottom:6px;">⚠️ No estaba en stock — le llegó al Taller en "Pedidos por elaborar" (Órdenes de producción).${p.fecha_estimada_entrega ? ' Entrega estimada: <strong>' + new Date(p.fecha_estimada_entrega + 'T00:00:00').toLocaleDateString('es-CO') + '</strong>.' : ''}</div>`
               : '';
-            acciones = `${avisoStock}<button class="btn-mini guardar" onclick="marcarPedidoListoUI('${p.id}')">📦 Marcar listo para despachar</button>`;
+            acciones = `${avisoStock}<button class="btn-mini guardar" onclick="marcarPedidoListoUI('${p.id}')">📦 Ya está listo (tejido y empacado)</button>`;
           } else if (p.estado === 'listo_despacho') {
             if (p.monto_saldo_requerido > 0 && !p.saldo_pagado) {
               acciones = `
@@ -15411,7 +15257,7 @@
     solicitudesElaboracionCache = pendientes;
 
     if (pendientes.length === 0) {
-      contenedor.innerHTML = '<div class="cargando">No hay pedidos pendientes de elaborar en este momento.</div>';
+      contenedor.innerHTML = '';
       return;
     }
 
@@ -15473,6 +15319,70 @@
     mostrarMensaje('mensajeOrdenesProd', '✅ Orden abierta para el pedido ' + (pedido.consecutivo || '') + '. Ahora entrégale el material que se va a usar.', 'exito');
     ordenAccionAbierta = { id: ordenId, accion: 'entregar' };
     filtrarOrdenesProduccion('en_proceso', document.querySelector('[data-filtro-op="en_proceso"]'));
+  }
+
+  let pedidosCrmSinOrdenCache = [];
+
+  async function cargarPedidosCrmSinOrden() {
+    const cont = document.getElementById('listaPedidosCrmSinOrden');
+    if (!cont) return;
+    let pedidos = [];
+    try {
+      const resp = await fetch(WORKER_URL + '/api/pos/crm/pedidos-activos', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+      if (resp.ok) pedidos = ((await resp.json()).pedidos || []).filter(p => p.estado === 'en produccion');
+    } catch (e) { /* Sin conexión al CRM: solo se muestran los pedidos de Tienda/WhatsApp. */ }
+
+    const { data: ordenes } = await supabaseClient.rpc('fn_op_listar', { p_estado: 'todas' });
+    const conOrden = new Set((ordenes || []).filter(o => o.estado !== 'anulada' && o.pedido).map(o => o.pedido));
+    const enSolicitudes = (numero) => solicitudesElaboracionCache.some(s => (s.descripcion || '').includes(numero));
+    pedidosCrmSinOrdenCache = pedidos.filter(p => {
+      const numero = p.numero_pedido || p.id;
+      return !conOrden.has(numero) && !enSolicitudes(numero);
+    });
+
+    if (!pedidosCrmSinOrdenCache.length) {
+      cont.innerHTML = solicitudesElaboracionCache.length ? '' : '<div class="cargando">No hay pedidos por elaborar en este momento.</div>';
+      return;
+    }
+    cont.innerHTML = `
+      <div class="tabla-lista" style="margin-bottom:12px;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:130px 1fr 110px 140px;">
+          <span>PEDIDO CRM</span><span>DESCRIPCIÓN</span><span>ENTREGA</span><span></span>
+        </div>
+        ${pedidosCrmSinOrdenCache.map(p => `
+          <div class="tabla-lista-fila" style="grid-template-columns:130px 1fr 110px 140px;">
+            <span style="font-weight:600;">${escaparHtml(p.numero_pedido || p.id.slice(0, 8))}</span>
+            <span style="opacity:0.75;font-size:11.5px;">${escaparHtml(p.nombre_cliente || '')}${p.nombre_cliente ? ' — ' : ''}${escaparHtml([p.tipo, p.descripcion].filter(Boolean).join(': '))}</span>
+            <span style="font-size:12px;">${p.fecha_entrega ? new Date(p.fecha_entrega + 'T00:00:00').toLocaleDateString('es-CO') : 'Sin fecha'}</span>
+            <span><button class="btn-mini editar" onclick="empezarPedidoCrm('${p.id}', this)">🧶 Empezar</button></span>
+          </div>`).join('')}
+      </div>
+      <div class="mensaje" id="mensajePedidosCrmSinOrden"></div>`;
+  }
+
+  async function empezarPedidoCrm(pedidoId, boton) {
+    const p = pedidosCrmSinOrdenCache.find(x => x.id === pedidoId);
+    if (!p) return;
+    if (boton) boton.disabled = true;
+    const numero = p.numero_pedido || p.id;
+    const { data: ordenId, error } = await supabaseClient.rpc('fn_op_abrir', {
+      p_producto_item_id: null,
+      p_descripcion: [p.tipo, p.descripcion].filter(Boolean).join(': ') || ('Pedido ' + numero),
+      p_cantidad: Number(p.cantidad_unidades) || 1,
+      p_pedido_canal_id: null,
+      p_pedido_crm_id: p.id,
+      p_numero_pedido_crm: numero,
+      p_observaciones: p.nombre_cliente ? 'Cliente: ' + p.nombre_cliente : null,
+    });
+    if (error) {
+      if (boton) boton.disabled = false;
+      mostrarMensaje('mensajePedidosCrmSinOrden', 'No se pudo abrir la orden: ' + error.message, 'error');
+      return;
+    }
+    mostrarMensaje('mensajeOrdenesProd', '✅ Orden abierta para el pedido ' + numero + '. Ahora entrégale el material que se va a usar.', 'exito');
+    ordenAccionAbierta = { id: ordenId, accion: 'entregar' };
+    filtrarOrdenesProduccion('en_proceso', document.querySelector('[data-filtro-op="en_proceso"]'));
+    await cargarPedidosCrmSinOrden();
   }
 
   // Al terminar una orden que salió de un pedido por elaborar, el pedido también queda terminado.
