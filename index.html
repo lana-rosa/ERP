@@ -2390,9 +2390,11 @@
     <h1>🧮 Costeo Real</h1>
     <div class="subtitulo">Costo de materiales + mano de obra por producto, comparado contra el precio de venta, para ver el margen real de cada pieza.</div>
   </div>
+  <div class="mensaje" id="mensajeCosteoReal"></div>
 
   <div class="filtro-tipo" style="margin-bottom:20px;">
     <button class="chip-filtro activo" data-subtab-btn="costeoReal" onclick="mostrarSubTabGrupo('costeoReal', 'subtabCosteoAmigurumis', this)">🧶 Amigurumis y productos tejidos</button>
+    <button class="chip-filtro" data-subtab-btn="costeoReal" onclick="mostrarSubTabGrupo('costeoReal', 'subtabCosteoMateriaPrima', this); cargarCostoMateriaPrima();">📅 Costo de materia prima por período</button>
     <button class="chip-filtro" data-subtab-btn="costeoReal" onclick="mostrarSubTabGrupo('costeoReal', 'subtabCosteoClases', this)">🎓 Cursos y clases</button>
     <button class="chip-filtro" data-subtab-btn="costeoReal" onclick="mostrarSubTabGrupo('costeoReal', 'subtabCosteoConfig', this)">⚙️ Configuración</button>
   </div>
@@ -2404,6 +2406,20 @@
       <div class="subtitulo">Costo de mano de obra = horas de tejido registradas en el CRM × valor de la hora (SMLV + prestaciones + ARL + parafiscales). Costo de materiales = lo consumido real del inventario para ese pedido — o, si no se registró, un estimado por el peso configurado del producto (marcado como "estimado").</div>
       <input type="text" id="buscarCosteoAmigurumis" placeholder="🔍 Buscar por nombre de producto..." oninput="filtrarCosteoAmigurumis()" style="margin-bottom:10px;">
       <div id="listaCosteoAmigurumis"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+
+  <div id="subtabCosteoMateriaPrima" data-subtab-grupo="costeoReal" class="oculto">
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+      <div><label for="cmpFechaDesde" style="font-size:11px;">Desde</label><input type="date" id="cmpFechaDesde" onchange="cargarCostoMateriaPrima()" style="padding:9px 10px;"></div>
+      <div><label for="cmpFechaHasta" style="font-size:11px;">Hasta</label><input type="date" id="cmpFechaHasta" onchange="cargarCostoMateriaPrima()" style="padding:9px 10px;"></div>
+      <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarCostoMateriaPrimaExcel()">📥 Excel</button>
+      <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirSeccion('subtabCosteoMateriaPrima', 'Costo de materia prima por producto')">🖨️ Imprimir / PDF</button>
+    </div>
+    <div class="panel" style="max-width:none;max-height:none;">
+      <h2>📅 Costo promedio de materia prima por producto de venta</h2>
+      <div class="subtitulo">Para cada producto vendido en el período: costo estimado de materiales (peso configurado × precio del gramo de hilo, más ojos/empaque/accesorios) y el margen frente al precio de venta promedio del período. No incluye mano de obra — para el costo total con mano de obra, ve a "Amigurumis y productos tejidos".</div>
+      <div id="contenidoCostoMateriaPrima"><div class="cargando">Cargando...</div></div>
     </div>
   </div>
 
@@ -14129,6 +14145,10 @@
     mostrarSubTabGrupo('costeoReal', 'subtabCosteoAmigurumis', document.querySelector('[data-subtab-btn="costeoReal"]'));
     document.getElementById('buscarCosteoAmigurumis').value = '';
     document.getElementById('buscarCosteoClases').value = '';
+    if (!document.getElementById('cmpFechaDesde').value) {
+      document.getElementById('cmpFechaDesde').value = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10);
+      document.getElementById('cmpFechaHasta').value = new Date().toISOString().slice(0, 10);
+    }
     await cargarCosteoReal();
   }
 
@@ -14192,6 +14212,66 @@
         `).join('')}
       </div>
     `;
+  }
+
+  let cacheCostoMateriaPrima = null;
+
+  async function cargarCostoMateriaPrima() {
+    const cont = document.getElementById('contenidoCostoMateriaPrima');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    const desde = document.getElementById('cmpFechaDesde').value;
+    const hasta = document.getElementById('cmpFechaHasta').value;
+    if (!desde || !hasta) return;
+    let d;
+    try {
+      d = await llamarReporteContable('fn_costo_materia_prima_por_producto', { p_desde: desde, p_hasta: hasta });
+    } catch (e) {
+      cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(e.message)}</div>`;
+      return;
+    }
+    cacheCostoMateriaPrima = d;
+    const productos = d.productos || [];
+    if (productos.length === 0) {
+      cont.innerHTML = '<div class="cargando">No hay ventas de productos terminados en este período.</div>';
+      return;
+    }
+    const sinPeso = productos.filter(p => Number(p.costo_materiales_unitario) === 0).length;
+    cont.innerHTML = `
+      <div style="font-size:12px;opacity:0.7;margin-bottom:10px;">Precio del gramo de hilo usado: ${formatearMoneda(d.precio_gramo_hilo)} (se configura en la pestaña "⚙️ Configuración").</div>
+      ${sinPeso ? `<div style="background:var(--tinte-ambar);color:var(--ambar);border-radius:var(--radius-md);padding:8px 12px;font-size:12.5px;margin-bottom:10px;">⚠️ ${sinPeso} producto(s) salen en $0 porque no tienen el peso configurado en Inventario (campo "Peso en gramos" de la ficha del producto).</div>` : ''}
+      <div class="tabla-lista">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:1fr 90px 110px 110px 110px 100px;">
+          <span>PRODUCTO</span><span style="text-align:right;">UNID. VENDIDAS</span><span style="text-align:right;">COSTO MAT. UNIT.</span><span style="text-align:right;">COSTO MAT. TOTAL</span><span style="text-align:right;">PRECIO VENTA PROM.</span><span style="text-align:right;">MARGEN MAT.</span>
+        </div>
+        ${productos.map(p => `
+          <div class="tabla-lista-fila" style="grid-template-columns:1fr 90px 110px 110px 110px 100px;cursor:default;">
+            <span>${escaparHtml(p.nombre)}</span>
+            <span style="text-align:right;">${p.unidades_vendidas}</span>
+            <span style="text-align:right;">${formatearMoneda(p.costo_materiales_unitario)}</span>
+            <span style="text-align:right;">${formatearMoneda(p.costo_materiales_total)}</span>
+            <span style="text-align:right;">${formatearMoneda(p.precio_venta_promedio)}</span>
+            <span style="text-align:right;color:${p.margen_materiales_unitario >= 0 ? 'var(--verde-exito)' : 'var(--rojo-error)'};font-weight:700;">${formatearMoneda(p.margen_materiales_unitario)}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  function exportarCostoMateriaPrimaExcel() {
+    if (!cacheCostoMateriaPrima) { mostrarMensaje('mensajeCosteoReal', 'Espera a que cargue el reporte primero.', 'error'); return; }
+    const d = cacheCostoMateriaPrima;
+    const filas = [
+      ['Lana Rosa Crochet — Costo de materia prima por producto'],
+      [`Período: ${d.periodo.desde || ''} a ${d.periodo.hasta || ''}`],
+      [`Precio del gramo de hilo: ${d.precio_gramo_hilo}`],
+      [],
+      ['Producto', 'Unidades vendidas', 'Costo materiales unitario', 'Costo materiales total', 'Precio venta promedio', 'Margen sobre materiales'],
+      ...(d.productos || []).map(p => [p.nombre, p.unidades_vendidas, p.costo_materiales_unitario, p.costo_materiales_total, p.precio_venta_promedio, p.margen_materiales_unitario]),
+    ];
+    const hoja = XLSX.utils.aoa_to_sheet(filas);
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Costo materia prima');
+    XLSX.writeFile(libro, `LanaRosa_CostoMateriaPrima_${new Date().toISOString().slice(0, 10)}.xlsx`);
   }
 
   function renderizarCosteoClases(clases) {
@@ -21735,7 +21815,7 @@
     ['consolidadoFechaDesde', 'consolidadoFechaHasta'], ['rkFechaDesde', 'rkFechaHasta'],
     ['repTurnoFechaDesde', 'repTurnoFechaHasta'], ['cxcFiltroFechaDesde', 'cxcFiltroFechaHasta'],
     ['keDesde', 'keHasta', 'cargarKardexEtapas'], ['feEmDesde', 'feEmHasta'], ['feDesde', 'feHasta'],
-    ['concFiltroDesde', 'concFiltroHasta'], ['ecFechaDesde', 'ecFechaHasta'],
+    ['concFiltroDesde', 'concFiltroHasta'], ['ecFechaDesde', 'ecFechaHasta'], ['cmpFechaDesde', 'cmpFechaHasta', 'cargarCostoMateriaPrima'],
   ];
   const CORTES_CON_SELECTOR_PERIODO = ['bgFechaCorte'];
 
