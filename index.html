@@ -967,6 +967,8 @@
         <button class="nav-btn" id="nav-transferir-stock-taller" onclick="mostrarPantallaTransferirStock()"><span class="nav-icon">🔄</span> Transferir stock (Taller)</button>
         <button class="nav-btn" id="nav-solicitudes-tienda" onclick="mostrarPantallaSolicitudes()"><span class="nav-icon">📦</span> Solicitud de insumos del Taller</button>
         <button class="nav-btn" id="nav-consumotaller" onclick="mostrarPantallaPedidosCrm()"><span class="nav-icon">🧶</span> Consumo de material (Taller)</button>
+        <button class="nav-btn" id="nav-ordenes-produccion" onclick="mostrarPantallaOrdenesProduccion()"><span class="nav-icon">🏭</span> Órdenes de producción</button>
+        <button class="nav-btn" id="nav-kardex-etapas" onclick="mostrarPantallaKardexEtapas()"><span class="nav-icon">📒</span> Kardex por etapas</button>
       </div>
     </div>
 
@@ -978,6 +980,7 @@
         <button class="nav-btn" id="nav-dashboard-contable" onclick="mostrarPantallaDashboardContable()"><span class="nav-icon">💹</span> Dashboard Contable</button>
         <button class="nav-btn" id="nav-honorarios-tejedoras" onclick="mostrarPantallaHonorariosTejedoras()"><span class="nav-icon">🧵</span> Honorarios Tejedoras</button>
         <button class="nav-btn" id="nav-estados-financieros" onclick="mostrarPantallaEstadosFinancieros()"><span class="nav-icon">📑</span> Estados financieros y libros</button>
+        <button class="nav-btn" id="nav-contabilidad-impuestos" onclick="mostrarPantallaContabilidadImpuestos()"><span class="nav-icon">🧾</span> Impuestos, PUC y ajustes</button>
         <button class="nav-btn" id="nav-activos-fijos" onclick="mostrarPantallaActivosFijos()"><span class="nav-icon">🪑</span> Activos fijos</button>
         <div class="sidebar-seccion">Reportes e indicadores</div>
         <button class="nav-btn" id="nav-reportes-financieros" onclick="mostrarPantallaReportesFinancieros()"><span class="nav-icon">📊</span> Informes de Ventas</button>
@@ -1641,7 +1644,7 @@
 <div id="pantallaPedidosCrm" class="oculto contenido">
   <div class="page-header">
     <h1>Consumo de taller — por pedido</h1>
-    <div class="subtitulo">Elige el pedido en producción (código del CRM), toma el material que vas a usar de la lista del inventario del Taller, y al terminar devuelve el sobrante. Todo queda registrado bajo el número del pedido.</div>
+    <div class="subtitulo">Elige el pedido en producción (código del CRM), toma el material que vas a usar de la lista del inventario del Taller, y al terminar devuelve el sobrante. Todo queda registrado bajo el número del pedido y en su orden de producción (se abre sola la primera vez que tomas material). Cuando la pieza esté lista, termínala en <a href="#" onclick="mostrarPantallaOrdenesProduccion(); return false;">🏭 Órdenes de producción</a>.</div>
   </div>
 
   <div class="grilla-2">
@@ -1672,6 +1675,66 @@
     <input type="text" id="buscarHistorialConsumosTaller" placeholder="🔍 N° de pedido o insumo..." oninput="filtrarHistorialConsumosTaller()" style="margin-bottom:10px;">
     <div id="listaHistorialConsumosTaller"><div class="cargando">Cargando...</div></div>
   </div>
+</div>
+
+<!-- ===== PANTALLA: ÓRDENES DE PRODUCCIÓN ===== -->
+<div id="pantallaOrdenesProduccion" class="oculto contenido">
+  <div class="page-header">
+    <h1>🏭 Órdenes de producción</h1>
+    <div class="subtitulo">Cada pieza o lote que se teje tiene una orden. El material que se le entrega sale de la materia prima (Tienda o Taller) y queda en <strong>productos en proceso</strong> hasta que la orden se termina; al terminarla, las unidades pasan a <strong>productos terminados</strong>.</div>
+  </div>
+  <div class="mensaje" id="mensajeOrdenesProd"></div>
+
+  <div class="panel" style="max-width:none;max-height:none;margin-bottom:20px;">
+    <h2>+ Abrir orden de producción</h2>
+    <div class="grilla-2" style="gap:12px;">
+      <div>
+        <label for="opProducto">¿Qué se va a tejer?</label>
+        <select id="opProducto" onchange="cambiarProductoNuevaOrden()"></select>
+      </div>
+      <div>
+        <label for="opPedido">Pedido <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+        <select id="opPedido"></select>
+      </div>
+      <div id="opBloqueDescripcion" class="oculto">
+        <label for="opDescripcion">Descripción del encargo</label>
+        <input type="text" id="opDescripcion" placeholder="Ej: Amigurumi personalizado de mascota">
+      </div>
+      <div>
+        <label for="opCantidad">Unidades a producir</label>
+        <input type="number" id="opCantidad" min="1" step="1" value="1">
+      </div>
+      <div>
+        <label for="opObservaciones">Observaciones <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+        <input type="text" id="opObservaciones" placeholder="Tejedora, colores, detalles...">
+      </div>
+    </div>
+    <button class="btn-principal" style="width:auto;" onclick="confirmarAbrirOrdenProduccion()">Abrir orden</button>
+  </div>
+
+  <div class="filtro-tipo" style="margin-bottom:14px;">
+    <button class="chip-filtro activo" data-filtro-op="en_proceso" onclick="filtrarOrdenesProduccion('en_proceso', this)">🧶 En proceso</button>
+    <button class="chip-filtro" data-filtro-op="terminada" onclick="filtrarOrdenesProduccion('terminada', this)">✅ Terminadas</button>
+    <button class="chip-filtro" data-filtro-op="todas" onclick="filtrarOrdenesProduccion('todas', this)">📋 Todas</button>
+  </div>
+  <div id="listaOrdenesProduccion"><div class="cargando">Cargando...</div></div>
+</div>
+
+<!-- ===== PANTALLA: KARDEX POR ETAPAS ===== -->
+<div id="pantallaKardexEtapas" class="oculto contenido">
+  <div class="page-header">
+    <h1>📒 Kardex por etapas</h1>
+    <div class="subtitulo">Dónde está la materia prima en cada momento: en inventario (Tienda o Taller), en productos en proceso o convertida en productos terminados. Se puede generar para cualquier rango de fechas.</div>
+  </div>
+  <div class="mensaje" id="mensajeKardexEtapas"></div>
+  <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+    <div><label for="keDesde" style="font-size:11px;">Desde</label><input type="date" id="keDesde" style="padding:9px 10px;"></div>
+    <div><label for="keHasta" style="font-size:11px;">Hasta</label><input type="date" id="keHasta" style="padding:9px 10px;"></div>
+    <button class="btn-principal" style="width:auto;margin-top:0;" onclick="cargarKardexEtapas()">Generar</button>
+    <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarKardexEtapasExcel()">📥 Excel</button>
+    <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirKardexEtapas()">🖨️ Imprimir / PDF</button>
+  </div>
+  <div id="keContenido"><div class="cargando">Elige el rango de fechas y pulsa Generar.</div></div>
 </div>
 
 <!-- ===== PANTALLA: SOLICITUDES ===== -->
@@ -1929,7 +1992,7 @@
   <div id="subtabHonorarios" data-subtab-grupo="pagosPendientes" class="oculto">
     <div class="panel" style="max-width:480px;">
       <div style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;font-size:12px;margin-bottom:14px;">
-        ℹ️ Para asesores externos que reciben pago por prestación de servicios (contador, abogado, etc.) — no es nómina. Antes de activar la retención, confírmalo con tu contador: como persona natural, es probable que hoy <strong>no</strong> estés obligada a retener, salvo que ingresos/patrimonio superen 30.000 UVT al año.
+        ℹ️ Para asesores externos que reciben pago por prestación de servicios (contador, abogado, etc.) — no es nómina. Lana Rosa está en el <strong>Régimen SIMPLE</strong>, que no practica retención en la fuente sobre honorarios (art. 911 del Estatuto Tributario), así que se paga el valor completo.
       </div>
       <label for="honProveedor">Asesor / proveedor de servicios</label>
       <select id="honProveedor"></select>
@@ -1937,7 +2000,7 @@
       <input type="text" id="honDescripcion" placeholder="Ej: Asesoría contable mes de julio">
       <label for="honMontoBruto">Valor del servicio (COP, bruto)</label>
       <input type="number" id="honMontoBruto" min="0" step="1" oninput="calcularNetoHonorarios()">
-      <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-weight:400;">
+      <label class="oculto" style="display:flex;align-items:center;gap:8px;margin-top:10px;font-weight:400;">
         <input type="checkbox" id="honAplicaRetencion" style="width:auto;" onchange="calcularNetoHonorarios()">
         <span>Aplicar retención en la fuente</span>
       </label>
@@ -3868,6 +3931,221 @@
   <div id="listaHonorariosTejedoras"><div class="cargando">Cargando...</div></div>
 </div>
 
+<!-- ===== PANTALLA: IMPUESTOS, PLAN DE CUENTAS Y AJUSTES ===== -->
+<div id="pantallaContabilidadImpuestos" class="oculto contenido">
+  <div class="page-header">
+    <h1>🧾 Impuestos, plan de cuentas y ajustes</h1>
+    <div class="subtitulo">Herramientas del contador: impuesto SIMPLE, plan de cuentas (PUC), asientos de ajuste y bitácora de auditoría. Todo queda registrado con fecha y usuario.</div>
+  </div>
+
+  <div class="filtro-tipo" style="margin-bottom:20px;">
+    <button class="chip-filtro activo" data-subtab-btn="contaImp" onclick="mostrarSubTabGrupo('contaImp', 'subtabCiSimple', this); cargarSimple();">🧾 Impuesto SIMPLE</button>
+    <button class="chip-filtro" data-subtab-btn="contaImp" onclick="mostrarSubTabGrupo('contaImp', 'subtabCiPuc', this); cargarPlanCuentas();">📒 Plan de cuentas</button>
+    <button class="chip-filtro" data-subtab-btn="contaImp" onclick="mostrarSubTabGrupo('contaImp', 'subtabCiCostos', this); cargarCierreCostos();">🏭 Cierre de costos</button>
+    <button class="chip-filtro" data-subtab-btn="contaImp" onclick="mostrarSubTabGrupo('contaImp', 'subtabCiAjuste', this); prepararAsientoAjuste();">✍️ Asiento de ajuste</button>
+    <button class="chip-filtro" data-subtab-btn="contaImp" onclick="mostrarSubTabGrupo('contaImp', 'subtabCiExogena', this); cargarExogena();">📑 Exógena DIAN</button>
+    <button class="chip-filtro" data-subtab-btn="contaImp" onclick="mostrarSubTabGrupo('contaImp', 'subtabCiDeclaracion', this); cargarResumenTributario();">📋 Declaración anual</button>
+    <button class="chip-filtro" data-subtab-btn="contaImp" onclick="mostrarSubTabGrupo('contaImp', 'subtabCiBitacora', this); cargarBitacoraContable();">🕵️ Bitácora</button>
+  </div>
+  <div class="mensaje" id="mensajeContaImp"></div>
+
+  <div id="subtabCiSimple" data-subtab-grupo="contaImp">
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+      <div><label for="ciSimpleAnio" style="font-size:11px;">Año gravable</label>
+        <select id="ciSimpleAnio" onchange="cargarSimple()" style="padding:9px 10px;"></select>
+      </div>
+    </div>
+
+    <div class="panel" style="max-width:none;max-height:none;margin-bottom:20px;">
+      <h2>Ingresos percibidos y anticipos por bimestre</h2>
+      <div class="subtitulo">En el Régimen SIMPLE la base son los ingresos brutos <strong>percibidos</strong> (art. 904 E.T.): lo cobrado en el bimestre, incluidos los anticipos de pedidos. Se calcula desde los libros contables.</div>
+      <div id="ciSimpleBimestres"><div class="cargando">Cargando...</div></div>
+    </div>
+
+    <div class="grilla-2" style="margin-bottom:20px;">
+      <div class="panel" style="max-height:none;">
+        <h2>Registrar pago de anticipo bimestral</h2>
+        <div class="subtitulo">Recibo electrónico SIMPLE (formulario 2593). Genera el asiento: débito 1355 Anticipo de impuestos, crédito caja o bancos.</div>
+        <label for="ciAntBimestre">Bimestre</label>
+        <select id="ciAntBimestre">
+          <option value="1">1 — Enero–Febrero</option><option value="2">2 — Marzo–Abril</option><option value="3">3 — Mayo–Junio</option>
+          <option value="4">4 — Julio–Agosto</option><option value="5">5 — Septiembre–Octubre</option><option value="6">6 — Noviembre–Diciembre</option>
+        </select>
+        <label for="ciAntMonto">Valor pagado (COP)</label>
+        <input type="number" id="ciAntMonto" min="1" step="1" placeholder="0">
+        <label for="ciAntFecha">Fecha de pago</label>
+        <input type="date" id="ciAntFecha">
+        <label for="ciAntMetodo">Pagado desde</label>
+        <select id="ciAntMetodo">
+          <option value="transferencia">Banco (transferencia / PSE)</option>
+          <option value="nequi">Nequi</option>
+          <option value="efectivo">Efectivo (caja)</option>
+        </select>
+        <label for="ciAntRecibo">N° de recibo 2593 <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+        <input type="text" id="ciAntRecibo" placeholder="Ej: 4910123456789">
+        <button class="btn-principal" onclick="confirmarAnticipoSimple()">Registrar pago de anticipo</button>
+      </div>
+
+      <div class="panel" style="max-height:none;">
+        <h2>Declaración anual (formulario 260)</h2>
+        <div class="subtitulo">Registra el impuesto a cargo que liquidó tu contador. El sistema causa el gasto (5405 contra 2404), le cruza los anticipos pagados y muestra el saldo.</div>
+        <div id="ciSimpleDeclaracion"></div>
+        <label for="ciDecImpuesto">Impuesto SIMPLE a cargo del año (COP)</label>
+        <input type="number" id="ciDecImpuesto" min="0" step="1" placeholder="0">
+        <label for="ciDecFecha">Fecha de presentación</label>
+        <input type="date" id="ciDecFecha">
+        <label for="ciDecFormulario">N° de formulario <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+        <input type="text" id="ciDecFormulario">
+        <button class="btn-principal" onclick="confirmarDeclaracionSimple()">Registrar declaración</button>
+
+        <h2 style="margin-top:22px;">Pago del saldo a cargo</h2>
+        <div class="grid-campos-inventario">
+          <div class="campo-mini"><label>Valor pagado</label><input type="number" id="ciSaldoMonto" min="1" step="1"></div>
+          <div class="campo-mini"><label>Fecha</label><input type="date" id="ciSaldoFecha"></div>
+        </div>
+        <label for="ciSaldoMetodo">Pagado desde</label>
+        <select id="ciSaldoMetodo">
+          <option value="transferencia">Banco (transferencia / PSE)</option>
+          <option value="nequi">Nequi</option>
+          <option value="efectivo">Efectivo (caja)</option>
+        </select>
+        <button class="btn-secundario" onclick="confirmarPagoSaldoSimple()">Registrar pago del saldo</button>
+      </div>
+    </div>
+
+    <div class="panel" style="max-width:none;max-height:none;">
+      <h2>Parámetros del año (los define tu contador)</h2>
+      <div class="subtitulo">Valor de la UVT y tarifa consolidada del SIMPLE para la actividad de Lana Rosa (art. 908 E.T.), por rangos de ingresos brutos anuales en UVT. Con esto el sistema estima el anticipo de cada bimestre (anualizando sus ingresos ×6). La cifra que vale es la del recibo que se paga.</div>
+      <div style="max-width:260px;">
+        <label for="ciUvt">Valor de la UVT (COP)</label>
+        <input type="number" id="ciUvt" min="1" step="1">
+      </div>
+      <label style="margin-top:14px;">Rangos de tarifa</label>
+      <div id="ciTarifas"></div>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+        <button class="btn-mini editar" style="flex:0 0 auto;padding:8px 14px;" onclick="agregarFilaTarifaSimple()">+ Agregar rango</button>
+        <button class="btn-mini guardar" style="flex:0 0 auto;padding:8px 14px;" onclick="guardarParametrosSimple()">Guardar parámetros</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="subtabCiPuc" data-subtab-grupo="contaImp" class="oculto">
+    <div class="grilla-2" style="grid-template-columns:1.6fr 1fr;align-items:start;">
+      <div class="panel" style="max-height:none;">
+        <h2>Plan Único de Cuentas</h2>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+          <input type="text" id="ciPucBuscar" placeholder="Buscar por código o nombre..." oninput="renderizarPlanCuentas()" style="flex:1;min-width:200px;">
+          <label style="display:flex;align-items:center;gap:6px;margin:0;font-weight:400;font-size:12.5px;">
+            <input type="checkbox" id="ciPucInactivas" style="width:auto;" onchange="renderizarPlanCuentas()"> Ver inactivas
+          </label>
+        </div>
+        <div id="ciPucLista"><div class="cargando">Cargando...</div></div>
+      </div>
+      <div class="panel" style="max-height:none;">
+        <h2>Nueva subcuenta o auxiliar</h2>
+        <div class="subtitulo">Subcuenta: 6 dígitos (ej. 530505 bajo 5305). Auxiliar: 8 dígitos (ej. 53050501 bajo 530505). Solo las cuentas del último nivel reciben movimientos.</div>
+        <label for="ciPucPadre">Cuenta padre (código)</label>
+        <input type="text" id="ciPucPadre" placeholder="Ej: 5305" inputmode="numeric">
+        <label for="ciPucCodigo">Código nuevo</label>
+        <input type="text" id="ciPucCodigo" placeholder="Ej: 530505" inputmode="numeric">
+        <label for="ciPucNombre">Nombre</label>
+        <input type="text" id="ciPucNombre" placeholder="Ej: Gastos bancarios">
+        <button class="btn-principal" onclick="confirmarCrearCuentaPuc()">Crear cuenta</button>
+        <div style="margin-top:14px;font-size:11.5px;color:var(--texto-suave);line-height:1.5;">
+          🔒 Las cuentas marcadas <strong>Sistema</strong> las usan los asientos automáticos (ventas, pedidos, gastos, nómina): no se les puede cambiar el código ni desactivar.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="subtabCiCostos" data-subtab-grupo="contaImp" class="oculto">
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+      <div><label for="ciCostosMes" style="font-size:11px;">Mes</label>
+        <input type="month" id="ciCostosMes" onchange="cargarCierreCostos()" style="padding:9px 10px;">
+      </div>
+    </div>
+    <div class="panel" style="max-width:none;max-height:none;">
+      <h2>Cierre de costos de producción del mes</h2>
+      <div class="subtitulo">Método de inventario periódico: compara los libros con las existencias reales al cierre del mes (según el kardex) y registra la materia prima consumida, traslada la mano de obra y los gastos del Taller a costo de producción, y ajusta el costo de ventas al costo real. Revisa la vista previa antes de registrar.</div>
+      <div id="ciCostosContenido"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+
+  <div id="subtabCiAjuste" data-subtab-grupo="contaImp" class="oculto">
+    <div class="panel" style="max-width:none;max-height:none;">
+      <h2>Asiento de ajuste o nota contable</h2>
+      <div class="subtitulo">Para reclasificaciones, correcciones y saldos iniciales. Debe cuadrar (débitos = créditos) y queda registrado con tu usuario; no se puede editar ni borrar después, solo revertir.</div>
+      <div class="grilla-2" style="grid-template-columns:200px 1fr;">
+        <div><label for="ciAjFecha">Fecha</label><input type="date" id="ciAjFecha"></div>
+        <div><label for="ciAjDescripcion">Descripción</label><input type="text" id="ciAjDescripcion" placeholder="Ej: Reclasificación de gasto de papelería"></div>
+      </div>
+      <label style="margin-top:14px;">Líneas del asiento</label>
+      <div class="tabla-lista">
+        <div class="tabla-lista-header" style="grid-template-columns:2fr 1.2fr 1.2fr 120px 120px 36px;">
+          <span>CUENTA</span><span>CENTRO DE COSTO</span><span>TERCERO</span><span style="text-align:right;">DÉBITO</span><span style="text-align:right;">CRÉDITO</span><span></span>
+        </div>
+        <div id="ciAjLineas"></div>
+      </div>
+      <button class="btn-mini editar" style="flex:0 0 auto;padding:8px 14px;margin-top:10px;" onclick="agregarLineaAjuste()">+ Agregar línea</button>
+      <div id="ciAjTotales" style="margin-top:12px;"></div>
+      <button class="btn-principal" id="btnRegistrarAjuste" onclick="confirmarAsientoAjuste()">Registrar asiento</button>
+    </div>
+  </div>
+
+  <div id="subtabCiExogena" data-subtab-grupo="contaImp" class="oculto">
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+      <div><label for="ciExoAnio" style="font-size:11px;">Año gravable</label><select id="ciExoAnio" onchange="cargarExogena()" style="padding:9px 10px;"></select></div>
+      <div><label for="ciExoFormato" style="font-size:11px;">Formato</label>
+        <select id="ciExoFormato" onchange="cargarExogena()" style="padding:9px 10px;">
+          <option value="1001">1001 — Pagos o abonos en cuenta y retenciones practicadas</option>
+          <option value="1003">1003 — Retenciones en la fuente que le practicaron</option>
+          <option value="1007">1007 — Ingresos recibidos</option>
+          <option value="1008">1008 — Saldos de cuentas por cobrar al 31 de diciembre</option>
+          <option value="1009">1009 — Saldos de cuentas por pagar al 31 de diciembre</option>
+        </select>
+      </div>
+      <div><label for="ciExoTope" style="font-size:11px;">Tope de cuantías menores (COP)</label>
+        <div style="display:flex;gap:6px;"><input type="number" id="ciExoTope" min="0" step="1" style="padding:9px 10px;width:160px;">
+        <button class="btn-mini editar" style="flex:0 0 auto;padding:8px 12px;" onclick="guardarTopeExogena()">Guardar tope</button></div>
+      </div>
+      <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarExogenaExcel()">📥 Excel para el prevalidador</button>
+    </div>
+    <div style="background:var(--tinte-azul);border-radius:var(--radius-md);padding:10px 14px;margin-bottom:16px;font-size:12.5px;line-height:1.5;">
+      ℹ️ La obligación de presentar exógena la define cada año una resolución de la DIAN, según topes de ingresos. Con los ingresos actuales de Lana Rosa es probable que no estés obligada, pero tu contador debe confirmarlo con la resolución vigente. El Excel sale con las columnas de los prevalidadores de la DIAN para copiarlas allí; verifica la versión del prevalidador antes de cargar.
+    </div>
+    <div id="ciExoContenido"><div class="cargando">Cargando...</div></div>
+    <div id="ciExoEditorTercero" class="panel oculto" style="max-width:none;max-height:none;margin-top:20px;"></div>
+    <details class="panel" style="max-width:none;max-height:none;margin-top:20px;">
+      <summary style="cursor:pointer;font-weight:600;">⚙️ Conceptos por cuenta contable (los valida el contador)</summary>
+      <div id="ciExoConceptos" style="margin-top:12px;"></div>
+    </details>
+  </div>
+
+  <div id="subtabCiDeclaracion" data-subtab-grupo="contaImp" class="oculto">
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+      <div><label for="ciDecAnio" style="font-size:11px;">Año gravable</label><select id="ciDecAnio" onchange="cargarResumenTributario()" style="padding:9px 10px;"></select></div>
+      <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarResumenTributarioExcel()">📥 Excel para el contador</button>
+      <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirEstadoFinanciero('ciDecContenido', 'Información para la declaración anual')">🖨️ Imprimir / PDF</button>
+    </div>
+    <div style="background:var(--tinte-azul);border-radius:var(--radius-md);padding:10px 14px;margin-bottom:16px;font-size:12.5px;line-height:1.5;">
+      ℹ️ Sara está inscrita en el <strong>Régimen SIMPLE</strong>: la declaración anual consolidada del SIMPLE (formulario 260) reemplaza a la declaración de renta (formulario 210) por los ingresos del negocio. Aquí están los datos del negocio que alimentan esa declaración. Tu contador confirma si hay algo adicional que declarar (por ejemplo, ingresos por fuera del negocio) y completa los bienes y deudas personales, que no están en este sistema.
+    </div>
+    <div id="ciDecContenido"><div class="cargando">Cargando...</div></div>
+  </div>
+
+  <div id="subtabCiBitacora" data-subtab-grupo="contaImp" class="oculto">
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+      <div><label for="ciBitDesde" style="font-size:11px;">Desde</label><input type="date" id="ciBitDesde" onchange="cargarBitacoraContable()" style="padding:9px 10px;"></div>
+      <div><label for="ciBitHasta" style="font-size:11px;">Hasta</label><input type="date" id="ciBitHasta" onchange="cargarBitacoraContable()" style="padding:9px 10px;"></div>
+    </div>
+    <div class="panel" style="max-width:none;max-height:none;">
+      <h2>Bitácora de auditoría contable</h2>
+      <div class="subtitulo">Cada asiento creado, revertido o completado, y cada cambio al plan de cuentas o a los parámetros del SIMPLE. Esta bitácora no se puede modificar ni borrar.</div>
+      <div id="ciBitacoraLista"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+</div>
+
 <div id="pantallaEstadosFinancieros" class="oculto contenido">
   <div class="page-header">
     <h1>📑 Estados financieros</h1>
@@ -3880,6 +4158,7 @@
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabFlujoCaja', this); cargarFlujoCaja();">💵 Flujo de Caja</button>
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabLibroDiario', this); cargarLibroDiario();">📖 Libro Diario</button>
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabLibroMayor', this); cargarLibroMayor();">📚 Libro Mayor</button>
+    <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabBalancePrueba', this); cargarBalancePrueba();">🧮 Balance de prueba</button>
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabLibroAuxiliar', this); prepararLibroAuxiliar();">🔍 Libro Auxiliar</button>
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabCierreContable', this); cargarPantallaCierreContable();">🔒 Cierre contable</button>
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabBloqueoFecha', this); cargarPantallaBloqueoFecha();">🔐 Bloqueo de período</button>
@@ -3933,6 +4212,16 @@
       <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarLibroMayorExcel()">📥 Excel</button>
     </div>
     <div id="contenidoLibroMayor"><div class="cargando">Cargando...</div></div>
+  </div>
+
+  <div id="subtabBalancePrueba" data-subtab-grupo="estadosFin" class="oculto">
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+      <div><label for="bpFechaDesde" style="font-size:11px;">Desde</label><input type="date" id="bpFechaDesde" onchange="cargarBalancePrueba()" style="padding:9px 10px;"></div>
+      <div><label for="bpFechaHasta" style="font-size:11px;">Hasta</label><input type="date" id="bpFechaHasta" onchange="cargarBalancePrueba()" style="padding:9px 10px;"></div>
+      <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarBalancePruebaExcel()">📥 Excel</button>
+      <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirEstadoFinanciero('contenidoBalancePrueba', 'Balance de prueba')">🖨️ Imprimir / PDF</button>
+    </div>
+    <div id="contenidoBalancePrueba"><div class="cargando">Cargando...</div></div>
   </div>
 
   <div id="subtabLibroAuxiliar" data-subtab-grupo="estadosFin" class="oculto">
@@ -4807,7 +5096,7 @@
   });
 
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb'];
+    const pantallas = ['pantallaLogin', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -4829,12 +5118,15 @@
       pantallaAjustestock: 'nav-ajustestock',
       pantallaConsumoTaller: 'nav-consumotaller',
       pantallaPedidosCrm: 'nav-consumotaller',
+      pantallaOrdenesProduccion: 'nav-ordenes-produccion',
+      pantallaKardexEtapas: 'nav-kardex-etapas',
       pantallaTurnoActivo: 'nav-turno',
       pantallaReportes: 'nav-reportes',
       pantallaReportesFinancieros: 'nav-reportes-financieros',
       pantallaCosteoReal: 'nav-costeo-real',
       pantallaPresupuestoEmpresa: 'nav-presupuesto-empresa',
       pantallaDashboardContable: 'nav-dashboard-contable',
+      pantallaContabilidadImpuestos: 'nav-contabilidad-impuestos',
       pantallaHonorariosTejedoras: 'nav-honorarios-tejedoras',
       pantallaNomina: 'nav-nomina',
       pantallaTalentoHumano: 'nav-talento-humano',
@@ -5161,7 +5453,7 @@
     // Grupos completos (acordeón) — reorganizados según los 7 puntos estándar de un ERP
     mostrar('deptoVentasGrupo', esAdmin || esCajero);
     mostrar('deptoComprasGrupo', esAdmin);
-    mostrar('deptoInventarioGrupo', esAdmin || esCajero || esTaller);
+    mostrar('deptoInventarioGrupo', esAdmin || esCajero || esTaller || esContador);
     mostrar('deptoContabilidadGrupo', esAdmin || esContador);
     mostrar('deptoTalentoGrupo', esAdmin);
     mostrar('deptoFondoEmprenderGrupo', esAdmin);
@@ -5199,6 +5491,8 @@
     mostrar('nav-pedidos-canal', esAdmin || esCajero);
     mostrar('nav-solicitudes-tienda', esAdmin || esCajero);
     mostrar('nav-consumotaller', esAdmin || esTaller);
+    mostrar('nav-ordenes-produccion', esAdmin || esTaller);
+    mostrar('nav-kardex-etapas', esAdmin || esContador || esTaller);
     mostrar('nav-inventario-taller', esAdmin || esTaller);
     mostrar('nav-transferir-stock-taller', esAdmin || esTaller);
     mostrar('nav-nomina', esAdmin);
@@ -5209,9 +5503,10 @@
     mostrar('nav-dashboard-contable', esAdmin || esContador);
     mostrar('nav-honorarios-tejedoras', esAdmin || esContador);
     mostrar('nav-estados-financieros', esAdmin || esContador);
+    mostrar('nav-contabilidad-impuestos', esAdmin || esContador);
     mostrar('nav-cuentas-pendientes', esAdmin || esContador);
-    mostrar('nav-activos-fijos', esAdmin);
-    mostrar('nav-conciliacion', esAdmin);
+    mostrar('nav-activos-fijos', esAdmin || esContador);
+    mostrar('nav-conciliacion', esAdmin || esContador);
     mostrar('nav-transferencias-internas', esAdmin);
     mostrar('nav-dashboard', esAdmin);
     document.getElementById('btnAbrirAsistenteIA').style.display = 'flex';
@@ -7317,9 +7612,10 @@
     let html = '';
     if (enStockBajo.length > 0) {
       html += `
-        <div style="background:#fff3cd;color:#856404;border-radius:9px;padding:10px 14px;margin-bottom:14px;font-size:13px;">
-          ⚠️ <strong>${enStockBajo.length} producto(s)</strong> en o por debajo del stock mínimo: ${enStockBajo.map(i => escaparHtml(i.nombre)).join(', ')}
-        </div>
+        <details style="background:var(--tinte-ambar);color:var(--ambar);border-radius:var(--radius-pill);padding:6px 14px;margin-bottom:12px;font-size:12px;display:inline-block;max-width:100%;">
+          <summary style="cursor:pointer;font-weight:600;">⚠️ ${enStockBajo.length} producto(s) en o por debajo del stock mínimo · <span style="text-decoration:underline;">Ver cuáles</span></summary>
+          <div style="margin-top:6px;line-height:1.6;font-weight:400;">${enStockBajo.map(i => escaparHtml(i.nombre)).join(' · ')}</div>
+        </details>
       `;
     }
 
@@ -7463,9 +7759,12 @@
     const etiquetasTipo = {
       consumo_taller: 'Salida', ajuste_manual: 'Ajuste', compra_proveedor: 'Entrada',
       entrada_automatica: 'Entrada', salida_automatica: 'Salida',
+      transferencia_entrada: 'Traslado recibido', transferencia_salida: 'Traslado enviado',
+      entrega_produccion: 'A producción', devolucion_produccion: 'Sobrante de producción', entrada_produccion: 'Producido',
     };
-    const colorTipo = (tipo) => {
-      const esEntrada = tipo.includes('entrada') || tipo === 'compra_proveedor';
+    const colorTipo = (m) => {
+      const tipo = m.tipo;
+      const esEntrada = esEntradaKardex(m);
       const esAjuste = tipo === 'ajuste_manual';
       if (esAjuste) return { bg: '#e6edf3', color: 'var(--azul-acero)' };
       return esEntrada ? { bg: '#e4f5ec', color: 'var(--verde-exito)' } : { bg: '#fdecea', color: 'var(--rojo-error)' };
@@ -7490,8 +7789,8 @@
           </thead>
           <tbody>
             ${movimientos.map(m => {
-              const c = colorTipo(m.tipo);
-              const esEntrada = m.tipo.includes('entrada') || m.tipo === 'compra_proveedor';
+              const c = colorTipo(m);
+              const esEntrada = esEntradaKardex(m);
               const detalleFactura = [
                 m.numero_factura ? 'N.° ' + m.numero_factura : null,
                 m.proveedor ? m.proveedor.nombre_completo : null,
@@ -7517,7 +7816,17 @@
   const etiquetasTipoKardexExcel = {
     consumo_taller: 'Salida (Taller)', ajuste_manual: 'Ajuste', compra_proveedor: 'Entrada (compra)',
     entrada_automatica: 'Entrada', salida_automatica: 'Salida',
+    transferencia_entrada: 'Traslado recibido', transferencia_salida: 'Traslado enviado',
+    entrega_produccion: 'Entregado a producción', devolucion_produccion: 'Sobrante devuelto de producción', entrada_produccion: 'Terminado en producción',
   };
+
+  // Entrada o salida según el cambio real de existencias del movimiento.
+  function esEntradaKardex(m) {
+    if (m.stock_antes !== undefined && m.stock_antes !== null && m.stock_despues !== undefined && m.stock_despues !== null) {
+      return Number(m.stock_despues) > Number(m.stock_antes);
+    }
+    return m.tipo.includes('entrada') || m.tipo === 'compra_proveedor' || m.tipo === 'devolucion_produccion';
+  }
 
   function exportarKardexExcel(nombreProducto) {
     if (!kardexActualCache || kardexActualCache.length === 0) return;
@@ -7526,7 +7835,7 @@
       [],
       ['Fecha', 'Tipo', 'Movimiento', 'N.° Factura', 'Proveedor', 'Cantidad', 'Saldo'],
       ...kardexActualCache.slice().reverse().map(m => {
-        const esEntrada = m.tipo.includes('entrada') || m.tipo === 'compra_proveedor';
+        const esEntrada = esEntradaKardex(m);
         return [
           new Date(m.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }),
           etiquetasTipoKardexExcel[m.tipo] || m.tipo,
@@ -8603,6 +8912,585 @@
         </div>
       `;
     }).join('');
+  }
+
+  // ============================================================================
+  // ÓRDENES DE PRODUCCIÓN
+  // ============================================================================
+  let ordenesProduccionCache = [];
+  let filtroOrdenesProduccion = 'en_proceso';
+  let materialesOrdenCache = { Taller: [], Tienda: [] };
+  let ordenAccionAbierta = null; // { id, accion }
+
+  const ESTADOS_ORDEN_PRODUCCION = {
+    en_proceso: ['🧶 En proceso', 'background:var(--tinte-ambar);color:var(--ambar);'],
+    terminada: ['✅ Terminada', 'background:var(--tinte-verde);color:var(--verde-exito);'],
+    entregada: ['📦 Entregada al cliente', 'background:var(--tinte-azul);color:var(--azul-acero);'],
+    anulada: ['✖️ Anulada', 'background:var(--gris-fondo);color:var(--texto-suave);'],
+  };
+
+  function formatearCantidad(n) {
+    return Number(n || 0).toLocaleString('es-CO', { maximumFractionDigits: 2 });
+  }
+
+  async function mostrarPantallaOrdenesProduccion() {
+    mostrarPantalla('pantallaOrdenesProduccion');
+    ocultarMensaje('mensajeOrdenesProd');
+    await cargarIdsDepartamentosClave();
+    await Promise.all([cargarOpcionesNuevaOrden(), cargarMaterialesParaOrdenes()]);
+    await cargarOrdenesProduccion();
+  }
+
+  async function cargarOpcionesNuevaOrden() {
+    const selProd = document.getElementById('opProducto');
+    const { data } = await supabaseClient.rpc('fn_op_catalogo_productos');
+    selProd.innerHTML = '<option value="">✏️ Encargo personalizado (no está en el catálogo)</option>'
+      + (data || []).map(p => `<option value="${p.id}">${escaparHtml(p.nombre)}</option>`).join('');
+    cambiarProductoNuevaOrden();
+
+    const selPed = document.getElementById('opPedido');
+    selPed.innerHTML = '<option value="">— Para inventario (sin pedido) —</option>';
+    try {
+      const resp = await fetch(WORKER_URL + '/api/pos/crm/pedidos-activos', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+      if (resp.ok) {
+        const { pedidos } = await resp.json();
+        selPed.innerHTML += (pedidos || []).filter(p => p.estado === 'en produccion')
+          .map(p => `<option value="${p.id}" data-numero="${escaparHtml(p.numero_pedido || p.id)}">${escaparHtml(p.numero_pedido || p.id)} — ${escaparHtml(p.descripcion || '')}</option>`).join('');
+      }
+    } catch (e) { /* Sin conexión al CRM: la orden se puede abrir sin pedido. */ }
+  }
+
+  function cambiarProductoNuevaOrden() {
+    const esEncargo = !document.getElementById('opProducto').value;
+    document.getElementById('opBloqueDescripcion').classList.toggle('oculto', !esEncargo);
+  }
+
+  async function cargarMaterialesParaOrdenes() {
+    const consulta = (centroId) => supabaseClient.from('inventario_items')
+      .select('id, nombre, stock_actual, unidad_medida').eq('tipo', 'merceria').eq('activo', true)
+      .eq('centro_costo_id', centroId).gt('stock_actual', 0).order('nombre', { ascending: true });
+    // El Taller toma material de su propio inventario; lo de la Tienda lo pide por "Solicitudes".
+    const [taller, tienda] = await Promise.all([
+      consulta(centroCostoTallerId),
+      rolActual === 'administrador' ? consulta(centroCostoTiendaId) : Promise.resolve({ data: [] }),
+    ]);
+    materialesOrdenCache = { Taller: taller.data || [], Tienda: tienda.data || [] };
+  }
+
+  async function confirmarAbrirOrdenProduccion() {
+    ocultarMensaje('mensajeOrdenesProd');
+    const productoId = document.getElementById('opProducto').value || null;
+    const descripcion = document.getElementById('opDescripcion').value.trim();
+    const cantidad = Number(document.getElementById('opCantidad').value);
+    const selPed = document.getElementById('opPedido');
+    const pedidoId = selPed.value || null;
+    const numeroPedido = pedidoId ? selPed.selectedOptions[0].dataset.numero : null;
+    if (!productoId && !descripcion) { mostrarMensaje('mensajeOrdenesProd', 'Describe el encargo que se va a tejer.', 'error'); return; }
+    if (!cantidad || cantidad <= 0) { mostrarMensaje('mensajeOrdenesProd', 'Escribe cuántas unidades se van a producir.', 'error'); return; }
+
+    const { data, error } = await supabaseClient.rpc('fn_op_abrir', {
+      p_producto_item_id: productoId, p_descripcion: productoId ? null : descripcion, p_cantidad: cantidad,
+      p_pedido_canal_id: null, p_pedido_crm_id: pedidoId, p_numero_pedido_crm: numeroPedido,
+      p_observaciones: document.getElementById('opObservaciones').value.trim() || null,
+    });
+    if (error) { mostrarMensaje('mensajeOrdenesProd', 'No se pudo abrir la orden: ' + error.message, 'error'); return; }
+
+    document.getElementById('opDescripcion').value = '';
+    document.getElementById('opObservaciones').value = '';
+    document.getElementById('opCantidad').value = '1';
+    mostrarMensaje('mensajeOrdenesProd', '✅ Orden abierta. Ahora entrégale el material que se va a usar.', 'exito');
+    ordenAccionAbierta = { id: data, accion: 'entregar' };
+    const chip = document.querySelector('[data-filtro-op="en_proceso"]');
+    filtrarOrdenesProduccion('en_proceso', chip);
+  }
+
+  function filtrarOrdenesProduccion(filtro, boton) {
+    document.querySelectorAll('[data-filtro-op]').forEach(b => b.classList.toggle('activo', b === boton));
+    filtroOrdenesProduccion = filtro;
+    cargarOrdenesProduccion();
+  }
+
+  async function cargarOrdenesProduccion() {
+    const cont = document.getElementById('listaOrdenesProduccion');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    const { data, error } = await supabaseClient.rpc('fn_op_listar', { p_estado: filtroOrdenesProduccion });
+    if (error) { cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(error.message)}</div>`; return; }
+    ordenesProduccionCache = data || [];
+    renderizarOrdenesProduccion();
+  }
+
+  function renderizarOrdenesProduccion() {
+    const cont = document.getElementById('listaOrdenesProduccion');
+    if (!ordenesProduccionCache.length) {
+      cont.innerHTML = `<div class="cargando">${filtroOrdenesProduccion === 'en_proceso' ? 'No hay órdenes en proceso.' : 'No hay órdenes para mostrar.'}</div>`;
+      return;
+    }
+    cont.innerHTML = ordenesProduccionCache.map(tarjetaOrdenProduccion).join('');
+  }
+
+  function tarjetaOrdenProduccion(o) {
+    const [textoEstado, estiloEstado] = ESTADOS_ORDEN_PRODUCCION[o.estado] || [o.estado, ''];
+    const fecha = (f) => f ? new Date(f).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+    const columnas = 'grid-template-columns:1.6fr 80px 100px 100px 110px 110px;';
+    const materiales = o.materiales.length ? `
+      <div class="tabla-lista" style="margin-top:10px;">
+        <div class="tabla-lista-header header-rosa" style="${columnas}">
+          <span>MATERIAL</span><span>ORIGEN</span><span style="text-align:right;">ENTREGADO</span><span style="text-align:right;">DEVUELTO</span><span style="text-align:right;">EN LA ORDEN</span><span style="text-align:right;">VALOR</span>
+        </div>
+        ${o.materiales.map(m => `
+          <div class="tabla-lista-fila" style="${columnas}cursor:default;">
+            <span style="font-size:12px;">${escaparHtml(m.nombre)}</span>
+            <span style="font-size:12px;">${escaparHtml(m.ubicacion || '')}</span>
+            <span style="text-align:right;">${formatearCantidad(m.entregado)}</span>
+            <span style="text-align:right;">${formatearCantidad(m.devuelto)}</span>
+            <span style="text-align:right;font-weight:600;">${formatearCantidad(m.neto)} ${escaparHtml(m.unidad || '')}</span>
+            <span style="text-align:right;">${formatearMoneda(m.valor_neto)}</span>
+          </div>`).join('')}
+      </div>` : '<div class="cargando" style="margin-top:8px;">Todavía no se le ha entregado material.</div>';
+
+    let acciones = '';
+    if (o.estado === 'en_proceso') {
+      const b = 'style="flex:0 0 auto;padding:8px 14px;';
+      acciones = `
+        <button class="btn-mini editar" ${b}" onclick="abrirAccionOrden('${o.id}', 'entregar')">➕ Entregar material</button>
+        ${o.materiales.some(m => Number(m.neto) > 0) ? `<button class="btn-mini editar" ${b}" onclick="abrirAccionOrden('${o.id}', 'devolver')">↩️ Devolver sobrante</button>` : ''}
+        ${o.materiales.some(m => Number(m.neto) > 0) ? `<button class="btn-mini" ${b}background:var(--verde-exito);color:#fff;" onclick="abrirAccionOrden('${o.id}', 'terminar')">✅ Terminar</button>` : ''}
+        <button class="btn-mini desactivar" ${b}" onclick="abrirAccionOrden('${o.id}', 'anular')">✖️ Anular</button>`;
+    } else if (o.estado === 'terminada' && !o.producto_item_id) {
+      acciones = `<button class="btn-mini editar" style="flex:0 0 auto;padding:8px 14px;" onclick="pedirConfirmacionBoton(this, '¿Confirmar entrega?', () => confirmarEntregaEncargo('${o.id}'))">📦 Marcar entregado al cliente</button>`;
+    }
+
+    let resumenValor;
+    if (o.estado === 'en_proceso') resumenValor = `En proceso: <strong>${formatearMoneda(o.valor_en_proceso)}</strong>`;
+    else if (o.estado === 'anulada') resumenValor = `Motivo: ${escaparHtml(o.motivo_anulacion || '')}`;
+    else resumenValor = `Costo de material: <strong>${formatearMoneda(o.costo_material)}</strong> · ${formatearMoneda(Number(o.costo_material) / Number(o.cantidad_terminada || 1))} por unidad`;
+
+    const destino = o.producto_item_id ? `${escaparHtml(o.producto || '')} → inventario de la Tienda` : 'Encargo personalizado';
+    const abierta = ordenAccionAbierta && ordenAccionAbierta.id === o.id ? formularioAccionOrden(o, ordenAccionAbierta.accion) : '';
+
+    return `
+      <div class="panel" id="op-${o.id}" style="max-width:none;max-height:none;margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start;">
+          <div>
+            <div class="fredoka" style="font-size:16px;"><span style="color:var(--rosa-principal);">${escaparHtml(o.orden)}</span> · ${escaparHtml(o.descripcion)}</div>
+            <div style="font-size:12px;opacity:0.75;margin-top:3px;line-height:1.6;">
+              ${destino} · ${o.estado === 'en_proceso' ? formatearCantidad(o.cantidad_planeada) + ' unidad(es) planeadas' : formatearCantidad(o.cantidad_terminada || o.cantidad_planeada) + ' unidad(es) ' + (o.estado === 'anulada' ? 'planeadas' : 'terminadas')}
+              ${o.pedido ? ' · Pedido ' + escaparHtml(o.pedido) : ''}
+              <br>Abierta ${fecha(o.fecha_apertura)}${o.abierta_por ? ' por ' + escaparHtml(o.abierta_por) : ''}${o.fecha_terminacion ? ' · ' + (o.estado === 'anulada' ? 'anulada' : 'terminada') + ' ' + fecha(o.fecha_terminacion) : ''}${o.fecha_entrega ? ' · entregada ' + fecha(o.fecha_entrega) : ''}
+              ${o.observaciones ? '<br><em>' + escaparHtml(o.observaciones) + '</em>' : ''}
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <span style="font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px;display:inline-block;${estiloEstado}">${textoEstado}</span>
+            <div style="font-size:12.5px;margin-top:6px;">${resumenValor}</div>
+          </div>
+        </div>
+        ${materiales}
+        ${acciones ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">${acciones}</div>` : ''}
+        ${abierta}
+      </div>`;
+  }
+
+  function abrirAccionOrden(id, accion) {
+    ordenAccionAbierta = ordenAccionAbierta && ordenAccionAbierta.id === id && ordenAccionAbierta.accion === accion ? null : { id, accion };
+    renderizarOrdenesProduccion();
+  }
+
+  function opcionesMaterialOrden(origen) {
+    const lista = materialesOrdenCache[origen] || [];
+    return lista.length
+      ? lista.map(i => `<option value="${i.id}">${escaparHtml(i.nombre)} (disponible: ${formatearCantidad(i.stock_actual)} ${escaparHtml(i.unidad_medida)})</option>`).join('')
+      : '<option value="">No hay material con existencias aquí</option>';
+  }
+
+  function formularioAccionOrden(o, accion) {
+    const caja = (contenido) => `<div style="margin-top:12px;padding:14px;border-radius:var(--radius-md);background:var(--gris-fondo);">${contenido}<div class="mensaje" id="mensajeAccionOp-${o.id}"></div></div>`;
+    const conSaldo = o.materiales.filter(m => Number(m.neto) > 0);
+    if (accion === 'entregar') {
+      const puedeTienda = rolActual === 'administrador';
+      return caja(`
+        <div class="grilla-2" style="gap:10px;">
+          <div><label>Sale de</label>
+            <select id="opEntOrigen-${o.id}" onchange="document.getElementById('opEntItem-${o.id}').innerHTML = opcionesMaterialOrden(this.value)">
+              <option value="Taller">Inventario del Taller</option>
+              ${puedeTienda ? '<option value="Tienda">Inventario de la Tienda</option>' : ''}
+            </select></div>
+          <div><label>Material</label><select id="opEntItem-${o.id}">${opcionesMaterialOrden('Taller')}</select></div>
+          <div><label>Cantidad</label><input type="number" id="opEntCant-${o.id}" min="0" step="0.1"></div>
+          <div><label>Nota <span style="font-size:10px;opacity:0.6;">(opcional)</span></label><input type="text" id="opEntNota-${o.id}"></div>
+        </div>
+        ${puedeTienda ? '' : '<div style="font-size:11.5px;opacity:0.7;margin-top:6px;">¿Falta material? Pídelo a la Tienda en "Solicitud de insumos"; cuando llegue al Taller, entrégalo aquí.</div>'}
+        <button class="btn-principal" style="width:auto;" onclick="confirmarEntregaMaterialOrden('${o.id}')">Entregar a ${escaparHtml(o.orden)}</button>`);
+    }
+    if (accion === 'devolver') {
+      return caja(`
+        <div class="grilla-2" style="gap:10px;">
+          <div><label>Material sobrante</label><select id="opDevItem-${o.id}">
+            ${conSaldo.map(m => `<option value="${m.inventario_item_id}">${escaparHtml(m.nombre)} (en la orden: ${formatearCantidad(m.neto)} ${escaparHtml(m.unidad || '')})</option>`).join('')}
+          </select></div>
+          <div><label>Cantidad que vuelve al inventario</label><input type="number" id="opDevCant-${o.id}" min="0" step="0.1"></div>
+        </div>
+        <button class="btn-principal" style="width:auto;" onclick="confirmarDevolucionOrden('${o.id}')">Devolver al inventario</button>`);
+    }
+    if (accion === 'terminar') {
+      return caja(`
+        <label>Unidades terminadas</label>
+        <input type="number" id="opTermCant-${o.id}" min="1" step="1" value="${Number(o.cantidad_planeada)}" style="max-width:160px;">
+        <div style="font-size:12.5px;font-weight:600;margin:12px 0 6px;">¿Sobró material? Escribe cuánto vuelve al inventario (0 si se usó todo):</div>
+        ${conSaldo.map(m => `
+          <div style="display:flex;gap:10px;align-items:center;margin-bottom:6px;">
+            <span style="flex:1;font-size:12.5px;">${escaparHtml(m.nombre)} <span style="opacity:0.6;">(en la orden: ${formatearCantidad(m.neto)} ${escaparHtml(m.unidad || '')})</span></span>
+            <input type="number" class="op-sobrante-${o.id}" data-item="${m.inventario_item_id}" data-max="${Number(m.neto)}" min="0" step="0.1" value="0" style="width:110px;">
+          </div>`).join('')}
+        <div style="font-size:12px;opacity:0.75;margin-top:8px;">${o.producto_item_id
+          ? `Al terminar, las unidades entran al inventario de productos terminados de la Tienda (${escaparHtml(o.producto || '')}).`
+          : 'Al terminar, el encargo queda en productos terminados hasta que lo marques como entregado al cliente.'}</div>
+        <button class="btn-principal" style="width:auto;background:var(--verde-exito);" onclick="confirmarTerminarOrden('${o.id}')">Terminar ${escaparHtml(o.orden)}</button>`);
+    }
+    if (accion === 'anular') {
+      return caja(`
+        <label>Motivo de la anulación</label><input type="text" id="opAnuMotivo-${o.id}" placeholder="Ej: el cliente canceló el pedido">
+        <div style="font-size:12px;opacity:0.75;margin-top:6px;">Todo el material que tenga la orden vuelve al inventario del que salió. La orden no se borra: queda anulada en el historial.</div>
+        <button class="btn-principal" style="width:auto;background:var(--rojo-error);" onclick="pedirConfirmacionBoton(this, '¿Seguro? Pulsa otra vez', () => confirmarAnularOrden('${o.id}'))">Anular ${escaparHtml(o.orden)}</button>`);
+    }
+    return '';
+  }
+
+  async function ejecutarAccionOrden(ordenId, funcion, parametros, textoExito) {
+    const { error } = await supabaseClient.rpc(funcion, parametros);
+    if (error) { mostrarMensaje('mensajeAccionOp-' + ordenId, error.message, 'error'); return false; }
+    ordenAccionAbierta = null;
+    mostrarMensaje('mensajeOrdenesProd', textoExito, 'exito');
+    await Promise.all([cargarMaterialesParaOrdenes(), cargarOrdenesProduccion()]);
+    return true;
+  }
+
+  async function confirmarEntregaMaterialOrden(ordenId) {
+    const itemId = document.getElementById('opEntItem-' + ordenId).value;
+    const cantidad = Number(document.getElementById('opEntCant-' + ordenId).value);
+    if (!itemId) { mostrarMensaje('mensajeAccionOp-' + ordenId, 'Elige el material.', 'error'); return; }
+    if (!cantidad || cantidad <= 0) { mostrarMensaje('mensajeAccionOp-' + ordenId, 'Escribe una cantidad mayor a cero.', 'error'); return; }
+    await ejecutarAccionOrden(ordenId, 'fn_op_entregar_material', {
+      p_orden_id: ordenId, p_inventario_item_id: itemId, p_cantidad: cantidad,
+      p_observaciones: document.getElementById('opEntNota-' + ordenId).value.trim() || null,
+    }, '✅ Material entregado: salió del inventario y quedó en productos en proceso.');
+  }
+
+  async function confirmarDevolucionOrden(ordenId) {
+    const itemId = document.getElementById('opDevItem-' + ordenId).value;
+    const cantidad = Number(document.getElementById('opDevCant-' + ordenId).value);
+    if (!cantidad || cantidad <= 0) { mostrarMensaje('mensajeAccionOp-' + ordenId, 'Escribe una cantidad mayor a cero.', 'error'); return; }
+    await ejecutarAccionOrden(ordenId, 'fn_op_devolver_material', {
+      p_orden_id: ordenId, p_inventario_item_id: itemId, p_cantidad: cantidad, p_observaciones: null,
+    }, '✅ Sobrante devuelto al inventario.');
+  }
+
+  async function confirmarTerminarOrden(ordenId) {
+    const cantidad = Number(document.getElementById('opTermCant-' + ordenId).value);
+    if (!cantidad || cantidad <= 0) { mostrarMensaje('mensajeAccionOp-' + ordenId, 'Escribe cuántas unidades se terminaron.', 'error'); return; }
+    const sobrantes = [];
+    for (const input of document.querySelectorAll('.op-sobrante-' + ordenId)) {
+      const valor = Number(input.value || 0);
+      if (valor < 0 || valor > Number(input.dataset.max)) {
+        mostrarMensaje('mensajeAccionOp-' + ordenId, 'Un sobrante no puede ser mayor a lo que tiene la orden.', 'error');
+        return;
+      }
+      if (valor > 0) sobrantes.push({ inventario_item_id: input.dataset.item, cantidad: valor });
+    }
+    await ejecutarAccionOrden(ordenId, 'fn_op_terminar', {
+      p_orden_id: ordenId, p_cantidad_terminada: cantidad, p_sobrantes: sobrantes,
+    }, '✅ Orden terminada: las unidades pasaron a productos terminados.');
+  }
+
+  async function confirmarAnularOrden(ordenId) {
+    const motivo = document.getElementById('opAnuMotivo-' + ordenId).value.trim();
+    if (!motivo) { mostrarMensaje('mensajeAccionOp-' + ordenId, 'Escribe el motivo de la anulación.', 'error'); return; }
+    await ejecutarAccionOrden(ordenId, 'fn_op_anular', { p_orden_id: ordenId, p_motivo: motivo },
+      '✅ Orden anulada. El material volvió al inventario.');
+  }
+
+  async function confirmarEntregaEncargo(ordenId) {
+    const { error } = await supabaseClient.rpc('fn_op_marcar_entregada', { p_orden_id: ordenId });
+    if (error) { mostrarMensaje('mensajeOrdenesProd', 'No se pudo registrar la entrega: ' + error.message, 'error'); return; }
+    mostrarMensaje('mensajeOrdenesProd', '✅ Encargo entregado: salió de productos terminados.', 'exito');
+    await cargarOrdenesProduccion();
+  }
+
+  // ============================================================================
+  // KARDEX POR ETAPAS (materia prima → en proceso → productos terminados)
+  // ============================================================================
+  let cacheKardexEtapas = null;
+
+  const CSS_TABLA_KARDEX = `
+    table.tk { width:100%; border-collapse:collapse; font-size:12px; margin-top:6px; }
+    table.tk th { font-size:10.5px; text-transform:uppercase; text-align:left; padding:7px 8px; background:#fdf0f7; color:#b8006a; border-bottom:1px solid #f1e2ec; }
+    table.tk td { padding:6px 8px; border-bottom:1px solid #f7eff5; vertical-align:top; }
+    table.tk .n { text-align:right; white-space:nowrap; }
+    table.tk tr.total td { font-weight:700; background:#faf6f8; border-top:2px solid #e8d5e0; }
+    table.tk .sub { font-size:10.5px; opacity:0.65; }
+    .tk-seccion { font-size:14px; font-weight:700; margin:22px 0 4px; color:#b8006a; }
+    .tk-vacio { font-size:12px; opacity:0.6; padding:8px 0; }
+  `;
+
+  function fechaLocalIso(d) {
+    const x = d || new Date();
+    return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+  }
+
+  async function mostrarPantallaKardexEtapas() {
+    mostrarPantalla('pantallaKardexEtapas');
+    if (!document.getElementById('estiloTablaKardex')) {
+      const estilo = document.createElement('style');
+      estilo.id = 'estiloTablaKardex';
+      estilo.textContent = CSS_TABLA_KARDEX.replace(/#fdf0f7/g, 'var(--tinte-rosa)').replace(/#b8006a/g, 'var(--rosa-principal)')
+        .replace(/#f1e2ec|#f7eff5|#e8d5e0/g, 'var(--gris-borde)').replace(/#faf6f8/g, 'var(--gris-fondo)');
+      document.head.appendChild(estilo);
+    }
+    if (!document.getElementById('keDesde').value) {
+      const hoy = new Date();
+      document.getElementById('keDesde').value = fechaLocalIso(new Date(hoy.getFullYear(), hoy.getMonth(), 1));
+      document.getElementById('keHasta').value = fechaLocalIso(hoy);
+    }
+    await cargarKardexEtapas();
+  }
+
+  async function cargarKardexEtapas() {
+    ocultarMensaje('mensajeKardexEtapas');
+    const desde = document.getElementById('keDesde').value;
+    const hasta = document.getElementById('keHasta').value;
+    const cont = document.getElementById('keContenido');
+    if (!desde || !hasta) { mostrarMensaje('mensajeKardexEtapas', 'Elige las dos fechas.', 'error'); return; }
+    cont.innerHTML = '<div class="cargando">Generando kardex...</div>';
+    try {
+      cacheKardexEtapas = await llamarReporteContable('fn_kardex_etapas', { p_desde: desde, p_hasta: hasta });
+    } catch (e) {
+      cont.innerHTML = `<div class="cargando">No se pudo generar: ${escaparHtml(e.message)}</div>`;
+      return;
+    }
+    cont.innerHTML = htmlKardexEtapas(cacheKardexEtapas, true);
+  }
+
+  // Agrupa los datos del kardex en las secciones del informe
+  function seccionesKardexEtapas(d) {
+    const porUbicacion = (etapa) => {
+      const grupos = {};
+      d.items.filter(i => i.etapa === etapa).forEach(i => { (grupos[i.ubicacion] = grupos[i.ubicacion] || []).push(i); });
+      return grupos;
+    };
+    const mp = porUbicacion('mp');
+    const pt = porUbicacion('pt');
+    const secciones = [];
+    const ubicacionesMp = ['Tienda', 'Taller', ...Object.keys(mp).filter(u => u !== 'Tienda' && u !== 'Taller')];
+    ubicacionesMp.forEach(u => secciones.push({ clave: 'mp_' + u, tipo: 'items', titulo: `${u === 'Tienda' ? '🏪' : u === 'Taller' ? '🧶' : '📍'} Materia prima e insumos — ${u}`, corto: 'Materia prima ' + u, items: mp[u] || [] }));
+    secciones.push({ clave: 'proceso', tipo: 'proceso', titulo: '⚙️ Productos en proceso — Taller', corto: 'En proceso', ordenes: d.ordenes });
+    const ubicacionesPt = ['Tienda', ...Object.keys(pt).filter(u => u !== 'Tienda')];
+    ubicacionesPt.forEach(u => secciones.push({ clave: 'pt_' + u, tipo: 'items', titulo: `🧸 Productos terminados — ${u}`, corto: 'Terminados ' + u, items: pt[u] || [], encargos: u === 'Tienda' ? d.encargos : [] }));
+    secciones.forEach(s => {
+      const sum = (lista, campo) => lista.reduce((a, x) => a + Number(x[campo] || 0), 0);
+      if (s.tipo === 'items') {
+        const enc = s.encargos || [];
+        s.valor_inicial = sum(s.items, 'valor_inicial') + sum(enc, 'valor_inicial');
+        s.valor_entradas = sum(s.items, 'valor_entradas') + sum(enc, 'valor_entradas');
+        s.valor_salidas = sum(s.items, 'valor_salidas') + sum(enc, 'valor_salidas');
+        s.valor_final = sum(s.items, 'valor_final') + sum(enc, 'valor_final');
+      } else {
+        s.valor_inicial = sum(s.ordenes, 'valor_inicial');
+        s.valor_entradas = sum(s.ordenes, 'valor_entradas');
+        s.valor_salidas = sum(s.ordenes, 'valor_devoluciones') + sum(s.ordenes, 'valor_a_terminados');
+        s.valor_final = sum(s.ordenes, 'valor_final');
+      }
+    });
+    return secciones;
+  }
+
+  const ETIQUETA_ETAPA_KARDEX = { mp: 'Materia prima', proceso: 'En proceso', pt: 'Terminados' };
+
+  function htmlKardexEtapas(d, conFiltroMovimientos) {
+    const secciones = seccionesKardexEtapas(d);
+    const n = formatearCantidad;
+    const m = formatearMoneda;
+    const fechaCorta = (f) => new Date(f).toLocaleString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const diferencias = d.items.filter(i => Number(i.diferencia) !== 0);
+
+    const avisos = [];
+    if (d.consumos_sin_orden > 0) avisos.push(`${d.consumos_sin_orden} consumo(s) del taller en el período se registraron sin orden de producción: salieron de la materia prima pero no aparecen en productos en proceso.`);
+    if (diferencias.length) avisos.push(`${diferencias.length} producto(s) tienen cambios de existencias que no quedaron registrados en el kardex (columna "Ajuste sin registro"). Se recomienda revisarlos con una toma de inventario.`);
+
+    const resumen = `
+      <table class="tk">
+        <thead><tr><th>Etapa</th><th class="n">Valor inicial</th><th class="n">Entradas</th><th class="n">Salidas</th><th class="n">Valor final</th></tr></thead>
+        <tbody>
+          ${secciones.map(s => `<tr><td>${s.titulo}</td><td class="n">${m(s.valor_inicial)}</td><td class="n">${m(s.valor_entradas)}</td><td class="n">${m(s.valor_salidas)}</td><td class="n"><strong>${m(s.valor_final)}</strong></td></tr>`).join('')}
+        </tbody>
+      </table>`;
+
+    const tablaItems = (s) => {
+      const conAjuste = s.items.some(i => Number(i.diferencia) !== 0);
+      const filas = s.items.map(i => `
+        <tr>
+          <td>${escaparHtml(i.nombre)}${i.activo ? '' : ' <span class="sub">(inactivo)</span>'}</td>
+          <td>${escaparHtml(i.unidad || '')}</td>
+          <td class="n">${n(i.saldo_inicial)}</td><td class="n">${n(i.entradas)}</td><td class="n">${n(i.salidas)}</td>
+          ${conAjuste ? `<td class="n">${Number(i.diferencia) !== 0 ? '⚠️ ' + (Number(i.diferencia) > 0 ? '+' : '') + n(i.diferencia) : ''}</td>` : ''}
+          <td class="n"><strong>${n(i.saldo_final)}</strong></td>
+          <td class="n">${m(i.costo_unitario)}</td><td class="n">${m(i.valor_inicial)}</td><td class="n">${m(i.valor_final)}</td>
+        </tr>`).join('');
+      const encargos = (s.encargos || []).map(e => `
+        <tr>
+          <td>${escaparHtml(e.descripcion)} <span class="sub">(encargo ${escaparHtml(e.orden)}${e.pedido ? ', pedido ' + escaparHtml(e.pedido) : ''})</span></td>
+          <td>unidad</td>
+          <td class="n">${Number(e.valor_inicial) ? n(e.cantidad) : 0}</td><td class="n">${Number(e.valor_entradas) ? n(e.cantidad) : 0}</td><td class="n">${Number(e.valor_salidas) ? n(e.cantidad) : 0}</td>
+          ${conAjuste ? '<td></td>' : ''}
+          <td class="n"><strong>${Number(e.valor_final) ? n(e.cantidad) : 0}</strong></td>
+          <td class="n">${m(Number(e.valor_final || e.valor_inicial || e.valor_entradas) / Number(e.cantidad || 1))}</td><td class="n">${m(e.valor_inicial)}</td><td class="n">${m(e.valor_final)}</td>
+        </tr>`).join('');
+      if (!filas && !encargos) return '<div class="tk-vacio">Sin existencias ni movimientos en este período.</div>';
+      return `
+        <table class="tk">
+          <thead><tr><th>Producto</th><th>Unidad</th><th class="n">Saldo inicial</th><th class="n">Entradas</th><th class="n">Salidas</th>${conAjuste ? '<th class="n">Ajuste sin registro</th>' : ''}<th class="n">Saldo final</th><th class="n">Costo unit.</th><th class="n">Valor inicial</th><th class="n">Valor final</th></tr></thead>
+          <tbody>${filas}${encargos}
+            <tr class="total"><td colspan="${conAjuste ? 8 : 7}">Total ${escaparHtml(s.corto)}</td><td class="n">${m(s.valor_inicial)}</td><td class="n">${m(s.valor_final)}</td></tr>
+          </tbody>
+        </table>`;
+    };
+
+    const tablaProceso = (s) => {
+      if (!s.ordenes.length) return '<div class="tk-vacio">No hubo órdenes de producción en proceso en este período.</div>';
+      return `
+        <table class="tk">
+          <thead><tr><th>Orden</th><th>Qué se teje / material en la orden</th><th>Estado</th><th class="n">Valor inicial</th><th class="n">Material recibido</th><th class="n">Sobrante devuelto</th><th class="n">Pasó a terminados</th><th class="n">Valor final</th></tr></thead>
+          <tbody>
+            ${s.ordenes.map(o => `
+              <tr>
+                <td><strong>${escaparHtml(o.orden)}</strong>${o.pedido ? `<div class="sub">Pedido ${escaparHtml(o.pedido)}</div>` : ''}</td>
+                <td>${escaparHtml(o.descripcion)} <span class="sub">(${n(o.cantidad_terminada || o.cantidad_planeada)} u.)</span>
+                  <div class="sub">${(o.materiales || []).map(x => `${escaparHtml(x.nombre)}: ${n(x.neto)} ${escaparHtml(x.unidad || '')} (de ${escaparHtml(x.ubicacion_origen || '')})`).join(' · ')}</div></td>
+                <td>${(ESTADOS_ORDEN_PRODUCCION[o.estado] || [o.estado])[0]}</td>
+                <td class="n">${m(o.valor_inicial)}</td><td class="n">${m(o.valor_entradas)}</td><td class="n">${m(o.valor_devoluciones)}</td><td class="n">${m(o.valor_a_terminados)}</td>
+                <td class="n"><strong>${m(o.valor_final)}</strong></td>
+              </tr>`).join('')}
+            <tr class="total"><td colspan="3">Total en proceso</td><td class="n">${m(s.valor_inicial)}</td><td class="n">${m(s.valor_entradas)}</td><td class="n">${m(s.ordenes.reduce((a, o) => a + Number(o.valor_devoluciones || 0), 0))}</td><td class="n">${m(s.ordenes.reduce((a, o) => a + Number(o.valor_a_terminados || 0), 0))}</td><td class="n">${m(s.valor_final)}</td></tr>
+          </tbody>
+        </table>`;
+    };
+
+    const filtro = conFiltroMovimientos ? (document.getElementById('keFiltroMov') || {}).value || '' : '';
+    const movimientos = d.movimientos.filter(x => !filtro || (filtro === x.etapa + '|' + x.ubicacion) || filtro === x.etapa);
+    const tablaMovimientos = movimientos.length ? `
+      <table class="tk">
+        <thead><tr><th>Fecha</th><th>Etapa</th><th>Producto</th><th>Movimiento</th><th class="n">Entrada</th><th class="n">Salida</th><th class="n">Saldo</th><th class="n">Valor</th><th>Referencia</th><th>Usuario</th></tr></thead>
+        <tbody>
+          ${movimientos.map(x => `
+            <tr>
+              <td style="white-space:nowrap;">${fechaCorta(x.fecha)}</td>
+              <td>${ETIQUETA_ETAPA_KARDEX[x.etapa] || x.etapa}<div class="sub">${escaparHtml(x.ubicacion)}</div></td>
+              <td>${escaparHtml(x.producto)}</td>
+              <td>${escaparHtml(x.movimiento)}${x.detalle ? `<div class="sub">${escaparHtml(x.detalle)}</div>` : ''}</td>
+              <td class="n">${x.entrada !== null ? n(x.entrada) : ''}</td>
+              <td class="n">${x.salida !== null ? n(x.salida) : ''}</td>
+              <td class="n">${x.saldo !== null ? n(x.saldo) : ''}</td>
+              <td class="n">${m(x.valor)}</td>
+              <td>${escaparHtml(x.referencia || '')}</td>
+              <td>${escaparHtml(x.usuario || '')}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>` : '<div class="tk-vacio">Sin movimientos para este filtro.</div>';
+
+    return `
+      <div style="font-size:12.5px;margin-bottom:6px;"><strong>Período:</strong> ${escaparHtml(d.desde)} a ${escaparHtml(d.hasta)}</div>
+      ${avisos.length ? `<div style="background:var(--tinte-ambar);border-radius:var(--radius-md);padding:10px 14px;margin:10px 0;font-size:12.5px;line-height:1.6;">${avisos.map(a => '⚠️ ' + escaparHtml(a)).join('<br>')}</div>` : ''}
+      <div class="tk-seccion">Resumen por etapa</div>
+      ${resumen}
+      ${secciones.map(s => `<div class="tk-seccion">${s.titulo}</div>${s.tipo === 'proceso' ? tablaProceso(s) : tablaItems(s)}`).join('')}
+      <div class="tk-seccion" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+        <span>📜 Detalle de movimientos (${movimientos.length})</span>
+        ${conFiltroMovimientos ? `<select id="keFiltroMov" onchange="document.getElementById('keContenido').innerHTML = htmlKardexEtapas(cacheKardexEtapas, true)" style="max-width:260px;padding:6px 10px;font-size:12px;">
+          <option value="">Todas las etapas</option>
+          <option value="mp|Tienda" ${filtro === 'mp|Tienda' ? 'selected' : ''}>Materia prima — Tienda</option>
+          <option value="mp|Taller" ${filtro === 'mp|Taller' ? 'selected' : ''}>Materia prima — Taller</option>
+          <option value="proceso" ${filtro === 'proceso' ? 'selected' : ''}>Productos en proceso</option>
+          <option value="pt" ${filtro === 'pt' ? 'selected' : ''}>Productos terminados</option>
+        </select>` : ''}
+      </div>
+      ${tablaMovimientos}
+      <div style="font-size:11.5px;opacity:0.7;margin-top:14px;line-height:1.6;">
+        Valorización: la materia prima y los productos terminados se valorizan al costo promedio de cada producto (en productos terminados es el costo del catálogo, que incluye la mano de obra). Los productos en proceso se valorizan con el costo del material entregado a cada orden, al costo del día de la entrega. Un mismo movimiento aparece en dos etapas cuando pasa de una a otra (por ejemplo, el material entregado a una orden sale de la materia prima y entra a productos en proceso).
+      </div>`;
+  }
+
+  function exportarKardexEtapasExcel() {
+    const d = cacheKardexEtapas;
+    if (!d) { mostrarMensaje('mensajeKardexEtapas', 'Primero genera el kardex.', 'error'); return; }
+    const secciones = seccionesKardexEtapas(d);
+    const libro = XLSX.utils.book_new();
+    const encabezado = [[`Lana Rosa Crochet — Kardex por etapas`], [`Período: ${d.desde} a ${d.hasta}`], [`Generado: ${new Date().toLocaleString('es-CO')}`], []];
+    const num = (v) => Math.round(Number(v || 0) * 100) / 100;
+
+    XLSX.utils.book_append_sheet(libro, XLSX.utils.aoa_to_sheet([
+      ...encabezado,
+      ['Etapa', 'Valor inicial', 'Entradas', 'Salidas', 'Valor final'],
+      ...secciones.map(s => [s.titulo.replace(/^\S+\s/, ''), num(s.valor_inicial), num(s.valor_entradas), num(s.valor_salidas), num(s.valor_final)]),
+    ]), 'Resumen');
+
+    const nombresHoja = new Set(['Resumen']);
+    const nombreHoja = (texto) => {
+      let base = texto.replace(/[\\/?*[\]:]/g, '').slice(0, 28);
+      let nombre = base; let k = 2;
+      while (nombresHoja.has(nombre)) nombre = base.slice(0, 26) + ' ' + (k++);
+      nombresHoja.add(nombre);
+      return nombre;
+    };
+    secciones.forEach(s => {
+      let filas;
+      if (s.tipo === 'items') {
+        filas = [...encabezado, ['Producto', 'Unidad', 'Saldo inicial', 'Entradas', 'Salidas', 'Ajuste sin registro', 'Saldo final', 'Costo unitario', 'Valor inicial', 'Valor final'],
+          ...s.items.map(i => [i.nombre, i.unidad, num(i.saldo_inicial), num(i.entradas), num(i.salidas), num(i.diferencia), num(i.saldo_final), num(i.costo_unitario), num(i.valor_inicial), num(i.valor_final)]),
+          ...(s.encargos || []).map(e => [`${e.descripcion} (encargo ${e.orden})`, 'unidad', Number(e.valor_inicial) ? num(e.cantidad) : 0, Number(e.valor_entradas) ? num(e.cantidad) : 0, Number(e.valor_salidas) ? num(e.cantidad) : 0, 0, Number(e.valor_final) ? num(e.cantidad) : 0, num(Number(e.valor_final || e.valor_inicial || e.valor_entradas) / Number(e.cantidad || 1)), num(e.valor_inicial), num(e.valor_final)]),
+          [], ['Total', '', '', '', '', '', '', '', num(s.valor_inicial), num(s.valor_final)]];
+      } else {
+        filas = [...encabezado, ['Orden', 'Qué se teje', 'Pedido', 'Estado', 'Unidades', 'Material en la orden', 'Valor inicial', 'Material recibido', 'Sobrante devuelto', 'Pasó a terminados', 'Valor final'],
+          ...s.ordenes.map(o => [o.orden, o.descripcion, o.pedido || '', (ESTADOS_ORDEN_PRODUCCION[o.estado] || [o.estado])[0].replace(/^\S+\s/, ''), num(o.cantidad_terminada || o.cantidad_planeada),
+            (o.materiales || []).map(x => `${x.nombre}: ${formatearCantidad(x.neto)} ${x.unidad || ''} (de ${x.ubicacion_origen || ''})`).join(' | '),
+            num(o.valor_inicial), num(o.valor_entradas), num(o.valor_devoluciones), num(o.valor_a_terminados), num(o.valor_final)]),
+          [], ['Total', '', '', '', '', '', num(s.valor_inicial), num(s.valor_entradas), '', '', num(s.valor_final)]];
+      }
+      XLSX.utils.book_append_sheet(libro, XLSX.utils.aoa_to_sheet(filas), nombreHoja(s.corto));
+    });
+
+    XLSX.utils.book_append_sheet(libro, XLSX.utils.aoa_to_sheet([
+      ...encabezado,
+      ['Fecha', 'Etapa', 'Ubicación', 'Producto', 'Movimiento', 'Detalle', 'Entrada', 'Salida', 'Saldo', 'Costo unitario', 'Valor', 'Referencia', 'Usuario'],
+      ...d.movimientos.map(x => [new Date(x.fecha).toLocaleString('es-CO'), ETIQUETA_ETAPA_KARDEX[x.etapa] || x.etapa, x.ubicacion, x.producto, x.movimiento, x.detalle || '',
+        x.entrada !== null ? num(x.entrada) : '', x.salida !== null ? num(x.salida) : '', x.saldo !== null ? num(x.saldo) : '', num(x.costo_unitario), num(x.valor), x.referencia || '', x.usuario || '']),
+    ]), 'Movimientos');
+    XLSX.writeFile(libro, `LanaRosa_Kardex_Etapas_${d.desde}_a_${d.hasta}.xlsx`);
+  }
+
+  function imprimirKardexEtapas() {
+    const d = cacheKardexEtapas;
+    if (!d) { mostrarMensaje('mensajeKardexEtapas', 'Primero genera el kardex.', 'error'); return; }
+    const ventana = window.open('', '_blank');
+    ventana.document.write(`
+      <html><head><title>Kardex por etapas — Lana Rosa Crochet</title><meta charset="utf-8">
+      <style>
+        body { font-family: Arial, Helvetica, sans-serif; padding: 24px; color: #2d2d2d; }
+        h1 { color: #d8017c; font-size: 20px; margin-bottom: 2px; }
+        .subtitulo-impresion { font-size: 12px; color: #666; margin-bottom: 16px; }
+        select { display: none; }
+        ${CSS_TABLA_KARDEX}
+        .firma-impresion { margin-top: 60px; display: flex; justify-content: space-between; }
+        .firma-impresion div { width: 45%; border-top: 1px solid #333; padding-top: 6px; text-align: center; font-size: 12px; }
+        @media print { body { padding: 8px; } tr { page-break-inside: avoid; } }
+      </style></head>
+      <body>
+        <h1>Lana Rosa Crochet — Kardex por etapas</h1>
+        <div class="subtitulo-impresion">Materia prima (Tienda y Taller), productos en proceso y productos terminados · Generado el ${new Date().toLocaleString('es-CO')}</div>
+        ${htmlKardexEtapas(d, false)}
+        <div class="firma-impresion"><div>Elaboró</div><div>Revisó</div></div>
+      </body></html>`);
+    ventana.document.close();
+    ventana.focus();
+    setTimeout(() => ventana.print(), 400);
   }
 
   // ============================================================================
@@ -9902,10 +10790,13 @@
     { clave: 'nav-transferir-stock-taller', etiqueta: '　　Transferir stock (Taller)' },
     { clave: 'nav-solicitudes-tienda', etiqueta: '　　Solicitud de insumos del Taller' },
     { clave: 'nav-consumotaller', etiqueta: '　　Consumo de material (Taller)' },
+    { clave: 'nav-ordenes-produccion', etiqueta: '　　Órdenes de producción' },
+    { clave: 'nav-kardex-etapas', etiqueta: '　　Kardex por etapas' },
     { clave: 'deptoContabilidadGrupo', etiqueta: '📊 Contabilidad (grupo completo)' },
     { clave: 'nav-dashboard-contable', etiqueta: '　　Dashboard Contable' },
     { clave: 'nav-honorarios-tejedoras', etiqueta: '　　Honorarios Tejedoras' },
     { clave: 'nav-estados-financieros', etiqueta: '　　Estados financieros y libros' },
+    { clave: 'nav-contabilidad-impuestos', etiqueta: '　　Impuestos, PUC y ajustes' },
     { clave: 'nav-activos-fijos', etiqueta: '　　Activos fijos' },
     { clave: 'nav-reportes-financieros', etiqueta: '　　Informes de Ventas' },
     { clave: 'nav-costeo-real', etiqueta: '　　Costeo Real' },
@@ -17911,32 +18802,51 @@
 
   let cacheEstadoResultados = null;
 
+  async function llamarReporteContable(funcion, parametros) {
+    const { data, error } = await supabaseClient.rpc(funcion, parametros);
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  function seccionEstadoFin(titulo, filas, etiquetaTotal, total, vacio) {
+    return `
+      <h2 style="margin-top:18px;">${titulo}</h2>
+      ${filas.map(f => filaEstadoFin(f.nombre, f.valor)).join('') || `<div class="cargando">${vacio}</div>`}
+      ${filaEstadoFin(etiquetaTotal, total, true)}
+    `;
+  }
+
   async function cargarEstadoResultados() {
     const cont = document.getElementById('contenidoEstadoResultados');
     cont.innerHTML = '<div class="cargando">Cargando...</div>';
     const desde = document.getElementById('erFechaDesde').value;
     const hasta = document.getElementById('erFechaHasta').value;
-    const resp = await fetch(`${WORKER_URL}/api/pos/finanzas/estado-resultados?fecha_desde=${desde}&fecha_hasta=${hasta}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
-    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
-    const d = await resp.json();
+    let d;
+    try {
+      d = await llamarReporteContable('fn_estado_resultados', { p_desde: desde, p_hasta: hasta });
+    } catch (e) {
+      cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(e.message)}</div>`;
+      return;
+    }
     cacheEstadoResultados = d;
+    const gastosAdmin = d.gastos.filter(g => g.grupo === '51');
+    const gastosVentas = d.gastos.filter(g => g.grupo === '52');
 
     cont.innerHTML = `
-      <div class="panel" style="max-width:560px;max-height:none;">
-        <h2>Ingresos operacionales</h2>
-        ${d.ingresos.map(i => filaEstadoFin(i.nombre, i.valor)).join('') || '<div class="cargando">Sin ingresos en el período.</div>'}
-        ${filaEstadoFin('Total ingresos', d.total_ingresos, true)}
-
-        <h2 style="margin-top:18px;">Costo de ventas</h2>
-        ${d.costos.map(c => filaEstadoFin(c.nombre, c.valor)).join('') || '<div class="cargando">Sin costos registrados.</div>'}
-        ${filaEstadoFin('Total costo de ventas', d.total_costos, true)}
+      <div class="panel" style="max-width:620px;max-height:none;">
+        <div class="subtitulo" style="margin-bottom:4px;">Calculado directamente de los asientos del Libro Diario (PUC).</div>
+        ${seccionEstadoFin('Ingresos operacionales (41)', d.ingresos, 'Total ingresos operacionales', d.total_ingresos, 'Sin ingresos en el período.')}
+        ${seccionEstadoFin('Costo de ventas (61)', d.costos, 'Total costo de ventas', d.total_costos, 'Sin costos registrados.')}
         ${filaEstadoFin('= Utilidad bruta', d.utilidad_bruta, true)}
+        ${seccionEstadoFin('Gastos operacionales de administración (51)', gastosAdmin, 'Total gastos de administración', gastosAdmin.reduce((a, g) => a + Number(g.valor), 0), 'Sin gastos de administración.')}
+        ${gastosVentas.length ? seccionEstadoFin('Gastos operacionales de ventas (52)', gastosVentas, 'Total gastos de ventas', gastosVentas.reduce((a, g) => a + Number(g.valor), 0), '') : ''}
+        ${filaEstadoFin('= Utilidad operacional', d.utilidad_operacional, true)}
+        ${d.otros_ingresos.length ? seccionEstadoFin('Ingresos no operacionales (42)', d.otros_ingresos, 'Total ingresos no operacionales', d.total_otros_ingresos, '') : ''}
+        ${d.otros_gastos.length ? seccionEstadoFin('Gastos no operacionales (53)', d.otros_gastos, 'Total gastos no operacionales', d.total_otros_gastos, '') : ''}
+        ${filaEstadoFin('= Utilidad antes de impuestos', d.utilidad_antes_impuestos, true)}
+        ${d.impuestos.length ? seccionEstadoFin('Impuesto de renta — SIMPLE (54)', d.impuestos, 'Total impuestos', d.total_impuestos, '') : ''}
 
-        <h2 style="margin-top:18px;">Gastos operacionales</h2>
-        ${d.gastos.map(g => filaEstadoFin(g.nombre, g.valor)).join('') || '<div class="cargando">Sin gastos en el período.</div>'}
-        ${filaEstadoFin('Total gastos', d.total_gastos, true)}
-
-        <div style="margin-top:16px;padding:14px;border-radius:10px;background:${d.utilidad_neta >= 0 ? '#eaf6ef' : '#fdecea'};text-align:center;">
+        <div style="margin-top:16px;padding:14px;border-radius:10px;background:${d.utilidad_neta >= 0 ? 'var(--tinte-verde)' : 'var(--tinte-rojo)'};text-align:center;">
           <div style="font-size:12px;font-weight:600;opacity:0.75;">UTILIDAD NETA DEL PERÍODO</div>
           <div style="font-size:26px;font-weight:700;color:${d.utilidad_neta >= 0 ? 'var(--verde-exito)' : 'var(--rojo-error)'};margin-top:4px;">${formatearMoneda(d.utilidad_neta)}</div>
         </div>
@@ -17946,39 +18856,54 @@
 
   let cacheBalanceGeneral = null;
 
+  function filasBalancePorGrupo(cuentas) {
+    let grupoActual = null;
+    return cuentas.map(c => {
+      const encabezado = c.grupo !== grupoActual
+        ? `<div style="font-size:11px;font-weight:700;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.4px;margin-top:10px;">${escaparHtml(c.grupo || '')}</div>`
+        : '';
+      grupoActual = c.grupo;
+      return encabezado + filaEstadoFin(c.nombre, c.valor);
+    }).join('');
+  }
+
   async function cargarBalanceGeneral() {
     const cont = document.getElementById('contenidoBalanceGeneral');
     cont.innerHTML = '<div class="cargando">Cargando...</div>';
     const fecha = document.getElementById('bgFechaCorte').value;
-    const resp = await fetch(`${WORKER_URL}/api/pos/finanzas/balance-general?fecha_corte=${fecha}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
-    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
-    const d = await resp.json();
+    let d;
+    try {
+      d = await llamarReporteContable('fn_balance_general', { p_fecha_corte: fecha });
+    } catch (e) {
+      cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(e.message)}</div>`;
+      return;
+    }
     cacheBalanceGeneral = d;
 
     cont.innerHTML = `
       <div class="grilla-2">
         <div class="panel" style="max-height:none;">
           <h2>Activos</h2>
-          ${d.activos.map(a => filaEstadoFin(a.nombre, a.valor)).join('') || '<div class="cargando">Sin movimientos.</div>'}
+          ${filasBalancePorGrupo(d.activos) || '<div class="cargando">Sin movimientos.</div>'}
           ${filaEstadoFin('TOTAL ACTIVOS', d.total_activos, true)}
         </div>
         <div class="panel" style="max-height:none;">
           <h2>Pasivos</h2>
-          ${d.pasivos.map(p => filaEstadoFin(p.nombre, p.valor)).join('') || '<div class="cargando">Sin pasivos registrados.</div>'}
+          ${filasBalancePorGrupo(d.pasivos) || '<div class="cargando">Sin pasivos registrados.</div>'}
           ${filaEstadoFin('TOTAL PASIVOS', d.total_pasivos, true)}
 
           <h2 style="margin-top:18px;">Patrimonio</h2>
-          ${d.patrimonio.map(p => filaEstadoFin(p.nombre, p.valor)).join('')}
-          ${filaEstadoFin('Utilidades acumuladas del período', d.utilidad_acumulada)}
+          ${filasBalancePorGrupo(d.patrimonio)}
+          ${filaEstadoFin('Resultado del ejercicio (sin cerrar)', d.utilidad_acumulada)}
           ${filaEstadoFin('TOTAL PATRIMONIO', d.total_patrimonio, true)}
+          ${filaEstadoFin('TOTAL PASIVO + PATRIMONIO', Number(d.total_pasivos) + Number(d.total_patrimonio), true)}
         </div>
       </div>
-      <div style="margin-top:16px;padding:12px;border-radius:9px;text-align:center;font-size:12.5px;font-weight:600;background:${d.cuadra ? '#eaf6ef' : '#fdecea'};color:${d.cuadra ? 'var(--verde-exito)' : 'var(--rojo-error)'};">
-        ${d.cuadra ? '✅ El balance cuadra: Activos = Pasivos + Patrimonio' : '⚠️ El balance no cuadra exactamente — revisa con tu contador (puede ser normal si hay movimientos sin contabilizar).'}
+      <div style="margin-top:16px;padding:12px;border-radius:9px;text-align:center;font-size:12.5px;font-weight:600;background:${d.cuadra ? 'var(--tinte-verde)' : 'var(--tinte-rojo)'};color:${d.cuadra ? 'var(--verde-exito)' : 'var(--rojo-error)'};">
+        ${d.cuadra ? '✅ El balance cuadra: Activos = Pasivos + Patrimonio' : '⚠️ El balance no cuadra — revisa el Balance de prueba con tu contador.'}
       </div>
     `;
   }
-
   let cacheFlujoCaja = null;
 
   async function cargarFlujoCaja() {
@@ -18022,34 +18947,57 @@
     const desde = document.getElementById('ldFechaDesde').value;
     const hasta = document.getElementById('ldFechaHasta').value;
 
-    const resp = await fetch(`${WORKER_URL}/api/pos/finanzas/libro-diario?fecha_desde=${desde}&fecha_hasta=${hasta}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
-    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
-    const d = await resp.json();
+    let d;
+    try {
+      d = await llamarReporteContable('fn_libro_diario', { p_desde: desde, p_hasta: hasta });
+    } catch (e) {
+      cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(e.message)}</div>`;
+      return;
+    }
     cacheLibroDiario = d;
 
     if (!d.movimientos || d.movimientos.length === 0) { cont.innerHTML = '<div class="cargando">Sin movimientos contables en este período.</div>'; return; }
 
+    const columnas = 'grid-template-columns:1.6fr 1fr 110px 110px;';
+    const rolesUsuario = [rolActual, ...(rolesAdicionalesActual || [])];
+    const puedeRevertir = rolesUsuario.includes('administrador') || rolesUsuario.includes('contador');
+    let numeroActual = null;
+    const filas = d.movimientos.map(m => {
+      let encabezado = '';
+      if (m.numero !== numeroActual) {
+        numeroActual = m.numero;
+        const marca = m.revertido
+          ? '<span class="badge-estado-pedido" style="background:var(--tinte-ambar);color:var(--ambar);margin-left:6px;">Revertido</span>'
+          : (m.revierte_a ? `<span class="badge-estado-pedido" style="background:var(--tinte-azul);color:var(--azul-acero);margin-left:6px;">Reversión del #${m.revierte_a}</span>` : '');
+        encabezado = `
+          <div class="tabla-lista-fila" style="grid-template-columns:1fr auto;cursor:default;background:var(--gris-fondo);">
+            <span><strong>Comprobante #${m.numero}</strong> · ${new Date(m.fecha + 'T00:00:00').toLocaleDateString('es-CO')} · ${escaparHtml(m.asiento_descripcion || '')}${marca}
+              <div style="font-size:10.5px;opacity:0.6;">Origen: ${escaparHtml(m.origen || '')} · Registrado por: ${escaparHtml(m.usuario || 'Sin usuario')}</div></span>
+            ${puedeRevertir && !m.revertido && !m.revierte_a ? `<button class="btn-mini desactivar" style="flex:0 0 auto;justify-self:end;" onclick="revertirAsientoUI('${m.asiento_id}', ${m.numero})">↩️ Revertir</button>` : ''}
+          </div>`;
+      }
+      return encabezado + `
+        <div class="tabla-lista-fila" style="${columnas}cursor:default;">
+          <span style="padding-left:${m.credito > 0 ? 18 : 0}px;">${escaparHtml(m.cuenta_codigo)} — ${escaparHtml(m.cuenta_nombre)}<div style="font-size:10px;opacity:0.55;">${escaparHtml(m.concepto || '')}</div></span>
+          <span style="font-size:11.5px;opacity:0.75;">${escaparHtml(m.tercero || '')}</span>
+          <span style="text-align:right;">${m.debito > 0 ? formatearMoneda(m.debito) : '—'}</span>
+          <span style="text-align:right;">${m.credito > 0 ? formatearMoneda(m.credito) : '—'}</span>
+        </div>`;
+    }).join('');
+
     cont.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header header-rosa" style="grid-template-columns:80px 1.3fr 90px 100px 100px;">
-          <span>FECHA</span><span>CUENTA / CONCEPTO</span><span>ORIGEN</span><span style="text-align:right;">DEBE</span><span style="text-align:right;">HABER</span>
+        <div class="tabla-lista-header header-rosa" style="${columnas}">
+          <span>CUENTA / CONCEPTO</span><span>TERCERO</span><span style="text-align:right;">DEBE</span><span style="text-align:right;">HABER</span>
         </div>
-        ${d.movimientos.map(m => `
-          <div class="tabla-lista-fila" style="grid-template-columns:80px 1.3fr 90px 100px 100px;cursor:default;">
-            <span>${new Date(m.fecha + 'T00:00:00').toLocaleDateString('es-CO')}</span>
-            <span>${escaparHtml(m.cuenta_codigo)} — ${escaparHtml(m.cuenta_nombre)}<div style="font-size:10px;opacity:0.55;">${escaparHtml(m.concepto || '')}</div></span>
-            <span style="font-size:11px;text-transform:capitalize;">${escaparHtml(m.origen || '')}</span>
-            <span style="text-align:right;">${m.debito > 0 ? formatearMoneda(m.debito) : '—'}</span>
-            <span style="text-align:right;">${m.credito > 0 ? formatearMoneda(m.credito) : '—'}</span>
-          </div>
-        `).join('')}
-        <div class="tabla-lista-fila" style="grid-template-columns:80px 1.3fr 90px 100px 100px;font-weight:700;background:var(--rosa-suave);cursor:default;">
-          <span style="grid-column:span 3;">TOTALES ${d.cuadra ? '✅ Cuadra' : '⚠️ No cuadra'}</span>
+        ${filas}
+        <div class="tabla-lista-fila" style="${columnas}font-weight:700;background:var(--tinte-rosa);cursor:default;">
+          <span style="grid-column:span 2;">TOTALES ${d.cuadra ? '✅ Cuadra' : '⚠️ No cuadra'}</span>
           <span style="text-align:right;">${formatearMoneda(d.total_debito)}</span>
           <span style="text-align:right;">${formatearMoneda(d.total_credito)}</span>
         </div>
       </div>
-      ${d.limite_alcanzado ? '<div style="margin-top:10px;padding:10px 14px;background:#fdf1de;border-radius:8px;font-size:12.5px;color:var(--ambar);">⚠️ Este rango de fechas tiene muchos movimientos — se muestran los primeros 3.000. Si necesitas verlos todos, acota el rango de fechas a un período más corto.</div>' : ''}
+      ${d.limite_alcanzado ? '<div style="margin-top:10px;padding:10px 14px;background:var(--tinte-ambar);border-radius:8px;font-size:12.5px;color:var(--ambar);">⚠️ Este rango de fechas tiene muchos movimientos — se muestran los primeros 3.000. Si necesitas verlos todos, acota el rango de fechas a un período más corto.</div>' : ''}
     `;
   }
 
@@ -18059,10 +19007,14 @@
       ['Lana Rosa Crochet — Libro Diario'],
       [`Período: ${cacheLibroDiario.periodo.desde} a ${cacheLibroDiario.periodo.hasta}`],
       [],
-      ['Fecha', 'Cuenta', 'Concepto', 'Origen', 'Debe', 'Haber'],
-      ...cacheLibroDiario.movimientos.map(m => [m.fecha, `${m.cuenta_codigo} — ${m.cuenta_nombre}`, m.concepto || '', m.origen || '', m.debito, m.credito]),
+      ['Comprobante', 'Fecha', 'Descripción del asiento', 'Cuenta', 'Nombre de la cuenta', 'Tercero', 'Concepto', 'Debe', 'Haber', 'Origen', 'Registrado por', 'Estado'],
+      ...cacheLibroDiario.movimientos.map(m => [
+        m.numero, m.fecha, m.asiento_descripcion || '', m.cuenta_codigo, m.cuenta_nombre, m.tercero || '', m.concepto || '',
+        m.debito, m.credito, m.origen || '', m.usuario || '',
+        m.revertido ? 'Revertido' : (m.revierte_a ? `Reversión del #${m.revierte_a}` : ''),
+      ]),
       [],
-      ['', '', '', 'TOTALES', cacheLibroDiario.total_debito, cacheLibroDiario.total_credito],
+      ['', '', '', '', '', '', 'TOTALES', cacheLibroDiario.total_debito, cacheLibroDiario.total_credito],
     ];
     const hoja = XLSX.utils.aoa_to_sheet(filas);
     const libro = XLSX.utils.book_new();
@@ -18090,14 +19042,20 @@
     const desde = document.getElementById('lmFechaDesde').value;
     const hasta = document.getElementById('lmFechaHasta').value;
 
-    const resp = await fetch(`${WORKER_URL}/api/pos/finanzas/libro-mayor?fecha_desde=${desde}&fecha_hasta=${hasta}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
-    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
-    const d = await resp.json();
+    let bp;
+    try {
+      bp = await llamarReporteContable('fn_balance_prueba', { p_desde: desde, p_hasta: hasta });
+    } catch (e) {
+      cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(e.message)}</div>`;
+      return;
+    }
+    const d = { periodo: bp.periodo, cuentas: bp.cuentas.filter(c => c.acepta_movimientos) };
     cacheLibroMayor = d;
 
     if (!d.cuentas || d.cuentas.length === 0) { cont.innerHTML = '<div class="cargando">Sin movimientos en este período.</div>'; return; }
 
     cont.innerHTML = `
+      <div class="subtitulo">Saldos según la naturaleza de cada cuenta (débito o crédito).</div>
       <div class="tabla-lista">
         <div class="tabla-lista-header header-rosa" style="grid-template-columns:1.3fr 100px 90px 90px 100px;">
           <span>CUENTA</span><span style="text-align:right;">SALDO INICIAL</span><span style="text-align:right;">DÉBITOS</span><span style="text-align:right;">CRÉDITOS</span><span style="text-align:right;">SALDO FINAL</span>
@@ -18128,6 +19086,1010 @@
     const libro = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(libro, hoja, 'Libro Mayor');
     XLSX.writeFile(libro, `LanaRosa_LibroMayor_${cacheLibroMayor.periodo.desde}_a_${cacheLibroMayor.periodo.hasta}.xlsx`);
+  }
+
+  // ============================================================
+  // IMPUESTOS, PLAN DE CUENTAS Y AJUSTES (herramientas del contador)
+  // ============================================================
+  async function mostrarPantallaContabilidadImpuestos() {
+    mostrarPantalla('pantallaContabilidadImpuestos');
+    ocultarMensaje('mensajeContaImp');
+    mostrarSubTabGrupo('contaImp', 'subtabCiSimple', document.querySelector('[data-subtab-btn="contaImp"]'));
+    await cargarSimple();
+  }
+
+  function hoyIso() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  // ---------- Impuesto SIMPLE ----------
+  let cacheSimple = null;
+
+  async function cargarSimple() {
+    const selectAnio = document.getElementById('ciSimpleAnio');
+    if (selectAnio.options.length === 0) {
+      const anioActual = new Date().getFullYear();
+      selectAnio.innerHTML = [anioActual, anioActual - 1].map(a => `<option value="${a}">${a}</option>`).join('');
+    }
+    ['ciAntFecha', 'ciDecFecha', 'ciSaldoFecha'].forEach(id => { if (!document.getElementById(id).value) document.getElementById(id).value = hoyIso(); });
+    const anio = Number(selectAnio.value);
+    const cont = document.getElementById('ciSimpleBimestres');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+
+    let d;
+    try {
+      d = await llamarReporteContable('fn_simple_resumen', { p_anio: anio });
+    } catch (e) {
+      cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(e.message)}</div>`;
+      return;
+    }
+    cacheSimple = d;
+
+    const columnas = 'grid-template-columns:1.4fr 120px 120px 80px 120px 120px;';
+    const sinTarifa = !d.valor_uvt || !d.tarifas.length;
+    cont.innerHTML = `
+      ${sinTarifa ? '<div style="background:var(--tinte-ambar);color:var(--ambar);border-radius:var(--radius-md);padding:10px 14px;font-size:12.5px;margin-bottom:12px;">⚠️ Faltan los parámetros del año (UVT y tarifa): el anticipo estimado aparecerá cuando tu contador los registre abajo.</div>' : ''}
+      <div class="tabla-lista">
+        <div class="tabla-lista-header header-rosa" style="${columnas}">
+          <span>BIMESTRE</span><span style="text-align:right;">INGRESOS PERCIBIDOS</span><span style="text-align:right;">ACUMULADO</span><span style="text-align:right;">TARIFA</span><span style="text-align:right;">ANTICIPO ESTIMADO</span><span style="text-align:right;">ANTICIPO PAGADO</span>
+        </div>
+        ${d.bimestres.map(b => `
+          <div class="tabla-lista-fila" style="${columnas}cursor:default;">
+            <span>${b.numero} — ${escaparHtml(b.nombre)}${b.pagos.length ? `<div style="font-size:10.5px;opacity:0.6;">${b.pagos.map(p => `${new Date(p.fecha + 'T00:00:00').toLocaleDateString('es-CO')}${p.numero_recibo ? ' · recibo ' + escaparHtml(p.numero_recibo) : ''}`).join(' / ')}</div>` : ''}</span>
+            <span style="text-align:right;">${formatearMoneda(b.ingresos_percibidos)}</span>
+            <span style="text-align:right;">${formatearMoneda(b.acumulado)}</span>
+            <span style="text-align:right;">${b.tarifa_pct === null ? '—' : b.tarifa_pct + '%'}</span>
+            <span style="text-align:right;">${b.anticipo_estimado === null ? '—' : formatearMoneda(b.anticipo_estimado)}</span>
+            <span style="text-align:right;font-weight:700;">${Number(b.anticipo_pagado) > 0 ? formatearMoneda(b.anticipo_pagado) : '—'}</span>
+          </div>
+        `).join('')}
+        <div class="tabla-lista-fila" style="${columnas}font-weight:700;background:var(--gris-fondo);cursor:default;">
+          <span>TOTAL ${d.anio}</span><span style="text-align:right;">${formatearMoneda(d.total_ingresos_percibidos)}</span><span></span><span></span><span></span>
+          <span style="text-align:right;">${formatearMoneda(d.total_anticipos_pagados)}</span>
+        </div>
+      </div>
+    `;
+
+    const dec = d.declaracion;
+    document.getElementById('ciSimpleDeclaracion').innerHTML = `
+      ${dec
+        ? `<div class="resumen-cierre" style="margin-top:0;margin-bottom:6px;">
+             <div class="resumen-fila"><span>Impuesto a cargo ${d.anio}</span><strong>${formatearMoneda(dec.impuesto_a_cargo)}</strong></div>
+             <div class="resumen-fila"><span>Presentada</span><strong>${new Date(dec.fecha_presentacion + 'T00:00:00').toLocaleDateString('es-CO')}${dec.numero_formulario ? ' · ' + escaparHtml(dec.numero_formulario) : ''}</strong></div>
+           </div>`
+        : '<div class="cargando" style="padding:6px 0;">Aún no se ha registrado la declaración de este año.</div>'}
+      <div class="resumen-fila"><span>Anticipos disponibles (1355)</span><strong>${formatearMoneda(d.saldo_anticipos_1355)}</strong></div>
+      <div class="resumen-fila"><span>Impuesto por pagar (2404)</span><strong>${formatearMoneda(d.saldo_por_pagar_2404)}</strong></div>
+    `;
+
+    document.getElementById('ciUvt').value = d.valor_uvt || '';
+    const contTarifas = document.getElementById('ciTarifas');
+    contTarifas.innerHTML = '';
+    (d.tarifas.length ? d.tarifas : [{ desde_uvt: 0, hasta_uvt: '', tarifa_pct: '' }]).forEach(t => agregarFilaTarifaSimple(t));
+  }
+
+  function agregarFilaTarifaSimple(t) {
+    t = t || { desde_uvt: '', hasta_uvt: '', tarifa_pct: '' };
+    const fila = document.createElement('div');
+    fila.className = 'grid-campos-inventario fila-tarifa-simple';
+    fila.style.gridTemplateColumns = '1fr 1fr 1fr 40px';
+    fila.innerHTML = `
+      <div class="campo-mini"><label>Desde (UVT)</label><input type="number" min="0" step="1" class="tar-desde" value="${t.desde_uvt ?? ''}"></div>
+      <div class="campo-mini"><label>Hasta (UVT, vacío = en adelante)</label><input type="number" min="0" step="1" class="tar-hasta" value="${t.hasta_uvt ?? ''}"></div>
+      <div class="campo-mini"><label>Tarifa (%)</label><input type="number" min="0" max="100" step="0.01" class="tar-pct" value="${t.tarifa_pct ?? ''}"></div>
+      <button type="button" class="btn-quitar" title="Quitar rango" onclick="this.parentElement.remove()">✕</button>
+    `;
+    document.getElementById('ciTarifas').appendChild(fila);
+  }
+
+  async function guardarParametrosSimple() {
+    ocultarMensaje('mensajeContaImp');
+    const anio = Number(document.getElementById('ciSimpleAnio').value);
+    const uvt = Number(document.getElementById('ciUvt').value);
+    if (!uvt || uvt <= 0) { mostrarMensaje('mensajeContaImp', 'Escribe el valor de la UVT del año.', 'error'); return; }
+    const tarifas = [...document.querySelectorAll('.fila-tarifa-simple')]
+      .map(f => ({ desde_uvt: f.querySelector('.tar-desde').value, hasta_uvt: f.querySelector('.tar-hasta').value, tarifa_pct: f.querySelector('.tar-pct').value }))
+      .filter(t => t.desde_uvt !== '' && t.tarifa_pct !== '');
+    try {
+      await llamarReporteContable('fn_simple_guardar_parametros', { p_anio: anio, p_valor_uvt: uvt, p_tarifas: tarifas });
+    } catch (e) {
+      mostrarMensaje('mensajeContaImp', 'No se pudo guardar: ' + e.message, 'error');
+      return;
+    }
+    mostrarMensaje('mensajeContaImp', '✅ Parámetros del SIMPLE guardados.', 'exito');
+    await cargarSimple();
+  }
+
+  async function confirmarAnticipoSimple() {
+    ocultarMensaje('mensajeContaImp');
+    const monto = Number(document.getElementById('ciAntMonto').value);
+    const fecha = document.getElementById('ciAntFecha').value;
+    if (!monto || monto <= 0) { mostrarMensaje('mensajeContaImp', 'Escribe el valor pagado.', 'error'); return; }
+    if (!fecha) { mostrarMensaje('mensajeContaImp', 'Escribe la fecha de pago.', 'error'); return; }
+    try {
+      await llamarReporteContable('fn_simple_registrar_anticipo', {
+        p_anio: Number(document.getElementById('ciSimpleAnio').value),
+        p_bimestre: Number(document.getElementById('ciAntBimestre').value),
+        p_monto: monto, p_fecha: fecha,
+        p_metodo_pago: document.getElementById('ciAntMetodo').value,
+        p_numero_recibo: document.getElementById('ciAntRecibo').value.trim(),
+      });
+    } catch (e) {
+      mostrarMensaje('mensajeContaImp', 'No se pudo registrar: ' + e.message, 'error');
+      return;
+    }
+    document.getElementById('ciAntMonto').value = '';
+    document.getElementById('ciAntRecibo').value = '';
+    mostrarMensaje('mensajeContaImp', '✅ Anticipo registrado y contabilizado (1355 contra caja/bancos).', 'exito');
+    await cargarSimple();
+  }
+
+  async function confirmarDeclaracionSimple() {
+    ocultarMensaje('mensajeContaImp');
+    const impuesto = document.getElementById('ciDecImpuesto').value;
+    const fecha = document.getElementById('ciDecFecha').value;
+    if (impuesto === '' || Number(impuesto) < 0) { mostrarMensaje('mensajeContaImp', 'Escribe el impuesto a cargo (puede ser 0).', 'error'); return; }
+    if (!fecha) { mostrarMensaje('mensajeContaImp', 'Escribe la fecha de presentación.', 'error'); return; }
+    let r;
+    try {
+      r = await llamarReporteContable('fn_simple_registrar_declaracion', {
+        p_anio: Number(document.getElementById('ciSimpleAnio').value),
+        p_impuesto_a_cargo: Number(impuesto), p_fecha_presentacion: fecha,
+        p_numero_formulario: document.getElementById('ciDecFormulario').value.trim(),
+      });
+    } catch (e) {
+      mostrarMensaje('mensajeContaImp', 'No se pudo registrar: ' + e.message, 'error');
+      return;
+    }
+    const saldo = Number(r.saldo_a_pagar) > 0
+      ? `Saldo a pagar: ${formatearMoneda(r.saldo_a_pagar)}.`
+      : `Saldo a favor: ${formatearMoneda(r.saldo_a_favor)}.`;
+    mostrarMensaje('mensajeContaImp', `✅ Declaración registrada. Se aplicaron ${formatearMoneda(r.anticipos_aplicados)} de anticipos. ${saldo}`, 'exito');
+    if (Number(r.saldo_a_pagar) > 0) document.getElementById('ciSaldoMonto').value = Math.round(r.saldo_a_pagar);
+    await cargarSimple();
+  }
+
+  async function confirmarPagoSaldoSimple() {
+    ocultarMensaje('mensajeContaImp');
+    const monto = Number(document.getElementById('ciSaldoMonto').value);
+    const fecha = document.getElementById('ciSaldoFecha').value;
+    if (!monto || monto <= 0) { mostrarMensaje('mensajeContaImp', 'Escribe el valor pagado.', 'error'); return; }
+    try {
+      await llamarReporteContable('fn_simple_pagar_saldo', {
+        p_anio: Number(document.getElementById('ciSimpleAnio').value),
+        p_monto: monto, p_fecha: fecha, p_metodo_pago: document.getElementById('ciSaldoMetodo').value,
+      });
+    } catch (e) {
+      mostrarMensaje('mensajeContaImp', 'No se pudo registrar: ' + e.message, 'error');
+      return;
+    }
+    document.getElementById('ciSaldoMonto').value = '';
+    mostrarMensaje('mensajeContaImp', '✅ Pago del saldo registrado (2404 contra caja/bancos).', 'exito');
+    await cargarSimple();
+  }
+
+  // ---------- Plan de cuentas ----------
+  let cachePlanCuentas = [];
+
+  async function cargarPlanCuentas() {
+    const cont = document.getElementById('ciPucLista');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    const { data, error } = await supabaseClient
+      .from('plan_cuentas_puc')
+      .select('codigo, nombre, nivel, naturaleza, acepta_movimientos, activa, usada_por_sistema, nota_validacion')
+      .order('codigo', { ascending: true });
+    if (error) { cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(error.message)}</div>`; return; }
+    cachePlanCuentas = data || [];
+    renderizarPlanCuentas();
+  }
+
+  function renderizarPlanCuentas() {
+    const cont = document.getElementById('ciPucLista');
+    const texto = document.getElementById('ciPucBuscar').value.trim().toLowerCase();
+    const verInactivas = document.getElementById('ciPucInactivas').checked;
+    const cuentas = cachePlanCuentas.filter(c =>
+      (verInactivas || c.activa) &&
+      (!texto || c.codigo.startsWith(texto) || c.nombre.toLowerCase().includes(texto)));
+    if (!cuentas.length) { cont.innerHTML = '<div class="cargando">Sin cuentas que coincidan.</div>'; return; }
+
+    const etiquetaNivel = ['', 'Clase', 'Grupo', 'Cuenta', 'Subcuenta', 'Auxiliar'];
+    const badge = (texto, fondo, color) => `<span class="badge-estado-pedido" style="background:${fondo};color:${color};margin-left:4px;">${texto}</span>`;
+    cont.innerHTML = `
+      <div class="tabla-lista">
+        ${cuentas.map(c => `
+          <div class="tabla-lista-fila" style="grid-template-columns:1fr auto;cursor:default;${c.nivel === 1 ? 'background:var(--tinte-rosa);font-weight:700;' : c.nivel === 2 ? 'font-weight:600;' : ''}${c.activa ? '' : 'opacity:0.5;'}">
+            <span style="padding-left:${(c.nivel - 1) * 16}px;">
+              ${escaparHtml(c.codigo)} — ${escaparHtml(c.nombre)}
+              <div style="font-weight:400;margin-top:2px;">
+                ${badge(etiquetaNivel[c.nivel] || '', 'var(--gris-fondo)', 'var(--texto-suave)')}
+                ${badge(c.naturaleza === 'debito' ? 'Débito' : 'Crédito', 'var(--tinte-azul)', 'var(--azul-acero)')}
+                ${c.acepta_movimientos ? badge('Recibe movimientos', 'var(--tinte-verde)', 'var(--verde-exito)') : ''}
+                ${c.usada_por_sistema ? badge('🔒 Sistema', 'var(--tinte-rosa)', 'var(--rosa-principal)') : ''}
+                ${c.activa ? '' : badge('Inactiva', 'var(--tinte-rojo)', 'var(--rojo-error)')}
+                ${c.nota_validacion ? `<div style="font-size:10.5px;color:var(--ambar);margin-top:3px;">⚠️ ${escaparHtml(c.nota_validacion)}</div>` : ''}
+              </div>
+            </span>
+            <span style="display:flex;gap:6px;">
+              ${c.nivel >= 3 ? `<button class="btn-mini editar" style="flex:0 0 auto;" onclick="editarNombreCuentaPuc('${c.codigo}')">Renombrar</button>` : ''}
+              ${c.nivel >= 3 && !c.usada_por_sistema ? `<button class="btn-mini ${c.activa ? 'desactivar' : 'guardar'}" style="flex:0 0 auto;" onclick="alternarCuentaPucActiva('${c.codigo}')">${c.activa ? 'Desactivar' : 'Activar'}</button>` : ''}
+            </span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  async function confirmarCrearCuentaPuc() {
+    ocultarMensaje('mensajeContaImp');
+    const padre = document.getElementById('ciPucPadre').value.trim();
+    const codigo = document.getElementById('ciPucCodigo').value.trim();
+    const nombre = document.getElementById('ciPucNombre').value.trim();
+    if (!padre || !codigo || !nombre) { mostrarMensaje('mensajeContaImp', 'Completa cuenta padre, código y nombre.', 'error'); return; }
+    try {
+      await llamarReporteContable('fn_crear_cuenta_puc', { p_codigo: codigo, p_nombre: nombre, p_padre_codigo: padre });
+    } catch (e) {
+      mostrarMensaje('mensajeContaImp', 'No se pudo crear: ' + e.message, 'error');
+      return;
+    }
+    document.getElementById('ciPucCodigo').value = '';
+    document.getElementById('ciPucNombre').value = '';
+    mostrarMensaje('mensajeContaImp', `✅ Cuenta ${codigo} creada.`, 'exito');
+    await cargarPlanCuentas();
+  }
+
+  async function actualizarCuentaPuc(codigo, nombre, activa) {
+    ocultarMensaje('mensajeContaImp');
+    try {
+      await llamarReporteContable('fn_actualizar_cuenta_puc', { p_codigo: codigo, p_nombre: nombre, p_activa: activa });
+    } catch (e) {
+      mostrarMensaje('mensajeContaImp', 'No se pudo actualizar: ' + e.message, 'error');
+      return;
+    }
+    mostrarMensaje('mensajeContaImp', `✅ Cuenta ${codigo} actualizada.`, 'exito');
+    await cargarPlanCuentas();
+  }
+
+  async function editarNombreCuentaPuc(codigo) {
+    const cuenta = cachePlanCuentas.find(c => c.codigo === codigo);
+    const nombre = prompt(`Nuevo nombre para la cuenta ${codigo}:`, cuenta.nombre);
+    if (nombre === null || !nombre.trim()) return;
+    await actualizarCuentaPuc(codigo, nombre.trim(), cuenta.activa);
+  }
+
+  async function alternarCuentaPucActiva(codigo) {
+    const cuenta = cachePlanCuentas.find(c => c.codigo === codigo);
+    await actualizarCuentaPuc(codigo, cuenta.nombre, !cuenta.activa);
+  }
+
+  // ---------- Cierre de costos de producción ----------
+  let cacheCierreCostos = null;
+
+  async function cargarCierreCostos() {
+    const inputMes = document.getElementById('ciCostosMes');
+    if (!inputMes.value) {
+      const hoy = new Date();
+      const anterior = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1);
+      inputMes.value = `${anterior.getFullYear()}-${String(anterior.getMonth() + 1).padStart(2, '0')}`;
+    }
+    const [anio, mes] = inputMes.value.split('-').map(Number);
+    const cont = document.getElementById('ciCostosContenido');
+    cont.innerHTML = '<div class="cargando">Calculando...</div>';
+    let d;
+    try {
+      d = await llamarReporteContable('fn_cierre_costos_preview', { p_anio: anio, p_mes: mes });
+    } catch (e) {
+      cont.innerHTML = `<div class="cargando">No se pudo calcular: ${escaparHtml(e.message)}</div>`;
+      return;
+    }
+    cacheCierreCostos = d;
+
+    const advertencias = d.advertencias.map(a => `<div style="background:var(--tinte-ambar);color:var(--ambar);border-radius:var(--radius-md);padding:8px 12px;font-size:12.5px;margin-bottom:8px;">⚠️ ${escaparHtml(a)}</div>`).join('');
+    const bloque = (titulo, filas) => `<h2 style="margin-top:16px;font-size:14px;">${titulo}</h2>${filas.map(([e, v, t]) => filaEstadoFin(e, v, t)).join('')}`;
+    const puedeRegistrar = !d.ya_registrado && d.lineas.length > 0 && !d.advertencias.some(a => a.includes('todavía no ha terminado') || a.includes('anterior al inicio del costeo'));
+
+    cont.innerHTML = `
+      ${d.ya_registrado ? `<div style="background:var(--tinte-verde);color:var(--verde-exito);border-radius:var(--radius-md);padding:10px 14px;font-size:12.5px;margin-bottom:10px;font-weight:600;">✅ Este mes ya está cerrado (comprobante #${d.ya_registrado}). Para rehacerlo, revierte ese comprobante en el Libro Diario.</div>` : ''}
+      ${advertencias}
+      <div class="grilla-2">
+        <div>
+          ${bloque('1. Materia prima (1405)', [['Según libros', d.materia_prima.libros], ['Existencias reales al cierre', d.materia_prima.fisico], ['= Consumida en producción', d.materia_prima.consumo, true],
+            ...(Number(d.materia_prima.desde_tienda) ? [['+ Mercería de la Tienda entregada a órdenes (1435)', d.materia_prima.desde_tienda]] : [])])}
+          ${bloque('2. Mano de obra y gastos del Taller', [['Personal del Taller (5105 → 7220)', d.mano_obra], ['Tejedoras externas (5110 → 7420)', d.tejedoras], ['Otros gastos del Taller (→ 7320)', d.indirectos]])}
+          ${filaEstadoFin('= Costo de producción del mes', d.costo_produccion, true)}
+          ${d.productos_en_proceso ? bloque('Productos en proceso (1410)', [['Según libros', d.productos_en_proceso.libros], ['Material en órdenes abiertas al cierre', d.productos_en_proceso.fisico], ['= Queda en proceso (el resto va a 1430)', d.productos_en_proceso.variacion, true]]) : ''}
+        </div>
+        <div>
+          ${bloque('3. Productos terminados (1430)', [['Libros + producción del mes', d.productos_terminados.libros_con_produccion], ['Existencias reales al cierre', d.productos_terminados.fisico], ['= Ajuste al costo de ventas (6120)', d.productos_terminados.ajuste_costo_ventas, true]])}
+          ${bloque('4. Mercancía de reventa (1435)', [['Según libros', d.mercancia.libros], ['Existencias reales al cierre', d.mercancia.fisico], ['= Merma (6135)', d.mercancia.merma, true]])}
+        </div>
+      </div>
+      ${d.lineas.length ? `
+        <h2 style="margin-top:18px;font-size:14px;">Asiento que se registrará</h2>
+        <div class="tabla-lista">
+          <div class="tabla-lista-header header-rosa" style="grid-template-columns:90px 1fr 120px 120px;"><span>CUENTA</span><span>CONCEPTO</span><span style="text-align:right;">DEBE</span><span style="text-align:right;">HABER</span></div>
+          ${d.lineas.map(l => `
+            <div class="tabla-lista-fila" style="grid-template-columns:90px 1fr 120px 120px;cursor:default;">
+              <span>${escaparHtml(l.cuenta)}</span><span style="font-size:12px;">${escaparHtml(l.concepto)}</span>
+              <span style="text-align:right;">${Number(l.debito) > 0 ? formatearMoneda(l.debito) : '—'}</span>
+              <span style="text-align:right;">${Number(l.credito) > 0 ? formatearMoneda(l.credito) : '—'}</span>
+            </div>`).join('')}
+        </div>` : '<div class="cargando" style="margin-top:12px;">No hay ajustes de costos para registrar en este mes.</div>'}
+      ${puedeRegistrar ? `<button class="btn-principal" onclick="confirmarCierreCostos()">Registrar cierre de costos de ${String(d.mes).padStart(2, '0')}/${d.anio}</button>` : ''}
+    `;
+  }
+
+  async function confirmarCierreCostos() {
+    const d = cacheCierreCostos;
+    if (!d) return;
+    if (!confirm(`¿Registrar el cierre de costos de ${String(d.mes).padStart(2, '0')}/${d.anio}? Se creará un comprobante en el Libro Diario que solo se puede corregir revirtiéndolo.`)) return;
+    ocultarMensaje('mensajeContaImp');
+    try {
+      await llamarReporteContable('fn_cierre_costos_ejecutar', { p_anio: d.anio, p_mes: d.mes });
+    } catch (e) {
+      mostrarMensaje('mensajeContaImp', 'No se pudo registrar: ' + e.message, 'error');
+      return;
+    }
+    mostrarMensaje('mensajeContaImp', '✅ Cierre de costos registrado. Ya aparece en el Libro Diario y en los estados financieros.', 'exito');
+    await cargarCierreCostos();
+  }
+
+  // ---------- Asiento de ajuste ----------
+  let cuentasMovimientoAjuste = [];
+  let centrosCostoAjuste = [];
+  let tercerosAjuste = [];
+
+  async function prepararAsientoAjuste() {
+    if (!document.getElementById('ciAjFecha').value) document.getElementById('ciAjFecha').value = hoyIso();
+    if (!cuentasMovimientoAjuste.length) {
+      const [cuentas, centros, terceros] = await Promise.all([
+        supabaseClient.from('plan_cuentas_puc').select('codigo, nombre').eq('acepta_movimientos', true).eq('activa', true).order('codigo', { ascending: true }),
+        supabaseClient.from('centros_costo').select('id, codigo, nombre').order('codigo', { ascending: true }),
+        supabaseClient.from('terceros').select('id, nombre_completo').order('nombre_completo', { ascending: true }),
+      ]);
+      cuentasMovimientoAjuste = cuentas.data || [];
+      centrosCostoAjuste = centros.data || [];
+      tercerosAjuste = terceros.data || [];
+    }
+    if (!document.querySelectorAll('.fila-ajuste').length) {
+      agregarLineaAjuste();
+      agregarLineaAjuste();
+    }
+    recalcularTotalesAjuste();
+  }
+
+  function agregarLineaAjuste() {
+    const fila = document.createElement('div');
+    fila.className = 'tabla-lista-fila fila-ajuste';
+    fila.style.cssText = 'grid-template-columns:2fr 1.2fr 1.2fr 120px 120px 36px;cursor:default;';
+    fila.innerHTML = `
+      <select class="aj-cuenta"><option value="">Cuenta...</option>${cuentasMovimientoAjuste.map(c => `<option value="${c.codigo}">${escaparHtml(c.codigo)} — ${escaparHtml(c.nombre)}</option>`).join('')}</select>
+      <select class="aj-centro">${centrosCostoAjuste.map(c => `<option value="${c.id}">${escaparHtml(c.codigo)} ${escaparHtml(c.nombre)}</option>`).join('')}</select>
+      <select class="aj-tercero"><option value="">Sin tercero</option>${tercerosAjuste.map(t => `<option value="${t.id}">${escaparHtml(t.nombre_completo)}</option>`).join('')}</select>
+      <input type="number" class="aj-debito" min="0" step="1" placeholder="0" oninput="recalcularTotalesAjuste()" style="text-align:right;">
+      <input type="number" class="aj-credito" min="0" step="1" placeholder="0" oninput="recalcularTotalesAjuste()" style="text-align:right;">
+      <button type="button" class="btn-quitar" title="Quitar línea" onclick="this.parentElement.remove(); recalcularTotalesAjuste();">✕</button>
+    `;
+    document.getElementById('ciAjLineas').appendChild(fila);
+  }
+
+  function lineasAsientoAjuste() {
+    return [...document.querySelectorAll('.fila-ajuste')].map(f => ({
+      cuenta_codigo: f.querySelector('.aj-cuenta').value,
+      centro_costo_id: f.querySelector('.aj-centro').value,
+      tercero_id: f.querySelector('.aj-tercero').value,
+      debito: Number(f.querySelector('.aj-debito').value || 0),
+      credito: Number(f.querySelector('.aj-credito').value || 0),
+    }));
+  }
+
+  function recalcularTotalesAjuste() {
+    const lineas = lineasAsientoAjuste();
+    const deb = lineas.reduce((a, l) => a + l.debito, 0);
+    const cre = lineas.reduce((a, l) => a + l.credito, 0);
+    const cuadra = deb > 0 && deb === cre;
+    document.getElementById('ciAjTotales').innerHTML = `
+      <div class="resumen-fila"><span>Total débitos</span><strong>${formatearMoneda(deb)}</strong></div>
+      <div class="resumen-fila"><span>Total créditos</span><strong>${formatearMoneda(cre)}</strong></div>
+      <div class="resumen-fila total"><span>Diferencia</span><strong style="color:${cuadra ? 'var(--verde-exito)' : 'var(--rojo-error)'};">${cuadra ? '✅ Cuadra' : formatearMoneda(deb - cre)}</strong></div>
+    `;
+  }
+
+  async function confirmarAsientoAjuste() {
+    ocultarMensaje('mensajeContaImp');
+    const fecha = document.getElementById('ciAjFecha').value;
+    const descripcion = document.getElementById('ciAjDescripcion').value.trim();
+    const lineas = lineasAsientoAjuste().filter(l => l.debito > 0 || l.credito > 0);
+    if (!fecha || !descripcion) { mostrarMensaje('mensajeContaImp', 'Escribe la fecha y la descripción del asiento.', 'error'); return; }
+    if (lineas.length < 2) { mostrarMensaje('mensajeContaImp', 'El asiento necesita al menos dos líneas con valor.', 'error'); return; }
+    if (lineas.some(l => !l.cuenta_codigo)) { mostrarMensaje('mensajeContaImp', 'Elige la cuenta de cada línea.', 'error'); return; }
+    if (lineas.some(l => l.debito > 0 && l.credito > 0)) { mostrarMensaje('mensajeContaImp', 'Cada línea va al débito o al crédito, no a ambos.', 'error'); return; }
+    const deb = lineas.reduce((a, l) => a + l.debito, 0);
+    const cre = lineas.reduce((a, l) => a + l.credito, 0);
+    if (deb !== cre) { mostrarMensaje('mensajeContaImp', 'El asiento no cuadra: débitos y créditos deben ser iguales.', 'error'); return; }
+
+    const btn = document.getElementById('btnRegistrarAjuste');
+    btn.disabled = true;
+    try {
+      await llamarReporteContable('fn_registrar_asiento_ajuste', { p_fecha: fecha, p_descripcion: descripcion, p_lineas: lineas });
+    } catch (e) {
+      mostrarMensaje('mensajeContaImp', 'No se pudo registrar: ' + e.message, 'error');
+      return;
+    } finally {
+      btn.disabled = false;
+    }
+    document.getElementById('ciAjDescripcion').value = '';
+    document.getElementById('ciAjLineas').innerHTML = '';
+    agregarLineaAjuste();
+    agregarLineaAjuste();
+    recalcularTotalesAjuste();
+    mostrarMensaje('mensajeContaImp', '✅ Asiento de ajuste registrado. Ya aparece en el Libro Diario.', 'exito');
+  }
+
+  // ---------- Exógena DIAN ----------
+  let cacheExogena = null;
+  let cacheTercerosExogena = {};
+
+  const NOMBRES_FORMATO_EXOGENA = {
+    '1001': 'Pagos o abonos en cuenta y retenciones practicadas',
+    '1003': 'Retenciones en la fuente que le practicaron',
+    '1007': 'Ingresos recibidos',
+    '1008': 'Saldos de cuentas por cobrar al 31 de diciembre',
+    '1009': 'Saldos de cuentas por pagar al 31 de diciembre',
+  };
+
+  // Dígito de verificación DIAN (módulo 11) — mismo cálculo que fn_calcular_dv.
+  function calcularDvNit(numero) {
+    const limpio = String(numero || '').replace(/\D/g, '');
+    if (!limpio) return '';
+    const pesos = [3, 7, 13, 17, 19, 23, 29, 37, 41, 43, 47, 53, 59, 67, 71];
+    let suma = 0;
+    limpio.split('').reverse().forEach((d, i) => { suma += Number(d) * (pesos[i] || 0); });
+    const residuo = suma % 11;
+    return String(residuo > 1 ? 11 - residuo : residuo);
+  }
+
+  function llenarSelectAnios(idSelect) {
+    const sel = document.getElementById(idSelect);
+    if (sel.options.length === 0) {
+      const anioActual = new Date().getFullYear();
+      sel.innerHTML = [anioActual, anioActual - 1].map(a => `<option value="${a}">${a}</option>`).join('');
+    }
+    return Number(sel.value);
+  }
+
+  async function cargarExogena() {
+    const anio = llenarSelectAnios('ciExoAnio');
+    const formato = document.getElementById('ciExoFormato').value;
+    const cont = document.getElementById('ciExoContenido');
+    document.getElementById('ciExoEditorTercero').classList.add('oculto');
+    cont.innerHTML = '<div class="cargando">Generando formato...</div>';
+
+    let d;
+    try {
+      d = await llamarReporteContable('fn_exogena_generar', { p_anio: anio, p_formato: formato });
+    } catch (e) {
+      cont.innerHTML = `<div class="cargando">No se pudo generar: ${escaparHtml(e.message)}</div>`;
+      return;
+    }
+    cacheExogena = d;
+    document.getElementById('ciExoTope').value = Number(d.cuantia_menor) || '';
+
+    const nombreInformado = (f) => f.razon_social
+      || [f.primer_apellido, f.segundo_apellido, f.primer_nombre, f.otros_nombres].filter(Boolean).join(' ')
+      || f.nombre_sistema || '';
+    const columnas = 'grid-template-columns:80px 70px 150px 1.6fr 130px 110px;';
+    const conRetencion = formato === '1001' || formato === '1003';
+
+    const avisos = [...(d.advertencias || [])];
+    const alertas = [];
+    if (d.sin_documento.length) {
+      alertas.push(`
+        <div style="background:var(--tinte-rojo);border-radius:var(--radius-md);padding:10px 14px;margin-bottom:12px;font-size:12.5px;line-height:1.6;">
+          <strong>🪪 ${d.sin_documento.length} tercero(s) sin cédula o NIT real</strong> — sus valores quedaron en cuantías menores. Completa el documento para reportarlos con su nombre:
+          <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;">
+            ${d.sin_documento.map(t => `<button class="btn-mini editar" style="flex:0 0 auto;" onclick="abrirEditorTerceroExogena('${t.tercero_id}')">✏️ ${escaparHtml(t.nombre)} <span style="opacity:0.6;">(${escaparHtml(t.documento_actual || 'sin documento')})</span></button>`).join('')}
+          </div>
+        </div>`);
+    }
+    if (d.incompletos.length) {
+      alertas.push(`
+        <div style="background:var(--tinte-ambar);border-radius:var(--radius-md);padding:10px 14px;margin-bottom:12px;font-size:12.5px;line-height:1.6;">
+          <strong>⚠️ ${d.incompletos.length} tercero(s) con datos incompletos</strong> — el prevalidador los rechaza así:
+          <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;">
+            ${d.incompletos.map(t => `<button class="btn-mini editar" style="flex:0 0 auto;" onclick="abrirEditorTerceroExogena('${t.tercero_id}')">✏️ ${escaparHtml(t.nombre)} <span style="opacity:0.6;">(falta: ${escaparHtml(t.faltan)})</span></button>`).join('')}
+          </div>
+        </div>`);
+    }
+
+    cont.innerHTML = `
+      ${alertas.join('')}
+      ${avisos.length ? `<div style="font-size:11.5px;opacity:0.75;margin-bottom:12px;line-height:1.5;">${avisos.map(a => '• ' + escaparHtml(a)).join('<br>')}</div>` : ''}
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+        <span class="chip-filtro activo" style="cursor:default;">Formato ${escaparHtml(d.formato)} · ${escaparHtml(NOMBRES_FORMATO_EXOGENA[d.formato] || '')}</span>
+        <span class="chip-filtro" style="cursor:default;">${d.filas.length} registro(s)</span>
+        <span class="chip-filtro" style="cursor:default;">Total ${formatearMoneda(d.total)}</span>
+      </div>
+      ${d.filas.length ? `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header header-rosa" style="${columnas}">
+          <span>CONCEPTO</span><span>TIPO DOC.</span><span>IDENTIFICACIÓN</span><span>INFORMADO</span><span style="text-align:right;">VALOR</span><span style="text-align:right;">${conRetencion ? 'RETENCIÓN' : ''}</span>
+        </div>
+        ${d.filas.map(f => `
+          <div class="tabla-lista-fila" style="${columnas}cursor:${f.tercero_id ? 'pointer' : 'default'};" ${f.tercero_id ? `onclick="abrirEditorTerceroExogena('${f.tercero_id}')" title="Editar datos del tercero"` : ''}>
+            <span>${escaparHtml(f.concepto)}</span>
+            <span>${escaparHtml(f.tipo_documento)}</span>
+            <span>${escaparHtml(f.numero_documento)}${f.dv ? '-' + escaparHtml(f.dv) : ''}</span>
+            <span>${escaparHtml(nombreInformado(f))}${f.tercero_id ? '' : ' <span style="font-size:10.5px;opacity:0.6;">(agrupado)</span>'}</span>
+            <span style="text-align:right;font-weight:600;">${formatearMoneda(f.valor)}</span>
+            <span style="text-align:right;">${conRetencion ? formatearMoneda(f.retencion) : ''}</span>
+          </div>
+        `).join('')}
+      </div>` : '<div class="cargando">No hay movimientos para reportar en este formato y año.</div>'}
+    `;
+    cargarConceptosExogena();
+  }
+
+  async function guardarTopeExogena() {
+    const anio = Number(document.getElementById('ciExoAnio').value);
+    const formato = document.getElementById('ciExoFormato').value;
+    const tope = Number(document.getElementById('ciExoTope').value || 0);
+    if (tope < 0) { mostrarMensaje('mensajeContaImp', 'El tope no puede ser negativo.', 'error'); return; }
+    const { error } = await supabaseClient.from('exogena_parametros')
+      .upsert({ anio, formato, cuantia_menor: tope }, { onConflict: 'anio,formato' });
+    if (error) { mostrarMensaje('mensajeContaImp', 'No se pudo guardar el tope: ' + error.message, 'error'); return; }
+    mostrarMensaje('mensajeContaImp', `✅ Tope de cuantías menores del formato ${formato} (${anio}) guardado.`, 'exito');
+    await cargarExogena();
+  }
+
+  function exportarExogenaExcel() {
+    const d = cacheExogena;
+    if (!d || !d.filas.length) { mostrarMensaje('mensajeContaImp', 'No hay registros para exportar.', 'error'); return; }
+    const identificacion = ['Tipo de documento', 'Número identificación del informado', 'DV', 'Primer apellido del informado', 'Segundo apellido del informado', 'Primer nombre del informado', 'Otros nombres del informado', 'Razón social informado'];
+    const ubicacion = ['Dirección', 'Código dpto.', 'Código mcp.', 'País de residencia o domicilio'];
+    const base = (f) => [f.tipo_documento, f.numero_documento, f.dv || '', f.primer_apellido || '', f.segundo_apellido || '', f.primer_nombre || '', f.otros_nombres || '', f.razon_social || ''];
+    const lugar = (f) => [f.direccion || '', f.codigo_departamento || '', f.codigo_municipio || '', f.codigo_pais || '169'];
+    const valor = (n) => Math.round(Number(n) || 0);
+
+    let encabezado, fila;
+    switch (d.formato) {
+      case '1001':
+        encabezado = ['Concepto', ...identificacion, ...ubicacion, 'Pago o abono en cuenta deducible', 'Pago o abono en cuenta no deducible', 'IVA mayor valor del costo o gasto deducible', 'IVA mayor valor del costo o gasto no deducible', 'Retención en la fuente practicada en renta', 'Retención en la fuente asumida en renta', 'Retención en la fuente practicada IVA a responsables del IVA', 'Retención en la fuente practicada IVA a no residentes o no domiciliados'];
+        fila = (f) => [f.concepto, ...base(f), ...lugar(f), valor(f.valor), 0, 0, 0, valor(f.retencion), 0, 0, 0];
+        break;
+      case '1003':
+        encabezado = ['Concepto', ...identificacion, 'Dirección', 'Código dpto.', 'Código mcp.', 'Valor acumulado del pago o abono sujeto a retención en la fuente', 'Retención que le practicaron'];
+        fila = (f) => [f.concepto, ...base(f), f.direccion || '', f.codigo_departamento || '', f.codigo_municipio || '', valor(f.valor), valor(f.retencion)];
+        break;
+      case '1007':
+        // El 1007 no lleva dígito de verificación.
+        encabezado = ['Concepto', ...identificacion.filter(c => c !== 'DV'), 'País de residencia o domicilio', 'Ingresos brutos recibidos por operaciones propias', 'Ingresos brutos recibidos a través de consorcio o uniones temporales', 'Ingresos a través de contratos de mandato o administración delegada', 'Ingresos a través de exploración y explotación de minerales', 'Ingresos a través de fiducias', 'Ingresos recibidos a través de terceros', 'Devoluciones, rebajas y descuentos'];
+        fila = (f) => [f.concepto, ...base(f).filter((_, i) => i !== 2), f.codigo_pais || '169', valor(f.valor), 0, 0, 0, 0, 0, valor(f.devoluciones)];
+        break;
+      default: // 1008 y 1009
+        encabezado = ['Concepto', ...identificacion, ...ubicacion, d.formato === '1008' ? 'Saldo cuentas por cobrar al 31-12' : 'Saldo cuentas por pagar al 31-12'];
+        fila = (f) => [f.concepto, ...base(f), ...lugar(f), valor(f.valor)];
+    }
+
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, XLSX.utils.aoa_to_sheet([encabezado, ...d.filas.map(fila)]), `Formato ${d.formato}`);
+    const notas = [
+      [`Lana Rosa Crochet — Información exógena formato ${d.formato} (${NOMBRES_FORMATO_EXOGENA[d.formato] || ''}) — año gravable ${d.anio}`],
+      [`Generado: ${new Date().toLocaleString('es-CO')}`],
+      [`Total reportado: ${valor(d.total)}`],
+      [],
+      ['Advertencias'],
+      ...(d.advertencias || []).map(a => [a]),
+      [],
+      ['Terceros sin documento real (reportados en cuantías menores)'],
+      ...d.sin_documento.map(t => [t.nombre, t.documento_actual || '']),
+      [],
+      ['Terceros con datos incompletos'],
+      ...d.incompletos.map(t => [t.nombre, 'Falta: ' + t.faltan]),
+    ];
+    XLSX.utils.book_append_sheet(libro, XLSX.utils.aoa_to_sheet(notas), 'Notas');
+    XLSX.writeFile(libro, `LanaRosa_Exogena_${d.formato}_${d.anio}.xlsx`);
+  }
+
+  async function abrirEditorTerceroExogena(terceroId) {
+    const panel = document.getElementById('ciExoEditorTercero');
+    panel.classList.remove('oculto');
+    panel.innerHTML = '<div class="cargando">Cargando tercero...</div>';
+    const { data: t, error } = await supabaseClient.from('terceros')
+      .select('id, tipo_documento, numero_documento, digito_verificacion, nombre_completo, primer_apellido, segundo_apellido, primer_nombre, otros_nombres, razon_social, direccion, ciudad, codigo_departamento, codigo_municipio, codigo_pais')
+      .eq('id', terceroId).single();
+    if (error) { panel.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(error.message)}</div>`; return; }
+    cacheTercerosExogena[terceroId] = t;
+
+    // Sugerencia de nombres a partir del nombre completo (formato habitual en Colombia: nombres y luego apellidos).
+    const partes = (t.nombre_completo || '').trim().split(/\s+/).filter(Boolean);
+    let sugerido = { primer_nombre: '', otros_nombres: '', primer_apellido: '', segundo_apellido: '' };
+    if (partes.length === 2) sugerido = { primer_nombre: partes[0], otros_nombres: '', primer_apellido: partes[1], segundo_apellido: '' };
+    else if (partes.length === 3) sugerido = { primer_nombre: partes[0], otros_nombres: '', primer_apellido: partes[1], segundo_apellido: partes[2] };
+    else if (partes.length >= 4) sugerido = { primer_nombre: partes[0], otros_nombres: partes.slice(1, -2).join(' '), primer_apellido: partes[partes.length - 2], segundo_apellido: partes[partes.length - 1] };
+    const val = (campo) => escaparHtml(t[campo] ?? sugerido[campo] ?? '');
+    const documentoFicticio = /^(CRM|SINNIT)/i.test(t.numero_documento || '') || !/^\d+$/.test(t.numero_documento || '');
+
+    panel.innerHTML = `
+      <h2 style="margin-top:0;">✏️ Datos para exógena — ${escaparHtml(t.nombre_completo)}</h2>
+      <div style="font-size:12px;opacity:0.7;margin-bottom:12px;">Estos datos se guardan en el tercero y los usa cualquier formato. Si una persona natural tiene NIT, usa su cédula como número.</div>
+      <div class="grilla-2" style="gap:12px;">
+        <div><label for="exoTTipo">Tipo de documento</label>
+          <select id="exoTTipo" onchange="actualizarCamposTerceroExogena()">
+            ${['CC', 'NIT', 'CE', 'PASAPORTE', 'TI'].map(tp => `<option value="${tp}" ${t.tipo_documento === tp ? 'selected' : ''}>${tp}</option>`).join('')}
+          </select></div>
+        <div><label for="exoTNumero">Número de documento <span style="font-size:10px;opacity:0.6;">(solo números, sin DV)</span></label>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="text" id="exoTNumero" inputmode="numeric" value="${documentoFicticio ? '' : escaparHtml(t.numero_documento)}" placeholder="${documentoFicticio ? 'Actual: ' + escaparHtml(t.numero_documento) : ''}" oninput="actualizarCamposTerceroExogena()">
+            <span id="exoTDv" style="font-weight:700;min-width:44px;"></span>
+          </div></div>
+      </div>
+      <div id="exoTBloquePersona" class="grilla-2" style="gap:12px;margin-top:10px;">
+        <div><label for="exoTPrimerApellido">Primer apellido</label><input type="text" id="exoTPrimerApellido" value="${val('primer_apellido')}"></div>
+        <div><label for="exoTSegundoApellido">Segundo apellido</label><input type="text" id="exoTSegundoApellido" value="${val('segundo_apellido')}"></div>
+        <div><label for="exoTPrimerNombre">Primer nombre</label><input type="text" id="exoTPrimerNombre" value="${val('primer_nombre')}"></div>
+        <div><label for="exoTOtrosNombres">Otros nombres</label><input type="text" id="exoTOtrosNombres" value="${val('otros_nombres')}"></div>
+      </div>
+      <div id="exoTBloqueEmpresa" style="margin-top:10px;">
+        <label for="exoTRazonSocial">Razón social (como aparece en el RUT)</label><input type="text" id="exoTRazonSocial" value="${escaparHtml(t.razon_social || t.nombre_completo || '')}">
+      </div>
+      <div class="grilla-2" style="gap:12px;margin-top:10px;">
+        <div><label for="exoTDireccion">Dirección</label><input type="text" id="exoTDireccion" value="${escaparHtml(t.direccion || '')}"></div>
+        <div><label for="exoTCiudad">Ciudad</label><input type="text" id="exoTCiudad" value="${escaparHtml(t.ciudad || '')}"></div>
+        <div><label for="exoTDepto">Código departamento DANE <span style="font-size:10px;opacity:0.6;">(ej. 17 Caldas)</span></label><input type="text" id="exoTDepto" inputmode="numeric" maxlength="2" value="${escaparHtml(t.codigo_departamento || '')}"></div>
+        <div><label for="exoTMunicipio">Código municipio DANE <span style="font-size:10px;opacity:0.6;">(ej. 17001 Manizales)</span></label><input type="text" id="exoTMunicipio" inputmode="numeric" maxlength="5" value="${escaparHtml(t.codigo_municipio || '')}"></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:14px;">
+        <button class="btn-principal" style="width:auto;margin-top:0;" onclick="guardarTerceroExogena('${t.id}')">Guardar datos</button>
+        <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="document.getElementById('ciExoEditorTercero').classList.add('oculto')">Cancelar</button>
+      </div>
+    `;
+    actualizarCamposTerceroExogena();
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function actualizarCamposTerceroExogena() {
+    const tipo = document.getElementById('exoTTipo').value;
+    const esNit = tipo === 'NIT';
+    const numero = document.getElementById('exoTNumero').value.replace(/\D/g, '');
+    document.getElementById('exoTDv').textContent = esNit && numero ? 'DV ' + calcularDvNit(numero) : '';
+    document.getElementById('exoTBloquePersona').classList.toggle('oculto', esNit);
+    document.getElementById('exoTBloqueEmpresa').classList.toggle('oculto', !esNit);
+  }
+
+  async function guardarTerceroExogena(terceroId) {
+    const tipo = document.getElementById('exoTTipo').value;
+    const numero = document.getElementById('exoTNumero').value.replace(/\D/g, '');
+    const texto = (id) => document.getElementById(id).value.trim() || null;
+    if (!numero) { mostrarMensaje('mensajeContaImp', 'Escribe el número de documento (solo números).', 'error'); return; }
+    const esNit = tipo === 'NIT';
+    const cambios = {
+      tipo_documento: tipo,
+      numero_documento: numero,
+      digito_verificacion: esNit ? calcularDvNit(numero) : null,
+      direccion: texto('exoTDireccion'),
+      ciudad: texto('exoTCiudad'),
+      codigo_departamento: texto('exoTDepto'),
+      codigo_municipio: texto('exoTMunicipio'),
+    };
+    if (esNit) {
+      cambios.razon_social = texto('exoTRazonSocial');
+      if (!cambios.razon_social) { mostrarMensaje('mensajeContaImp', 'Para un NIT escribe la razón social.', 'error'); return; }
+    } else {
+      Object.assign(cambios, {
+        primer_apellido: texto('exoTPrimerApellido'), segundo_apellido: texto('exoTSegundoApellido'),
+        primer_nombre: texto('exoTPrimerNombre'), otros_nombres: texto('exoTOtrosNombres'),
+      });
+      if (!cambios.primer_apellido || !cambios.primer_nombre) { mostrarMensaje('mensajeContaImp', 'Escribe al menos el primer apellido y el primer nombre.', 'error'); return; }
+    }
+    if (cambios.codigo_municipio && cambios.codigo_departamento && !cambios.codigo_municipio.startsWith(cambios.codigo_departamento)) {
+      mostrarMensaje('mensajeContaImp', 'El código de municipio DANE debe empezar por el código del departamento.', 'error'); return;
+    }
+    const { error } = await supabaseClient.from('terceros').update(cambios).eq('id', terceroId);
+    if (error) {
+      const duplicado = /duplicate|unique/i.test(error.message);
+      mostrarMensaje('mensajeContaImp', duplicado ? 'Ya existe otro tercero con ese tipo y número de documento.' : 'No se pudo guardar: ' + error.message, 'error');
+      return;
+    }
+    mostrarMensaje('mensajeContaImp', '✅ Datos del tercero actualizados.', 'exito');
+    await cargarExogena();
+  }
+
+  async function cargarConceptosExogena() {
+    const cont = document.getElementById('ciExoConceptos');
+    const formato = document.getElementById('ciExoFormato').value;
+    const { data, error } = await supabaseClient.from('exogena_conceptos').select('*').eq('formato', formato).order('prefijo_cuenta');
+    if (error) { cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(error.message)}</div>`; return; }
+    const columnas = 'grid-template-columns:110px 110px 1.6fr 90px 90px;';
+    cont.innerHTML = `
+      <div style="font-size:12px;opacity:0.75;margin-bottom:10px;">Cada cuenta del PUC (o grupo de cuentas por prefijo) se reporta con un código de concepto del formato ${escaparHtml(formato)}. Si hay dos prefijos que aplican, gana el más largo. Los códigos vienen sugeridos: tu contador los revisa y marca “validado”.</div>
+      <div class="tabla-lista">
+        <div class="tabla-lista-header header-rosa" style="${columnas}">
+          <span>CUENTA (PREFIJO)</span><span>CONCEPTO</span><span>DESCRIPCIÓN</span><span style="text-align:center;">VALIDADO</span><span></span>
+        </div>
+        ${data.map(c => `
+          <div class="tabla-lista-fila" style="${columnas}cursor:default;">
+            <span>${escaparHtml(c.prefijo_cuenta)}</span>
+            <span><input type="text" id="exoCon_${escaparHtml(c.prefijo_cuenta)}" value="${escaparHtml(c.concepto)}" inputmode="numeric" maxlength="4" style="padding:5px 8px;width:80px;"></span>
+            <span style="font-size:12px;">${escaparHtml(c.descripcion)}</span>
+            <span style="text-align:center;"><input type="checkbox" id="exoVal_${escaparHtml(c.prefijo_cuenta)}" ${c.validado ? 'checked' : ''}></span>
+            <span><button class="btn-mini editar" onclick="guardarConceptoExogena('${escaparHtml(formato)}', '${escaparHtml(c.prefijo_cuenta)}')">Guardar</button></span>
+          </div>
+        `).join('') || '<div class="cargando">Sin conceptos configurados.</div>'}
+      </div>
+    `;
+  }
+
+  async function guardarConceptoExogena(formato, prefijo) {
+    const concepto = document.getElementById('exoCon_' + prefijo).value.trim();
+    if (!/^\d{4}$/.test(concepto)) { mostrarMensaje('mensajeContaImp', 'El código de concepto debe tener 4 dígitos.', 'error'); return; }
+    const validado = document.getElementById('exoVal_' + prefijo).checked;
+    const { error } = await supabaseClient.from('exogena_conceptos').update({ concepto, validado })
+      .eq('formato', formato).eq('prefijo_cuenta', prefijo);
+    if (error) { mostrarMensaje('mensajeContaImp', 'No se pudo guardar: ' + error.message, 'error'); return; }
+    mostrarMensaje('mensajeContaImp', `✅ Concepto de la cuenta ${prefijo} guardado.`, 'exito');
+    await cargarExogena();
+  }
+
+  // ---------- Información para la declaración anual ----------
+  let cacheResumenTributario = null;
+
+  async function cargarResumenTributario() {
+    const anio = llenarSelectAnios('ciDecAnio');
+    const cont = document.getElementById('ciDecContenido');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    let d;
+    try {
+      d = await llamarReporteContable('fn_resumen_tributario', { p_anio: anio });
+    } catch (e) {
+      cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(e.message)}</div>`;
+      return;
+    }
+    cacheResumenTributario = d;
+    const dec = d.declaracion_simple;
+    const pendientesPersonales = [
+      'Inmuebles a nombre de Sara (valor patrimonial / avalúo catastral al 31-12)',
+      'Vehículos (valor según tabla del Ministerio de Transporte)',
+      'Cuentas bancarias personales, CDT, inversiones y criptoactivos (certificados al 31-12)',
+      'Deudas personales: créditos hipotecarios, de vehículo, tarjetas de crédito (certificados al 31-12)',
+      'Ingresos por fuera del negocio: salarios, honorarios, arriendos, dividendos, pensiones',
+      'Ganancias ocasionales: herencias, donaciones, venta de activos poseídos por más de 2 años, loterías',
+      'Aportes voluntarios a pensión o AFC, intereses de vivienda, medicina prepagada y dependientes (si hay ingresos por fuera del SIMPLE)',
+      'Certificados de retención que le hayan entregado terceros',
+    ];
+
+    cont.innerHTML = `
+      <div class="grilla-2" style="gap:18px;align-items:start;">
+        <div class="panel" style="max-width:none;max-height:none;">
+          <h2 style="margin-top:0;">🧾 Ingresos del negocio — ${d.anio}</h2>
+          ${filaEstadoFin('Ingresos brutos percibidos (base SIMPLE, art. 904 E.T.)', d.ingresos_percibidos_simple, true)}
+          <div style="font-size:11px;opacity:0.65;margin:4px 0 10px;">Incluye los abonos de pedidos recibidos en el año aunque el pedido no se haya entregado.</div>
+          <h2>Ingresos contables (causados)</h2>
+          ${(d.detalle_ingresos || []).map(i => filaEstadoFin(i.nombre, i.valor)).join('') || '<div class="cargando">Sin ingresos.</div>'}
+          ${filaEstadoFin('Ingresos operacionales', d.ingresos_operacionales)}
+          ${filaEstadoFin('Ingresos no operacionales', d.ingresos_no_operacionales)}
+          <h2>Costos y gastos</h2>
+          ${filaEstadoFin('Costos de venta', d.costos)}
+          ${filaEstadoFin('Gastos de administración, ventas y otros', d.gastos)}
+          ${filaEstadoFin('Utilidad contable del año', d.utilidad_contable, true)}
+        </div>
+        <div class="panel" style="max-width:none;max-height:none;">
+          <h2 style="margin-top:0;">🏦 Patrimonio del negocio al 31-12-${d.anio}</h2>
+          ${(d.detalle_activos || []).map(a => filaEstadoFin(a.nombre, a.valor)).join('') || '<div class="cargando">Sin activos.</div>'}
+          ${filaEstadoFin('Patrimonio bruto (bienes del negocio)', d.patrimonio_bruto, true)}
+          <h2>Deudas</h2>
+          ${(d.detalle_pasivos || []).map(p => filaEstadoFin(p.nombre, p.valor)).join('') || '<div class="cargando">Sin deudas.</div>'}
+          ${filaEstadoFin('Total deudas', d.deudas, true)}
+          ${filaEstadoFin('Patrimonio líquido del negocio', d.patrimonio_liquido, true)}
+          ${Number(d.anio) === new Date().getFullYear() ? `<div style="font-size:11px;opacity:0.65;margin-top:6px;">El año aún no termina: los saldos son a hoy y cambiarán hasta el 31 de diciembre.</div>` : ''}
+        </div>
+      </div>
+
+      <div class="panel" style="max-width:none;max-height:none;margin-top:18px;">
+        <h2 style="margin-top:0;">💳 Impuesto SIMPLE, retenciones y descuentos</h2>
+        ${filaEstadoFin('Anticipos bimestrales del SIMPLE pagados', d.anticipos_simple_pagados)}
+        ${filaEstadoFin('Retenciones en la fuente que le practicaron (a favor)', d.retenciones_a_favor)}
+        ${filaEstadoFin('Aportes a pensión pagados como empleadora (descuento SIMPLE, a validar)', d.aportes_pension_empleador)}
+        ${filaEstadoFin('Nómina pagada en el año', d.nomina_pagada)}
+        ${dec
+          ? filaEstadoFin(`Declaración anual SIMPLE presentada (${new Date(dec.fecha_presentacion + 'T00:00:00').toLocaleDateString('es-CO')}) — impuesto a cargo`, dec.impuesto_a_cargo, true)
+          : '<div class="resumen-fila"><span>Declaración anual SIMPLE (formulario 260)</span><strong>Pendiente</strong></div>'}
+      </div>
+
+      <div class="panel" style="max-width:none;max-height:none;margin-top:18px;">
+        <h2 style="margin-top:0;">📝 Lo que no está en el sistema (lo aporta Sara al contador)</h2>
+        <div style="font-size:12.5px;line-height:1.8;">${pendientesPersonales.map(p => '☐ ' + escaparHtml(p)).join('<br>')}</div>
+      </div>
+    `;
+  }
+
+  function exportarResumenTributarioExcel() {
+    const d = cacheResumenTributario;
+    if (!d) { mostrarMensaje('mensajeContaImp', 'No hay datos para exportar.', 'error'); return; }
+    const n = (v) => Math.round(Number(v) || 0);
+    const dec = d.declaracion_simple;
+    const filas = [
+      [`Lana Rosa Crochet — Información para la declaración anual ${d.anio} (Régimen SIMPLE)`],
+      [`Generado: ${new Date().toLocaleString('es-CO')}`],
+      [],
+      ['INGRESOS', ''],
+      ['Ingresos brutos percibidos (base SIMPLE, art. 904 E.T.)', n(d.ingresos_percibidos_simple)],
+      ...(d.detalle_ingresos || []).map(i => ['  ' + i.nombre, n(i.valor)]),
+      ['Ingresos operacionales (causados)', n(d.ingresos_operacionales)],
+      ['Ingresos no operacionales', n(d.ingresos_no_operacionales)],
+      [],
+      ['COSTOS Y GASTOS', ''],
+      ['Costos de venta', n(d.costos)],
+      ['Gastos', n(d.gastos)],
+      ['Utilidad contable', n(d.utilidad_contable)],
+      [],
+      [`PATRIMONIO DEL NEGOCIO AL 31-12-${d.anio}`, ''],
+      ...(d.detalle_activos || []).map(a => ['  ' + a.nombre, n(a.valor)]),
+      ['Patrimonio bruto', n(d.patrimonio_bruto)],
+      ...(d.detalle_pasivos || []).map(p => ['  ' + p.nombre, n(p.valor)]),
+      ['Deudas', n(d.deudas)],
+      ['Patrimonio líquido', n(d.patrimonio_liquido)],
+      [],
+      ['IMPUESTO SIMPLE, RETENCIONES Y DESCUENTOS', ''],
+      ['Anticipos SIMPLE pagados', n(d.anticipos_simple_pagados)],
+      ['Retenciones a favor', n(d.retenciones_a_favor)],
+      ['Aportes a pensión como empleadora (a validar)', n(d.aportes_pension_empleador)],
+      ['Nómina pagada', n(d.nomina_pagada)],
+      ['Impuesto a cargo declaración SIMPLE', dec ? n(dec.impuesto_a_cargo) : 'Pendiente'],
+    ];
+    const hoja = XLSX.utils.aoa_to_sheet(filas);
+    hoja['!cols'] = [{ wch: 70 }, { wch: 18 }];
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, `Declaración ${d.anio}`);
+    XLSX.writeFile(libro, `LanaRosa_InformacionDeclaracion_${d.anio}.xlsx`);
+  }
+
+  // ---------- Bitácora ----------
+  async function cargarBitacoraContable() {
+    if (!document.getElementById('ciBitDesde').value) {
+      document.getElementById('ciBitDesde').value = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+      document.getElementById('ciBitHasta').value = hoyIso();
+    }
+    const cont = document.getElementById('ciBitacoraLista');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    let eventos;
+    try {
+      eventos = await llamarReporteContable('fn_bitacora_consulta', {
+        p_desde: document.getElementById('ciBitDesde').value, p_hasta: document.getElementById('ciBitHasta').value,
+      });
+    } catch (e) {
+      cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(e.message)}</div>`;
+      return;
+    }
+    if (!eventos.length) { cont.innerHTML = '<div class="cargando">Sin eventos en este rango.</div>'; return; }
+
+    const acciones = {
+      crear_asiento: '🆕 Asiento creado',
+      revertir_asiento: '↩️ Asiento revertido',
+      borrado_convertido_en_reversion: '🛡️ Intento de borrado → reversión',
+      completar_asiento_descuadrado: '🩹 Asiento descuadrado completado',
+      linea_agregada_a_asiento_descuadrado: '🩹 Línea faltante agregada',
+      insert_cuenta: '📒 Cuenta creada',
+      update_cuenta: '📒 Cuenta modificada',
+      delete_cuenta: '📒 Cuenta eliminada',
+      parametros_simple: '🧾 Parámetros SIMPLE',
+      reestructuracion_puc_fase1: '📒 Reestructuración del PUC',
+    };
+    const detalle = (ev) => {
+      const d = ev.datos || {};
+      if (ev.accion === 'crear_asiento') return `#${d.numero} · ${escaparHtml(d.descripcion || '')}`;
+      if (ev.accion === 'revertir_asiento' || ev.accion === 'completar_asiento_descuadrado' || ev.accion === 'borrado_convertido_en_reversion') return `Asiento #${d.numero}`;
+      if (ev.accion.endsWith('_cuenta')) {
+        const c = d.despues || d.antes || {};
+        return `${escaparHtml(c.codigo || '')} — ${escaparHtml(c.nombre || '')}`;
+      }
+      if (ev.accion === 'linea_agregada_a_asiento_descuadrado') return escaparHtml(d.motivo || '');
+      return '';
+    };
+    cont.innerHTML = `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:150px 1fr 2fr 140px;">
+          <span>FECHA Y HORA</span><span>ACCIÓN</span><span>DETALLE</span><span>USUARIO</span>
+        </div>
+        ${eventos.map(ev => `
+          <div class="tabla-lista-fila" style="grid-template-columns:150px 1fr 2fr 140px;cursor:default;">
+            <span style="font-size:11.5px;">${new Date(ev.ocurrido_en).toLocaleString('es-CO')}</span>
+            <span>${acciones[ev.accion] || escaparHtml(ev.accion)}</span>
+            <span style="font-size:12px;">${detalle(ev)}</span>
+            <span style="font-size:12px;">${escaparHtml(ev.usuario)}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  // ---------- Reversión desde el Libro Diario ----------
+  async function revertirAsientoUI(asientoId, numero) {
+    const motivo = prompt(`Motivo de la reversión del comprobante #${numero} (obligatorio):`);
+    if (motivo === null) return;
+    if (!motivo.trim()) { alert('El motivo es obligatorio.'); return; }
+    const fecha = prompt('Fecha de la reversión (AAAA-MM-DD). Déjala vacía para usar la fecha original del asiento; si ese mes ya está cerrado, usa una fecha del período abierto:', '');
+    if (fecha === null) return;
+    try {
+      await llamarReporteContable('fn_revertir_asiento', { p_asiento_id: asientoId, p_motivo: motivo.trim(), p_fecha: fecha.trim() || null });
+    } catch (e) {
+      alert('No se pudo revertir: ' + e.message);
+      return;
+    }
+    mostrarMensaje('mensajeEstadosFinancieros', `✅ Comprobante #${numero} revertido. La reversión quedó registrada en el Libro Diario.`, 'exito');
+    await cargarLibroDiario();
+  }
+
+  // ============================================================
+  // BALANCE DE PRUEBA
+  // ============================================================
+  let cacheBalancePrueba = null;
+
+  async function cargarBalancePrueba() {
+    const cont = document.getElementById('contenidoBalancePrueba');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    if (!document.getElementById('bpFechaDesde').value) {
+      document.getElementById('bpFechaDesde').value = new Date().toISOString().slice(0, 4) + '-01-01';
+      document.getElementById('bpFechaHasta').value = new Date().toISOString().slice(0, 10);
+    }
+    const desde = document.getElementById('bpFechaDesde').value;
+    const hasta = document.getElementById('bpFechaHasta').value;
+
+    let d;
+    try {
+      d = await llamarReporteContable('fn_balance_prueba', { p_desde: desde, p_hasta: hasta });
+    } catch (e) {
+      cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(e.message)}</div>`;
+      return;
+    }
+    cacheBalancePrueba = d;
+    if (!d.cuentas.length) { cont.innerHTML = '<div class="cargando">Sin movimientos en este período.</div>'; return; }
+
+    const columnas = 'grid-template-columns:1.5fr 110px 110px 110px 110px;';
+    cont.innerHTML = `
+      <div class="subtitulo">Clases, grupos y cuentas del PUC con movimiento. Saldos según la naturaleza de cada cuenta.</div>
+      <div class="tabla-lista">
+        <div class="tabla-lista-header header-rosa" style="${columnas}">
+          <span>CUENTA</span><span style="text-align:right;">SALDO INICIAL</span><span style="text-align:right;">DÉBITOS</span><span style="text-align:right;">CRÉDITOS</span><span style="text-align:right;">SALDO FINAL</span>
+        </div>
+        ${d.cuentas.map(c => `
+          <div class="tabla-lista-fila" style="${columnas}cursor:default;${c.nivel === 1 ? 'background:var(--tinte-rosa);font-weight:700;' : c.nivel === 2 ? 'font-weight:600;' : ''}">
+            <span style="padding-left:${(c.nivel - 1) * 14}px;">${escaparHtml(c.codigo)} — ${escaparHtml(c.nombre)}</span>
+            <span style="text-align:right;">${formatearMoneda(c.saldo_inicial)}</span>
+            <span style="text-align:right;">${formatearMoneda(c.debitos)}</span>
+            <span style="text-align:right;">${formatearMoneda(c.creditos)}</span>
+            <span style="text-align:right;">${formatearMoneda(c.saldo_final)}</span>
+          </div>
+        `).join('')}
+        <div class="tabla-lista-fila" style="${columnas}font-weight:700;background:var(--gris-fondo);cursor:default;">
+          <span>SUMAS IGUALES</span><span></span>
+          <span style="text-align:right;">${formatearMoneda(d.total_debitos)}</span>
+          <span style="text-align:right;">${formatearMoneda(d.total_creditos)}</span>
+          <span></span>
+        </div>
+      </div>
+      <div style="margin-top:12px;padding:12px;border-radius:9px;text-align:center;font-size:12.5px;font-weight:600;background:${d.cuadra ? 'var(--tinte-verde)' : 'var(--tinte-rojo)'};color:${d.cuadra ? 'var(--verde-exito)' : 'var(--rojo-error)'};">
+        ${d.cuadra ? '✅ Sumas iguales: débitos = créditos' : '⚠️ Débitos y créditos no son iguales'}
+      </div>
+    `;
+  }
+
+  function exportarBalancePruebaExcel() {
+    if (!cacheBalancePrueba || !cacheBalancePrueba.cuentas.length) { mostrarMensaje('mensajeEstadosFinancieros', 'No hay datos para exportar.', 'error'); return; }
+    const d = cacheBalancePrueba;
+    const filas = [
+      ['Lana Rosa Crochet — Balance de prueba'],
+      [`Período: ${d.periodo.desde} a ${d.periodo.hasta}`],
+      [],
+      ['Código', 'Cuenta', 'Nivel', 'Saldo inicial', 'Débitos', 'Créditos', 'Saldo final'],
+      ...d.cuentas.map(c => [c.codigo, c.nombre, ['', 'Clase', 'Grupo', 'Cuenta', 'Subcuenta', 'Auxiliar'][c.nivel] || c.nivel,
+                             c.saldo_inicial, c.debitos, c.creditos, c.saldo_final]),
+      [],
+      ['', 'SUMAS IGUALES', '', '', d.total_debitos, d.total_creditos, ''],
+    ];
+    const hoja = XLSX.utils.aoa_to_sheet(filas);
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Balance de prueba');
+    XLSX.writeFile(libro, `LanaRosa_BalancePrueba_${d.periodo.desde}_a_${d.periodo.hasta}.xlsx`);
   }
 
   // ============================================================
@@ -18316,7 +20278,20 @@
       [],
       ['GASTOS OPERACIONALES', ''],
       ...d.gastos.map(g => [g.nombre, g.valor]),
-      ['Total gastos', d.total_gastos],
+      ['Total gastos operacionales', d.total_gastos],
+      ['= UTILIDAD OPERACIONAL', d.utilidad_operacional],
+      [],
+      ['INGRESOS NO OPERACIONALES', ''],
+      ...d.otros_ingresos.map(i => [i.nombre, i.valor]),
+      ['Total ingresos no operacionales', d.total_otros_ingresos],
+      ['GASTOS NO OPERACIONALES', ''],
+      ...d.otros_gastos.map(g => [g.nombre, g.valor]),
+      ['Total gastos no operacionales', d.total_otros_gastos],
+      ['= UTILIDAD ANTES DE IMPUESTOS', d.utilidad_antes_impuestos],
+      [],
+      ['IMPUESTO DE RENTA (SIMPLE)', ''],
+      ...d.impuestos.map(i => [i.nombre, i.valor]),
+      ['Total impuestos', d.total_impuestos],
       [],
       ['UTILIDAD NETA DEL PERÍODO', d.utilidad_neta],
     ];
@@ -18343,8 +20318,9 @@
       [],
       ['PATRIMONIO', ''],
       ...d.patrimonio.map(p => [p.nombre, p.valor]),
-      ['Utilidades acumuladas del período', d.utilidad_acumulada],
+      ['Resultado del ejercicio (sin cerrar)', d.utilidad_acumulada],
       ['TOTAL PATRIMONIO', d.total_patrimonio],
+      ['TOTAL PASIVO + PATRIMONIO', Number(d.total_pasivos) + Number(d.total_patrimonio)],
       [],
       ['¿Cuadra? (Activos = Pasivos + Patrimonio)', d.cuadra ? 'Sí' : 'No'],
     ];
@@ -19707,7 +21683,7 @@
 
   async function confirmarEliminarVentaAcademia(ventaId) {
     const confirmado = await pedirConfirmacionModal(
-      '¿Eliminar esta venta? El dinero se devuelve a la caja/banco de Academia, y el asiento contable se elimina. Esta acción no se puede deshacer.',
+      '¿Eliminar esta venta? El dinero se devuelve a la caja/banco de Academia y la contabilidad registra un asiento de reversión (el asiento original se conserva, como exige la norma contable). Esta acción no se puede deshacer.',
       'Sí, eliminar la venta'
     );
     if (!confirmado) return;
