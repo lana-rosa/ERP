@@ -967,6 +967,8 @@
         <button class="nav-btn" id="nav-transferir-stock-taller" onclick="mostrarPantallaTransferirStock()"><span class="nav-icon">🔄</span> Transferir stock (Taller)</button>
         <button class="nav-btn" id="nav-solicitudes-tienda" onclick="mostrarPantallaSolicitudes()"><span class="nav-icon">📦</span> Solicitud de insumos del Taller</button>
         <button class="nav-btn" id="nav-consumotaller" onclick="mostrarPantallaPedidosCrm()"><span class="nav-icon">🧶</span> Consumo de material (Taller)</button>
+        <button class="nav-btn" id="nav-ordenes-produccion" onclick="mostrarPantallaOrdenesProduccion()"><span class="nav-icon">🏭</span> Órdenes de producción</button>
+        <button class="nav-btn" id="nav-kardex-etapas" onclick="mostrarPantallaKardexEtapas()"><span class="nav-icon">📒</span> Kardex por etapas</button>
       </div>
     </div>
 
@@ -1642,7 +1644,7 @@
 <div id="pantallaPedidosCrm" class="oculto contenido">
   <div class="page-header">
     <h1>Consumo de taller — por pedido</h1>
-    <div class="subtitulo">Elige el pedido en producción (código del CRM), toma el material que vas a usar de la lista del inventario del Taller, y al terminar devuelve el sobrante. Todo queda registrado bajo el número del pedido.</div>
+    <div class="subtitulo">Elige el pedido en producción (código del CRM), toma el material que vas a usar de la lista del inventario del Taller, y al terminar devuelve el sobrante. Todo queda registrado bajo el número del pedido y en su orden de producción (se abre sola la primera vez que tomas material). Cuando la pieza esté lista, termínala en <a href="#" onclick="mostrarPantallaOrdenesProduccion(); return false;">🏭 Órdenes de producción</a>.</div>
   </div>
 
   <div class="grilla-2">
@@ -1673,6 +1675,66 @@
     <input type="text" id="buscarHistorialConsumosTaller" placeholder="🔍 N° de pedido o insumo..." oninput="filtrarHistorialConsumosTaller()" style="margin-bottom:10px;">
     <div id="listaHistorialConsumosTaller"><div class="cargando">Cargando...</div></div>
   </div>
+</div>
+
+<!-- ===== PANTALLA: ÓRDENES DE PRODUCCIÓN ===== -->
+<div id="pantallaOrdenesProduccion" class="oculto contenido">
+  <div class="page-header">
+    <h1>🏭 Órdenes de producción</h1>
+    <div class="subtitulo">Cada pieza o lote que se teje tiene una orden. El material que se le entrega sale de la materia prima (Tienda o Taller) y queda en <strong>productos en proceso</strong> hasta que la orden se termina; al terminarla, las unidades pasan a <strong>productos terminados</strong>.</div>
+  </div>
+  <div class="mensaje" id="mensajeOrdenesProd"></div>
+
+  <div class="panel" style="max-width:none;max-height:none;margin-bottom:20px;">
+    <h2>+ Abrir orden de producción</h2>
+    <div class="grilla-2" style="gap:12px;">
+      <div>
+        <label for="opProducto">¿Qué se va a tejer?</label>
+        <select id="opProducto" onchange="cambiarProductoNuevaOrden()"></select>
+      </div>
+      <div>
+        <label for="opPedido">Pedido <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+        <select id="opPedido"></select>
+      </div>
+      <div id="opBloqueDescripcion" class="oculto">
+        <label for="opDescripcion">Descripción del encargo</label>
+        <input type="text" id="opDescripcion" placeholder="Ej: Amigurumi personalizado de mascota">
+      </div>
+      <div>
+        <label for="opCantidad">Unidades a producir</label>
+        <input type="number" id="opCantidad" min="1" step="1" value="1">
+      </div>
+      <div>
+        <label for="opObservaciones">Observaciones <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+        <input type="text" id="opObservaciones" placeholder="Tejedora, colores, detalles...">
+      </div>
+    </div>
+    <button class="btn-principal" style="width:auto;" onclick="confirmarAbrirOrdenProduccion()">Abrir orden</button>
+  </div>
+
+  <div class="filtro-tipo" style="margin-bottom:14px;">
+    <button class="chip-filtro activo" data-filtro-op="en_proceso" onclick="filtrarOrdenesProduccion('en_proceso', this)">🧶 En proceso</button>
+    <button class="chip-filtro" data-filtro-op="terminada" onclick="filtrarOrdenesProduccion('terminada', this)">✅ Terminadas</button>
+    <button class="chip-filtro" data-filtro-op="todas" onclick="filtrarOrdenesProduccion('todas', this)">📋 Todas</button>
+  </div>
+  <div id="listaOrdenesProduccion"><div class="cargando">Cargando...</div></div>
+</div>
+
+<!-- ===== PANTALLA: KARDEX POR ETAPAS ===== -->
+<div id="pantallaKardexEtapas" class="oculto contenido">
+  <div class="page-header">
+    <h1>📒 Kardex por etapas</h1>
+    <div class="subtitulo">Dónde está la materia prima en cada momento: en inventario (Tienda o Taller), en productos en proceso o convertida en productos terminados. Se puede generar para cualquier rango de fechas.</div>
+  </div>
+  <div class="mensaje" id="mensajeKardexEtapas"></div>
+  <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+    <div><label for="keDesde" style="font-size:11px;">Desde</label><input type="date" id="keDesde" style="padding:9px 10px;"></div>
+    <div><label for="keHasta" style="font-size:11px;">Hasta</label><input type="date" id="keHasta" style="padding:9px 10px;"></div>
+    <button class="btn-principal" style="width:auto;margin-top:0;" onclick="cargarKardexEtapas()">Generar</button>
+    <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarKardexEtapasExcel()">📥 Excel</button>
+    <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirKardexEtapas()">🖨️ Imprimir / PDF</button>
+  </div>
+  <div id="keContenido"><div class="cargando">Elige el rango de fechas y pulsa Generar.</div></div>
 </div>
 
 <!-- ===== PANTALLA: SOLICITUDES ===== -->
@@ -5034,7 +5096,7 @@
   });
 
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb'];
+    const pantallas = ['pantallaLogin', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -5056,6 +5118,8 @@
       pantallaAjustestock: 'nav-ajustestock',
       pantallaConsumoTaller: 'nav-consumotaller',
       pantallaPedidosCrm: 'nav-consumotaller',
+      pantallaOrdenesProduccion: 'nav-ordenes-produccion',
+      pantallaKardexEtapas: 'nav-kardex-etapas',
       pantallaTurnoActivo: 'nav-turno',
       pantallaReportes: 'nav-reportes',
       pantallaReportesFinancieros: 'nav-reportes-financieros',
@@ -5389,7 +5453,7 @@
     // Grupos completos (acordeón) — reorganizados según los 7 puntos estándar de un ERP
     mostrar('deptoVentasGrupo', esAdmin || esCajero);
     mostrar('deptoComprasGrupo', esAdmin);
-    mostrar('deptoInventarioGrupo', esAdmin || esCajero || esTaller);
+    mostrar('deptoInventarioGrupo', esAdmin || esCajero || esTaller || esContador);
     mostrar('deptoContabilidadGrupo', esAdmin || esContador);
     mostrar('deptoTalentoGrupo', esAdmin);
     mostrar('deptoFondoEmprenderGrupo', esAdmin);
@@ -5427,6 +5491,8 @@
     mostrar('nav-pedidos-canal', esAdmin || esCajero);
     mostrar('nav-solicitudes-tienda', esAdmin || esCajero);
     mostrar('nav-consumotaller', esAdmin || esTaller);
+    mostrar('nav-ordenes-produccion', esAdmin || esTaller);
+    mostrar('nav-kardex-etapas', esAdmin || esContador || esTaller);
     mostrar('nav-inventario-taller', esAdmin || esTaller);
     mostrar('nav-transferir-stock-taller', esAdmin || esTaller);
     mostrar('nav-nomina', esAdmin);
@@ -7693,9 +7759,12 @@
     const etiquetasTipo = {
       consumo_taller: 'Salida', ajuste_manual: 'Ajuste', compra_proveedor: 'Entrada',
       entrada_automatica: 'Entrada', salida_automatica: 'Salida',
+      transferencia_entrada: 'Traslado recibido', transferencia_salida: 'Traslado enviado',
+      entrega_produccion: 'A producción', devolucion_produccion: 'Sobrante de producción', entrada_produccion: 'Producido',
     };
-    const colorTipo = (tipo) => {
-      const esEntrada = tipo.includes('entrada') || tipo === 'compra_proveedor';
+    const colorTipo = (m) => {
+      const tipo = m.tipo;
+      const esEntrada = esEntradaKardex(m);
       const esAjuste = tipo === 'ajuste_manual';
       if (esAjuste) return { bg: '#e6edf3', color: 'var(--azul-acero)' };
       return esEntrada ? { bg: '#e4f5ec', color: 'var(--verde-exito)' } : { bg: '#fdecea', color: 'var(--rojo-error)' };
@@ -7720,8 +7789,8 @@
           </thead>
           <tbody>
             ${movimientos.map(m => {
-              const c = colorTipo(m.tipo);
-              const esEntrada = m.tipo.includes('entrada') || m.tipo === 'compra_proveedor';
+              const c = colorTipo(m);
+              const esEntrada = esEntradaKardex(m);
               const detalleFactura = [
                 m.numero_factura ? 'N.° ' + m.numero_factura : null,
                 m.proveedor ? m.proveedor.nombre_completo : null,
@@ -7747,7 +7816,17 @@
   const etiquetasTipoKardexExcel = {
     consumo_taller: 'Salida (Taller)', ajuste_manual: 'Ajuste', compra_proveedor: 'Entrada (compra)',
     entrada_automatica: 'Entrada', salida_automatica: 'Salida',
+    transferencia_entrada: 'Traslado recibido', transferencia_salida: 'Traslado enviado',
+    entrega_produccion: 'Entregado a producción', devolucion_produccion: 'Sobrante devuelto de producción', entrada_produccion: 'Terminado en producción',
   };
+
+  // Entrada o salida según el cambio real de existencias del movimiento.
+  function esEntradaKardex(m) {
+    if (m.stock_antes !== undefined && m.stock_antes !== null && m.stock_despues !== undefined && m.stock_despues !== null) {
+      return Number(m.stock_despues) > Number(m.stock_antes);
+    }
+    return m.tipo.includes('entrada') || m.tipo === 'compra_proveedor' || m.tipo === 'devolucion_produccion';
+  }
 
   function exportarKardexExcel(nombreProducto) {
     if (!kardexActualCache || kardexActualCache.length === 0) return;
@@ -7756,7 +7835,7 @@
       [],
       ['Fecha', 'Tipo', 'Movimiento', 'N.° Factura', 'Proveedor', 'Cantidad', 'Saldo'],
       ...kardexActualCache.slice().reverse().map(m => {
-        const esEntrada = m.tipo.includes('entrada') || m.tipo === 'compra_proveedor';
+        const esEntrada = esEntradaKardex(m);
         return [
           new Date(m.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }),
           etiquetasTipoKardexExcel[m.tipo] || m.tipo,
@@ -8833,6 +8912,585 @@
         </div>
       `;
     }).join('');
+  }
+
+  // ============================================================================
+  // ÓRDENES DE PRODUCCIÓN
+  // ============================================================================
+  let ordenesProduccionCache = [];
+  let filtroOrdenesProduccion = 'en_proceso';
+  let materialesOrdenCache = { Taller: [], Tienda: [] };
+  let ordenAccionAbierta = null; // { id, accion }
+
+  const ESTADOS_ORDEN_PRODUCCION = {
+    en_proceso: ['🧶 En proceso', 'background:var(--tinte-ambar);color:var(--ambar);'],
+    terminada: ['✅ Terminada', 'background:var(--tinte-verde);color:var(--verde-exito);'],
+    entregada: ['📦 Entregada al cliente', 'background:var(--tinte-azul);color:var(--azul-acero);'],
+    anulada: ['✖️ Anulada', 'background:var(--gris-fondo);color:var(--texto-suave);'],
+  };
+
+  function formatearCantidad(n) {
+    return Number(n || 0).toLocaleString('es-CO', { maximumFractionDigits: 2 });
+  }
+
+  async function mostrarPantallaOrdenesProduccion() {
+    mostrarPantalla('pantallaOrdenesProduccion');
+    ocultarMensaje('mensajeOrdenesProd');
+    await cargarIdsDepartamentosClave();
+    await Promise.all([cargarOpcionesNuevaOrden(), cargarMaterialesParaOrdenes()]);
+    await cargarOrdenesProduccion();
+  }
+
+  async function cargarOpcionesNuevaOrden() {
+    const selProd = document.getElementById('opProducto');
+    const { data } = await supabaseClient.rpc('fn_op_catalogo_productos');
+    selProd.innerHTML = '<option value="">✏️ Encargo personalizado (no está en el catálogo)</option>'
+      + (data || []).map(p => `<option value="${p.id}">${escaparHtml(p.nombre)}</option>`).join('');
+    cambiarProductoNuevaOrden();
+
+    const selPed = document.getElementById('opPedido');
+    selPed.innerHTML = '<option value="">— Para inventario (sin pedido) —</option>';
+    try {
+      const resp = await fetch(WORKER_URL + '/api/pos/crm/pedidos-activos', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+      if (resp.ok) {
+        const { pedidos } = await resp.json();
+        selPed.innerHTML += (pedidos || []).filter(p => p.estado === 'en produccion')
+          .map(p => `<option value="${p.id}" data-numero="${escaparHtml(p.numero_pedido || p.id)}">${escaparHtml(p.numero_pedido || p.id)} — ${escaparHtml(p.descripcion || '')}</option>`).join('');
+      }
+    } catch (e) { /* Sin conexión al CRM: la orden se puede abrir sin pedido. */ }
+  }
+
+  function cambiarProductoNuevaOrden() {
+    const esEncargo = !document.getElementById('opProducto').value;
+    document.getElementById('opBloqueDescripcion').classList.toggle('oculto', !esEncargo);
+  }
+
+  async function cargarMaterialesParaOrdenes() {
+    const consulta = (centroId) => supabaseClient.from('inventario_items')
+      .select('id, nombre, stock_actual, unidad_medida').eq('tipo', 'merceria').eq('activo', true)
+      .eq('centro_costo_id', centroId).gt('stock_actual', 0).order('nombre', { ascending: true });
+    // El Taller toma material de su propio inventario; lo de la Tienda lo pide por "Solicitudes".
+    const [taller, tienda] = await Promise.all([
+      consulta(centroCostoTallerId),
+      rolActual === 'administrador' ? consulta(centroCostoTiendaId) : Promise.resolve({ data: [] }),
+    ]);
+    materialesOrdenCache = { Taller: taller.data || [], Tienda: tienda.data || [] };
+  }
+
+  async function confirmarAbrirOrdenProduccion() {
+    ocultarMensaje('mensajeOrdenesProd');
+    const productoId = document.getElementById('opProducto').value || null;
+    const descripcion = document.getElementById('opDescripcion').value.trim();
+    const cantidad = Number(document.getElementById('opCantidad').value);
+    const selPed = document.getElementById('opPedido');
+    const pedidoId = selPed.value || null;
+    const numeroPedido = pedidoId ? selPed.selectedOptions[0].dataset.numero : null;
+    if (!productoId && !descripcion) { mostrarMensaje('mensajeOrdenesProd', 'Describe el encargo que se va a tejer.', 'error'); return; }
+    if (!cantidad || cantidad <= 0) { mostrarMensaje('mensajeOrdenesProd', 'Escribe cuántas unidades se van a producir.', 'error'); return; }
+
+    const { data, error } = await supabaseClient.rpc('fn_op_abrir', {
+      p_producto_item_id: productoId, p_descripcion: productoId ? null : descripcion, p_cantidad: cantidad,
+      p_pedido_canal_id: null, p_pedido_crm_id: pedidoId, p_numero_pedido_crm: numeroPedido,
+      p_observaciones: document.getElementById('opObservaciones').value.trim() || null,
+    });
+    if (error) { mostrarMensaje('mensajeOrdenesProd', 'No se pudo abrir la orden: ' + error.message, 'error'); return; }
+
+    document.getElementById('opDescripcion').value = '';
+    document.getElementById('opObservaciones').value = '';
+    document.getElementById('opCantidad').value = '1';
+    mostrarMensaje('mensajeOrdenesProd', '✅ Orden abierta. Ahora entrégale el material que se va a usar.', 'exito');
+    ordenAccionAbierta = { id: data, accion: 'entregar' };
+    const chip = document.querySelector('[data-filtro-op="en_proceso"]');
+    filtrarOrdenesProduccion('en_proceso', chip);
+  }
+
+  function filtrarOrdenesProduccion(filtro, boton) {
+    document.querySelectorAll('[data-filtro-op]').forEach(b => b.classList.toggle('activo', b === boton));
+    filtroOrdenesProduccion = filtro;
+    cargarOrdenesProduccion();
+  }
+
+  async function cargarOrdenesProduccion() {
+    const cont = document.getElementById('listaOrdenesProduccion');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    const { data, error } = await supabaseClient.rpc('fn_op_listar', { p_estado: filtroOrdenesProduccion });
+    if (error) { cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(error.message)}</div>`; return; }
+    ordenesProduccionCache = data || [];
+    renderizarOrdenesProduccion();
+  }
+
+  function renderizarOrdenesProduccion() {
+    const cont = document.getElementById('listaOrdenesProduccion');
+    if (!ordenesProduccionCache.length) {
+      cont.innerHTML = `<div class="cargando">${filtroOrdenesProduccion === 'en_proceso' ? 'No hay órdenes en proceso.' : 'No hay órdenes para mostrar.'}</div>`;
+      return;
+    }
+    cont.innerHTML = ordenesProduccionCache.map(tarjetaOrdenProduccion).join('');
+  }
+
+  function tarjetaOrdenProduccion(o) {
+    const [textoEstado, estiloEstado] = ESTADOS_ORDEN_PRODUCCION[o.estado] || [o.estado, ''];
+    const fecha = (f) => f ? new Date(f).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+    const columnas = 'grid-template-columns:1.6fr 80px 100px 100px 110px 110px;';
+    const materiales = o.materiales.length ? `
+      <div class="tabla-lista" style="margin-top:10px;">
+        <div class="tabla-lista-header header-rosa" style="${columnas}">
+          <span>MATERIAL</span><span>ORIGEN</span><span style="text-align:right;">ENTREGADO</span><span style="text-align:right;">DEVUELTO</span><span style="text-align:right;">EN LA ORDEN</span><span style="text-align:right;">VALOR</span>
+        </div>
+        ${o.materiales.map(m => `
+          <div class="tabla-lista-fila" style="${columnas}cursor:default;">
+            <span style="font-size:12px;">${escaparHtml(m.nombre)}</span>
+            <span style="font-size:12px;">${escaparHtml(m.ubicacion || '')}</span>
+            <span style="text-align:right;">${formatearCantidad(m.entregado)}</span>
+            <span style="text-align:right;">${formatearCantidad(m.devuelto)}</span>
+            <span style="text-align:right;font-weight:600;">${formatearCantidad(m.neto)} ${escaparHtml(m.unidad || '')}</span>
+            <span style="text-align:right;">${formatearMoneda(m.valor_neto)}</span>
+          </div>`).join('')}
+      </div>` : '<div class="cargando" style="margin-top:8px;">Todavía no se le ha entregado material.</div>';
+
+    let acciones = '';
+    if (o.estado === 'en_proceso') {
+      const b = 'style="flex:0 0 auto;padding:8px 14px;';
+      acciones = `
+        <button class="btn-mini editar" ${b}" onclick="abrirAccionOrden('${o.id}', 'entregar')">➕ Entregar material</button>
+        ${o.materiales.some(m => Number(m.neto) > 0) ? `<button class="btn-mini editar" ${b}" onclick="abrirAccionOrden('${o.id}', 'devolver')">↩️ Devolver sobrante</button>` : ''}
+        ${o.materiales.some(m => Number(m.neto) > 0) ? `<button class="btn-mini" ${b}background:var(--verde-exito);color:#fff;" onclick="abrirAccionOrden('${o.id}', 'terminar')">✅ Terminar</button>` : ''}
+        <button class="btn-mini desactivar" ${b}" onclick="abrirAccionOrden('${o.id}', 'anular')">✖️ Anular</button>`;
+    } else if (o.estado === 'terminada' && !o.producto_item_id) {
+      acciones = `<button class="btn-mini editar" style="flex:0 0 auto;padding:8px 14px;" onclick="pedirConfirmacionBoton(this, '¿Confirmar entrega?', () => confirmarEntregaEncargo('${o.id}'))">📦 Marcar entregado al cliente</button>`;
+    }
+
+    let resumenValor;
+    if (o.estado === 'en_proceso') resumenValor = `En proceso: <strong>${formatearMoneda(o.valor_en_proceso)}</strong>`;
+    else if (o.estado === 'anulada') resumenValor = `Motivo: ${escaparHtml(o.motivo_anulacion || '')}`;
+    else resumenValor = `Costo de material: <strong>${formatearMoneda(o.costo_material)}</strong> · ${formatearMoneda(Number(o.costo_material) / Number(o.cantidad_terminada || 1))} por unidad`;
+
+    const destino = o.producto_item_id ? `${escaparHtml(o.producto || '')} → inventario de la Tienda` : 'Encargo personalizado';
+    const abierta = ordenAccionAbierta && ordenAccionAbierta.id === o.id ? formularioAccionOrden(o, ordenAccionAbierta.accion) : '';
+
+    return `
+      <div class="panel" id="op-${o.id}" style="max-width:none;max-height:none;margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start;">
+          <div>
+            <div class="fredoka" style="font-size:16px;"><span style="color:var(--rosa-principal);">${escaparHtml(o.orden)}</span> · ${escaparHtml(o.descripcion)}</div>
+            <div style="font-size:12px;opacity:0.75;margin-top:3px;line-height:1.6;">
+              ${destino} · ${o.estado === 'en_proceso' ? formatearCantidad(o.cantidad_planeada) + ' unidad(es) planeadas' : formatearCantidad(o.cantidad_terminada || o.cantidad_planeada) + ' unidad(es) ' + (o.estado === 'anulada' ? 'planeadas' : 'terminadas')}
+              ${o.pedido ? ' · Pedido ' + escaparHtml(o.pedido) : ''}
+              <br>Abierta ${fecha(o.fecha_apertura)}${o.abierta_por ? ' por ' + escaparHtml(o.abierta_por) : ''}${o.fecha_terminacion ? ' · ' + (o.estado === 'anulada' ? 'anulada' : 'terminada') + ' ' + fecha(o.fecha_terminacion) : ''}${o.fecha_entrega ? ' · entregada ' + fecha(o.fecha_entrega) : ''}
+              ${o.observaciones ? '<br><em>' + escaparHtml(o.observaciones) + '</em>' : ''}
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <span style="font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px;display:inline-block;${estiloEstado}">${textoEstado}</span>
+            <div style="font-size:12.5px;margin-top:6px;">${resumenValor}</div>
+          </div>
+        </div>
+        ${materiales}
+        ${acciones ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">${acciones}</div>` : ''}
+        ${abierta}
+      </div>`;
+  }
+
+  function abrirAccionOrden(id, accion) {
+    ordenAccionAbierta = ordenAccionAbierta && ordenAccionAbierta.id === id && ordenAccionAbierta.accion === accion ? null : { id, accion };
+    renderizarOrdenesProduccion();
+  }
+
+  function opcionesMaterialOrden(origen) {
+    const lista = materialesOrdenCache[origen] || [];
+    return lista.length
+      ? lista.map(i => `<option value="${i.id}">${escaparHtml(i.nombre)} (disponible: ${formatearCantidad(i.stock_actual)} ${escaparHtml(i.unidad_medida)})</option>`).join('')
+      : '<option value="">No hay material con existencias aquí</option>';
+  }
+
+  function formularioAccionOrden(o, accion) {
+    const caja = (contenido) => `<div style="margin-top:12px;padding:14px;border-radius:var(--radius-md);background:var(--gris-fondo);">${contenido}<div class="mensaje" id="mensajeAccionOp-${o.id}"></div></div>`;
+    const conSaldo = o.materiales.filter(m => Number(m.neto) > 0);
+    if (accion === 'entregar') {
+      const puedeTienda = rolActual === 'administrador';
+      return caja(`
+        <div class="grilla-2" style="gap:10px;">
+          <div><label>Sale de</label>
+            <select id="opEntOrigen-${o.id}" onchange="document.getElementById('opEntItem-${o.id}').innerHTML = opcionesMaterialOrden(this.value)">
+              <option value="Taller">Inventario del Taller</option>
+              ${puedeTienda ? '<option value="Tienda">Inventario de la Tienda</option>' : ''}
+            </select></div>
+          <div><label>Material</label><select id="opEntItem-${o.id}">${opcionesMaterialOrden('Taller')}</select></div>
+          <div><label>Cantidad</label><input type="number" id="opEntCant-${o.id}" min="0" step="0.1"></div>
+          <div><label>Nota <span style="font-size:10px;opacity:0.6;">(opcional)</span></label><input type="text" id="opEntNota-${o.id}"></div>
+        </div>
+        ${puedeTienda ? '' : '<div style="font-size:11.5px;opacity:0.7;margin-top:6px;">¿Falta material? Pídelo a la Tienda en "Solicitud de insumos"; cuando llegue al Taller, entrégalo aquí.</div>'}
+        <button class="btn-principal" style="width:auto;" onclick="confirmarEntregaMaterialOrden('${o.id}')">Entregar a ${escaparHtml(o.orden)}</button>`);
+    }
+    if (accion === 'devolver') {
+      return caja(`
+        <div class="grilla-2" style="gap:10px;">
+          <div><label>Material sobrante</label><select id="opDevItem-${o.id}">
+            ${conSaldo.map(m => `<option value="${m.inventario_item_id}">${escaparHtml(m.nombre)} (en la orden: ${formatearCantidad(m.neto)} ${escaparHtml(m.unidad || '')})</option>`).join('')}
+          </select></div>
+          <div><label>Cantidad que vuelve al inventario</label><input type="number" id="opDevCant-${o.id}" min="0" step="0.1"></div>
+        </div>
+        <button class="btn-principal" style="width:auto;" onclick="confirmarDevolucionOrden('${o.id}')">Devolver al inventario</button>`);
+    }
+    if (accion === 'terminar') {
+      return caja(`
+        <label>Unidades terminadas</label>
+        <input type="number" id="opTermCant-${o.id}" min="1" step="1" value="${Number(o.cantidad_planeada)}" style="max-width:160px;">
+        <div style="font-size:12.5px;font-weight:600;margin:12px 0 6px;">¿Sobró material? Escribe cuánto vuelve al inventario (0 si se usó todo):</div>
+        ${conSaldo.map(m => `
+          <div style="display:flex;gap:10px;align-items:center;margin-bottom:6px;">
+            <span style="flex:1;font-size:12.5px;">${escaparHtml(m.nombre)} <span style="opacity:0.6;">(en la orden: ${formatearCantidad(m.neto)} ${escaparHtml(m.unidad || '')})</span></span>
+            <input type="number" class="op-sobrante-${o.id}" data-item="${m.inventario_item_id}" data-max="${Number(m.neto)}" min="0" step="0.1" value="0" style="width:110px;">
+          </div>`).join('')}
+        <div style="font-size:12px;opacity:0.75;margin-top:8px;">${o.producto_item_id
+          ? `Al terminar, las unidades entran al inventario de productos terminados de la Tienda (${escaparHtml(o.producto || '')}).`
+          : 'Al terminar, el encargo queda en productos terminados hasta que lo marques como entregado al cliente.'}</div>
+        <button class="btn-principal" style="width:auto;background:var(--verde-exito);" onclick="confirmarTerminarOrden('${o.id}')">Terminar ${escaparHtml(o.orden)}</button>`);
+    }
+    if (accion === 'anular') {
+      return caja(`
+        <label>Motivo de la anulación</label><input type="text" id="opAnuMotivo-${o.id}" placeholder="Ej: el cliente canceló el pedido">
+        <div style="font-size:12px;opacity:0.75;margin-top:6px;">Todo el material que tenga la orden vuelve al inventario del que salió. La orden no se borra: queda anulada en el historial.</div>
+        <button class="btn-principal" style="width:auto;background:var(--rojo-error);" onclick="pedirConfirmacionBoton(this, '¿Seguro? Pulsa otra vez', () => confirmarAnularOrden('${o.id}'))">Anular ${escaparHtml(o.orden)}</button>`);
+    }
+    return '';
+  }
+
+  async function ejecutarAccionOrden(ordenId, funcion, parametros, textoExito) {
+    const { error } = await supabaseClient.rpc(funcion, parametros);
+    if (error) { mostrarMensaje('mensajeAccionOp-' + ordenId, error.message, 'error'); return false; }
+    ordenAccionAbierta = null;
+    mostrarMensaje('mensajeOrdenesProd', textoExito, 'exito');
+    await Promise.all([cargarMaterialesParaOrdenes(), cargarOrdenesProduccion()]);
+    return true;
+  }
+
+  async function confirmarEntregaMaterialOrden(ordenId) {
+    const itemId = document.getElementById('opEntItem-' + ordenId).value;
+    const cantidad = Number(document.getElementById('opEntCant-' + ordenId).value);
+    if (!itemId) { mostrarMensaje('mensajeAccionOp-' + ordenId, 'Elige el material.', 'error'); return; }
+    if (!cantidad || cantidad <= 0) { mostrarMensaje('mensajeAccionOp-' + ordenId, 'Escribe una cantidad mayor a cero.', 'error'); return; }
+    await ejecutarAccionOrden(ordenId, 'fn_op_entregar_material', {
+      p_orden_id: ordenId, p_inventario_item_id: itemId, p_cantidad: cantidad,
+      p_observaciones: document.getElementById('opEntNota-' + ordenId).value.trim() || null,
+    }, '✅ Material entregado: salió del inventario y quedó en productos en proceso.');
+  }
+
+  async function confirmarDevolucionOrden(ordenId) {
+    const itemId = document.getElementById('opDevItem-' + ordenId).value;
+    const cantidad = Number(document.getElementById('opDevCant-' + ordenId).value);
+    if (!cantidad || cantidad <= 0) { mostrarMensaje('mensajeAccionOp-' + ordenId, 'Escribe una cantidad mayor a cero.', 'error'); return; }
+    await ejecutarAccionOrden(ordenId, 'fn_op_devolver_material', {
+      p_orden_id: ordenId, p_inventario_item_id: itemId, p_cantidad: cantidad, p_observaciones: null,
+    }, '✅ Sobrante devuelto al inventario.');
+  }
+
+  async function confirmarTerminarOrden(ordenId) {
+    const cantidad = Number(document.getElementById('opTermCant-' + ordenId).value);
+    if (!cantidad || cantidad <= 0) { mostrarMensaje('mensajeAccionOp-' + ordenId, 'Escribe cuántas unidades se terminaron.', 'error'); return; }
+    const sobrantes = [];
+    for (const input of document.querySelectorAll('.op-sobrante-' + ordenId)) {
+      const valor = Number(input.value || 0);
+      if (valor < 0 || valor > Number(input.dataset.max)) {
+        mostrarMensaje('mensajeAccionOp-' + ordenId, 'Un sobrante no puede ser mayor a lo que tiene la orden.', 'error');
+        return;
+      }
+      if (valor > 0) sobrantes.push({ inventario_item_id: input.dataset.item, cantidad: valor });
+    }
+    await ejecutarAccionOrden(ordenId, 'fn_op_terminar', {
+      p_orden_id: ordenId, p_cantidad_terminada: cantidad, p_sobrantes: sobrantes,
+    }, '✅ Orden terminada: las unidades pasaron a productos terminados.');
+  }
+
+  async function confirmarAnularOrden(ordenId) {
+    const motivo = document.getElementById('opAnuMotivo-' + ordenId).value.trim();
+    if (!motivo) { mostrarMensaje('mensajeAccionOp-' + ordenId, 'Escribe el motivo de la anulación.', 'error'); return; }
+    await ejecutarAccionOrden(ordenId, 'fn_op_anular', { p_orden_id: ordenId, p_motivo: motivo },
+      '✅ Orden anulada. El material volvió al inventario.');
+  }
+
+  async function confirmarEntregaEncargo(ordenId) {
+    const { error } = await supabaseClient.rpc('fn_op_marcar_entregada', { p_orden_id: ordenId });
+    if (error) { mostrarMensaje('mensajeOrdenesProd', 'No se pudo registrar la entrega: ' + error.message, 'error'); return; }
+    mostrarMensaje('mensajeOrdenesProd', '✅ Encargo entregado: salió de productos terminados.', 'exito');
+    await cargarOrdenesProduccion();
+  }
+
+  // ============================================================================
+  // KARDEX POR ETAPAS (materia prima → en proceso → productos terminados)
+  // ============================================================================
+  let cacheKardexEtapas = null;
+
+  const CSS_TABLA_KARDEX = `
+    table.tk { width:100%; border-collapse:collapse; font-size:12px; margin-top:6px; }
+    table.tk th { font-size:10.5px; text-transform:uppercase; text-align:left; padding:7px 8px; background:#fdf0f7; color:#b8006a; border-bottom:1px solid #f1e2ec; }
+    table.tk td { padding:6px 8px; border-bottom:1px solid #f7eff5; vertical-align:top; }
+    table.tk .n { text-align:right; white-space:nowrap; }
+    table.tk tr.total td { font-weight:700; background:#faf6f8; border-top:2px solid #e8d5e0; }
+    table.tk .sub { font-size:10.5px; opacity:0.65; }
+    .tk-seccion { font-size:14px; font-weight:700; margin:22px 0 4px; color:#b8006a; }
+    .tk-vacio { font-size:12px; opacity:0.6; padding:8px 0; }
+  `;
+
+  function fechaLocalIso(d) {
+    const x = d || new Date();
+    return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+  }
+
+  async function mostrarPantallaKardexEtapas() {
+    mostrarPantalla('pantallaKardexEtapas');
+    if (!document.getElementById('estiloTablaKardex')) {
+      const estilo = document.createElement('style');
+      estilo.id = 'estiloTablaKardex';
+      estilo.textContent = CSS_TABLA_KARDEX.replace(/#fdf0f7/g, 'var(--tinte-rosa)').replace(/#b8006a/g, 'var(--rosa-principal)')
+        .replace(/#f1e2ec|#f7eff5|#e8d5e0/g, 'var(--gris-borde)').replace(/#faf6f8/g, 'var(--gris-fondo)');
+      document.head.appendChild(estilo);
+    }
+    if (!document.getElementById('keDesde').value) {
+      const hoy = new Date();
+      document.getElementById('keDesde').value = fechaLocalIso(new Date(hoy.getFullYear(), hoy.getMonth(), 1));
+      document.getElementById('keHasta').value = fechaLocalIso(hoy);
+    }
+    await cargarKardexEtapas();
+  }
+
+  async function cargarKardexEtapas() {
+    ocultarMensaje('mensajeKardexEtapas');
+    const desde = document.getElementById('keDesde').value;
+    const hasta = document.getElementById('keHasta').value;
+    const cont = document.getElementById('keContenido');
+    if (!desde || !hasta) { mostrarMensaje('mensajeKardexEtapas', 'Elige las dos fechas.', 'error'); return; }
+    cont.innerHTML = '<div class="cargando">Generando kardex...</div>';
+    try {
+      cacheKardexEtapas = await llamarReporteContable('fn_kardex_etapas', { p_desde: desde, p_hasta: hasta });
+    } catch (e) {
+      cont.innerHTML = `<div class="cargando">No se pudo generar: ${escaparHtml(e.message)}</div>`;
+      return;
+    }
+    cont.innerHTML = htmlKardexEtapas(cacheKardexEtapas, true);
+  }
+
+  // Agrupa los datos del kardex en las secciones del informe
+  function seccionesKardexEtapas(d) {
+    const porUbicacion = (etapa) => {
+      const grupos = {};
+      d.items.filter(i => i.etapa === etapa).forEach(i => { (grupos[i.ubicacion] = grupos[i.ubicacion] || []).push(i); });
+      return grupos;
+    };
+    const mp = porUbicacion('mp');
+    const pt = porUbicacion('pt');
+    const secciones = [];
+    const ubicacionesMp = ['Tienda', 'Taller', ...Object.keys(mp).filter(u => u !== 'Tienda' && u !== 'Taller')];
+    ubicacionesMp.forEach(u => secciones.push({ clave: 'mp_' + u, tipo: 'items', titulo: `${u === 'Tienda' ? '🏪' : u === 'Taller' ? '🧶' : '📍'} Materia prima e insumos — ${u}`, corto: 'Materia prima ' + u, items: mp[u] || [] }));
+    secciones.push({ clave: 'proceso', tipo: 'proceso', titulo: '⚙️ Productos en proceso — Taller', corto: 'En proceso', ordenes: d.ordenes });
+    const ubicacionesPt = ['Tienda', ...Object.keys(pt).filter(u => u !== 'Tienda')];
+    ubicacionesPt.forEach(u => secciones.push({ clave: 'pt_' + u, tipo: 'items', titulo: `🧸 Productos terminados — ${u}`, corto: 'Terminados ' + u, items: pt[u] || [], encargos: u === 'Tienda' ? d.encargos : [] }));
+    secciones.forEach(s => {
+      const sum = (lista, campo) => lista.reduce((a, x) => a + Number(x[campo] || 0), 0);
+      if (s.tipo === 'items') {
+        const enc = s.encargos || [];
+        s.valor_inicial = sum(s.items, 'valor_inicial') + sum(enc, 'valor_inicial');
+        s.valor_entradas = sum(s.items, 'valor_entradas') + sum(enc, 'valor_entradas');
+        s.valor_salidas = sum(s.items, 'valor_salidas') + sum(enc, 'valor_salidas');
+        s.valor_final = sum(s.items, 'valor_final') + sum(enc, 'valor_final');
+      } else {
+        s.valor_inicial = sum(s.ordenes, 'valor_inicial');
+        s.valor_entradas = sum(s.ordenes, 'valor_entradas');
+        s.valor_salidas = sum(s.ordenes, 'valor_devoluciones') + sum(s.ordenes, 'valor_a_terminados');
+        s.valor_final = sum(s.ordenes, 'valor_final');
+      }
+    });
+    return secciones;
+  }
+
+  const ETIQUETA_ETAPA_KARDEX = { mp: 'Materia prima', proceso: 'En proceso', pt: 'Terminados' };
+
+  function htmlKardexEtapas(d, conFiltroMovimientos) {
+    const secciones = seccionesKardexEtapas(d);
+    const n = formatearCantidad;
+    const m = formatearMoneda;
+    const fechaCorta = (f) => new Date(f).toLocaleString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const diferencias = d.items.filter(i => Number(i.diferencia) !== 0);
+
+    const avisos = [];
+    if (d.consumos_sin_orden > 0) avisos.push(`${d.consumos_sin_orden} consumo(s) del taller en el período se registraron sin orden de producción: salieron de la materia prima pero no aparecen en productos en proceso.`);
+    if (diferencias.length) avisos.push(`${diferencias.length} producto(s) tienen cambios de existencias que no quedaron registrados en el kardex (columna "Ajuste sin registro"). Se recomienda revisarlos con una toma de inventario.`);
+
+    const resumen = `
+      <table class="tk">
+        <thead><tr><th>Etapa</th><th class="n">Valor inicial</th><th class="n">Entradas</th><th class="n">Salidas</th><th class="n">Valor final</th></tr></thead>
+        <tbody>
+          ${secciones.map(s => `<tr><td>${s.titulo}</td><td class="n">${m(s.valor_inicial)}</td><td class="n">${m(s.valor_entradas)}</td><td class="n">${m(s.valor_salidas)}</td><td class="n"><strong>${m(s.valor_final)}</strong></td></tr>`).join('')}
+        </tbody>
+      </table>`;
+
+    const tablaItems = (s) => {
+      const conAjuste = s.items.some(i => Number(i.diferencia) !== 0);
+      const filas = s.items.map(i => `
+        <tr>
+          <td>${escaparHtml(i.nombre)}${i.activo ? '' : ' <span class="sub">(inactivo)</span>'}</td>
+          <td>${escaparHtml(i.unidad || '')}</td>
+          <td class="n">${n(i.saldo_inicial)}</td><td class="n">${n(i.entradas)}</td><td class="n">${n(i.salidas)}</td>
+          ${conAjuste ? `<td class="n">${Number(i.diferencia) !== 0 ? '⚠️ ' + (Number(i.diferencia) > 0 ? '+' : '') + n(i.diferencia) : ''}</td>` : ''}
+          <td class="n"><strong>${n(i.saldo_final)}</strong></td>
+          <td class="n">${m(i.costo_unitario)}</td><td class="n">${m(i.valor_inicial)}</td><td class="n">${m(i.valor_final)}</td>
+        </tr>`).join('');
+      const encargos = (s.encargos || []).map(e => `
+        <tr>
+          <td>${escaparHtml(e.descripcion)} <span class="sub">(encargo ${escaparHtml(e.orden)}${e.pedido ? ', pedido ' + escaparHtml(e.pedido) : ''})</span></td>
+          <td>unidad</td>
+          <td class="n">${Number(e.valor_inicial) ? n(e.cantidad) : 0}</td><td class="n">${Number(e.valor_entradas) ? n(e.cantidad) : 0}</td><td class="n">${Number(e.valor_salidas) ? n(e.cantidad) : 0}</td>
+          ${conAjuste ? '<td></td>' : ''}
+          <td class="n"><strong>${Number(e.valor_final) ? n(e.cantidad) : 0}</strong></td>
+          <td class="n">${m(Number(e.valor_final || e.valor_inicial || e.valor_entradas) / Number(e.cantidad || 1))}</td><td class="n">${m(e.valor_inicial)}</td><td class="n">${m(e.valor_final)}</td>
+        </tr>`).join('');
+      if (!filas && !encargos) return '<div class="tk-vacio">Sin existencias ni movimientos en este período.</div>';
+      return `
+        <table class="tk">
+          <thead><tr><th>Producto</th><th>Unidad</th><th class="n">Saldo inicial</th><th class="n">Entradas</th><th class="n">Salidas</th>${conAjuste ? '<th class="n">Ajuste sin registro</th>' : ''}<th class="n">Saldo final</th><th class="n">Costo unit.</th><th class="n">Valor inicial</th><th class="n">Valor final</th></tr></thead>
+          <tbody>${filas}${encargos}
+            <tr class="total"><td colspan="${conAjuste ? 8 : 7}">Total ${escaparHtml(s.corto)}</td><td class="n">${m(s.valor_inicial)}</td><td class="n">${m(s.valor_final)}</td></tr>
+          </tbody>
+        </table>`;
+    };
+
+    const tablaProceso = (s) => {
+      if (!s.ordenes.length) return '<div class="tk-vacio">No hubo órdenes de producción en proceso en este período.</div>';
+      return `
+        <table class="tk">
+          <thead><tr><th>Orden</th><th>Qué se teje / material en la orden</th><th>Estado</th><th class="n">Valor inicial</th><th class="n">Material recibido</th><th class="n">Sobrante devuelto</th><th class="n">Pasó a terminados</th><th class="n">Valor final</th></tr></thead>
+          <tbody>
+            ${s.ordenes.map(o => `
+              <tr>
+                <td><strong>${escaparHtml(o.orden)}</strong>${o.pedido ? `<div class="sub">Pedido ${escaparHtml(o.pedido)}</div>` : ''}</td>
+                <td>${escaparHtml(o.descripcion)} <span class="sub">(${n(o.cantidad_terminada || o.cantidad_planeada)} u.)</span>
+                  <div class="sub">${(o.materiales || []).map(x => `${escaparHtml(x.nombre)}: ${n(x.neto)} ${escaparHtml(x.unidad || '')} (de ${escaparHtml(x.ubicacion_origen || '')})`).join(' · ')}</div></td>
+                <td>${(ESTADOS_ORDEN_PRODUCCION[o.estado] || [o.estado])[0]}</td>
+                <td class="n">${m(o.valor_inicial)}</td><td class="n">${m(o.valor_entradas)}</td><td class="n">${m(o.valor_devoluciones)}</td><td class="n">${m(o.valor_a_terminados)}</td>
+                <td class="n"><strong>${m(o.valor_final)}</strong></td>
+              </tr>`).join('')}
+            <tr class="total"><td colspan="3">Total en proceso</td><td class="n">${m(s.valor_inicial)}</td><td class="n">${m(s.valor_entradas)}</td><td class="n">${m(s.ordenes.reduce((a, o) => a + Number(o.valor_devoluciones || 0), 0))}</td><td class="n">${m(s.ordenes.reduce((a, o) => a + Number(o.valor_a_terminados || 0), 0))}</td><td class="n">${m(s.valor_final)}</td></tr>
+          </tbody>
+        </table>`;
+    };
+
+    const filtro = conFiltroMovimientos ? (document.getElementById('keFiltroMov') || {}).value || '' : '';
+    const movimientos = d.movimientos.filter(x => !filtro || (filtro === x.etapa + '|' + x.ubicacion) || filtro === x.etapa);
+    const tablaMovimientos = movimientos.length ? `
+      <table class="tk">
+        <thead><tr><th>Fecha</th><th>Etapa</th><th>Producto</th><th>Movimiento</th><th class="n">Entrada</th><th class="n">Salida</th><th class="n">Saldo</th><th class="n">Valor</th><th>Referencia</th><th>Usuario</th></tr></thead>
+        <tbody>
+          ${movimientos.map(x => `
+            <tr>
+              <td style="white-space:nowrap;">${fechaCorta(x.fecha)}</td>
+              <td>${ETIQUETA_ETAPA_KARDEX[x.etapa] || x.etapa}<div class="sub">${escaparHtml(x.ubicacion)}</div></td>
+              <td>${escaparHtml(x.producto)}</td>
+              <td>${escaparHtml(x.movimiento)}${x.detalle ? `<div class="sub">${escaparHtml(x.detalle)}</div>` : ''}</td>
+              <td class="n">${x.entrada !== null ? n(x.entrada) : ''}</td>
+              <td class="n">${x.salida !== null ? n(x.salida) : ''}</td>
+              <td class="n">${x.saldo !== null ? n(x.saldo) : ''}</td>
+              <td class="n">${m(x.valor)}</td>
+              <td>${escaparHtml(x.referencia || '')}</td>
+              <td>${escaparHtml(x.usuario || '')}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>` : '<div class="tk-vacio">Sin movimientos para este filtro.</div>';
+
+    return `
+      <div style="font-size:12.5px;margin-bottom:6px;"><strong>Período:</strong> ${escaparHtml(d.desde)} a ${escaparHtml(d.hasta)}</div>
+      ${avisos.length ? `<div style="background:var(--tinte-ambar);border-radius:var(--radius-md);padding:10px 14px;margin:10px 0;font-size:12.5px;line-height:1.6;">${avisos.map(a => '⚠️ ' + escaparHtml(a)).join('<br>')}</div>` : ''}
+      <div class="tk-seccion">Resumen por etapa</div>
+      ${resumen}
+      ${secciones.map(s => `<div class="tk-seccion">${s.titulo}</div>${s.tipo === 'proceso' ? tablaProceso(s) : tablaItems(s)}`).join('')}
+      <div class="tk-seccion" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+        <span>📜 Detalle de movimientos (${movimientos.length})</span>
+        ${conFiltroMovimientos ? `<select id="keFiltroMov" onchange="document.getElementById('keContenido').innerHTML = htmlKardexEtapas(cacheKardexEtapas, true)" style="max-width:260px;padding:6px 10px;font-size:12px;">
+          <option value="">Todas las etapas</option>
+          <option value="mp|Tienda" ${filtro === 'mp|Tienda' ? 'selected' : ''}>Materia prima — Tienda</option>
+          <option value="mp|Taller" ${filtro === 'mp|Taller' ? 'selected' : ''}>Materia prima — Taller</option>
+          <option value="proceso" ${filtro === 'proceso' ? 'selected' : ''}>Productos en proceso</option>
+          <option value="pt" ${filtro === 'pt' ? 'selected' : ''}>Productos terminados</option>
+        </select>` : ''}
+      </div>
+      ${tablaMovimientos}
+      <div style="font-size:11.5px;opacity:0.7;margin-top:14px;line-height:1.6;">
+        Valorización: la materia prima y los productos terminados se valorizan al costo promedio de cada producto (en productos terminados es el costo del catálogo, que incluye la mano de obra). Los productos en proceso se valorizan con el costo del material entregado a cada orden, al costo del día de la entrega. Un mismo movimiento aparece en dos etapas cuando pasa de una a otra (por ejemplo, el material entregado a una orden sale de la materia prima y entra a productos en proceso).
+      </div>`;
+  }
+
+  function exportarKardexEtapasExcel() {
+    const d = cacheKardexEtapas;
+    if (!d) { mostrarMensaje('mensajeKardexEtapas', 'Primero genera el kardex.', 'error'); return; }
+    const secciones = seccionesKardexEtapas(d);
+    const libro = XLSX.utils.book_new();
+    const encabezado = [[`Lana Rosa Crochet — Kardex por etapas`], [`Período: ${d.desde} a ${d.hasta}`], [`Generado: ${new Date().toLocaleString('es-CO')}`], []];
+    const num = (v) => Math.round(Number(v || 0) * 100) / 100;
+
+    XLSX.utils.book_append_sheet(libro, XLSX.utils.aoa_to_sheet([
+      ...encabezado,
+      ['Etapa', 'Valor inicial', 'Entradas', 'Salidas', 'Valor final'],
+      ...secciones.map(s => [s.titulo.replace(/^\S+\s/, ''), num(s.valor_inicial), num(s.valor_entradas), num(s.valor_salidas), num(s.valor_final)]),
+    ]), 'Resumen');
+
+    const nombresHoja = new Set(['Resumen']);
+    const nombreHoja = (texto) => {
+      let base = texto.replace(/[\\/?*[\]:]/g, '').slice(0, 28);
+      let nombre = base; let k = 2;
+      while (nombresHoja.has(nombre)) nombre = base.slice(0, 26) + ' ' + (k++);
+      nombresHoja.add(nombre);
+      return nombre;
+    };
+    secciones.forEach(s => {
+      let filas;
+      if (s.tipo === 'items') {
+        filas = [...encabezado, ['Producto', 'Unidad', 'Saldo inicial', 'Entradas', 'Salidas', 'Ajuste sin registro', 'Saldo final', 'Costo unitario', 'Valor inicial', 'Valor final'],
+          ...s.items.map(i => [i.nombre, i.unidad, num(i.saldo_inicial), num(i.entradas), num(i.salidas), num(i.diferencia), num(i.saldo_final), num(i.costo_unitario), num(i.valor_inicial), num(i.valor_final)]),
+          ...(s.encargos || []).map(e => [`${e.descripcion} (encargo ${e.orden})`, 'unidad', Number(e.valor_inicial) ? num(e.cantidad) : 0, Number(e.valor_entradas) ? num(e.cantidad) : 0, Number(e.valor_salidas) ? num(e.cantidad) : 0, 0, Number(e.valor_final) ? num(e.cantidad) : 0, num(Number(e.valor_final || e.valor_inicial || e.valor_entradas) / Number(e.cantidad || 1)), num(e.valor_inicial), num(e.valor_final)]),
+          [], ['Total', '', '', '', '', '', '', '', num(s.valor_inicial), num(s.valor_final)]];
+      } else {
+        filas = [...encabezado, ['Orden', 'Qué se teje', 'Pedido', 'Estado', 'Unidades', 'Material en la orden', 'Valor inicial', 'Material recibido', 'Sobrante devuelto', 'Pasó a terminados', 'Valor final'],
+          ...s.ordenes.map(o => [o.orden, o.descripcion, o.pedido || '', (ESTADOS_ORDEN_PRODUCCION[o.estado] || [o.estado])[0].replace(/^\S+\s/, ''), num(o.cantidad_terminada || o.cantidad_planeada),
+            (o.materiales || []).map(x => `${x.nombre}: ${formatearCantidad(x.neto)} ${x.unidad || ''} (de ${x.ubicacion_origen || ''})`).join(' | '),
+            num(o.valor_inicial), num(o.valor_entradas), num(o.valor_devoluciones), num(o.valor_a_terminados), num(o.valor_final)]),
+          [], ['Total', '', '', '', '', '', num(s.valor_inicial), num(s.valor_entradas), '', '', num(s.valor_final)]];
+      }
+      XLSX.utils.book_append_sheet(libro, XLSX.utils.aoa_to_sheet(filas), nombreHoja(s.corto));
+    });
+
+    XLSX.utils.book_append_sheet(libro, XLSX.utils.aoa_to_sheet([
+      ...encabezado,
+      ['Fecha', 'Etapa', 'Ubicación', 'Producto', 'Movimiento', 'Detalle', 'Entrada', 'Salida', 'Saldo', 'Costo unitario', 'Valor', 'Referencia', 'Usuario'],
+      ...d.movimientos.map(x => [new Date(x.fecha).toLocaleString('es-CO'), ETIQUETA_ETAPA_KARDEX[x.etapa] || x.etapa, x.ubicacion, x.producto, x.movimiento, x.detalle || '',
+        x.entrada !== null ? num(x.entrada) : '', x.salida !== null ? num(x.salida) : '', x.saldo !== null ? num(x.saldo) : '', num(x.costo_unitario), num(x.valor), x.referencia || '', x.usuario || '']),
+    ]), 'Movimientos');
+    XLSX.writeFile(libro, `LanaRosa_Kardex_Etapas_${d.desde}_a_${d.hasta}.xlsx`);
+  }
+
+  function imprimirKardexEtapas() {
+    const d = cacheKardexEtapas;
+    if (!d) { mostrarMensaje('mensajeKardexEtapas', 'Primero genera el kardex.', 'error'); return; }
+    const ventana = window.open('', '_blank');
+    ventana.document.write(`
+      <html><head><title>Kardex por etapas — Lana Rosa Crochet</title><meta charset="utf-8">
+      <style>
+        body { font-family: Arial, Helvetica, sans-serif; padding: 24px; color: #2d2d2d; }
+        h1 { color: #d8017c; font-size: 20px; margin-bottom: 2px; }
+        .subtitulo-impresion { font-size: 12px; color: #666; margin-bottom: 16px; }
+        select { display: none; }
+        ${CSS_TABLA_KARDEX}
+        .firma-impresion { margin-top: 60px; display: flex; justify-content: space-between; }
+        .firma-impresion div { width: 45%; border-top: 1px solid #333; padding-top: 6px; text-align: center; font-size: 12px; }
+        @media print { body { padding: 8px; } tr { page-break-inside: avoid; } }
+      </style></head>
+      <body>
+        <h1>Lana Rosa Crochet — Kardex por etapas</h1>
+        <div class="subtitulo-impresion">Materia prima (Tienda y Taller), productos en proceso y productos terminados · Generado el ${new Date().toLocaleString('es-CO')}</div>
+        ${htmlKardexEtapas(d, false)}
+        <div class="firma-impresion"><div>Elaboró</div><div>Revisó</div></div>
+      </body></html>`);
+    ventana.document.close();
+    ventana.focus();
+    setTimeout(() => ventana.print(), 400);
   }
 
   // ============================================================================
@@ -10132,6 +10790,8 @@
     { clave: 'nav-transferir-stock-taller', etiqueta: '　　Transferir stock (Taller)' },
     { clave: 'nav-solicitudes-tienda', etiqueta: '　　Solicitud de insumos del Taller' },
     { clave: 'nav-consumotaller', etiqueta: '　　Consumo de material (Taller)' },
+    { clave: 'nav-ordenes-produccion', etiqueta: '　　Órdenes de producción' },
+    { clave: 'nav-kardex-etapas', etiqueta: '　　Kardex por etapas' },
     { clave: 'deptoContabilidadGrupo', etiqueta: '📊 Contabilidad (grupo completo)' },
     { clave: 'nav-dashboard-contable', etiqueta: '　　Dashboard Contable' },
     { clave: 'nav-honorarios-tejedoras', etiqueta: '　　Honorarios Tejedoras' },
@@ -18732,9 +19392,11 @@
       ${advertencias}
       <div class="grilla-2">
         <div>
-          ${bloque('1. Materia prima (1405)', [['Según libros', d.materia_prima.libros], ['Existencias reales al cierre', d.materia_prima.fisico], ['= Consumida en producción', d.materia_prima.consumo, true]])}
+          ${bloque('1. Materia prima (1405)', [['Según libros', d.materia_prima.libros], ['Existencias reales al cierre', d.materia_prima.fisico], ['= Consumida en producción', d.materia_prima.consumo, true],
+            ...(Number(d.materia_prima.desde_tienda) ? [['+ Mercería de la Tienda entregada a órdenes (1435)', d.materia_prima.desde_tienda]] : [])])}
           ${bloque('2. Mano de obra y gastos del Taller', [['Personal del Taller (5105 → 7220)', d.mano_obra], ['Tejedoras externas (5110 → 7420)', d.tejedoras], ['Otros gastos del Taller (→ 7320)', d.indirectos]])}
-          ${filaEstadoFin('= Costo de producción del mes (→ 1430)', d.costo_produccion, true)}
+          ${filaEstadoFin('= Costo de producción del mes', d.costo_produccion, true)}
+          ${d.productos_en_proceso ? bloque('Productos en proceso (1410)', [['Según libros', d.productos_en_proceso.libros], ['Material en órdenes abiertas al cierre', d.productos_en_proceso.fisico], ['= Queda en proceso (el resto va a 1430)', d.productos_en_proceso.variacion, true]]) : ''}
         </div>
         <div>
           ${bloque('3. Productos terminados (1430)', [['Libros + producción del mes', d.productos_terminados.libros_con_produccion], ['Existencias reales al cierre', d.productos_terminados.fisico], ['= Ajuste al costo de ventas (6120)', d.productos_terminados.ajuste_costo_ventas, true]])}
