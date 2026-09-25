@@ -978,6 +978,7 @@
         <button class="nav-btn" id="nav-consumotaller" onclick="mostrarPantallaPedidosCrm()"><span class="nav-icon">🧶</span> Consumo de material (Taller)</button>
         <button class="nav-btn" id="nav-ordenes-produccion" onclick="mostrarPantallaOrdenesProduccion()"><span class="nav-icon">🏭</span> Órdenes de producción</button>
         <button class="nav-btn" id="nav-kardex-etapas" onclick="mostrarPantallaKardexEtapas()"><span class="nav-icon">📒</span> Kardex por etapas</button>
+        <button class="nav-btn" id="nav-inventario-global" onclick="mostrarPantallaInventarioGlobal()"><span class="nav-icon">🗺️</span> Inventario global</button>
       </div>
     </div>
 
@@ -1774,6 +1775,21 @@
     <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirKardexEtapas()">🖨️ Imprimir / PDF</button>
   </div>
   <div id="keContenido"><div class="cargando">Elige el rango de fechas y pulsa Generar.</div></div>
+</div>
+
+<!-- ===== PANTALLA: INVENTARIO GLOBAL ===== -->
+<div id="pantallaInventarioGlobal" class="oculto contenido">
+  <div class="page-header">
+    <h1>🗺️ Inventario global</h1>
+    <div class="subtitulo">Todo el inventario de la empresa a una fecha, en un solo informe: insumos en la Tienda, insumos en el Taller, productos en proceso y productos terminados, con cantidades y valores.</div>
+  </div>
+  <div class="mensaje" id="mensajeInventarioGlobal"></div>
+  <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+    <div><label for="igCorte" style="font-size:11px;">Fecha de corte</label><input type="date" id="igCorte" onchange="cargarInventarioGlobal()" style="padding:9px 10px;"></div>
+    <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarInventarioGlobalExcel()">📥 Excel</button>
+    <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirInventarioGlobal()">🖨️ Imprimir / PDF</button>
+  </div>
+  <div id="igContenido"><div class="cargando">Cargando...</div></div>
 </div>
 
 <!-- ===== PANTALLA: FACTURACIÓN Y NÓMINA ELECTRÓNICA (solución gratuita DIAN) ===== -->
@@ -5220,7 +5236,7 @@
   });
 
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaFacturacionElectronica', 'pantallaServiciosDian', 'pantallaCorreoEmpresa', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb'];
+    const pantallas = ['pantallaLogin', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaInventarioGlobal', 'pantallaFacturacionElectronica', 'pantallaServiciosDian', 'pantallaCorreoEmpresa', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -5244,6 +5260,7 @@
       pantallaPedidosCrm: 'nav-consumotaller',
       pantallaOrdenesProduccion: 'nav-ordenes-produccion',
       pantallaKardexEtapas: 'nav-kardex-etapas',
+      pantallaInventarioGlobal: 'nav-inventario-global',
       pantallaFacturacionElectronica: 'nav-facturacion-electronica',
       pantallaServiciosDian: 'nav-servicios-dian',
       pantallaCorreoEmpresa: 'nav-correo-empresa',
@@ -5622,6 +5639,7 @@
     mostrar('nav-consumotaller', false); // reemplazada por Órdenes de producción
     mostrar('nav-ordenes-produccion', esAdmin || esTaller);
     mostrar('nav-kardex-etapas', esAdmin || esContador || esTaller);
+    mostrar('nav-inventario-global', esAdmin || esContador || esTaller);
     mostrar('nav-facturacion-electronica', esAdmin || esCajero);
     mostrar('nav-fe-contabilidad', esContador && !esAdmin);
     mostrar('nav-servicios-dian', esAdmin || esContador);
@@ -9919,6 +9937,209 @@
   }
 
   // ============================================================================
+  // INVENTARIO GLOBAL (foto del inventario a una fecha, por ubicación y etapa)
+  // ============================================================================
+  let cacheInventarioGlobal = null;
+
+  async function mostrarPantallaInventarioGlobal() {
+    mostrarPantalla('pantallaInventarioGlobal');
+    asegurarEstiloTablaKardex();
+    const corte = document.getElementById('igCorte');
+    if (!corte.value) corte.value = fechaLocalIso(new Date());
+    await cargarInventarioGlobal();
+  }
+
+  async function cargarInventarioGlobal() {
+    ocultarMensaje('mensajeInventarioGlobal');
+    const corte = document.getElementById('igCorte').value;
+    const cont = document.getElementById('igContenido');
+    if (!corte) { mostrarMensaje('mensajeInventarioGlobal', 'Elige la fecha de corte.', 'error'); return; }
+    cont.innerHTML = '<div class="cargando">Calculando el inventario...</div>';
+    try {
+      const d = await llamarReporteContable('fn_kardex_etapas', { p_desde: corte, p_hasta: corte });
+      cacheInventarioGlobal = armarInventarioGlobal(d, corte);
+    } catch (e) {
+      cont.innerHTML = `<div class="cargando">No se pudo generar: ${escaparHtml(e.message)}</div>`;
+      return;
+    }
+    cont.innerHTML = htmlInventarioGlobal(cacheInventarioGlobal);
+  }
+
+  function armarInventarioGlobal(d, corte) {
+    const conSaldo = (i) => Number(i.saldo_final) !== 0 || Number(i.valor_final) !== 0;
+    const porValor = (a, b) => Number(b.valor_final) - Number(a.valor_final);
+    const items = (etapa, filtroUbic) => d.items.filter(i => i.etapa === etapa && filtroUbic(i.ubicacion) && conSaldo(i)).sort(porValor);
+    const ubicacionesMp = [...new Set(d.items.filter(i => i.etapa === 'mp').map(i => i.ubicacion))].filter(u => u !== 'Tienda' && u !== 'Taller');
+
+    const bloques = [
+      { clave: 'mp_Tienda', tipo: 'items', icono: '🏪', titulo: 'Insumos en inventario — Tienda', items: items('mp', u => u === 'Tienda') },
+      { clave: 'mp_Taller', tipo: 'items', icono: '🧶', titulo: 'Insumos en inventario — Taller', items: items('mp', u => u === 'Taller') },
+      ...ubicacionesMp.map(u => ({ clave: 'mp_' + u, tipo: 'items', icono: '📍', titulo: 'Insumos en inventario — ' + u, items: items('mp', x => x === u) })),
+      { clave: 'proceso', tipo: 'proceso', icono: '⚙️', titulo: 'Productos en proceso', ordenes: (d.ordenes || []).filter(o => Number(o.valor_final) !== 0 || o.estado === 'en_proceso') },
+      { clave: 'pt', tipo: 'items', icono: '🧸', titulo: 'Productos terminados', items: items('pt', () => true),
+        encargos: (d.encargos || []).filter(e => Number(e.valor_final) !== 0) },
+    ];
+    bloques.forEach(b => {
+      const suma = (lista) => lista.reduce((a, x) => a + Number(x.valor_final || 0), 0);
+      b.valor = b.tipo === 'proceso' ? suma(b.ordenes) : suma(b.items) + suma(b.encargos || []);
+      b.referencias = b.tipo === 'proceso' ? b.ordenes.length : b.items.length + (b.encargos || []).length;
+    });
+    const total = bloques.reduce((a, b) => a + b.valor, 0);
+    bloques.forEach(b => { b.pct = total > 0 ? (b.valor / total) * 100 : 0; });
+
+    const avisos = [];
+    const negativos = d.items.filter(i => Number(i.saldo_final) < 0);
+    if (negativos.length) avisos.push(`${negativos.length} producto(s) quedan con existencias negativas (se vendió o usó más de lo que había registrado): ${negativos.slice(0, 5).map(i => i.nombre).join(', ')}${negativos.length > 5 ? '…' : ''}. Hay que revisarlos con una toma de inventario.`);
+    const sinCosto = d.items.filter(i => Number(i.saldo_final) > 0 && !Number(i.costo_unitario));
+    if (sinCosto.length) avisos.push(`${sinCosto.length} producto(s) tienen existencias pero no tienen costo, así que suman $0: ${sinCosto.slice(0, 5).map(i => i.nombre).join(', ')}${sinCosto.length > 5 ? '…' : ''}.`);
+    const sinMaterial = bloques.find(b => b.clave === 'proceso').ordenes.filter(o => o.estado === 'en_proceso' && !Number(o.valor_final));
+    if (sinMaterial.length) avisos.push(`${sinMaterial.length} orden(es) de producción abierta(s) todavía sin material entregado (${sinMaterial.map(o => o.orden).join(', ')}): cuando la tejedora le entregue el material, su valor aparece en productos en proceso.`);
+
+    return { corte, generado: d.generado, bloques, total, avisos };
+  }
+
+  function htmlInventarioGlobal(g) {
+    const m = formatearMoneda;
+    const n = formatearCantidad;
+    const pct = (x) => (Math.round(x * 10) / 10).toLocaleString('es-CO') + '%';
+    const fechaCorte = new Date(g.corte + 'T00:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    const tarjetas = g.bloques.map(b => `
+      <div style="border:1px solid var(--gris-borde, #eee);border-radius:12px;padding:14px 16px;background:var(--fondo-panel, #fff);">
+        <div style="font-size:12.5px;font-weight:600;">${b.icono} ${escaparHtml(b.titulo)}</div>
+        <div style="font-size:22px;font-weight:700;margin:6px 0 8px;">${m(b.valor)}</div>
+        <div role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(b.pct)}" aria-label="Porcentaje del inventario total" style="height:6px;border-radius:4px;background:var(--gris-borde, #eee);overflow:hidden;">
+          <div style="height:100%;width:${Math.min(b.pct, 100)}%;border-radius:4px;background:var(--rosa-principal, #d8017c);"></div>
+        </div>
+        <div style="font-size:11.5px;opacity:0.7;margin-top:6px;">${pct(b.pct)} del total · ${b.referencias} ${b.tipo === 'proceso' ? 'orden(es)' : 'referencia(s)'}</div>
+      </div>`).join('');
+
+    const resumen = `
+      <table class="tk">
+        <thead><tr><th>Dónde está</th><th class="n">${'Referencias / órdenes'}</th><th class="n">Valor</th><th class="n">% del total</th></tr></thead>
+        <tbody>
+          ${g.bloques.map(b => `<tr><td>${b.icono} ${escaparHtml(b.titulo)}</td><td class="n">${b.referencias}</td><td class="n">${m(b.valor)}</td><td class="n">${pct(b.pct)}</td></tr>`).join('')}
+          <tr class="total"><td>Total inventario</td><td class="n">${g.bloques.reduce((a, b) => a + b.referencias, 0)}</td><td class="n">${m(g.total)}</td><td class="n">100%</td></tr>
+        </tbody>
+      </table>`;
+
+    const tablaItems = (b) => {
+      const filas = b.items.map(i => `
+        <tr>
+          <td>${escaparHtml(i.nombre)}${b.clave === 'pt' && i.ubicacion !== 'Tienda' ? ` <span class="sub">(${escaparHtml(i.ubicacion)})</span>` : ''}${i.activo ? '' : ' <span class="sub">(inactivo)</span>'}</td>
+          <td>${escaparHtml(i.unidad || '')}</td>
+          <td class="n">${Number(i.saldo_final) < 0 ? '⚠️ ' : ''}${n(i.saldo_final)}</td>
+          <td class="n">${m(i.costo_unitario)}</td>
+          <td class="n"><strong>${m(i.valor_final)}</strong></td>
+          <td class="n">${b.valor > 0 ? pct(Number(i.valor_final) / b.valor * 100) : ''}</td>
+        </tr>`).join('');
+      const encargos = (b.encargos || []).map(e => `
+        <tr>
+          <td>${escaparHtml(e.descripcion)} <span class="sub">(encargo ${escaparHtml(e.orden)}${e.pedido ? ', pedido ' + escaparHtml(e.pedido) : ''})</span></td>
+          <td>unidad</td>
+          <td class="n">${n(e.cantidad)}</td>
+          <td class="n">${m(Number(e.valor_final) / Number(e.cantidad || 1))}</td>
+          <td class="n"><strong>${m(e.valor_final)}</strong></td>
+          <td class="n">${b.valor > 0 ? pct(Number(e.valor_final) / b.valor * 100) : ''}</td>
+        </tr>`).join('');
+      if (!filas && !encargos) return '<div class="tk-vacio">No hay existencias aquí a esta fecha.</div>';
+      return `
+        <table class="tk">
+          <thead><tr><th>Producto</th><th>Unidad</th><th class="n">Cantidad</th><th class="n">Costo unit.</th><th class="n">Valor</th><th class="n">% de esta ubicación</th></tr></thead>
+          <tbody>${filas}${encargos}
+            <tr class="total"><td colspan="4">Total ${escaparHtml(b.titulo)}</td><td class="n">${m(b.valor)}</td><td class="n">${b.valor > 0 ? '100%' : ''}</td></tr>
+          </tbody>
+        </table>`;
+    };
+
+    const tablaProceso = (b) => {
+      if (!b.ordenes.length) return '<div class="tk-vacio">No hay órdenes de producción en proceso a esta fecha.</div>';
+      return `
+        <table class="tk">
+          <thead><tr><th>Orden</th><th>Qué se teje</th><th>Material en la orden</th><th class="n">Valor</th></tr></thead>
+          <tbody>
+            ${b.ordenes.map(o => `
+              <tr>
+                <td><strong>${escaparHtml(o.orden)}</strong>${o.pedido ? `<div class="sub">Pedido ${escaparHtml(o.pedido)}</div>` : ''}</td>
+                <td>${escaparHtml(o.descripcion)} <span class="sub">(${n(o.cantidad_planeada)} u.)</span></td>
+                <td>${(o.materiales || []).filter(x => Number(x.neto)).map(x => `${escaparHtml(x.nombre)}: ${n(x.neto)} ${escaparHtml(x.unidad || '')}`).join('<br>') || '<span class="sub">Sin material entregado todavía</span>'}</td>
+                <td class="n"><strong>${m(o.valor_final)}</strong></td>
+              </tr>`).join('')}
+            <tr class="total"><td colspan="3">Total productos en proceso</td><td class="n">${m(b.valor)}</td></tr>
+          </tbody>
+        </table>`;
+    };
+
+    return `
+      <div style="font-size:12.5px;margin-bottom:10px;"><strong>Inventario al ${escaparHtml(fechaCorte)}</strong> (al cierre del día)</div>
+      <div style="margin-bottom:14px;">
+        <div style="font-size:12px;opacity:0.7;">Valor total del inventario</div>
+        <div style="font-size:34px;font-weight:700;line-height:1.2;">${m(g.total)}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px;">${tarjetas}</div>
+      ${g.avisos.length ? `<div style="background:var(--tinte-ambar, #fdf3dc);border-radius:10px;padding:10px 14px;margin:10px 0;font-size:12.5px;line-height:1.6;">${g.avisos.map(a => '⚠️ ' + escaparHtml(a)).join('<br>')}</div>` : ''}
+      <div class="tk-seccion">Resumen</div>
+      <div style="overflow-x:auto;">${resumen}</div>
+      ${g.bloques.map(b => `<div class="tk-seccion">${b.icono} ${escaparHtml(b.titulo)} — ${m(b.valor)}</div><div style="overflow-x:auto;">${b.tipo === 'proceso' ? tablaProceso(b) : tablaItems(b)}</div>`).join('')}
+      <div style="font-size:11.5px;opacity:0.7;margin-top:14px;line-height:1.6;">
+        Valorización: los insumos y los productos terminados van al costo promedio de cada producto (en productos terminados es el costo del catálogo, que incluye la mano de obra). Los productos en proceso van con el costo del material entregado a cada orden. Son los mismos datos del Kardex por etapas, tomados al cierre de la fecha de corte; para ver cómo se llegó a estas cantidades (entradas y salidas), usa el Kardex por etapas. En la contabilidad, estos valores se reflejan en las cuentas de inventario cuando se ejecuta el cierre de costos de cada mes.
+      </div>`;
+  }
+
+  function exportarInventarioGlobalExcel() {
+    const g = cacheInventarioGlobal;
+    if (!g) { mostrarMensaje('mensajeInventarioGlobal', 'Espera a que cargue el informe.', 'error'); return; }
+    const num = (v) => Math.round(Number(v || 0) * 100) / 100;
+    const encabezado = [['Lana Rosa Crochet — Inventario global'], [`Corte: ${g.corte} (al cierre del día)`], [`Generado: ${new Date().toLocaleString('es-CO')}`], []];
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, XLSX.utils.aoa_to_sheet([
+      ...encabezado,
+      ['Dónde está', 'Referencias / órdenes', 'Valor', '% del total'],
+      ...g.bloques.map(b => [b.titulo, b.referencias, num(b.valor), num(b.pct)]),
+      ['Total inventario', g.bloques.reduce((a, b) => a + b.referencias, 0), num(g.total), 100],
+      ...(g.avisos.length ? [[], ['Avisos'], ...g.avisos.map(a => [a])] : []),
+    ]), 'Resumen');
+    g.bloques.forEach(b => {
+      const filas = b.tipo === 'proceso'
+        ? [...encabezado, ['Orden', 'Pedido', 'Qué se teje', 'Unidades', 'Material en la orden', 'Valor'],
+            ...b.ordenes.map(o => [o.orden, o.pedido || '', o.descripcion, num(o.cantidad_planeada), (o.materiales || []).filter(x => Number(x.neto)).map(x => `${x.nombre}: ${formatearCantidad(x.neto)} ${x.unidad || ''}`).join(' | '), num(o.valor_final)]),
+            [], ['Total', '', '', '', '', num(b.valor)]]
+        : [...encabezado, ['Producto', 'Ubicación', 'Unidad', 'Cantidad', 'Costo unitario', 'Valor'],
+            ...b.items.map(i => [i.nombre, i.ubicacion, i.unidad || '', num(i.saldo_final), num(i.costo_unitario), num(i.valor_final)]),
+            ...(b.encargos || []).map(e => [`${e.descripcion} (encargo ${e.orden})`, 'Tienda', 'unidad', num(e.cantidad), num(Number(e.valor_final) / Number(e.cantidad || 1)), num(e.valor_final)]),
+            [], ['Total', '', '', '', '', num(b.valor)]];
+      XLSX.utils.book_append_sheet(libro, XLSX.utils.aoa_to_sheet(filas), b.titulo.replace(/^Insumos en inventario — /, 'Insumos ').replace(/[\\/?*[\]:]/g, '').slice(0, 30));
+    });
+    XLSX.writeFile(libro, `LanaRosa_Inventario_Global_${g.corte}.xlsx`);
+  }
+
+  function imprimirInventarioGlobal() {
+    const g = cacheInventarioGlobal;
+    if (!g) { mostrarMensaje('mensajeInventarioGlobal', 'Espera a que cargue el informe.', 'error'); return; }
+    const ventana = window.open('', '_blank');
+    ventana.document.write(`
+      <html><head><title>Inventario global — Lana Rosa Crochet</title><meta charset="utf-8">
+      <style>
+        body { font-family: Arial, Helvetica, sans-serif; padding: 24px; color: #2d2d2d; }
+        h1 { color: #d8017c; font-size: 20px; margin-bottom: 2px; }
+        .subtitulo-impresion { font-size: 12px; color: #666; margin-bottom: 16px; }
+        ${CSS_TABLA_KARDEX}
+        .firma-impresion { margin-top: 60px; display: flex; justify-content: space-between; }
+        .firma-impresion div { width: 45%; border-top: 1px solid #333; padding-top: 6px; text-align: center; font-size: 12px; }
+        @media print { body { padding: 8px; } tr { page-break-inside: avoid; } * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+      </style></head>
+      <body>
+        <h1>Lana Rosa Crochet — Inventario global</h1>
+        <div class="subtitulo-impresion">Insumos en Tienda y Taller, productos en proceso y productos terminados · Generado el ${new Date().toLocaleString('es-CO')}</div>
+        ${htmlInventarioGlobal(g)}
+        <div class="firma-impresion"><div>Elaboró</div><div>Revisó</div></div>
+      </body></html>`);
+    ventana.document.close();
+    ventana.focus();
+    setTimeout(() => ventana.print(), 400);
+  }
+
+  // ============================================================================
   // SOLICITUDES DE MATERIAL
   // ============================================================================
   let catalogoSolicitudesCompleto = [];
@@ -11233,6 +11454,7 @@
     { clave: 'nav-solicitudes-tienda', etiqueta: '　　Solicitud de insumos del Taller' },
     { clave: 'nav-ordenes-produccion', etiqueta: '　　Órdenes de producción' },
     { clave: 'nav-kardex-etapas', etiqueta: '　　Kardex por etapas' },
+    { clave: 'nav-inventario-global', etiqueta: '　　Inventario global' },
     { clave: 'nav-facturacion-electronica', etiqueta: '　　Facturación electrónica DIAN' },
     { clave: 'nav-fe-contabilidad', etiqueta: '　　Facturación y nómina electrónica (contador)' },
     { clave: 'nav-servicios-dian', etiqueta: '　　Servicios digitales DIAN' },
