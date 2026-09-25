@@ -939,6 +939,7 @@
         <button class="nav-btn" id="nav-resenas-web" onclick="mostrarPantallaResenasWeb()" style="display:none;"><span class="nav-icon">⭐</span> Reseñas web <span id="badgeResenasPendientes" style="display:none;margin-left:auto;background:#d8017c;color:#fff;border-radius:999px;font-size:10.5px;font-weight:700;padding:1px 8px;"></span></button>
         <button class="nav-btn" id="nav-pedidos-canal" onclick="mostrarPantallaPedidosCanal()"><span class="nav-icon">📱</span> Pedidos WhatsApp/Redes</button>
         <button class="nav-btn" id="nav-notas-cd" onclick="mostrarPantallaNotasCD()"><span class="nav-icon">📄</span> Notas crédito/débito</button>
+        <button class="nav-btn" id="nav-facturacion-electronica" onclick="mostrarPantallaFacturacionElectronica()"><span class="nav-icon">🧾</span> Facturación electrónica DIAN</button>
         <button class="nav-btn" id="nav-cuentas-pendientes" onclick="mostrarPantallaCuentasPendientes()"><span class="nav-icon">📋</span> Cartera</button>
       </div>
     </div>
@@ -963,8 +964,8 @@
         <button class="nav-btn" id="nav-listas-precios" onclick="mostrarPantallaListasPrecios()"><span class="nav-icon">💲</span> Listas de precios</button>
         <button class="nav-btn" id="nav-ajustestock" onclick="mostrarPantallaAjusteStock()"><span class="nav-icon">📥</span> Entrada mercancía</button>
         <button class="nav-btn" id="nav-etiquetas" onclick="mostrarPantallaEtiquetas()"><span class="nav-icon">🏷️</span> Imprimir etiquetas</button>
-        <button class="nav-btn" id="nav-transferir-stock" onclick="mostrarPantallaTransferirStock()"><span class="nav-icon">🔄</span> Transferir stock (Tienda)</button>
-        <button class="nav-btn" id="nav-transferir-stock-taller" onclick="mostrarPantallaTransferirStock()"><span class="nav-icon">🔄</span> Transferir stock (Taller)</button>
+        <button class="nav-btn" id="nav-transferir-stock" onclick="mostrarPantallaTransferirStock()"><span class="nav-icon">🔄</span> Trasladar Tienda ↔ Taller</button>
+        <button class="nav-btn" id="nav-transferir-stock-taller" onclick="mostrarPantallaTransferirStock()"><span class="nav-icon">🔄</span> Trasladar Tienda ↔ Taller</button>
         <button class="nav-btn" id="nav-solicitudes-tienda" onclick="mostrarPantallaSolicitudes()"><span class="nav-icon">📦</span> Solicitud de insumos del Taller</button>
         <button class="nav-btn" id="nav-consumotaller" onclick="mostrarPantallaPedidosCrm()"><span class="nav-icon">🧶</span> Consumo de material (Taller)</button>
         <button class="nav-btn" id="nav-ordenes-produccion" onclick="mostrarPantallaOrdenesProduccion()"><span class="nav-icon">🏭</span> Órdenes de producción</button>
@@ -981,6 +982,7 @@
         <button class="nav-btn" id="nav-honorarios-tejedoras" onclick="mostrarPantallaHonorariosTejedoras()"><span class="nav-icon">🧵</span> Honorarios Tejedoras</button>
         <button class="nav-btn" id="nav-estados-financieros" onclick="mostrarPantallaEstadosFinancieros()"><span class="nav-icon">📑</span> Estados financieros y libros</button>
         <button class="nav-btn" id="nav-contabilidad-impuestos" onclick="mostrarPantallaContabilidadImpuestos()"><span class="nav-icon">🧾</span> Impuestos, PUC y ajustes</button>
+        <button class="nav-btn" id="nav-fe-contabilidad" onclick="mostrarPantallaFacturacionElectronica()"><span class="nav-icon">📨</span> Facturación y nómina electrónica</button>
         <button class="nav-btn" id="nav-activos-fijos" onclick="mostrarPantallaActivosFijos()"><span class="nav-icon">🪑</span> Activos fijos</button>
         <div class="sidebar-seccion">Reportes e indicadores</div>
         <button class="nav-btn" id="nav-reportes-financieros" onclick="mostrarPantallaReportesFinancieros()"><span class="nav-icon">📊</span> Informes de Ventas</button>
@@ -1374,33 +1376,46 @@
 <!-- ===== PANTALLA: TRANSFERIR STOCK ===== -->
 <div id="pantallaTransferirStock" class="oculto contenido">
   <div class="page-header">
-    <h1>🔄 Transferir stock entre Tienda y Taller</h1>
-    <div class="subtitulo">Mueve productos de un departamento a otro. Si el producto no existe todavía en el destino, se crea automáticamente allá.</div>
+    <h1>🔄 Trasladar entre Tienda y Taller</h1>
+    <div class="subtitulo">Mueve insumos (materia prima) o productos entre la Tienda y el Taller. Cada traslado queda en el kardex de las dos ubicaciones y lo autorizan los líderes de ambas.</div>
   </div>
   <div class="grilla-2">
     <div class="panel">
-      <h2>Nueva transferencia</h2>
-      <label for="transferenciaDepartamentoOrigen">Departamento de origen</label>
-      <select id="transferenciaDepartamentoOrigen" onchange="cargarProductosParaTransferir()">
-        <option value="01">🏬 Tienda Física</option>
+      <h2>Nuevo traslado</h2>
+      <label for="transferenciaTipo">¿Qué vas a trasladar?</label>
+      <select id="transferenciaTipo" onchange="cargarProductosParaTransferir()">
+        <option value="merceria">🧵 Insumos y materia prima</option>
+        <option value="producto_terminado">🧸 Productos terminados</option>
+      </select>
+      <label for="transferenciaDepartamentoOrigen">Sale de</label>
+      <select id="transferenciaDepartamentoOrigen" onchange="document.getElementById('transferenciaDepartamentoDestino').value = this.value === '01' ? '03' : '01'; cargarProductosParaTransferir()">
+        <option value="01">🏬 Tienda</option>
         <option value="03">🧶 Taller</option>
       </select>
-      <label for="transferenciaProducto">Producto a transferir</label>
-      <select id="transferenciaProducto"><option value="">Selecciona el origen primero...</option></select>
-      <label for="transferenciaDepartamentoDestino">Departamento destino</label>
-      <select id="transferenciaDepartamentoDestino">
+      <label for="transferenciaDepartamentoDestino">Llega a</label>
+      <select id="transferenciaDepartamentoDestino" onchange="document.getElementById('transferenciaDepartamentoOrigen').value = this.value === '01' ? '03' : '01'; cargarProductosParaTransferir()">
         <option value="03">🧶 Taller</option>
-        <option value="01">🏬 Tienda Física</option>
+        <option value="01">🏬 Tienda</option>
       </select>
-      <label for="transferenciaCantidad">Cantidad a transferir</label>
-      <input type="number" id="transferenciaCantidad" min="0.01" step="0.01">
-      <label for="transferenciaObservaciones">Observaciones <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
-      <input type="text" id="transferenciaObservaciones" placeholder="Ej: para armar kits de tejido">
-      <button class="btn-principal" onclick="confirmarTransferirStock()">Transferir</button>
+      <div id="transferenciaAvisoTipo"></div>
+      <div id="transferenciaCampos">
+        <label for="transferenciaProducto">Producto</label>
+        <select id="transferenciaProducto"><option value="">Cargando...</option></select>
+        <label for="transferenciaCantidad">Cantidad</label>
+        <input type="number" id="transferenciaCantidad" min="0.01" step="0.01">
+        <div id="transferenciaBloqueUso">
+          <label for="transferenciaOrden">¿Para qué se va a usar?</label>
+          <select id="transferenciaOrden"></select>
+          <div style="font-size:11.5px;opacity:0.7;margin-top:4px;">Si ya sabes para qué pieza es, elige su orden de producción: el insumo pasa directo a <strong>productos en proceso</strong>. Si no, queda en el inventario del Taller y se entrega a una orden cuando se use.</div>
+        </div>
+        <label for="transferenciaObservaciones">Observaciones <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+        <input type="text" id="transferenciaObservaciones" placeholder="Ej: para el pedido de la muñeca">
+        <button class="btn-principal" id="btnTransferirStock" onclick="confirmarTransferirStock()">Trasladar</button>
+      </div>
       <div class="mensaje" id="mensajeTransferirStock"></div>
     </div>
     <div class="panel">
-      <h2>Historial de transferencias</h2>
+      <h2>Historial de traslados</h2>
       <input type="text" id="buscarTransferenciaStock" placeholder="🔍 Producto o departamento..." oninput="filtrarHistorialTransferencias()" style="margin-bottom:10px;">
       <div id="listaTransferenciasStock"><div class="cargando">Cargando...</div></div>
     </div>
@@ -1735,6 +1750,56 @@
     <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirKardexEtapas()">🖨️ Imprimir / PDF</button>
   </div>
   <div id="keContenido"><div class="cargando">Elige el rango de fechas y pulsa Generar.</div></div>
+</div>
+
+<!-- ===== PANTALLA: FACTURACIÓN Y NÓMINA ELECTRÓNICA (solución gratuita DIAN) ===== -->
+<div id="pantallaFacturacionElectronica" class="oculto contenido">
+  <div class="page-header">
+    <h1>🧾 Facturación y nómina electrónica</h1>
+    <div class="subtitulo">Los documentos se emiten en la solución gratuita de la DIAN. Aquí ves qué falta por emitir, con los datos listos para copiar, y registras el número y el CUFE/CUNE que te da la DIAN para llevar el control.</div>
+  </div>
+  <div class="mensaje" id="mensajeFe"></div>
+  <div id="feAvisoConfig"></div>
+  <div class="filtro-tipo" style="margin-bottom:16px;">
+    <button class="chip-filtro activo" data-subtab-btn="fe" onclick="mostrarSubTabGrupo('fe', 'subtabFePendientes', this); cargarFePendientes();">🧾 Por facturar</button>
+    <button class="chip-filtro" data-subtab-btn="fe" onclick="mostrarSubTabGrupo('fe', 'subtabFeEmitidas', this); cargarFeEmitidas();">✅ Facturas emitidas</button>
+    <button class="chip-filtro" data-subtab-btn="fe" id="chipFeNomina" onclick="mostrarSubTabGrupo('fe', 'subtabFeNomina', this); cargarNominaElectronica();">👥 Nómina electrónica</button>
+    <button class="chip-filtro" data-subtab-btn="fe" onclick="mostrarSubTabGrupo('fe', 'subtabFeConfig', this); cargarFeConfiguracion();">⚙️ Configuración y guía</button>
+  </div>
+
+  <div id="subtabFePendientes" data-subtab-grupo="fe">
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px;">
+      <div><label for="feDesde" style="font-size:11px;">Ventas desde</label><input type="date" id="feDesde" onchange="cargarFePendientes()" style="padding:9px 10px;"></div>
+      <div><label for="feHasta" style="font-size:11px;">Hasta</label><input type="date" id="feHasta" onchange="cargarFePendientes()" style="padding:9px 10px;"></div>
+    </div>
+    <div style="background:var(--tinte-azul);border-radius:var(--radius-md);padding:10px 14px;margin-bottom:14px;font-size:12.5px;line-height:1.5;">
+      ℹ️ La DIAN espera la factura en el momento de la venta: emítela en el portal apenas vendas y regístrala aquí. Esta lista sirve para que no se quede ninguna. Aparecen las ventas de la tienda, las clases de la Academia y los pedidos cuando están pagados por completo o entregados.
+    </div>
+    <div id="feListaPendientes"><div class="cargando">Cargando...</div></div>
+  </div>
+
+  <div id="subtabFeEmitidas" data-subtab-grupo="fe" class="oculto">
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px;">
+      <div><label for="feEmDesde" style="font-size:11px;">Emitidas desde</label><input type="date" id="feEmDesde" onchange="cargarFeEmitidas()" style="padding:9px 10px;"></div>
+      <div><label for="feEmHasta" style="font-size:11px;">Hasta</label><input type="date" id="feEmHasta" onchange="cargarFeEmitidas()" style="padding:9px 10px;"></div>
+      <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarFeEmitidasExcel()">📥 Excel</button>
+    </div>
+    <div id="feListaEmitidas"><div class="cargando">Cargando...</div></div>
+  </div>
+
+  <div id="subtabFeNomina" data-subtab-grupo="fe" class="oculto">
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px;">
+      <div><label for="neMes" style="font-size:11px;">Mes de la nómina</label><input type="month" id="neMes" onchange="cargarNominaElectronica()" style="padding:9px 10px;"></div>
+    </div>
+    <div style="background:var(--tinte-azul);border-radius:var(--radius-md);padding:10px 14px;margin-bottom:14px;font-size:12.5px;line-height:1.5;">
+      ℹ️ Cada mes se transmite un documento por empleado con lo devengado y deducido en el mes, a más tardar en los primeros 10 días hábiles del mes siguiente. Por estar en el Régimen SIMPLE, la DIAN ha dicho que no es obligatoria; se hace porque la interventoría lo pide. Los datos salen de la nómina liquidada en el ERP.
+    </div>
+    <div id="neContenido"><div class="cargando">Cargando...</div></div>
+  </div>
+
+  <div id="subtabFeConfig" data-subtab-grupo="fe" class="oculto">
+    <div id="feConfigContenido"><div class="cargando">Cargando...</div></div>
+  </div>
 </div>
 
 <!-- ===== PANTALLA: SOLICITUDES ===== -->
@@ -3746,54 +3811,50 @@
 
 <div id="pantallaConciliacion" class="oculto contenido">
   <div class="page-header">
-    <h1>🏦 Conciliación bancaria</h1>
-    <div class="subtitulo">Compara lo que muestra el extracto real de tu banco/Nequi/Daviplata contra lo que el sistema registró, para detectar diferencias.</div>
+    <h1>🏦 Cuentas bancarias y conciliación</h1>
+    <div class="subtitulo">Cada cuenta (banco, Nequi, Daviplata…) tiene su propia subcuenta contable y se concilia por separado contra su extracto.</div>
+  </div>
+  <div class="mensaje" id="mensajeConciliacion"></div>
+
+  <div id="bancosResumen"><div class="cargando">Cargando cuentas...</div></div>
+
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0;">
+    <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="alternarPanelBancos('bancosPanelNueva')">＋ Agregar cuenta</button>
+    <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="alternarPanelBancos('bancosPanelMedios')">💳 ¿A qué cuenta llega cada medio de pago?</button>
+    <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="alternarPanelBancos('bancosPanelTraslado')">🔁 Traslado entre cuentas</button>
   </div>
 
-  <div id="resumenConciliacion" class="grilla-3" style="margin-bottom:20px;"></div>
-
-  <div class="panel" style="max-width:520px;">
-    <h2>+ Registrar movimiento del extracto</h2>
-    <div class="subtitulo">Digita cada movimiento tal como aparece en tu banco/app, para poder compararlo.</div>
-    <label for="concFecha">Fecha</label>
-    <input type="date" id="concFecha">
-    <label for="concDescripcion">Descripción (como aparece en el extracto)</label>
-    <input type="text" id="concDescripcion" placeholder="Ej: Transferencia recibida Nequi">
-    <label for="concTipo">Tipo</label>
-    <select id="concTipo">
-      <option value="entrada">Entrada (dinero que llegó)</option>
-      <option value="salida">Salida (dinero que salió)</option>
-    </select>
-    <label for="concValor">Valor (COP)</label>
-    <input type="number" id="concValor" min="1" step="1">
-    <button class="btn-principal" onclick="confirmarRegistrarMovimientoExtracto()">Registrar</button>
-    <div class="mensaje" id="mensajeConciliacion"></div>
-  </div>
-
-  <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin:20px 0 12px 0;">
-    <div><label for="concFiltroDesde" style="font-size:11px;">Desde</label><input type="date" id="concFiltroDesde" onchange="cargarPantallaConciliacionCompleta()" style="padding:9px 10px;"></div>
-    <div><label for="concFiltroHasta" style="font-size:11px;">Hasta</label><input type="date" id="concFiltroHasta" onchange="cargarPantallaConciliacionCompleta()" style="padding:9px 10px;"></div>
-  </div>
-
-  <div class="grilla-2">
-    <div class="panel" style="max-width:none;max-height:none;">
-      <h2>📄 Extracto bancario (sin conciliar)</h2>
-      <div id="listaExtractoSinConciliar"><div class="cargando">Cargando...</div></div>
+  <div id="bancosPanelNueva" class="panel oculto" style="max-width:none;max-height:none;margin-bottom:16px;">
+    <h2>＋ Agregar cuenta bancaria o billetera</h2>
+    <div class="grilla-2" style="gap:12px;">
+      <div><label for="bcNombre">Nombre para reconocerla</label><input type="text" id="bcNombre" placeholder="Ej: Ahorros Bancolombia, Nequi de la tienda"></div>
+      <div><label for="bcEntidad">Entidad</label><input type="text" id="bcEntidad" list="bcEntidades" placeholder="Ej: Bancolombia"><datalist id="bcEntidades"><option>Bancolombia</option><option>Nequi</option><option>Daviplata</option><option>Davivienda</option><option>Banco de Bogotá</option><option>Banco Agrario</option><option>BBVA</option><option>Caja Social</option></datalist></div>
+      <div><label for="bcTipo">Tipo</label><select id="bcTipo"><option value="ahorros">Cuenta de ahorros</option><option value="corriente">Cuenta corriente</option><option value="billetera_digital">Billetera digital (Nequi, Daviplata…)</option><option value="otra">Otra</option></select></div>
+      <div><label for="bcNumero">Número de cuenta o celular</label><input type="text" id="bcNumero"></div>
+      <div><label for="bcTitular">Titular</label><input type="text" id="bcTitular" placeholder="A nombre de quién está"></div>
+      <div><label for="bcUso">Uso</label><select id="bcUso"><option value="general">General del negocio</option><option value="fondo_emprender">Exclusiva Fondo Emprender (solo recursos del SENA)</option></select></div>
     </div>
-    <div class="panel" style="max-width:none;max-height:none;">
-      <h2>💻 Registrado en el sistema (sin conciliar)</h2>
-      <div id="listaApuntesSinConciliar"><div class="cargando">Cargando...</div></div>
-    </div>
+    <label for="bcNotas">Notas <span style="font-size:10px;opacity:0.6;">(opcional)</span></label><input type="text" id="bcNotas">
+    <label style="display:flex;gap:8px;align-items:center;margin-top:10px;font-weight:500;"><input type="checkbox" id="bcPredeterminada" style="width:auto;"> Cuenta predeterminada (recibe los medios de pago sin cuenta asignada)</label>
+    <button class="btn-principal" style="width:auto;" onclick="confirmarCrearCuentaBancaria()">Agregar cuenta</button>
   </div>
 
-  <div class="panel" style="max-width:none;max-height:none;margin-top:20px;">
-    <h2>✅ Ya conciliados</h2>
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
-      <input type="text" id="buscarConciliados" placeholder="🔍 Buscar por descripción..." oninput="filtrarYaConciliados()" style="flex:1;min-width:200px;">
-      <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarConciliadosExcel()">📥 Excel</button>
+  <div id="bancosPanelMedios" class="panel oculto" style="max-width:none;max-height:none;margin-bottom:16px;"></div>
+
+  <div id="bancosPanelTraslado" class="panel oculto" style="max-width:none;max-height:none;margin-bottom:16px;">
+    <h2>🔁 Traslado entre cuentas</h2>
+    <div class="subtitulo">Para cuando pasas plata de una cuenta a otra (ej: de Nequi a Bancolombia). No es ingreso ni gasto.</div>
+    <div class="grilla-2" style="gap:12px;">
+      <div><label for="btOrigen">Sale de</label><select id="btOrigen"></select></div>
+      <div><label for="btDestino">Llega a</label><select id="btDestino"></select></div>
+      <div><label for="btMonto">Valor (COP)</label><input type="number" id="btMonto" min="1" step="1"></div>
+      <div><label for="btFecha">Fecha</label><input type="date" id="btFecha"></div>
     </div>
-    <div id="listaYaConciliados"><div class="cargando">Cargando...</div></div>
+    <label for="btDescripcion">Descripción <span style="font-size:10px;opacity:0.6;">(opcional)</span></label><input type="text" id="btDescripcion">
+    <button class="btn-principal" style="width:auto;" onclick="confirmarTrasladoBancos()">Registrar traslado</button>
   </div>
+
+  <div id="bancosConciliacion"></div>
 </div>
 
 <div id="pantallaCuentasPendientes" class="oculto contenido">
@@ -5096,7 +5157,7 @@
   });
 
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb'];
+    const pantallas = ['pantallaLogin', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaFacturacionElectronica', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -5120,6 +5181,7 @@
       pantallaPedidosCrm: 'nav-consumotaller',
       pantallaOrdenesProduccion: 'nav-ordenes-produccion',
       pantallaKardexEtapas: 'nav-kardex-etapas',
+      pantallaFacturacionElectronica: 'nav-facturacion-electronica',
       pantallaTurnoActivo: 'nav-turno',
       pantallaReportes: 'nav-reportes',
       pantallaReportesFinancieros: 'nav-reportes-financieros',
@@ -5489,12 +5551,14 @@
     mostrar('nav-transferir-stock', esAdmin || esCajero);
     mostrar('nav-reportes', esAdmin);
     mostrar('nav-pedidos-canal', esAdmin || esCajero);
-    mostrar('nav-solicitudes-tienda', esAdmin || esCajero);
+    mostrar('nav-solicitudes-tienda', false); // reemplazada por Trasladar entre Tienda y Taller
     mostrar('nav-consumotaller', esAdmin || esTaller);
     mostrar('nav-ordenes-produccion', esAdmin || esTaller);
     mostrar('nav-kardex-etapas', esAdmin || esContador || esTaller);
+    mostrar('nav-facturacion-electronica', esAdmin || esCajero);
+    mostrar('nav-fe-contabilidad', esContador && !esAdmin);
     mostrar('nav-inventario-taller', esAdmin || esTaller);
-    mostrar('nav-transferir-stock-taller', esAdmin || esTaller);
+    mostrar('nav-transferir-stock-taller', esTaller && !esAdmin && !esCajero); // misma pantalla que nav-transferir-stock
     mostrar('nav-nomina', esAdmin);
     mostrar('nav-talento-humano', esAdmin);
     mostrar('nav-reportes-financieros', esAdmin || esContador);
@@ -9119,7 +9183,7 @@
           <div><label>Cantidad</label><input type="number" id="opEntCant-${o.id}" min="0" step="0.1"></div>
           <div><label>Nota <span style="font-size:10px;opacity:0.6;">(opcional)</span></label><input type="text" id="opEntNota-${o.id}"></div>
         </div>
-        ${puedeTienda ? '' : '<div style="font-size:11.5px;opacity:0.7;margin-top:6px;">¿Falta material? Pídelo a la Tienda en "Solicitud de insumos"; cuando llegue al Taller, entrégalo aquí.</div>'}
+        ${puedeTienda ? '' : '<div style="font-size:11.5px;opacity:0.7;margin-top:6px;">¿Falta material? Se trae de la Tienda en "Trasladar entre Tienda y Taller", y allí mismo se puede entregar a esta orden.</div>'}
         <button class="btn-principal" style="width:auto;" onclick="confirmarEntregaMaterialOrden('${o.id}')">Entregar a ${escaparHtml(o.orden)}</button>`);
     }
     if (accion === 'devolver') {
@@ -9710,23 +9774,40 @@
   }
 
   async function cargarProductosParaTransferir() {
+    const tipo = document.getElementById('transferenciaTipo').value;
+    const origen = document.getElementById('transferenciaDepartamentoOrigen').value;
+    const destino = document.getElementById('transferenciaDepartamentoDestino').value;
     const select = document.getElementById('transferenciaProducto');
-    const codigoOrigen = document.getElementById('transferenciaDepartamentoOrigen').value;
-    const centroId = idsCentroCostoPorCodigo[codigoOrigen];
+    const aviso = document.getElementById('transferenciaAvisoTipo');
+    const campos = document.getElementById('transferenciaCampos');
+    aviso.innerHTML = '';
+    campos.classList.remove('oculto');
+
+    // El Taller no guarda productos terminados: salen de las órdenes de producción directo a la Tienda.
+    if (tipo === 'producto_terminado') {
+      campos.classList.add('oculto');
+      aviso.innerHTML = `<div style="background:var(--tinte-azul);border-radius:var(--radius-md);padding:10px 14px;margin-top:12px;font-size:12.5px;line-height:1.6;">
+        Los productos terminados solo se guardan en la Tienda: el Taller no tiene inventario de productos terminados. Cuando el Taller termina una pieza, se registra al terminar su <a href="#" onclick="mostrarPantallaOrdenesProduccion(); return false;">orden de producción</a> y entra directo al inventario de la Tienda. Para un arreglo o una devolución de un producto al Taller, usa una orden de producción.</div>`;
+      return;
+    }
+
+    document.getElementById('transferenciaBloqueUso').classList.toggle('oculto', destino !== '03');
     select.innerHTML = '<option value="">Cargando...</option>';
-    if (!centroId) return;
+    const { data, error } = await supabaseClient.rpc('fn_inventario_para_traslado', { p_centro_codigo: origen, p_tipo: tipo });
+    if (error) { select.innerHTML = `<option value="">No se pudo cargar: ${escaparHtml(error.message)}</option>`; return; }
+    select.innerHTML = (data && data.length)
+      ? data.map(i => `<option value="${i.id}">${escaparHtml(i.nombre)} (disponible: ${formatearCantidad(i.stock)} ${escaparHtml(i.unidad || '')})</option>`).join('')
+      : '<option value="">Sin existencias registradas aquí</option>';
+    if (!data || !data.length) {
+      aviso.innerHTML = `<div style="background:var(--tinte-ambar);border-radius:var(--radius-md);padding:10px 14px;margin-top:12px;font-size:12.5px;line-height:1.6;">
+        ${origen === '01' ? 'La Tienda' : 'El Taller'} no tiene insumos con existencias registradas en el sistema. Si físicamente sí hay, regístralos primero con "Entrada mercancía" (compras) o con una toma de inventario.</div>`;
+    }
 
-    const { data } = await supabaseClient
-      .from('inventario_items')
-      .select('id, nombre, stock_actual, unidad_medida')
-      .eq('centro_costo_id', centroId)
-      .eq('activo', true)
-      .gt('stock_actual', 0)
-      .order('nombre', { ascending: true });
-
-    select.innerHTML = (data && data.length > 0)
-      ? data.map(i => `<option value="${i.id}">${escaparHtml(i.nombre)} (stock: ${i.stock_actual} ${i.unidad_medida})</option>`).join('')
-      : '<option value="">Sin productos con stock en este departamento</option>';
+    if (destino === '03') {
+      const { data: ordenes } = await supabaseClient.rpc('fn_op_abiertas');
+      document.getElementById('transferenciaOrden').innerHTML = '<option value="">Queda en el inventario del Taller</option>'
+        + (ordenes || []).map(o => `<option value="${o.id}">Entregar a ${escaparHtml(o.orden)} — ${escaparHtml(o.descripcion)}${o.pedido ? ' (pedido ' + escaparHtml(o.pedido) + ')' : ''}</option>`).join('');
+    }
   }
 
   async function confirmarTransferirStock() {
@@ -9735,6 +9816,7 @@
     const itemId = document.getElementById('transferenciaProducto').value;
     const cantidad = Number(document.getElementById('transferenciaCantidad').value);
     const observaciones = document.getElementById('transferenciaObservaciones').value.trim();
+    const ordenId = codigoDestino === '03' ? document.getElementById('transferenciaOrden').value || null : null;
     ocultarMensaje('mensajeTransferirStock');
 
     if (codigoOrigen === codigoDestino) { mostrarMensaje('mensajeTransferirStock', 'El origen y el destino deben ser diferentes.', 'error'); return; }
@@ -9764,15 +9846,14 @@
     const autDestino = await respAutDestino.json();
     if (!autDestino.valido) { mostrarMensaje('mensajeTransferirStock', `Código inválido para autorizar la recepción en ${nombreDestino}.`, 'error'); return; }
 
-    const resp = await fetch(WORKER_URL + '/api/pos/inventario/transferir', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ inventario_item_id: itemId, centro_costo_destino_id: centroDestinoId, cantidad, observaciones: observaciones || null })
+    const { data, error } = await supabaseClient.rpc('fn_transferir_inventario', {
+      p_item_id: itemId, p_centro_destino_id: centroDestinoId, p_cantidad: cantidad, p_observaciones: observaciones || null, p_orden_id: ordenId,
     });
-    const datos = await resp.json();
-    if (!resp.ok) { mostrarMensaje('mensajeTransferirStock', datos.error || 'No se pudo transferir.', 'error'); return; }
+    if (error) { mostrarMensaje('mensajeTransferirStock', 'No se pudo trasladar: ' + error.message, 'error'); return; }
 
-    mostrarMensaje('mensajeTransferirStock', '✅ Transferencia realizada correctamente.', 'exito');
+    mostrarMensaje('mensajeTransferirStock', data && data.orden
+      ? `✅ Traslado realizado y entregado a ${data.orden}: el insumo ya está en productos en proceso.`
+      : '✅ Traslado realizado. Queda en el kardex de las dos ubicaciones.', 'exito');
     document.getElementById('transferenciaCantidad').value = '';
     document.getElementById('transferenciaObservaciones').value = '';
     await cargarProductosParaTransferir();
@@ -10786,12 +10867,14 @@
     { clave: 'nav-listas-precios', etiqueta: '　　Listas de precios' },
     { clave: 'nav-ajustestock', etiqueta: '　　Entrada de mercancía' },
     { clave: 'nav-etiquetas', etiqueta: '　　Imprimir etiquetas' },
-    { clave: 'nav-transferir-stock', etiqueta: '　　Transferir stock (Tienda)' },
-    { clave: 'nav-transferir-stock-taller', etiqueta: '　　Transferir stock (Taller)' },
+    { clave: 'nav-transferir-stock', etiqueta: '　　Trasladar Tienda ↔ Taller' },
+    { clave: 'nav-transferir-stock-taller', etiqueta: '　　Trasladar Tienda ↔ Taller (menú del Taller)' },
     { clave: 'nav-solicitudes-tienda', etiqueta: '　　Solicitud de insumos del Taller' },
     { clave: 'nav-consumotaller', etiqueta: '　　Consumo de material (Taller)' },
     { clave: 'nav-ordenes-produccion', etiqueta: '　　Órdenes de producción' },
     { clave: 'nav-kardex-etapas', etiqueta: '　　Kardex por etapas' },
+    { clave: 'nav-facturacion-electronica', etiqueta: '　　Facturación electrónica DIAN' },
+    { clave: 'nav-fe-contabilidad', etiqueta: '　　Facturación y nómina electrónica (contador)' },
     { clave: 'deptoContabilidadGrupo', etiqueta: '📊 Contabilidad (grupo completo)' },
     { clave: 'nav-dashboard-contable', etiqueta: '　　Dashboard Contable' },
     { clave: 'nav-honorarios-tejedoras', etiqueta: '　　Honorarios Tejedoras' },
@@ -16458,12 +16541,12 @@
     }
 
     // Saldo en Bancos — reutiliza el mismo cálculo que ya usa Conciliación bancaria
-    const respBancos = await fetch(`${WORKER_URL}/api/pos/conciliacion/resumen`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
     const elBancos = document.getElementById('kpiSaldoBancos');
-    if (respBancos.ok && elBancos) {
-      const r = await respBancos.json();
-      elBancos.querySelector('.kpi-valor').textContent = formatearMoneda(r.saldo_libros);
-      elBancos.querySelector('.kpi-delta').textContent = 'Según libros contables';
+    const { data: bancos } = await supabaseClient.rpc('fn_bancos_listar');
+    if (bancos && elBancos) {
+      const total = Number(bancos.sin_asignar_1110) + bancos.cuentas.reduce((a, c) => a + Number(c.saldo_libros || 0), 0);
+      elBancos.querySelector('.kpi-valor').textContent = formatearMoneda(total);
+      elBancos.querySelector('.kpi-delta').textContent = bancos.cuentas.length ? `Según libros · ${bancos.cuentas.length} cuenta(s)` : 'Según libros contables';
     }
   }
 
@@ -17482,178 +17565,868 @@
     `;
   }
 
+  // ============================================================================
+  // FACTURACIÓN Y NÓMINA ELECTRÓNICA (solución gratuita DIAN)
+  // ============================================================================
+  let cacheFeConfig = null;
+  let cacheFePendientes = [];
+  let cacheFeEmitidas = [];
+  let cacheNomina = null;
+  let feAccionAbierta = null; // clave `${origen}:${id}:${accion}`
+
+  const ORIGEN_VENTA_FE = { venta_pos: '🏪 Venta tienda', pedido_canal: '📱 Pedido', venta_academia: '🎓 Academia' };
+  const MEDIO_PAGO_DIAN = {
+    efectivo: 'Efectivo', nequi: 'Transferencia (Nequi)', daviplata: 'Transferencia (Daviplata)', transferencia: 'Transferencia bancaria',
+    tarjeta_debito: 'Tarjeta débito', tarjeta_credito: 'Tarjeta crédito',
+  };
+
+  function esRolFe(...roles) {
+    return roles.includes(rolActual) || (rolesAdicionalesActual || []).some(r => roles.includes(r));
+  }
+
+  async function copiarTexto(texto, boton) {
+    try {
+      await navigator.clipboard.writeText(texto);
+      if (boton) { const t = boton.textContent; boton.textContent = '✔ Copiado'; setTimeout(() => { boton.textContent = t; }, 1200); }
+    } catch (e) {
+      mostrarMensaje('mensajeFe', 'No se pudo copiar automáticamente; selecciona el texto y cópialo.', 'error');
+    }
+  }
+
+  async function mostrarPantallaFacturacionElectronica() {
+    mostrarPantalla('pantallaFacturacionElectronica');
+    ocultarMensaje('mensajeFe');
+    document.getElementById('chipFeNomina').style.display = esRolFe('administrador', 'contador') ? '' : 'none';
+    const hoy = new Date();
+    if (!document.getElementById('feDesde').value) {
+      document.getElementById('feDesde').value = fechaLocalIso(new Date(hoy.getFullYear(), hoy.getMonth() - 2, 1));
+      document.getElementById('feHasta').value = fechaLocalIso(hoy);
+      document.getElementById('feEmDesde').value = fechaLocalIso(new Date(hoy.getFullYear(), hoy.getMonth(), 1));
+      document.getElementById('feEmHasta').value = fechaLocalIso(hoy);
+      const mesAnterior = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1);
+      document.getElementById('neMes').value = `${mesAnterior.getFullYear()}-${String(mesAnterior.getMonth() + 1).padStart(2, '0')}`;
+    }
+    const { data } = await supabaseClient.from('fe_configuracion').select('*').eq('id', 1).single();
+    cacheFeConfig = data || {};
+    renderizarAvisoFe();
+    mostrarSubTabGrupo('fe', 'subtabFePendientes', document.querySelector('[data-subtab-btn="fe"]'));
+    await cargarFePendientes();
+  }
+
+  function renderizarAvisoFe() {
+    const c = cacheFeConfig || {};
+    const avisos = [];
+    if (!c.facturador_habilitado) avisos.push('Todavía no está marcada la habilitación como facturador electrónico. Sigue la guía en "⚙️ Configuración y guía" y, cuando termines, registra aquí los datos de la resolución.');
+    if (c.vigencia_hasta) {
+      const dias = Math.round((new Date(c.vigencia_hasta + 'T00:00:00') - new Date()) / 86400000);
+      if (dias < 30) avisos.push(dias < 0 ? 'La resolución de numeración está vencida: solicita una nueva en la DIAN.' : `La resolución de numeración vence en ${dias} días: solicita la renovación a tiempo.`);
+    }
+    document.getElementById('feAvisoConfig').innerHTML = avisos.map(a => `<div style="background:var(--tinte-ambar);border-radius:var(--radius-md);padding:10px 14px;margin-bottom:12px;font-size:12.5px;">⚠️ ${escaparHtml(a)}</div>`).join('');
+  }
+
+  function textoDatosDianVenta(v) {
+    const c = v.cliente;
+    const lineas = [
+      `Cliente: ${c.consumidor_final ? 'Consumidor final' : c.nombre}`,
+      `Tipo de documento: ${c.consumidor_final ? 'Cédula de ciudadanía' : c.tipo_documento}`,
+      `Número: ${c.numero_documento}${c.dv ? '-' + c.dv : ''}`,
+    ];
+    if (c.correo) lineas.push(`Correo: ${c.correo}`);
+    if (c.telefono) lineas.push(`Teléfono: ${c.telefono}`);
+    lineas.push('', 'Productos (sin IVA — no responsable de IVA):');
+    v.items.forEach(i => lineas.push(`- ${i.descripcion} | Cantidad ${formatearCantidad(i.cantidad)} | Valor unitario ${Math.round(Number(i.valor_unitario))} | Total ${Math.round(Number(i.total))}`));
+    lineas.push('', `Forma de pago: Contado`, `Medio de pago: ${(v.medio_pago || '').split(', ').map(m => MEDIO_PAGO_DIAN[m] || m).join(' / ')}`, `Total: ${Math.round(Number(v.total))}`);
+    lineas.push(`Referencia interna: ${v.consecutivo}`);
+    return lineas.join('\n');
+  }
+
+  async function cargarFePendientes() {
+    const cont = document.getElementById('feListaPendientes');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    try {
+      cacheFePendientes = await llamarReporteContable('fn_fe_ventas', { p_desde: document.getElementById('feDesde').value, p_hasta: document.getElementById('feHasta').value, p_solo_pendientes: true });
+    } catch (e) {
+      cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(e.message)}</div>`;
+      return;
+    }
+    renderizarFePendientes();
+  }
+
+  function renderizarFePendientes() {
+    const cont = document.getElementById('feListaPendientes');
+    if (!cacheFePendientes.length) { cont.innerHTML = '<div class="cargando">🎉 No hay ventas pendientes por facturar en este rango.</div>'; return; }
+    const total = cacheFePendientes.reduce((a, v) => a + Number(v.total), 0);
+    const c = cacheFeConfig || {};
+    cont.innerHTML = `
+      <div style="font-size:13px;margin-bottom:10px;"><strong>${cacheFePendientes.length}</strong> venta(s) sin factura registrada · ${formatearMoneda(total)}</div>
+      ${cacheFePendientes.map(v => {
+        const clave = `${v.origen}:${v.origen_id}`;
+        const cli = v.cliente;
+        const abierta = (acc) => feAccionAbierta === `${clave}:${acc}`;
+        return `
+        <div class="panel" style="max-width:none;max-height:none;margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+            <div>
+              <div style="font-weight:700;">${ORIGEN_VENTA_FE[v.origen] || v.origen} · ${escaparHtml(v.consecutivo || '')} · ${new Date(v.fecha + 'T00:00:00').toLocaleDateString('es-CO')}</div>
+              <div style="font-size:12.5px;opacity:0.8;margin-top:2px;">
+                ${cli.consumidor_final ? `Consumidor final (222222222222)${cli.nombre_real ? ' — ' + escaparHtml(cli.nombre_real) : ''}` : `${escaparHtml(cli.nombre)} · ${escaparHtml(cli.tipo_documento)} ${escaparHtml(cli.numero_documento)}${cli.dv ? '-' + cli.dv : ''}`}
+                ${cli.correo ? ' · ' + escaparHtml(cli.correo) : ''}
+              </div>
+              <div style="font-size:12px;opacity:0.7;">${v.items.map(i => escaparHtml(i.descripcion)).join(' · ')}</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:17px;font-weight:700;">${formatearMoneda(v.total)}</div>
+              <div style="font-size:11.5px;opacity:0.7;">${escaparHtml((v.medio_pago || '').split(', ').map(m => MEDIO_PAGO_DIAN[m] || m).join(' / '))}</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+            <button class="btn-mini editar" style="flex:0 0 auto;padding:7px 12px;" onclick="alternarAccionFe('${clave}:datos')">📋 Datos para la DIAN</button>
+            <button class="btn-mini" style="flex:0 0 auto;padding:7px 12px;background:var(--verde-exito);color:#fff;" onclick="alternarAccionFe('${clave}:registrar')">✅ Registrar factura emitida</button>
+          </div>
+          ${abierta('datos') ? `
+            <div style="margin-top:10px;padding:12px;border-radius:var(--radius-md);background:var(--gris-fondo);">
+              <pre style="white-space:pre-wrap;font-family:inherit;font-size:12.5px;margin:0;">${escaparHtml(textoDatosDianVenta(v))}</pre>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+                <button class="btn-mini editar" style="flex:0 0 auto;padding:6px 12px;" onclick="copiarTexto(textoDatosDianVenta(cacheFePendientes.find(x => x.origen_id === '${v.origen_id}')), this)">Copiar todo</button>
+                <button class="btn-mini editar" style="flex:0 0 auto;padding:6px 12px;" onclick="copiarTexto('${escaparHtml(cli.numero_documento)}', this)">Copiar documento</button>
+                <button class="btn-mini editar" style="flex:0 0 auto;padding:6px 12px;" onclick="copiarTexto('${Math.round(Number(v.total))}', this)">Copiar total</button>
+              </div>
+              ${cli.consumidor_final && cli.nombre_real ? '<div style="font-size:11.5px;opacity:0.75;margin-top:6px;">El cliente no tiene cédula registrada: sale a nombre de consumidor final. Si pide factura a su nombre, pídele la cédula y regístrala en Clientes.</div>' : ''}
+            </div>` : ''}
+          ${abierta('registrar') ? `
+            <div style="margin-top:10px;padding:12px;border-radius:var(--radius-md);background:var(--gris-fondo);">
+              <div class="grilla-2" style="gap:10px;">
+                <div><label>Prefijo</label><input type="text" id="feRegPrefijo" value="${escaparHtml(c.prefijo || '')}" placeholder="Ej: LR"></div>
+                <div><label>Número de la factura</label><input type="text" id="feRegNumero" inputmode="numeric"></div>
+                <div><label>Fecha de emisión</label><input type="date" id="feRegFecha" value="${fechaLocalIso()}"></div>
+                <div><label>CUFE <span style="font-size:10px;opacity:0.6;">(código largo que aparece en la factura)</span></label><input type="text" id="feRegCufe"></div>
+              </div>
+              <label>Observaciones <span style="font-size:10px;opacity:0.6;">(opcional)</span></label><input type="text" id="feRegObs">
+              <div class="mensaje" id="mensajeFeRegistro"></div>
+              <button class="btn-principal" style="width:auto;" onclick="confirmarRegistrarFactura('${v.origen}', '${v.origen_id}')">Guardar</button>
+            </div>` : ''}
+        </div>`;
+      }).join('')}`;
+  }
+
+  function alternarAccionFe(clave) {
+    feAccionAbierta = feAccionAbierta === clave ? null : clave;
+    renderizarFePendientes();
+  }
+
+  async function confirmarRegistrarFactura(origen, origenId) {
+    const v = (id) => document.getElementById(id).value.trim();
+    if (!v('feRegNumero')) { mostrarMensaje('mensajeFeRegistro', 'Escribe el número de la factura.', 'error'); return; }
+    const { data, error } = await supabaseClient.rpc('fn_fe_registrar_factura', {
+      p_origen: origen, p_origen_id: origenId, p_prefijo: v('feRegPrefijo') || null, p_numero: v('feRegNumero'),
+      p_cufe: v('feRegCufe') || null, p_fecha: v('feRegFecha'), p_observaciones: v('feRegObs') || null,
+    });
+    if (error) { mostrarMensaje('mensajeFeRegistro', error.message, 'error'); return; }
+    feAccionAbierta = null;
+    const adv = (data && data.advertencias) || [];
+    mostrarMensaje('mensajeFe', adv.length ? '⚠️ Factura registrada, pero revisa: ' + adv.join(' ') : '✅ Factura registrada.', adv.length ? 'error' : 'exito');
+    await cargarFePendientes();
+  }
+
+  async function cargarFeEmitidas() {
+    const cont = document.getElementById('feListaEmitidas');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    try {
+      cacheFeEmitidas = await llamarReporteContable('fn_fe_emitidos', { p_desde: document.getElementById('feEmDesde').value, p_hasta: document.getElementById('feEmHasta').value, p_tipo: 'factura' });
+    } catch (e) {
+      cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(e.message)}</div>`;
+      return;
+    }
+    if (!cacheFeEmitidas.length) { cont.innerHTML = '<div class="cargando">No hay facturas registradas en este rango.</div>'; return; }
+    const puedeAnular = esRolFe('administrador', 'contador');
+    const columnas = 'grid-template-columns:110px 100px 1.4fr 120px 1fr 110px;';
+    const vigentes = cacheFeEmitidas.filter(d => d.estado === 'emitida');
+    cont.innerHTML = `
+      <div style="font-size:13px;margin-bottom:10px;"><strong>${vigentes.length}</strong> factura(s) · ${formatearMoneda(vigentes.reduce((a, d) => a + Number(d.valor), 0))}</div>
+      <div class="tabla-lista">
+        <div class="tabla-lista-header header-rosa" style="${columnas}"><span>FACTURA</span><span>FECHA</span><span>CLIENTE</span><span style="text-align:right;">VALOR</span><span>CUFE</span><span></span></div>
+        ${cacheFeEmitidas.map(d => `
+          <div class="tabla-lista-fila" style="${columnas}cursor:default;${d.estado === 'anulada' ? 'opacity:0.5;text-decoration:line-through;' : ''}">
+            <span style="font-weight:600;">${escaparHtml((d.prefijo || '') + d.numero)}</span>
+            <span>${new Date(d.fecha_emision + 'T00:00:00').toLocaleDateString('es-CO')}</span>
+            <span style="font-size:12px;">${escaparHtml(d.nombre_receptor || '')}<div style="font-size:10.5px;opacity:0.6;">${escaparHtml(d.documento_receptor || '')}${d.registrado_por ? ' · registró ' + escaparHtml(d.registrado_por) : ''}</div></span>
+            <span style="text-align:right;">${formatearMoneda(d.valor)}</span>
+            <span style="font-size:10.5px;word-break:break-all;opacity:0.75;">${d.cufe ? escaparHtml(d.cufe.slice(0, 18)) + '…' : '<span style="color:var(--ambar);">Sin CUFE</span>'}</span>
+            <span>${d.estado === 'emitida' && puedeAnular ? `<button class="btn-mini desactivar" style="flex:0 0 auto;padding:4px 8px;" onclick="anularRegistroFe('${d.id}')">Anular registro</button>` : (d.estado === 'anulada' ? `<span style="font-size:10.5px;">${escaparHtml(d.motivo_anulacion || '')}</span>` : '')}</span>
+          </div>`).join('')}
+      </div>`;
+  }
+
+  async function anularRegistroFe(id) {
+    const motivo = await pedirTexto('Esto solo anula el registro en el ERP (por ejemplo, si se digitó mal). Una factura ya emitida en la DIAN se corrige con una nota crédito en el portal.', 'Motivo');
+    if (!motivo) return;
+    const { error } = await supabaseClient.rpc('fn_fe_anular_registro', { p_id: id, p_motivo: motivo });
+    if (error) { mostrarMensaje('mensajeFe', error.message, 'error'); return; }
+    mostrarMensaje('mensajeFe', '✅ Registro anulado. La venta vuelve a aparecer como pendiente.', 'exito');
+    await cargarFeEmitidas();
+  }
+
+  function exportarFeEmitidasExcel() {
+    if (!cacheFeEmitidas.length) { mostrarMensaje('mensajeFe', 'No hay facturas para exportar.', 'error'); return; }
+    const filas = [
+      ['Lana Rosa Crochet — Facturas electrónicas registradas'],
+      [`Del ${document.getElementById('feEmDesde').value} al ${document.getElementById('feEmHasta').value}`], [],
+      ['Prefijo', 'Número', 'Fecha', 'Cliente', 'Documento', 'Valor', 'CUFE', 'Estado', 'Origen', 'Registró', 'Observaciones'],
+      ...cacheFeEmitidas.map(d => [d.prefijo || '', d.numero, d.fecha_emision, d.nombre_receptor || '', d.documento_receptor || '', Number(d.valor), d.cufe || '', d.estado, d.origen, d.registrado_por || '', d.observaciones || d.motivo_anulacion || '']),
+    ];
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, XLSX.utils.aoa_to_sheet(filas), 'Facturas');
+    XLSX.writeFile(libro, `LanaRosa_FacturasElectronicas_${document.getElementById('feEmDesde').value}_a_${document.getElementById('feEmHasta').value}.xlsx`);
+  }
+
+  // ---- Nómina electrónica ----
+  function textoDatosNominaDian(e, periodo) {
+    const m = (x) => Math.round(Number(x || 0));
+    return [
+      `Periodo: ${periodo} (${e.periodos.map(p => p.desde + ' a ' + p.hasta).join(', ')})`,
+      `Trabajador: ${e.nombre} · ${e.tipo_documento || 'CC'} ${e.numero_documento || ''}`,
+      `Tipo de contrato: ${e.tipo_contrato || ''} · Salario básico: ${m(e.salario_basico)} · Ingreso: ${e.fecha_ingreso || ''}${e.fecha_retiro ? ' · Retiro: ' + e.fecha_retiro : ''}`,
+      `Fecha de pago: ${e.fecha_pago || ''} · Medio de pago: ${(e.medio_pago || '').split(', ').map(x => MEDIO_PAGO_DIAN[x] || x).join(' / ')}`,
+      '', 'DEVENGADOS',
+      `Días trabajados: ${formatearCantidad(e.dias_trabajados)} · Sueldo: ${m(e.salario)}`,
+      `Auxilio de transporte: ${m(e.auxilio_transporte)}`,
+      Number(e.valor_horas_extras) ? `Horas extras: ${formatearCantidad(e.horas_extras)} h · ${m(e.valor_horas_extras)}` : null,
+      Number(e.dias_vacaciones) ? `Vacaciones: ${formatearCantidad(e.dias_vacaciones)} días` : null,
+      Number(e.dias_incapacidad) ? `Incapacidades: ${formatearCantidad(e.dias_incapacidad)} días` : null,
+      Number(e.dias_licencias) ? `Licencias: ${formatearCantidad(e.dias_licencias)} días` : null,
+      `Total devengado: ${m(e.total_devengado)}`,
+      '', 'DEDUCCIONES',
+      `Salud (4%): ${m(e.salud)} · Pensión (4%): ${m(e.pension)}`,
+      Number(e.prestamos) ? `Préstamos / libranzas: ${m(e.prestamos)}` : null,
+      Number(e.retencion_fuente) ? `Retención en la fuente: ${m(e.retencion_fuente)}` : null,
+      `Total deducciones: ${m(e.total_deducciones)}`,
+      '', `NETO PAGADO: ${m(e.neto)}`,
+    ].filter(x => x !== null).join('\n');
+  }
+
+  async function cargarNominaElectronica() {
+    const cont = document.getElementById('neContenido');
+    const [anio, mes] = document.getElementById('neMes').value.split('-').map(Number);
+    if (!anio) return;
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    try {
+      cacheNomina = await llamarReporteContable('fn_ne_mes', { p_anio: anio, p_mes: mes });
+    } catch (e) {
+      cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(e.message)}</div>`;
+      return;
+    }
+    const d = cacheNomina;
+    if (!d.empleados.length) {
+      cont.innerHTML = `<div class="cargando">No hay nómina liquidada con periodos que terminen en ${escaparHtml(d.periodo)}. Liquida la nómina del mes en Talento Humano → Nómina y vuelve aquí.</div>`;
+      return;
+    }
+    const pendientes = d.empleados.filter(e => !e.documento).length;
+    cont.innerHTML = `
+      <div style="font-size:13px;margin-bottom:10px;">${pendientes ? `<strong>${pendientes}</strong> documento(s) por transmitir` : '✅ Todos los documentos del mes están registrados'} · fecha límite aproximada: <strong>${new Date(d.fecha_limite_sugerida + 'T00:00:00').toLocaleDateString('es-CO')}</strong> <span style="font-size:11px;opacity:0.6;">(10 días hábiles, sin descontar festivos)</span></div>
+      ${d.empleados.map(e => `
+        <div class="panel" style="max-width:none;max-height:none;margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+            <div>
+              <div style="font-weight:700;">${escaparHtml(e.nombre)} <span style="font-weight:400;font-size:12px;opacity:0.7;">${escaparHtml(e.tipo_documento || '')} ${escaparHtml(e.numero_documento || '')}</span></div>
+              <div style="font-size:12px;opacity:0.75;">Devengado ${formatearMoneda(e.total_devengado)} · Deducciones ${formatearMoneda(e.total_deducciones)} · Neto ${formatearMoneda(e.neto)}</div>
+            </div>
+            <div>${e.documento
+              ? `<span style="font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px;background:var(--tinte-verde);color:var(--verde-exito);">✅ ${escaparHtml((e.documento.prefijo || '') + e.documento.numero)} · ${new Date(e.documento.fecha_emision + 'T00:00:00').toLocaleDateString('es-CO')}</span>`
+              : '<span style="font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px;background:var(--tinte-ambar);color:var(--ambar);">Pendiente</span>'}</div>
+          </div>
+          <details style="margin-top:8px;"><summary style="cursor:pointer;font-size:12.5px;">📋 Datos para la DIAN</summary>
+            <pre style="white-space:pre-wrap;font-family:inherit;font-size:12.5px;background:var(--gris-fondo);padding:10px;border-radius:var(--radius-md);">${escaparHtml(textoDatosNominaDian(e, d.periodo))}</pre>
+            <button class="btn-mini editar" style="flex:0 0 auto;padding:6px 12px;" onclick="copiarTexto(textoDatosNominaDian(cacheNomina.empleados.find(x => x.empleado_id === '${e.empleado_id}'), cacheNomina.periodo), this)">Copiar todo</button>
+          </details>
+          ${e.documento ? '' : `
+            <details style="margin-top:6px;"><summary style="cursor:pointer;font-size:12.5px;">✅ Registrar documento transmitido</summary>
+              <div class="grilla-2" style="gap:10px;margin-top:8px;">
+                <div><label>Prefijo</label><input type="text" id="neP-${e.empleado_id}" value="${escaparHtml((cacheFeConfig && cacheFeConfig.prefijo_nomina) || '')}"></div>
+                <div><label>Número</label><input type="text" id="neN-${e.empleado_id}"></div>
+                <div><label>Fecha de transmisión</label><input type="date" id="neF-${e.empleado_id}" value="${fechaLocalIso()}"></div>
+                <div><label>CUNE</label><input type="text" id="neC-${e.empleado_id}"></div>
+              </div>
+              <button class="btn-mini" style="flex:0 0 auto;padding:7px 14px;margin-top:8px;background:var(--verde-exito);color:#fff;" onclick="confirmarRegistrarNominaElectronica('${e.empleado_id}', ${Number(e.neto)})">Guardar</button>
+            </details>`}
+        </div>`).join('')}`;
+  }
+
+  async function confirmarRegistrarNominaElectronica(empleadoId, neto) {
+    const v = (p) => document.getElementById(p + empleadoId).value.trim();
+    if (!v('neN-')) { mostrarMensaje('mensajeFe', 'Escribe el número del documento de nómina.', 'error'); return; }
+    const { error } = await supabaseClient.rpc('fn_ne_registrar', {
+      p_empleado_id: empleadoId, p_periodo: cacheNomina.periodo, p_prefijo: v('neP-') || null, p_numero: v('neN-'),
+      p_cune: v('neC-') || null, p_fecha: v('neF-'), p_valor: neto,
+    });
+    if (error) { mostrarMensaje('mensajeFe', error.message, 'error'); return; }
+    mostrarMensaje('mensajeFe', '✅ Documento de nómina registrado.', 'exito');
+    await cargarNominaElectronica();
+  }
+
+  // ---- Configuración y guía ----
+  function cargarFeConfiguracion() {
+    const c = cacheFeConfig || {};
+    const puedeEditar = esRolFe('administrador', 'contador');
+    const campo = (id, etiqueta, valor, tipo = 'text', extra = '') => `<div><label for="${id}">${etiqueta}</label><input type="${tipo}" id="${id}" value="${escaparHtml(valor == null ? '' : String(valor))}" ${puedeEditar ? '' : 'disabled'} ${extra}></div>`;
+    const enlace = (url, texto) => `<a href="${url}" target="_blank" rel="noopener">${texto}</a>`;
+    document.getElementById('feConfigContenido').innerHTML = `
+      <div class="grilla-2" style="gap:18px;align-items:start;">
+        <div class="panel" style="max-width:none;max-height:none;margin:0;">
+          <h2 style="margin-top:0;">🧾 Facturación electrónica</h2>
+          <label style="display:flex;gap:8px;align-items:center;font-weight:500;"><input type="checkbox" id="fcHabilitado" style="width:auto;" ${c.facturador_habilitado ? 'checked' : ''} ${puedeEditar ? '' : 'disabled'}> Ya estamos habilitados como facturadores en la solución gratuita</label>
+          <div class="grilla-2" style="gap:10px;">
+            ${campo('fcFechaHab', 'Fecha de habilitación', c.fecha_habilitacion, 'date')}
+            ${campo('fcResolucion', 'N° de resolución de numeración', c.resolucion_numero)}
+            ${campo('fcResFecha', 'Fecha de la resolución', c.resolucion_fecha, 'date')}
+            ${campo('fcVigencia', 'Vigente hasta', c.vigencia_hasta, 'date')}
+            ${campo('fcPrefijo', 'Prefijo', c.prefijo, 'text', 'maxlength="4"')}
+            <div></div>
+            ${campo('fcDesde', 'Rango desde', c.rango_desde, 'number')}
+            ${campo('fcHasta', 'Rango hasta', c.rango_hasta, 'number')}
+          </div>
+          <h2>👥 Nómina electrónica</h2>
+          <label style="display:flex;gap:8px;align-items:center;font-weight:500;"><input type="checkbox" id="fcNomina" style="width:auto;" ${c.nomina_habilitada ? 'checked' : ''} ${puedeEditar ? '' : 'disabled'}> Ya estamos habilitados en la solución gratuita de nómina</label>
+          <div class="grilla-2" style="gap:10px;">
+            ${campo('fcFechaNom', 'Fecha de habilitación', c.fecha_habilitacion_nomina, 'date')}
+            ${campo('fcPrefijoNom', 'Prefijo de nómina', c.prefijo_nomina, 'text', 'maxlength="10"')}
+          </div>
+          <label for="fcNotas">Notas</label><input type="text" id="fcNotas" value="${escaparHtml(c.notas || '')}" ${puedeEditar ? '' : 'disabled'}>
+          ${puedeEditar ? '<button class="btn-principal" style="width:auto;" onclick="guardarFeConfiguracion()">Guardar</button>' : ''}
+        </div>
+        <div class="panel" style="max-width:none;max-height:none;margin:0;font-size:13px;line-height:1.65;">
+          <h2 style="margin-top:0;">🗺️ Guía para empezar (la hace Sara con su usuario de la DIAN)</h2>
+          <ol style="padding-left:18px;margin:0;">
+            <li><strong>RUT al día</strong>: actividad económica, correo, teléfono y establecimiento de comercio actualizados. Al habilitarte, la DIAN agrega la responsabilidad de facturador electrónico.</li>
+            <li><strong>Firma electrónica</strong>: en la solución gratuita la DIAN la entrega sin costo (solo sirve dentro de su portal).</li>
+            <li><strong>Habilitación</strong>: en el portal de la DIAN, en Factura electrónica → Registro y habilitación, elige como modo de operación la <em>Solución gratuita DIAN</em> y completa el proceso que te pide el sistema.</li>
+            <li><strong>Numeración</strong>: solicita la resolución de numeración de facturación (formulario 1302) y asocia el prefijo al modo de operación. Anota aquí la resolución, el prefijo y el rango.</li>
+            <li><strong>Configura el portal</strong>: logo, datos de la empresa y <em>plantillas</em> con los productos más vendidos; así cada factura sale en menos de un minuto.</li>
+            <li><strong>Nómina</strong>: habilítate también en la solución gratuita de nómina electrónica; cada mes transmite un documento por empleado (pestaña "Nómina electrónica").</li>
+            <li><strong>Día a día</strong>: al vender, emite la factura en el portal y regístrala aquí con su número y CUFE. Los errores se corrigen con nota crédito en el portal, nunca borrando.</li>
+          </ol>
+          <div style="margin-top:10px;">Material oficial de la DIAN:<br>
+            • ${enlace('https://www.dian.gov.co/impuestos/factura-electronica/facturacion-gratuita/Paginas/default.aspx', 'Facturación gratuita DIAN')}<br>
+            • ${enlace('https://micrositios.dian.gov.co/sistema-de-facturacion-electronica/guia-de-facturacion-gratuita-dian/', 'Guía de facturación gratuita')}<br>
+            • ${enlace('https://micrositios.dian.gov.co/sistema-de-facturacion-electronica/plantillas-facturacion-gratuita-dian/', 'Plantillas de facturación')}<br>
+            • ${enlace('https://micrositios.dian.gov.co/sistema-de-facturacion-electronica/solucion-gratuita-de-nomina-electronica/', 'Solución gratuita de nómina electrónica')}
+          </div>
+          <div style="font-size:11.5px;opacity:0.7;margin-top:10px;">Los menús del portal de la DIAN cambian con frecuencia: si algo no coincide, guíate por el material oficial o por la línea de atención de la DIAN. Tu contador puede acompañar la habilitación.</div>
+        </div>
+      </div>`;
+  }
+
+  async function guardarFeConfiguracion() {
+    const v = (id) => document.getElementById(id).value.trim();
+    const { error } = await supabaseClient.rpc('fn_fe_guardar_configuracion', { p: {
+      facturador_habilitado: document.getElementById('fcHabilitado').checked, fecha_habilitacion: v('fcFechaHab'),
+      resolucion_numero: v('fcResolucion'), resolucion_fecha: v('fcResFecha'), vigencia_hasta: v('fcVigencia'), prefijo: v('fcPrefijo'),
+      rango_desde: v('fcDesde'), rango_hasta: v('fcHasta'), nomina_habilitada: document.getElementById('fcNomina').checked,
+      fecha_habilitacion_nomina: v('fcFechaNom'), prefijo_nomina: v('fcPrefijoNom'), notas: v('fcNotas'),
+    } });
+    if (error) { mostrarMensaje('mensajeFe', 'No se pudo guardar: ' + error.message, 'error'); return; }
+    const { data } = await supabaseClient.from('fe_configuracion').select('*').eq('id', 1).single();
+    cacheFeConfig = data || cacheFeConfig;
+    renderizarAvisoFe();
+    mostrarMensaje('mensajeFe', '✅ Configuración guardada.', 'exito');
+  }
+
+  // ============================================================================
+  // CUENTAS BANCARIAS Y CONCILIACIÓN (una conciliación por cuenta)
+  // ============================================================================
+  let cacheBancos = null;
+  let cuentaBancariaActivaId = null;
+  let cacheConciliacion = null;
+
+  const MEDIOS_PAGO_BANCO = [
+    ['nequi', 'Nequi'], ['daviplata', 'Daviplata'], ['transferencia', 'Transferencia bancaria'],
+    ['tarjeta_debito', 'Tarjeta débito (datáfono)'], ['tarjeta_credito', 'Tarjeta crédito (datáfono)'],
+  ];
+  const TIPOS_CUENTA_BANCO = { ahorros: 'Ahorros', corriente: 'Corriente', billetera_digital: 'Billetera digital', otra: 'Otra' };
+
   async function mostrarPantallaConciliacion() {
     mostrarPantalla('pantallaConciliacion');
-    document.getElementById('concFecha').value = new Date().toISOString().slice(0, 10);
-    document.getElementById('concDescripcion').value = '';
-    document.getElementById('concValor').value = '';
     ocultarMensaje('mensajeConciliacion');
-    if (!document.getElementById('concFiltroDesde').value) {
-      const primerDia = new Date(); primerDia.setDate(1);
-      document.getElementById('concFiltroDesde').value = primerDia.toISOString().slice(0, 10);
-      document.getElementById('concFiltroHasta').value = new Date().toISOString().slice(0, 10);
-    }
-    movimientoExtractoSeleccionado = null;
-    await cargarPantallaConciliacionCompleta();
+    document.getElementById('btFecha').value = fechaLocalIso();
+    await cargarBancos();
   }
 
-  async function confirmarRegistrarMovimientoExtracto() {
-    const fecha = document.getElementById('concFecha').value;
-    const descripcion = document.getElementById('concDescripcion').value.trim();
-    const tipo = document.getElementById('concTipo').value;
-    const valor = Number(document.getElementById('concValor').value);
-    ocultarMensaje('mensajeConciliacion');
-
-    if (!fecha) { mostrarMensaje('mensajeConciliacion', 'Escribe la fecha.', 'error'); return; }
-    if (!descripcion) { mostrarMensaje('mensajeConciliacion', 'Escribe la descripción.', 'error'); return; }
-    if (!valor || valor <= 0) { mostrarMensaje('mensajeConciliacion', 'Escribe un valor válido.', 'error'); return; }
-
-    const resp = await fetch(WORKER_URL + '/api/pos/conciliacion/movimientos', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ fecha, descripcion, tipo, valor })
+  function alternarPanelBancos(id) {
+    ['bancosPanelNueva', 'bancosPanelMedios', 'bancosPanelTraslado'].forEach(p => {
+      document.getElementById(p).classList.toggle('oculto', p !== id || !document.getElementById(p).classList.contains('oculto'));
     });
-    const datos = await resp.json();
-    if (!resp.ok) { mostrarMensaje('mensajeConciliacion', datos.error || 'No se pudo registrar.', 'error'); return; }
-
-    mostrarMensaje('mensajeConciliacion', '✅ Movimiento registrado.', 'exito');
-    document.getElementById('concDescripcion').value = '';
-    document.getElementById('concValor').value = '';
-    await cargarPantallaConciliacionCompleta();
   }
 
-  async function cargarPantallaConciliacionCompleta() {
-    const desde = document.getElementById('concFiltroDesde').value;
+  async function cargarBancos() {
+    const cont = document.getElementById('bancosResumen');
+    try {
+      cacheBancos = await llamarReporteContable('fn_bancos_listar', {});
+    } catch (e) {
+      cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(e.message)}</div>`;
+      return;
+    }
+    const cuentas = cacheBancos.cuentas;
+    const activas = cuentas.filter(c => c.activa);
+    if (!cuentaBancariaActivaId || !cuentas.some(c => c.id === cuentaBancariaActivaId)) cuentaBancariaActivaId = activas.length ? activas[0].id : null;
+
+    const sinAsignar = Number(cacheBancos.sin_asignar_1110);
+    const tarjeta = (c) => {
+      const activa = c.id === cuentaBancariaActivaId;
+      return `
+      <div class="panel" style="max-height:none;cursor:pointer;margin:0;${activa ? 'border:2px solid var(--rosa-principal);' : ''}${c.activa ? '' : 'opacity:0.55;'}" onclick="seleccionarCuentaBancaria('${c.id}')">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;">
+          <div>
+            <div class="fredoka" style="font-size:15px;">${escaparHtml(c.nombre)}</div>
+            <div style="font-size:11.5px;opacity:0.7;">${escaparHtml(c.entidad)} · ${TIPOS_CUENTA_BANCO[c.tipo_cuenta] || ''}${c.numero ? ' · ****' + escaparHtml(String(c.numero).replace(/\D/g, '').slice(-4)) : ''} · PUC ${escaparHtml(c.codigo_puc)}</div>
+          </div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">
+            ${c.uso === 'fondo_emprender' ? '<span style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:999px;background:var(--tinte-verde);color:var(--verde-exito);">Fondo Emprender</span>' : ''}
+            ${c.predeterminada ? '<span style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:999px;background:var(--tinte-azul);color:var(--azul-acero);">Predeterminada</span>' : ''}
+            ${c.activa ? '' : '<span style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:999px;background:var(--gris-fondo);">Inactiva</span>'}
+          </div>
+        </div>
+        <div style="font-size:11px;opacity:0.65;margin-top:10px;">SALDO SEGÚN LIBROS</div>
+        <div style="font-size:19px;font-weight:700;">${formatearMoneda(c.saldo_libros)}</div>
+        <div style="font-size:11.5px;margin-top:6px;opacity:0.8;">
+          ${c.fecha_saldo_inicial ? `${c.extracto_pendientes} movimiento(s) del extracto sin conciliar${c.ultimo_extracto ? ' · extracto hasta ' + new Date(c.ultimo_extracto + 'T00:00:00').toLocaleDateString('es-CO') : ''}` : '⚠️ Falta el saldo inicial'}
+        </div>
+        ${c.medios.length ? `<div style="font-size:11px;opacity:0.7;margin-top:4px;">Recibe: ${c.medios.map(m => (MEDIOS_PAGO_BANCO.find(x => x[0] === m) || [m, m])[1]).join(', ')}</div>` : ''}
+      </div>`;
+    };
+
+    cont.innerHTML = `
+      ${cuentas.length ? `<div class="grilla-3" style="gap:14px;">${cuentas.map(tarjeta).join('')}</div>` : `
+        <div class="panel" style="max-width:none;max-height:none;">
+          <h2>Todavía no hay cuentas registradas</h2>
+          <div style="font-size:13px;line-height:1.6;">Agrega cada cuenta bancaria y billetera (Nequi, Daviplata…) con el botón "＋ Agregar cuenta". Luego indica a qué cuenta llega cada medio de pago y registra el saldo de cada una según su extracto: desde ahí se concilian por separado.</div>
+        </div>`}
+      ${Math.abs(sinAsignar) >= 1 ? `
+        <div style="background:${sinAsignar < 0 ? 'var(--tinte-rojo)' : 'var(--tinte-ambar)'};border-radius:var(--radius-md);padding:10px 14px;margin-top:14px;font-size:12.5px;line-height:1.6;">
+          <strong>Saldo en bancos sin asignar a una cuenta (1110): ${formatearMoneda(sinAsignar)}</strong><br>
+          ${sinAsignar < 0
+            ? 'Las cuentas tienen más dinero del que el sistema registró: faltan ingresos por registrar. Revísalo con tu contador y regístralo con un asiento de ajuste.'
+            : cuentas.some(c => !c.fecha_saldo_inicial)
+              ? 'Es lo que el sistema registró en bancos antes de separar las cuentas. Se reparte al registrar el saldo inicial de cada cuenta.'
+              : 'Ya registraste el saldo de todas las cuentas y aún queda esta diferencia: son movimientos que no llegaron a ningún banco (o que falta registrar). Revísalo con tu contador y ajústalo con un asiento de ajuste.'}
+        </div>` : ''}
+    `;
+
+    const opciones = activas.filter(c => c.uso === 'general').map(c => `<option value="${c.id}">${escaparHtml(c.nombre)}</option>`).join('');
+    document.getElementById('btOrigen').innerHTML = opciones;
+    document.getElementById('btDestino').innerHTML = opciones;
+    renderizarMediosPagoBancos();
+    await cargarConciliacionCuenta();
+  }
+
+  function renderizarMediosPagoBancos() {
+    const generales = cacheBancos.cuentas.filter(c => c.activa && c.uso === 'general');
+    const predeterminada = generales.find(c => c.predeterminada);
+    document.getElementById('bancosPanelMedios').innerHTML = `
+      <h2>💳 ¿A qué cuenta llega cada medio de pago?</h2>
+      <div class="subtitulo">Así, cada venta, abono o gasto pagado por ese medio queda en la cuenta correcta. Los medios sin cuenta asignada van a la cuenta predeterminada${predeterminada ? ' (' + escaparHtml(predeterminada.nombre) + ')' : ''}. El efectivo va a la caja.</div>
+      ${generales.length ? MEDIOS_PAGO_BANCO.map(([medio, etiqueta]) => `
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
+          <span style="width:220px;font-size:13px;font-weight:600;">${etiqueta}</span>
+          <select style="flex:1;min-width:200px;" onchange="asignarMedioPagoBanco('${medio}', this.value)">
+            <option value="">— Cuenta predeterminada —</option>
+            ${generales.map(c => `<option value="${c.id}" ${cacheBancos.medios[medio] === c.id ? 'selected' : ''}>${escaparHtml(c.nombre)}</option>`).join('')}
+          </select>
+        </div>`).join('') : '<div class="cargando">Primero agrega una cuenta.</div>'}
+      <div style="font-size:11.5px;opacity:0.7;margin-top:6px;">La cuenta de Fondo Emprender no aparece aquí: solo recibe los recursos del SENA.</div>`;
+  }
+
+  async function asignarMedioPagoBanco(medio, cuentaId) {
+    const { error } = await supabaseClient.rpc('fn_bancos_asignar_medio', { p_medio: medio, p_cuenta_bancaria_id: cuentaId || null });
+    if (error) { mostrarMensaje('mensajeConciliacion', 'No se pudo guardar: ' + error.message, 'error'); return; }
+    mostrarMensaje('mensajeConciliacion', '✅ Medio de pago asignado. Los próximos pagos por ese medio quedan en esa cuenta.', 'exito');
+    await cargarBancos();
+  }
+
+  async function confirmarCrearCuentaBancaria() {
+    const v = (id) => document.getElementById(id).value.trim();
+    if (!v('bcNombre') || !v('bcEntidad')) { mostrarMensaje('mensajeConciliacion', 'Escribe el nombre de la cuenta y la entidad.', 'error'); return; }
+    const { data, error } = await supabaseClient.rpc('fn_bancos_crear_cuenta', {
+      p_nombre: v('bcNombre'), p_entidad: v('bcEntidad'), p_tipo_cuenta: v('bcTipo'), p_numero: v('bcNumero') || null,
+      p_titular: v('bcTitular') || null, p_uso: v('bcUso'), p_predeterminada: document.getElementById('bcPredeterminada').checked, p_notas: v('bcNotas') || null,
+    });
+    if (error) { mostrarMensaje('mensajeConciliacion', 'No se pudo crear: ' + error.message, 'error'); return; }
+    ['bcNombre', 'bcEntidad', 'bcNumero', 'bcTitular', 'bcNotas'].forEach(id => { document.getElementById(id).value = ''; });
+    document.getElementById('bcPredeterminada').checked = false;
+    document.getElementById('bancosPanelNueva').classList.add('oculto');
+    cuentaBancariaActivaId = data;
+    mostrarMensaje('mensajeConciliacion', '✅ Cuenta creada con su subcuenta contable. Ahora registra su saldo inicial según el extracto.', 'exito');
+    await cargarBancos();
+  }
+
+  async function confirmarTrasladoBancos() {
+    const origen = document.getElementById('btOrigen').value;
+    const destino = document.getElementById('btDestino').value;
+    const monto = Number(document.getElementById('btMonto').value);
+    if (!origen || !destino || origen === destino) { mostrarMensaje('mensajeConciliacion', 'Elige dos cuentas distintas.', 'error'); return; }
+    if (!monto || monto <= 0) { mostrarMensaje('mensajeConciliacion', 'Escribe el valor.', 'error'); return; }
+    const { error } = await supabaseClient.rpc('fn_bancos_traslado', {
+      p_origen_id: origen, p_destino_id: destino, p_monto: monto, p_fecha: document.getElementById('btFecha').value || null,
+      p_descripcion: document.getElementById('btDescripcion').value.trim() || null,
+    });
+    if (error) { mostrarMensaje('mensajeConciliacion', 'No se pudo registrar: ' + error.message, 'error'); return; }
+    document.getElementById('btMonto').value = '';
+    document.getElementById('btDescripcion').value = '';
+    document.getElementById('bancosPanelTraslado').classList.add('oculto');
+    mostrarMensaje('mensajeConciliacion', '✅ Traslado registrado (queda en el Libro Diario).', 'exito');
+    await cargarBancos();
+  }
+
+  async function seleccionarCuentaBancaria(id) {
+    cuentaBancariaActivaId = id;
+    movimientoExtractoSeleccionado = null;
+    await cargarBancos();
+  }
+
+  async function cargarConciliacionCuenta() {
+    const cont = document.getElementById('bancosConciliacion');
+    const c = cacheBancos && cacheBancos.cuentas.find(x => x.id === cuentaBancariaActivaId);
+    if (!c) { cont.innerHTML = ''; return; }
+
+    const edicion = `
+      <details style="margin-top:6px;">
+        <summary style="cursor:pointer;font-size:12.5px;">✏️ Editar datos de la cuenta</summary>
+        <div class="grilla-2" style="gap:10px;margin-top:8px;">
+          <div><label>Nombre</label><input type="text" id="bcEdNombre" value="${escaparHtml(c.nombre)}"></div>
+          <div><label>Número</label><input type="text" id="bcEdNumero" value="${escaparHtml(c.numero || '')}"></div>
+          <div><label>Titular</label><input type="text" id="bcEdTitular" value="${escaparHtml(c.titular || '')}"></div>
+          <div><label>Notas</label><input type="text" id="bcEdNotas" value="${escaparHtml(c.notas || '')}"></div>
+        </div>
+        <label style="display:flex;gap:8px;align-items:center;margin-top:8px;font-weight:500;"><input type="checkbox" id="bcEdActiva" style="width:auto;" ${c.activa ? 'checked' : ''}> Activa</label>
+        ${c.uso === 'general' ? `<label style="display:flex;gap:8px;align-items:center;margin-top:4px;font-weight:500;"><input type="checkbox" id="bcEdPred" style="width:auto;" ${c.predeterminada ? 'checked' : ''}> Predeterminada</label>` : ''}
+        <button class="btn-mini editar" style="flex:0 0 auto;padding:8px 14px;margin-top:8px;" onclick="guardarEdicionCuentaBancaria('${c.id}')">Guardar cambios</button>
+      </details>`;
+
+    const encabezado = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
+        <div>
+          <h2 style="margin:0;">Conciliación — ${escaparHtml(c.nombre)}</h2>
+          <div style="font-size:12px;opacity:0.7;">${escaparHtml(c.nombre_puc)} (PUC ${escaparHtml(c.codigo_puc)})${c.uso === 'fondo_emprender' ? ' · Solo debe tener los desembolsos del SENA y las compras aprobadas por ellos.' : ''}</div>
+        </div>
+      </div>
+      ${edicion}`;
+
+    if (!c.fecha_saldo_inicial) {
+      cont.innerHTML = `
+        <div class="panel" style="max-width:none;max-height:none;margin-top:16px;">
+          ${encabezado}
+          <h2 style="margin-top:18px;font-size:14px;">Punto de partida: saldo según el extracto</h2>
+          <div class="subtitulo">Escribe el saldo que muestra el extracto o la app de ${escaparHtml(c.entidad)} al final de un día. Desde el día siguiente se concilia movimiento por movimiento. Este valor se trae de lo que hoy está "sin asignar" en bancos (1110).</div>
+          <div class="grilla-2" style="gap:12px;max-width:520px;">
+            <div><label for="bcSiFecha">Fecha del saldo</label><input type="date" id="bcSiFecha" value="${fechaLocalIso()}"></div>
+            <div><label for="bcSiValor">Saldo según extracto (COP)</label><input type="number" id="bcSiValor" step="1"></div>
+          </div>
+          <button class="btn-principal" style="width:auto;" onclick="pedirConfirmacionBoton(this, '¿Confirmas el saldo? Pulsa otra vez', () => confirmarSaldoInicialBanco('${c.id}'))">Registrar saldo inicial</button>
+        </div>`;
+      return;
+    }
+
+    if (!document.getElementById('concFiltroDesde')) {
+      window._concDesde = fechaLocalIso(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+      window._concHasta = fechaLocalIso();
+    }
+    const desde = (document.getElementById('concFiltroDesde') || {}).value || window._concDesde;
+    const hasta = (document.getElementById('concFiltroHasta') || {}).value || window._concHasta;
+
+    let r, d;
+    try {
+      [r, d] = await Promise.all([
+        llamarReporteContable('fn_conc_resumen', { p_cuenta_id: c.id, p_corte: hasta }),
+        llamarReporteContable('fn_conc_datos', { p_cuenta_id: c.id, p_desde: desde, p_hasta: hasta }),
+      ]);
+    } catch (e) {
+      cont.innerHTML = `<div class="cargando">No se pudo cargar la conciliación: ${escaparHtml(e.message)}</div>`;
+      return;
+    }
+    cacheConciliacion = { cuenta: c, resumen: r, datos: d, desde, hasta };
+
+    const fechaCo = (f) => new Date(f + 'T00:00:00').toLocaleDateString('es-CO');
+    const signo = (x) => (x.tipo === 'entrada' ? '+' : '−') + formatearMoneda(x.valor);
+    const colorTipo = (x) => x.tipo === 'entrada' ? 'var(--verde-exito)' : 'var(--rojo-error)';
+    const noExplicada = Number(r.no_explicada);
+
+    cont.innerHTML = `
+      <div class="panel" style="max-width:none;max-height:none;margin-top:16px;">
+        ${encabezado}
+        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin:14px 0;">
+          <div><label for="concFiltroDesde" style="font-size:11px;">Desde</label><input type="date" id="concFiltroDesde" value="${desde}" onchange="cargarConciliacionCuenta()" style="padding:9px 10px;"></div>
+          <div><label for="concFiltroHasta" style="font-size:11px;">Hasta (fecha de corte)</label><input type="date" id="concFiltroHasta" value="${hasta}" onchange="cargarConciliacionCuenta()" style="padding:9px 10px;"></div>
+          <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="autoconciliarCuenta('${c.id}')">⚡ Conciliar automáticamente</button>
+          <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarConciliacionExcel()">📥 Excel</button>
+        </div>
+
+        <div class="grilla-3" style="gap:12px;">
+          <div class="panel" style="max-height:none;text-align:center;margin:0;"><div style="font-size:11.5px;opacity:0.65;">SALDO SEGÚN EXTRACTO</div><div style="font-size:19px;font-weight:700;margin-top:4px;">${formatearMoneda(r.saldo_banco)}</div></div>
+          <div class="panel" style="max-height:none;text-align:center;margin:0;"><div style="font-size:11.5px;opacity:0.65;">SALDO SEGÚN LIBROS</div><div style="font-size:19px;font-weight:700;margin-top:4px;">${formatearMoneda(r.saldo_libros)}</div></div>
+          <div class="panel" style="max-height:none;text-align:center;margin:0;"><div style="font-size:11.5px;opacity:0.65;">DIFERENCIA</div><div style="font-size:19px;font-weight:700;margin-top:4px;color:${Math.abs(Number(r.diferencia)) < 1 ? 'var(--verde-exito)' : 'var(--ambar)'};">${formatearMoneda(r.diferencia)}</div></div>
+        </div>
+        <div class="resumen-cierre" style="margin-top:12px;">
+          <div class="resumen-fila"><span>Saldo inicial (${fechaCo(r.fecha_saldo_inicial)})</span><strong>${formatearMoneda(r.saldo_inicial)}</strong></div>
+          <div class="resumen-fila"><span>Movimientos del extracto que no están en libros</span><strong>${formatearMoneda(r.extracto_sin_conciliar)}</strong></div>
+          <div class="resumen-fila"><span>Registros en libros que no aparecen en el extracto</span><strong>${formatearMoneda(r.libros_sin_conciliar)}</strong></div>
+          <div class="resumen-fila total"><span>Diferencia sin explicar</span><strong style="color:${Math.abs(noExplicada) < 1 ? 'var(--verde-exito)' : 'var(--rojo-error)'};">${formatearMoneda(noExplicada)}</strong></div>
+        </div>
+        ${Math.abs(noExplicada) >= 1 ? '<div style="font-size:12px;color:var(--rojo-error);margin-top:6px;">Hay una diferencia que no explican los movimientos pendientes: revisa que el extracto esté completo hasta la fecha de corte.</div>' : ''}
+
+        <div class="grilla-2" style="gap:16px;margin-top:18px;">
+          <div>
+            <h2 style="font-size:14px;">+ Movimiento del extracto</h2>
+            <div class="grilla-2" style="gap:8px;">
+              <div><label for="concFecha">Fecha</label><input type="date" id="concFecha" value="${fechaLocalIso()}"></div>
+              <div><label for="concTipo">Tipo</label><select id="concTipo"><option value="entrada">Entrada (llegó dinero)</option><option value="salida">Salida (salió dinero)</option></select></div>
+              <div><label for="concValor">Valor (COP)</label><input type="number" id="concValor" min="1" step="1"></div>
+              <div><label for="concReferencia">Referencia <span style="font-size:10px;opacity:0.6;">(opcional)</span></label><input type="text" id="concReferencia"></div>
+            </div>
+            <label for="concDescripcion">Descripción (como aparece en el extracto)</label>
+            <input type="text" id="concDescripcion" placeholder="Ej: Transferencia recibida de Laura">
+            <button class="btn-principal" style="width:auto;" onclick="confirmarRegistrarMovimientoExtracto('${c.id}')">Registrar</button>
+          </div>
+          <div>
+            <h2 style="font-size:14px;">📂 Importar extracto (Excel o CSV)</h2>
+            <div class="subtitulo">Descarga el extracto desde la app o la banca en línea y súbelo. Se leen las columnas de fecha, descripción y valor (o débito/crédito). Los movimientos repetidos no se duplican.</div>
+            <input type="file" id="concArchivo" accept=".xlsx,.xls,.csv" onchange="leerArchivoExtracto('${c.id}')">
+            <div id="concVistaImport" style="margin-top:8px;"></div>
+          </div>
+        </div>
+
+        <div style="font-size:12px;opacity:0.75;margin-top:16px;">Para conciliar a mano: toca un movimiento del extracto (izquierda) y luego el registro de libros que le corresponde (derecha). Deben tener el mismo valor.</div>
+        <div class="grilla-2" style="gap:16px;margin-top:8px;">
+          <div>
+            <h2 style="font-size:14px;">📄 Extracto sin conciliar (${d.extracto_sin_conciliar.length})</h2>
+            ${d.extracto_sin_conciliar.map(m => `
+              <div class="fila-historial" style="margin-bottom:8px;cursor:pointer;${movimientoExtractoSeleccionado === m.id ? 'border:2px solid var(--rosa-principal);' : ''}" onclick="seleccionarMovimientoExtracto('${m.id}')">
+                <div class="fila-historial-encabezado">
+                  <span class="fila-historial-consecutivo">${fechaCo(m.fecha)} — ${escaparHtml(m.descripcion)}${m.origen === 'importado' ? ' <span style="font-size:10px;opacity:0.6;">(importado)</span>' : ''}</span>
+                  <span class="fila-historial-total" style="color:${colorTipo(m)};">${signo(m)}</span>
+                </div>
+                <button class="btn-mini desactivar" style="margin-top:4px;flex:0 0 auto;padding:4px 10px;" onclick="event.stopPropagation(); pedirConfirmacionBoton(this, '¿Seguro?', () => eliminarMovimientoExtracto('${m.id}'))">🗑️ Eliminar</button>
+              </div>`).join('') || '<div class="cargando">Nada pendiente aquí.</div>'}
+          </div>
+          <div>
+            <h2 style="font-size:14px;">💻 Libros sin conciliar (${d.libros_sin_conciliar.length})</h2>
+            ${d.libros_sin_conciliar.map(a => `
+              <div class="fila-historial" style="margin-bottom:8px;cursor:pointer;" onclick="intentarConciliar('${a.apunte_id}')">
+                <div class="fila-historial-encabezado">
+                  <span class="fila-historial-consecutivo">${fechaCo(a.fecha)} — ${escaparHtml(a.descripcion || '')} <span style="font-size:10px;opacity:0.6;">(asiento #${a.numero_asiento})</span></span>
+                  <span class="fila-historial-total" style="color:${colorTipo(a)};">${signo(a)}</span>
+                </div>
+              </div>`).join('') || '<div class="cargando">Nada pendiente aquí.</div>'}
+          </div>
+        </div>
+
+        <h2 style="font-size:14px;margin-top:18px;">✅ Ya conciliados (${d.conciliados.length})</h2>
+        <input type="text" id="buscarConciliados" placeholder="🔍 Buscar por descripción..." oninput="filtrarYaConciliados()" style="margin-bottom:10px;">
+        <div id="listaYaConciliados"></div>
+      </div>`;
+    yaConciliadosCache = d.conciliados;
+    renderizarYaConciliados(yaConciliadosCache);
+  }
+
+  async function guardarEdicionCuentaBancaria(id) {
+    const v = (x) => document.getElementById(x).value.trim();
+    const pred = document.getElementById('bcEdPred');
+    const { error } = await supabaseClient.rpc('fn_bancos_actualizar_cuenta', {
+      p_id: id, p_nombre: v('bcEdNombre'), p_numero: v('bcEdNumero') || null, p_titular: v('bcEdTitular') || null,
+      p_notas: v('bcEdNotas') || null, p_activa: document.getElementById('bcEdActiva').checked, p_predeterminada: pred ? pred.checked : false,
+    });
+    if (error) { mostrarMensaje('mensajeConciliacion', 'No se pudo guardar: ' + error.message, 'error'); return; }
+    mostrarMensaje('mensajeConciliacion', '✅ Cuenta actualizada.', 'exito');
+    await cargarBancos();
+  }
+
+  async function confirmarSaldoInicialBanco(id) {
+    const fecha = document.getElementById('bcSiFecha').value;
+    const valor = document.getElementById('bcSiValor').value;
+    if (!fecha || valor === '') { mostrarMensaje('mensajeConciliacion', 'Escribe la fecha y el saldo.', 'error'); return; }
+    const { data, error } = await supabaseClient.rpc('fn_bancos_saldo_inicial', { p_cuenta_id: id, p_fecha: fecha, p_saldo: Number(valor) });
+    if (error) { mostrarMensaje('mensajeConciliacion', 'No se pudo registrar: ' + error.message, 'error'); return; }
+    mostrarMensaje('mensajeConciliacion', data && data.advertencia ? '⚠️ Saldo registrado. ' + data.advertencia : '✅ Saldo inicial registrado. Desde el día siguiente ya puedes conciliar.', data && data.advertencia ? 'error' : 'exito');
+    await cargarBancos();
+  }
+
+  async function confirmarRegistrarMovimientoExtracto(cuentaId) {
+    const v = (x) => document.getElementById(x).value.trim();
+    const valor = Number(v('concValor'));
+    if (!v('concFecha') || !v('concDescripcion') || !valor || valor <= 0) {
+      mostrarMensaje('mensajeConciliacion', 'Escribe la fecha, la descripción y un valor mayor a cero.', 'error'); return;
+    }
+    const { error } = await supabaseClient.rpc('fn_conc_registrar', {
+      p_cuenta_id: cuentaId, p_fecha: v('concFecha'), p_descripcion: v('concDescripcion'), p_tipo: v('concTipo'), p_valor: valor, p_referencia: v('concReferencia') || null,
+    });
+    if (error) { mostrarMensaje('mensajeConciliacion', 'No se pudo registrar: ' + error.message, 'error'); return; }
+    mostrarMensaje('mensajeConciliacion', '✅ Movimiento registrado.', 'exito');
+    await cargarBancos();
+  }
+
+  // ---- Importación del extracto ----
+  let filasExtractoImport = [];
+
+  // Convierte montos de extractos: "$ 45.000", "1.234.567,89", "1,234.50", "(12.000)", "-45000".
+  function numeroDeTexto(valor) {
+    if (typeof valor === 'number') return valor;
+    let t = String(valor || '').trim();
+    if (!t) return NaN;
+    const negativo = /^\(.*\)$/.test(t) || /-/.test(t);
+    t = t.replace(/[^\d,.]/g, '');
+    const comas = (t.match(/,/g) || []).length, puntos = (t.match(/\./g) || []).length;
+    const separadorMiles = (sep, cantidad) => cantidad > 1 || new RegExp('\\' + sep + '\\d{3}$').test(t);
+    if (comas && puntos) {
+      const decimal = t.lastIndexOf(',') > t.lastIndexOf('.') ? ',' : '.';
+      t = t.split(decimal === ',' ? '.' : ',').join('').replace(',', '.');
+    } else if (puntos) {
+      if (separadorMiles('.', puntos)) t = t.split('.').join('');
+    } else if (comas) {
+      t = separadorMiles(',', comas) ? t.split(',').join('') : t.replace(',', '.');
+    }
+    const n = Number(t);
+    return negativo ? -n : n;
+  }
+
+  function fechaDeCelda(valor) {
+    if (valor instanceof Date) return fechaLocalIso(valor);
+    if (typeof valor === 'number' && valor > 20000 && valor < 80000) {
+      const d = new Date(Math.round((valor - 25569) * 86400000));
+      return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+    }
+    const t = String(valor || '').trim();
+    let m = t.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+    if (m) return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
+    m = t.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})/);
+    if (m) { const anio = m[3].length === 2 ? '20' + m[3] : m[3]; return `${anio}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`; }
+    return null;
+  }
+
+  async function leerArchivoExtracto(cuentaId) {
+    const archivo = document.getElementById('concArchivo').files[0];
+    const vista = document.getElementById('concVistaImport');
+    filasExtractoImport = [];
+    if (!archivo) { vista.innerHTML = ''; return; }
+    try {
+      const libro = XLSX.read(await archivo.arrayBuffer(), { type: 'array', cellDates: true });
+      const filas = XLSX.utils.sheet_to_json(libro.Sheets[libro.SheetNames[0]], { header: 1, raw: true, defval: '' });
+      const iEnc = filas.findIndex(f => f.some(x => /fecha/i.test(String(x))));
+      if (iEnc < 0) throw new Error('No encontré una fila de encabezados con la columna "Fecha".');
+      const enc = filas[iEnc].map(x => String(x).toLowerCase());
+      const col = (re) => enc.findIndex(x => re.test(x));
+      const cFecha = col(/fecha/), cDesc = col(/descrip|concepto|detalle|transacci|movimiento/), cRef = col(/referencia|documento|comprobante/);
+      const cValor = col(/^valor|monto|importe|^cantidad/), cDeb = col(/d[eé]bito|retiro|cargo|salida|egreso/), cCre = col(/cr[eé]dito|abono|dep[oó]sito|entrada|ingreso/);
+      if (cValor < 0 && cDeb < 0 && cCre < 0) throw new Error('No encontré la columna del valor (o de débitos/créditos).');
+      filasExtractoImport = filas.slice(iEnc + 1).map(f => {
+        const fecha = fechaDeCelda(f[cFecha]);
+        let valor = cValor >= 0 && String(f[cValor]).trim() !== '' ? numeroDeTexto(f[cValor]) : ((cCre >= 0 ? (numeroDeTexto(f[cCre]) || 0) : 0) - (cDeb >= 0 ? Math.abs(numeroDeTexto(f[cDeb]) || 0) : 0));
+        return { fecha, valor, descripcion: cDesc >= 0 ? String(f[cDesc]).trim() : '', referencia: cRef >= 0 ? String(f[cRef]).trim() : '' };
+      }).filter(x => x.fecha && Number.isFinite(x.valor) && x.valor !== 0).sort((a, b) => a.fecha.localeCompare(b.fecha));
+      if (!filasExtractoImport.length) throw new Error('No encontré movimientos con fecha y valor.');
+      const entradas = filasExtractoImport.filter(x => x.valor > 0).reduce((a, x) => a + x.valor, 0);
+      const salidas = filasExtractoImport.filter(x => x.valor < 0).reduce((a, x) => a - x.valor, 0);
+      vista.innerHTML = `
+        <div style="background:var(--gris-fondo);border-radius:var(--radius-md);padding:10px 12px;font-size:12.5px;line-height:1.6;">
+          ${filasExtractoImport.length} movimientos del ${new Date(filasExtractoImport[0].fecha + 'T00:00:00').toLocaleDateString('es-CO')} al ${new Date(filasExtractoImport[filasExtractoImport.length - 1].fecha + 'T00:00:00').toLocaleDateString('es-CO')} ·
+          entradas ${formatearMoneda(entradas)} · salidas ${formatearMoneda(salidas)}<br>
+          <span style="opacity:0.7;">Ejemplo: ${escaparHtml(filasExtractoImport[0].descripcion)} (${formatearMoneda(filasExtractoImport[0].valor)})</span><br>
+          <button class="btn-mini editar" style="flex:0 0 auto;padding:6px 12px;margin-top:6px;" onclick="confirmarImportarExtracto('${cuentaId}')">Importar ${filasExtractoImport.length} movimientos</button>
+        </div>`;
+    } catch (e) {
+      vista.innerHTML = `<div style="color:var(--rojo-error);font-size:12.5px;">No se pudo leer el archivo: ${escaparHtml(e.message)}</div>`;
+    }
+  }
+
+  async function confirmarImportarExtracto(cuentaId) {
+    const { data, error } = await supabaseClient.rpc('fn_conc_importar', { p_cuenta_id: cuentaId, p_filas: filasExtractoImport });
+    if (error) { mostrarMensaje('mensajeConciliacion', 'No se pudo importar: ' + error.message, 'error'); return; }
+    const rech = data.rechazados.length;
+    mostrarMensaje('mensajeConciliacion', `✅ ${data.insertados} movimiento(s) importados${data.duplicados ? `, ${data.duplicados} ya estaban` : ''}${rech ? `, ${rech} rechazados (ej: ${data.rechazados[0].motivo})` : ''}. Ahora prueba "Conciliar automáticamente".`, rech ? 'error' : 'exito');
+    filasExtractoImport = [];
+    await cargarBancos();
+  }
+
+  async function autoconciliarCuenta(cuentaId) {
     const hasta = document.getElementById('concFiltroHasta').value;
-
-    // Resumen
-    const respResumen = await fetch(`${WORKER_URL}/api/pos/conciliacion/resumen?fecha_corte=${hasta || new Date().toISOString().slice(0, 10)}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
-    if (respResumen.ok) {
-      const r = await respResumen.json();
-      const dif = r.diferencia;
-      document.getElementById('resumenConciliacion').innerHTML = `
-        <div class="panel" style="max-height:none;text-align:center;"><div style="font-size:11.5px;opacity:0.65;">SALDO SEGÚN BANCO</div><div style="font-size:19px;font-weight:700;margin-top:4px;">${formatearMoneda(r.saldo_banco)}</div></div>
-        <div class="panel" style="max-height:none;text-align:center;"><div style="font-size:11.5px;opacity:0.65;">SALDO SEGÚN LIBROS</div><div style="font-size:19px;font-weight:700;margin-top:4px;">${formatearMoneda(r.saldo_libros)}</div></div>
-        <div class="panel" style="max-height:none;text-align:center;"><div style="font-size:11.5px;opacity:0.65;">DIFERENCIA</div><div style="font-size:19px;font-weight:700;margin-top:4px;color:${Math.abs(dif) < 1 ? 'var(--verde-exito)' : 'var(--rojo-error)'};">${formatearMoneda(dif)}</div></div>
-      `;
-    }
-
-    // Extracto sin conciliar
-    const respExtracto = await fetch(`${WORKER_URL}/api/pos/conciliacion/movimientos?solo_sin_conciliar=true&fecha_desde=${desde}&fecha_hasta=${hasta}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
-    const contExtracto = document.getElementById('listaExtractoSinConciliar');
-    if (respExtracto.ok) {
-      const { movimientos } = await respExtracto.json();
-      window._extractoSinConciliarCache = movimientos || [];
-      contExtracto.innerHTML = (!movimientos || movimientos.length === 0) ? '<div class="cargando">Nada pendiente por conciliar aquí.</div>' :
-        movimientos.map(m => `
-          <div class="fila-historial ${movimientoExtractoSeleccionado === m.id ? 'seleccionado-conciliacion' : ''}" style="margin-bottom:8px;cursor:pointer;${movimientoExtractoSeleccionado === m.id ? 'border:2px solid var(--rosa-principal);' : ''}" onclick="seleccionarMovimientoExtracto('${m.id}')">
-            <div class="fila-historial-encabezado">
-              <span class="fila-historial-consecutivo">${new Date(m.fecha + 'T00:00:00').toLocaleDateString('es-CO')} — ${escaparHtml(m.descripcion)}</span>
-              <span class="fila-historial-total" style="color:${m.tipo === 'entrada' ? 'var(--verde-exito)' : 'var(--rojo-error)'};">${m.tipo === 'entrada' ? '+' : '-'}${formatearMoneda(m.valor)}</span>
-            </div>
-            <button class="btn-mini desactivar" style="margin-top:4px;" onclick="event.stopPropagation(); pedirConfirmacionBoton(this, '¿Seguro?', () => eliminarMovimientoExtracto('${m.id}'))">🗑️ Eliminar</button>
-          </div>
-        `).join('');
-    }
-
-    // Apuntes del sistema sin conciliar
-    const respApuntes = await fetch(`${WORKER_URL}/api/pos/conciliacion/apuntes-bancos?fecha_desde=${desde}&fecha_hasta=${hasta}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
-    const contApuntes = document.getElementById('listaApuntesSinConciliar');
-    if (respApuntes.ok) {
-      const { apuntes } = await respApuntes.json();
-      window._apuntesSinConciliarCache = apuntes || [];
-      contApuntes.innerHTML = (!apuntes || apuntes.length === 0) ? '<div class="cargando">Nada pendiente por conciliar aquí.</div>' :
-        apuntes.map(a => `
-          <div class="fila-historial" style="margin-bottom:8px;cursor:pointer;" onclick="intentarConciliar('${a.id}')">
-            <div class="fila-historial-encabezado">
-              <span class="fila-historial-consecutivo">${new Date(a.fecha + 'T00:00:00').toLocaleDateString('es-CO')} — ${escaparHtml(a.descripcion || '')}</span>
-              <span class="fila-historial-total" style="color:${a.tipo === 'entrada' ? 'var(--verde-exito)' : 'var(--rojo-error)'};">${a.tipo === 'entrada' ? '+' : '-'}${formatearMoneda(a.valor)}</span>
-            </div>
-          </div>
-        `).join('');
-    }
-
-    // Ya conciliados
-    const respConciliados = await fetch(`${WORKER_URL}/api/pos/conciliacion/movimientos?fecha_desde=${desde}&fecha_hasta=${hasta}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
-    if (respConciliados.ok) {
-      const { movimientos } = await respConciliados.json();
-      yaConciliadosCache = (movimientos || []).filter(m => m.conciliado);
-      renderizarYaConciliados(yaConciliadosCache);
-    }
+    const { data, error } = await supabaseClient.rpc('fn_conc_autoconciliar', { p_cuenta_id: cuentaId, p_hasta: hasta });
+    if (error) { mostrarMensaje('mensajeConciliacion', 'No se pudo conciliar: ' + error.message, 'error'); return; }
+    mostrarMensaje('mensajeConciliacion', data ? `✅ Se conciliaron ${data} movimiento(s) con el mismo valor y fechas cercanas. Revisa los que quedaron pendientes.` : 'No se encontraron parejas con el mismo valor y fechas cercanas.', data ? 'exito' : 'error');
+    await cargarBancos();
   }
 
   let yaConciliadosCache = [];
 
   function filtrarYaConciliados() {
     const texto = document.getElementById('buscarConciliados').value.trim().toLowerCase();
-    if (!texto) { renderizarYaConciliados(yaConciliadosCache); return; }
-    renderizarYaConciliados(yaConciliadosCache.filter(m => (m.descripcion || '').toLowerCase().includes(texto)));
+    renderizarYaConciliados(!texto ? yaConciliadosCache : yaConciliadosCache.filter(m => `${m.descripcion} ${m.descripcion_libros}`.toLowerCase().includes(texto)));
   }
 
   function renderizarYaConciliados(movimientos) {
-    const contConciliados = document.getElementById('listaYaConciliados');
-    contConciliados.innerHTML = !movimientos || movimientos.length === 0 ? '<div class="cargando">Todavía no has conciliado nada en este rango.</div>' :
+    const cont = document.getElementById('listaYaConciliados');
+    if (!cont) return;
+    cont.innerHTML = !movimientos || movimientos.length === 0 ? '<div class="cargando">Todavía no hay movimientos conciliados en este rango.</div>' :
       movimientos.map(m => `
         <div class="resumen-fila">
-          <span>${new Date(m.fecha + 'T00:00:00').toLocaleDateString('es-CO')} — ${escaparHtml(m.descripcion)}</span>
-          <span><strong>${formatearMoneda(m.valor)}</strong> <button class="btn-mini desactivar" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => confirmarDesconciliarMovimiento('${m.id}'))">Deshacer</button></span>
-        </div>
-      `).join('');
+          <span>${new Date(m.fecha + 'T00:00:00').toLocaleDateString('es-CO')} — ${escaparHtml(m.descripcion)}<span style="font-size:11px;opacity:0.6;"> ↔ asiento #${m.numero_asiento}</span></span>
+          <span><strong style="color:${m.tipo === 'entrada' ? 'var(--verde-exito)' : 'var(--rojo-error)'};">${m.tipo === 'entrada' ? '+' : '−'}${formatearMoneda(m.valor)}</strong> <button class="btn-mini desactivar" style="flex:0 0 auto;padding:4px 10px;" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => confirmarDesconciliarMovimiento('${m.id}'))">Deshacer</button></span>
+        </div>`).join('');
   }
 
-  function exportarConciliadosExcel() {
-    if (!yaConciliadosCache || yaConciliadosCache.length === 0) { mostrarMensaje('mensajeConciliacion', 'No hay movimientos conciliados para exportar en este rango.', 'error'); return; }
+  function exportarConciliacionExcel() {
+    const x = cacheConciliacion;
+    if (!x) return;
+    const r = x.resumen, d = x.datos;
+    const firmado = (m) => (m.tipo === 'entrada' ? 1 : -1) * Number(m.valor);
     const filas = [
-      ['Lana Rosa Crochet — Movimientos Conciliados'],
-      [`Desde: ${document.getElementById('concFiltroDesde').value || 'Inicio'}  Hasta: ${document.getElementById('concFiltroHasta').value || 'Hoy'}`],
+      [`Lana Rosa Crochet — Conciliación bancaria: ${x.cuenta.nombre} (${x.cuenta.entidad})`],
+      [`Cuenta contable: ${x.cuenta.codigo_puc} ${x.cuenta.nombre_puc}`],
+      [`Movimientos del ${x.desde} al ${x.hasta} · Fecha de corte: ${x.hasta}`],
       [],
-      ['Fecha', 'Descripción', 'Tipo', 'Valor'],
-      ...yaConciliadosCache.map(m => [m.fecha, m.descripcion || '', m.tipo === 'entrada' ? 'Entrada' : 'Salida', Number(m.valor)])
+      ['Saldo según extracto', Number(r.saldo_banco)],
+      ['Saldo según libros', Number(r.saldo_libros)],
+      ['Diferencia', Number(r.diferencia)],
+      ['Movimientos del extracto que no están en libros', Number(r.extracto_sin_conciliar)],
+      ['Registros en libros que no aparecen en el extracto', Number(r.libros_sin_conciliar)],
+      ['Diferencia sin explicar', Number(r.no_explicada)],
+      [],
+      ['EXTRACTO SIN CONCILIAR'], ['Fecha', 'Descripción', 'Referencia', 'Valor'],
+      ...d.extracto_sin_conciliar.map(m => [m.fecha, m.descripcion, m.referencia || '', firmado(m)]),
+      [],
+      ['LIBROS SIN CONCILIAR'], ['Fecha', 'Descripción', 'Asiento', 'Valor'],
+      ...d.libros_sin_conciliar.map(a => [a.fecha, a.descripcion || '', a.numero_asiento, firmado(a)]),
+      [],
+      ['CONCILIADOS'], ['Fecha extracto', 'Descripción extracto', 'Fecha libros', 'Asiento', 'Valor'],
+      ...d.conciliados.map(m => [m.fecha, m.descripcion, m.fecha_libros, m.numero_asiento, firmado(m)]),
     ];
-    const hoja = XLSX.utils.aoa_to_sheet(filas);
     const libro = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(libro, hoja, 'Conciliados');
-    XLSX.writeFile(libro, `LanaRosa_Conciliados_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    XLSX.utils.book_append_sheet(libro, XLSX.utils.aoa_to_sheet(filas), 'Conciliación');
+    XLSX.writeFile(libro, `LanaRosa_Conciliacion_${x.cuenta.nombre.replace(/[^\w]+/g, '_')}_${x.hasta}.xlsx`);
   }
 
   function seleccionarMovimientoExtracto(id) {
     movimientoExtractoSeleccionado = movimientoExtractoSeleccionado === id ? null : id;
-    cargarPantallaConciliacionCompleta();
+    cargarConciliacionCuenta();
   }
 
   async function intentarConciliar(apunteId) {
     if (!movimientoExtractoSeleccionado) {
-      mostrarMensaje('mensajeConciliacion', 'Primero selecciona (toca) el movimiento del extracto bancario, del lado izquierdo, y luego toca aquí el registro del sistema con el que coincide.', 'error');
+      mostrarMensaje('mensajeConciliacion', 'Primero toca el movimiento del extracto (izquierda) y luego el registro de libros con el que coincide.', 'error');
       return;
     }
-    const resp = await fetch(WORKER_URL + '/api/pos/conciliacion/conciliar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ movimiento_id: movimientoExtractoSeleccionado, apunte_contable_id: apunteId })
-    });
-    if (!resp.ok) { mostrarMensaje('mensajeConciliacion', 'No se pudo conciliar.', 'error'); return; }
+    const { error } = await supabaseClient.rpc('fn_conc_conciliar', { p_movimiento_id: movimientoExtractoSeleccionado, p_apunte_id: apunteId });
+    if (error) { mostrarMensaje('mensajeConciliacion', error.message, 'error'); return; }
     movimientoExtractoSeleccionado = null;
-    await cargarPantallaConciliacionCompleta();
+    ocultarMensaje('mensajeConciliacion');
+    await cargarBancos();
   }
 
   async function confirmarDesconciliarMovimiento(movimientoId) {
-    const resp = await fetch(WORKER_URL + '/api/pos/conciliacion/desconciliar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ movimiento_id: movimientoId })
-    });
-    if (!resp.ok) { mostrarMensaje('mensajeConciliacion', 'No se pudo deshacer.', 'error'); return; }
-    await cargarPantallaConciliacionCompleta();
+    const { error } = await supabaseClient.rpc('fn_conc_desconciliar', { p_movimiento_id: movimientoId });
+    if (error) { mostrarMensaje('mensajeConciliacion', 'No se pudo deshacer: ' + error.message, 'error'); return; }
+    await cargarBancos();
   }
 
   async function eliminarMovimientoExtracto(id) {
-    const resp = await fetch(WORKER_URL + '/api/pos/conciliacion/movimientos/eliminar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ id })
-    });
-    if (!resp.ok) { mostrarMensaje('mensajeConciliacion', 'No se pudo eliminar.', 'error'); return; }
-    await cargarPantallaConciliacionCompleta();
+    const { error } = await supabaseClient.rpc('fn_conc_eliminar', { p_movimiento_id: id });
+    if (error) { mostrarMensaje('mensajeConciliacion', 'No se pudo eliminar: ' + error.message, 'error'); return; }
+    await cargarBancos();
   }
 
 
