@@ -1708,7 +1708,7 @@
   </div>
   <div class="mensaje" id="mensajeOrdenesProd"></div>
 
-  <div class="panel" style="max-width:none;max-height:none;margin-bottom:20px;">
+  <div class="panel no-exportar" style="max-width:none;max-height:none;margin-bottom:20px;">
     <h2>+ Abrir orden de producción</h2>
     <div class="grilla-2" style="gap:12px;">
       <div>
@@ -1791,6 +1791,7 @@
       <div><label for="feEmDesde" style="font-size:11px;">Emitidas desde</label><input type="date" id="feEmDesde" onchange="cargarFeEmitidas()" style="padding:9px 10px;"></div>
       <div><label for="feEmHasta" style="font-size:11px;">Hasta</label><input type="date" id="feEmHasta" onchange="cargarFeEmitidas()" style="padding:9px 10px;"></div>
       <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarFeEmitidasExcel()">📥 Excel</button>
+<button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirSeccion('subtabFeEmitidas', 'Facturas electrónicas')">🖨️ PDF</button>
     </div>
     <div id="feListaEmitidas"><div class="cargando">Cargando...</div></div>
   </div>
@@ -2344,6 +2345,7 @@
         <select id="bimAnio" onchange="cargarIngresosBimestralesRST()" style="padding:9px 10px;"></select>
       </div>
       <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarIngresosBimestralesExcel()">📥 Excel</button>
+<button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirSeccion('subtabFinBimestral', 'Ingresos bimestrales')">🖨️ PDF</button>
     </div>
 
     <div class="panel" style="max-width:none;max-height:none;">
@@ -2664,6 +2666,7 @@
           <select id="consolidadoAnio" onchange="cargarConsolidadoNomina()"></select>
         </div>
         <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarConsolidadoExcel()">📥 Exportar a Excel</button>
+<button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirSeccion('subtabNominaReportes', 'Reportes de nómina')">🖨️ PDF</button>
       </div>
       <div id="resumenConsolidadoNomina"></div>
       <div id="listaConsolidadoNomina" style="margin-top:14px;"><div class="cargando">Cargando...</div></div>
@@ -3507,6 +3510,7 @@
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
         <input type="text" id="buscarActivoFijo" placeholder="🔍 Nombre, categoría o N° de recibo..." oninput="filtrarActivosFijos()" style="flex:1;min-width:200px;">
         <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarActivosFijosExcel()">📥 Excel</button>
+<button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirSeccion('subtabAfListado', 'Activos fijos')">🖨️ PDF</button>
       </div>
       <div class="mensaje" id="mensajeActivosFijosListado"></div>
       <div id="listaActivosFijos"><div class="cargando">Cargando...</div></div>
@@ -3554,7 +3558,7 @@
   </div>
 
   <div id="subtabAfDepreciacion" data-subtab-grupo="activosFijos" class="oculto">
-    <div class="panel" style="max-width:520px;">
+    <div class="panel no-exportar" style="max-width:520px;">
       <h2>Registrar depreciación del mes</h2>
       <div class="subtitulo">Calcula y contabiliza automáticamente la depreciación de TODOS los activos activos para el período elegido — se puede correr varias veces sin duplicar, y se pone al día sola si llevas meses sin registrarla.</div>
       <label for="afPeriodoDepreciacion">Período (mes)</label>
@@ -3989,6 +3993,7 @@
   <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
     <input type="text" id="buscarHonorariosTejedoras" placeholder="🔍 Radicado, producto o tejedora..." oninput="filtrarHonorariosTejedoras()" style="flex:1;">
     <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarHonorariosTejedorasExcel()">📥 Excel</button>
+<button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirSeccion('pantallaHonorariosTejedoras', 'Honorarios de tejedoras')">🖨️ PDF</button>
   </div>
   <div class="filtro-tipo" style="margin-bottom:16px;">
     <button class="chip-filtro activo" data-filtro-hon="pendientes" onclick="cambiarFiltroHonorarios('pendientes', this)">Pendientes</button>
@@ -4032,7 +4037,7 @@
     </div>
 
     <div class="grilla-2" style="margin-bottom:20px;">
-      <div class="panel" style="max-height:none;">
+      <div class="panel no-exportar" style="max-height:none;">
         <h2>Registrar pago de anticipo bimestral</h2>
         <div class="subtitulo">Recibo electrónico SIMPLE (formulario 2593). Genera el asiento: débito 1355 Anticipo de impuestos, crédito caja o bancos.</div>
         <label for="ciAntBimestre">Bimestre</label>
@@ -4110,7 +4115,7 @@
         </div>
         <div id="ciPucLista"><div class="cargando">Cargando...</div></div>
       </div>
-      <div class="panel" style="max-height:none;">
+      <div class="panel no-exportar" style="max-height:none;">
         <h2>Nueva subcuenta o auxiliar</h2>
         <div class="subtitulo">Subcuenta: 6 dígitos (ej. 530505 bajo 5305). Auxiliar: 8 dígitos (ej. 53050501 bajo 530505). Solo las cuentas del último nivel reciben movimientos.</div>
         <label for="ciPucPadre">Cuenta padre (código)</label>
@@ -4178,6 +4183,7 @@
         <button class="btn-mini editar" style="flex:0 0 auto;padding:8px 12px;" onclick="guardarTopeExogena()">Guardar tope</button></div>
       </div>
       <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarExogenaExcel()">📥 Excel para el prevalidador</button>
+<button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirSeccion('subtabCiExogena', 'Información exógena')">🖨️ PDF</button>
     </div>
     <div style="background:var(--tinte-azul);border-radius:var(--radius-md);padding:10px 14px;margin-bottom:16px;font-size:12.5px;line-height:1.5;">
       ℹ️ La obligación de presentar exógena la define cada año una resolución de la DIAN, según topes de ingresos. Con los ingresos actuales de Lana Rosa es probable que no estés obligada, pero tu contador debe confirmarlo con la resolución vigente. El Excel sale con las columnas de los prevalidadores de la DIAN para copiarlas allí; verifica la versión del prevalidador antes de cargar.
@@ -4279,6 +4285,7 @@
       <div><label for="lmFechaDesde" style="font-size:11px;">Desde</label><input type="date" id="lmFechaDesde" onchange="cargarLibroMayor()" style="padding:9px 10px;"></div>
       <div><label for="lmFechaHasta" style="font-size:11px;">Hasta</label><input type="date" id="lmFechaHasta" onchange="cargarLibroMayor()" style="padding:9px 10px;"></div>
       <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarLibroMayorExcel()">📥 Excel</button>
+<button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirSeccion('subtabLibroMayor', 'Libro mayor')">🖨️ PDF</button>
     </div>
     <div id="contenidoLibroMayor"><div class="cargando">Cargando...</div></div>
   </div>
@@ -4307,6 +4314,7 @@
       <div><label for="laFechaDesde" style="font-size:11px;">Desde</label><input type="date" id="laFechaDesde" onchange="cargarLibroAuxiliar()" style="padding:9px 10px;"></div>
       <div><label for="laFechaHasta" style="font-size:11px;">Hasta</label><input type="date" id="laFechaHasta" onchange="cargarLibroAuxiliar()" style="padding:9px 10px;"></div>
       <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarLibroAuxiliarExcel()">📥 Excel</button>
+<button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirSeccion('subtabLibroAuxiliar', 'Libro auxiliar')">🖨️ PDF</button>
     </div>
     <div class="mensaje" id="mensajeLibroAuxiliar"></div>
     <div id="contenidoLibroAuxiliar"><div class="cargando">Selecciona una cuenta o un tercero para ver su historial.</div></div>
@@ -4317,7 +4325,7 @@
       ℹ️ El cierre contable traslada la utilidad (o pérdida) del período que elijas a la cuenta de Utilidades acumuladas, y deja las cuentas de ingresos, gastos y costos en cero para que el siguiente período empiece limpio. <strong>No se puede deshacer</strong> — considera aplicar el bloqueo de fecha justo después, en Configuración → Apariencia, para proteger el período ya cerrado.
     </div>
 
-    <div class="panel" style="max-width:480px;">
+    <div class="panel no-exportar" style="max-width:480px;">
       <h2>+ Realizar cierre</h2>
       <label for="cierreTipo">Tipo</label>
       <select id="cierreTipo">
@@ -4353,7 +4361,7 @@
 
   <div id="subtabRevisionContador" data-subtab-grupo="estadosFin" class="oculto">
     <div class="grilla-2">
-      <div class="panel">
+      <div class="panel no-exportar">
         <h2>Registrar revisión</h2>
         <div class="subtitulo">Cuando tu contador revise los estados financieros de un período, regístralo aquí — queda como constancia visible dentro del sistema.</div>
         <label for="revPeriodoDesde">Período — desde</label>
@@ -4727,7 +4735,7 @@
     <div class="subtitulo">Revisa el documento y marca cada casilla según lo que veas. El sistema aplica automáticamente las reglas del Instructivo de Pagos y del Manual Financiero.</div>
   </div>
   <div class="grilla-2">
-    <div class="panel">
+    <div class="panel no-exportar">
       <h2>+ Validar nuevo documento</h2>
       <label for="feDocTipo">Tipo de documento</label>
       <select id="feDocTipo" onchange="renderizarChecklistFe()">
@@ -4772,7 +4780,7 @@
 
   <div id="panelSeguimientoMensualFe" class="panel" style="max-width:none;"></div>
 
-  <div class="panel" style="max-width:560px;">
+  <div class="panel no-exportar" style="max-width:560px;">
     <h2>+ Agregar indicador</h2>
     <label for="feIndNombre">Nombre</label>
     <input type="text" id="feIndNombre" placeholder="Ej: Empleos generados">
@@ -7861,7 +7869,7 @@
     cont.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
         <div class="fredoka" style="font-size:13px;color:var(--rosa-principal);">Historial Kardex — ${escaparHtml(nombreProducto)}</div>
-        <button type="button" class="btn-mini editar" onclick="exportarKardexExcel('${escaparHtml(nombreProducto)}')">📥 Excel</button>
+        <span style="display:flex;gap:6px;"><button type="button" class="btn-mini editar" onclick="exportarKardexExcel('${escaparHtml(nombreProducto)}')">📥 Excel</button><button type="button" class="btn-mini editar" onclick="imprimirSeccion('kardexProducto-${itemId}', 'Kardex de ${escaparHtml(nombreProducto).replace(/'/g, '')}')">🖨️ PDF</button></span>
       </div>
       <div style="background:#fff;border-radius:10px;overflow:hidden;border:1px solid #f1e2ec;">
         <table style="width:100%;border-collapse:collapse;">
@@ -18111,7 +18119,7 @@
     if (!c) { cont.innerHTML = ''; return; }
 
     const edicion = `
-      <details style="margin-top:6px;">
+      <details class="no-exportar" style="margin-top:6px;">
         <summary style="cursor:pointer;font-size:12.5px;">✏️ Editar datos de la cuenta</summary>
         <div class="grilla-2" style="gap:10px;margin-top:8px;">
           <div><label>Nombre</label><input type="text" id="bcEdNombre" value="${escaparHtml(c.nombre)}"></div>
@@ -18180,6 +18188,7 @@
           <div><label for="concFiltroHasta" style="font-size:11px;">Hasta (fecha de corte)</label><input type="date" id="concFiltroHasta" value="${hasta}" onchange="cargarConciliacionCuenta()" style="padding:9px 10px;"></div>
           <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="autoconciliarCuenta('${c.id}')">⚡ Conciliar automáticamente</button>
           <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarConciliacionExcel()">📥 Excel</button>
+<button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirSeccion('bancosConciliacion', 'Conciliación bancaria')">🖨️ PDF</button>
         </div>
 
         <div class="grilla-3" style="gap:12px;">
@@ -18195,7 +18204,7 @@
         </div>
         ${Math.abs(noExplicada) >= 1 ? '<div style="font-size:12px;color:var(--rojo-error);margin-top:6px;">Hay una diferencia que no explican los movimientos pendientes: revisa que el extracto esté completo hasta la fecha de corte.</div>' : ''}
 
-        <div class="grilla-2" style="gap:16px;margin-top:18px;">
+        <div class="grilla-2 no-exportar" style="gap:16px;margin-top:18px;">
           <div>
             <h2 style="font-size:14px;">+ Movimiento del extracto</h2>
             <div class="grilla-2" style="gap:8px;">
@@ -18216,7 +18225,7 @@
           </div>
         </div>
 
-        <div style="font-size:12px;opacity:0.75;margin-top:16px;">Para conciliar a mano: toca un movimiento del extracto (izquierda) y luego el registro de libros que le corresponde (derecha). Deben tener el mismo valor.</div>
+        <div class="no-exportar" style="font-size:12px;opacity:0.75;margin-top:16px;">Para conciliar a mano: toca un movimiento del extracto (izquierda) y luego el registro de libros que le corresponde (derecha). Deben tener el mismo valor.</div>
         <div class="grilla-2" style="gap:16px;margin-top:8px;">
           <div>
             <h2 style="font-size:14px;">📄 Extracto sin conciliar (${d.extracto_sin_conciliar.length})</h2>
@@ -21018,6 +21027,215 @@
     XLSX.writeFile(libro, `LanaRosa_LibroAuxiliar_${new Date().toISOString().slice(0, 10)}.xlsx`);
   }
 
+
+  // ============================================================================
+  // EXPORTACIÓN GENERAL DE INFORMES (Excel y PDF de cualquier sección)
+  // ============================================================================
+  // Recorre lo que se ve en pantalla: tablas, listas (.tabla-lista), filas de
+  // resumen y títulos. Los montos ("$1.234.567", "−$5.000") salen como números.
+  // Texto visible de un elemento sin los botones que tenga adentro (ej. "Deshacer").
+  function textoVisibleInforme(el) {
+    if (el.nodeType === 3) return el.textContent;
+    if (el.nodeType !== 1 || el.tagName === 'BUTTON' || !elementoVisibleInforme(el)) return '';
+    if (!el.querySelector('button')) return el.innerText || el.textContent || '';
+    return [...el.childNodes].map(textoVisibleInforme).join(' ');
+  }
+
+  function textoCeldaInforme(el) {
+    const campo = el.matches('input, select, textarea') ? el : el.querySelector('input:not([type=hidden]):not([type=checkbox]), select, textarea');
+    if (campo && !campo.closest('.oculto')) return campo.tagName === 'SELECT' ? (campo.selectedOptions[0] || {}).textContent || '' : campo.value;
+    return textoVisibleInforme(el).replace(/[ \t]+/g, ' ').replace(/\s+\n/g, '\n').trim();
+  }
+
+  function valorCeldaInforme(texto) {
+    const t = String(texto || '').replace(/−/g, '-').replace(/^\+\s*/, '').trim();
+    if (/^-?\s*\$\s*[\d.,]+$/.test(t) || /^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(t) || /^-?\d+(,\d+)?$/.test(t)) {
+      const n = numeroDeTexto(t);
+      if (Number.isFinite(n)) return n;
+    }
+    return t;
+  }
+
+  // Un campo de fecha es filtro del informe si lo recarga al cambiar o si es un rango/corte.
+  function esFiltroDeInforme(campo) {
+    return ['date', 'month'].includes(campo.type) && (campo.hasAttribute('onchange') || /desde|hasta|corte/i.test(campo.id || ''));
+  }
+
+  function elementoVisibleInforme(el) {
+    if (el.classList.contains('oculto') || el.classList.contains('barra-exportar')) return false;
+    const e = getComputedStyle(el);
+    return e.display !== 'none' && e.visibility !== 'hidden';
+  }
+
+  function filasDeInforme(el, filas) {
+    if (!el || el.nodeType !== 1 || !elementoVisibleInforme(el)) return;
+    const tag = el.tagName;
+    if (['BUTTON', 'SCRIPT', 'STYLE', 'CANVAS', 'svg', 'SVG', 'IMG', 'DATALIST'].includes(tag)) return;
+    if (el.matches('.filtro-tipo, .chip-filtro, .no-exportar, .mensaje')) return;
+    if (tag === 'DETAILS' && !el.open) return;
+    if (tag === 'TABLE') {
+      el.querySelectorAll('tr').forEach(tr => filas.push([...tr.children].map(c => valorCeldaInforme(textoCeldaInforme(c)))));
+      filas.push([]);
+      return;
+    }
+    if (el.matches('.tabla-lista-header, .tabla-lista-fila, .resumen-fila')) {
+      filas.push([...el.children].filter(elementoVisibleInforme).map(c => valorCeldaInforme(textoCeldaInforme(c))));
+      return;
+    }
+    if (/^H[1-4]$/.test(tag)) { filas.push([]); filas.push([el.innerText.trim()]); return; }
+    if (tag === 'LABEL') return; // las etiquetas se escriben junto a su campo
+    if (el.matches('input, select, textarea')) {
+      // Fuera de una tabla solo se exportan los filtros de fecha (dan el contexto del informe);
+      // los demás campos son formularios de captura.
+      if (!esFiltroDeInforme(el)) return;
+      const etiqueta = el.id ? document.querySelector(`label[for="${el.id}"]`) : null;
+      const valor = textoCeldaInforme(el);
+      if (valor) filas.push([etiqueta ? etiqueta.innerText.trim() : '', valorCeldaInforme(valor)]);
+      return;
+    }
+    const hijos = [...el.children].filter(elementoVisibleInforme);
+    const enLinea = hijos.every(h => ['SPAN', 'STRONG', 'EM', 'B', 'I', 'SMALL', 'A', 'BR'].includes(h.tagName));
+    if (!hijos.length || enLinea) {
+      const partes = hijos.length > 1 && hijos.every(h => h.tagName !== 'BR')
+        ? hijos.map(h => textoCeldaInforme(h)).filter(Boolean)
+        : [textoCeldaInforme(el)].filter(Boolean);
+      if (partes.length) filas.push(partes.map(valorCeldaInforme));
+      return;
+    }
+    hijos.forEach(h => filasDeInforme(h, filas));
+  }
+
+  function nombreArchivoInforme(titulo, extension) {
+    return `LanaRosa_${titulo.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w]+/g, '_').replace(/^_|_$/g, '')}_${fechaLocalIso()}.${extension}`;
+  }
+
+  function exportarSeccionExcel(ids, titulo) {
+    const lista = (Array.isArray(ids) ? ids : [ids]).map(id => document.getElementById(id)).filter(Boolean);
+    const filas = [[`Lana Rosa Crochet — ${titulo}`], [`Generado: ${new Date().toLocaleString('es-CO')}`], []];
+    lista.forEach(el => filasDeInforme(el, filas));
+    const limpias = filas.filter((f, i) => f.length || (filas[i - 1] && filas[i - 1].length));
+    if (limpias.length <= 3) { alert('No hay datos visibles para exportar. Genera o carga el informe primero.'); return; }
+    const hoja = XLSX.utils.aoa_to_sheet(limpias);
+    const ancho = Math.max(...limpias.map(f => f.length));
+    hoja['!cols'] = Array.from({ length: ancho }, (_, c) => ({ wch: Math.min(60, Math.max(10, ...limpias.map(f => String(f[c] == null ? '' : f[c]).length + 2))) }));
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, titulo.replace(/[\\/?*[\]:]/g, '').slice(0, 31) || 'Informe');
+    XLSX.writeFile(libro, nombreArchivoInforme(titulo, 'xlsx'));
+  }
+
+  // Abre el informe con los mismos estilos de la app, listo para imprimir o "Guardar como PDF".
+  function imprimirSeccion(ids, titulo) {
+    const lista = (Array.isArray(ids) ? ids : [ids]).map(id => document.getElementById(id)).filter(Boolean);
+    if (!lista.length) return;
+    const estilos = [...document.querySelectorAll('style')].map(s => s.textContent).join('\n');
+    const cuerpo = lista.map(el => {
+      const copia = el.cloneNode(true);
+      copia.classList.remove('oculto');
+      const originales = el.querySelectorAll('canvas');
+      copia.querySelectorAll('canvas').forEach((cv, i) => {
+        try { const img = document.createElement('img'); img.src = originales[i].toDataURL('image/png'); img.style.maxWidth = '100%'; cv.replaceWith(img); } catch (e) { cv.remove(); }
+      });
+      // Secciones cerradas, mensajes y formularios de captura no hacen parte del informe
+      const detallesOrig = el.querySelectorAll('details');
+      copia.querySelectorAll('details').forEach((d, i) => { if (!detallesOrig[i] || !detallesOrig[i].open) d.setAttribute('data-quitar', '1'); });
+      // Los campos de tablas y los filtros de fecha se imprimen como texto con su valor actual
+      const camposOrig = el.querySelectorAll('input, select, textarea');
+      copia.querySelectorAll('input, select, textarea').forEach((c, i) => {
+        const o = camposOrig[i];
+        const enTabla = o && o.closest('table, .tabla-lista-fila');
+        if (!o || o.type === 'hidden' || o.type === 'file' || (!enTabla && !esFiltroDeInforme(o))) {
+          if (o && o.id) copia.querySelectorAll(`label[for="${o.id}"]`).forEach(l => l.remove());
+          const envoltura = c.closest('label');
+          (envoltura || c).remove();
+          return;
+        }
+        const span = document.createElement('span');
+        span.textContent = o.type === 'checkbox' ? (o.checked ? '☑' : '☐') : (o.tagName === 'SELECT' ? ((o.selectedOptions[0] || {}).textContent || '') : o.value);
+        span.style.fontWeight = '600';
+        span.setAttribute('data-valor', '1');
+        c.replaceWith(span);
+      });
+      copia.querySelectorAll('.barra-exportar, button, .filtro-tipo, datalist, .no-exportar, .mensaje, [data-quitar]').forEach(b => b.remove());
+      copia.querySelectorAll('label').forEach(l => {
+        const siguiente = l.nextElementSibling;
+        const conValor = l.querySelector('span[data-valor]') || (siguiente && siguiente.matches('span[data-valor]'));
+        if (!conValor) l.remove();
+      });
+      return copia.outerHTML;
+    }).join('');
+    const ventana = window.open('', '_blank');
+    if (!ventana) { alert('El navegador bloqueó la ventana de impresión: permite las ventanas emergentes para este sitio.'); return; }
+    ventana.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>${escaparHtml(titulo)} — Lana Rosa Crochet</title>
+      <style>${estilos}</style>
+      <style>
+        html, body { height: auto !important; overflow: visible !important; background: #fff !important; display: block !important; }
+        body { padding: 24px !important; margin: 0 !important; }
+        .oculto { display: none !important; }
+        .contenido, [data-subtab-grupo] { display: block !important; margin: 0 !important; padding: 0 !important; }
+        .panel { max-height: none !important; overflow: visible !important; box-shadow: none !important; }
+        .page-header { background: none !important; padding: 0 0 8px !important; }
+        .encabezado-informe h1 { color: #d8017c; font-size: 20px; margin: 0 0 2px; }
+        .encabezado-informe div { font-size: 12px; color: #666; margin-bottom: 18px; }
+        @media print {
+          body { padding: 0 !important; }
+          tr, .tabla-lista-fila, .resumen-fila, .kpi-card-nuevo { break-inside: avoid; }
+          @page { margin: 14mm; }
+        }
+      </style></head>
+      <body>
+        <div class="encabezado-informe"><h1>Lana Rosa Crochet — ${escaparHtml(titulo)}</h1><div>Generado el ${new Date().toLocaleString('es-CO')}</div></div>
+        ${cuerpo}
+      </body></html>`);
+    ventana.document.close();
+    ventana.focus();
+    setTimeout(() => ventana.print(), 500);
+  }
+
+  function botonesExportarHtml(idSeccion, titulo) {
+    const t = String(titulo).replace(/'/g, "\\'");
+    return `<button class="btn-mini editar" style="flex:0 0 auto;padding:7px 12px;" onclick="exportarSeccionExcel('${idSeccion}', '${t}')">📥 Excel</button>
+            <button class="btn-mini editar" style="flex:0 0 auto;padding:7px 12px;" onclick="imprimirSeccion('${idSeccion}', '${t}')">🖨️ PDF</button>`;
+  }
+
+  // Informes que no tenían Excel ni PDF: se les agrega la barra al cargar la app.
+  const INFORMES_CON_EXPORTACION = [
+    ['pantallaDashboardContable', 'Dashboard contable'],
+    ['subtabCierreContable', 'Cierres contables'],
+    ['subtabRevisionContador', 'Revisiones del contador'],
+    ['subtabCiSimple', 'Impuesto SIMPLE'],
+    ['subtabCiPuc', 'Plan de cuentas'],
+    ['subtabCiCostos', 'Cierre de costos'],
+    ['subtabCiBitacora', 'Bitácora contable'],
+    ['subtabFinConsolidado', 'Informe consolidado de ventas'],
+    ['subtabFinIndicadores', 'Indicadores de ventas'],
+    ['subtabFinRanking', 'Ranking de ventas'],
+    ['subtabCosteoAmigurumis', 'Costeo real de productos'],
+    ['subtabCosteoClases', 'Costeo real de cursos y clases'],
+    ['subtabPresupuestoReal', 'Presupuesto de la empresa'],
+    ['subtabPresupuestoSimulacion', 'Simulación de presupuesto'],
+    ['subtabAfDepreciacion', 'Depreciación de activos fijos'],
+    ['subtabNominaProvisiones', 'Provisiones de nómina'],
+    ['pantallaFeIndicadores', 'Fondo Emprender — indicadores'],
+    ['pantallaFePresupuesto', 'Fondo Emprender — presupuesto'],
+    ['pantallaFeDocumentos', 'Fondo Emprender — documentos'],
+    ['subtabFePendientes', 'Ventas pendientes por facturar'],
+    ['subtabFeNomina', 'Nómina electrónica'],
+    ['pantallaOrdenesProduccion', 'Órdenes de producción'],
+  ];
+
+  function agregarBarrasExportacion() {
+    INFORMES_CON_EXPORTACION.forEach(([id, titulo]) => {
+      const seccion = document.getElementById(id);
+      if (!seccion || seccion.querySelector(':scope > .barra-exportar')) return;
+      const barra = document.createElement('div');
+      barra.className = 'barra-exportar';
+      barra.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-bottom:10px;';
+      barra.innerHTML = botonesExportarHtml(id, titulo);
+      const encabezado = seccion.querySelector(':scope > .page-header');
+      if (encabezado) encabezado.after(barra); else seccion.prepend(barra);
+    });
+  }
+  agregarBarrasExportacion();
 
   function imprimirEstadoFinanciero(idContenido, titulo) {
     const contenidoHtml = document.getElementById(idContenido).innerHTML;
