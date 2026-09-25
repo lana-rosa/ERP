@@ -9357,6 +9357,7 @@
   let filtroOrdenesProduccion = 'en_proceso';
   let materialesOrdenCache = { Taller: [], Tienda: [] };
   let ordenAccionAbierta = null; // { id, accion }
+  let ordenRecienAbiertaId = null;
 
   const ESTADOS_ORDEN_PRODUCCION = {
     en_proceso: ['🧶 En proceso', 'background:var(--tinte-ambar);color:var(--ambar);'],
@@ -9435,8 +9436,9 @@
     document.getElementById('opDescripcion').value = '';
     document.getElementById('opObservaciones').value = '';
     document.getElementById('opCantidad').value = '1';
-    mostrarMensaje('mensajeOrdenesProd', '✅ Orden abierta. Ahora entrégale el material que se va a usar.', 'exito');
+    mostrarMensaje('mensajeOrdenesProd', '✅ Orden abierta. En la tarjeta resaltada de la orden, elige el material, escribe la cantidad y pulsa "Entregar".', 'exito');
     ordenAccionAbierta = { id: data, accion: 'entregar' };
+    ordenRecienAbiertaId = data;
     const chip = document.querySelector('[data-filtro-op="en_proceso"]');
     filtrarOrdenesProduccion('en_proceso', chip);
   }
@@ -9463,6 +9465,15 @@
       return;
     }
     cont.innerHTML = ordenesProduccionCache.map(tarjetaOrdenProduccion).join('');
+    const recien = ordenRecienAbiertaId && document.getElementById('op-' + ordenRecienAbiertaId);
+    if (recien) {
+      ordenRecienAbiertaId = null;
+      recien.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      recien.style.boxShadow = '0 0 0 3px var(--rosa-principal)';
+      setTimeout(() => { recien.style.boxShadow = ''; }, 2500);
+      const cantidad = document.getElementById('opEntCant-' + recien.id.slice(3));
+      if (cantidad) cantidad.focus({ preventScroll: true });
+    }
   }
 
   function tarjetaOrdenProduccion(o) {
@@ -15538,8 +15549,9 @@
       return;
     }
     await actualizarEstadoElaboracion(solicitudId, 'en_proceso');
-    mostrarMensaje('mensajeOrdenesProd', '✅ Orden abierta para el pedido ' + (pedido.consecutivo || '') + '. Ahora entrégale el material que se va a usar.', 'exito');
+    mostrarMensaje('mensajeOrdenesProd', '✅ Orden abierta para el pedido ' + (pedido.consecutivo || '') + '. En la tarjeta resaltada de la orden, elige el material, escribe la cantidad y pulsa "Entregar".', 'exito');
     ordenAccionAbierta = { id: ordenId, accion: 'entregar' };
+    ordenRecienAbiertaId = ordenId;
     filtrarOrdenesProduccion('en_proceso', document.querySelector('[data-filtro-op="en_proceso"]'));
   }
 
@@ -15601,8 +15613,9 @@
       mostrarMensaje('mensajePedidosCrmSinOrden', 'No se pudo abrir la orden: ' + error.message, 'error');
       return;
     }
-    mostrarMensaje('mensajeOrdenesProd', '✅ Orden abierta para el pedido ' + numero + '. Ahora entrégale el material que se va a usar.', 'exito');
+    mostrarMensaje('mensajeOrdenesProd', '✅ Orden abierta para el pedido ' + numero + '. En la tarjeta resaltada de la orden, elige el material, escribe la cantidad y pulsa "Entregar".', 'exito');
     ordenAccionAbierta = { id: ordenId, accion: 'entregar' };
+    ordenRecienAbiertaId = ordenId;
     filtrarOrdenesProduccion('en_proceso', document.querySelector('[data-filtro-op="en_proceso"]'));
     await cargarPedidosCrmSinOrden();
   }
