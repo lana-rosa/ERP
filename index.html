@@ -7332,8 +7332,9 @@
           <div style="font-size:11.5px;opacity:0.7;margin-top:6px;">La prueba se envía al mismo correo remitente. Si llega, la conexión quedó bien.</div>
         </div>
         <div class="panel" style="max-width:none;max-height:none;margin:0;font-size:13px;line-height:1.65;">
-          <h2 style="margin-top:0;">🗺️ Cómo conectarlo (una sola vez)</h2>
-          <ol style="padding-left:18px;margin:0;">
+          <details ${(c.activo && c.verificado_en) ? '' : 'open'}>
+          <summary style="cursor:pointer;font-weight:700;font-size:15px;">🗺️ Cómo conectarlo (una sola vez)${(c.activo && c.verificado_en) ? ' <span style="font-weight:400;font-size:12px;opacity:0.65;">— ya está conectado, clic para ver la guía otra vez</span>' : ''}</summary>
+          <ol style="padding-left:18px;margin:10px 0 0 0;">
             <li><strong>Cuenta en Resend:</strong> entra a <a href="https://resend.com/signup" target="_blank" rel="noopener">resend.com</a> y crea una cuenta gratis (3.000 correos al mes, 100 al día — de sobra para los recibos de Lana Rosa). No hace falta tarjeta.</li>
             <li><strong>Agregar el dominio:</strong> en el panel de Resend, ve a <em>Domains → Add Domain</em> y escribe <code>lanarosacrochet.com</code>.</li>
             <li><strong>Registros DNS:</strong> Resend muestra 2 o 3 registros (SPF, DKIM y a veces DMARC). Cópialos y agrégalos donde está administrado el dominio (el sitio donde se compró o se maneja lanarosacrochet.com — GoDaddy, Namecheap, Cloudflare, etc., en la sección "DNS" o "Zona DNS"). Si no sabes dónde es, dime y te ayudo a identificarlo.</li>
@@ -7343,6 +7344,7 @@
             <li><strong>Datos y prueba:</strong> escribe a la izquierda el correo remitente (con el dominio ya verificado) y el nombre, guarda, y pulsa "Enviar correo de prueba".</li>
           </ol>
           <div style="font-size:11.5px;opacity:0.7;margin-top:10px;">Límites: el plan gratis de Resend permite 3.000 correos al mes y 100 al día; el ERP además limita a 60 por usuario y 150 en total cada 24 horas, para cuidar esa cuota. Cada envío queda registrado abajo.</div>
+          </details>
         </div>
       </div>
       <div class="panel" style="max-width:none;max-height:none;margin:18px 0 0 0;">
