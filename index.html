@@ -18262,6 +18262,7 @@
       </div>`;
     yaConciliadosCache = d.conciliados;
     renderizarYaConciliados(yaConciliadosCache);
+    crearSelectorPeriodo('concFiltroDesde', 'concFiltroHasta');
   }
 
   async function guardarEdicionCuentaBancaria(id) {
@@ -21033,6 +21034,133 @@
     XLSX.writeFile(libro, `LanaRosa_LibroAuxiliar_${new Date().toISOString().slice(0, 10)}.xlsx`);
   }
 
+
+  // ============================================================================
+  // SELECTOR DE PERÍODO (mes, bimestre, trimestre, semestre o año)
+  // ============================================================================
+  // Se agrega junto a los campos Desde/Hasta de los informes: al elegir un
+  // período llena las fechas y recarga el informe. Si las fechas se editan a
+  // mano, el selector queda en "Personalizado".
+  const MESES_ES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+  const MESES_CORTOS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+  // [desde, hasta, función de recarga si los campos no recargan solos]
+  const RANGOS_CON_SELECTOR_PERIODO = [
+    ['erFechaDesde', 'erFechaHasta'], ['fcFechaDesde', 'fcFechaHasta'], ['ldFechaDesde', 'ldFechaHasta'],
+    ['lmFechaDesde', 'lmFechaHasta'], ['bpFechaDesde', 'bpFechaHasta'], ['laFechaDesde', 'laFechaHasta'],
+    ['cierreFechaDesde', 'cierreFechaHasta'], ['revPeriodoDesde', 'revPeriodoHasta'], ['ciBitDesde', 'ciBitHasta'],
+    ['consolidadoFechaDesde', 'consolidadoFechaHasta'], ['rkFechaDesde', 'rkFechaHasta'],
+    ['repTurnoFechaDesde', 'repTurnoFechaHasta'], ['cxcFiltroFechaDesde', 'cxcFiltroFechaHasta'],
+    ['keDesde', 'keHasta', 'cargarKardexEtapas'], ['feEmDesde', 'feEmHasta'], ['feDesde', 'feHasta'],
+    ['concFiltroDesde', 'concFiltroHasta'],
+  ];
+  const CORTES_CON_SELECTOR_PERIODO = ['bgFechaCorte'];
+
+  function opcionesPeriodoHtml(modoCorte) {
+    const hoy = new Date();
+    const anio = hoy.getFullYear(), mes = hoy.getMonth();
+    const iso = (d) => fechaLocalIso(d);
+    const hoyIsoLocal = iso(hoy);
+    const finDe = (a, m) => iso(new Date(a, m + 1, 0));
+    const rango = (a, m1, a2, m2) => `${iso(new Date(a, m1, 1))}|${finDe(a2, m2)}`;
+    const ddmm = (fechaIso) => fechaIso.split('-').reverse().join('/');
+    // En modo corte (Balance General) cada opción es una fecha de corte: el último día del período.
+    const opcion = (valor, texto) => modoCorte
+      ? `<option value="${valor}">${ddmm(valor.split('|')[1])} — ${texto}</option>`
+      : `<option value="${valor}">${texto}</option>`;
+    const grupos = [];
+    grupos.push(modoCorte
+      ? `<optgroup label="Rápidos">
+          <option value="${hoyIsoLocal}|${hoyIsoLocal}">Hoy (${ddmm(hoyIsoLocal)})</option>
+          ${opcion(rango(anio, mes - 1, anio, mes - 1), 'cierre del mes anterior')}
+          ${opcion(rango(anio - 1, 0, anio - 1, 11), 'cierre del año anterior')}
+        </optgroup>`
+      : `<optgroup label="Rápidos">
+          ${opcion(`${iso(new Date(anio, mes, 1))}|${hoyIsoLocal}`, 'Este mes (hasta hoy)')}
+          ${opcion(rango(anio, mes - 1, anio, mes - 1), 'Mes anterior')}
+          ${opcion(`${iso(new Date(anio, mes - 2, 1))}|${hoyIsoLocal}`, 'Últimos 3 meses (hasta hoy)')}
+          ${opcion(`${iso(new Date(anio, 0, 1))}|${hoyIsoLocal}`, 'Este año (hasta hoy)')}
+          ${opcion(rango(anio - 1, 0, anio - 1, 11), 'Año anterior')}
+        </optgroup>`);
+    const meses = [];
+    for (let i = 0; i < 24; i++) {
+      const d = new Date(anio, mes - i, 1);
+      meses.push(opcion(rango(d.getFullYear(), d.getMonth(), d.getFullYear(), d.getMonth()), `${MESES_ES[d.getMonth()]} ${d.getFullYear()}`));
+    }
+    grupos.push(`<optgroup label="Meses completos">${meses.join('')}</optgroup>`);
+    const periodos = (etiqueta, tam, nombre) => {
+      const items = [];
+      for (const a of [anio, anio - 1]) {
+        for (let k = Math.floor(11 / tam); k >= 0; k--) {
+          const m1 = k * tam;
+          if (a === anio && m1 > mes) continue;
+          items.push(opcion(rango(a, m1, a, m1 + tam - 1), `${nombre(k)} ${a} (${MESES_CORTOS[m1]}–${MESES_CORTOS[m1 + tam - 1]})`));
+        }
+      }
+      return `<optgroup label="${etiqueta}">${items.join('')}</optgroup>`;
+    };
+    grupos.push(periodos('Bimestres (SIMPLE)', 2, k => `Bimestre ${k + 1}`));
+    grupos.push(periodos('Trimestres', 3, k => `Trimestre ${k + 1}`));
+    grupos.push(periodos('Semestres', 6, k => (k === 0 ? '1.er' : '2.º') + ' semestre'));
+    grupos.push(`<optgroup label="Años completos">${[anio, anio - 1, anio - 2].map(a => opcion(rango(a, 0, a, 11), `Año ${a}`)).join('')}</optgroup>`);
+    return `<option value="">Personalizado</option>${grupos.join('')}`;
+  }
+
+  function sincronizarSelectorPeriodo(select) {
+    const desde = document.getElementById(select.dataset.desde);
+    const hasta = document.getElementById(select.dataset.hasta);
+    if (!hasta) return;
+    const buscado = select.dataset.modo === 'corte' ? null : `${desde ? desde.value : ''}|${hasta.value}`;
+    const opcion = [...select.options].find(o => o.value && (buscado ? o.value === buscado : o.value.split('|')[1] === hasta.value));
+    select.value = opcion ? opcion.value : '';
+  }
+
+  function aplicarSelectorPeriodo(select) {
+    if (!select.value) return;
+    const [desde, hasta] = select.value.split('|');
+    const campoDesde = select.dataset.desde ? document.getElementById(select.dataset.desde) : null;
+    const campoHasta = document.getElementById(select.dataset.hasta);
+    if (campoDesde) campoDesde.value = desde;
+    campoHasta.value = hasta;
+    // Recarga el informe una sola vez (los campos de fecha ya saben qué recargar)
+    if (campoHasta.hasAttribute('onchange')) campoHasta.dispatchEvent(new Event('change'));
+    else if (select.dataset.recarga && typeof window[select.dataset.recarga] === 'function') window[select.dataset.recarga]();
+  }
+
+  function crearSelectorPeriodo(idDesde, idHasta, recarga) {
+    const campoHasta = document.getElementById(idHasta);
+    const campoDesde = idDesde ? document.getElementById(idDesde) : null;
+    const ancla = campoDesde || campoHasta;
+    if (!ancla || ancla.dataset.selectorPeriodo) return;
+    ancla.dataset.selectorPeriodo = '1';
+    const modoCorte = !idDesde;
+    const envoltura = document.createElement('div');
+    envoltura.className = 'selector-periodo';
+    const idSelect = 'periodo_' + idHasta;
+    envoltura.innerHTML = `<label for="${idSelect}" style="font-size:11px;">📅 Período</label>
+      <select id="${idSelect}" style="padding:9px 10px;min-width:210px;" data-hasta="${idHasta}" ${idDesde ? `data-desde="${idDesde}"` : ''}
+        data-modo="${modoCorte ? 'corte' : 'rango'}" ${recarga ? `data-recarga="${recarga}"` : ''}
+        onfocus="sincronizarSelectorPeriodo(this)" onchange="aplicarSelectorPeriodo(this)">${opcionesPeriodoHtml(modoCorte)}</select>`;
+    // Si el campo va dentro de su propio contenedor (etiqueta + campo), el selector va antes de ese contenedor;
+    // si no, va antes de la etiqueta del campo.
+    const contenedor = ancla.parentElement;
+    const soloCampo = contenedor && contenedor.children.length <= 2 && contenedor.querySelector(`label[for="${ancla.id}"]`);
+    if (soloCampo) contenedor.before(envoltura);
+    else {
+      const etiqueta = document.querySelector(`label[for="${ancla.id}"]`);
+      envoltura.style.marginBottom = '6px';
+      (etiqueta || ancla).before(envoltura);
+    }
+    const select = envoltura.querySelector('select');
+    [campoDesde, campoHasta].filter(Boolean).forEach(c => c.addEventListener('input', () => sincronizarSelectorPeriodo(select)));
+    sincronizarSelectorPeriodo(select);
+  }
+
+  function adjuntarSelectoresPeriodo() {
+    RANGOS_CON_SELECTOR_PERIODO.forEach(([d, h, r]) => crearSelectorPeriodo(d, h, r));
+    CORTES_CON_SELECTOR_PERIODO.forEach(c => crearSelectorPeriodo(null, c));
+  }
+  adjuntarSelectoresPeriodo();
 
   // ============================================================================
   // EXPORTACIÓN GENERAL DE INFORMES (Excel y PDF de cualquier sección)
