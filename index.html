@@ -11644,6 +11644,8 @@
         { valor: 'mod_ventas', texto: '🛍️ Punto de Venta' },
         { valor: 'mod_compras', texto: '🛒 Compras y Gastos' },
         { valor: 'mod_inventario', texto: '📦 Inventarios y Productos' },
+        { valor: 'mod_produccion', texto: '🏭 Órdenes de producción y kardex' },
+        { valor: 'mod_facturacion', texto: '🧾 Facturación y nómina electrónica' },
         { valor: 'mod_contabilidad', texto: '📊 Contabilidad e Impuestos' },
         { valor: 'mod_talento', texto: '🗂️ Talento Humano' },
         { valor: 'mod_bancos', texto: '🏦 Bancos y Tesorería' },
@@ -11726,7 +11728,11 @@
         mod_contabilidad: 'Contabilidad e Impuestos', mod_talento: 'Talento Humano', mod_bancos: 'Bancos y Tesorería',
         mod_reportes: 'Reportes e Indicadores',
       };
-      input.value = `Explícame cómo funciona el módulo de ${nombresModulo[opcion]} — qué pantallas tiene y para qué sirve cada una.`;
+      const preguntasEspeciales = {
+        mod_produccion: 'Explícame cómo funcionan las órdenes de producción, los traslados de insumos entre Tienda y Taller y el kardex por etapas.',
+        mod_facturacion: 'Explícame cómo funciona la facturación electrónica y la nómina electrónica en el ERP con la solución gratuita de la DIAN.',
+      };
+      input.value = preguntasEspeciales[opcion] || `Explícame cómo funciona el módulo de ${nombresModulo[opcion]} — qué pantallas tiene y para qué sirve cada una.`;
     } else {
       input.focus();
       return;
