@@ -3879,6 +3879,7 @@
   <div class="filtro-tipo" style="margin-bottom:20px;">
     <button class="chip-filtro activo" data-subtab-btn="contaImp" onclick="mostrarSubTabGrupo('contaImp', 'subtabCiSimple', this); cargarSimple();">🧾 Impuesto SIMPLE</button>
     <button class="chip-filtro" data-subtab-btn="contaImp" onclick="mostrarSubTabGrupo('contaImp', 'subtabCiPuc', this); cargarPlanCuentas();">📒 Plan de cuentas</button>
+    <button class="chip-filtro" data-subtab-btn="contaImp" onclick="mostrarSubTabGrupo('contaImp', 'subtabCiCostos', this); cargarCierreCostos();">🏭 Cierre de costos</button>
     <button class="chip-filtro" data-subtab-btn="contaImp" onclick="mostrarSubTabGrupo('contaImp', 'subtabCiAjuste', this); prepararAsientoAjuste();">✍️ Asiento de ajuste</button>
     <button class="chip-filtro" data-subtab-btn="contaImp" onclick="mostrarSubTabGrupo('contaImp', 'subtabCiBitacora', this); cargarBitacoraContable();">🕵️ Bitácora</button>
   </div>
@@ -3990,6 +3991,19 @@
           🔒 Las cuentas marcadas <strong>Sistema</strong> las usan los asientos automáticos (ventas, pedidos, gastos, nómina): no se les puede cambiar el código ni desactivar.
         </div>
       </div>
+    </div>
+  </div>
+
+  <div id="subtabCiCostos" data-subtab-grupo="contaImp" class="oculto">
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+      <div><label for="ciCostosMes" style="font-size:11px;">Mes</label>
+        <input type="month" id="ciCostosMes" onchange="cargarCierreCostos()" style="padding:9px 10px;">
+      </div>
+    </div>
+    <div class="panel" style="max-width:none;max-height:none;">
+      <h2>Cierre de costos de producción del mes</h2>
+      <div class="subtitulo">Método de inventario periódico: compara los libros con las existencias reales al cierre del mes (según el kardex) y registra la materia prima consumida, traslada la mano de obra y los gastos del Taller a costo de producción, y ajusta el costo de ventas al costo real. Revisa la vista previa antes de registrar.</div>
+      <div id="ciCostosContenido"><div class="cargando">Cargando...</div></div>
     </div>
   </div>
 
@@ -7489,9 +7503,10 @@
     let html = '';
     if (enStockBajo.length > 0) {
       html += `
-        <div style="background:#fff3cd;color:#856404;border-radius:9px;padding:10px 14px;margin-bottom:14px;font-size:13px;">
-          ⚠️ <strong>${enStockBajo.length} producto(s)</strong> en o por debajo del stock mínimo: ${enStockBajo.map(i => escaparHtml(i.nombre)).join(', ')}
-        </div>
+        <details style="background:var(--tinte-ambar);color:var(--ambar);border-radius:var(--radius-pill);padding:6px 14px;margin-bottom:12px;font-size:12px;display:inline-block;max-width:100%;">
+          <summary style="cursor:pointer;font-weight:600;">⚠️ ${enStockBajo.length} producto(s) en o por debajo del stock mínimo · <span style="text-decoration:underline;">Ver cuáles</span></summary>
+          <div style="margin-top:6px;line-height:1.6;font-weight:400;">${enStockBajo.map(i => escaparHtml(i.nombre)).join(' · ')}</div>
+        </details>
       `;
     }
 
@@ -18641,6 +18656,76 @@
   async function alternarCuentaPucActiva(codigo) {
     const cuenta = cachePlanCuentas.find(c => c.codigo === codigo);
     await actualizarCuentaPuc(codigo, cuenta.nombre, !cuenta.activa);
+  }
+
+  // ---------- Cierre de costos de producción ----------
+  let cacheCierreCostos = null;
+
+  async function cargarCierreCostos() {
+    const inputMes = document.getElementById('ciCostosMes');
+    if (!inputMes.value) {
+      const hoy = new Date();
+      const anterior = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1);
+      inputMes.value = `${anterior.getFullYear()}-${String(anterior.getMonth() + 1).padStart(2, '0')}`;
+    }
+    const [anio, mes] = inputMes.value.split('-').map(Number);
+    const cont = document.getElementById('ciCostosContenido');
+    cont.innerHTML = '<div class="cargando">Calculando...</div>';
+    let d;
+    try {
+      d = await llamarReporteContable('fn_cierre_costos_preview', { p_anio: anio, p_mes: mes });
+    } catch (e) {
+      cont.innerHTML = `<div class="cargando">No se pudo calcular: ${escaparHtml(e.message)}</div>`;
+      return;
+    }
+    cacheCierreCostos = d;
+
+    const advertencias = d.advertencias.map(a => `<div style="background:var(--tinte-ambar);color:var(--ambar);border-radius:var(--radius-md);padding:8px 12px;font-size:12.5px;margin-bottom:8px;">⚠️ ${escaparHtml(a)}</div>`).join('');
+    const bloque = (titulo, filas) => `<h2 style="margin-top:16px;font-size:14px;">${titulo}</h2>${filas.map(([e, v, t]) => filaEstadoFin(e, v, t)).join('')}`;
+    const puedeRegistrar = !d.ya_registrado && d.lineas.length > 0 && !d.advertencias.some(a => a.includes('todavía no ha terminado') || a.includes('anterior al inicio del costeo'));
+
+    cont.innerHTML = `
+      ${d.ya_registrado ? `<div style="background:var(--tinte-verde);color:var(--verde-exito);border-radius:var(--radius-md);padding:10px 14px;font-size:12.5px;margin-bottom:10px;font-weight:600;">✅ Este mes ya está cerrado (comprobante #${d.ya_registrado}). Para rehacerlo, revierte ese comprobante en el Libro Diario.</div>` : ''}
+      ${advertencias}
+      <div class="grilla-2">
+        <div>
+          ${bloque('1. Materia prima (1405)', [['Según libros', d.materia_prima.libros], ['Existencias reales al cierre', d.materia_prima.fisico], ['= Consumida en producción', d.materia_prima.consumo, true]])}
+          ${bloque('2. Mano de obra y gastos del Taller', [['Personal del Taller (5105 → 7220)', d.mano_obra], ['Tejedoras externas (5110 → 7420)', d.tejedoras], ['Otros gastos del Taller (→ 7320)', d.indirectos]])}
+          ${filaEstadoFin('= Costo de producción del mes (→ 1430)', d.costo_produccion, true)}
+        </div>
+        <div>
+          ${bloque('3. Productos terminados (1430)', [['Libros + producción del mes', d.productos_terminados.libros_con_produccion], ['Existencias reales al cierre', d.productos_terminados.fisico], ['= Ajuste al costo de ventas (6120)', d.productos_terminados.ajuste_costo_ventas, true]])}
+          ${bloque('4. Mercancía de reventa (1435)', [['Según libros', d.mercancia.libros], ['Existencias reales al cierre', d.mercancia.fisico], ['= Merma (6135)', d.mercancia.merma, true]])}
+        </div>
+      </div>
+      ${d.lineas.length ? `
+        <h2 style="margin-top:18px;font-size:14px;">Asiento que se registrará</h2>
+        <div class="tabla-lista">
+          <div class="tabla-lista-header header-rosa" style="grid-template-columns:90px 1fr 120px 120px;"><span>CUENTA</span><span>CONCEPTO</span><span style="text-align:right;">DEBE</span><span style="text-align:right;">HABER</span></div>
+          ${d.lineas.map(l => `
+            <div class="tabla-lista-fila" style="grid-template-columns:90px 1fr 120px 120px;cursor:default;">
+              <span>${escaparHtml(l.cuenta)}</span><span style="font-size:12px;">${escaparHtml(l.concepto)}</span>
+              <span style="text-align:right;">${Number(l.debito) > 0 ? formatearMoneda(l.debito) : '—'}</span>
+              <span style="text-align:right;">${Number(l.credito) > 0 ? formatearMoneda(l.credito) : '—'}</span>
+            </div>`).join('')}
+        </div>` : '<div class="cargando" style="margin-top:12px;">No hay ajustes de costos para registrar en este mes.</div>'}
+      ${puedeRegistrar ? `<button class="btn-principal" onclick="confirmarCierreCostos()">Registrar cierre de costos de ${String(d.mes).padStart(2, '0')}/${d.anio}</button>` : ''}
+    `;
+  }
+
+  async function confirmarCierreCostos() {
+    const d = cacheCierreCostos;
+    if (!d) return;
+    if (!confirm(`¿Registrar el cierre de costos de ${String(d.mes).padStart(2, '0')}/${d.anio}? Se creará un comprobante en el Libro Diario que solo se puede corregir revirtiéndolo.`)) return;
+    ocultarMensaje('mensajeContaImp');
+    try {
+      await llamarReporteContable('fn_cierre_costos_ejecutar', { p_anio: d.anio, p_mes: d.mes });
+    } catch (e) {
+      mostrarMensaje('mensajeContaImp', 'No se pudo registrar: ' + e.message, 'error');
+      return;
+    }
+    mostrarMensaje('mensajeContaImp', '✅ Cierre de costos registrado. Ya aparece en el Libro Diario y en los estados financieros.', 'exito');
+    await cargarCierreCostos();
   }
 
   // ---------- Asiento de ajuste ----------
