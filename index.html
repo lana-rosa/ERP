@@ -1009,6 +1009,7 @@
       <button class="sidebar-depto-header" id="headerDeptoTalento" onclick="toggleSidebarDepto('deptoTalentoSubmenu', 'headerDeptoTalento')">🗂️ Talento Humano <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoTalentoSubmenu">
         <button class="nav-btn" id="nav-nomina" onclick="mostrarPantallaNomina()"><span class="nav-icon">👥</span> Nómina</button>
+        <button class="nav-btn" id="nav-nomina-electronica" onclick="mostrarPantallaFacturacionElectronica('nomina')"><span class="nav-icon">📨</span> Nómina electrónica DIAN</button>
         <button class="nav-btn" id="nav-talento-humano" onclick="mostrarPantallaTalentoHumano()"><span class="nav-icon">📁</span> Carpetas por empleado</button>
       </div>
     </div>
@@ -5562,6 +5563,7 @@
     mostrar('deptoInventarioGrupo', esAdmin || esCajero || esTaller || esContador);
     mostrar('deptoContabilidadGrupo', esAdmin || esContador);
     mostrar('deptoTalentoGrupo', esAdmin);
+    mostrar('nav-nomina-electronica', esAdmin || esContador);
     mostrar('deptoFondoEmprenderGrupo', esAdmin);
     // Configuración es visible para todos (Apariencia y Mi perfil son de
     // cualquiera), pero los ítems sensibles adentro quedan solo para admin.
@@ -11226,6 +11228,7 @@
     { clave: 'nav-transferencias-internas', etiqueta: '　　Transferencias caja/banco' },
     { clave: 'deptoTalentoGrupo', etiqueta: '🗂️ Talento Humano (grupo completo)' },
     { clave: 'nav-nomina', etiqueta: '　　Nómina' },
+    { clave: 'nav-nomina-electronica', etiqueta: '　　Nómina electrónica DIAN' },
     { clave: 'nav-talento-humano', etiqueta: '　　Carpetas por empleado' },
     { clave: 'deptoFondoEmprenderGrupo', etiqueta: '🏦 Fondo Emprender (grupo completo)' },
     { clave: 'nav-calendario', etiqueta: '📅 Calendario del equipo' },
@@ -18127,7 +18130,9 @@
     }
   }
 
-  async function mostrarPantallaFacturacionElectronica() {
+  // p_subtab: 'pendientes' (por defecto) o 'nomina' — para entrar directo a esa pestaña
+  // (por ejemplo desde Talento Humano → Nómina electrónica DIAN).
+  async function mostrarPantallaFacturacionElectronica(p_subtab) {
     mostrarPantalla('pantallaFacturacionElectronica');
     ocultarMensaje('mensajeFe');
     document.getElementById('chipFeNomina').style.display = esRolFe('administrador', 'contador') ? '' : 'none';
@@ -18144,8 +18149,19 @@
     cacheFeConfig = data || {};
     renderizarAvisoFe();
     renderizarEstadoConexionFe();
-    mostrarSubTabGrupo('fe', 'subtabFePendientes', document.querySelector('[data-subtab-btn="fe"]'));
-    await cargarFePendientes();
+    if (p_subtab === 'nomina') {
+      mostrarSubTabGrupo('fe', 'subtabFeNomina', document.getElementById('chipFeNomina'));
+      await cargarNominaElectronica();
+      // Resaltar "Nómina electrónica DIAN" (Talento Humano) en vez de "Facturación electrónica DIAN" (Ventas)
+      const btnNominaElectronica = document.getElementById('nav-nomina-electronica');
+      if (btnNominaElectronica) {
+        document.querySelectorAll('.nav-btn.activo').forEach(b => b.classList.remove('activo'));
+        btnNominaElectronica.classList.add('activo');
+      }
+    } else {
+      mostrarSubTabGrupo('fe', 'subtabFePendientes', document.querySelector('[data-subtab-btn="fe"]'));
+      await cargarFePendientes();
+    }
   }
 
   function renderizarAvisoFe() {
