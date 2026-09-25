@@ -3881,6 +3881,8 @@
     <button class="chip-filtro" data-subtab-btn="contaImp" onclick="mostrarSubTabGrupo('contaImp', 'subtabCiPuc', this); cargarPlanCuentas();">📒 Plan de cuentas</button>
     <button class="chip-filtro" data-subtab-btn="contaImp" onclick="mostrarSubTabGrupo('contaImp', 'subtabCiCostos', this); cargarCierreCostos();">🏭 Cierre de costos</button>
     <button class="chip-filtro" data-subtab-btn="contaImp" onclick="mostrarSubTabGrupo('contaImp', 'subtabCiAjuste', this); prepararAsientoAjuste();">✍️ Asiento de ajuste</button>
+    <button class="chip-filtro" data-subtab-btn="contaImp" onclick="mostrarSubTabGrupo('contaImp', 'subtabCiExogena', this); cargarExogena();">📑 Exógena DIAN</button>
+    <button class="chip-filtro" data-subtab-btn="contaImp" onclick="mostrarSubTabGrupo('contaImp', 'subtabCiDeclaracion', this); cargarResumenTributario();">📋 Declaración anual</button>
     <button class="chip-filtro" data-subtab-btn="contaImp" onclick="mostrarSubTabGrupo('contaImp', 'subtabCiBitacora', this); cargarBitacoraContable();">🕵️ Bitácora</button>
   </div>
   <div class="mensaje" id="mensajeContaImp"></div>
@@ -4026,6 +4028,47 @@
       <div id="ciAjTotales" style="margin-top:12px;"></div>
       <button class="btn-principal" id="btnRegistrarAjuste" onclick="confirmarAsientoAjuste()">Registrar asiento</button>
     </div>
+  </div>
+
+  <div id="subtabCiExogena" data-subtab-grupo="contaImp" class="oculto">
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+      <div><label for="ciExoAnio" style="font-size:11px;">Año gravable</label><select id="ciExoAnio" onchange="cargarExogena()" style="padding:9px 10px;"></select></div>
+      <div><label for="ciExoFormato" style="font-size:11px;">Formato</label>
+        <select id="ciExoFormato" onchange="cargarExogena()" style="padding:9px 10px;">
+          <option value="1001">1001 — Pagos o abonos en cuenta y retenciones practicadas</option>
+          <option value="1003">1003 — Retenciones en la fuente que le practicaron</option>
+          <option value="1007">1007 — Ingresos recibidos</option>
+          <option value="1008">1008 — Saldos de cuentas por cobrar al 31 de diciembre</option>
+          <option value="1009">1009 — Saldos de cuentas por pagar al 31 de diciembre</option>
+        </select>
+      </div>
+      <div><label for="ciExoTope" style="font-size:11px;">Tope de cuantías menores (COP)</label>
+        <div style="display:flex;gap:6px;"><input type="number" id="ciExoTope" min="0" step="1" style="padding:9px 10px;width:160px;">
+        <button class="btn-mini editar" style="flex:0 0 auto;padding:8px 12px;" onclick="guardarTopeExogena()">Guardar tope</button></div>
+      </div>
+      <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarExogenaExcel()">📥 Excel para el prevalidador</button>
+    </div>
+    <div style="background:var(--tinte-azul);border-radius:var(--radius-md);padding:10px 14px;margin-bottom:16px;font-size:12.5px;line-height:1.5;">
+      ℹ️ La obligación de presentar exógena la define cada año una resolución de la DIAN, según topes de ingresos. Con los ingresos actuales de Lana Rosa es probable que no estés obligada, pero tu contador debe confirmarlo con la resolución vigente. El Excel sale con las columnas de los prevalidadores de la DIAN para copiarlas allí; verifica la versión del prevalidador antes de cargar.
+    </div>
+    <div id="ciExoContenido"><div class="cargando">Cargando...</div></div>
+    <div id="ciExoEditorTercero" class="panel oculto" style="max-width:none;max-height:none;margin-top:20px;"></div>
+    <details class="panel" style="max-width:none;max-height:none;margin-top:20px;">
+      <summary style="cursor:pointer;font-weight:600;">⚙️ Conceptos por cuenta contable (los valida el contador)</summary>
+      <div id="ciExoConceptos" style="margin-top:12px;"></div>
+    </details>
+  </div>
+
+  <div id="subtabCiDeclaracion" data-subtab-grupo="contaImp" class="oculto">
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+      <div><label for="ciDecAnio" style="font-size:11px;">Año gravable</label><select id="ciDecAnio" onchange="cargarResumenTributario()" style="padding:9px 10px;"></select></div>
+      <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarResumenTributarioExcel()">📥 Excel para el contador</button>
+      <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirEstadoFinanciero('ciDecContenido', 'Información para la declaración anual')">🖨️ Imprimir / PDF</button>
+    </div>
+    <div style="background:var(--tinte-azul);border-radius:var(--radius-md);padding:10px 14px;margin-bottom:16px;font-size:12.5px;line-height:1.5;">
+      ℹ️ Sara está inscrita en el <strong>Régimen SIMPLE</strong>: la declaración anual consolidada del SIMPLE (formulario 260) reemplaza a la declaración de renta (formulario 210) por los ingresos del negocio. Aquí están los datos del negocio que alimentan esa declaración. Tu contador confirma si hay algo adicional que declarar (por ejemplo, ingresos por fuera del negocio) y completa los bienes y deudas personales, que no están en este sistema.
+    </div>
+    <div id="ciDecContenido"><div class="cargando">Cargando...</div></div>
   </div>
 
   <div id="subtabCiBitacora" data-subtab-grupo="contaImp" class="oculto">
@@ -18818,6 +18861,424 @@
     agregarLineaAjuste();
     recalcularTotalesAjuste();
     mostrarMensaje('mensajeContaImp', '✅ Asiento de ajuste registrado. Ya aparece en el Libro Diario.', 'exito');
+  }
+
+  // ---------- Exógena DIAN ----------
+  let cacheExogena = null;
+  let cacheTercerosExogena = {};
+
+  const NOMBRES_FORMATO_EXOGENA = {
+    '1001': 'Pagos o abonos en cuenta y retenciones practicadas',
+    '1003': 'Retenciones en la fuente que le practicaron',
+    '1007': 'Ingresos recibidos',
+    '1008': 'Saldos de cuentas por cobrar al 31 de diciembre',
+    '1009': 'Saldos de cuentas por pagar al 31 de diciembre',
+  };
+
+  // Dígito de verificación DIAN (módulo 11) — mismo cálculo que fn_calcular_dv.
+  function calcularDvNit(numero) {
+    const limpio = String(numero || '').replace(/\D/g, '');
+    if (!limpio) return '';
+    const pesos = [3, 7, 13, 17, 19, 23, 29, 37, 41, 43, 47, 53, 59, 67, 71];
+    let suma = 0;
+    limpio.split('').reverse().forEach((d, i) => { suma += Number(d) * (pesos[i] || 0); });
+    const residuo = suma % 11;
+    return String(residuo > 1 ? 11 - residuo : residuo);
+  }
+
+  function llenarSelectAnios(idSelect) {
+    const sel = document.getElementById(idSelect);
+    if (sel.options.length === 0) {
+      const anioActual = new Date().getFullYear();
+      sel.innerHTML = [anioActual, anioActual - 1].map(a => `<option value="${a}">${a}</option>`).join('');
+    }
+    return Number(sel.value);
+  }
+
+  async function cargarExogena() {
+    const anio = llenarSelectAnios('ciExoAnio');
+    const formato = document.getElementById('ciExoFormato').value;
+    const cont = document.getElementById('ciExoContenido');
+    document.getElementById('ciExoEditorTercero').classList.add('oculto');
+    cont.innerHTML = '<div class="cargando">Generando formato...</div>';
+
+    let d;
+    try {
+      d = await llamarReporteContable('fn_exogena_generar', { p_anio: anio, p_formato: formato });
+    } catch (e) {
+      cont.innerHTML = `<div class="cargando">No se pudo generar: ${escaparHtml(e.message)}</div>`;
+      return;
+    }
+    cacheExogena = d;
+    document.getElementById('ciExoTope').value = Number(d.cuantia_menor) || '';
+
+    const nombreInformado = (f) => f.razon_social
+      || [f.primer_apellido, f.segundo_apellido, f.primer_nombre, f.otros_nombres].filter(Boolean).join(' ')
+      || f.nombre_sistema || '';
+    const columnas = 'grid-template-columns:80px 70px 150px 1.6fr 130px 110px;';
+    const conRetencion = formato === '1001' || formato === '1003';
+
+    const avisos = [...(d.advertencias || [])];
+    const alertas = [];
+    if (d.sin_documento.length) {
+      alertas.push(`
+        <div style="background:var(--tinte-rojo);border-radius:var(--radius-md);padding:10px 14px;margin-bottom:12px;font-size:12.5px;line-height:1.6;">
+          <strong>🪪 ${d.sin_documento.length} tercero(s) sin cédula o NIT real</strong> — sus valores quedaron en cuantías menores. Completa el documento para reportarlos con su nombre:
+          <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;">
+            ${d.sin_documento.map(t => `<button class="btn-mini editar" style="flex:0 0 auto;" onclick="abrirEditorTerceroExogena('${t.tercero_id}')">✏️ ${escaparHtml(t.nombre)} <span style="opacity:0.6;">(${escaparHtml(t.documento_actual || 'sin documento')})</span></button>`).join('')}
+          </div>
+        </div>`);
+    }
+    if (d.incompletos.length) {
+      alertas.push(`
+        <div style="background:var(--tinte-ambar);border-radius:var(--radius-md);padding:10px 14px;margin-bottom:12px;font-size:12.5px;line-height:1.6;">
+          <strong>⚠️ ${d.incompletos.length} tercero(s) con datos incompletos</strong> — el prevalidador los rechaza así:
+          <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;">
+            ${d.incompletos.map(t => `<button class="btn-mini editar" style="flex:0 0 auto;" onclick="abrirEditorTerceroExogena('${t.tercero_id}')">✏️ ${escaparHtml(t.nombre)} <span style="opacity:0.6;">(falta: ${escaparHtml(t.faltan)})</span></button>`).join('')}
+          </div>
+        </div>`);
+    }
+
+    cont.innerHTML = `
+      ${alertas.join('')}
+      ${avisos.length ? `<div style="font-size:11.5px;opacity:0.75;margin-bottom:12px;line-height:1.5;">${avisos.map(a => '• ' + escaparHtml(a)).join('<br>')}</div>` : ''}
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+        <span class="chip-filtro activo" style="cursor:default;">Formato ${escaparHtml(d.formato)} · ${escaparHtml(NOMBRES_FORMATO_EXOGENA[d.formato] || '')}</span>
+        <span class="chip-filtro" style="cursor:default;">${d.filas.length} registro(s)</span>
+        <span class="chip-filtro" style="cursor:default;">Total ${formatearMoneda(d.total)}</span>
+      </div>
+      ${d.filas.length ? `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header header-rosa" style="${columnas}">
+          <span>CONCEPTO</span><span>TIPO DOC.</span><span>IDENTIFICACIÓN</span><span>INFORMADO</span><span style="text-align:right;">VALOR</span><span style="text-align:right;">${conRetencion ? 'RETENCIÓN' : ''}</span>
+        </div>
+        ${d.filas.map(f => `
+          <div class="tabla-lista-fila" style="${columnas}cursor:${f.tercero_id ? 'pointer' : 'default'};" ${f.tercero_id ? `onclick="abrirEditorTerceroExogena('${f.tercero_id}')" title="Editar datos del tercero"` : ''}>
+            <span>${escaparHtml(f.concepto)}</span>
+            <span>${escaparHtml(f.tipo_documento)}</span>
+            <span>${escaparHtml(f.numero_documento)}${f.dv ? '-' + escaparHtml(f.dv) : ''}</span>
+            <span>${escaparHtml(nombreInformado(f))}${f.tercero_id ? '' : ' <span style="font-size:10.5px;opacity:0.6;">(agrupado)</span>'}</span>
+            <span style="text-align:right;font-weight:600;">${formatearMoneda(f.valor)}</span>
+            <span style="text-align:right;">${conRetencion ? formatearMoneda(f.retencion) : ''}</span>
+          </div>
+        `).join('')}
+      </div>` : '<div class="cargando">No hay movimientos para reportar en este formato y año.</div>'}
+    `;
+    cargarConceptosExogena();
+  }
+
+  async function guardarTopeExogena() {
+    const anio = Number(document.getElementById('ciExoAnio').value);
+    const formato = document.getElementById('ciExoFormato').value;
+    const tope = Number(document.getElementById('ciExoTope').value || 0);
+    if (tope < 0) { mostrarMensaje('mensajeContaImp', 'El tope no puede ser negativo.', 'error'); return; }
+    const { error } = await supabaseClient.from('exogena_parametros')
+      .upsert({ anio, formato, cuantia_menor: tope }, { onConflict: 'anio,formato' });
+    if (error) { mostrarMensaje('mensajeContaImp', 'No se pudo guardar el tope: ' + error.message, 'error'); return; }
+    mostrarMensaje('mensajeContaImp', `✅ Tope de cuantías menores del formato ${formato} (${anio}) guardado.`, 'exito');
+    await cargarExogena();
+  }
+
+  function exportarExogenaExcel() {
+    const d = cacheExogena;
+    if (!d || !d.filas.length) { mostrarMensaje('mensajeContaImp', 'No hay registros para exportar.', 'error'); return; }
+    const identificacion = ['Tipo de documento', 'Número identificación del informado', 'DV', 'Primer apellido del informado', 'Segundo apellido del informado', 'Primer nombre del informado', 'Otros nombres del informado', 'Razón social informado'];
+    const ubicacion = ['Dirección', 'Código dpto.', 'Código mcp.', 'País de residencia o domicilio'];
+    const base = (f) => [f.tipo_documento, f.numero_documento, f.dv || '', f.primer_apellido || '', f.segundo_apellido || '', f.primer_nombre || '', f.otros_nombres || '', f.razon_social || ''];
+    const lugar = (f) => [f.direccion || '', f.codigo_departamento || '', f.codigo_municipio || '', f.codigo_pais || '169'];
+    const valor = (n) => Math.round(Number(n) || 0);
+
+    let encabezado, fila;
+    switch (d.formato) {
+      case '1001':
+        encabezado = ['Concepto', ...identificacion, ...ubicacion, 'Pago o abono en cuenta deducible', 'Pago o abono en cuenta no deducible', 'IVA mayor valor del costo o gasto deducible', 'IVA mayor valor del costo o gasto no deducible', 'Retención en la fuente practicada en renta', 'Retención en la fuente asumida en renta', 'Retención en la fuente practicada IVA a responsables del IVA', 'Retención en la fuente practicada IVA a no residentes o no domiciliados'];
+        fila = (f) => [f.concepto, ...base(f), ...lugar(f), valor(f.valor), 0, 0, 0, valor(f.retencion), 0, 0, 0];
+        break;
+      case '1003':
+        encabezado = ['Concepto', ...identificacion, 'Dirección', 'Código dpto.', 'Código mcp.', 'Valor acumulado del pago o abono sujeto a retención en la fuente', 'Retención que le practicaron'];
+        fila = (f) => [f.concepto, ...base(f), f.direccion || '', f.codigo_departamento || '', f.codigo_municipio || '', valor(f.valor), valor(f.retencion)];
+        break;
+      case '1007':
+        // El 1007 no lleva dígito de verificación.
+        encabezado = ['Concepto', ...identificacion.filter(c => c !== 'DV'), 'País de residencia o domicilio', 'Ingresos brutos recibidos por operaciones propias', 'Ingresos brutos recibidos a través de consorcio o uniones temporales', 'Ingresos a través de contratos de mandato o administración delegada', 'Ingresos a través de exploración y explotación de minerales', 'Ingresos a través de fiducias', 'Ingresos recibidos a través de terceros', 'Devoluciones, rebajas y descuentos'];
+        fila = (f) => [f.concepto, ...base(f).filter((_, i) => i !== 2), f.codigo_pais || '169', valor(f.valor), 0, 0, 0, 0, 0, valor(f.devoluciones)];
+        break;
+      default: // 1008 y 1009
+        encabezado = ['Concepto', ...identificacion, ...ubicacion, d.formato === '1008' ? 'Saldo cuentas por cobrar al 31-12' : 'Saldo cuentas por pagar al 31-12'];
+        fila = (f) => [f.concepto, ...base(f), ...lugar(f), valor(f.valor)];
+    }
+
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, XLSX.utils.aoa_to_sheet([encabezado, ...d.filas.map(fila)]), `Formato ${d.formato}`);
+    const notas = [
+      [`Lana Rosa Crochet — Información exógena formato ${d.formato} (${NOMBRES_FORMATO_EXOGENA[d.formato] || ''}) — año gravable ${d.anio}`],
+      [`Generado: ${new Date().toLocaleString('es-CO')}`],
+      [`Total reportado: ${valor(d.total)}`],
+      [],
+      ['Advertencias'],
+      ...(d.advertencias || []).map(a => [a]),
+      [],
+      ['Terceros sin documento real (reportados en cuantías menores)'],
+      ...d.sin_documento.map(t => [t.nombre, t.documento_actual || '']),
+      [],
+      ['Terceros con datos incompletos'],
+      ...d.incompletos.map(t => [t.nombre, 'Falta: ' + t.faltan]),
+    ];
+    XLSX.utils.book_append_sheet(libro, XLSX.utils.aoa_to_sheet(notas), 'Notas');
+    XLSX.writeFile(libro, `LanaRosa_Exogena_${d.formato}_${d.anio}.xlsx`);
+  }
+
+  async function abrirEditorTerceroExogena(terceroId) {
+    const panel = document.getElementById('ciExoEditorTercero');
+    panel.classList.remove('oculto');
+    panel.innerHTML = '<div class="cargando">Cargando tercero...</div>';
+    const { data: t, error } = await supabaseClient.from('terceros')
+      .select('id, tipo_documento, numero_documento, digito_verificacion, nombre_completo, primer_apellido, segundo_apellido, primer_nombre, otros_nombres, razon_social, direccion, ciudad, codigo_departamento, codigo_municipio, codigo_pais')
+      .eq('id', terceroId).single();
+    if (error) { panel.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(error.message)}</div>`; return; }
+    cacheTercerosExogena[terceroId] = t;
+
+    // Sugerencia de nombres a partir del nombre completo (formato habitual en Colombia: nombres y luego apellidos).
+    const partes = (t.nombre_completo || '').trim().split(/\s+/).filter(Boolean);
+    let sugerido = { primer_nombre: '', otros_nombres: '', primer_apellido: '', segundo_apellido: '' };
+    if (partes.length === 2) sugerido = { primer_nombre: partes[0], otros_nombres: '', primer_apellido: partes[1], segundo_apellido: '' };
+    else if (partes.length === 3) sugerido = { primer_nombre: partes[0], otros_nombres: '', primer_apellido: partes[1], segundo_apellido: partes[2] };
+    else if (partes.length >= 4) sugerido = { primer_nombre: partes[0], otros_nombres: partes.slice(1, -2).join(' '), primer_apellido: partes[partes.length - 2], segundo_apellido: partes[partes.length - 1] };
+    const val = (campo) => escaparHtml(t[campo] ?? sugerido[campo] ?? '');
+    const documentoFicticio = /^(CRM|SINNIT)/i.test(t.numero_documento || '') || !/^\d+$/.test(t.numero_documento || '');
+
+    panel.innerHTML = `
+      <h2 style="margin-top:0;">✏️ Datos para exógena — ${escaparHtml(t.nombre_completo)}</h2>
+      <div style="font-size:12px;opacity:0.7;margin-bottom:12px;">Estos datos se guardan en el tercero y los usa cualquier formato. Si una persona natural tiene NIT, usa su cédula como número.</div>
+      <div class="grilla-2" style="gap:12px;">
+        <div><label for="exoTTipo">Tipo de documento</label>
+          <select id="exoTTipo" onchange="actualizarCamposTerceroExogena()">
+            ${['CC', 'NIT', 'CE', 'PASAPORTE', 'TI'].map(tp => `<option value="${tp}" ${t.tipo_documento === tp ? 'selected' : ''}>${tp}</option>`).join('')}
+          </select></div>
+        <div><label for="exoTNumero">Número de documento <span style="font-size:10px;opacity:0.6;">(solo números, sin DV)</span></label>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="text" id="exoTNumero" inputmode="numeric" value="${documentoFicticio ? '' : escaparHtml(t.numero_documento)}" placeholder="${documentoFicticio ? 'Actual: ' + escaparHtml(t.numero_documento) : ''}" oninput="actualizarCamposTerceroExogena()">
+            <span id="exoTDv" style="font-weight:700;min-width:44px;"></span>
+          </div></div>
+      </div>
+      <div id="exoTBloquePersona" class="grilla-2" style="gap:12px;margin-top:10px;">
+        <div><label for="exoTPrimerApellido">Primer apellido</label><input type="text" id="exoTPrimerApellido" value="${val('primer_apellido')}"></div>
+        <div><label for="exoTSegundoApellido">Segundo apellido</label><input type="text" id="exoTSegundoApellido" value="${val('segundo_apellido')}"></div>
+        <div><label for="exoTPrimerNombre">Primer nombre</label><input type="text" id="exoTPrimerNombre" value="${val('primer_nombre')}"></div>
+        <div><label for="exoTOtrosNombres">Otros nombres</label><input type="text" id="exoTOtrosNombres" value="${val('otros_nombres')}"></div>
+      </div>
+      <div id="exoTBloqueEmpresa" style="margin-top:10px;">
+        <label for="exoTRazonSocial">Razón social (como aparece en el RUT)</label><input type="text" id="exoTRazonSocial" value="${escaparHtml(t.razon_social || t.nombre_completo || '')}">
+      </div>
+      <div class="grilla-2" style="gap:12px;margin-top:10px;">
+        <div><label for="exoTDireccion">Dirección</label><input type="text" id="exoTDireccion" value="${escaparHtml(t.direccion || '')}"></div>
+        <div><label for="exoTCiudad">Ciudad</label><input type="text" id="exoTCiudad" value="${escaparHtml(t.ciudad || '')}"></div>
+        <div><label for="exoTDepto">Código departamento DANE <span style="font-size:10px;opacity:0.6;">(ej. 17 Caldas)</span></label><input type="text" id="exoTDepto" inputmode="numeric" maxlength="2" value="${escaparHtml(t.codigo_departamento || '')}"></div>
+        <div><label for="exoTMunicipio">Código municipio DANE <span style="font-size:10px;opacity:0.6;">(ej. 17001 Manizales)</span></label><input type="text" id="exoTMunicipio" inputmode="numeric" maxlength="5" value="${escaparHtml(t.codigo_municipio || '')}"></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:14px;">
+        <button class="btn-principal" style="width:auto;margin-top:0;" onclick="guardarTerceroExogena('${t.id}')">Guardar datos</button>
+        <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="document.getElementById('ciExoEditorTercero').classList.add('oculto')">Cancelar</button>
+      </div>
+    `;
+    actualizarCamposTerceroExogena();
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function actualizarCamposTerceroExogena() {
+    const tipo = document.getElementById('exoTTipo').value;
+    const esNit = tipo === 'NIT';
+    const numero = document.getElementById('exoTNumero').value.replace(/\D/g, '');
+    document.getElementById('exoTDv').textContent = esNit && numero ? 'DV ' + calcularDvNit(numero) : '';
+    document.getElementById('exoTBloquePersona').classList.toggle('oculto', esNit);
+    document.getElementById('exoTBloqueEmpresa').classList.toggle('oculto', !esNit);
+  }
+
+  async function guardarTerceroExogena(terceroId) {
+    const tipo = document.getElementById('exoTTipo').value;
+    const numero = document.getElementById('exoTNumero').value.replace(/\D/g, '');
+    const texto = (id) => document.getElementById(id).value.trim() || null;
+    if (!numero) { mostrarMensaje('mensajeContaImp', 'Escribe el número de documento (solo números).', 'error'); return; }
+    const esNit = tipo === 'NIT';
+    const cambios = {
+      tipo_documento: tipo,
+      numero_documento: numero,
+      digito_verificacion: esNit ? calcularDvNit(numero) : null,
+      direccion: texto('exoTDireccion'),
+      ciudad: texto('exoTCiudad'),
+      codigo_departamento: texto('exoTDepto'),
+      codigo_municipio: texto('exoTMunicipio'),
+    };
+    if (esNit) {
+      cambios.razon_social = texto('exoTRazonSocial');
+      if (!cambios.razon_social) { mostrarMensaje('mensajeContaImp', 'Para un NIT escribe la razón social.', 'error'); return; }
+    } else {
+      Object.assign(cambios, {
+        primer_apellido: texto('exoTPrimerApellido'), segundo_apellido: texto('exoTSegundoApellido'),
+        primer_nombre: texto('exoTPrimerNombre'), otros_nombres: texto('exoTOtrosNombres'),
+      });
+      if (!cambios.primer_apellido || !cambios.primer_nombre) { mostrarMensaje('mensajeContaImp', 'Escribe al menos el primer apellido y el primer nombre.', 'error'); return; }
+    }
+    if (cambios.codigo_municipio && cambios.codigo_departamento && !cambios.codigo_municipio.startsWith(cambios.codigo_departamento)) {
+      mostrarMensaje('mensajeContaImp', 'El código de municipio DANE debe empezar por el código del departamento.', 'error'); return;
+    }
+    const { error } = await supabaseClient.from('terceros').update(cambios).eq('id', terceroId);
+    if (error) {
+      const duplicado = /duplicate|unique/i.test(error.message);
+      mostrarMensaje('mensajeContaImp', duplicado ? 'Ya existe otro tercero con ese tipo y número de documento.' : 'No se pudo guardar: ' + error.message, 'error');
+      return;
+    }
+    mostrarMensaje('mensajeContaImp', '✅ Datos del tercero actualizados.', 'exito');
+    await cargarExogena();
+  }
+
+  async function cargarConceptosExogena() {
+    const cont = document.getElementById('ciExoConceptos');
+    const formato = document.getElementById('ciExoFormato').value;
+    const { data, error } = await supabaseClient.from('exogena_conceptos').select('*').eq('formato', formato).order('prefijo_cuenta');
+    if (error) { cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(error.message)}</div>`; return; }
+    const columnas = 'grid-template-columns:110px 110px 1.6fr 90px 90px;';
+    cont.innerHTML = `
+      <div style="font-size:12px;opacity:0.75;margin-bottom:10px;">Cada cuenta del PUC (o grupo de cuentas por prefijo) se reporta con un código de concepto del formato ${escaparHtml(formato)}. Si hay dos prefijos que aplican, gana el más largo. Los códigos vienen sugeridos: tu contador los revisa y marca “validado”.</div>
+      <div class="tabla-lista">
+        <div class="tabla-lista-header header-rosa" style="${columnas}">
+          <span>CUENTA (PREFIJO)</span><span>CONCEPTO</span><span>DESCRIPCIÓN</span><span style="text-align:center;">VALIDADO</span><span></span>
+        </div>
+        ${data.map(c => `
+          <div class="tabla-lista-fila" style="${columnas}cursor:default;">
+            <span>${escaparHtml(c.prefijo_cuenta)}</span>
+            <span><input type="text" id="exoCon_${escaparHtml(c.prefijo_cuenta)}" value="${escaparHtml(c.concepto)}" inputmode="numeric" maxlength="4" style="padding:5px 8px;width:80px;"></span>
+            <span style="font-size:12px;">${escaparHtml(c.descripcion)}</span>
+            <span style="text-align:center;"><input type="checkbox" id="exoVal_${escaparHtml(c.prefijo_cuenta)}" ${c.validado ? 'checked' : ''}></span>
+            <span><button class="btn-mini editar" onclick="guardarConceptoExogena('${escaparHtml(formato)}', '${escaparHtml(c.prefijo_cuenta)}')">Guardar</button></span>
+          </div>
+        `).join('') || '<div class="cargando">Sin conceptos configurados.</div>'}
+      </div>
+    `;
+  }
+
+  async function guardarConceptoExogena(formato, prefijo) {
+    const concepto = document.getElementById('exoCon_' + prefijo).value.trim();
+    if (!/^\d{4}$/.test(concepto)) { mostrarMensaje('mensajeContaImp', 'El código de concepto debe tener 4 dígitos.', 'error'); return; }
+    const validado = document.getElementById('exoVal_' + prefijo).checked;
+    const { error } = await supabaseClient.from('exogena_conceptos').update({ concepto, validado })
+      .eq('formato', formato).eq('prefijo_cuenta', prefijo);
+    if (error) { mostrarMensaje('mensajeContaImp', 'No se pudo guardar: ' + error.message, 'error'); return; }
+    mostrarMensaje('mensajeContaImp', `✅ Concepto de la cuenta ${prefijo} guardado.`, 'exito');
+    await cargarExogena();
+  }
+
+  // ---------- Información para la declaración anual ----------
+  let cacheResumenTributario = null;
+
+  async function cargarResumenTributario() {
+    const anio = llenarSelectAnios('ciDecAnio');
+    const cont = document.getElementById('ciDecContenido');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    let d;
+    try {
+      d = await llamarReporteContable('fn_resumen_tributario', { p_anio: anio });
+    } catch (e) {
+      cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(e.message)}</div>`;
+      return;
+    }
+    cacheResumenTributario = d;
+    const dec = d.declaracion_simple;
+    const pendientesPersonales = [
+      'Inmuebles a nombre de Sara (valor patrimonial / avalúo catastral al 31-12)',
+      'Vehículos (valor según tabla del Ministerio de Transporte)',
+      'Cuentas bancarias personales, CDT, inversiones y criptoactivos (certificados al 31-12)',
+      'Deudas personales: créditos hipotecarios, de vehículo, tarjetas de crédito (certificados al 31-12)',
+      'Ingresos por fuera del negocio: salarios, honorarios, arriendos, dividendos, pensiones',
+      'Ganancias ocasionales: herencias, donaciones, venta de activos poseídos por más de 2 años, loterías',
+      'Aportes voluntarios a pensión o AFC, intereses de vivienda, medicina prepagada y dependientes (si hay ingresos por fuera del SIMPLE)',
+      'Certificados de retención que le hayan entregado terceros',
+    ];
+
+    cont.innerHTML = `
+      <div class="grilla-2" style="gap:18px;align-items:start;">
+        <div class="panel" style="max-width:none;max-height:none;">
+          <h2 style="margin-top:0;">🧾 Ingresos del negocio — ${d.anio}</h2>
+          ${filaEstadoFin('Ingresos brutos percibidos (base SIMPLE, art. 904 E.T.)', d.ingresos_percibidos_simple, true)}
+          <div style="font-size:11px;opacity:0.65;margin:4px 0 10px;">Incluye los abonos de pedidos recibidos en el año aunque el pedido no se haya entregado.</div>
+          <h2>Ingresos contables (causados)</h2>
+          ${(d.detalle_ingresos || []).map(i => filaEstadoFin(i.nombre, i.valor)).join('') || '<div class="cargando">Sin ingresos.</div>'}
+          ${filaEstadoFin('Ingresos operacionales', d.ingresos_operacionales)}
+          ${filaEstadoFin('Ingresos no operacionales', d.ingresos_no_operacionales)}
+          <h2>Costos y gastos</h2>
+          ${filaEstadoFin('Costos de venta', d.costos)}
+          ${filaEstadoFin('Gastos de administración, ventas y otros', d.gastos)}
+          ${filaEstadoFin('Utilidad contable del año', d.utilidad_contable, true)}
+        </div>
+        <div class="panel" style="max-width:none;max-height:none;">
+          <h2 style="margin-top:0;">🏦 Patrimonio del negocio al 31-12-${d.anio}</h2>
+          ${(d.detalle_activos || []).map(a => filaEstadoFin(a.nombre, a.valor)).join('') || '<div class="cargando">Sin activos.</div>'}
+          ${filaEstadoFin('Patrimonio bruto (bienes del negocio)', d.patrimonio_bruto, true)}
+          <h2>Deudas</h2>
+          ${(d.detalle_pasivos || []).map(p => filaEstadoFin(p.nombre, p.valor)).join('') || '<div class="cargando">Sin deudas.</div>'}
+          ${filaEstadoFin('Total deudas', d.deudas, true)}
+          ${filaEstadoFin('Patrimonio líquido del negocio', d.patrimonio_liquido, true)}
+          ${Number(d.anio) === new Date().getFullYear() ? `<div style="font-size:11px;opacity:0.65;margin-top:6px;">El año aún no termina: los saldos son a hoy y cambiarán hasta el 31 de diciembre.</div>` : ''}
+        </div>
+      </div>
+
+      <div class="panel" style="max-width:none;max-height:none;margin-top:18px;">
+        <h2 style="margin-top:0;">💳 Impuesto SIMPLE, retenciones y descuentos</h2>
+        ${filaEstadoFin('Anticipos bimestrales del SIMPLE pagados', d.anticipos_simple_pagados)}
+        ${filaEstadoFin('Retenciones en la fuente que le practicaron (a favor)', d.retenciones_a_favor)}
+        ${filaEstadoFin('Aportes a pensión pagados como empleadora (descuento SIMPLE, a validar)', d.aportes_pension_empleador)}
+        ${filaEstadoFin('Nómina pagada en el año', d.nomina_pagada)}
+        ${dec
+          ? filaEstadoFin(`Declaración anual SIMPLE presentada (${new Date(dec.fecha_presentacion + 'T00:00:00').toLocaleDateString('es-CO')}) — impuesto a cargo`, dec.impuesto_a_cargo, true)
+          : '<div class="resumen-fila"><span>Declaración anual SIMPLE (formulario 260)</span><strong>Pendiente</strong></div>'}
+      </div>
+
+      <div class="panel" style="max-width:none;max-height:none;margin-top:18px;">
+        <h2 style="margin-top:0;">📝 Lo que no está en el sistema (lo aporta Sara al contador)</h2>
+        <div style="font-size:12.5px;line-height:1.8;">${pendientesPersonales.map(p => '☐ ' + escaparHtml(p)).join('<br>')}</div>
+      </div>
+    `;
+  }
+
+  function exportarResumenTributarioExcel() {
+    const d = cacheResumenTributario;
+    if (!d) { mostrarMensaje('mensajeContaImp', 'No hay datos para exportar.', 'error'); return; }
+    const n = (v) => Math.round(Number(v) || 0);
+    const dec = d.declaracion_simple;
+    const filas = [
+      [`Lana Rosa Crochet — Información para la declaración anual ${d.anio} (Régimen SIMPLE)`],
+      [`Generado: ${new Date().toLocaleString('es-CO')}`],
+      [],
+      ['INGRESOS', ''],
+      ['Ingresos brutos percibidos (base SIMPLE, art. 904 E.T.)', n(d.ingresos_percibidos_simple)],
+      ...(d.detalle_ingresos || []).map(i => ['  ' + i.nombre, n(i.valor)]),
+      ['Ingresos operacionales (causados)', n(d.ingresos_operacionales)],
+      ['Ingresos no operacionales', n(d.ingresos_no_operacionales)],
+      [],
+      ['COSTOS Y GASTOS', ''],
+      ['Costos de venta', n(d.costos)],
+      ['Gastos', n(d.gastos)],
+      ['Utilidad contable', n(d.utilidad_contable)],
+      [],
+      [`PATRIMONIO DEL NEGOCIO AL 31-12-${d.anio}`, ''],
+      ...(d.detalle_activos || []).map(a => ['  ' + a.nombre, n(a.valor)]),
+      ['Patrimonio bruto', n(d.patrimonio_bruto)],
+      ...(d.detalle_pasivos || []).map(p => ['  ' + p.nombre, n(p.valor)]),
+      ['Deudas', n(d.deudas)],
+      ['Patrimonio líquido', n(d.patrimonio_liquido)],
+      [],
+      ['IMPUESTO SIMPLE, RETENCIONES Y DESCUENTOS', ''],
+      ['Anticipos SIMPLE pagados', n(d.anticipos_simple_pagados)],
+      ['Retenciones a favor', n(d.retenciones_a_favor)],
+      ['Aportes a pensión como empleadora (a validar)', n(d.aportes_pension_empleador)],
+      ['Nómina pagada', n(d.nomina_pagada)],
+      ['Impuesto a cargo declaración SIMPLE', dec ? n(dec.impuesto_a_cargo) : 'Pendiente'],
+    ];
+    const hoja = XLSX.utils.aoa_to_sheet(filas);
+    hoja['!cols'] = [{ wch: 70 }, { wch: 18 }];
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, `Declaración ${d.anio}`);
+    XLSX.writeFile(libro, `LanaRosa_InformacionDeclaracion_${d.anio}.xlsx`);
   }
 
   // ---------- Bitácora ----------
