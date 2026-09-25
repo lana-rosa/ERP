@@ -991,6 +991,7 @@
         <button class="nav-btn" id="nav-estados-financieros" onclick="mostrarPantallaEstadosFinancieros()"><span class="nav-icon">📑</span> Estados financieros y libros</button>
         <button class="nav-btn" id="nav-contabilidad-impuestos" onclick="mostrarPantallaContabilidadImpuestos()"><span class="nav-icon">🧾</span> Impuestos, PUC y ajustes</button>
         <button class="nav-btn" id="nav-fe-contabilidad" onclick="mostrarPantallaFacturacionElectronica()"><span class="nav-icon">📨</span> Facturación y nómina electrónica</button>
+        <button class="nav-btn" id="nav-servicios-dian" onclick="mostrarPantallaServiciosDian()"><span class="nav-icon">🏛️</span> Servicios digitales DIAN</button>
         <button class="nav-btn" id="nav-activos-fijos" onclick="mostrarPantallaActivosFijos()"><span class="nav-icon">🪑</span> Activos fijos</button>
         <div class="sidebar-seccion">Reportes e indicadores</div>
         <button class="nav-btn" id="nav-reportes-financieros" onclick="mostrarPantallaReportesFinancieros()"><span class="nav-icon">📊</span> Informes de Ventas</button>
@@ -1030,6 +1031,7 @@
         <button class="nav-btn" id="nav-gestion-usuarios" onclick="mostrarPantallaUsuarios()"><span class="nav-icon">👥</span> Usuarios y permisos</button>
         <button class="nav-btn" onclick="mostrarPantallaMiPerfil()"><span class="nav-icon">👤</span> Mi perfil</button>
         <button class="nav-btn" id="nav-config-empresa" onclick="mostrarPantallaLogoEmpresa()"><span class="nav-icon">🏢</span> Configuración empresa</button>
+        <button class="nav-btn" id="nav-correo-empresa" onclick="mostrarPantallaCorreoEmpresa()"><span class="nav-icon">📧</span> Correo de la empresa</button>
         <button class="nav-btn" id="nav-copia-seguridad" onclick="mostrarPantallaCopiaSeguridad()"><span class="nav-icon">🛡️</span> Respaldo y auditoría</button>
         <button class="nav-btn" onclick="mostrarPantallaApariencia()"><span class="nav-icon">🎨</span> Apariencia</button>
       </div>
@@ -1245,6 +1247,7 @@
       <div id="botonesReciboVenta" style="display:flex;gap:8px;margin-top:10px;">
         <button class="btn-secundario" style="margin-top:0;" onclick="imprimirReciboVenta()" id="btnImprimirRecibo" disabled title="Se activa después de confirmar una venta">🖨️ Imprimir recibo</button>
         <button class="btn-secundario" style="margin-top:0;" onclick="enviarReciboVentaWhatsapp()" id="btnWhatsappRecibo" disabled title="Se activa después de confirmar una venta">📱 Enviar WhatsApp</button>
+        <button class="btn-secundario btn-correo-recibo" style="margin-top:0;display:none;" onclick="enviarReciboVentaCorreo(this)" id="btnCorreoRecibo" disabled title="Se activa después de confirmar una venta">📧 Enviar por correo</button>
       </div>
     </div>
 
@@ -1354,6 +1357,7 @@
         <div style="display:flex;gap:8px;margin-top:10px;">
           <button class="btn-secundario" style="margin-top:0;" onclick="imprimirReciboVenta()" id="btnImprimirReciboAcademia" disabled title="Se activa después de confirmar una venta">🖨️ Imprimir recibo</button>
           <button class="btn-secundario" style="margin-top:0;" onclick="enviarReciboVentaWhatsapp()" id="btnWhatsappReciboAcademia" disabled title="Se activa después de confirmar una venta">📱 Enviar WhatsApp</button>
+          <button class="btn-secundario btn-correo-recibo" style="margin-top:0;display:none;" onclick="enviarReciboVentaCorreo(this)" id="btnCorreoReciboAcademia" disabled title="Se activa después de confirmar una venta">📧 Enviar por correo</button>
         </div>
       </div>
 
@@ -1767,6 +1771,7 @@
     <div class="subtitulo">Los documentos se emiten en la solución gratuita de la DIAN. Aquí ves qué falta por emitir, con los datos listos para copiar, y registras el número y el CUFE/CUNE que te da la DIAN para llevar el control.</div>
   </div>
   <div class="mensaje" id="mensajeFe"></div>
+  <div id="feEstadoConexion"></div>
   <div id="feAvisoConfig"></div>
   <div class="filtro-tipo" style="margin-bottom:16px;">
     <button class="chip-filtro activo" data-subtab-btn="fe" onclick="mostrarSubTabGrupo('fe', 'subtabFePendientes', this); cargarFePendientes();">🧾 Por facturar</button>
@@ -1809,6 +1814,27 @@
   <div id="subtabFeConfig" data-subtab-grupo="fe" class="oculto">
     <div id="feConfigContenido"><div class="cargando">Cargando...</div></div>
   </div>
+</div>
+
+<!-- ===== PANTALLA: SERVICIOS DIGITALES DIAN (estado y qué falta) ===== -->
+<div id="pantallaServiciosDian" class="oculto contenido">
+  <div class="page-header">
+    <h1>🏛️ Servicios digitales DIAN</h1>
+    <div class="subtitulo">Estado de cada servicio de la DIAN que usa o debería usar Lana Rosa, qué falta para habilitarlo y cómo se conecta con el ERP.</div>
+  </div>
+  <div class="mensaje" id="mensajeServiciosDian"></div>
+  <div id="sdResumen"></div>
+  <div id="sdLista"><div class="cargando">Cargando...</div></div>
+</div>
+
+<!-- ===== PANTALLA: CORREO DE LA EMPRESA (Zoho) ===== -->
+<div id="pantallaCorreoEmpresa" class="oculto contenido">
+  <div class="page-header">
+    <h1>📧 Correo de la empresa</h1>
+    <div class="subtitulo">Conecta el correo de Zoho para enviar los recibos a los clientes desde el ERP.</div>
+  </div>
+  <div class="mensaje" id="mensajeCorreoEmpresa"></div>
+  <div id="ceContenido"><div class="cargando">Cargando...</div></div>
 </div>
 
 <!-- ===== PANTALLA: SOLICITUDES ===== -->
@@ -5173,7 +5199,7 @@
   });
 
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaFacturacionElectronica', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb'];
+    const pantallas = ['pantallaLogin', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaFacturacionElectronica', 'pantallaServiciosDian', 'pantallaCorreoEmpresa', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -5198,6 +5224,8 @@
       pantallaOrdenesProduccion: 'nav-ordenes-produccion',
       pantallaKardexEtapas: 'nav-kardex-etapas',
       pantallaFacturacionElectronica: 'nav-facturacion-electronica',
+      pantallaServiciosDian: 'nav-servicios-dian',
+      pantallaCorreoEmpresa: 'nav-correo-empresa',
       pantallaTurnoActivo: 'nav-turno',
       pantallaReportes: 'nav-reportes',
       pantallaReportesFinancieros: 'nav-reportes-financieros',
@@ -5541,6 +5569,7 @@
     mostrar('nav-gestion-usuarios', esAdmin);
     mostrar('nav-config-empresa', esAdmin || esContador);
     mostrar('nav-copia-seguridad', esAdmin);
+    mostrar('nav-correo-empresa', esAdmin);
 
     // Turno de caja solo aplica a quien maneja caja física (Tienda)
     mostrar('nav-turno', esAdmin || esCajero);
@@ -5573,6 +5602,7 @@
     mostrar('nav-kardex-etapas', esAdmin || esContador || esTaller);
     mostrar('nav-facturacion-electronica', esAdmin || esCajero);
     mostrar('nav-fe-contabilidad', esContador && !esAdmin);
+    mostrar('nav-servicios-dian', esAdmin || esContador);
     mostrar('nav-inventario-taller', esAdmin || esTaller);
     mostrar('nav-transferir-stock-taller', esTaller && !esAdmin && !esCajero); // misma pantalla que nav-transferir-stock
     mostrar('nav-nomina', esAdmin);
@@ -5597,6 +5627,7 @@
     // Si el usuario solo tiene un departamento, se abre expandido automáticamente
     if (esCajero) abrirSidebarDepto('deptoVentasSubmenu', 'headerDeptoVentas');
     if (esTaller) abrirSidebarDepto('deptoInventarioSubmenu', 'headerDeptoInventario');
+    cargarEstadoCorreoEmpresa();
   }
 
   // El submenú se anima hasta la altura real de su contenido (antes tenía un tope
@@ -6176,6 +6207,7 @@
     ocultarMensaje('mensajeVenta');
     document.getElementById('btnImprimirRecibo').disabled = true;
     document.getElementById('btnWhatsappRecibo').disabled = true;
+    document.getElementById('btnCorreoRecibo').disabled = true;
     renderizarCarrito();
     renderizarPagos();
     renderizarVentasEnEspera();
@@ -6792,6 +6824,7 @@
       };
       document.getElementById('btnImprimirRecibo').disabled = false;
       document.getElementById('btnWhatsappRecibo').disabled = false;
+      document.getElementById('btnCorreoRecibo').disabled = false;
 
       // Si hubo pago en efectivo, intentar abrir el cajón monedero (requiere
       // impresora/cajón compatible conectado; si no hay hardware, esto no hace nada).
@@ -6915,7 +6948,7 @@
       ` : ''}
 
       <div style="margin-top:16px;font-size:10.5px;color:#888;text-align:center;">
-        Recibo de venta — Lana Rosa Crochet no está obligada a expedir factura electrónica (persona natural, ingresos bajo el tope de la DIAN). Este documento sirve como comprobante de pago.
+        Recibo de venta — Este documento es un comprobante de pago. La factura electrónica la envía la DIAN por separado.
       </div>
 
       ${politicaCambiosCache ? `
@@ -7015,7 +7048,7 @@
       lineas: lineasVenta.map(l => ({ nombre: l.descripcion, cantidad: l.cantidad, precio: l.cantidad > 0 ? l.subtotal_linea / l.cantidad : l.subtotal_linea })),
       total: Number(venta.total),
       pagos: pagosVenta.map(p => ({ metodo_pago: p.metodo_pago, monto: Number(p.monto) })),
-      cliente: { nombre: tercero ? tercero.nombre_completo : '', telefono: tercero ? tercero.telefono : '', identificacion: tercero ? tercero.numero_documento : '' },
+      cliente: { nombre: tercero ? tercero.nombre_completo : '', telefono: tercero ? tercero.telefono : '', identificacion: tercero ? tercero.numero_documento : '', tercero_id: venta.tercero_id || null, email: tercero ? tercero.email : '' },
       cajero: cajerosPorId[venta.cajero_user_id] || 'Cajero'
     };
   }
@@ -7105,6 +7138,255 @@
       mostrarMensaje(idMensaje, 'No se pudo generar la imagen del recibo: ' + err.message, 'error');
     } finally {
       if (btn) { btn.disabled = false; btn.innerHTML = '<span class="nav-icon"></span>📱 Enviar WhatsApp'; btn.textContent = '📱 Enviar WhatsApp'; }
+    }
+  }
+
+  // ============================================================================
+  // CORREO DE LA EMPRESA (Zoho) — envío de recibos a clientes
+  // La contraseña de Zoho vive como secreto en Supabase (ZOHO_SMTP_PASS); el
+  // ERP solo llama a la función "enviar-correo", nunca ve la contraseña.
+  // ============================================================================
+  let estadoCorreoEmpresa = null; // { activo, remitente, nombre }
+  const EMAIL_VALIDO = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+
+  function correoEmpresaActivo() { return !!(estadoCorreoEmpresa && estadoCorreoEmpresa.activo); }
+
+  async function cargarEstadoCorreoEmpresa() {
+    try {
+      const { data } = await supabaseClient.rpc('fn_correo_estado');
+      estadoCorreoEmpresa = data || null;
+    } catch (e) { estadoCorreoEmpresa = null; }
+    document.querySelectorAll('.btn-correo-recibo').forEach(b => { b.style.display = correoEmpresaActivo() ? '' : 'none'; });
+  }
+
+  async function llamarEnviarCorreo(payload) {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const resp = await fetch(SUPABASE_URL + '/functions/v1/enviar-correo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + (session ? session.access_token : '') },
+      body: JSON.stringify(payload),
+    });
+    let datos = {};
+    try { datos = await resp.json(); } catch (e) { /* respuesta sin JSON */ }
+    if (!resp.ok) throw new Error(datos.error || ('error ' + resp.status));
+    return datos;
+  }
+
+  function blobABase64(blob) {
+    return new Promise((resolve, reject) => {
+      const lector = new FileReader();
+      lector.onload = () => resolve(String(lector.result).split(',')[1] || '');
+      lector.onerror = () => reject(new Error('No se pudo leer la imagen del recibo.'));
+      lector.readAsDataURL(blob);
+    });
+  }
+
+  async function buscarCorreoCliente(cliente) {
+    try {
+      let q = supabaseClient.from('terceros').select('id, email');
+      if (cliente.terceroId) q = q.eq('id', cliente.terceroId);
+      else if (cliente.identificacion) q = q.eq('numero_documento', cliente.identificacion);
+      else return { id: null, email: cliente.email || '' };
+      const { data } = await q.limit(1);
+      if (data && data[0]) return { id: data[0].id, email: data[0].email || cliente.email || '' };
+    } catch (e) { /* sin acceso a terceros: se pide el correo */ }
+    return { id: null, email: cliente.email || '' };
+  }
+
+  function htmlCorreoRecibo(o) {
+    const firma = (estadoCorreoEmpresa && estadoCorreoEmpresa.nombre) || 'Lana Rosa Crochet';
+    return `<div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#333;font-size:14px;line-height:1.55;">
+      <div style="border-bottom:3px solid #d8017c;padding-bottom:10px;margin-bottom:16px;"><strong style="font-size:18px;color:#d8017c;">Lana Rosa Crochet</strong></div>
+      <p>Hola${o.nombre ? ' ' + escaparHtml(o.nombre) : ''} 👋</p>
+      <p>${o.intro}</p>
+      <p style="font-size:15px;"><strong>${escaparHtml(o.titulo)}</strong> — Total: <strong>${formatearMoneda(o.total)}</strong></p>
+      <div style="text-align:center;margin:18px 0;"><img src="cid:recibo" alt="Recibo" style="max-width:100%;border:1px solid #eee;border-radius:8px;"></div>
+      <p style="font-size:12px;color:#777;">Este correo es un comprobante de pago. La factura electrónica te llega por separado desde la DIAN.</p>
+      <p>¡Gracias por tu compra! 🐑💕<br>${escaparHtml(firma)}<br><span style="font-size:12px;color:#777;">Calle 10 No. 5-37, Villamaría, Caldas — Tel. 3205072801</span></p>
+    </div>`;
+  }
+
+  // o = { idMensaje, boton, cliente:{nombre, terceroId, identificacion, email}, tipo, referencia, asunto, titulo, intro, total, generarImagen, nombreArchivo }
+  async function enviarReciboPorCorreo(o) {
+    if (!correoEmpresaActivo()) {
+      mostrarMensaje(o.idMensaje, 'El envío por correo aún no está activo. La administradora lo configura en Configuración → Correo de la empresa.', 'error');
+      return;
+    }
+    const encontrado = await buscarCorreoCliente(o.cliente || {});
+    const escrito = await pedirTexto(
+      encontrado.email ? 'Confirma el correo al que se envía el recibo:' : 'Este cliente no tiene correo guardado. Escribe el correo al que se envía el recibo:',
+      'Correo del cliente', 'cliente@correo.com', encontrado.email, 'email');
+    if (!escrito) return;
+    const para = escrito.trim().toLowerCase();
+    if (!EMAIL_VALIDO.test(para)) { mostrarMensaje(o.idMensaje, 'El correo escrito no es válido.', 'error'); return; }
+
+    const boton = o.boton;
+    const textoBoton = boton ? boton.textContent : '';
+    if (boton) { boton.disabled = true; boton.textContent = 'Enviando...'; }
+    try {
+      const base64 = await blobABase64(await o.generarImagen());
+      await llamarEnviarCorreo({
+        para, asunto: o.asunto, tipo: o.tipo, referencia: o.referencia,
+        html: htmlCorreoRecibo({ ...o, nombre: o.cliente && o.cliente.nombre }),
+        texto: `Hola${o.cliente && o.cliente.nombre ? ' ' + o.cliente.nombre : ''}. ${o.titulo} — Total ${formatearMoneda(o.total)}. El recibo va adjunto. ¡Gracias por tu compra! Lana Rosa Crochet.`,
+        adjuntos: [{ nombre: o.nombreArchivo, tipo: 'image/png', base64, cid: 'recibo' }],
+      });
+      let extra = '';
+      if (encontrado.id && encontrado.email !== para) {
+        const { error } = await supabaseClient.from('terceros').update({ email: para }).eq('id', encontrado.id);
+        if (!error) extra = ' El correo quedó guardado en la ficha del cliente.';
+      }
+      mostrarMensaje(o.idMensaje, `✅ Recibo enviado a ${para}.${extra}`, 'exito');
+    } catch (e) {
+      mostrarMensaje(o.idMensaje, 'No se pudo enviar el correo: ' + e.message, 'error');
+    } finally {
+      if (boton) { boton.disabled = false; boton.textContent = textoBoton; }
+    }
+  }
+
+  async function enviarReciboVentaCorreo(boton) {
+    const idMensaje = boton && boton.id === 'btnCorreoReciboAcademia' ? 'mensajeVentaAcademia' : idMensajeReciboActivo();
+    if (!ultimaVentaCache) { mostrarMensaje(idMensaje, 'Todavía no hay una venta registrada para enviar.', 'error'); return; }
+    const v = ultimaVentaCache;
+    await enviarReciboPorCorreo({
+      idMensaje, boton,
+      cliente: { nombre: v.cliente.nombre, terceroId: v.cliente.tercero_id, identificacion: v.cliente.identificacion, email: v.cliente.email },
+      tipo: 'recibo_venta', referencia: 'Venta ' + v.consecutivo,
+      asunto: `Tu recibo de compra N.° ${v.consecutivo} — Lana Rosa Crochet`,
+      titulo: `Recibo de venta N.° ${v.consecutivo}`,
+      intro: 'Te enviamos el recibo de tu compra en Lana Rosa Crochet.',
+      total: v.total,
+      generarImagen: () => generarImagenRecibo(v),
+      nombreArchivo: `recibo_${v.consecutivo}.png`,
+    });
+  }
+
+  async function enviarReciboHistorialCorreo(ventaId, boton) {
+    const recibo = construirReciboDesdeHistorial(ventaId);
+    if (!recibo) { mostrarMensaje('mensajeHistorialVentas', 'No se pudo generar el recibo.', 'error'); return; }
+    ultimaVentaCache = recibo;
+    await enviarReciboVentaCorreo(boton);
+  }
+
+  async function enviarReciboCompletoPedidoCorreo(pedidoId, boton) {
+    const recibo = armarReciboCompletoPedido(pedidoId);
+    if (!recibo) return;
+    const p = recibo.pedido;
+    const t = p.tercero || {};
+    await enviarReciboPorCorreo({
+      idMensaje: 'mensajePedidosCanal', boton,
+      cliente: { nombre: t.nombre_completo || '', terceroId: p.tercero_id || t.id, identificacion: t.numero_documento, email: t.email },
+      tipo: 'recibo_pedido', referencia: 'Pedido ' + p.consecutivo,
+      asunto: `Tu recibo del pedido ${p.consecutivo} — Lana Rosa Crochet`,
+      titulo: `Pedido ${p.consecutivo}`,
+      intro: 'Te enviamos el recibo de tu pedido en Lana Rosa Crochet.',
+      total: recibo.pagos.reduce((s, x) => s + Number(x.monto || 0), 0),
+      generarImagen: () => generarImagenReciboPedido(recibo),
+      nombreArchivo: `recibo_${p.consecutivo}.png`,
+    });
+  }
+
+  // ---- Pantalla de configuración (solo administradora) ----
+  async function mostrarPantallaCorreoEmpresa() {
+    mostrarPantalla('pantallaCorreoEmpresa');
+    asegurarEstiloTablaKardex();
+    ocultarMensaje('mensajeCorreoEmpresa');
+    await cargarCorreoEmpresa();
+  }
+
+  async function cargarCorreoEmpresa() {
+    const cont = document.getElementById('ceContenido');
+    const [{ data: cfg, error }, { data: envios }] = await Promise.all([
+      supabaseClient.from('configuracion_correo').select('*').eq('id', 1).maybeSingle(),
+      supabaseClient.from('correos_enviados').select('created_at, destinatario, asunto, tipo, estado, error').order('created_at', { ascending: false }).limit(25),
+    ]);
+    if (error || !cfg) { cont.innerHTML = `<div class="cargando">No se pudo cargar la configuración${error ? ': ' + escaparHtml(error.message) : ''}.</div>`; return; }
+    const c = cfg;
+    let estado;
+    if (c.activo && c.verificado_en) estado = `<span style="color:#1a7a4c;font-weight:700;">🟢 Conectado y activo</span> — los recibos se pueden enviar por correo.`;
+    else if (c.verificado_en) estado = `<span style="color:#8a6a0a;font-weight:700;">🟡 Conexión probada, envío apagado</span> — marca "Activar envío" y guarda.`;
+    else if (c.remitente_email) estado = `<span style="color:#8a6a0a;font-weight:700;">🟡 Falta la prueba</span> — guarda los datos, crea el secreto en Supabase y pulsa "Enviar correo de prueba".`;
+    else estado = `<span style="color:#a8322d;font-weight:700;">🔴 Sin configurar</span> — sigue los pasos de la derecha.`;
+    const campo = (id, etiqueta, valor, tipo = 'text', ph = '') => `<div><label for="${id}">${etiqueta}</label><input type="${tipo}" id="${id}" value="${escaparHtml(valor || '')}" placeholder="${ph}"></div>`;
+    const tiposCorreo = { recibo_venta: 'Recibo venta', recibo_pedido: 'Recibo pedido', recibo_abono: 'Recibo abono', prueba: 'Prueba', otro: 'Otro' };
+    cont.innerHTML = `
+      <div class="grilla-2" style="gap:18px;align-items:start;">
+        <div class="panel" style="max-width:none;max-height:none;margin:0;">
+          <h2 style="margin-top:0;">Estado</h2>
+          <div style="font-size:13px;line-height:1.55;">${estado}
+            ${c.verificado_en ? `<div style="opacity:0.7;font-size:12px;">Última prueba exitosa: ${new Date(c.verificado_en).toLocaleString('es-CO')}</div>` : ''}
+            ${c.ultimo_error ? `<div style="color:#a8322d;font-size:12px;margin-top:4px;">Último error: ${escaparHtml(c.ultimo_error)}</div>` : ''}
+          </div>
+          <h2>Datos de la cuenta</h2>
+          <div class="grilla-2" style="gap:10px;">
+            ${campo('ceRemitente', 'Correo remitente (Zoho)', c.remitente_email, 'email', 'ventas@lanarosa...')}
+            ${campo('ceNombre', 'Nombre que ve el cliente', c.remitente_nombre, 'text', 'Lana Rosa Crochet')}
+            <div><label for="ceHost">Tipo de cuenta Zoho</label>
+              <select id="ceHost">
+                <option value="smtppro.zoho.com" ${c.smtp_host === 'smtppro.zoho.com' ? 'selected' : ''}>Con dominio propio (…@lanarosa…) — smtppro.zoho.com</option>
+                <option value="smtp.zoho.com" ${c.smtp_host !== 'smtppro.zoho.com' ? 'selected' : ''}>Personal (…@zohomail.com / @zoho.com) — smtp.zoho.com</option>
+              </select></div>
+            ${campo('ceUsuario', 'Usuario de Zoho (solo si es distinto al remitente)', c.smtp_usuario, 'email', 'Déjalo vacío normalmente')}
+            ${campo('ceResponder', 'Las respuestas llegan a (opcional)', c.responder_a, 'email')}
+            ${campo('ceCopia', 'Copia oculta de cada envío (opcional)', c.copia_oculta, 'email')}
+          </div>
+          <label style="display:flex;gap:8px;align-items:center;font-weight:500;margin-top:10px;"><input type="checkbox" id="ceActivo" style="width:auto;" ${c.activo ? 'checked' : ''}> Activar envío de recibos por correo</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+            <button class="btn-principal" style="width:auto;margin-top:0;" onclick="guardarCorreoEmpresa()">Guardar</button>
+            <button class="btn-secundario" style="width:auto;margin-top:0;" id="btnPruebaCorreo" onclick="enviarCorreoPrueba()">📨 Enviar correo de prueba</button>
+          </div>
+          <div style="font-size:11.5px;opacity:0.7;margin-top:6px;">La prueba se envía al mismo correo remitente. Si llega, la conexión quedó bien.</div>
+        </div>
+        <div class="panel" style="max-width:none;max-height:none;margin:0;font-size:13px;line-height:1.65;">
+          <h2 style="margin-top:0;">🗺️ Cómo conectarlo (una sola vez)</h2>
+          <ol style="padding-left:18px;margin:0;">
+            <li><strong>Plan de Zoho:</strong> el plan gratuito de Zoho Mail normalmente no permite enviar desde otros programas (SMTP). Si la prueba falla aunque la contraseña esté bien, revisa que el plan lo incluya (Mail Lite o superior).</li>
+            <li><strong>Contraseña de aplicación:</strong> entra a <a href="https://accounts.zoho.com/home#security/app_password" target="_blank" rel="noopener">Zoho Accounts → Seguridad → Contraseñas específicas de aplicación</a>, genera una nueva con el nombre "ERP Lana Rosa" y cópiala. (Si no ves la opción, activa primero la verificación en dos pasos.)</li>
+            <li><strong>Guárdala en Supabase, no aquí:</strong> en el panel de Supabase del proyecto, ve a <em>Edge Functions → Secrets</em> y agrega un secreto con nombre <code>ZOHO_SMTP_PASS</code> y como valor la contraseña de aplicación. No la escribas en el ERP, en chats ni en WhatsApp.</li>
+            <li><strong>Datos:</strong> escribe a la izquierda el correo remitente (el mismo de Zoho), elige el tipo de cuenta y guarda.</li>
+            <li><strong>Prueba:</strong> pulsa "Enviar correo de prueba". Si llega, el envío queda activo y aparece el botón "📧 Enviar por correo" en los recibos (tienda, Academia, historial y pedidos).</li>
+          </ol>
+          <div style="font-size:11.5px;opacity:0.7;margin-top:10px;">Límite de seguridad: 60 correos por usuario y 150 en total cada 24 horas. Cada envío queda registrado abajo.</div>
+        </div>
+      </div>
+      <div class="panel" style="max-width:none;max-height:none;margin:18px 0 0 0;">
+        <h2 style="margin-top:0;">Últimos envíos</h2>
+        ${(envios || []).length ? `
+          <div style="overflow-x:auto;"><table class="tk">
+            <tr><th>Fecha</th><th>Para</th><th>Asunto</th><th>Tipo</th><th>Estado</th></tr>
+            ${envios.map(e => `<tr><td>${new Date(e.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}</td><td>${escaparHtml(e.destinatario)}</td><td>${escaparHtml(e.asunto)}</td><td>${tiposCorreo[e.tipo] || escaparHtml(e.tipo)}</td>
+              <td>${e.estado === 'enviado' ? '✅ Enviado' : `<span style="color:#a8322d;" title="${escaparHtml(e.error || '')}">❌ Error</span>`}</td></tr>`).join('')}
+          </table></div>` : '<div class="cargando">Todavía no se ha enviado ningún correo.</div>'}
+      </div>`;
+  }
+
+  async function guardarCorreoEmpresa(silencioso) {
+    const v = (id) => document.getElementById(id).value.trim();
+    const { error } = await supabaseClient.rpc('fn_correo_guardar_configuracion', { p: {
+      activo: document.getElementById('ceActivo').checked, remitente_email: v('ceRemitente'), remitente_nombre: v('ceNombre'),
+      smtp_host: document.getElementById('ceHost').value, smtp_usuario: v('ceUsuario'), responder_a: v('ceResponder'), copia_oculta: v('ceCopia'),
+    } });
+    if (error) { mostrarMensaje('mensajeCorreoEmpresa', 'No se pudo guardar: ' + error.message, 'error'); return false; }
+    await cargarEstadoCorreoEmpresa();
+    if (!silencioso) { await cargarCorreoEmpresa(); mostrarMensaje('mensajeCorreoEmpresa', '✅ Configuración guardada.', 'exito'); }
+    return true;
+  }
+
+  async function enviarCorreoPrueba() {
+    const boton = document.getElementById('btnPruebaCorreo');
+    if (!document.getElementById('ceRemitente').value.trim()) { mostrarMensaje('mensajeCorreoEmpresa', 'Escribe primero el correo remitente.', 'error'); return; }
+    if (!(await guardarCorreoEmpresa(true))) return;
+    boton.disabled = true; boton.textContent = 'Enviando prueba...';
+    try {
+      const r = await llamarEnviarCorreo({ tipo: 'prueba' });
+      // Si la prueba sale bien, se deja el envío activo de una vez
+      document.getElementById('ceActivo').checked = true;
+      await guardarCorreoEmpresa(true);
+      await cargarCorreoEmpresa();
+      mostrarMensaje('mensajeCorreoEmpresa', `✅ Correo de prueba enviado a ${r.destinatario}. El envío de recibos quedó activo.`, 'exito');
+    } catch (e) {
+      await cargarCorreoEmpresa();
+      mostrarMensaje('mensajeCorreoEmpresa', 'La prueba falló: ' + e.message, 'error');
     }
   }
 
@@ -8595,7 +8877,7 @@
     if (terceroIds.length > 0) {
       const { data } = await supabaseClient
         .from('terceros')
-        .select('id, nombre_completo, numero_documento, telefono')
+        .select('id, nombre_completo, numero_documento, telefono, email')
         .in('id', terceroIds);
       tercerosData = data || [];
     }
@@ -8678,6 +8960,7 @@
           ${venta.estado === 'completada' ? `<button class="btn-mini desactivar" onclick="event.stopPropagation(); abrirDevolucionSimple('${venta.id}', '${venta.consecutivo}')">💵 Devolver dinero</button>` : ''}
           <button class="btn-mini editar" onclick="event.stopPropagation(); verReciboHistorial('${venta.id}')">🖨️ Ver / imprimir recibo</button>
           <button class="btn-mini editar" onclick="event.stopPropagation(); enviarReciboHistorialWhatsapp('${venta.id}')">📱 Enviar por WhatsApp</button>
+          ${correoEmpresaActivo() ? `<button class="btn-mini editar" onclick="event.stopPropagation(); enviarReciboHistorialCorreo('${venta.id}', this)">📧 Enviar por correo</button>` : ''}
         </div>
         <div id="panelCambioArticulo-${venta.id}" class="oculto" style="margin-top:10px;"></div>
       </div>
@@ -9333,15 +9616,19 @@
     return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
   }
 
+  // Estilo de tabla compacta (table.tk) que usan el kardex y otros listados
+  function asegurarEstiloTablaKardex() {
+    if (document.getElementById('estiloTablaKardex')) return;
+    const estilo = document.createElement('style');
+    estilo.id = 'estiloTablaKardex';
+    estilo.textContent = CSS_TABLA_KARDEX.replace(/#fdf0f7/g, 'var(--tinte-rosa)').replace(/#b8006a/g, 'var(--rosa-principal)')
+      .replace(/#f1e2ec|#f7eff5|#e8d5e0/g, 'var(--gris-borde)').replace(/#faf6f8/g, 'var(--gris-fondo)');
+    document.head.appendChild(estilo);
+  }
+
   async function mostrarPantallaKardexEtapas() {
     mostrarPantalla('pantallaKardexEtapas');
-    if (!document.getElementById('estiloTablaKardex')) {
-      const estilo = document.createElement('style');
-      estilo.id = 'estiloTablaKardex';
-      estilo.textContent = CSS_TABLA_KARDEX.replace(/#fdf0f7/g, 'var(--tinte-rosa)').replace(/#b8006a/g, 'var(--rosa-principal)')
-        .replace(/#f1e2ec|#f7eff5|#e8d5e0/g, 'var(--gris-borde)').replace(/#faf6f8/g, 'var(--gris-fondo)');
-      document.head.appendChild(estilo);
-    }
+    asegurarEstiloTablaKardex();
     if (!document.getElementById('keDesde').value) {
       const hoy = new Date();
       document.getElementById('keDesde').value = fechaLocalIso(new Date(hoy.getFullYear(), hoy.getMonth(), 1));
@@ -10907,6 +11194,7 @@
     { clave: 'nav-kardex-etapas', etiqueta: '　　Kardex por etapas' },
     { clave: 'nav-facturacion-electronica', etiqueta: '　　Facturación electrónica DIAN' },
     { clave: 'nav-fe-contabilidad', etiqueta: '　　Facturación y nómina electrónica (contador)' },
+    { clave: 'nav-servicios-dian', etiqueta: '　　Servicios digitales DIAN' },
     { clave: 'deptoContabilidadGrupo', etiqueta: '📊 Contabilidad (grupo completo)' },
     { clave: 'nav-dashboard-contable', etiqueta: '　　Dashboard Contable' },
     { clave: 'nav-honorarios-tejedoras', etiqueta: '　　Honorarios Tejedoras' },
@@ -14451,6 +14739,7 @@
             acciones = `
               <button class="btn-mini editar" onclick="imprimirReciboCompletoPedido('${p.id}')">🖨️ Imprimir recibo</button>
               <button class="btn-mini editar" onclick="enviarReciboCompletoPedidoWhatsapp('${p.id}')">📱 Enviar por WhatsApp</button>
+              ${correoEmpresaActivo() ? `<button class="btn-mini editar" onclick="enviarReciboCompletoPedidoCorreo('${p.id}', this)">📧 Enviar por correo</button>` : ''}
             `;
           }
 
@@ -14715,7 +15004,7 @@
       </div>
       ${recibo.tipo_pago === 'anticipo' ? `<div style="margin-top:8px;font-size:11.5px;opacity:0.75;">Saldo pendiente a la entrega (incluye envío): <strong>${formatearMoneda(p.monto_saldo_requerido)}</strong></div>` : ''}
       <div style="margin-top:16px;font-size:10.5px;color:#888;text-align:center;">
-        Lana Rosa Crochet no está obligada a expedir factura electrónica (persona natural). Este documento sirve como comprobante de pago.
+        Este documento es un comprobante de pago. La factura electrónica la envía la DIAN por separado.
       </div>
       ${politicaCambiosCache ? `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed #ccc;font-size:10.5px;color:#888;text-align:center;">🔄 ${escaparHtml(politicaCambiosCache)}</div>` : ''}
     `;
@@ -14762,15 +15051,19 @@
       numeroFinal = await pedirTexto('Este cliente no tiene teléfono guardado. Escribe el número de WhatsApp:', 'Teléfono', 'Ej: 573001234567');
       if (!numeroFinal) return;
     }
+    const blob = await generarImagenReciboPedido(recibo);
+    const mensaje = `Hola 👋 Aquí está tu recibo de ${recibo.tipo_pago === 'anticipo' ? 'anticipo' : 'pago final'} — Pedido ${recibo.pedido.consecutivo}. ¡Gracias por tu compra! 🐑💕`;
+    await compartirImagenPorWhatsapp(blob, numeroFinal, `recibo_${recibo.pedido.consecutivo}.png`, mensaje);
+  }
+
+  async function generarImagenReciboPedido(recibo) {
     const wrapper = document.createElement('div');
     wrapper.style.cssText = 'position:fixed;left:-9999px;width:320px;padding:16px;background:white;font-family:Arial,sans-serif;';
     wrapper.innerHTML = generarContenidoReciboPedido(recibo);
     document.body.appendChild(wrapper);
     try {
       const canvas = await html2canvas(wrapper, { scale: 2, backgroundColor: '#ffffff' });
-      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-      const mensaje = `Hola 👋 Aquí está tu recibo de ${recibo.tipo_pago === 'anticipo' ? 'anticipo' : 'pago final'} — Pedido ${recibo.pedido.consecutivo}. ¡Gracias por tu compra! 🐑💕`;
-      await compartirImagenPorWhatsapp(blob, numeroFinal, `recibo_${recibo.pedido.consecutivo}.png`, mensaje);
+      return await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
     } finally {
       document.body.removeChild(wrapper);
     }
@@ -17647,6 +17940,7 @@
     const { data } = await supabaseClient.from('fe_configuracion').select('*').eq('id', 1).single();
     cacheFeConfig = data || {};
     renderizarAvisoFe();
+    renderizarEstadoConexionFe();
     mostrarSubTabGrupo('fe', 'subtabFePendientes', document.querySelector('[data-subtab-btn="fe"]'));
     await cargarFePendientes();
   }
@@ -17965,7 +18259,164 @@
     const { data } = await supabaseClient.from('fe_configuracion').select('*').eq('id', 1).single();
     cacheFeConfig = data || cacheFeConfig;
     renderizarAvisoFe();
+    renderizarEstadoConexionFe();
     mostrarMensaje('mensajeFe', '✅ Configuración guardada.', 'exito');
+  }
+
+  // ============================================================================
+  // SERVICIOS DIGITALES DIAN — estado, qué falta y conexión con el ERP
+  // ============================================================================
+  let cacheServiciosDian = [];
+  const ESTADOS_SERVICIO_DIAN = {
+    habilitado: { texto: '🟢 Habilitado', bg: 'var(--tinte-verde, #e3f4ea)', color: '#1a7a4c' },
+    en_tramite: { texto: '🟡 En trámite', bg: '#fdf3d6', color: '#8a6a0a' },
+    pendiente: { texto: '🔴 Pendiente', bg: '#fde5e5', color: '#a8322d' },
+    no_aplica: { texto: '⚪ No se usa', bg: '#eef0f2', color: '#5b6470' },
+  };
+  const APLICA_SERVICIO_DIAN = {
+    obligatorio: { texto: 'Obligatorio', color: '#a8322d' },
+    recomendado: { texto: 'Recomendado', color: '#b3620a' },
+    segun_topes: { texto: 'Según topes', color: '#5b6470' },
+    opcional: { texto: 'Opcional', color: '#5b6470' },
+    no_necesario: { texto: 'No necesario', color: '#5b6470' },
+  };
+  const CONEXION_SERVICIO_DIAN = {
+    asistida: '🟠 Registro asistido en el ERP',
+    calcula: '🟢 El ERP calcula; se presenta en el portal DIAN',
+    falta_erp: '🔴 Falta en el ERP',
+    portal: '⚪ Solo en el portal DIAN',
+  };
+
+  async function mostrarPantallaServiciosDian() {
+    mostrarPantalla('pantallaServiciosDian');
+    ocultarMensaje('mensajeServiciosDian');
+    await cargarServiciosDian();
+  }
+
+  async function cargarServiciosDian() {
+    const lista = document.getElementById('sdLista');
+    const { data, error } = await supabaseClient.rpc('fn_dian_servicios_listar');
+    if (error) { lista.innerHTML = `<div class="cargando">No se pudieron cargar los servicios: ${escaparHtml(error.message)}</div>`; return; }
+    cacheServiciosDian = data || [];
+    renderizarServiciosDian();
+  }
+
+  function renderizarServiciosDian() {
+    const servicios = cacheServiciosDian;
+    const importantes = servicios.filter(s => ['obligatorio', 'recomendado'].includes(s.aplica));
+    const listos = importantes.filter(s => s.estado === 'habilitado').length;
+    document.getElementById('sdResumen').innerHTML = `
+      <div class="panel" style="max-width:none;max-height:none;margin:0 0 16px 0;">
+        <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center;">
+          <div style="font-size:26px;font-weight:700;color:var(--rosa-principal);">${listos} / ${importantes.length}</div>
+          <div style="flex:1;min-width:220px;font-size:13px;line-height:1.55;">servicios obligatorios o recomendados ya habilitados.
+            ${listos < importantes.length ? `Falta: ${importantes.filter(s => s.estado !== 'habilitado').map(s => '<strong>' + escaparHtml(s.nombre) + '</strong>').join(', ')}.` : '¡Todo lo necesario está habilitado!'}</div>
+        </div>
+        <div style="margin-top:12px;background:var(--tinte-azul);border-radius:var(--radius-md);padding:10px 14px;font-size:12.5px;line-height:1.55;">
+          🔌 <strong>Conexión automática ERP ↔ DIAN: no disponible.</strong> Las soluciones gratuitas de la DIAN (factura, nómina, documento soporte) no tienen conexión directa (API) con otros programas.
+          Por eso el ERP trabaja en <strong>modo asistido</strong>: te muestra qué falta por emitir con los datos listos para copiar, tú lo emites en el portal de la DIAN y aquí se registra el número y el CUFE/CUNE.
+          Para que el ERP envíe los documentos solo, habría que contratar un <em>proveedor tecnológico</em> autorizado por la DIAN (tiene costo mensual); si algún día se decide, el ERP ya tiene los datos organizados para conectarlo.
+        </div>
+      </div>`;
+    document.getElementById('sdLista').innerHTML = servicios.map(tarjetaServicioDian).join('');
+  }
+
+  function tarjetaServicioDian(s) {
+    const est = ESTADOS_SERVICIO_DIAN[s.estado] || ESTADOS_SERVICIO_DIAN.pendiente;
+    const apl = APLICA_SERVICIO_DIAN[s.aplica] || APLICA_SERVICIO_DIAN.opcional;
+    const pasos = s.pasos || [];
+    const hechos = pasos.filter(p => p.hecho).length;
+    const pendientes = pasos.filter(p => !p.hecho);
+    const porcentaje = pasos.length ? Math.round(100 * hechos / pasos.length) : 0;
+    const clave = escaparHtml(s.clave);
+    const fechaTxt = (f) => f ? new Date(f + 'T00:00:00').toLocaleDateString('es-CO') : '';
+    let queFalta;
+    if (s.estado === 'habilitado') {
+      queFalta = `✅ Habilitado${s.fecha_habilitacion ? ' desde el ' + fechaTxt(s.fecha_habilitacion) : ''}.${pendientes.length ? ' Quedan pasos por marcar abajo.' : ''}`;
+    } else if (s.estado === 'no_aplica') {
+      queFalta = 'Hoy no se usa. ' + escaparHtml(s.aplica_nota || '');
+    } else {
+      queFalta = pendientes.length
+        ? `<strong>Qué falta para habilitarlo:</strong> ${escaparHtml(pendientes[0].texto)}${pendientes.length > 1 ? ` <span style="opacity:0.7;">(y ${pendientes.length - 1} paso${pendientes.length > 2 ? 's' : ''} más)</span>` : ''}`
+        : 'Todos los pasos están hechos: cambia el estado a "Habilitado".';
+    }
+    let aviso = '';
+    if (s.fecha_vencimiento) {
+      const dias = Math.round((new Date(s.fecha_vencimiento + 'T00:00:00') - new Date()) / 86400000);
+      if (dias < 0) aviso = `<div style="color:#a8322d;font-weight:600;font-size:12.5px;margin-top:6px;">⚠️ Venció el ${fechaTxt(s.fecha_vencimiento)}: hay que renovarlo.</div>`;
+      else if (dias <= 60) aviso = `<div style="color:#b3620a;font-weight:600;font-size:12.5px;margin-top:6px;">⏰ Vence en ${dias} días (${fechaTxt(s.fecha_vencimiento)}).</div>`;
+    }
+    const enlaces = (s.enlaces || []).map(e => `<a href="${escaparHtml(e.url)}" target="_blank" rel="noopener">${escaparHtml(e.texto)}</a>`).join(' · ');
+    return `
+      <div class="panel" style="max-width:none;max-height:none;margin:0 0 14px 0;" id="sdServicio-${clave}">
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start;">
+          <div style="flex:1;min-width:220px;">
+            <h2 style="margin:0 0 4px 0;">${escaparHtml(s.nombre)}</h2>
+            <span style="font-size:11px;font-weight:700;color:${apl.color};text-transform:uppercase;letter-spacing:0.04em;">${apl.texto}</span>
+          </div>
+          <span style="background:${est.bg};color:${est.color};border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700;white-space:nowrap;">${est.texto}</span>
+        </div>
+        <div style="font-size:13px;line-height:1.55;margin-top:8px;">${escaparHtml(s.descripcion)}</div>
+        ${s.aplica_nota ? `<div style="font-size:12px;opacity:0.75;margin-top:4px;">${escaparHtml(s.aplica_nota)}</div>` : ''}
+        <div style="margin-top:10px;padding:10px 12px;border-radius:var(--radius-md);background:#fff7fb;border:1px solid #f1e2ec;font-size:13px;line-height:1.5;">${queFalta}${aviso}</div>
+        <div style="margin-top:10px;font-size:12.5px;line-height:1.5;">
+          <div><strong>${CONEXION_SERVICIO_DIAN[s.conexion_tipo] || ''}</strong></div>
+          <div style="opacity:0.8;">${escaparHtml(s.conexion_texto)}</div>
+        </div>
+        <details style="margin-top:10px;" ${s.estado === 'en_tramite' ? 'open' : ''}>
+          <summary style="cursor:pointer;font-size:13px;font-weight:600;">Pasos (${hechos} de ${pasos.length}) y datos
+            <span style="display:inline-block;vertical-align:middle;width:90px;height:6px;border-radius:3px;background:#eee;margin-left:6px;overflow:hidden;"><span style="display:block;height:100%;width:${porcentaje}%;background:var(--rosa-principal);"></span></span>
+          </summary>
+          <div style="margin-top:8px;">
+            ${pasos.map(p => `
+              <label style="display:flex;gap:8px;align-items:flex-start;font-weight:400;font-size:13px;margin:6px 0;">
+                <input type="checkbox" style="width:auto;margin-top:3px;" data-sd-paso="${escaparHtml(p.id)}" ${p.hecho ? 'checked' : ''} ${p.auto ? 'disabled' : ''}>
+                <span>${escaparHtml(p.texto)}${p.auto ? ' <span style="font-size:11px;opacity:0.6;">(se marca solo con los datos del ERP)</span>' : ''}</span>
+              </label>`).join('')}
+            <div class="grilla-2" style="gap:10px;margin-top:8px;">
+              <div><label for="sdEstado-${clave}">Estado</label>
+                <select id="sdEstado-${clave}">
+                  ${Object.entries(ESTADOS_SERVICIO_DIAN).map(([k, v]) => `<option value="${k}" ${k === s.estado ? 'selected' : ''}>${v.texto}</option>`).join('')}
+                </select></div>
+              <div><label for="sdFechaHab-${clave}">Fecha de habilitación</label><input type="date" id="sdFechaHab-${clave}" value="${escaparHtml(s.fecha_habilitacion || '')}"></div>
+              ${s.clave === 'factura_electronica' ? '' : `<div><label for="sdFechaVence-${clave}">Vence (si aplica)</label><input type="date" id="sdFechaVence-${clave}" value="${escaparHtml(s.fecha_vencimiento || '')}"></div>`}
+              <div><label for="sdNotas-${clave}">Notas</label><input type="text" id="sdNotas-${clave}" value="${escaparHtml(s.notas || '')}" placeholder="Ej: radicado, quién lo hizo..."></div>
+            </div>
+            <button class="btn-principal" style="width:auto;" onclick="guardarServicioDian('${clave}')">Guardar</button>
+          </div>
+        </details>
+        ${enlaces ? `<div style="font-size:12px;margin-top:8px;">📎 ${enlaces}</div>` : ''}
+      </div>`;
+  }
+
+  async function guardarServicioDian(clave) {
+    const tarjeta = document.getElementById('sdServicio-' + clave);
+    const pasosHechos = {};
+    tarjeta.querySelectorAll('[data-sd-paso]').forEach(c => { if (!c.disabled && c.checked) pasosHechos[c.dataset.sdPaso] = true; });
+    const p = {
+      estado: document.getElementById('sdEstado-' + clave).value,
+      fecha_habilitacion: document.getElementById('sdFechaHab-' + clave).value,
+      notas: document.getElementById('sdNotas-' + clave).value,
+      pasos_hechos: pasosHechos,
+    };
+    const vence = document.getElementById('sdFechaVence-' + clave);
+    if (vence) p.fecha_vencimiento = vence.value;
+    const { error } = await supabaseClient.rpc('fn_dian_servicio_actualizar', { p_clave: clave, p });
+    if (error) { mostrarMensaje('mensajeServiciosDian', 'No se pudo guardar: ' + error.message, 'error'); return; }
+    mostrarMensaje('mensajeServiciosDian', '✅ Guardado.', 'exito');
+    await cargarServiciosDian();
+  }
+
+  // Franja en Facturación electrónica con el estado de la conexión con la DIAN
+  function renderizarEstadoConexionFe() {
+    const c = cacheFeConfig || {};
+    const estado = (ok) => ok ? '<strong style="color:#1a7a4c;">🟢 habilitada</strong>' : '<strong style="color:#a8322d;">🔴 falta habilitar</strong>';
+    document.getElementById('feEstadoConexion').innerHTML = `
+      <div style="border:1px solid #f1e2ec;background:#fff;border-radius:var(--radius-md);padding:10px 14px;margin-bottom:14px;font-size:12.5px;line-height:1.6;">
+        🔌 <strong>Conexión con la DIAN:</strong> modo asistido (se emite en el portal gratuito y se registra aquí). Envío automático: <strong>no disponible</strong> — requiere un proveedor tecnológico.<br>
+        Factura electrónica: ${estado(c.facturador_habilitado)} · Nómina electrónica: ${estado(c.nomina_habilitada)}
+        ${esRolFe('administrador', 'contador') ? ' · <a href="#" onclick="event.preventDefault(); mostrarPantallaServiciosDian();">Ver qué falta y otros servicios DIAN →</a>' : ''}
+      </div>`;
   }
 
   // ============================================================================
@@ -22758,6 +23209,7 @@
     };
     document.getElementById('btnImprimirReciboAcademia').disabled = false;
     document.getElementById('btnWhatsappReciboAcademia').disabled = false;
+    document.getElementById('btnCorreoReciboAcademia').disabled = false;
 
     document.getElementById('academiaCliente').value = '';
     document.getElementById('academiaIdentificacion').value = '';
