@@ -11,7 +11,8 @@ const CORS = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
-const TIPOS = ["recibo_venta", "recibo_pedido", "recibo_abono", "prueba", "otro"];
+const TIPOS = ["recibo_venta", "recibo_pedido", "recibo_abono", "bienvenida", "prueba", "otro"];
+const TIPOS_SOLO_ADMIN = ["prueba", "bienvenida"];
 const ROLES_QUE_ENVIAN = ["administrador", "cajero", "contador"];
 const TIPOS_ADJUNTO = ["image/png", "image/jpeg", "application/pdf"];
 const LIMITE_DIARIO_USUARIO = 60;
@@ -56,7 +57,7 @@ Deno.serve(async (req) => {
   const { data: cfg } = await admin.from("configuracion_correo").select("*").eq("id", 1).maybeSingle();
   if (!cfg || !cfg.remitente_email) return responder({ error: "Falta configurar el correo remitente (Configuración → Correo de la empresa).", codigo: "sin_configurar" }, 400);
 
-  if (tipo === "prueba" && rol !== "administrador") return responder({ error: "Solo la administradora puede enviar el correo de prueba." }, 403);
+  if (TIPOS_SOLO_ADMIN.includes(tipo) && rol !== "administrador") return responder({ error: "Solo la administradora puede enviar este correo." }, 403);
   if (tipo !== "prueba" && !(cfg.activo && cfg.verificado_en)) {
     return responder({ error: "El envío de correos no está activo: la administradora debe terminar la configuración y enviar el correo de prueba.", codigo: "inactivo" }, 400);
   }

@@ -11762,6 +11762,8 @@
             <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
               <button class="btn-mini editar" onclick="event.stopPropagation(); abrirPermisosUsuario('${u.user_id}', '${escaparHtml(u.nombre_completo || '')}')">⚙️ Permisos</button>
               <button class="btn-mini editar" onclick="event.stopPropagation(); resetearPasswordUsuario('${u.user_id}', '${escaparHtml(u.nombre_completo || '')}')">🔑 Resetear contraseña</button>
+              <button class="btn-mini editar" onclick="event.stopPropagation(); reenviarBienvenidaWhatsapp('${u.user_id}')">📱 Bienvenida por WhatsApp</button>
+              <button class="btn-mini editar" onclick="event.stopPropagation(); reenviarBienvenidaCorreo('${u.user_id}', this)">📧 Bienvenida por correo</button>
               <button class="btn-mini ${u.activo ? 'desactivar' : 'guardar'}" onclick="event.stopPropagation(); pedirConfirmacionBoton(this, '¿Seguro?', () => activarDesactivarUsuario('${u.user_id}', ${!u.activo}))">${u.activo ? '🚫 Desactivar' : '✅ Activar'}</button>
             </div>
           </div>
@@ -12100,6 +12102,110 @@
     return true;
   }
 
+  // ---- Bienvenida a usuarios nuevos del equipo (WhatsApp y correo) ----
+  const QUE_HACE_ROL = {
+    administrador: 'la administración general del negocio',
+    cajero: 'la Tienda: ventas, caja, clientes e inventario',
+    taller: 'el Taller: pedidos por tejer, órdenes de producción y material',
+    contador: 'la contabilidad: estados financieros, libros, impuestos, conciliación bancaria y facturación electrónica',
+  };
+
+  function urlPlataformaErp() { return new URL('./', window.location.href).href; }
+
+  function primerNombre(nombre) { return String(nombre || '').trim().split(/\s+/)[0] || ''; }
+
+  // password = null cuando se reenvía la bienvenida (la contraseña ya se compartió antes)
+  function mensajeWhatsappBienvenida(u, password) {
+    const firmante = (miPropiaIdentidad && miPropiaIdentidad.nombre) || 'Lana Rosa Crochet';
+    return `¡Hola, ${primerNombre(u.nombre)}! 🐑💕\n\n`
+      + `Te damos la bienvenida al equipo de *Lana Rosa Crochet*. ¡Qué alegría tenerte con nosotros! `
+      + `Ya tienes tu usuario en nuestro sistema (ERP), desde donde vas a manejar ${QUE_HACE_ROL[u.rol] || 'tus tareas en Lana Rosa'}.\n\n`
+      + `*Así ingresas:*\n`
+      + `1️⃣ Abre este enlace: ${urlPlataformaErp()}\n`
+      + `2️⃣ Correo: ${u.correo}\n`
+      + (password ? `3️⃣ Contraseña temporal: ${password}\n\n` : `3️⃣ Contraseña: la temporal que te compartimos (si no la tienes, escríbeme y te genero una nueva).\n\n`)
+      + `🔐 *Importante:* apenas entres, cambia la contraseña por una que solo tú conozcas. Está en *Configuración → Mi perfil → 🔐 Cuenta y seguridad*.\n\n`
+      + `💡 Funciona en el computador y en el celular (en el celular puedes instalarlo como app desde el menú: "📲 Instalar app en el celular"). `
+      + `Si tienes dudas, Rosina, la asistente del ERP (botón abajo a la derecha), te ayuda, o me escribes con toda confianza.\n\n`
+      + `Un abrazo,\n${firmante}`;
+  }
+
+  function htmlCorreoBienvenida(u) {
+    const url = urlPlataformaErp();
+    const firmante = (miPropiaIdentidad && miPropiaIdentidad.nombre) || 'Lana Rosa Crochet';
+    const paso = (n, html) => `<tr><td style="vertical-align:top;padding:6px 10px 6px 0;"><span style="display:inline-block;width:24px;height:24px;line-height:24px;border-radius:12px;background:#d8017c;color:#fff;text-align:center;font-weight:700;font-size:13px;">${n}</span></td><td style="padding:6px 0;">${html}</td></tr>`;
+    return `<div style="font-family:Arial,Helvetica,sans-serif;max-width:580px;margin:0 auto;color:#333;font-size:14.5px;line-height:1.6;">
+      <div style="border-bottom:3px solid #d8017c;padding-bottom:10px;margin-bottom:18px;"><strong style="font-size:19px;color:#d8017c;">Lana Rosa Crochet</strong></div>
+      <p style="font-size:16px;">¡Hola, ${escaparHtml(primerNombre(u.nombre))}! 🐑💕</p>
+      <p>Te damos la bienvenida al equipo de <strong>Lana Rosa Crochet</strong>. ¡Qué alegría tenerte con nosotros!</p>
+      <p>Ya tienes tu usuario en nuestro sistema de gestión (ERP), desde donde vas a manejar ${escaparHtml(QUE_HACE_ROL[u.rol] || 'tus tareas en Lana Rosa')}.</p>
+      <h3 style="color:#d8017c;margin:22px 0 6px 0;font-size:16px;">Así ingresas a la plataforma</h3>
+      <table style="border-collapse:collapse;">
+        ${paso(1, `Abre este enlace: <a href="${url}" style="color:#d8017c;font-weight:700;">${url}</a>`)}
+        ${paso(2, `En <strong>Correo</strong> escribe: <strong>${escaparHtml(u.correo)}</strong>`)}
+        ${paso(3, `En <strong>Contraseña</strong> escribe la contraseña temporal que te enviamos por WhatsApp. Por seguridad no va en este correo; si no la tienes, respóndenos y te generamos una nueva.`)}
+        ${paso(4, `<strong>Cambia la contraseña apenas entres</strong> por una que solo tú conozcas: en el menú <strong>Configuración → Mi perfil → 🔐 Cuenta y seguridad</strong>.`)}
+      </table>
+      <div style="text-align:center;margin:24px 0;">
+        <a href="${url}" style="display:inline-block;background:#d8017c;color:#fff;text-decoration:none;font-weight:700;padding:12px 26px;border-radius:10px;">Ingresar al ERP de Lana Rosa</a>
+      </div>
+      <div style="background:#fdf0f7;border-radius:10px;padding:12px 16px;font-size:13.5px;">
+        💡 <strong>Tips:</strong><br>
+        • Funciona en el computador y en el celular. En el celular puedes instalarlo como app desde el menú (<em>📲 Instalar app en el celular</em>).<br>
+        • Si tienes dudas sobre cómo hacer algo, pregúntale a <strong>Rosina</strong>, la asistente del ERP (botón abajo a la derecha).<br>
+        • Guarda el enlace en tus favoritos para tenerlo siempre a mano.
+      </div>
+      <p style="margin-top:22px;">Cualquier cosa que necesites, nos escribes con toda confianza.</p>
+      <p>Un abrazo,<br><strong>${escaparHtml(firmante)}</strong><br>Lana Rosa Crochet<br><span style="font-size:12px;color:#777;">Calle 10 No. 5-37, Villamaría, Caldas — Tel. 3205072801</span></p>
+    </div>`;
+  }
+
+  async function enviarBienvenidaCorreo(u, idMensaje, boton) {
+    if (!correoEmpresaActivo()) {
+      mostrarMensaje(idMensaje, 'El correo de la empresa aún no está conectado. Termina la configuración en Configuración → Correo de la empresa (contraseña de aplicación de Zoho y correo de prueba) y vuelve a intentarlo.', 'error');
+      return false;
+    }
+    const textoBoton = boton ? boton.textContent : '';
+    if (boton) { boton.disabled = true; boton.textContent = 'Enviando...'; }
+    try {
+      await llamarEnviarCorreo({
+        para: u.correo, tipo: 'bienvenida', referencia: 'Usuario ' + u.correo,
+        asunto: `¡Te damos la bienvenida a Lana Rosa Crochet, ${primerNombre(u.nombre)}! Así ingresas al ERP`,
+        html: htmlCorreoBienvenida(u),
+        texto: `Hola, ${primerNombre(u.nombre)}. Te damos la bienvenida al equipo de Lana Rosa Crochet. Ingresa al ERP en ${urlPlataformaErp()} con tu correo ${u.correo} y la contraseña temporal que te enviamos por WhatsApp. Apenas entres, cámbiala en Configuración → Mi perfil → Cuenta y seguridad.`,
+      });
+      mostrarMensaje(idMensaje, `✅ Correo de bienvenida enviado a ${u.correo}.`, 'exito');
+      return true;
+    } catch (e) {
+      mostrarMensaje(idMensaje, 'No se pudo enviar el correo de bienvenida: ' + e.message, 'error');
+      return false;
+    } finally {
+      if (boton) { boton.disabled = false; boton.textContent = textoBoton; }
+    }
+  }
+
+  function usuarioParaBienvenida(userId) {
+    const u = (usuariosCache || []).find(x => x.user_id === userId);
+    return u ? { user_id: u.user_id, nombre: u.nombre_completo || '', correo: u.correo || '', rol: u.rol, telefono: u.telefono || '' } : null;
+  }
+
+  async function reenviarBienvenidaCorreo(userId, boton) {
+    const u = usuarioParaBienvenida(userId);
+    if (!u || !u.correo) { mostrarMensaje('mensajeUsuarios', 'Este usuario no tiene correo registrado.', 'error'); return; }
+    await enviarBienvenidaCorreo(u, 'mensajeUsuarios', boton);
+  }
+
+  async function reenviarBienvenidaWhatsapp(userId) {
+    const u = usuarioParaBienvenida(userId);
+    if (!u) return;
+    const telefono = await pedirTexto(`WhatsApp de ${u.nombre} (el mensaje lleva el enlace y el correo; la contraseña no, porque ya se compartió):`, 'Número de WhatsApp', 'Ej: 3001234567', u.telefono, 'tel');
+    if (!telefono) return;
+    await supabaseClient.rpc('fn_usuario_guardar_telefono', { p_user_id: userId, p_telefono: telefono });
+    const cacheUsuario = (usuariosCache || []).find(x => x.user_id === userId);
+    if (cacheUsuario) cacheUsuario.telefono = telefono;
+    if (!abrirWhatsAppTexto(telefono, mensajeWhatsappBienvenida(u, null))) mostrarMensaje('mensajeUsuarios', 'El número no es válido.', 'error');
+  }
+
   async function confirmarCrearUsuario() {
     const nombre = document.getElementById('nuevoUsuarioNombre').value.trim();
     const correo = document.getElementById('nuevoUsuarioCorreo').value.trim();
@@ -12137,9 +12243,17 @@
 
     mostrarMensaje('mensajeCrearUsuario', `✅ Usuario creado. Correo: ${correo} — Contraseña temporal: ${password}. Compártesela de forma segura.`, 'exito');
 
+    // Rol base del usuario nuevo (los roles personalizados dependen de uno base)
+    const rolBase = tipoRol === 'custom' ? ((rolesPersonalizadosCache || []).find(r => r.id === valorRolPuro) || {}).rol_base || '' : valorRolPuro;
+    const nuevoUsuario = { nombre, correo, rol: rolBase };
+    const nuevoUserId = datos.user_id || (datos.usuario && (datos.usuario.user_id || datos.usuario.id)) || null;
     if (telefono) {
-      const mensajeBienvenida = `¡Hola ${nombre}! 👋 Ya tienes tu usuario nuevo en el sistema de Lana Rosa Crochet.\n\n📧 Correo: ${correo}\n🔑 Contraseña temporal: ${password}\n\n⚠️ Por seguridad, cámbiala apenas ingreses (en "Mi perfil → Seguridad"). Cualquier duda me escribes. 🐑💕`;
-      abrirWhatsAppTexto(telefono, mensajeBienvenida);
+      if (nuevoUserId) supabaseClient.rpc('fn_usuario_guardar_telefono', { p_user_id: nuevoUserId, p_telefono: telefono });
+      abrirWhatsAppTexto(telefono, mensajeWhatsappBienvenida(nuevoUsuario, password));
+    }
+    if (correoEmpresaActivo()) {
+      const enviado = await enviarBienvenidaCorreo(nuevoUsuario, 'mensajeUsuarios', null);
+      if (enviado) mostrarMensaje('mensajeCrearUsuario', `✅ Usuario creado y correo de bienvenida enviado a ${correo} (sin la contraseña). Contraseña temporal: ${password} — compártesela por WhatsApp.`, 'exito');
     }
 
     document.getElementById('nuevoUsuarioNombre').value = '';
