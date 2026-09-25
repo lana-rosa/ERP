@@ -14235,10 +14235,11 @@
       cont.innerHTML = '<div class="cargando">No hay ventas de productos terminados en este período.</div>';
       return;
     }
-    const sinPeso = productos.filter(p => Number(p.costo_materiales_unitario) === 0).length;
+    const estimados = productos.filter(p => p.materiales_son_estimados).length;
+    const sinPeso = productos.filter(p => p.materiales_son_estimados && Number(p.costo_materiales_unitario) === 0).length;
     cont.innerHTML = `
       <div style="font-size:12px;opacity:0.7;margin-bottom:10px;">Precio del gramo de hilo usado: ${formatearMoneda(d.precio_gramo_hilo)} (se configura en la pestaña "⚙️ Configuración").</div>
-      ${sinPeso ? `<div style="background:var(--tinte-ambar);color:var(--ambar);border-radius:var(--radius-md);padding:8px 12px;font-size:12.5px;margin-bottom:10px;">⚠️ ${sinPeso} producto(s) salen en $0 porque no tienen el peso configurado en Inventario (campo "Peso en gramos" de la ficha del producto).</div>` : ''}
+      ${estimados ? `<div style="background:var(--tinte-ambar);color:var(--ambar);border-radius:var(--radius-md);padding:8px 12px;font-size:12.5px;margin-bottom:10px;">⚠️ ${estimados} producto(s) muestran costo <strong>(estimado)</strong> por peso porque no tienen "Órdenes de producción" terminadas en este período con datos reales de consumo.${sinPeso ? ` ${sinPeso} de ellos salen en $0 porque tampoco tienen el peso configurado en Inventario (campo "Peso en gramos").` : ''} Para que el costo sea real y automático, la tejedora debe abrir la orden en "Órdenes de producción", entregar allí la mercería que usó y marcarla como terminada al finalizar — el costo real reemplaza el estimado automáticamente.</div>` : ''}
       <div class="tabla-lista">
         <div class="tabla-lista-header header-rosa" style="grid-template-columns:1fr 90px 110px 110px 110px 100px;">
           <span>PRODUCTO</span><span style="text-align:right;">UNID. VENDIDAS</span><span style="text-align:right;">COSTO MAT. UNIT.</span><span style="text-align:right;">COSTO MAT. TOTAL</span><span style="text-align:right;">PRECIO VENTA PROM.</span><span style="text-align:right;">MARGEN MAT.</span>
@@ -14247,7 +14248,7 @@
           <div class="tabla-lista-fila" style="grid-template-columns:1fr 90px 110px 110px 110px 100px;cursor:default;">
             <span>${escaparHtml(p.nombre)}</span>
             <span style="text-align:right;">${p.unidades_vendidas}</span>
-            <span style="text-align:right;">${formatearMoneda(p.costo_materiales_unitario)}</span>
+            <span style="text-align:right;">${formatearMoneda(p.costo_materiales_unitario)}${p.materiales_son_estimados ? ' <span style="font-size:9.5px;opacity:0.6;" title="No hay consumo real registrado en Órdenes de producción para este producto en este período — este valor es un estimado por el peso configurado del producto.">(estimado)</span>' : ' <span style="font-size:9.5px;opacity:0.6;color:var(--verde-exito);" title="Calculado con el consumo real de mercería registrado en Órdenes de producción.">(real)</span>'}</span>
             <span style="text-align:right;">${formatearMoneda(p.costo_materiales_total)}</span>
             <span style="text-align:right;">${formatearMoneda(p.precio_venta_promedio)}</span>
             <span style="text-align:right;color:${p.margen_materiales_unitario >= 0 ? 'var(--verde-exito)' : 'var(--rojo-error)'};font-weight:700;">${formatearMoneda(p.margen_materiales_unitario)}</span>
@@ -14265,8 +14266,8 @@
       [`Período: ${d.periodo.desde || ''} a ${d.periodo.hasta || ''}`],
       [`Precio del gramo de hilo: ${d.precio_gramo_hilo}`],
       [],
-      ['Producto', 'Unidades vendidas', 'Costo materiales unitario', 'Costo materiales total', 'Precio venta promedio', 'Margen sobre materiales'],
-      ...(d.productos || []).map(p => [p.nombre, p.unidades_vendidas, p.costo_materiales_unitario, p.costo_materiales_total, p.precio_venta_promedio, p.margen_materiales_unitario]),
+      ['Producto', 'Unidades vendidas', 'Costo materiales unitario', 'Origen del costo', 'Costo materiales total', 'Precio venta promedio', 'Margen sobre materiales'],
+      ...(d.productos || []).map(p => [p.nombre, p.unidades_vendidas, p.costo_materiales_unitario, p.materiales_son_estimados ? 'Estimado por peso' : 'Real (órdenes de producción)', p.costo_materiales_total, p.precio_venta_promedio, p.margen_materiales_unitario]),
     ];
     const hoja = XLSX.utils.aoa_to_sheet(filas);
     const libro = XLSX.utils.book_new();
