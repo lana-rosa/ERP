@@ -1,4 +1,4 @@
-// Envía correos desde el dominio de la empresa (recibos a clientes) usando
+// Envía correos desde el dominio de la empresa (recibos, bienvenidas, correos generales e informes) usando
 // Resend (https://resend.com). La clave de la API NO está en el código ni en
 // la base de datos: se guarda como secreto de Edge Functions en Supabase con
 // el nombre RESEND_API_KEY (Project Settings → Edge Functions → Secrets).
@@ -10,10 +10,17 @@ const CORS = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
-const TIPOS = ["recibo_venta", "recibo_pedido", "recibo_abono", "bienvenida", "prueba", "otro"];
+const TIPOS = ["recibo_venta", "recibo_pedido", "recibo_abono", "bienvenida", "prueba", "general", "informe", "otro"];
 const TIPOS_SOLO_ADMIN = ["prueba", "bienvenida"];
+// Correos libres e informes: solo administradora y contador (la caja solo envía recibos)
+const TIPOS_ADMIN_O_CONTADOR = ["general", "informe"];
 const ROLES_QUE_ENVIAN = ["administrador", "cajero", "contador"];
-const TIPOS_ADJUNTO = ["image/png", "image/jpeg", "application/pdf"];
+const TIPOS_ADJUNTO = [
+  "image/png", "image/jpeg", "application/pdf",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+];
+const MAX_DESTINATARIOS = 5;
+const MAX_ADJUNTOS = 5;
 const LIMITE_DIARIO_USUARIO = 60;
 const LIMITE_DIARIO_TOTAL = 150;
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -58,18 +65,26 @@ Deno.serve(async (req) => {
   if (!cfg || !cfg.remitente_email) return responder({ error: "Falta configurar el correo remitente (Configuración → Correo de la empresa).", codigo: "sin_configurar" }, 400);
 
   if (TIPOS_SOLO_ADMIN.includes(tipo) && rol !== "administrador") return responder({ error: "Solo la administradora puede enviar este correo." }, 403);
+  if (TIPOS_ADMIN_O_CONTADOR.includes(tipo) && rol !== "administrador" && rol !== "contador") {
+    return responder({ error: "Solo la administradora y el contador pueden enviar correos generales e informes." }, 403);
+  }
   if (tipo !== "prueba" && !(cfg.activo && cfg.verificado_en)) {
     return responder({ error: "El envío de correos no está activo: la administradora debe terminar la configuración y enviar el correo de prueba.", codigo: "inactivo" }, 400);
   }
 
-  const para = String(tipo === "prueba" ? (cuerpo?.para || cfg.remitente_email) : (cuerpo?.para || "")).trim().toLowerCase();
-  if (!EMAIL_RE.test(para) || para.length > 254) return responder({ error: "El correo del destinatario no es válido." }, 400);
+  const paraTexto = String(tipo === "prueba" ? (cuerpo?.para || cfg.remitente_email) : (cuerpo?.para || ""));
+  const destinatarios = [...new Set(paraTexto.split(/[,;\s]+/).map((d) => d.trim().toLowerCase()).filter(Boolean))];
+  if (!destinatarios.length) return responder({ error: "Escribe el correo del destinatario." }, 400);
+  if (destinatarios.length > MAX_DESTINATARIOS) return responder({ error: `Máximo ${MAX_DESTINATARIOS} destinatarios por correo.` }, 400);
+  const invalido = destinatarios.find((d) => !EMAIL_RE.test(d) || d.length > 254);
+  if (invalido) return responder({ error: `El correo "${invalido}" no es válido.` }, 400);
+  const para = destinatarios.join(", ");
   if (tipo !== "prueba" && (!asunto || (!html && !texto))) return responder({ error: "Faltan el asunto o el contenido." }, 400);
   if (html.length > 250000) return responder({ error: "El contenido del correo es demasiado grande." }, 400);
-  if (adjuntos.length > 3) return responder({ error: "Máximo 3 adjuntos por correo." }, 400);
+  if (adjuntos.length > MAX_ADJUNTOS) return responder({ error: `Máximo ${MAX_ADJUNTOS} adjuntos por correo.` }, 400);
   for (const a of adjuntos) {
     if (!a || typeof a.base64 !== "string" || !TIPOS_ADJUNTO.includes(a.tipo) || a.base64.length > 4_000_000) {
-      return responder({ error: "Adjunto no permitido (solo PNG, JPG o PDF de hasta 3 MB)." }, 400);
+      return responder({ error: "Adjunto no permitido (solo PDF, Excel, PNG o JPG de hasta 3 MB cada uno)." }, 400);
     }
   }
 
@@ -97,7 +112,7 @@ Deno.serve(async (req) => {
 
   const payload: Record<string, unknown> = {
     from: `${cfg.remitente_nombre || "Lana Rosa Crochet"} <${cfg.remitente_email}>`,
-    to: [para],
+    to: destinatarios,
     subject: asuntoFinal,
   };
   if (htmlFinal) payload.html = htmlFinal;
