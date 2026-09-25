@@ -964,8 +964,8 @@
         <button class="nav-btn" id="nav-listas-precios" onclick="mostrarPantallaListasPrecios()"><span class="nav-icon">💲</span> Listas de precios</button>
         <button class="nav-btn" id="nav-ajustestock" onclick="mostrarPantallaAjusteStock()"><span class="nav-icon">📥</span> Entrada mercancía</button>
         <button class="nav-btn" id="nav-etiquetas" onclick="mostrarPantallaEtiquetas()"><span class="nav-icon">🏷️</span> Imprimir etiquetas</button>
-        <button class="nav-btn" id="nav-transferir-stock" onclick="mostrarPantallaTransferirStock()"><span class="nav-icon">🔄</span> Transferir stock (Tienda)</button>
-        <button class="nav-btn" id="nav-transferir-stock-taller" onclick="mostrarPantallaTransferirStock()"><span class="nav-icon">🔄</span> Transferir stock (Taller)</button>
+        <button class="nav-btn" id="nav-transferir-stock" onclick="mostrarPantallaTransferirStock()"><span class="nav-icon">🔄</span> Trasladar Tienda ↔ Taller</button>
+        <button class="nav-btn" id="nav-transferir-stock-taller" onclick="mostrarPantallaTransferirStock()"><span class="nav-icon">🔄</span> Trasladar Tienda ↔ Taller</button>
         <button class="nav-btn" id="nav-solicitudes-tienda" onclick="mostrarPantallaSolicitudes()"><span class="nav-icon">📦</span> Solicitud de insumos del Taller</button>
         <button class="nav-btn" id="nav-consumotaller" onclick="mostrarPantallaPedidosCrm()"><span class="nav-icon">🧶</span> Consumo de material (Taller)</button>
         <button class="nav-btn" id="nav-ordenes-produccion" onclick="mostrarPantallaOrdenesProduccion()"><span class="nav-icon">🏭</span> Órdenes de producción</button>
@@ -1376,33 +1376,46 @@
 <!-- ===== PANTALLA: TRANSFERIR STOCK ===== -->
 <div id="pantallaTransferirStock" class="oculto contenido">
   <div class="page-header">
-    <h1>🔄 Transferir stock entre Tienda y Taller</h1>
-    <div class="subtitulo">Mueve productos de un departamento a otro. Si el producto no existe todavía en el destino, se crea automáticamente allá.</div>
+    <h1>🔄 Trasladar entre Tienda y Taller</h1>
+    <div class="subtitulo">Mueve insumos (materia prima) o productos entre la Tienda y el Taller. Cada traslado queda en el kardex de las dos ubicaciones y lo autorizan los líderes de ambas.</div>
   </div>
   <div class="grilla-2">
     <div class="panel">
-      <h2>Nueva transferencia</h2>
-      <label for="transferenciaDepartamentoOrigen">Departamento de origen</label>
-      <select id="transferenciaDepartamentoOrigen" onchange="cargarProductosParaTransferir()">
-        <option value="01">🏬 Tienda Física</option>
+      <h2>Nuevo traslado</h2>
+      <label for="transferenciaTipo">¿Qué vas a trasladar?</label>
+      <select id="transferenciaTipo" onchange="cargarProductosParaTransferir()">
+        <option value="merceria">🧵 Insumos y materia prima</option>
+        <option value="producto_terminado">🧸 Productos terminados</option>
+      </select>
+      <label for="transferenciaDepartamentoOrigen">Sale de</label>
+      <select id="transferenciaDepartamentoOrigen" onchange="document.getElementById('transferenciaDepartamentoDestino').value = this.value === '01' ? '03' : '01'; cargarProductosParaTransferir()">
+        <option value="01">🏬 Tienda</option>
         <option value="03">🧶 Taller</option>
       </select>
-      <label for="transferenciaProducto">Producto a transferir</label>
-      <select id="transferenciaProducto"><option value="">Selecciona el origen primero...</option></select>
-      <label for="transferenciaDepartamentoDestino">Departamento destino</label>
-      <select id="transferenciaDepartamentoDestino">
+      <label for="transferenciaDepartamentoDestino">Llega a</label>
+      <select id="transferenciaDepartamentoDestino" onchange="document.getElementById('transferenciaDepartamentoOrigen').value = this.value === '01' ? '03' : '01'; cargarProductosParaTransferir()">
         <option value="03">🧶 Taller</option>
-        <option value="01">🏬 Tienda Física</option>
+        <option value="01">🏬 Tienda</option>
       </select>
-      <label for="transferenciaCantidad">Cantidad a transferir</label>
-      <input type="number" id="transferenciaCantidad" min="0.01" step="0.01">
-      <label for="transferenciaObservaciones">Observaciones <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
-      <input type="text" id="transferenciaObservaciones" placeholder="Ej: para armar kits de tejido">
-      <button class="btn-principal" onclick="confirmarTransferirStock()">Transferir</button>
+      <div id="transferenciaAvisoTipo"></div>
+      <div id="transferenciaCampos">
+        <label for="transferenciaProducto">Producto</label>
+        <select id="transferenciaProducto"><option value="">Cargando...</option></select>
+        <label for="transferenciaCantidad">Cantidad</label>
+        <input type="number" id="transferenciaCantidad" min="0.01" step="0.01">
+        <div id="transferenciaBloqueUso">
+          <label for="transferenciaOrden">¿Para qué se va a usar?</label>
+          <select id="transferenciaOrden"></select>
+          <div style="font-size:11.5px;opacity:0.7;margin-top:4px;">Si ya sabes para qué pieza es, elige su orden de producción: el insumo pasa directo a <strong>productos en proceso</strong>. Si no, queda en el inventario del Taller y se entrega a una orden cuando se use.</div>
+        </div>
+        <label for="transferenciaObservaciones">Observaciones <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+        <input type="text" id="transferenciaObservaciones" placeholder="Ej: para el pedido de la muñeca">
+        <button class="btn-principal" id="btnTransferirStock" onclick="confirmarTransferirStock()">Trasladar</button>
+      </div>
       <div class="mensaje" id="mensajeTransferirStock"></div>
     </div>
     <div class="panel">
-      <h2>Historial de transferencias</h2>
+      <h2>Historial de traslados</h2>
       <input type="text" id="buscarTransferenciaStock" placeholder="🔍 Producto o departamento..." oninput="filtrarHistorialTransferencias()" style="margin-bottom:10px;">
       <div id="listaTransferenciasStock"><div class="cargando">Cargando...</div></div>
     </div>
@@ -5538,14 +5551,14 @@
     mostrar('nav-transferir-stock', esAdmin || esCajero);
     mostrar('nav-reportes', esAdmin);
     mostrar('nav-pedidos-canal', esAdmin || esCajero);
-    mostrar('nav-solicitudes-tienda', esAdmin || esCajero);
+    mostrar('nav-solicitudes-tienda', false); // reemplazada por Trasladar entre Tienda y Taller
     mostrar('nav-consumotaller', esAdmin || esTaller);
     mostrar('nav-ordenes-produccion', esAdmin || esTaller);
     mostrar('nav-kardex-etapas', esAdmin || esContador || esTaller);
     mostrar('nav-facturacion-electronica', esAdmin || esCajero);
     mostrar('nav-fe-contabilidad', esContador && !esAdmin);
     mostrar('nav-inventario-taller', esAdmin || esTaller);
-    mostrar('nav-transferir-stock-taller', esAdmin || esTaller);
+    mostrar('nav-transferir-stock-taller', esTaller && !esAdmin && !esCajero); // misma pantalla que nav-transferir-stock
     mostrar('nav-nomina', esAdmin);
     mostrar('nav-talento-humano', esAdmin);
     mostrar('nav-reportes-financieros', esAdmin || esContador);
@@ -9170,7 +9183,7 @@
           <div><label>Cantidad</label><input type="number" id="opEntCant-${o.id}" min="0" step="0.1"></div>
           <div><label>Nota <span style="font-size:10px;opacity:0.6;">(opcional)</span></label><input type="text" id="opEntNota-${o.id}"></div>
         </div>
-        ${puedeTienda ? '' : '<div style="font-size:11.5px;opacity:0.7;margin-top:6px;">¿Falta material? Pídelo a la Tienda en "Solicitud de insumos"; cuando llegue al Taller, entrégalo aquí.</div>'}
+        ${puedeTienda ? '' : '<div style="font-size:11.5px;opacity:0.7;margin-top:6px;">¿Falta material? Se trae de la Tienda en "Trasladar entre Tienda y Taller", y allí mismo se puede entregar a esta orden.</div>'}
         <button class="btn-principal" style="width:auto;" onclick="confirmarEntregaMaterialOrden('${o.id}')">Entregar a ${escaparHtml(o.orden)}</button>`);
     }
     if (accion === 'devolver') {
@@ -9761,23 +9774,40 @@
   }
 
   async function cargarProductosParaTransferir() {
+    const tipo = document.getElementById('transferenciaTipo').value;
+    const origen = document.getElementById('transferenciaDepartamentoOrigen').value;
+    const destino = document.getElementById('transferenciaDepartamentoDestino').value;
     const select = document.getElementById('transferenciaProducto');
-    const codigoOrigen = document.getElementById('transferenciaDepartamentoOrigen').value;
-    const centroId = idsCentroCostoPorCodigo[codigoOrigen];
+    const aviso = document.getElementById('transferenciaAvisoTipo');
+    const campos = document.getElementById('transferenciaCampos');
+    aviso.innerHTML = '';
+    campos.classList.remove('oculto');
+
+    // El Taller no guarda productos terminados: salen de las órdenes de producción directo a la Tienda.
+    if (tipo === 'producto_terminado') {
+      campos.classList.add('oculto');
+      aviso.innerHTML = `<div style="background:var(--tinte-azul);border-radius:var(--radius-md);padding:10px 14px;margin-top:12px;font-size:12.5px;line-height:1.6;">
+        Los productos terminados solo se guardan en la Tienda: el Taller no tiene inventario de productos terminados. Cuando el Taller termina una pieza, se registra al terminar su <a href="#" onclick="mostrarPantallaOrdenesProduccion(); return false;">orden de producción</a> y entra directo al inventario de la Tienda. Para un arreglo o una devolución de un producto al Taller, usa una orden de producción.</div>`;
+      return;
+    }
+
+    document.getElementById('transferenciaBloqueUso').classList.toggle('oculto', destino !== '03');
     select.innerHTML = '<option value="">Cargando...</option>';
-    if (!centroId) return;
+    const { data, error } = await supabaseClient.rpc('fn_inventario_para_traslado', { p_centro_codigo: origen, p_tipo: tipo });
+    if (error) { select.innerHTML = `<option value="">No se pudo cargar: ${escaparHtml(error.message)}</option>`; return; }
+    select.innerHTML = (data && data.length)
+      ? data.map(i => `<option value="${i.id}">${escaparHtml(i.nombre)} (disponible: ${formatearCantidad(i.stock)} ${escaparHtml(i.unidad || '')})</option>`).join('')
+      : '<option value="">Sin existencias registradas aquí</option>';
+    if (!data || !data.length) {
+      aviso.innerHTML = `<div style="background:var(--tinte-ambar);border-radius:var(--radius-md);padding:10px 14px;margin-top:12px;font-size:12.5px;line-height:1.6;">
+        ${origen === '01' ? 'La Tienda' : 'El Taller'} no tiene insumos con existencias registradas en el sistema. Si físicamente sí hay, regístralos primero con "Entrada mercancía" (compras) o con una toma de inventario.</div>`;
+    }
 
-    const { data } = await supabaseClient
-      .from('inventario_items')
-      .select('id, nombre, stock_actual, unidad_medida')
-      .eq('centro_costo_id', centroId)
-      .eq('activo', true)
-      .gt('stock_actual', 0)
-      .order('nombre', { ascending: true });
-
-    select.innerHTML = (data && data.length > 0)
-      ? data.map(i => `<option value="${i.id}">${escaparHtml(i.nombre)} (stock: ${i.stock_actual} ${i.unidad_medida})</option>`).join('')
-      : '<option value="">Sin productos con stock en este departamento</option>';
+    if (destino === '03') {
+      const { data: ordenes } = await supabaseClient.rpc('fn_op_abiertas');
+      document.getElementById('transferenciaOrden').innerHTML = '<option value="">Queda en el inventario del Taller</option>'
+        + (ordenes || []).map(o => `<option value="${o.id}">Entregar a ${escaparHtml(o.orden)} — ${escaparHtml(o.descripcion)}${o.pedido ? ' (pedido ' + escaparHtml(o.pedido) + ')' : ''}</option>`).join('');
+    }
   }
 
   async function confirmarTransferirStock() {
@@ -9786,6 +9816,7 @@
     const itemId = document.getElementById('transferenciaProducto').value;
     const cantidad = Number(document.getElementById('transferenciaCantidad').value);
     const observaciones = document.getElementById('transferenciaObservaciones').value.trim();
+    const ordenId = codigoDestino === '03' ? document.getElementById('transferenciaOrden').value || null : null;
     ocultarMensaje('mensajeTransferirStock');
 
     if (codigoOrigen === codigoDestino) { mostrarMensaje('mensajeTransferirStock', 'El origen y el destino deben ser diferentes.', 'error'); return; }
@@ -9815,15 +9846,14 @@
     const autDestino = await respAutDestino.json();
     if (!autDestino.valido) { mostrarMensaje('mensajeTransferirStock', `Código inválido para autorizar la recepción en ${nombreDestino}.`, 'error'); return; }
 
-    const resp = await fetch(WORKER_URL + '/api/pos/inventario/transferir', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ inventario_item_id: itemId, centro_costo_destino_id: centroDestinoId, cantidad, observaciones: observaciones || null })
+    const { data, error } = await supabaseClient.rpc('fn_transferir_inventario', {
+      p_item_id: itemId, p_centro_destino_id: centroDestinoId, p_cantidad: cantidad, p_observaciones: observaciones || null, p_orden_id: ordenId,
     });
-    const datos = await resp.json();
-    if (!resp.ok) { mostrarMensaje('mensajeTransferirStock', datos.error || 'No se pudo transferir.', 'error'); return; }
+    if (error) { mostrarMensaje('mensajeTransferirStock', 'No se pudo trasladar: ' + error.message, 'error'); return; }
 
-    mostrarMensaje('mensajeTransferirStock', '✅ Transferencia realizada correctamente.', 'exito');
+    mostrarMensaje('mensajeTransferirStock', data && data.orden
+      ? `✅ Traslado realizado y entregado a ${data.orden}: el insumo ya está en productos en proceso.`
+      : '✅ Traslado realizado. Queda en el kardex de las dos ubicaciones.', 'exito');
     document.getElementById('transferenciaCantidad').value = '';
     document.getElementById('transferenciaObservaciones').value = '';
     await cargarProductosParaTransferir();
@@ -10837,8 +10867,8 @@
     { clave: 'nav-listas-precios', etiqueta: '　　Listas de precios' },
     { clave: 'nav-ajustestock', etiqueta: '　　Entrada de mercancía' },
     { clave: 'nav-etiquetas', etiqueta: '　　Imprimir etiquetas' },
-    { clave: 'nav-transferir-stock', etiqueta: '　　Transferir stock (Tienda)' },
-    { clave: 'nav-transferir-stock-taller', etiqueta: '　　Transferir stock (Taller)' },
+    { clave: 'nav-transferir-stock', etiqueta: '　　Trasladar Tienda ↔ Taller' },
+    { clave: 'nav-transferir-stock-taller', etiqueta: '　　Trasladar Tienda ↔ Taller (menú del Taller)' },
     { clave: 'nav-solicitudes-tienda', etiqueta: '　　Solicitud de insumos del Taller' },
     { clave: 'nav-consumotaller', etiqueta: '　　Consumo de material (Taller)' },
     { clave: 'nav-ordenes-produccion', etiqueta: '　　Órdenes de producción' },
