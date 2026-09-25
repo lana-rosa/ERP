@@ -934,6 +934,7 @@
   <div class="sidebar-nav">
     <button class="nav-btn" id="nav-dashboard" onclick="mostrarPantallaDashboard()"><span class="nav-icon">🏠</span> Dashboard</button>
     <button class="nav-btn" id="nav-calendario" onclick="mostrarPantallaCalendario()"><span class="nav-icon">📅</span> Calendario del equipo</button>
+    <button class="nav-btn" id="nav-enviar-correo" onclick="abrirRedactarCorreo()" style="display:none;"><span class="nav-icon">✉️</span> Enviar correo</button>
 
     <!-- 1. VENTAS Y CLIENTES -->
     <div class="sidebar-depto" id="deptoVentasGrupo" style="display:none;">
@@ -3393,6 +3394,31 @@
   </div>
 </div>
 
+<div id="modalCorreo" class="oculto" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:650;display:flex;align-items:center;justify-content:center;padding:16px;">
+  <div role="dialog" aria-labelledby="modalCorreoTitulo" style="background:#fff;border-radius:14px;max-width:640px;width:100%;max-height:90vh;overflow-y:auto;padding:24px;">
+    <h2 id="modalCorreoTitulo" style="margin-top:0;">✉️ Enviar correo</h2>
+    <div style="font-size:12px;opacity:0.75;margin-bottom:8px;">Sale desde <strong id="correoRemitente">el correo de la empresa</strong>. Las respuestas llegan a ese mismo buzón.</div>
+    <div id="correoAviso"></div>
+    <label for="correoPara">Para</label>
+    <input type="text" id="correoPara" placeholder="correo@ejemplo.com (varios separados por coma, máximo 5)" autocomplete="off">
+    <label for="correoAsunto">Asunto</label>
+    <input type="text" id="correoAsunto" maxlength="200">
+    <label for="correoMensaje">Mensaje</label>
+    <textarea id="correoMensaje" rows="8" maxlength="10000" style="width:100%;resize:vertical;"></textarea>
+    <div style="font-size:11.5px;opacity:0.7;margin-top:4px;">Al final se agrega solo: "Cordialmente", tu nombre y los datos de Lana Rosa Crochet.</div>
+    <label style="margin-top:12px;">Adjuntos</label>
+    <div id="correoAdjuntos"></div>
+    <button type="button" class="btn-mini editar" style="margin-top:6px;" onclick="document.getElementById('correoArchivo').click()">📎 Adjuntar archivo</button>
+    <input type="file" id="correoArchivo" accept=".pdf,.xlsx,.png,.jpg,.jpeg" multiple style="display:none;" onchange="agregarAdjuntosCorreo(this)">
+    <div style="font-size:11px;opacity:0.6;margin-top:4px;">PDF, Excel, PNG o JPG · hasta 5 archivos de 3 MB cada uno.</div>
+    <div class="mensaje" id="mensajeCorreoRedactar"></div>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button class="btn-principal" id="btnEnviarCorreoRedactado" style="margin-top:0;" onclick="enviarCorreoRedactado()">Enviar</button>
+      <button class="btn-secundario" id="btnCerrarCorreoRedactado" style="margin-top:0;" onclick="cerrarRedactarCorreo()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <div id="modalPoliticaDatos" class="oculto" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:600;display:flex;align-items:center;justify-content:center;padding:20px;">
   <div style="background:#fff;border-radius:14px;max-width:600px;width:100%;max-height:85vh;overflow-y:auto;padding:28px;">
     <h2 style="margin-top:0;">📋 Política de Tratamiento de Datos Personales — Lana Rosa Crochet</h2>
@@ -5673,6 +5699,8 @@
     document.getElementById('btnCrearRapido').style.display = esAdmin ? 'flex' : 'none';
     document.getElementById('barraBusquedaGlobal').classList.remove('oculto');
     mostrar('nav-calendario', true);
+    mostrar('nav-enviar-correo', esAdmin || esContador);
+    document.querySelectorAll('.btn-correo-informe').forEach(b => { b.style.display = (esAdmin || esContador) ? '' : 'none'; });
 
     // Si el usuario solo tiene un departamento, se abre expandido automáticamente
     if (esCajero) abrirSidebarDepto('deptoVentasSubmenu', 'headerDeptoVentas');
@@ -11581,6 +11609,7 @@
     { clave: 'nav-talento-humano', etiqueta: '　　Carpetas por empleado' },
     { clave: 'deptoFondoEmprenderGrupo', etiqueta: '🏦 Fondo Emprender (grupo completo)' },
     { clave: 'nav-calendario', etiqueta: '📅 Calendario del equipo' },
+    { clave: 'nav-enviar-correo', etiqueta: '✉️ Enviar correo' },
   ];
 
   let usuariosCache = [];
@@ -12543,9 +12572,16 @@
         ${tipsHtml}
       </div>
       <p style="margin-top:22px;">${escaparHtml(despedidaTexto)}</p>
-      <p>Un abrazo,<br><strong>${escaparHtml(firmante)}</strong><br>Lana Rosa Crochet<br><span style="font-size:12px;color:#777;">Calle 10 No. 5-37, Villamaría, Caldas — Tel. 3205072801</span></p>
+      ${firmaHtmlCorreo()}
     </div>`;
   }
+
+  const DATOS_FIRMA_CORREO = 'Calle 10 No. 5-37, Villamaría, Caldas — Tel. 3205072801';
+  function firmanteCorreo() { return (miPropiaIdentidad && miPropiaIdentidad.nombre) || 'Lana Rosa Crochet'; }
+  function firmaHtmlCorreo() {
+    return `<p style="margin-top:22px;">Cordialmente,<br><strong>${escaparHtml(firmanteCorreo())}</strong><br>Lana Rosa Crochet<br><span style="font-size:12px;color:#777;">${DATOS_FIRMA_CORREO}</span></p>`;
+  }
+  function firmaTextoCorreo() { return `Cordialmente,\n${firmanteCorreo()}\nLana Rosa Crochet\n${DATOS_FIRMA_CORREO}`; }
 
   // Arma asunto + html leyendo la plantilla guardada (o el texto predeterminado si está vacía)
   async function construirCorreoBienvenida(u) {
@@ -22381,7 +22417,8 @@
   function botonesExportarHtml(idSeccion, titulo) {
     const t = String(titulo).replace(/'/g, "\\'");
     return `<button class="btn-mini editar" style="flex:0 0 auto;padding:7px 12px;" onclick="exportarSeccionExcel('${idSeccion}', '${t}')">📥 Excel</button>
-            <button class="btn-mini editar" style="flex:0 0 auto;padding:7px 12px;" onclick="imprimirSeccion('${idSeccion}', '${t}')">🖨️ PDF</button>`;
+            <button class="btn-mini editar" style="flex:0 0 auto;padding:7px 12px;" onclick="imprimirSeccion('${idSeccion}', '${t}')">🖨️ PDF</button>
+            <button class="btn-mini editar btn-correo-informe" style="flex:0 0 auto;padding:7px 12px;display:none;" onclick="enviarInformePorCorreo(() => exportarSeccionExcel('${idSeccion}', '${t}'), '${t}')">📧 Correo</button>`;
   }
 
   // Informes que no tenían Excel ni PDF: se les agrega la barra al cargar la app.
@@ -22423,6 +22460,203 @@
     });
   }
   agregarBarrasExportacion();
+
+  // ============================================================================
+  // CORREO GENERAL E INFORMES (sale desde el correo de la empresa, vía Resend)
+  // ============================================================================
+  const TIPOS_MIME_ADJUNTO = {
+    pdf: 'application/pdf', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg',
+    xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  };
+  const MAX_BYTES_ADJUNTO = 3000000;
+  const MAX_ADJUNTOS_CORREO = 5;
+  const MAX_DESTINATARIOS_CORREO = 5;
+  let adjuntosCorreo = [];
+  let tipoCorreoRedactar = 'general';
+
+  function puedeEnviarCorreoGeneral() { return rolActual === 'administrador' || rolActual === 'contador'; }
+
+  function destinatariosCorreo(texto) {
+    return [...new Set(String(texto || '').split(/[,;\s]+/).map(d => d.trim().toLowerCase()).filter(Boolean))];
+  }
+
+  function tamanoLegible(bytes) {
+    return bytes >= 1000000 ? (bytes / 1000000).toFixed(1).replace('.', ',') + ' MB' : Math.max(1, Math.round(bytes / 1000)) + ' KB';
+  }
+
+  async function abrirRedactarCorreo(opciones = {}) {
+    tipoCorreoRedactar = opciones.tipo || 'general';
+    adjuntosCorreo = (opciones.adjuntos || []).slice();
+    document.getElementById('correoPara').value = opciones.para || '';
+    document.getElementById('correoAsunto').value = opciones.asunto || '';
+    document.getElementById('correoMensaje').value = opciones.mensaje || '';
+    document.getElementById('correoArchivo').value = '';
+    ocultarMensaje('mensajeCorreoRedactar');
+    const btnEnviar = document.getElementById('btnEnviarCorreoRedactado');
+    btnEnviar.textContent = 'Enviar';
+    document.getElementById('btnCerrarCorreoRedactado').textContent = 'Cancelar';
+    if (!estadoCorreoEmpresa) await cargarEstadoCorreoEmpresa();
+    document.getElementById('correoRemitente').textContent = (estadoCorreoEmpresa && estadoCorreoEmpresa.remitente) || 'el correo de la empresa';
+    const avisos = [];
+    if (!puedeEnviarCorreoGeneral()) avisos.push('Solo la administradora y el contador pueden enviar correos desde el ERP.');
+    else if (!correoEmpresaActivo()) avisos.push('El correo de la empresa todavía no está activo: la administradora lo configura en Configuración → Correo de la empresa.');
+    if (opciones.avisoAdjunto) avisos.push(opciones.avisoAdjunto);
+    document.getElementById('correoAviso').innerHTML = avisos.map(a => `<div style="background:var(--tinte-ambar, #fdf3dc);border-radius:8px;padding:8px 12px;font-size:12.5px;margin-bottom:8px;">⚠️ ${escaparHtml(a)}</div>`).join('');
+    btnEnviar.disabled = !puedeEnviarCorreoGeneral() || !correoEmpresaActivo();
+    renderizarAdjuntosCorreo();
+    document.getElementById('modalCorreo').classList.remove('oculto');
+    setTimeout(() => document.getElementById('correoPara').focus(), 50);
+  }
+
+  function cerrarRedactarCorreo() {
+    document.getElementById('modalCorreo').classList.add('oculto');
+    adjuntosCorreo = [];
+  }
+
+  function renderizarAdjuntosCorreo() {
+    const cont = document.getElementById('correoAdjuntos');
+    cont.innerHTML = adjuntosCorreo.length
+      ? adjuntosCorreo.map((a, i) => `
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--gris-borde, #eee);border-radius:8px;margin-bottom:6px;font-size:12.5px;">
+          <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📎 ${escaparHtml(a.nombre)}</span>
+          <span style="opacity:0.6;white-space:nowrap;">${tamanoLegible(a.tamano)}</span>
+          <button type="button" class="btn-quitar-pago" title="Quitar adjunto" aria-label="Quitar adjunto" onclick="quitarAdjuntoCorreo(${i})">✕</button>
+        </div>`).join('')
+      : '<div style="font-size:12px;opacity:0.6;">Sin adjuntos.</div>';
+  }
+
+  function quitarAdjuntoCorreo(i) {
+    adjuntosCorreo.splice(i, 1);
+    renderizarAdjuntosCorreo();
+  }
+
+  async function agregarAdjuntosCorreo(input) {
+    ocultarMensaje('mensajeCorreoRedactar');
+    for (const archivo of [...input.files]) {
+      const extension = (archivo.name.split('.').pop() || '').toLowerCase();
+      const tipo = TIPOS_MIME_ADJUNTO[extension];
+      if (!tipo) { mostrarMensaje('mensajeCorreoRedactar', `"${archivo.name}" no se puede adjuntar: solo PDF, Excel (.xlsx), PNG o JPG.`, 'error'); continue; }
+      if (archivo.size > MAX_BYTES_ADJUNTO) { mostrarMensaje('mensajeCorreoRedactar', `"${archivo.name}" pesa ${tamanoLegible(archivo.size)}: el máximo es 3 MB por archivo.`, 'error'); continue; }
+      if (adjuntosCorreo.length >= MAX_ADJUNTOS_CORREO) { mostrarMensaje('mensajeCorreoRedactar', `Máximo ${MAX_ADJUNTOS_CORREO} adjuntos por correo.`, 'error'); break; }
+      adjuntosCorreo.push({ nombre: archivo.name, tipo, base64: await blobABase64(archivo), tamano: archivo.size });
+    }
+    input.value = '';
+    renderizarAdjuntosCorreo();
+  }
+
+  function htmlCorreoGeneral(mensaje, adjuntos) {
+    return `<div style="font-family:Arial,Helvetica,sans-serif;max-width:620px;margin:0 auto;color:#333;font-size:14.5px;line-height:1.6;">
+      <div style="border-bottom:3px solid #d8017c;padding-bottom:10px;margin-bottom:18px;"><strong style="font-size:19px;color:#d8017c;">Lana Rosa Crochet</strong></div>
+      ${parrafosHtmlBienvenida(mensaje)}
+      ${adjuntos.length ? `<p style="font-size:13px;color:#666;">📎 Adjunto${adjuntos.length > 1 ? 's' : ''}: ${adjuntos.map(a => escaparHtml(a.nombre)).join(', ')}</p>` : ''}
+      ${firmaHtmlCorreo()}
+    </div>`;
+  }
+
+  async function enviarCorreoRedactado() {
+    ocultarMensaje('mensajeCorreoRedactar');
+    const destinatarios = destinatariosCorreo(document.getElementById('correoPara').value);
+    const asunto = document.getElementById('correoAsunto').value.trim();
+    const mensaje = document.getElementById('correoMensaje').value.trim();
+    const correoValido = (d) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d);
+    if (!destinatarios.length) { mostrarMensaje('mensajeCorreoRedactar', 'Escribe a quién va el correo.', 'error'); return; }
+    if (destinatarios.length > MAX_DESTINATARIOS_CORREO) { mostrarMensaje('mensajeCorreoRedactar', `Máximo ${MAX_DESTINATARIOS_CORREO} destinatarios por correo.`, 'error'); return; }
+    const invalido = destinatarios.find(d => !correoValido(d));
+    if (invalido) { mostrarMensaje('mensajeCorreoRedactar', `"${invalido}" no parece un correo válido.`, 'error'); return; }
+    if (!asunto) { mostrarMensaje('mensajeCorreoRedactar', 'Escribe el asunto.', 'error'); return; }
+    if (!mensaje) { mostrarMensaje('mensajeCorreoRedactar', 'Escribe el mensaje.', 'error'); return; }
+
+    const btn = document.getElementById('btnEnviarCorreoRedactado');
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+    try {
+      await llamarEnviarCorreo({
+        tipo: tipoCorreoRedactar,
+        para: destinatarios.join(', '),
+        asunto,
+        html: htmlCorreoGeneral(mensaje, adjuntosCorreo),
+        texto: `${mensaje}\n\n${firmaTextoCorreo()}`,
+        adjuntos: adjuntosCorreo.map(a => ({ nombre: a.nombre, tipo: a.tipo, base64: a.base64 })),
+      });
+      mostrarMensaje('mensajeCorreoRedactar', `✅ Correo enviado a ${destinatarios.join(', ')}.`, 'exito');
+      btn.textContent = 'Enviado';
+      document.getElementById('btnCerrarCorreoRedactado').textContent = 'Cerrar';
+    } catch (e) {
+      mostrarMensaje('mensajeCorreoRedactar', 'No se pudo enviar: ' + e.message, 'error');
+      btn.disabled = false;
+      btn.textContent = 'Enviar';
+    }
+  }
+
+  // Para adjuntar un informe se reutiliza su propio botón de Excel: mientras la captura
+  // está activa, XLSX.writeFile entrega el archivo en vez de descargarlo.
+  let capturaExcelActiva = false;
+  let excelCapturado = null;
+  if (window.XLSX && typeof XLSX.writeFile === 'function') {
+    const escribirArchivoOriginal = XLSX.writeFile;
+    XLSX.writeFile = function (libro, nombre, opciones) {
+      if (capturaExcelActiva) {
+        excelCapturado = { nombre, base64: XLSX.write(libro, { bookType: 'xlsx', type: 'base64' }) };
+        return;
+      }
+      return escribirArchivoOriginal.call(this, libro, nombre, opciones);
+    };
+  }
+
+  async function capturarExcel(generar) {
+    excelCapturado = null;
+    capturaExcelActiva = true;
+    try {
+      await generar();
+      for (let i = 0; i < 30 && !excelCapturado; i++) await new Promise(r => setTimeout(r, 100));
+    } finally {
+      capturaExcelActiva = false;
+    }
+    return excelCapturado;
+  }
+
+  async function enviarInformePorCorreo(generar, titulo) {
+    let captura = null;
+    try { captura = await capturarExcel(generar); } catch (e) { captura = null; }
+    const bytes = captura ? Math.round(captura.base64.length * 0.75) : 0;
+    const adjuntos = captura && bytes <= MAX_BYTES_ADJUNTO ? [{ nombre: captura.nombre, tipo: TIPOS_MIME_ADJUNTO.xlsx, base64: captura.base64, tamano: bytes }] : [];
+    const fecha = new Date().toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' });
+    await abrirRedactarCorreo({
+      tipo: 'informe',
+      asunto: `${titulo} — Lana Rosa Crochet`,
+      mensaje: `Buen día,\n\nAdjunto el informe "${titulo}", generado el ${fecha} desde el ERP de Lana Rosa Crochet.`,
+      adjuntos,
+      avisoAdjunto: !captura ? 'No se pudo adjuntar el informe en Excel: primero genera o carga el informe en la pantalla y vuelve a pulsar "📧 Correo".'
+        : (bytes > MAX_BYTES_ADJUNTO ? 'El Excel del informe pesa más de 3 MB y no se puede adjuntar: acorta el período del informe.' : ''),
+    });
+  }
+
+  function tituloInformeDeBoton(boton) {
+    const limpiar = (t) => String(t || '').replace(/^[^\p{L}\p{N}]+/u, '').trim();
+    const pantalla = boton.closest('.contenido');
+    const h1 = pantalla && pantalla.querySelector('.page-header h1');
+    const subtab = boton.closest('[data-subtab-grupo]');
+    const chip = subtab ? document.querySelector(`[data-subtab-btn="${subtab.dataset.subtabGrupo}"].activo`) : null;
+    return [h1 && limpiar(h1.textContent), chip && limpiar(chip.textContent)].filter(Boolean).join(' — ') || 'Informe';
+  }
+
+  // Junto a cada botón "📥 Excel" de los informes se agrega "📧 Correo" con el mismo Excel adjunto.
+  function agregarBotonesCorreoInformes() {
+    document.querySelectorAll('button[onclick^="exportar"]').forEach(b => {
+      if (!b.textContent.includes('Excel') || b.closest('.barra-exportar') || (b.getAttribute('onclick') || '').startsWith('exportarSeccionExcel')) return;
+      if (b.nextElementSibling && b.nextElementSibling.classList.contains('btn-correo-informe')) return;
+      const correo = document.createElement('button');
+      correo.type = 'button';
+      correo.className = b.className + ' btn-correo-informe';
+      correo.style.cssText = b.style.cssText;
+      correo.style.display = 'none';
+      correo.textContent = '📧 Correo';
+      correo.title = 'Enviar este informe por correo, con el Excel adjunto';
+      correo.onclick = () => enviarInformePorCorreo(() => b.click(), tituloInformeDeBoton(b));
+      b.after(correo);
+    });
+  }
+  agregarBotonesCorreoInformes();
 
   function imprimirEstadoFinanciero(idContenido, titulo) {
     const contenidoHtml = document.getElementById(idContenido).innerHTML;
