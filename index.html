@@ -1827,11 +1827,11 @@
   <div id="sdLista"><div class="cargando">Cargando...</div></div>
 </div>
 
-<!-- ===== PANTALLA: CORREO DE LA EMPRESA (Zoho) ===== -->
+<!-- ===== PANTALLA: CORREO DE LA EMPRESA (Resend) ===== -->
 <div id="pantallaCorreoEmpresa" class="oculto contenido">
   <div class="page-header">
     <h1>📧 Correo de la empresa</h1>
-    <div class="subtitulo">Conecta el correo de Zoho para enviar los recibos a los clientes desde el ERP.</div>
+    <div class="subtitulo">Conecta el correo de la empresa (con Resend) para enviar los recibos a los clientes desde el ERP.</div>
   </div>
   <div class="mensaje" id="mensajeCorreoEmpresa"></div>
   <div id="ceContenido"><div class="cargando">Cargando...</div></div>
@@ -7142,9 +7142,9 @@
   }
 
   // ============================================================================
-  // CORREO DE LA EMPRESA (Zoho) — envío de recibos a clientes
-  // La contraseña de Zoho vive como secreto en Supabase (ZOHO_SMTP_PASS); el
-  // ERP solo llama a la función "enviar-correo", nunca ve la contraseña.
+  // CORREO DE LA EMPRESA (Resend) — envío de recibos a clientes
+  // La clave de la API de Resend vive como secreto en Supabase (RESEND_API_KEY);
+  // el ERP solo llama a la función "enviar-correo", nunca ve la clave.
   // ============================================================================
   let estadoCorreoEmpresa = null; // { activo, remitente, nombre }
   const EMAIL_VALIDO = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -7319,14 +7319,8 @@
           </div>
           <h2>Datos de la cuenta</h2>
           <div class="grilla-2" style="gap:10px;">
-            ${campo('ceRemitente', 'Correo remitente (Zoho)', c.remitente_email, 'email', 'ventas@lanarosa...')}
+            ${campo('ceRemitente', 'Correo remitente (del dominio verificado)', c.remitente_email, 'email', 'contabilidad@lanarosacrochet.com')}
             ${campo('ceNombre', 'Nombre que ve el cliente', c.remitente_nombre, 'text', 'Lana Rosa Crochet')}
-            <div><label for="ceHost">Tipo de cuenta Zoho</label>
-              <select id="ceHost">
-                <option value="smtppro.zoho.com" ${c.smtp_host === 'smtppro.zoho.com' ? 'selected' : ''}>Con dominio propio (…@lanarosa…) — smtppro.zoho.com</option>
-                <option value="smtp.zoho.com" ${c.smtp_host !== 'smtppro.zoho.com' ? 'selected' : ''}>Personal (…@zohomail.com / @zoho.com) — smtp.zoho.com</option>
-              </select></div>
-            ${campo('ceUsuario', 'Usuario de Zoho (solo si es distinto al remitente)', c.smtp_usuario, 'email', 'Déjalo vacío normalmente')}
             ${campo('ceResponder', 'Las respuestas llegan a (opcional)', c.responder_a, 'email')}
             ${campo('ceCopia', 'Copia oculta de cada envío (opcional)', c.copia_oculta, 'email')}
           </div>
@@ -7340,13 +7334,15 @@
         <div class="panel" style="max-width:none;max-height:none;margin:0;font-size:13px;line-height:1.65;">
           <h2 style="margin-top:0;">🗺️ Cómo conectarlo (una sola vez)</h2>
           <ol style="padding-left:18px;margin:0;">
-            <li><strong>Plan de Zoho:</strong> el plan gratuito de Zoho Mail normalmente no permite enviar desde otros programas (SMTP). Si la prueba falla aunque la contraseña esté bien, revisa que el plan lo incluya (Mail Lite o superior).</li>
-            <li><strong>Contraseña de aplicación:</strong> entra a <a href="https://accounts.zoho.com/home#security/app_password" target="_blank" rel="noopener">Zoho Accounts → Seguridad → Contraseñas específicas de aplicación</a>, genera una nueva con el nombre "ERP Lana Rosa" y cópiala. (Si no ves la opción, activa primero la verificación en dos pasos.)</li>
-            <li><strong>Guárdala en Supabase, no aquí:</strong> en el panel de Supabase del proyecto, ve a <em>Edge Functions → Secrets</em> y agrega un secreto con nombre <code>ZOHO_SMTP_PASS</code> y como valor la contraseña de aplicación. No la escribas en el ERP, en chats ni en WhatsApp.</li>
-            <li><strong>Datos:</strong> escribe a la izquierda el correo remitente (el mismo de Zoho), elige el tipo de cuenta y guarda.</li>
-            <li><strong>Prueba:</strong> pulsa "Enviar correo de prueba". Si llega, el envío queda activo y aparece el botón "📧 Enviar por correo" en los recibos (tienda, Academia, historial y pedidos).</li>
+            <li><strong>Cuenta en Resend:</strong> entra a <a href="https://resend.com/signup" target="_blank" rel="noopener">resend.com</a> y crea una cuenta gratis (3.000 correos al mes, 100 al día — de sobra para los recibos de Lana Rosa). No hace falta tarjeta.</li>
+            <li><strong>Agregar el dominio:</strong> en el panel de Resend, ve a <em>Domains → Add Domain</em> y escribe <code>lanarosacrochet.com</code>.</li>
+            <li><strong>Registros DNS:</strong> Resend muestra 2 o 3 registros (SPF, DKIM y a veces DMARC). Cópialos y agrégalos donde está administrado el dominio (el sitio donde se compró o se maneja lanarosacrochet.com — GoDaddy, Namecheap, Cloudflare, etc., en la sección "DNS" o "Zona DNS"). Si no sabes dónde es, dime y te ayudo a identificarlo.</li>
+            <li><strong>Verificación:</strong> vuelve a Resend y pulsa "Verify". Puede tardar unos minutos o hasta 24 horas en ponerse en verde.</li>
+            <li><strong>Clave de la API:</strong> en Resend, ve a <em>API Keys → Create API Key</em>, dale un nombre como "ERP Lana Rosa" y con permiso de envío (Sending access).</li>
+            <li><strong>Guárdala en Supabase, no aquí:</strong> en el panel de Supabase del proyecto, ve a <em>Edge Functions → Secrets</em> y agrega un secreto con nombre <code>RESEND_API_KEY</code> y como valor esa clave. No la escribas en el ERP, en chats ni en WhatsApp.</li>
+            <li><strong>Datos y prueba:</strong> escribe a la izquierda el correo remitente (con el dominio ya verificado) y el nombre, guarda, y pulsa "Enviar correo de prueba".</li>
           </ol>
-          <div style="font-size:11.5px;opacity:0.7;margin-top:10px;">Límite de seguridad: 60 correos por usuario y 150 en total cada 24 horas. Cada envío queda registrado abajo.</div>
+          <div style="font-size:11.5px;opacity:0.7;margin-top:10px;">Límites: el plan gratis de Resend permite 3.000 correos al mes y 100 al día; el ERP además limita a 60 por usuario y 150 en total cada 24 horas, para cuidar esa cuota. Cada envío queda registrado abajo.</div>
         </div>
       </div>
       <div class="panel" style="max-width:none;max-height:none;margin:18px 0 0 0;">
@@ -7364,7 +7360,7 @@
     const v = (id) => document.getElementById(id).value.trim();
     const { error } = await supabaseClient.rpc('fn_correo_guardar_configuracion', { p: {
       activo: document.getElementById('ceActivo').checked, remitente_email: v('ceRemitente'), remitente_nombre: v('ceNombre'),
-      smtp_host: document.getElementById('ceHost').value, smtp_usuario: v('ceUsuario'), responder_a: v('ceResponder'), copia_oculta: v('ceCopia'),
+      responder_a: v('ceResponder'), copia_oculta: v('ceCopia'),
     } });
     if (error) { mostrarMensaje('mensajeCorreoEmpresa', 'No se pudo guardar: ' + error.message, 'error'); return false; }
     await cargarEstadoCorreoEmpresa();
@@ -12162,7 +12158,7 @@
 
   async function enviarBienvenidaCorreo(u, idMensaje, boton) {
     if (!correoEmpresaActivo()) {
-      mostrarMensaje(idMensaje, 'El correo de la empresa aún no está conectado. Termina la configuración en Configuración → Correo de la empresa (contraseña de aplicación de Zoho y correo de prueba) y vuelve a intentarlo.', 'error');
+      mostrarMensaje(idMensaje, 'El correo de la empresa aún no está conectado. Termina la configuración en Configuración → Correo de la empresa (dominio verificado en Resend y correo de prueba) y vuelve a intentarlo.', 'error');
       return false;
     }
     const textoBoton = boton ? boton.textContent : '';
