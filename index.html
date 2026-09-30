@@ -15221,6 +15221,11 @@
 
     const etiquetasCanal = { whatsapp: '💬 WhatsApp', instagram: '📷 Instagram', facebook: '👍 Facebook', tienda_virtual: '🛍️ Tienda virtual' };
     const etiquetasEstado = { esperando_pago: '⏳ Esperando pago', en_preparacion: '🧶 En preparación', listo_despacho: '📦 Listo', entregado: '✅ Entregado' };
+    const etiquetasMedio = {
+      efectivo: 'Efectivo', nequi: 'Nequi', daviplata: 'Daviplata', transferencia: 'Transferencia', tarjeta_debito: 'Tarjeta débito', tarjeta_credito: 'Tarjeta crédito',
+      wompi_tarjeta: 'Wompi · Tarjeta', wompi_bancolombia: 'Wompi · Bancolombia', wompi_qr: 'Wompi · QR Bancolombia', wompi_pse: 'Wompi · PSE', wompi_nequi: 'Wompi · Nequi', wompi_otro: 'Wompi',
+    };
+    const nombreMedio = m => etiquetasMedio[m] || (m ? String(m).replace(/_/g, ' ') : '');
 
     contenedor.innerHTML = `
       <div class="tabla-lista">
@@ -15261,6 +15266,14 @@
             `;
           }
 
+          const pagosMedio = [
+            p.anticipo_pagado && p.metodo_pago_anticipo ? `Anticipo: ${escaparHtml(nombreMedio(p.metodo_pago_anticipo))}` : '',
+            p.saldo_pagado && p.metodo_pago_saldo ? `Saldo: ${escaparHtml(nombreMedio(p.metodo_pago_saldo))}` : '',
+          ].filter(Boolean);
+          const lineaMedio = pagosMedio.length
+            ? `<div style="font-size:11.5px;margin-bottom:6px;">💳 <strong>Medio de pago</strong> — ${pagosMedio.join(' · ')}</div>`
+            : '';
+
           const coloresEstadoPedido = {
             esperando_pago: { bg: '#fdecd2', color: '#a5690a' },
             en_preparacion: { bg: '#dce8f5', color: '#2d5a8c' },
@@ -15280,7 +15293,7 @@
               <span style="text-align:right;font-weight:700;">${formatearMoneda(p.total_pedido)}</span>
               <span><span class="badge-estado-pedido" style="background:${colorEstado.bg};color:${colorEstado.color};">${etiquetasEstado[p.estado] || p.estado}</span></span>
             </div>
-            ${acciones ? `<div class="tabla-lista-detalle" style="display:block;">${acciones}</div>` : ''}
+            ${(acciones || lineaMedio) ? `<div class="tabla-lista-detalle" style="display:block;">${lineaMedio}${acciones}</div>` : ''}
           `;
         }).join('')}
       </div>
