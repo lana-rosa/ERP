@@ -946,7 +946,7 @@
         <button class="nav-btn" id="nav-clientes-dir" onclick="mostrarPantallaClientes()"><span class="nav-icon">👤</span> Clientes</button>
         <button class="nav-btn" id="nav-oportunidades" onclick="mostrarPantallaOportunidades()"><span class="nav-icon">🎯</span> Oportunidades</button>
         <button class="nav-btn" id="nav-resenas-web" onclick="mostrarPantallaResenasWeb()" style="display:none;"><span class="nav-icon">⭐</span> Reseñas web <span id="badgeResenasPendientes" style="display:none;margin-left:auto;background:#d8017c;color:#fff;border-radius:999px;font-size:10.5px;font-weight:700;padding:1px 8px;"></span></button>
-        <button class="nav-btn" id="nav-pedidos-canal" onclick="mostrarPantallaPedidosCanal()"><span class="nav-icon">📱</span> Pedidos WhatsApp/Redes</button>
+        <button class="nav-btn" id="nav-pedidos-canal" onclick="mostrarPantallaPedidosCanal()"><span class="nav-icon">📱</span> Pedidos Web/Redes</button>
         <button class="nav-btn" id="nav-notas-cd" onclick="mostrarPantallaNotasCD()"><span class="nav-icon">📄</span> Notas crédito/débito</button>
         <button class="nav-btn" id="nav-facturacion-electronica" onclick="mostrarPantallaFacturacionElectronica()"><span class="nav-icon">🧾</span> Facturación electrónica DIAN</button>
         <button class="nav-btn" id="nav-cuentas-pendientes" onclick="mostrarPantallaCuentasPendientes()"><span class="nav-icon">📋</span> Cartera</button>
@@ -1264,12 +1264,12 @@
       <div style="background:var(--rosa-suave);border-radius:9px;padding:14px 16px;font-size:13px;line-height:1.6;">
         Los pedidos nuevos por WhatsApp, Instagram, Facebook o Tienda virtual se registran en el <strong>CRM</strong>, no aquí — así el seguimiento de la conversación y el historial de cada cliente queda completo en un solo lugar.
         <br><br>
-        Una vez el pedido esté listo allá, tráelo al ERP con el botón <strong>"🔄 Cargar pedidos nuevos del CRM"</strong> en <strong>Pedidos WhatsApp/Redes</strong> (menú lateral) — desde ahí se registra el cobro del anticipo y el saldo, y se marca como entregado (los envíos se siguen manejando en el CRM).
+        Una vez el pedido esté listo allá, tráelo al ERP con el botón <strong>"🔄 Cargar pedidos nuevos del CRM"</strong> en <strong>Pedidos Web/Redes</strong> (menú lateral) — desde ahí se registra el cobro del anticipo y el saldo, y se marca como entregado (los envíos se siguen manejando en el CRM).
       </div>
       <a href="https://lana-rosa.github.io/CRM/" target="_blank" style="display:block;margin-top:14px;">
         <button class="btn-principal" type="button">🔗 Ir al CRM a crear el pedido</button>
       </a>
-      <button class="btn-secundario" style="margin-top:10px;" onclick="mostrarPantallaPedidosCanal()">📱 Ir a Pedidos WhatsApp/Redes (gestionar los que ya existen)</button>
+      <button class="btn-secundario" style="margin-top:10px;" onclick="mostrarPantallaPedidosCanal()">📱 Ir a Pedidos Web/Redes (gestionar los que ya existen)</button>
     </div>
   </div>
 
@@ -1949,7 +1949,7 @@
 <!-- ===== PANTALLA: PEDIDOS POR CANAL (WhatsApp/Instagram/Facebook/Tienda virtual) ===== -->
 <div id="pantallaPedidosCanal" class="oculto contenido">
   <div class="page-header">
-    <h1>Pedidos WhatsApp/Redes — cobros y entrega</h1>
+    <h1>Pedidos Web/Redes — cobros y entrega</h1>
     <div class="subtitulo">Los pedidos se crean, se siguen y se envían en el CRM. Aquí llegan solos para registrar la plata que entra (anticipo y saldo) y marcarlos como entregados, así quedan en la contabilidad y en Facturación electrónica.</div>
   </div>
 
@@ -11568,7 +11568,7 @@
     { clave: 'nav-turno', etiqueta: '　　Turno de caja' },
     { clave: 'nav-ventas', etiqueta: '　　Registrar venta' },
     { clave: 'nav-historial', etiqueta: '　　Historial de ventas' },
-    { clave: 'nav-pedidos-canal', etiqueta: '　　Pedidos WhatsApp/Redes' },
+    { clave: 'nav-pedidos-canal', etiqueta: '　　Pedidos Web/Redes' },
     { clave: 'nav-resenas-web', etiqueta: '　　Reseñas web' },
     { clave: 'nav-notas-cd', etiqueta: '　　Notas crédito/débito' },
     { clave: 'nav-cuentas-pendientes', etiqueta: '　　Cartera' },
@@ -20507,7 +20507,7 @@
 
     if (d.pedidos_pendientes_por_traer_crm > 0) {
       cont.classList.remove('oculto');
-      cont.innerHTML = `ℹ️ Hay <strong>${d.pedidos_pendientes_por_traer_crm} pedido(s)</strong> en el CRM que todavía no se han traído al ERP — sus valores ya están sumados arriba (marcados como "CRM sin traer"), pero para cobrarlos y que queden contabilizados de verdad, ve a <strong>Pedidos WhatsApp/Redes</strong> y usa el botón "🔄 Cargar pedidos nuevos del CRM".`;
+      cont.innerHTML = `ℹ️ Hay <strong>${d.pedidos_pendientes_por_traer_crm} pedido(s)</strong> en el CRM que todavía no se han traído al ERP — sus valores ya están sumados arriba (marcados como "CRM sin traer"), pero para cobrarlos y que queden contabilizados de verdad, ve a <strong>Pedidos Web/Redes</strong> y usa el botón "🔄 Cargar pedidos nuevos del CRM".`;
     }
   }
 
