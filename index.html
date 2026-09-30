@@ -3083,10 +3083,33 @@
 </div>
 
 <!-- ===== PANTALLA: TARIFAS DE ENVÍO ===== -->
+<div id="pantallaTextosWeb" class="oculto contenido">
+  <div class="filtro-tipo" style="margin-bottom:16px;flex-wrap:wrap;">
+    <button class="chip-filtro" onclick="mostrarPantallaLogoEmpresa()">🖼️ Logo</button>
+    <button class="chip-filtro" onclick="mostrarPantallaRosinaImagenes()">🐑 Imágenes de Rosina</button>
+    <button class="chip-filtro activo" onclick="mostrarPantallaTextosWeb()">✏️ Textos de la web</button>
+    <button class="chip-filtro" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
+    <button class="chip-filtro" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
+    <button class="chip-filtro" onclick="mostrarPantallaTarifasEnvio()">🚚 Tarifas de envío</button>
+    <button class="chip-filtro" onclick="mostrarPantallaCodigosDescuento()">🏷️ Códigos de descuento</button>
+  </div>
+  <div class="page-header">
+    <h1>✏️ Textos de la web</h1>
+    <div class="subtitulo">Cambia aquí los avisos y promociones de lanarosacrochet.com. Al guardar, el cambio se ve en la web al recargar la página (no hay que publicar nada). Si dejas un anuncio vacío, no se muestra.</div>
+  </div>
+  <div class="mensaje" id="mensajeTextosWeb"></div>
+  <div id="listaTextosWeb"><div class="cargando">Cargando...</div></div>
+  <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;">
+    <button class="btn-primario" id="btnGuardarTextosWeb" onclick="guardarTextosWeb()">💾 Guardar cambios</button>
+    <a class="btn-secundario" href="https://lanarosacrochet.com" target="_blank" rel="noopener" style="text-decoration:none;">Ver la web ↗</a>
+  </div>
+</div>
+
 <div id="pantallaTarifasEnvio" class="oculto contenido">
   <div class="filtro-tipo" style="margin-bottom:16px;flex-wrap:wrap;">
     <button class="chip-filtro" onclick="mostrarPantallaLogoEmpresa()">🖼️ Logo</button>
     <button class="chip-filtro" onclick="mostrarPantallaRosinaImagenes()">🐑 Imágenes de Rosina</button>
+    <button class="chip-filtro" onclick="mostrarPantallaTextosWeb()">✏️ Textos de la web</button>
     <button class="chip-filtro" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
     <button class="chip-filtro" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
     <button class="chip-filtro" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
@@ -3125,6 +3148,7 @@
   <div class="filtro-tipo" style="margin-bottom:16px;flex-wrap:wrap;">
     <button class="chip-filtro" onclick="mostrarPantallaLogoEmpresa()">🖼️ Logo</button>
     <button class="chip-filtro" onclick="mostrarPantallaRosinaImagenes()">🐑 Imágenes de Rosina</button>
+    <button class="chip-filtro" onclick="mostrarPantallaTextosWeb()">✏️ Textos de la web</button>
     <button class="chip-filtro" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
     <button class="chip-filtro" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
     <button class="chip-filtro activo" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
@@ -3175,6 +3199,7 @@
   <div class="filtro-tipo" style="margin-bottom:16px;flex-wrap:wrap;">
     <button class="chip-filtro" onclick="mostrarPantallaLogoEmpresa()">🖼️ Logo</button>
     <button class="chip-filtro" onclick="mostrarPantallaRosinaImagenes()">🐑 Imágenes de Rosina</button>
+    <button class="chip-filtro" onclick="mostrarPantallaTextosWeb()">✏️ Textos de la web</button>
     <button class="chip-filtro" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
     <button class="chip-filtro" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
     <button class="chip-filtro" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
@@ -3202,6 +3227,7 @@
   <div class="filtro-tipo" style="margin-bottom:16px;flex-wrap:wrap;">
     <button class="chip-filtro" onclick="mostrarPantallaLogoEmpresa()">🖼️ Logo</button>
     <button class="chip-filtro activo" onclick="mostrarPantallaRosinaImagenes()">🐑 Imágenes de Rosina</button>
+    <button class="chip-filtro" onclick="mostrarPantallaTextosWeb()">✏️ Textos de la web</button>
     <button class="chip-filtro" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
     <button class="chip-filtro" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
     <button class="chip-filtro" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
@@ -3239,6 +3265,7 @@
   <div class="filtro-tipo" style="margin-bottom:16px;flex-wrap:wrap;">
     <button class="chip-filtro" onclick="mostrarPantallaLogoEmpresa()">🖼️ Logo</button>
     <button class="chip-filtro" onclick="mostrarPantallaRosinaImagenes()">🐑 Imágenes de Rosina</button>
+    <button class="chip-filtro" onclick="mostrarPantallaTextosWeb()">✏️ Textos de la web</button>
     <button class="chip-filtro" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
     <button class="chip-filtro" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
     <button class="chip-filtro" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
@@ -3265,6 +3292,7 @@
   <div class="filtro-tipo" style="margin-bottom:16px;flex-wrap:wrap;">
     <button class="chip-filtro" onclick="mostrarPantallaLogoEmpresa()">🖼️ Logo</button>
     <button class="chip-filtro" onclick="mostrarPantallaRosinaImagenes()">🐑 Imágenes de Rosina</button>
+    <button class="chip-filtro" onclick="mostrarPantallaTextosWeb()">✏️ Textos de la web</button>
     <button class="chip-filtro" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
     <button class="chip-filtro" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
     <button class="chip-filtro" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
@@ -3327,6 +3355,7 @@
   <div class="filtro-tipo" style="margin-bottom:16px;flex-wrap:wrap;">
     <button class="chip-filtro activo" onclick="mostrarPantallaLogoEmpresa()">🖼️ Logo</button>
     <button class="chip-filtro" onclick="mostrarPantallaRosinaImagenes()">🐑 Imágenes de Rosina</button>
+    <button class="chip-filtro" onclick="mostrarPantallaTextosWeb()">✏️ Textos de la web</button>
     <button class="chip-filtro" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
     <button class="chip-filtro" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
     <button class="chip-filtro" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
@@ -3353,6 +3382,7 @@
   <div class="filtro-tipo" style="margin-bottom:16px;flex-wrap:wrap;">
     <button class="chip-filtro" onclick="mostrarPantallaLogoEmpresa()">🖼️ Logo</button>
     <button class="chip-filtro" onclick="mostrarPantallaRosinaImagenes()">🐑 Imágenes de Rosina</button>
+    <button class="chip-filtro" onclick="mostrarPantallaTextosWeb()">✏️ Textos de la web</button>
     <button class="chip-filtro activo" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
     <button class="chip-filtro" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
     <button class="chip-filtro" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
@@ -4483,6 +4513,7 @@
   <div class="filtro-tipo" style="margin-bottom:16px;flex-wrap:wrap;">
     <button class="chip-filtro" onclick="mostrarPantallaLogoEmpresa()">🖼️ Logo</button>
     <button class="chip-filtro" onclick="mostrarPantallaRosinaImagenes()">🐑 Imágenes de Rosina</button>
+    <button class="chip-filtro" onclick="mostrarPantallaTextosWeb()">✏️ Textos de la web</button>
     <button class="chip-filtro" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
     <button class="chip-filtro activo" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
     <button class="chip-filtro" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
@@ -5267,7 +5298,7 @@
   });
 
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaInventarioGlobal', 'pantallaFacturacionElectronica', 'pantallaServiciosDian', 'pantallaCorreoEmpresa', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb'];
+    const pantallas = ['pantallaLogin', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaInventarioGlobal', 'pantallaFacturacionElectronica', 'pantallaServiciosDian', 'pantallaCorreoEmpresa', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb', 'pantallaTextosWeb'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -5286,6 +5317,7 @@
       pantallaHistorial: 'nav-historial',
       pantallaPedidosCanal: 'nav-pedidos-canal',
       pantallaResenasWeb: 'nav-resenas-web',
+      pantallaTextosWeb: 'nav-config-empresa',
       pantallaAjustestock: 'nav-ajustestock',
       pantallaConsumoTaller: 'nav-consumotaller',
       pantallaPedidosCrm: 'nav-consumotaller',
@@ -11618,6 +11650,58 @@
   // ============================================================
   // CÓDIGOS DE DESCUENTO (administración)
   // ============================================================
+  // ============================================================
+  // TEXTOS DE LA WEB (administración) — tabla web_textos, la lee js/textos.js de lanarosacrochet.com
+  // ============================================================
+  let textosWebCache = [];
+  async function mostrarPantallaTextosWeb() {
+    mostrarPantalla('pantallaTextosWeb');
+    ocultarMensaje('mensajeTextosWeb');
+    const cont = document.getElementById('listaTextosWeb');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    const { data, error } = await supabaseClient.from('web_textos').select('clave, grupo, etiqueta, ayuda, valor, orden').order('orden');
+    if (error) { cont.innerHTML = '<div class="cargando">No se pudieron cargar los textos: ' + escaparHtml(error.message) + '</div>'; return; }
+    textosWebCache = data || [];
+    let html = '', grupoActual = null;
+    textosWebCache.forEach(t => {
+      if (t.grupo !== grupoActual) {
+        if (grupoActual !== null) html += '</div>';
+        html += '<div class="tarjeta" style="background:#fff;border-radius:14px;padding:16px 18px;margin-bottom:16px;box-shadow:var(--sombra);"><h3 style="margin:0 0 12px;">' + escaparHtml(t.grupo) + '</h3>';
+        grupoActual = t.grupo;
+      }
+      const largo = t.clave === 'bono.intro' || t.clave === 'bono.nota';
+      const campo = largo
+        ? '<textarea data-clave-texto="' + escaparHtml(t.clave) + '" rows="3" maxlength="400" style="width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:10px;font:inherit;">' + escaparHtml(t.valor) + '</textarea>'
+        : '<input type="text" data-clave-texto="' + escaparHtml(t.clave) + '" maxlength="160" value="' + escaparHtml(t.valor) + '" style="width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:10px;font:inherit;">';
+      html += '<div style="margin-bottom:12px;"><label style="display:block;font-weight:600;font-size:13px;margin-bottom:4px;">' + escaparHtml(t.etiqueta) + '</label>' + campo
+        + (t.ayuda ? '<div style="font-size:12px;opacity:0.65;margin-top:3px;">' + escaparHtml(t.ayuda) + '</div>' : '') + '</div>';
+    });
+    if (grupoActual !== null) html += '</div>';
+    cont.innerHTML = html || '<div class="cargando">No hay textos configurados.</div>';
+  }
+
+  async function guardarTextosWeb() {
+    const btn = document.getElementById('btnGuardarTextosWeb');
+    ocultarMensaje('mensajeTextosWeb');
+    const cambios = [];
+    document.querySelectorAll('#listaTextosWeb [data-clave-texto]').forEach(el => {
+      const clave = el.getAttribute('data-clave-texto');
+      const original = (textosWebCache.find(t => t.clave === clave) || {}).valor;
+      if (el.value.trim() !== (original || '')) cambios.push({ clave, valor: el.value.trim() });
+    });
+    if (!cambios.length) { mostrarMensaje('mensajeTextosWeb', 'No hay cambios para guardar.', 'error'); return; }
+    btn.disabled = true;
+    let falla = null;
+    for (const c of cambios) {
+      const { error } = await supabaseClient.from('web_textos').update({ valor: c.valor }).eq('clave', c.clave);
+      if (error) { falla = error.message; break; }
+      const t = textosWebCache.find(x => x.clave === c.clave); if (t) t.valor = c.valor;
+    }
+    btn.disabled = false;
+    if (falla) mostrarMensaje('mensajeTextosWeb', 'No se pudo guardar: ' + falla, 'error');
+    else mostrarMensaje('mensajeTextosWeb', 'Guardado (' + cambios.length + (cambios.length === 1 ? ' texto' : ' textos') + '). Recarga lanarosacrochet.com para verlo.', 'exito');
+  }
+
   // ============================================================
   // TARIFAS DE ENVÍO (administración)
   // ============================================================
