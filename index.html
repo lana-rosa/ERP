@@ -908,6 +908,57 @@
       break-inside: avoid;
     }
   }
+
+  /* ===== Paso a paso de producción (antes en el CRM) ===== */
+  .fp-fondo { position: fixed; inset: 0; z-index: 3000; background: rgba(45, 26, 38, 0.55); overflow-y: auto; padding: 24px 12px; }
+  .fp-caja { max-width: 640px; margin: 0 auto; background: var(--fondo-panel); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: 20px; }
+  .fp-cab { display: flex; gap: 12px; align-items: flex-start; }
+  .fp-cab h2 { margin: 0; font-family: var(--font-display); font-size: 18px; line-height: 1.3; }
+  .fp-cerrar { margin-left: auto; flex: 0 0 auto; background: var(--gris-fondo); border: none; border-radius: 50%; width: 36px; height: 36px; font-size: 18px; cursor: pointer; color: var(--texto-oscuro); }
+  .fp-sub { font-size: 12.5px; color: var(--texto-suave); margin-top: 4px; line-height: 1.5; }
+  .fp-resumen { margin: 16px 0; padding: 14px; border-radius: var(--radius-md); background: var(--tinte-rosa); }
+  .fp-barra { height: 10px; border-radius: 999px; background: #fff; overflow: hidden; margin: 8px 0 6px; }
+  .fp-barra > div { height: 100%; background: linear-gradient(90deg, var(--rosa-medio), var(--rosa-principal)); transition: width .3s; }
+  .fp-fila { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 12.5px; }
+  .fp-paso { border: 2px solid var(--gris-borde); border-radius: var(--radius-md); margin-bottom: 10px; background: var(--fondo-panel); }
+  .fp-paso.hecho { border-color: #bbf7d0; background: #f0fdf4; }
+  .fp-paso.activo { border-color: var(--rosa-principal); box-shadow: var(--shadow-md); }
+  .fp-paso.bloqueado { opacity: .5; }
+  .fp-paso-cab { display: flex; align-items: center; gap: 10px; padding: 12px 14px; }
+  .fp-num { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex: 0 0 auto; background: var(--rosa-suave); color: var(--rosa-principal); }
+  .fp-paso.activo .fp-num { background: var(--rosa-principal); color: #fff; }
+  .fp-paso.hecho .fp-num { background: #16a34a; color: #fff; }
+  .fp-paso-tit { flex: 1; font-size: 14px; font-weight: 600; }
+  .fp-paso.hecho .fp-paso-tit { text-decoration: line-through; color: var(--texto-suave); }
+  .fp-etq { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+  .fp-paso-cuerpo { padding: 0 14px 14px; }
+  .fp-desc { font-size: 12.5px; color: var(--texto-suave); line-height: 1.5; margin: 0 0 12px; }
+  .fp-crono { background: linear-gradient(135deg, #2d1a26, #4a2a3e); color: #fff; border-radius: var(--radius-md); padding: 18px; text-align: center; margin-bottom: 12px; }
+  .fp-crono-num { font-family: var(--font-display); font-size: 40px; font-variant-numeric: tabular-nums; letter-spacing: 1px; }
+  .fp-crono-sub { font-size: 11px; opacity: .7; margin-bottom: 12px; letter-spacing: .5px; }
+  .fp-crono.claro { background: var(--gris-fondo); color: var(--texto-oscuro); }
+  .fp-crono.claro .fp-crono-num { font-size: 30px; }
+  .fp-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .fp-btn { border: none; border-radius: 999px; padding: 10px 18px; font-weight: 600; font-size: 13.5px; cursor: pointer; font-family: var(--font-texto); }
+  .fp-btn.iniciar { background: #16a34a; color: #fff; }
+  .fp-btn.pausar { background: #d97706; color: #fff; }
+  .fp-btn.suave { background: rgba(255,255,255,.18); color: inherit; }
+  .fp-crono.claro .fp-btn.suave { background: var(--fondo-panel); border: 1px solid var(--gris-borde); }
+  .fp-enlace { background: none; border: none; color: var(--rosa-principal); text-decoration: underline; font-size: 12px; cursor: pointer; padding: 0; font-family: var(--font-texto); }
+  .fp-crono .fp-enlace { color: rgba(255,255,255,.8); }
+  .fp-manual { display: flex; gap: 6px; align-items: center; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
+  .fp-manual input { width: 76px; text-align: center; padding: 8px; border-radius: 8px; border: 1px solid var(--borde-input); }
+  .fp-completar { width: 100%; border: none; border-radius: var(--radius-md); padding: 13px; background: linear-gradient(135deg, #16a34a, #22c55e); color: #fff; font-weight: 700; font-size: 14px; cursor: pointer; font-family: var(--font-texto); }
+  .fp-completar:disabled { background: var(--azul-acero); cursor: not-allowed; }
+  .fp-foto { position: relative; border: 2px dashed var(--rosa-medio); border-radius: var(--radius-md); padding: 18px; text-align: center; margin-bottom: 12px; background: var(--tinte-rosa); font-size: 13px; }
+  .fp-foto input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+  .fp-foto-img { display: block; max-width: 100%; max-height: 240px; margin: 0 auto 10px; border-radius: var(--radius-md); object-fit: contain; }
+  .fp-pausa { position: fixed; inset: 0; z-index: 3100; background: rgba(45,26,38,.8); display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .fp-pausa > div { background: var(--fondo-panel); border-radius: var(--radius-lg); padding: 26px; text-align: center; max-width: 360px; }
+  .fp-pausa-num { font-family: var(--font-display); font-size: 48px; color: var(--rosa-principal); margin: 8px 0 14px; }
+  .fp-mini-barra { height: 6px; border-radius: 999px; background: var(--gris-fondo); overflow: hidden; margin-top: 4px; max-width: 220px; }
+  .fp-mini-barra > div { height: 100%; background: var(--rosa-principal); }
+  @media (max-width: 600px) { .fp-fondo { padding: 0; } .fp-caja { border-radius: 0; min-height: 100%; padding: 16px; } .fp-crono-num { font-size: 34px; } }
 </style>
 </head>
 <body>
@@ -1764,6 +1815,8 @@
     <button class="chip-filtro" data-filtro-op="todas" onclick="filtrarOrdenesProduccion('todas', this)">📋 Todas</button>
   </div>
   <div id="listaOrdenesProduccion"><div class="cargando">Cargando...</div></div>
+  <div id="fichaProduccion" class="fp-fondo oculto" role="dialog" aria-modal="true" aria-labelledby="fpTitulo"></div>
+  <div id="fichaPausa" class="fp-pausa oculto" role="alertdialog" aria-labelledby="fpPausaTit"></div>
 </div>
 
 <!-- ===== PANTALLA: KARDEX POR ETAPAS ===== -->
@@ -9462,6 +9515,7 @@
   let materialesOrdenCache = { Taller: [], Tienda: [] };
   let ordenAccionAbierta = null; // { id, accion }
   let ordenRecienAbiertaId = null;
+  let fichasProduccionCache = {}; // { orden_id: { pasos_estado, tiempos, foto_url, tejedora, ... } }
 
   const ESTADOS_ORDEN_PRODUCCION = {
     en_proceso: ['🧶 En proceso', 'background:var(--tinte-ambar);color:var(--ambar);'],
@@ -9572,6 +9626,8 @@
     const { data, error } = await supabaseClient.rpc('fn_op_listar', { p_estado: filtroOrdenesProduccion });
     if (error) { cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(error.message)}</div>`; return; }
     ordenesProduccionCache = data || [];
+    const { data: fichas } = await supabaseClient.rpc('fn_op_fichas', { p_ordenes: ordenesProduccionCache.map(o => o.id) });
+    fichasProduccionCache = fichas || {};
     renderizarOrdenesProduccion();
   }
 
@@ -9650,11 +9706,463 @@
             <div style="font-size:12.5px;margin-top:6px;">${resumenValor}</div>
           </div>
         </div>
+        ${o.estado !== 'anulada' ? resumenFichaOrden(o) : ''}
         ${materiales}
         ${acciones ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">${acciones}</div>` : ''}
         ${abierta}
       </div>`;
   }
+
+  // ============================================================================
+  // PASO A PASO DE PRODUCCIÓN (antes estaba en el CRM)
+  // Cada orden de producción tiene su ficha: tejedora, pasos, tiempos y foto.
+  // ============================================================================
+  const PASOS_PRODUCCION = [
+    { id: 'patron',      icono: '📋', titulo: 'Selección de patrón',      desc: 'Elige el patrón correcto para este pedido. Verifica que coincida con la imagen de referencia del cliente.' },
+    { id: 'materiales',  icono: '🎨', titulo: 'Selección de materiales',  desc: 'Prepara todos los materiales: lana del color correcto, aguja adecuada, relleno, ojos, accesorios específicos.' },
+    { id: 'tejido',      icono: '🧵', titulo: 'Tiempo de tejido',         desc: 'Teje la pieza siguiendo el patrón. Usa el cronómetro para registrar el tiempo. Cada 60 minutos suena una alarma de pausa activa.' },
+    { id: 'detalles',    icono: '✨', titulo: 'Tiempo de detalles',       desc: 'Agrega todos los detalles específicos del cliente: gafas, ropa, accesorios, color de ojos, bordados, etc.' },
+    { id: 'marquilla',   icono: '🏷️', titulo: 'Poner marquilla',          desc: 'Coloca la marquilla de Lana Rosa Crochet. Asegúrate de que esté bien cosida y visible.' },
+    { id: 'calidad',     icono: '🔍', titulo: 'Control de calidad',       desc: 'Revisa toda la pieza: puntadas uniformes, relleno parejo, detalles correctos, sin hilos sueltos. Si hay algo mal, corrígelo antes de continuar.' },
+    { id: 'foto',        icono: '📷', titulo: 'Tomar foto del resultado', desc: 'Toma una foto de la pieza terminada. Queda guardada en la orden y sirve para redes sociales, portafolio o catálogo.' },
+    { id: 'empaquetado', icono: '📦', titulo: 'Empaquetado',              desc: 'Empaca la pieza con el packaging de Lana Rosa. Incluye la tarjeta con el mensaje personalizado del cliente. Deja todo listo para entrega.' },
+  ];
+  const PAUSA_ACTIVA_SEG = 60 * 60;
+  const DURACION_PAUSA_SEG = 180;
+
+  // Las piezas para inventario (sin pedido) no se empacan todavía: se empacan cuando se venden.
+  const esOrdenParaStock = (o) => !o.pedido && !o.pedido_canal_id;
+  const pasosDeOrden = (o) => esOrdenParaStock(o) ? PASOS_PRODUCCION.filter(p => p.id !== 'empaquetado') : PASOS_PRODUCCION;
+
+  function formatoReloj(seg) {
+    seg = Math.max(0, Math.floor(seg || 0));
+    const h = Math.floor(seg / 3600), m = Math.floor((seg % 3600) / 60), s = seg % 60;
+    return [h, m, s].map(n => String(n).padStart(2, '0')).join(':');
+  }
+  function formatoHorasCorto(seg) {
+    const h = Math.floor((seg || 0) / 3600), m = Math.round(((seg || 0) % 3600) / 60);
+    return h ? `${h} h ${m} min` : `${m} min`;
+  }
+
+  function resumenFichaOrden(o) {
+    const f = fichasProduccionCache[o.id];
+    const pasos = pasosDeOrden(o);
+    const hechos = f ? pasos.filter(p => (f.pasos_estado || {})[p.id] === 'done').length : 0;
+    const pct = Math.round(hechos / pasos.length * 100);
+    const t = f ? (Number((f.tiempos || {}).tejido) || 0) + (Number((f.tiempos || {}).detalles) || 0) : 0;
+    const puedeEditar = o.estado === 'en_proceso' && (rolActual === 'administrador' || rolActual === 'taller');
+    const texto = !f ? 'Paso a paso sin empezar'
+      : `Paso a paso: ${hechos} de ${pasos.length} pasos${t ? ' · ' + formatoHorasCorto(t) + ' de trabajo' : ''}${f.tejedora ? ' · ' + escaparHtml(f.tejedora) : ''}`;
+    return `
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:10px;padding:10px 12px;border-radius:var(--radius-md);background:var(--tinte-rosa);">
+        ${f && f.foto_url ? `<img src="${escaparHtml(f.foto_url)}" alt="" style="width:44px;height:44px;border-radius:10px;object-fit:cover;">` : ''}
+        <div style="flex:1;min-width:180px;font-size:12.5px;">
+          ${texto}
+          <div class="fp-mini-barra"><div style="width:${pct}%;"></div></div>
+        </div>
+        <button class="btn-mini editar" style="flex:0 0 auto;padding:8px 14px;" onclick="abrirFichaProduccion('${o.id}')">${puedeEditar ? (f ? '🧵 Seguir paso a paso' : '🧵 Empezar paso a paso') : '👁️ Ver paso a paso'}</button>
+      </div>`;
+  }
+
+  let fichaActiva = null;     // { orden, pasos, tejedora_id, foto_url, soloLectura }
+  let fichaTejedoras = [];
+  const crono = {
+    tejido:   { base: 0, desde: null },
+    detalles: { base: 0, desde: null },
+  };
+  let cronoIntervalo = null;
+  let segDesdePausa = 0, ultimoTic = null, segSinGuardar = 0;
+  let pausaIntervalo = null;
+  let fichaFotoArchivo = null;
+  let fichaEditandoTiempo = null;
+
+  const segundosDe = (c) => crono[c].base + (crono[c].desde ? (Date.now() - crono[c].desde) / 1000 : 0);
+  const corriendo = (c) => !!(crono[c] && crono[c].desde);
+
+  async function abrirFichaProduccion(ordenId) {
+    const o = ordenesProduccionCache.find(x => x.id === ordenId);
+    if (!o) return;
+    detenerCronosFicha(false);
+    const { data, error } = await supabaseClient.from('produccion_fichas').select('*').eq('orden_id', ordenId).maybeSingle();
+    if (error) { mostrarMensaje('mensajeOrdenesProd', 'No se pudo abrir el paso a paso: ' + error.message, 'error'); return; }
+    if (!fichaTejedoras.length) {
+      const { data: tej } = await supabaseClient.rpc('fn_op_tejedoras');
+      fichaTejedoras = tej || [];
+    }
+    let f = data;
+    // Si se cerró la página sin guardar, se recupera lo que quedó en este dispositivo.
+    try {
+      const local = JSON.parse(localStorage.getItem('erp_ficha_' + ordenId) || 'null');
+      if (local && (!f || local.updated_at > f.updated_at)) f = Object.assign({}, f || {}, local);
+    } catch (e) {}
+    f = f || {};
+    fichaActiva = {
+      orden: o,
+      pasos: Object.assign({}, f.pasos_estado || {}),
+      tejedora_id: f.tejedora_id || null,
+      tejedora_nombre: f.tejedora_nombre || null,
+      foto_url: f.foto_url || null,
+      terminada_at: f.terminada_at || null,
+      existe: !!data,
+      soloLectura: o.estado !== 'en_proceso' || !(rolActual === 'administrador' || rolActual === 'taller'),
+    };
+    crono.tejido.base = Number((f.tiempos || {}).tejido) || 0;
+    crono.detalles.base = Number((f.tiempos || {}).detalles) || 0;
+    crono.tejido.desde = crono.detalles.desde = null;
+    segDesdePausa = 0; fichaFotoArchivo = null; fichaEditandoTiempo = null;
+    document.getElementById('fichaProduccion').classList.remove('oculto');
+    document.body.style.overflow = 'hidden';
+    renderizarFichaProduccion();
+  }
+
+  async function cerrarFichaProduccion() {
+    if (!fichaActiva) return;
+    detenerCronosFicha(true);
+    if (!fichaActiva.soloLectura && fichaActiva.existe) await guardarFichaProduccion();
+    fichaActiva = null;
+    document.getElementById('fichaProduccion').classList.add('oculto');
+    document.body.style.overflow = '';
+    cargarOrdenesProduccion();
+  }
+
+  function renderizarFichaProduccion() {
+    const fa = fichaActiva; if (!fa) return;
+    const o = fa.orden;
+    const pasos = pasosDeOrden(o);
+    const primerPendiente = (pasos.find(p => fa.pasos[p.id] !== 'done') || {}).id || null;
+    const hechos = pasos.filter(p => fa.pasos[p.id] === 'done').length;
+    const pct = Math.round(hechos / pasos.length * 100);
+    const total = segundosDe('tejido') + segundosDe('detalles');
+    const unidades = Number(o.cantidad_planeada) || 1;
+    const opcionesTej = fichaTejedoras.map(t => `<option value="${t.id}" ${t.id === fa.tejedora_id ? 'selected' : ''}>${escaparHtml(t.nombre)}</option>`).join('')
+      + (fa.tejedora_nombre && !fa.tejedora_id ? `<option value="" selected>${escaparHtml(fa.tejedora_nombre)}</option>` : '');
+
+    const destino = esOrdenParaStock(o) ? `📦 Para inventario · ${formatearCantidad(unidades)} unidad(es)` : `🧾 Pedido ${escaparHtml(o.pedido || '')}`;
+    document.getElementById('fichaProduccion').innerHTML = `
+      <div class="fp-caja">
+        <div class="fp-cab">
+          <div>
+            <h2 id="fpTitulo"><span style="color:var(--rosa-principal);">${escaparHtml(o.orden)}</span> · ${escaparHtml(o.descripcion || '')}</h2>
+            <div class="fp-sub">${destino}${o.observaciones ? ' · ' + escaparHtml(o.observaciones) : ''}</div>
+          </div>
+          <button class="fp-cerrar" onclick="cerrarFichaProduccion()" aria-label="Cerrar">✕</button>
+        </div>
+
+        <div class="fp-resumen">
+          <label for="fpTejedora" style="font-size:12.5px;font-weight:600;">🧶 Tejedora</label>
+          <select id="fpTejedora" onchange="cambiarTejedoraFicha(this.value)" ${fa.soloLectura ? 'disabled' : ''} style="margin-top:4px;">
+            <option value="">— Elige quién la teje —</option>${opcionesTej}
+          </select>
+          <div class="fp-barra" style="margin-top:14px;"><div style="width:${pct}%;"></div></div>
+          <div class="fp-fila">
+            <span><strong>${pct}%</strong> · ${hechos} de ${pasos.length} pasos</span>
+            <span>⏱️ Tiempo total: <strong id="fpTotal">${formatoReloj(total)}</strong>${unidades > 1 ? ` <span id="fpPorUnidad" style="color:var(--rosa-principal);">(${formatoReloj(total / unidades)} por unidad)</span>` : ''}</span>
+          </div>
+        </div>
+
+        ${fa.soloLectura ? `<div class="fp-sub" style="margin-bottom:12px;">${o.estado === 'en_proceso' ? 'Solo lectura.' : 'La orden ya está ' + (o.estado === 'anulada' ? 'anulada' : 'terminada') + '; el paso a paso queda como registro.'}</div>` : ''}
+        ${!primerPendiente && !fa.soloLectura ? `<div class="mensaje exito" style="display:block;margin-bottom:12px;">🎉 ¡Paso a paso completo! Ahora cierra esta ventana y pulsa <strong>✅ Terminar</strong> en la orden para registrar las unidades y el material que sobró.</div>` : ''}
+
+        ${pasos.map((paso, i) => {
+          const hecho = fa.pasos[paso.id] === 'done';
+          const activo = !fa.soloLectura && paso.id === primerPendiente;
+          const clase = hecho ? 'hecho' : activo ? 'activo' : 'bloqueado';
+          const conTiempo = paso.id === 'tejido' || paso.id === 'detalles';
+          let cuerpo = '';
+          if (activo) cuerpo = `<div class="fp-paso-cuerpo"><p class="fp-desc">${paso.desc}</p>${interiorPasoFicha(paso.id)}</div>`;
+          else if (hecho && conTiempo && fichaEditandoTiempo === paso.id) cuerpo = `<div class="fp-paso-cuerpo">${formularioTiempoFicha(paso.id, true)}</div>`;
+          else if (hecho && paso.id === 'foto' && fa.foto_url) cuerpo = `<div class="fp-paso-cuerpo"><img class="fp-foto-img" src="${escaparHtml(fa.foto_url)}" alt="Foto del resultado" style="max-height:160px;margin:0;"></div>`;
+          return `
+            <div class="fp-paso ${clase}" id="fp-paso-${paso.id}">
+              <div class="fp-paso-cab">
+                <div class="fp-num">${hecho ? '✓' : i + 1}</div>
+                <div class="fp-paso-tit">${paso.icono} ${paso.titulo}${hecho && conTiempo ? ` <span style="font-weight:400;font-size:12px;text-decoration:none;display:inline-block;">· ${formatoHorasCorto(segundosDe(paso.id))}</span>` : ''}</div>
+                ${hecho ? '<span class="fp-etq" style="color:#16a34a;">Completado ✓</span>' : ''}
+                ${activo ? '<span class="fp-etq" style="background:var(--rosa-suave);color:var(--rosa-principal);">Activo</span>' : ''}
+                ${hecho && conTiempo && !fa.soloLectura ? `<button class="fp-enlace" onclick="alternarCorreccionTiempo('${paso.id}')">✏️ Corregir tiempo</button>` : ''}
+              </div>
+              ${cuerpo}
+            </div>`;
+        }).join('')}
+        ${!fa.soloLectura && hechos > 0 ? `<div style="text-align:center;margin-top:6px;"><button class="fp-enlace" onclick="pedirConfirmacionBoton(this, '¿Deshacer el último paso?', deshacerPasoFicha)">↩️ Deshacer el último paso completado</button></div>` : ''}
+      </div>`;
+  }
+
+  function interiorPasoFicha(id) {
+    if (id === 'tejido') {
+      return `
+        <div class="fp-crono">
+          <div class="fp-crono-num" id="fpReloj-tejido">${formatoReloj(segundosDe('tejido'))}</div>
+          <div class="fp-crono-sub">TIEMPO ACUMULADO DE TEJIDO</div>
+          <div class="fp-btns">
+            <button class="fp-btn ${corriendo('tejido') ? 'pausar' : 'iniciar'}" onclick="alternarCrono('tejido')">${corriendo('tejido') ? '⏸ Pausar' : (segundosDe('tejido') ? '▶ Continuar' : '▶ Iniciar')}</button>
+            <button class="fp-btn suave" onclick="pedirConfirmacionBoton(this, '¿Volver a cero?', () => reiniciarCrono('tejido'))">↺ Reiniciar</button>
+          </div>
+          <div style="font-size:11px;opacity:.7;margin-top:10px;">🔔 Alarma de pausa activa cada 60 minutos</div>
+          <div style="margin-top:12px;border-top:1px solid rgba(255,255,255,.15);padding-top:10px;">${formularioTiempoFicha('tejido', false)}</div>
+        </div>
+        <button class="fp-completar" onclick="completarPasoFicha('tejido')">✓ Tejido terminado — continuar</button>`;
+    }
+    if (id === 'detalles') {
+      return `
+        <div class="fp-crono claro">
+          <div class="fp-crono-num" id="fpReloj-detalles">${formatoReloj(segundosDe('detalles'))}</div>
+          <div class="fp-crono-sub">TIEMPO EN DETALLES</div>
+          <div class="fp-btns">
+            <button class="fp-btn ${corriendo('detalles') ? 'pausar' : 'iniciar'}" onclick="alternarCrono('detalles')">${corriendo('detalles') ? '⏸ Pausar' : (segundosDe('detalles') ? '▶ Continuar' : '▶ Iniciar')}</button>
+          </div>
+          <div style="margin-top:10px;">${formularioTiempoFicha('detalles', false)}</div>
+        </div>
+        <button class="fp-completar" onclick="completarPasoFicha('detalles')">✓ Detalles listos — continuar</button>`;
+    }
+    if (id === 'foto') {
+      const hay = fichaActiva.foto_url || fichaFotoArchivo;
+      return `
+        <div class="fp-foto">
+          ${fichaActiva.foto_url && !fichaFotoArchivo ? `<img class="fp-foto-img" src="${escaparHtml(fichaActiva.foto_url)}" alt="Foto guardada">` : ''}
+          <img class="fp-foto-img ${fichaFotoArchivo ? '' : 'oculto'}" id="fpFotoVista" alt="Foto nueva">
+          <input type="file" accept="image/*" onchange="elegirFotoFicha(this)" aria-label="Foto del resultado">
+          <strong>${hay ? 'Cambiar foto' : '📷 Tomar foto · 🖼️ Galería'}</strong>
+          <div style="font-size:11.5px;opacity:.7;margin-top:4px;">Desde la cámara o la galería del celular</div>
+        </div>
+        <button class="fp-completar" id="fpBtnFoto" onclick="completarFotoFicha()" ${hay ? '' : 'disabled'}>${hay ? '✓ Foto lista — continuar' : '📷 Sube una foto para continuar'}</button>`;
+    }
+    return `<button class="fp-completar" onclick="completarPasoFicha('${id}')">✓ Paso completado — continuar</button>`;
+  }
+
+  // Por si se olvidó parar el cronómetro (o para corregir un paso ya completado).
+  function formularioTiempoFicha(id, abierto) {
+    const s = segundosDe(id);
+    const h = Math.floor(s / 3600), m = Math.round((s % 3600) / 60);
+    const campos = `
+      <div class="fp-manual">
+        <input type="number" id="fpH-${id}" min="0" value="${h || ''}" placeholder="Horas" aria-label="Horas"> <span>h</span>
+        <input type="number" id="fpM-${id}" min="0" max="59" value="${m || ''}" placeholder="Min" aria-label="Minutos"> <span>min</span>
+        <button class="fp-btn iniciar" onclick="guardarTiempoManualFicha('${id}')">💾 Usar este tiempo</button>
+      </div>
+      <div style="font-size:11px;opacity:.65;margin-top:6px;text-align:center;">Este valor reemplaza el tiempo del cronómetro.</div>`;
+    if (abierto) return `<div style="background:var(--tinte-rosa);border-radius:var(--radius-md);padding:12px;">${campos}<div style="text-align:center;margin-top:6px;"><button class="fp-enlace" onclick="alternarCorreccionTiempo('${id}')">Cancelar</button></div></div>`;
+    return `<button class="fp-enlace" onclick="this.nextElementSibling.classList.toggle('oculto')">✏️ ¿Se te olvidó parar el tiempo? Escríbelo a mano</button><div class="oculto">${campos}</div>`;
+  }
+
+  function alternarCorreccionTiempo(id) {
+    fichaEditandoTiempo = fichaEditandoTiempo === id ? null : id;
+    renderizarFichaProduccion();
+  }
+
+  async function guardarTiempoManualFicha(id) {
+    const h = parseFloat(document.getElementById('fpH-' + id).value) || 0;
+    const m = parseFloat(document.getElementById('fpM-' + id).value) || 0;
+    if (h < 0 || m < 0 || (h === 0 && m === 0)) { alert('Escribe un tiempo válido.'); return; }
+    crono[id].desde = null;
+    crono[id].base = Math.round(h * 3600 + m * 60);
+    if (id === 'tejido') segDesdePausa = 0;
+    fichaEditandoTiempo = null;
+    actualizarIntervaloCrono();
+    await guardarFichaProduccion();
+    renderizarFichaProduccion();
+  }
+
+  function alternarCrono(id) {
+    if (corriendo(id)) {
+      crono[id].base = segundosDe(id); crono[id].desde = null;
+      guardarFichaProduccion();
+    } else {
+      // Solo un cronómetro a la vez.
+      ['tejido', 'detalles'].forEach(c => { if (c !== id && corriendo(c)) { crono[c].base = segundosDe(c); crono[c].desde = null; } });
+      crono[id].desde = Date.now();
+      try { obtenerAudioFicha(); } catch (e) {}
+    }
+    actualizarIntervaloCrono();
+    renderizarFichaProduccion();
+  }
+
+  function reiniciarCrono(id) {
+    crono[id].base = 0; crono[id].desde = null;
+    if (id === 'tejido') segDesdePausa = 0;
+    actualizarIntervaloCrono();
+    guardarFichaProduccion();
+    renderizarFichaProduccion();
+  }
+
+  function actualizarIntervaloCrono() {
+    const alguno = corriendo('tejido') || corriendo('detalles');
+    if (alguno && !cronoIntervalo) { ultimoTic = Date.now(); cronoIntervalo = setInterval(ticCrono, 1000); }
+    if (!alguno && cronoIntervalo) { clearInterval(cronoIntervalo); cronoIntervalo = null; }
+  }
+
+  function ticCrono() {
+    const ahora = Date.now(), paso = (ahora - (ultimoTic || ahora)) / 1000; ultimoTic = ahora;
+    ['tejido', 'detalles'].forEach(c => { const el = document.getElementById('fpReloj-' + c); if (el) el.textContent = formatoReloj(segundosDe(c)); });
+    const total = segundosDe('tejido') + segundosDe('detalles');
+    const elT = document.getElementById('fpTotal'); if (elT) elT.textContent = formatoReloj(total);
+    const elU = document.getElementById('fpPorUnidad');
+    if (elU && fichaActiva) elU.textContent = `(${formatoReloj(total / (Number(fichaActiva.orden.cantidad_planeada) || 1))} por unidad)`;
+    segSinGuardar += paso;
+    if (segSinGuardar >= 30) { segSinGuardar = 0; guardarFichaProduccion(); }
+    if (corriendo('tejido')) {
+      segDesdePausa += paso;
+      if (segDesdePausa >= PAUSA_ACTIVA_SEG) {
+        segDesdePausa = 0;
+        crono.tejido.base = segundosDe('tejido'); crono.tejido.desde = null;
+        actualizarIntervaloCrono();
+        guardarFichaProduccion();
+        renderizarFichaProduccion();
+        abrirPausaActiva();
+      }
+    }
+  }
+
+  function detenerCronosFicha(conservar) {
+    ['tejido', 'detalles'].forEach(c => { if (corriendo(c)) { crono[c].base = conservar ? segundosDe(c) : crono[c].base; crono[c].desde = null; } });
+    actualizarIntervaloCrono();
+    cerrarPausaActiva(false);
+  }
+
+  // ---- Pausa activa ----
+  let audioFicha = null;
+  function obtenerAudioFicha() {
+    if (!audioFicha) audioFicha = new (window.AudioContext || window.webkitAudioContext)();
+    return audioFicha;
+  }
+  function pitidoFicha(freq = 880, dur = 0.3, vol = 0.5) {
+    try {
+      const ctx = obtenerAudioFicha(), osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.connect(g); g.connect(ctx.destination); osc.frequency.value = freq; osc.type = 'sine';
+      g.gain.setValueAtTime(vol, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + dur);
+    } catch (e) {}
+  }
+  function abrirPausaActiva() {
+    [880, 1100, 880, 1100, 880].forEach((f, i) => setTimeout(() => pitidoFicha(f, 0.35, 0.6), i * 350));
+    const fin = Date.now() + DURACION_PAUSA_SEG * 1000;
+    const caja = document.getElementById('fichaPausa');
+    caja.innerHTML = `<div>
+      <div style="font-size:44px;">🧘‍♀️</div>
+      <h2 id="fpPausaTit" class="fredoka" style="margin:6px 0;">¡Pausa activa!</h2>
+      <div style="font-size:13px;opacity:.8;">Llevas una hora tejiendo. Estira las manos, los hombros y el cuello, y descansa la vista.</div>
+      <div class="fp-pausa-num" id="fpPausaNum">3:00</div>
+      <button class="fp-btn iniciar" onclick="cerrarPausaActiva(true)">▶ Ya descansé, seguir tejiendo</button>
+    </div>`;
+    caja.classList.remove('oculto');
+    clearInterval(pausaIntervalo);
+    pausaIntervalo = setInterval(() => {
+      const r = Math.max(0, Math.round((fin - Date.now()) / 1000));
+      const el = document.getElementById('fpPausaNum');
+      if (el) el.textContent = Math.floor(r / 60) + ':' + String(r % 60).padStart(2, '0');
+      if (r <= 0) cerrarPausaActiva(true);
+    }, 1000);
+  }
+  function cerrarPausaActiva(seguir) {
+    clearInterval(pausaIntervalo); pausaIntervalo = null;
+    const caja = document.getElementById('fichaPausa');
+    if (!caja || caja.classList.contains('oculto')) return;
+    caja.classList.add('oculto');
+    if (seguir && fichaActiva && fichaActiva.pasos.tejido !== 'done' && !corriendo('tejido')) alternarCrono('tejido');
+  }
+
+  // ---- Pasos ----
+  async function completarPasoFicha(id) {
+    if (!fichaActiva) return;
+    if (corriendo(id)) { crono[id].base = segundosDe(id); crono[id].desde = null; actualizarIntervaloCrono(); }
+    fichaActiva.pasos[id] = 'done';
+    const pasos = pasosDeOrden(fichaActiva.orden);
+    const completo = pasos.every(p => fichaActiva.pasos[p.id] === 'done');
+    fichaActiva.terminada_at = completo ? new Date().toISOString() : null;
+    await guardarFichaProduccion();
+    renderizarFichaProduccion();
+    pitidoFicha(660, 0.2);
+    setTimeout(() => {
+      const sig = document.querySelector('#fichaProduccion .fp-paso.activo') || document.querySelector('#fichaProduccion .mensaje.exito');
+      if (sig) sig.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 150);
+  }
+
+  async function deshacerPasoFicha() {
+    const pasos = pasosDeOrden(fichaActiva.orden).filter(p => fichaActiva.pasos[p.id] === 'done');
+    if (!pasos.length) return;
+    delete fichaActiva.pasos[pasos[pasos.length - 1].id];
+    fichaActiva.terminada_at = null;
+    await guardarFichaProduccion();
+    renderizarFichaProduccion();
+  }
+
+  async function cambiarTejedoraFicha(valor) {
+    fichaActiva.tejedora_id = valor || null;
+    if (valor) fichaActiva.tejedora_nombre = null;
+    await guardarFichaProduccion();
+  }
+
+  function comprimirFotoFicha(archivo, lado = 1600, calidad = 0.82) {
+    return new Promise((resolver) => {
+      const img = new Image();
+      img.onload = () => {
+        const k = Math.min(1, lado / Math.max(img.width, img.height));
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(img.src);
+        c.toBlob(b => resolver(b || archivo), 'image/webp', calidad);
+      };
+      img.onerror = () => resolver(archivo);
+      img.src = URL.createObjectURL(archivo);
+    });
+  }
+
+  async function elegirFotoFicha(input) {
+    const archivo = input.files && input.files[0];
+    if (!archivo) return;
+    fichaFotoArchivo = await comprimirFotoFicha(archivo);
+    renderizarFichaProduccion();
+    const vista = document.getElementById('fpFotoVista');
+    if (vista) vista.src = URL.createObjectURL(fichaFotoArchivo);
+  }
+
+  async function completarFotoFicha() {
+    const btn = document.getElementById('fpBtnFoto');
+    if (fichaFotoArchivo) {
+      if (btn) { btn.disabled = true; btn.textContent = '⏳ Subiendo foto...'; }
+      const ext = fichaFotoArchivo.type === 'image/webp' ? 'webp' : ((fichaFotoArchivo.name || '').split('.').pop() || 'jpg');
+      const ruta = `ordenes/${fichaActiva.orden.id}_${Date.now()}.${ext}`;
+      const { error } = await supabaseClient.storage.from('produccion-fotos').upload(ruta, fichaFotoArchivo, { contentType: fichaFotoArchivo.type || 'image/jpeg' });
+      if (error) {
+        alert('No se pudo subir la foto: ' + error.message);
+        if (btn) { btn.disabled = false; btn.textContent = '✓ Foto lista — continuar'; }
+        return;
+      }
+      fichaActiva.foto_url = supabaseClient.storage.from('produccion-fotos').getPublicUrl(ruta).data.publicUrl;
+      fichaFotoArchivo = null;
+    }
+    if (!fichaActiva.foto_url) return;
+    await completarPasoFicha('foto');
+  }
+
+  async function guardarFichaProduccion() {
+    const fa = fichaActiva;
+    if (!fa || fa.soloLectura) return;
+    const fila = {
+      orden_id: fa.orden.id,
+      tejedora_id: fa.tejedora_id,
+      tejedora_nombre: fa.tejedora_nombre,
+      pasos_estado: fa.pasos,
+      tiempos: { tejido: Math.round(segundosDe('tejido')), detalles: Math.round(segundosDe('detalles')) },
+      foto_url: fa.foto_url,
+      terminada_at: fa.terminada_at,
+      updated_at: new Date().toISOString(),
+    };
+    try { localStorage.setItem('erp_ficha_' + fa.orden.id, JSON.stringify(fila)); } catch (e) {}
+    const { error } = await supabaseClient.from('produccion_fichas').upsert(fila, { onConflict: 'orden_id' });
+    if (error) { console.warn('Paso a paso:', error.message); return; }
+    fa.existe = true;
+    try { localStorage.removeItem('erp_ficha_' + fa.orden.id); } catch (e) {}
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && fichaActiva && document.getElementById('fichaPausa').classList.contains('oculto')) cerrarFichaProduccion();
+  });
+  window.addEventListener('beforeunload', (e) => {
+    if (fichaActiva && (corriendo('tejido') || corriendo('detalles'))) { guardarFichaProduccion(); e.preventDefault(); e.returnValue = ''; }
+  });
 
   function abrirAccionOrden(id, accion) {
     ordenAccionAbierta = ordenAccionAbierta && ordenAccionAbierta.id === id && ordenAccionAbierta.accion === accion ? null : { id, accion };
