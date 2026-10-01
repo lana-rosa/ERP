@@ -959,6 +959,24 @@
   .fp-mini-barra { height: 6px; border-radius: 999px; background: var(--gris-fondo); overflow: hidden; margin-top: 4px; max-width: 220px; }
   .fp-mini-barra > div { height: 100%; background: var(--rosa-principal); }
   @media (max-width: 600px) { .fp-fondo { padding: 0; } .fp-caja { border-radius: 0; min-height: 100%; padding: 16px; } .fp-crono-num { font-size: 34px; } }
+
+  /* ===== Trazabilidad de un pedido ===== */
+  .tz-etapas { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 16px 0; }
+  .tz-etapa { text-align: center; font-size: 11.5px; line-height: 1.3; padding: 10px 4px; border-radius: var(--radius-md); background: var(--gris-fondo); color: var(--texto-suave); }
+  .tz-etapa .tz-ic { font-size: 20px; display: block; margin-bottom: 4px; filter: grayscale(1); opacity: .6; }
+  .tz-etapa.hecha { background: var(--tinte-verde); color: var(--verde-exito); font-weight: 600; }
+  .tz-etapa.hecha .tz-ic, .tz-etapa.actual .tz-ic { filter: none; opacity: 1; }
+  .tz-etapa.actual { background: var(--tinte-rosa); color: var(--rosa-principal); font-weight: 700; box-shadow: inset 0 0 0 2px var(--rosa-principal); }
+  .tz-linea { list-style: none; margin: 0; padding: 0 0 0 18px; border-left: 2px solid var(--gris-borde); }
+  .tz-linea li { position: relative; padding: 0 0 14px 12px; }
+  .tz-linea li::before { content: ''; position: absolute; left: -25px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--rosa-principal); border: 2px solid var(--fondo-panel); }
+  .tz-linea li.pago::before { background: var(--verde-exito); } .tz-linea li.produccion::before { background: var(--ambar); }
+  .tz-linea li.envio::before { background: var(--azul-acero); } .tz-linea li.resena::before { background: #f5b301; }
+  .tz-fecha { font-size: 11px; color: var(--texto-suave); }
+  .tz-tit { font-size: 13.5px; font-weight: 600; }
+  .tz-det { font-size: 12.5px; color: var(--texto-suave); margin-top: 2px; word-break: break-word; }
+  .tz-caja { padding: 12px 14px; border-radius: var(--radius-md); background: var(--gris-fondo); font-size: 12.5px; margin-bottom: 10px; }
+  @media (max-width: 600px) { .tz-etapas { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; } .tz-etapa { font-size: 10px; padding: 8px 2px; } }
 </style>
 </head>
 <body>
@@ -2009,6 +2027,14 @@
   <div style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;line-height:1.6;">
     ℹ️ Los pedidos nuevos del CRM se traen solos al abrir esta pantalla (o con el botón 🔄). Cuando el pedido está listo, registra aquí la entrega (recoge en tienda, domicilio o transportadora con su guía): la clienta lo ve en su cuenta de la web. Lo que se le cobra al cliente por el envío va en el valor de envío del pedido y sale en la factura como una línea aparte.
   </div>
+
+  <div class="panel" style="max-width:none;max-height:none;margin-bottom:16px;">
+    <h2>🧭 Trazabilidad de un pedido</h2>
+    <div class="subtitulo">Todo lo que ha pasado con un pedido en un solo lugar: compra, pagos, orden de producción, paso a paso, envío, entrega y reseña. Sirve también para los pedidos ya entregados.</div>
+    <input type="search" id="trazaPedidoBuscar" placeholder="🔍 Número de pedido, referencia de la web (LRW-...), cliente, cédula o teléfono" oninput="buscarTrazaPedidoDebounce()" style="margin-top:10px;">
+    <div id="trazaPedidoResultados"></div>
+  </div>
+  <div id="trazaPedidoModal" class="fp-fondo oculto" role="dialog" aria-modal="true" aria-labelledby="trazaTitulo" onclick="if (event.target === this) cerrarTrazaPedido()"></div>
 
   <div id="subtabCanalActivos" data-subtab-grupo="pedidosCanal">
     <div class="panel" style="max-width:none;max-height:none;">
@@ -15991,7 +16017,8 @@
               <span style="text-align:right;font-weight:700;">${formatearMoneda(p.total_pedido)}</span>
               <span><span class="badge-estado-pedido" style="background:${colorEstado.bg};color:${colorEstado.color};">${etiquetasEstado[p.estado] || p.estado}</span></span>
             </div>
-            ${(acciones || lineaMedio || envioPedidosCache[p.id]) ? `<div class="tabla-lista-detalle" style="display:block;">${lineaMedio}${acciones}<div data-envio-pedido="${p.id}">${bloqueEnvioPedido(p)}</div></div>` : ''}
+            <div class="tabla-lista-detalle" style="display:block;">${lineaMedio}${acciones}<div data-envio-pedido="${p.id}">${bloqueEnvioPedido(p)}</div>
+              <button class="btn-mini editar" style="margin-top:8px;" onclick="abrirTrazaPedido('${p.id}')">🧭 Ver trazabilidad</button></div>
           `;
         }).join('')}
       </div>
@@ -16132,6 +16159,108 @@
     const fila = document.querySelector(`[data-envio-pedido="${id}"]`);
     if (fila && p) fila.innerHTML = bloqueEnvioPedido(p);
   }
+
+  // ============================================================
+  // TRAZABILIDAD DE UN PEDIDO: compra → pagos → producción → envío → entrega.
+  // ============================================================
+  let trazaBuscarTimer = null;
+  function buscarTrazaPedidoDebounce() {
+    clearTimeout(trazaBuscarTimer);
+    trazaBuscarTimer = setTimeout(buscarTrazaPedido, 350);
+  }
+  async function buscarTrazaPedido() {
+    const texto = document.getElementById('trazaPedidoBuscar').value.trim();
+    const cont = document.getElementById('trazaPedidoResultados');
+    if (texto.length < 2) { cont.innerHTML = ''; return; }
+    cont.innerHTML = '<div class="cargando">Buscando...</div>';
+    const { data, error } = await supabaseClient.rpc('fn_buscar_pedidos_traza', { p_texto: texto });
+    if (error) { cont.innerHTML = `<div class="cargando">No se pudo buscar: ${escaparHtml(error.message)}</div>`; return; }
+    if (!data || !data.length) { cont.innerHTML = '<div class="cargando">No se encontró ningún pedido.</div>'; return; }
+    const estados = { esperando_pago: '⏳ Esperando pago', en_preparacion: '🧶 En preparación', listo_despacho: '📦 Listo', entregado: '✅ Entregado' };
+    cont.innerHTML = `<div class="tabla-lista" style="margin-top:10px;">${data.map(p => `
+      <div class="tabla-lista-fila" style="grid-template-columns:1fr auto;cursor:pointer;" onclick="abrirTrazaPedido('${p.id}')">
+        <span><strong>${escaparHtml(p.consecutivo)}</strong>${p.referencia ? ' · ' + escaparHtml(p.referencia) : ''} · ${escaparHtml(p.cliente || 'Sin cliente')}
+          <br><span style="font-size:11.5px;opacity:.75;">${escaparHtml(p.producto || '')} · ${new Date(p.fecha).toLocaleDateString('es-CO')} · ${formatearMoneda(p.total)}</span></span>
+        <span style="font-size:12px;">${estados[p.estado] || escaparHtml(p.estado)} ›</span>
+      </div>`).join('')}</div>`;
+  }
+
+  async function abrirTrazaPedido(id) {
+    const modal = document.getElementById('trazaPedidoModal');
+    modal.innerHTML = '<div class="fp-caja"><div class="cargando">Cargando la historia del pedido...</div></div>';
+    modal.classList.remove('oculto');
+    document.body.style.overflow = 'hidden';
+    const { data, error } = await supabaseClient.rpc('fn_pedido_trazabilidad', { p_pedido_id: id });
+    if (error) { modal.innerHTML = `<div class="fp-caja"><button class="fp-cerrar" onclick="cerrarTrazaPedido()" aria-label="Cerrar">✕</button><div class="cargando">No se pudo cargar: ${escaparHtml(error.message)}</div></div>`; return; }
+    modal.innerHTML = htmlTrazaPedido(data);
+  }
+
+  function cerrarTrazaPedido() {
+    document.getElementById('trazaPedidoModal').classList.add('oculto');
+    document.body.style.overflow = '';
+  }
+
+  function etapasTrazaPedido(d) {
+    const p = d.pedido, ords = d.ordenes || [];
+    const entregado = p.estado === 'entregado';
+    const listo = entregado || p.estado === 'listo_despacho';
+    const pago = !!p.anticipo_pagado;
+    const prodHecha = listo || ords.some(o => o.estado === 'terminada' || o.estado === 'entregada');
+    const enviado = !!p.fecha_envio || (p.recoge && listo);
+    const lista = [
+      { ic: '💳', t: p.saldo_pagado || p.monto_saldo <= 0 ? 'Pagado' : 'Anticipo', hecha: pago },
+      { ic: p.disponible_en_stock ? '📦' : '🧶', t: p.disponible_en_stock ? 'Desde inventario' : 'Tejido', hecha: pago && (prodHecha || p.disponible_en_stock && listo) },
+      { ic: '🎁', t: 'Listo', hecha: listo },
+      { ic: p.recoge ? '🏪' : p.tipo_entrega === 'domicilio' ? '🛵' : '🚚', t: p.recoge ? 'Para recoger' : p.tipo_entrega === 'domicilio' ? 'Domicilio' : 'Enviado', hecha: enviado || entregado },
+      { ic: '🎉', t: 'Entregado', hecha: entregado },
+    ];
+    const actual = lista.findIndex(e => !e.hecha);
+    return lista.map((e, i) => ({ ...e, actual: i === actual }));
+  }
+
+  function htmlTrazaPedido(d) {
+    const p = d.pedido, c = d.cliente || {}, ords = d.ordenes || [];
+    const fechaHora = (f) => new Date(f).toLocaleString('es-CO', { day: '2-digit', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+    const canales = { whatsapp: '💬 WhatsApp', instagram: '📷 Instagram', facebook: '👍 Facebook', tienda_virtual: '🛍️ Tienda virtual' };
+    const produccion = ords.map(o => {
+      const pasos = o.pasos_estado || {};
+      const total = PASOS_PRODUCCION.length;
+      const hechos = PASOS_PRODUCCION.filter(x => pasos[x.id] === 'done').length;
+      const t = o.tiempos || {};
+      const horas = ((Number(t.tejido) || 0) + (Number(t.detalles) || 0));
+      return `<div class="tz-caja" style="display:flex;gap:12px;align-items:center;">
+        ${o.foto_url ? `<a href="${escaparHtml(o.foto_url)}" target="_blank" rel="noopener"><img src="${escaparHtml(o.foto_url)}" alt="Foto del resultado" style="width:64px;height:64px;border-radius:10px;object-fit:cover;"></a>` : ''}
+        <div style="flex:1;">
+          <strong>🏭 ${escaparHtml(o.orden)}</strong> · ${escaparHtml((ESTADOS_ORDEN_PRODUCCION[o.estado] || [o.estado])[0])}
+          <br>${o.tejedora ? '🧶 ' + escaparHtml(o.tejedora) + ' · ' : ''}${o.pasos_estado ? `Paso a paso ${hechos} de ${total}` : 'Paso a paso sin empezar'}${horas ? ' · ⏱️ ' + formatoHorasCorto(horas) : ''}
+          ${Number(o.costo_material) > 0 ? `<br>Material: ${formatearMoneda(o.costo_material)}` : ''}
+        </div></div>`;
+    }).join('');
+    const eventos = d.eventos || [];
+    return `
+      <div class="fp-caja">
+        <div class="fp-cab">
+          <div>
+            <h2 id="trazaTitulo"><span style="color:var(--rosa-principal);">${escaparHtml(p.consecutivo)}</span> · ${escaparHtml(p.producto || '')}${Number(p.cantidad) > 1 ? ' (x' + formatearCantidad(p.cantidad) + ')' : ''}</h2>
+            <div class="fp-sub">${canales[p.canal] || escaparHtml(p.canal || '')}${p.referencia_web ? ' · ' + escaparHtml(p.referencia_web) : ''} · Total ${formatearMoneda(p.total)}${Number(p.envio) > 0 ? ' (envío ' + formatearMoneda(p.envio) + ')' : ''}</div>
+            <div class="fp-sub">👤 ${escaparHtml(c.nombre || 'Sin cliente')}${c.telefono ? ' · ' + escaparHtml(c.telefono) : ''}${c.correo ? ' · ' + escaparHtml(c.correo) : ''}</div>
+          </div>
+          <button class="fp-cerrar" onclick="cerrarTrazaPedido()" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="tz-etapas">${etapasTrazaPedido(d).map(e => `<div class="tz-etapa ${e.hecha ? 'hecha' : ''} ${e.actual ? 'actual' : ''}"><span class="tz-ic">${e.ic}</span>${e.t}</div>`).join('')}</div>
+        ${produccion}
+        ${p.numero_guia || p.guia_url ? `<div class="tz-caja">🚚 ${escaparHtml(p.transportadora || '')}${p.numero_guia ? ' · Guía ' + escaparHtml(p.numero_guia) : ''}${p.guia_url ? ` · <a href="${escaparHtml(p.guia_url)}" target="_blank" rel="noopener">📄 Ver guía</a>` : ''}</div>` : ''}
+        <h3 style="font-size:14px;margin:18px 0 10px;">Historia del pedido</h3>
+        ${eventos.length ? `<ol class="tz-linea">${eventos.map(e => `
+          <li class="${escaparHtml(e.tipo)}"><div class="tz-fecha">${fechaHora(e.fecha)}</div><div class="tz-tit">${escaparHtml(e.titulo)}</div>${e.detalle ? `<div class="tz-det">${escaparHtml(e.detalle)}</div>` : ''}</li>`).join('')}</ol>` : '<div class="cargando">Todavía no hay movimientos.</div>'}
+        <div style="font-size:11px;opacity:.6;margin-top:6px;">Las fechas de "Listo" y "Entregado" se guardan desde el 1 de octubre de 2026; en pedidos anteriores puede faltar alguna.</div>
+      </div>`;
+  }
+
+  document.addEventListener('keydown', (e) => {
+    const m = document.getElementById('trazaPedidoModal');
+    if (e.key === 'Escape' && m && !m.classList.contains('oculto')) cerrarTrazaPedido();
+  });
 
   // ============================================================
   // PAGO COMBINADO de anticipo/saldo en Pedidos por canal — mismo patrón
