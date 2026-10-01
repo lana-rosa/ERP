@@ -3088,6 +3088,7 @@
     <button class="chip-filtro" onclick="mostrarPantallaLogoEmpresa()">🖼️ Logo</button>
     <button class="chip-filtro" onclick="mostrarPantallaRosinaImagenes()">🐑 Imágenes de Rosina</button>
     <button class="chip-filtro activo" onclick="mostrarPantallaTextosWeb()">✏️ Textos de la web</button>
+    <button class="chip-filtro" onclick="mostrarPantallaPaypalConfig()">🌎 PayPal y envío internacional</button>
     <button class="chip-filtro" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
     <button class="chip-filtro" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
     <button class="chip-filtro" onclick="mostrarPantallaTarifasEnvio()">🚚 Tarifas de envío</button>
@@ -3105,11 +3106,35 @@
   </div>
 </div>
 
+<div id="pantallaPaypalConfig" class="oculto contenido">
+  <div class="filtro-tipo" style="margin-bottom:16px;flex-wrap:wrap;">
+    <button class="chip-filtro" onclick="mostrarPantallaLogoEmpresa()">🖼️ Logo</button>
+    <button class="chip-filtro" onclick="mostrarPantallaTextosWeb()">✏️ Textos de la web</button>
+    <button class="chip-filtro activo" onclick="mostrarPantallaPaypalConfig()">🌎 PayPal y envío internacional</button>
+    <button class="chip-filtro" onclick="mostrarPantallaTarifasEnvio()">🚚 Tarifas de envío</button>
+    <button class="chip-filtro" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
+  </div>
+  <div class="page-header">
+    <h1>🌎 PayPal y envío internacional</h1>
+    <div class="subtitulo">Pagos de clientas de otros países en lanarosacrochet.com. PayPal cobra en dólares (US$): aquí defines la tasa para convertir tus precios en pesos y el valor del envío por zona. Mientras esté apagado, la web no ofrece PayPal.</div>
+  </div>
+  <div class="mensaje" id="mensajePaypalConfig"></div>
+  <div id="contenidoPaypalConfig"><div class="cargando">Cargando...</div></div>
+  <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;">
+    <button class="btn-primario" id="btnGuardarPaypalConfig" onclick="guardarPaypalConfig()">💾 Guardar cambios</button>
+  </div>
+  <div style="margin-top:22px;background:#fff;border-radius:14px;padding:16px 18px;box-shadow:var(--sombra);font-size:13px;line-height:1.55;">
+    <strong>Para que PayPal funcione también se necesita</strong> (una sola vez, en Supabase → Edge Functions → Secrets): <code>PAYPAL_CLIENT_ID</code>, <code>PAYPAL_CLIENT_SECRET</code> y <code>PAYPAL_MODO</code> (<code>sandbox</code> para pruebas, <code>live</code> para cobros reales). Las llaves nunca se escriben en esta pantalla ni en el chat.<br>
+    <strong>El dinero de PayPal en contabilidad:</strong> se registra con el medio de pago <code>paypal</code>. En Bancos puedes asignarlo a la cuenta donde te llegan esos pagos; si no, cae en la cuenta predeterminada.
+  </div>
+</div>
+
 <div id="pantallaTarifasEnvio" class="oculto contenido">
   <div class="filtro-tipo" style="margin-bottom:16px;flex-wrap:wrap;">
     <button class="chip-filtro" onclick="mostrarPantallaLogoEmpresa()">🖼️ Logo</button>
     <button class="chip-filtro" onclick="mostrarPantallaRosinaImagenes()">🐑 Imágenes de Rosina</button>
     <button class="chip-filtro" onclick="mostrarPantallaTextosWeb()">✏️ Textos de la web</button>
+    <button class="chip-filtro" onclick="mostrarPantallaPaypalConfig()">🌎 PayPal y envío internacional</button>
     <button class="chip-filtro" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
     <button class="chip-filtro" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
     <button class="chip-filtro" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
@@ -3149,6 +3174,7 @@
     <button class="chip-filtro" onclick="mostrarPantallaLogoEmpresa()">🖼️ Logo</button>
     <button class="chip-filtro" onclick="mostrarPantallaRosinaImagenes()">🐑 Imágenes de Rosina</button>
     <button class="chip-filtro" onclick="mostrarPantallaTextosWeb()">✏️ Textos de la web</button>
+    <button class="chip-filtro" onclick="mostrarPantallaPaypalConfig()">🌎 PayPal y envío internacional</button>
     <button class="chip-filtro" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
     <button class="chip-filtro" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
     <button class="chip-filtro activo" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
@@ -3200,6 +3226,7 @@
     <button class="chip-filtro" onclick="mostrarPantallaLogoEmpresa()">🖼️ Logo</button>
     <button class="chip-filtro" onclick="mostrarPantallaRosinaImagenes()">🐑 Imágenes de Rosina</button>
     <button class="chip-filtro" onclick="mostrarPantallaTextosWeb()">✏️ Textos de la web</button>
+    <button class="chip-filtro" onclick="mostrarPantallaPaypalConfig()">🌎 PayPal y envío internacional</button>
     <button class="chip-filtro" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
     <button class="chip-filtro" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
     <button class="chip-filtro" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
@@ -3228,6 +3255,7 @@
     <button class="chip-filtro" onclick="mostrarPantallaLogoEmpresa()">🖼️ Logo</button>
     <button class="chip-filtro activo" onclick="mostrarPantallaRosinaImagenes()">🐑 Imágenes de Rosina</button>
     <button class="chip-filtro" onclick="mostrarPantallaTextosWeb()">✏️ Textos de la web</button>
+    <button class="chip-filtro" onclick="mostrarPantallaPaypalConfig()">🌎 PayPal y envío internacional</button>
     <button class="chip-filtro" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
     <button class="chip-filtro" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
     <button class="chip-filtro" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
@@ -3266,6 +3294,7 @@
     <button class="chip-filtro" onclick="mostrarPantallaLogoEmpresa()">🖼️ Logo</button>
     <button class="chip-filtro" onclick="mostrarPantallaRosinaImagenes()">🐑 Imágenes de Rosina</button>
     <button class="chip-filtro" onclick="mostrarPantallaTextosWeb()">✏️ Textos de la web</button>
+    <button class="chip-filtro" onclick="mostrarPantallaPaypalConfig()">🌎 PayPal y envío internacional</button>
     <button class="chip-filtro" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
     <button class="chip-filtro" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
     <button class="chip-filtro" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
@@ -3293,6 +3322,7 @@
     <button class="chip-filtro" onclick="mostrarPantallaLogoEmpresa()">🖼️ Logo</button>
     <button class="chip-filtro" onclick="mostrarPantallaRosinaImagenes()">🐑 Imágenes de Rosina</button>
     <button class="chip-filtro" onclick="mostrarPantallaTextosWeb()">✏️ Textos de la web</button>
+    <button class="chip-filtro" onclick="mostrarPantallaPaypalConfig()">🌎 PayPal y envío internacional</button>
     <button class="chip-filtro" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
     <button class="chip-filtro" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
     <button class="chip-filtro" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
@@ -3356,6 +3386,7 @@
     <button class="chip-filtro activo" onclick="mostrarPantallaLogoEmpresa()">🖼️ Logo</button>
     <button class="chip-filtro" onclick="mostrarPantallaRosinaImagenes()">🐑 Imágenes de Rosina</button>
     <button class="chip-filtro" onclick="mostrarPantallaTextosWeb()">✏️ Textos de la web</button>
+    <button class="chip-filtro" onclick="mostrarPantallaPaypalConfig()">🌎 PayPal y envío internacional</button>
     <button class="chip-filtro" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
     <button class="chip-filtro" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
     <button class="chip-filtro" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
@@ -3383,6 +3414,7 @@
     <button class="chip-filtro" onclick="mostrarPantallaLogoEmpresa()">🖼️ Logo</button>
     <button class="chip-filtro" onclick="mostrarPantallaRosinaImagenes()">🐑 Imágenes de Rosina</button>
     <button class="chip-filtro" onclick="mostrarPantallaTextosWeb()">✏️ Textos de la web</button>
+    <button class="chip-filtro" onclick="mostrarPantallaPaypalConfig()">🌎 PayPal y envío internacional</button>
     <button class="chip-filtro activo" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
     <button class="chip-filtro" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
     <button class="chip-filtro" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
@@ -4514,6 +4546,7 @@
     <button class="chip-filtro" onclick="mostrarPantallaLogoEmpresa()">🖼️ Logo</button>
     <button class="chip-filtro" onclick="mostrarPantallaRosinaImagenes()">🐑 Imágenes de Rosina</button>
     <button class="chip-filtro" onclick="mostrarPantallaTextosWeb()">✏️ Textos de la web</button>
+    <button class="chip-filtro" onclick="mostrarPantallaPaypalConfig()">🌎 PayPal y envío internacional</button>
     <button class="chip-filtro" onclick="mostrarPantallaDatosEmpresa()">🏢 Datos de la empresa</button>
     <button class="chip-filtro activo" onclick="mostrarPantallaPoliticasLegales()">📋 Políticas legales</button>
     <button class="chip-filtro" onclick="mostrarPantallaDocumentosEmpresa()">📁 Documentos legales</button>
@@ -5298,7 +5331,7 @@
   });
 
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaInventarioGlobal', 'pantallaFacturacionElectronica', 'pantallaServiciosDian', 'pantallaCorreoEmpresa', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb', 'pantallaTextosWeb'];
+    const pantallas = ['pantallaLogin', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaInventarioGlobal', 'pantallaFacturacionElectronica', 'pantallaServiciosDian', 'pantallaCorreoEmpresa', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb', 'pantallaTextosWeb', 'pantallaPaypalConfig'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -5318,6 +5351,7 @@
       pantallaPedidosCanal: 'nav-pedidos-canal',
       pantallaResenasWeb: 'nav-resenas-web',
       pantallaTextosWeb: 'nav-config-empresa',
+      pantallaPaypalConfig: 'nav-config-empresa',
       pantallaAjustestock: 'nav-ajustestock',
       pantallaConsumoTaller: 'nav-consumotaller',
       pantallaPedidosCrm: 'nav-consumotaller',
@@ -11700,6 +11734,72 @@
     btn.disabled = false;
     if (falla) mostrarMensaje('mensajeTextosWeb', 'No se pudo guardar: ' + falla, 'error');
     else mostrarMensaje('mensajeTextosWeb', 'Guardado (' + cambios.length + (cambios.length === 1 ? ' texto' : ' textos') + '). Recarga lanarosacrochet.com para verlo.', 'exito');
+  }
+
+  // ============================================================
+  // PAYPAL Y ENVÍO INTERNACIONAL (administración) — tablas paypal_ajustes, envio_zonas_intl, paises_envio
+  // ============================================================
+  let paypalAjustesCache = null, zonasIntlCache = [];
+  async function mostrarPantallaPaypalConfig() {
+    mostrarPantalla('pantallaPaypalConfig');
+    ocultarMensaje('mensajePaypalConfig');
+    const cont = document.getElementById('contenidoPaypalConfig');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    const [aj, zs, ps] = await Promise.all([
+      supabaseClient.from('paypal_ajustes').select('activo, tasa_usd_cop').eq('id', 1).maybeSingle(),
+      supabaseClient.from('envio_zonas_intl').select('zona, etiqueta, valor_usd, activo, orden').order('orden'),
+      supabaseClient.from('paises_envio').select('pais, zona').order('pais'),
+    ]);
+    if (aj.error || zs.error) { cont.innerHTML = '<div class="cargando">No se pudo cargar: ' + escaparHtml((aj.error || zs.error).message) + '</div>'; return; }
+    paypalAjustesCache = aj.data || { activo: false, tasa_usd_cop: null };
+    zonasIntlCache = zs.data || [];
+    const paisesPorZona = {};
+    (ps.data || []).forEach(p => { (paisesPorZona[p.zona] = paisesPorZona[p.zona] || []).push(p.pais); });
+    const campo = 'padding:9px 12px;border:1.5px solid #ddd;border-radius:10px;font:inherit;';
+    let html = '<div style="background:#fff;border-radius:14px;padding:16px 18px;margin-bottom:16px;box-shadow:var(--sombra);">'
+      + '<label style="display:flex;gap:10px;align-items:center;font-weight:700;margin-bottom:14px;"><input type="checkbox" id="ppActivo" ' + (paypalAjustesCache.activo ? 'checked' : '') + ' style="width:18px;height:18px;"> Activar pagos con PayPal en la web</label>'
+      + '<label style="display:block;font-weight:600;font-size:13px;margin-bottom:4px;">Tasa: ¿cuántos pesos (COP) vale 1 dólar (US$)?</label>'
+      + '<input type="number" id="ppTasa" min="1" step="1" value="' + (paypalAjustesCache.tasa_usd_cop != null ? Number(paypalAjustesCache.tasa_usd_cop) : '') + '" placeholder="Ej: 4000" style="' + campo + 'width:180px;">'
+      + '<div style="font-size:12px;opacity:0.65;margin-top:4px;">La clienta ve el total en pesos y lo que se le cobra en dólares con esta tasa. Cámbiala cuando el dólar cambie mucho.</div></div>';
+    html += '<div style="background:#fff;border-radius:14px;padding:16px 18px;box-shadow:var(--sombra);"><h3 style="margin:0 0 10px;">Envío por zona (en dólares)</h3>'
+      + '<div style="font-size:12px;opacity:0.65;margin-bottom:12px;">Una zona solo se ofrece si está activa y tiene un valor mayor a 0.</div>';
+    zonasIntlCache.forEach(z => {
+      html += '<div style="border-top:1px solid #eee;padding:12px 0;"><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">'
+        + '<strong style="min-width:200px;">' + escaparHtml(z.etiqueta) + '</strong>'
+        + '<span>US$ <input type="number" min="0" step="0.5" data-zona-valor="' + escaparHtml(z.zona) + '" value="' + (z.valor_usd != null ? Number(z.valor_usd) : '') + '" placeholder="0" style="' + campo + 'width:110px;"></span>'
+        + '<label style="display:flex;gap:6px;align-items:center;"><input type="checkbox" data-zona-activa="' + escaparHtml(z.zona) + '" ' + (z.activo ? 'checked' : '') + ' style="width:16px;height:16px;"> Activa</label></div>'
+        + '<div style="font-size:12px;opacity:0.65;margin-top:6px;">Países: ' + escaparHtml((paisesPorZona[z.zona] || []).join(', ')) + '</div></div>';
+    });
+    html += '</div>';
+    cont.innerHTML = html;
+  }
+
+  async function guardarPaypalConfig() {
+    const btn = document.getElementById('btnGuardarPaypalConfig');
+    ocultarMensaje('mensajePaypalConfig');
+    const activo = document.getElementById('ppActivo').checked;
+    const tasaTxt = document.getElementById('ppTasa').value.trim();
+    const tasa = tasaTxt === '' ? null : Number(tasaTxt);
+    if (tasa !== null && (!isFinite(tasa) || tasa <= 0)) { mostrarMensaje('mensajePaypalConfig', 'La tasa debe ser un número mayor a 0.', 'error'); return; }
+    const zonas = zonasIntlCache.map(z => {
+      const v = document.querySelector('[data-zona-valor="' + z.zona + '"]').value.trim();
+      return { zona: z.zona, valor_usd: v === '' ? null : Number(v), activo: document.querySelector('[data-zona-activa="' + z.zona + '"]').checked };
+    });
+    if (zonas.some(z => z.valor_usd !== null && (!isFinite(z.valor_usd) || z.valor_usd < 0))) { mostrarMensaje('mensajePaypalConfig', 'Los valores de envío deben ser números de 0 en adelante.', 'error'); return; }
+    if (activo && !tasa) { mostrarMensaje('mensajePaypalConfig', 'Para activar PayPal primero escribe la tasa.', 'error'); return; }
+    if (activo && !zonas.some(z => z.activo && z.valor_usd > 0)) { mostrarMensaje('mensajePaypalConfig', 'Para activar PayPal deja al menos una zona activa con un valor de envío mayor a 0.', 'error'); return; }
+    btn.disabled = true;
+    let falla = null;
+    const r1 = await supabaseClient.from('paypal_ajustes').update({ activo, tasa_usd_cop: tasa, updated_at: new Date().toISOString() }).eq('id', 1);
+    if (r1.error) falla = r1.error.message;
+    for (const z of zonas) {
+      if (falla) break;
+      const r = await supabaseClient.from('envio_zonas_intl').update({ valor_usd: z.valor_usd, activo: z.activo }).eq('zona', z.zona);
+      if (r.error) falla = r.error.message;
+    }
+    btn.disabled = false;
+    if (falla) mostrarMensaje('mensajePaypalConfig', 'No se pudo guardar: ' + falla, 'error');
+    else mostrarMensaje('mensajePaypalConfig', 'Guardado. ' + (activo ? 'PayPal queda activo en la web solo si también están las llaves en Supabase.' : 'PayPal queda apagado en la web.'), 'exito');
   }
 
   // ============================================================
