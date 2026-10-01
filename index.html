@@ -2003,11 +2003,11 @@
 <div id="pantallaPedidosCanal" class="oculto contenido">
   <div class="page-header">
     <h1>Pedidos Web/Redes — cobros y entrega</h1>
-    <div class="subtitulo">Los pedidos se crean, se siguen y se envían en el CRM. Aquí llegan solos para registrar la plata que entra (anticipo y saldo) y marcarlos como entregados, así quedan en la contabilidad y en Facturación electrónica.</div>
+    <div class="subtitulo">Aquí se registra la plata que entra (anticipo y saldo), la entrega o el envío de cada pedido, y se marcan como entregados, así quedan en la contabilidad y en Facturación electrónica.</div>
   </div>
 
   <div style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;line-height:1.6;">
-    ℹ️ Los pedidos nuevos del CRM se traen solos al abrir esta pantalla (o con el botón 🔄). Los envíos (transportadora y guía) se manejan en el CRM; lo que se le cobra al cliente por el envío va en el valor de envío del pedido y sale en la factura como una línea aparte.
+    ℹ️ Los pedidos nuevos del CRM se traen solos al abrir esta pantalla (o con el botón 🔄). Cuando el pedido está listo, registra aquí la entrega (recoge en tienda, domicilio o transportadora con su guía): la clienta lo ve en su cuenta de la web. Lo que se le cobra al cliente por el envío va en el valor de envío del pedido y sale en la factura como una línea aparte.
   </div>
 
   <div id="subtabCanalActivos" data-subtab-grupo="pedidosCanal">
@@ -15905,6 +15905,12 @@
 
     const { pedidos } = await resp.json();
     pedidosCanalCache = pedidos || [];
+    const idsEnvio = pedidosCanalCache.filter(p => p.estado === 'listo_despacho' || p.estado === 'entregado').map(p => p.id);
+    envioPedidosCache = {};
+    if (idsEnvio.length) {
+      const { data: envios } = await supabaseClient.rpc('fn_pedidos_envio', { p_ids: idsEnvio });
+      envioPedidosCache = envios || {};
+    }
 
     if (!pedidos || pedidos.length === 0) {
       contenedor.innerHTML = '<div class="cargando">No hay pedidos en este filtro.</div>';
@@ -15985,12 +15991,146 @@
               <span style="text-align:right;font-weight:700;">${formatearMoneda(p.total_pedido)}</span>
               <span><span class="badge-estado-pedido" style="background:${colorEstado.bg};color:${colorEstado.color};">${etiquetasEstado[p.estado] || p.estado}</span></span>
             </div>
-            ${(acciones || lineaMedio) ? `<div class="tabla-lista-detalle" style="display:block;">${lineaMedio}${acciones}</div>` : ''}
+            ${(acciones || lineaMedio || envioPedidosCache[p.id]) ? `<div class="tabla-lista-detalle" style="display:block;">${lineaMedio}${acciones}<div data-envio-pedido="${p.id}">${bloqueEnvioPedido(p)}</div></div>` : ''}
           `;
         }).join('')}
       </div>
       <div class="mensaje" id="mensajePedidosCanal"></div>
     `;
+  }
+
+  // ============================================================
+  // ENVÍO / ENTREGA de los pedidos (antes se registraba en el CRM).
+  // Lo que se guarda aquí lo ve la clienta en "Mis pedidos" de la web.
+  // ============================================================
+  let envioPedidosCache = {};   // { pedido_id: datos de fn_pedidos_envio }
+  let envioFormAbierto = null;  // pedido_id con el formulario abierto
+  let envioGuiaArchivo = null;
+  const TRANSPORTADORAS_ENVIO = ['Servientrega', 'Coordinadora', 'Interrapidísimo', 'TCC', 'Deprisa', 'Envía', 'Otra'];
+  const TIPOS_ENTREGA = { recogida: '🏪 Recoge en la tienda', domicilio: '🛵 Domicilio (Manizales / Villamaría)', nacional: '📦 Envío por transportadora' };
+
+  const sinTildes = (t) => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  function tipoEntregaSugerido(e) {
+    if (e.tipo_entrega === 'envio' || e.tipo_entrega === 'nacional') return 'nacional';
+    if (e.tipo_entrega === 'recogida' || e.tipo_entrega === 'domicilio') return e.tipo_entrega;
+    if (e.recoge_web) return 'recogida';
+    const c = sinTildes(e.ciudad);
+    return (c.includes('villamaria') || c.includes('manizales')) ? 'domicilio' : 'nacional';
+  }
+
+  function bloqueEnvioPedido(p) {
+    const e = envioPedidosCache[p.id];
+    if (!e) return '';
+    const tipo = e.tipo_entrega === 'envio' ? 'nacional' : e.tipo_entrega;
+    const registrado = !!(e.fecha_envio || e.numero_guia || (tipo === 'recogida'));
+    const fecha = e.fecha_envio ? new Date(e.fecha_envio).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+    let resumen;
+    if (registrado) {
+      const partes = [TIPOS_ENTREGA[tipo] || escaparHtml(tipo || '')];
+      if (e.transportadora) partes.push(escaparHtml(e.transportadora));
+      if (e.numero_guia) partes.push('Guía ' + escaparHtml(e.numero_guia));
+      if (fecha) partes.push((tipo === 'domicilio' ? 'salió el ' : 'enviado el ') + fecha);
+      resumen = `<div style="font-size:12px;">🚚 <strong>Entrega</strong> — ${partes.join(' · ')}
+        ${e.guia_url ? ` · <a href="${escaparHtml(e.guia_url)}" target="_blank" rel="noopener">📄 Ver guía</a>` : ''}
+        ${e.direccion_envio ? `<br><span style="opacity:.75;">📍 ${escaparHtml(e.direccion_envio)}</span>` : ''}
+        ${e.notas_envio ? `<br><span style="opacity:.75;">📝 ${escaparHtml(e.notas_envio)}</span>` : ''}</div>`;
+    } else {
+      resumen = `<div style="font-size:12px;">🚚 <strong>Entrega</strong> — todavía no se ha registrado${e.direccion_sugerida ? ` · 📍 ${escaparHtml(e.direccion_sugerida)}` : ''}</div>`;
+    }
+    const boton = `<button class="btn-mini ${registrado ? 'editar' : 'guardar'}" style="margin-top:6px;" onclick="alternarFormEnvio('${p.id}')">${registrado ? '✏️ Editar entrega' : '🚚 Registrar envío o entrega'}</button>`;
+    return `<div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--gris-borde);">${resumen}${boton}
+      ${envioFormAbierto === p.id ? formularioEnvioPedido(p, e) : ''}</div>`;
+  }
+
+  function alternarFormEnvio(id) {
+    envioFormAbierto = envioFormAbierto === id ? null : id;
+    envioGuiaArchivo = null;
+    const p = pedidosCanalCache.find(x => x.id === id);
+    // Se vuelve a pintar solo el bloque del pedido para no perder el resto de la lista.
+    const fila = document.querySelector(`[data-envio-pedido="${id}"]`);
+    if (fila && p) fila.innerHTML = bloqueEnvioPedido(p);
+    const cont = document.getElementById('envioPedido-' + id);
+    if (cont) cont.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function formularioEnvioPedido(p, e) {
+    const tipo = tipoEntregaSugerido(e);
+    const transp = e.transportadora || '';
+    const otra = transp && !TRANSPORTADORAS_ENVIO.includes(transp);
+    const radio = (t) => `<label style="display:flex;gap:8px;align-items:center;font-size:13px;padding:8px 10px;border:1.5px solid var(--gris-borde);border-radius:10px;cursor:pointer;background:var(--fondo-panel);">
+        <input type="radio" name="envTipo-${p.id}" value="${t}" ${t === tipo ? 'checked' : ''} onchange="cambiarTipoEnvio('${p.id}')" style="width:auto;margin:0;"> ${TIPOS_ENTREGA[t]}</label>`;
+    return `
+      <div id="envioPedido-${p.id}" style="margin-top:10px;padding:14px;border-radius:var(--radius-md);background:var(--gris-fondo);">
+        <div style="display:grid;gap:6px;">${radio('recogida')}${radio('domicilio')}${radio('nacional')}</div>
+        <div id="envDir-${p.id}" class="${tipo === 'recogida' ? 'oculto' : ''}" style="margin-top:10px;">
+          <label>Dirección de entrega</label>
+          <input type="text" id="envDireccion-${p.id}" value="${escaparHtml(e.direccion_envio || e.direccion_sugerida || '')}" placeholder="Dirección, barrio y ciudad">
+        </div>
+        <div id="envNac-${p.id}" class="${tipo === 'nacional' ? '' : 'oculto'}" style="margin-top:10px;">
+          <div class="grilla-2" style="gap:10px;">
+            <div><label>Transportadora</label>
+              <select id="envTransp-${p.id}" onchange="document.getElementById('envTranspOtra-${p.id}').classList.toggle('oculto', this.value !== 'Otra')">
+                <option value="">— Elige —</option>
+                ${TRANSPORTADORAS_ENVIO.map(t => `<option ${(otra ? t === 'Otra' : t === transp) ? 'selected' : ''}>${t}</option>`).join('')}
+              </select>
+              <input type="text" id="envTranspOtra-${p.id}" class="${otra ? '' : 'oculto'}" value="${otra ? escaparHtml(transp) : ''}" placeholder="¿Cuál?" style="margin-top:6px;">
+            </div>
+            <div><label>Número de guía</label><input type="text" id="envGuia-${p.id}" value="${escaparHtml(e.numero_guia || '')}" placeholder="Ej: 9050012345678"></div>
+          </div>
+          <label style="margin-top:8px;">Foto o PDF de la guía <span style="font-size:10px;opacity:0.6;">(opcional; la clienta la ve en "Rastrear pedido")</span></label>
+          ${e.guia_url ? `<div style="font-size:12px;margin-bottom:4px;"><a href="${escaparHtml(e.guia_url)}" target="_blank" rel="noopener">📄 Ver guía actual</a></div>` : ''}
+          <input type="file" accept="image/*,application/pdf" onchange="envioGuiaArchivo = this.files[0] || null">
+        </div>
+        <div style="margin-top:10px;"><label>Notas <span style="font-size:10px;opacity:0.6;">(opcional: indicaciones, quién recibe...)</span></label>
+          <input type="text" id="envNotas-${p.id}" value="${escaparHtml(e.notas_envio || '')}"></div>
+        <button class="btn-principal" style="width:auto;margin-top:12px;" onclick="guardarEnvioPedido('${p.id}', this)">💾 Guardar entrega</button>
+        <div style="font-size:11.5px;opacity:.7;margin-top:6px;">La clienta lo ve en su cuenta de la web: "Listo para recoger", "En camino" o "Enviado" con la guía.</div>
+        <div class="mensaje" id="mensajeEnvio-${p.id}"></div>
+      </div>`;
+  }
+
+  function cambiarTipoEnvio(id) {
+    const t = (document.querySelector(`input[name="envTipo-${id}"]:checked`) || {}).value;
+    document.getElementById('envDir-' + id).classList.toggle('oculto', t === 'recogida');
+    document.getElementById('envNac-' + id).classList.toggle('oculto', t !== 'nacional');
+  }
+
+  async function guardarEnvioPedido(id, boton) {
+    ocultarMensaje('mensajeEnvio-' + id);
+    const tipo = (document.querySelector(`input[name="envTipo-${id}"]:checked`) || {}).value;
+    let transp = document.getElementById('envTransp-' + id).value;
+    if (transp === 'Otra') transp = document.getElementById('envTranspOtra-' + id).value.trim();
+    if (tipo === 'nacional' && !transp) { mostrarMensaje('mensajeEnvio-' + id, 'Elige la transportadora.', 'error'); return; }
+    const direccion = document.getElementById('envDireccion-' + id).value.trim();
+    if (tipo !== 'recogida' && !direccion) { mostrarMensaje('mensajeEnvio-' + id, 'Escribe la dirección de entrega.', 'error'); return; }
+    boton.disabled = true; boton.textContent = 'Guardando...';
+    let guiaUrl = null;
+    if (tipo === 'nacional' && envioGuiaArchivo) {
+      let archivo = envioGuiaArchivo;
+      if (archivo.type.startsWith('image/') && typeof comprimirFotoFicha === 'function') archivo = await comprimirFotoFicha(archivo);
+      const ext = archivo.type === 'application/pdf' ? 'pdf' : archivo.type === 'image/webp' ? 'webp' : 'jpg';
+      const ruta = `${id}_${Date.now()}.${ext}`;
+      const { error: errSubir } = await supabaseClient.storage.from('guias-envio').upload(ruta, archivo, { contentType: archivo.type || 'application/octet-stream' });
+      if (errSubir) {
+        boton.disabled = false; boton.textContent = '💾 Guardar entrega';
+        mostrarMensaje('mensajeEnvio-' + id, 'No se pudo subir la guía: ' + errSubir.message, 'error'); return;
+      }
+      guiaUrl = supabaseClient.storage.from('guias-envio').getPublicUrl(ruta).data.publicUrl;
+    }
+    const { error } = await supabaseClient.rpc('fn_pedido_guardar_envio', {
+      p_pedido_id: id, p_tipo: tipo, p_direccion: direccion, p_notas: document.getElementById('envNotas-' + id).value.trim(),
+      p_transportadora: transp, p_numero_guia: document.getElementById('envGuia-' + id).value.trim(), p_guia_url: guiaUrl,
+    });
+    if (error) {
+      boton.disabled = false; boton.textContent = '💾 Guardar entrega';
+      mostrarMensaje('mensajeEnvio-' + id, 'No se pudo guardar: ' + error.message, 'error'); return;
+    }
+    envioFormAbierto = null; envioGuiaArchivo = null;
+    const { data } = await supabaseClient.rpc('fn_pedidos_envio', { p_ids: [id] });
+    if (data && data[id]) envioPedidosCache[id] = data[id];
+    const p = pedidosCanalCache.find(x => x.id === id);
+    const fila = document.querySelector(`[data-envio-pedido="${id}"]`);
+    if (fila && p) fila.innerHTML = bloqueEnvioPedido(p);
   }
 
   // ============================================================
