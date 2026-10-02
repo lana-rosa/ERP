@@ -1629,6 +1629,8 @@
             <div class="campo-mini"><label>Marca <span style="font-size:10px;opacity:0.6;">(opcional)</span></label><input type="text" id="invMarca" placeholder="Ej: Anchor"></div>
             <div class="campo-mini"><label>Color <span style="font-size:10px;opacity:0.6;">(opcional)</span></label><input type="text" id="invColor" placeholder="Ej: Rosa fuerte"></div>
             <div class="campo-mini"><label>Peso (gramos) <span style="font-size:10px;opacity:0.6;">(opcional)</span></label><input type="number" id="invPeso" min="0" step="1" placeholder="Ej: 120"></div>
+            <div class="campo-mini"><label>Alto (cm) <span style="font-size:10px;opacity:0.6;">(opcional)</span></label><input type="number" id="invAlto" min="0" step="0.5" placeholder="Ej: 20"></div>
+            <div class="campo-mini"><label>Ancho (cm) <span style="font-size:10px;opacity:0.6;">(opcional)</span></label><input type="number" id="invAncho" min="0" step="0.5" placeholder="Ej: 12"></div>
             <div class="campo-mini"><label>Material <span style="font-size:10px;opacity:0.6;">(opcional)</span></label><input type="text" id="invMaterial" placeholder="Ej: Estambre acrílico"></div>
           </div>
           <label for="invFoto" style="margin-top:14px;">Foto de referencia <span style="font-size:10px;opacity:0.6;">(opcional, se sube al guardar)</span></label>
@@ -8201,6 +8203,8 @@
     document.getElementById('invMarca').value = '';
     document.getElementById('invColor').value = '';
     document.getElementById('invPeso').value = '';
+    document.getElementById('invAlto').value = '';
+    document.getElementById('invAncho').value = '';
     document.getElementById('invMaterial').value = '';
     document.getElementById('invFoto').value = '';
     document.getElementById('previsualizacionFotoProducto').classList.add('oculto');
@@ -8234,6 +8238,8 @@
     const marca = document.getElementById('invMarca').value.trim() || null;
     const color = document.getElementById('invColor').value.trim() || null;
     const peso = document.getElementById('invPeso').value ? Number(document.getElementById('invPeso').value) : null;
+    const alto = document.getElementById('invAlto').value ? Number(document.getElementById('invAlto').value) : null;
+    const ancho = document.getElementById('invAncho').value ? Number(document.getElementById('invAncho').value) : null;
     const material = document.getElementById('invMaterial').value.trim() || null;
     const archivoFoto = document.getElementById('invFoto').files[0] || null;
 
@@ -8271,6 +8277,8 @@
       marca,
       color,
       peso_gramos: peso,
+      alto_cm: alto,
+      ancho_cm: ancho,
       material,
       activo: true
     }).select('id').single();
@@ -8316,7 +8324,7 @@
 
     const { data, error } = await supabaseClient
       .from('inventario_items')
-      .select('id, tipo, nombre, sku, stock_actual, stock_minimo, precio_venta, costo_promedio_ponderado, unidad_medida, activo, centro_costo_id, categoria_id, proveedor_tercero_id, peso_gramos, costo_ojos, costo_empaque, costo_otros_accesorios, marca, color, material, foto_url, proveedor:proveedor_tercero_id(nombre_completo)')
+      .select('id, tipo, nombre, sku, stock_actual, stock_minimo, precio_venta, costo_promedio_ponderado, unidad_medida, activo, centro_costo_id, categoria_id, proveedor_tercero_id, peso_gramos, alto_cm, ancho_cm, costo_ojos, costo_empaque, costo_otros_accesorios, marca, color, material, foto_url, proveedor:proveedor_tercero_id(nombre_completo)')
       .order('nombre', { ascending: true });
 
     if (error) {
@@ -8442,6 +8450,8 @@
               <div style="font-size:11.5px;font-weight:700;opacity:0.7;margin-bottom:6px;">🧶 Costeo por peso (opcional — se usa como respaldo cuando el Taller no registró el consumo real de un pedido)</div>
               <div class="grid-campos-inventario">
                 <div class="campo-mini"><label>Peso (gramos)</label><input type="number" min="0" step="1" value="${item.peso_gramos || ''}" id="edit-peso-${item.id}" oninput="actualizarCostoEstimadoPeso('${item.id}')" placeholder="Ej: 120"></div>
+                <div class="campo-mini"><label>Alto (cm)</label><input type="number" min="0" step="0.5" value="${item.alto_cm || ''}" id="edit-alto-${item.id}" placeholder="Ej: 20"></div>
+                <div class="campo-mini"><label>Ancho (cm)</label><input type="number" min="0" step="0.5" value="${item.ancho_cm || ''}" id="edit-ancho-${item.id}" placeholder="Ej: 12"></div>
                 <div class="campo-mini"><label>Costo ojos</label><input type="number" min="0" step="1" value="${item.costo_ojos || ''}" id="edit-ojos-${item.id}" oninput="actualizarCostoEstimadoPeso('${item.id}')" placeholder="Ej: 1500"></div>
                 <div class="campo-mini"><label>Costo empaque</label><input type="number" min="0" step="1" value="${item.costo_empaque || ''}" id="edit-empaque-${item.id}" oninput="actualizarCostoEstimadoPeso('${item.id}')" placeholder="Ej: 2000"></div>
                 <div class="campo-mini"><label>Otros accesorios <span style="font-size:9.5px;opacity:0.6;">(llavero, gafas, etc.)</span></label><input type="number" min="0" step="1" value="${item.costo_otros_accesorios || ''}" id="edit-otros-${item.id}" oninput="actualizarCostoEstimadoPeso('${item.id}')" placeholder="Ej: 800"></div>
@@ -8690,6 +8700,9 @@
       const empaqueEl = document.getElementById(`edit-empaque-${itemId}`);
       const otrosEl = document.getElementById(`edit-otros-${itemId}`);
       if (pesoEl) cambios.peso_gramos = pesoEl.value ? Number(pesoEl.value) : null;
+      const altoEl = document.getElementById(`edit-alto-${itemId}`), anchoEl = document.getElementById(`edit-ancho-${itemId}`);
+      if (altoEl) cambios.alto_cm = altoEl.value ? Number(altoEl.value) : null;
+      if (anchoEl) cambios.ancho_cm = anchoEl.value ? Number(anchoEl.value) : null;
       if (ojosEl) cambios.costo_ojos = ojosEl.value ? Number(ojosEl.value) : null;
       if (empaqueEl) cambios.costo_empaque = empaqueEl.value ? Number(empaqueEl.value) : null;
       if (otrosEl) cambios.costo_otros_accesorios = otrosEl.value ? Number(otrosEl.value) : null;
@@ -9969,6 +9982,7 @@
       soloLectura: o.estado !== 'en_proceso' || !(rolActual === 'administrador' || rolActual === 'taller' || miTejedora.vinculada),
       peso_gramos: f.peso_gramos || null,
       tamano_cm: f.tamano_cm || null,
+      ancho_cm: f.ancho_cm || null,
     };
     // Una tejedora que abre una pieza sin tejedora queda asignada a ella.
     if (miTejedora.vinculada && rolActual !== 'administrador' && !fichaActiva.soloLectura && !fichaActiva.tejedora_id && !fichaActiva.tejedora_tercero_id) {
@@ -10115,8 +10129,10 @@
             <input type="number" id="fpPeso" min="1" step="0.5" inputmode="decimal" value="${fichaActiva.peso_gramos || ''}" placeholder="Ej: 120" oninput="fichaActiva.peso_gramos = Number(this.value) || null; actualizarBotonFoto()" style="margin-top:4px;max-width:170px;"></div>
           <div><label for="fpTamano" style="font-weight:600;">📏 Alto (cm)</label>
             <input type="number" id="fpTamano" min="1" step="0.5" inputmode="decimal" value="${fichaActiva.tamano_cm || ''}" placeholder="Ej: 20" oninput="fichaActiva.tamano_cm = Number(this.value) || null; actualizarBotonFoto()" style="margin-top:4px;max-width:170px;"></div>
+          <div><label for="fpAncho" style="font-weight:600;">↔️ Ancho (cm)</label>
+            <input type="number" id="fpAncho" min="1" step="0.5" inputmode="decimal" value="${fichaActiva.ancho_cm || ''}" placeholder="Ej: 12" oninput="fichaActiva.ancho_cm = Number(this.value) || null; actualizarBotonFoto()" style="margin-top:4px;max-width:170px;"></div>
         </div>
-        <button class="fp-completar" id="fpBtnFoto" onclick="completarFotoFicha()" ${hay && fichaActiva.peso_gramos && fichaActiva.tamano_cm ? '' : 'disabled'}>${hay ? (fichaActiva.peso_gramos && fichaActiva.tamano_cm ? '✓ Foto, peso y tamaño listos — continuar' : '⚖️ Escribe el peso y el alto para continuar') : '📷 Sube una foto para continuar'}</button>`;
+        <button class="fp-completar" id="fpBtnFoto" onclick="completarFotoFicha()" ${hay && fichaActiva.peso_gramos && fichaActiva.tamano_cm && fichaActiva.ancho_cm ? '' : 'disabled'}>${hay ? (fichaActiva.peso_gramos && fichaActiva.tamano_cm && fichaActiva.ancho_cm ? '✓ Foto, peso y tamaño listos — continuar' : '⚖️ Escribe el peso, el alto y el ancho para continuar') : '📷 Sube una foto para continuar'}</button>`;
     }
     return `<button class="fp-completar" onclick="completarPasoFicha('${id}')">✓ Paso completado — continuar</button>`;
   }
@@ -10316,13 +10332,13 @@
     const btn = document.getElementById('fpBtnFoto');
     if (!btn) return;
     const hay = fichaActiva.foto_url || fichaFotoArchivo;
-    const medidas = fichaActiva.peso_gramos && fichaActiva.tamano_cm;
+    const medidas = fichaActiva.peso_gramos && fichaActiva.tamano_cm && fichaActiva.ancho_cm;
     btn.disabled = !(hay && medidas);
-    btn.textContent = hay ? (medidas ? '✓ Foto, peso y tamaño listos — continuar' : '⚖️ Escribe el peso y el alto para continuar') : '📷 Sube una foto para continuar';
+    btn.textContent = hay ? (medidas ? '✓ Foto, peso y tamaño listos — continuar' : '⚖️ Escribe el peso, el alto y el ancho para continuar') : '📷 Sube una foto para continuar';
   }
 
   async function completarFotoFicha() {
-    if (!fichaActiva.peso_gramos || fichaActiva.peso_gramos <= 0 || !fichaActiva.tamano_cm) { alert('Escribe el peso (gramos) y el alto (cm) de la pieza.'); return; }
+    if (!fichaActiva.peso_gramos || fichaActiva.peso_gramos <= 0 || !fichaActiva.tamano_cm || !fichaActiva.ancho_cm) { alert('Escribe el peso (gramos), el alto (cm) y el ancho (cm) de la pieza.'); return; }
     const btn = document.getElementById('fpBtnFoto');
     if (fichaFotoArchivo) {
       if (btn) { btn.disabled = true; btn.textContent = '⏳ Subiendo foto...'; }
@@ -10354,6 +10370,7 @@
       foto_url: fa.foto_url,
       peso_gramos: fa.peso_gramos || null,
       tamano_cm: fa.tamano_cm || null,
+      ancho_cm: fa.ancho_cm || null,
       terminada_at: fa.terminada_at,
       updated_at: new Date().toISOString(),
     };
