@@ -10294,14 +10294,14 @@
   }
 
   // Costo de producción (directo): mano de obra + materia prima registrada + etiqueta (va cosida en la pieza).
-  // El empaque NO es costo de producción: es gasto de venta (se usa al vender o despachar).
+  // El empaque o bolsa no es costo: se le cobra al cliente si lo quiere. Los gastos variables de venta
+  // (comisión de Wompi/PayPal, envío asumido...) van en la ficha de costos y precios, no aquí.
   function textoCostoOrden(o, f, manoObra) {
-    const p = parametrosCosteo || { costo_etiqueta: 1000, costo_empaque: 2000 };
+    const p = parametrosCosteo || {};
     const material = Number(o.costo_material || o.valor_en_proceso || 0);
-    const etiqueta = Number(p.costo_etiqueta ?? 1000), empaque = Number(p.costo_empaque ?? 2000);
+    const etiqueta = Number(p.costo_etiqueta ?? 1000);
     const produccion = manoObra + material + etiqueta;
     return `Costo de producción: mano de obra <strong>${formatearMoneda(manoObra)}</strong> + materia prima <strong>${formatearMoneda(material)}</strong> + etiqueta ${formatearMoneda(etiqueta)} = <strong>${formatearMoneda(produccion)}</strong>`
-      + `<br><span style="opacity:.8;">Gasto de venta: empaque ${formatearMoneda(empaque)} · Costo total al vender: <strong>${formatearMoneda(produccion + empaque)}</strong></span>`
       + (f && f.peso_gramos ? ` · ⚖️ ${formatearCantidad(f.peso_gramos)} g` : '');
   }
 
