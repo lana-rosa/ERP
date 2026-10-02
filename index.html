@@ -135,6 +135,10 @@
   }
   .kpi-pill.sube { background: var(--tinte-verde); color: var(--verde-exito); }
   .kpi-pill.baja { background: var(--tinte-rojo); color: var(--rojo-error); }
+  /* Reglas de precios */
+  #pantallaReglasPrecios table { width: 100%; border-collapse: collapse; }
+  #pantallaReglasPrecios th { font-size: 10.5px; text-transform: uppercase; padding: 7px 8px; background: #fdf0f7; color: #b8006a; border-bottom: 1px solid #f1e2ec; }
+  #pantallaReglasPrecios td { padding: 7px 8px; border-bottom: 1px solid #f7eff5; vertical-align: top; }
   /* Chat de Rosina en pantalla completa */
   #panelChatAsistenteIA > div:first-child > strong { margin-right: auto; }
   #panelChatAsistenteIA.chat-ia-completo { top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; max-width: none !important; height: 100vh !important; height: 100dvh !important; max-height: none !important; border-radius: 0 !important; z-index: 2000 !important; }
@@ -1076,6 +1080,7 @@
         <button class="nav-btn" id="nav-reportes-financieros" onclick="mostrarPantallaReportesFinancieros()"><span class="nav-icon">📊</span> Informes de Ventas</button>
         <button class="nav-btn" id="nav-costeo-real" onclick="mostrarPantallaCosteoReal()"><span class="nav-icon">🧮</span> Costeo Real</button>
         <button class="nav-btn" id="nav-informe-costos" onclick="mostrarPantallaInformeCostos()"><span class="nav-icon">🏷️</span> Informe de costos por área</button>
+        <button class="nav-btn" id="nav-reglas-precios" onclick="mostrarPantallaReglasPrecios()"><span class="nav-icon">💲</span> Reglas de precios</button>
         <button class="nav-btn" id="nav-presupuesto-empresa" onclick="mostrarPantallaPresupuestoEmpresa()"><span class="nav-icon">💰</span> Presupuesto</button>
         <div class="sidebar-seccion">Bancos y tesorería</div>
         <button class="nav-btn" id="nav-reportes" onclick="mostrarPantallaReportes()"><span class="nav-icon">📈</span> Reportes de turno</button>
@@ -1851,6 +1856,20 @@
 <div id="fichaPausa" class="fp-pausa oculto" role="alertdialog" aria-labelledby="fpPausaTit"></div>
 
 <!-- ===== PANTALLA: INFORME DE COSTOS POR ÁREA ===== -->
+<div id="pantallaReglasPrecios" class="oculto contenido">
+  <div class="page-header">
+    <h1>💲 Reglas de precios</h1>
+    <div class="subtitulo">Cómo se fija el precio en cada línea a partir de los costos reales del ERP. Amigurumis y productos del Taller: se costean en el Taller con el cotizador (Cotizaciones → 🧮) y en la Mercería no se les suma nada más.</div>
+  </div>
+  <div class="mensaje" id="mensajeReglasPrecios"></div>
+  <div class="filtro-tipo" style="margin-bottom:14px;">
+    <button class="chip-filtro activo" data-subtab-btn="reglasPrecios" onclick="mostrarSubTabGrupo('reglasPrecios', 'subtabReglaMerceria', this)">🧶 Mercería (mercancía comprada)</button>
+    <button class="chip-filtro" data-subtab-btn="reglasPrecios" onclick="mostrarSubTabGrupo('reglasPrecios', 'subtabReglaAcademia', this)">🎓 Academia (cursos y clases)</button>
+  </div>
+  <div id="subtabReglaMerceria" data-subtab-grupo="reglasPrecios"><div class="cargando">Cargando...</div></div>
+  <div id="subtabReglaAcademia" data-subtab-grupo="reglasPrecios" class="oculto"><div class="cargando">Cargando...</div></div>
+</div>
+
 <div id="pantallaInformeCostos" class="oculto contenido">
   <div class="page-header">
     <h1>🏷️ Informe de costos por área</h1>
@@ -5535,7 +5554,7 @@
   });
 
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaInventarioGlobal', 'pantallaFacturacionElectronica', 'pantallaServiciosDian', 'pantallaCorreoEmpresa', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb', 'pantallaTextosWeb', 'pantallaPaypalConfig', 'pantallaMiProduccion', 'pantallaInformeCostos'];
+    const pantallas = ['pantallaLogin', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaInventarioGlobal', 'pantallaFacturacionElectronica', 'pantallaServiciosDian', 'pantallaCorreoEmpresa', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb', 'pantallaTextosWeb', 'pantallaPaypalConfig', 'pantallaMiProduccion', 'pantallaInformeCostos', 'pantallaReglasPrecios'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -5562,6 +5581,7 @@
       pantallaOrdenesProduccion: 'nav-ordenes-produccion',
       pantallaMiProduccion: 'nav-mi-produccion',
       pantallaInformeCostos: 'nav-informe-costos',
+      pantallaReglasPrecios: 'nav-reglas-precios',
       pantallaKardexEtapas: 'nav-kardex-etapas',
       pantallaInventarioGlobal: 'nav-inventario-global',
       pantallaFacturacionElectronica: 'nav-facturacion-electronica',
@@ -5965,6 +5985,7 @@
     mostrar('nav-reportes-financieros', esAdmin || esContador);
     mostrar('nav-costeo-real', esAdmin || esContador);
     mostrar('nav-informe-costos', esAdmin || esContador);
+    mostrar('nav-reglas-precios', esAdmin || esContador);
     mostrar('nav-presupuesto-empresa', esAdmin || esContador);
     mostrar('nav-dashboard-contable', esAdmin || esContador);
     mostrar('nav-honorarios-tejedoras', esAdmin || esContador);
@@ -10399,6 +10420,193 @@
   // ============================================================================
   // INFORME DE COSTOS: global y por área (Mercería, Taller, Academia)
   // ============================================================================
+  // ============================================================================
+  // REGLAS DE PRECIOS — Mercería (mercancía comprada, utilidad 40 %) y Academia (clases, utilidad mínima 50 %)
+  // ============================================================================
+  let rpParams = null;
+  const rpDinero = (v) => (v < 0 ? '−' : '') + formatearMoneda(Math.abs(Math.round(v || 0)));
+  const rpFila = (t, v, fuerte, nota) => `<div class="resumen-fila${fuerte ? ' total' : ''}"><span>${t}${nota ? `<br><span style="font-size:10.5px;opacity:.65;font-weight:400;">${nota}</span>` : ''}</span><strong>${typeof v === 'string' ? v : rpDinero(v)}</strong></div>`;
+
+  async function mostrarPantallaReglasPrecios() {
+    mostrarPantalla('pantallaReglasPrecios');
+    ocultarMensaje('mensajeReglasPrecios');
+    const { data, error } = await supabaseClient.rpc('fn_reglas_precios_parametros');
+    if (error) { mostrarMensaje('mensajeReglasPrecios', 'No se pudieron cargar los costos: ' + error.message, 'error'); return; }
+    rpParams = data;
+    renderizarReglaMerceria();
+    renderizarReglaAcademia();
+  }
+
+  function rpFijosMerceria() {
+    const p = rpParams;
+    const empleada = Number(p.costo_empleado_mes) * Number(p.merceria_empleado_pct || 0) / 100;
+    const otros = (p.fijos_merceria || []).reduce((t, f) => t + Number(f.valor_mes || 0), 0);
+    const base = Number(p.merceria_costo_ventas_mes || 0);
+    const carga = base > 0 ? (empleada + otros) / base : 0;
+    return { empleada, otros, total: empleada + otros, base, carga, margen: Number(p.margen_merceria_pct || 40) / 100 };
+  }
+
+  function rpPrecioMerceria(costo, k) {
+    if (!(costo > 0)) return 0;
+    return Math.ceil(costo * (1 + k.carga) / (1 - k.margen) / 100) * 100; // redondeado a los $100 de arriba
+  }
+
+  function renderizarReglaMerceria() {
+    const p = rpParams, k = rpFijosMerceria(), esAdmin = rolActual === 'administrador';
+    const fijos = (p.fijos_merceria || []).map(f => rpFila(escaparHtml(f.concepto), Number(f.valor_mes), false, escaparHtml(f.fuente))).join('');
+    const productos = p.productos_merceria || [];
+    const filas = productos.map(it => {
+      const costo = Number(it.costo || 0), actual = Number(it.precio || 0), sug = rpPrecioMerceria(costo, k);
+      const costoTotal = costo * (1 + k.carga);
+      const utilActual = actual > 0 && costo > 0 ? Math.round((actual - costoTotal) / actual * 100) : null;
+      const color = utilActual === null ? '' : (utilActual < k.margen * 100 - 0.5 ? 'color:#c0392b;' : 'color:#1e8449;');
+      return `<tr data-rp-nombre="${escaparHtml((it.nombre + ' ' + (it.categoria || '')).toLowerCase())}">
+        <td>${escaparHtml(it.nombre)}<br><span style="font-size:10.5px;opacity:.6;">${escaparHtml(it.categoria || '')} · stock ${formatearCantidad(it.stock)}</span></td>
+        <td style="text-align:right;">${costo > 0 ? formatearMoneda(costo) : '<span style="opacity:.6;font-size:11px;">Sin costo: registra la compra</span>'}</td>
+        <td style="text-align:right;">${formatearMoneda(actual)}${utilActual !== null ? `<br><span style="font-size:10.5px;${color}">utilidad ${utilActual} %</span>` : ''}</td>
+        <td style="text-align:right;font-weight:700;">${sug ? formatearMoneda(sug) : '—'}</td>
+        <td>${esAdmin && sug && sug !== actual ? `<button class="btn-mini guardar" onclick="aplicarPrecioMerceria('${it.id}', ${sug}, this)">Aplicar</button>` : ''}</td></tr>`;
+    }).join('');
+    const avisoBase = k.base > 0 ? '' : `<div class="rosina-bubble" style="margin:10px 0;"><span class="icon">⚠️</span><p>Falta <strong>cuánta mercancía (a precio de costo) se espera vender al mes</strong>. Sin ese dato no se pueden repartir los costos fijos y el precio sugerido solo lleva la utilidad.${p.merceria_costo_ventas_real ? ` Referencia: en los últimos 3 meses se vendió en promedio ${formatearMoneda(p.merceria_costo_ventas_real)} al mes (a costo).` : ''}</p></div>`;
+    document.getElementById('subtabReglaMerceria').innerHTML = `
+      <div class="grilla-2" style="gap:16px;">
+        <div class="panel" style="max-width:none;max-height:none;">
+          <h2>La regla</h2>
+          <div style="font-size:13px;line-height:1.6;">
+            <strong>Precio = costo de la mercancía × (1 + carga de costos fijos) ÷ (1 − ${Math.round(k.margen * 100)} %)</strong>, redondeado a los $100 de arriba.<br>
+            · <strong>Costo de la mercancía</strong>: costo promedio ponderado del Kardex (se actualiza con cada compra según la factura).<br>
+            · <strong>Carga de costos fijos</strong>: lo que cuesta la Mercería al mes (persona que atiende, arriendo, servicios, contador, software, publicidad, administración) ÷ la mercancía que se vende al mes, a costo.<br>
+            · <strong>Utilidad</strong>: ${Math.round(k.margen * 100)} % del precio, antes de la comisión de pago y del impuesto.<br>
+            · No aplica a los productos del Taller (amigurumis): esos ya traen su precio del Taller. Las bolsas (papel $1.000, tela $2.000) se cobran en la venta como un producto más.
+          </div>
+          ${avisoBase}
+        </div>
+        <div class="panel" style="max-width:none;max-height:none;">
+          <h2>Costos fijos de la Mercería al mes</h2>
+          ${rpFila('Persona que atiende la Mercería', k.empleada, false, `Costo de una empleada con salario mínimo (${formatearMoneda(p.costo_empleado_mes)}) × ${formatearCantidad(p.merceria_empleado_pct)} % de su tiempo`)}
+          ${fijos}
+          ${rpFila('Total al mes', k.total, true)}
+          ${rpFila('Mercancía vendida al mes (a costo)', k.base > 0 ? formatearMoneda(k.base) : 'Falta el dato', false, 'Lo define la administradora (abajo)')}
+          ${rpFila('Carga de costos fijos', k.base > 0 ? Math.round(k.carga * 100) + ' %' : '—', true, k.base > 0 ? `Por cada $1.000 de mercancía, ${formatearMoneda(Math.round(k.carga * 1000))} de costos fijos` : '')}
+        </div>
+      </div>
+      ${esAdmin ? `<details class="panel" style="max-width:none;max-height:none;margin-top:14px;"><summary style="cursor:pointer;font-weight:700;">⚙️ Valores de la regla (solo administradora)</summary>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;">
+          <div><label for="rpMargenMer">Utilidad (% del precio)</label><input type="number" id="rpMargenMer" min="1" max="89" step="1" value="${p.margen_merceria_pct}" style="max-width:140px;"></div>
+          <div><label for="rpEmpleadoPct">% del tiempo de la empleada en la Mercería</label><input type="number" id="rpEmpleadoPct" min="0" max="100" step="5" value="${p.merceria_empleado_pct}" style="max-width:140px;"></div>
+          <div><label for="rpCostoVentas">Mercancía vendida al mes, a costo ($)</label><input type="number" id="rpCostoVentas" min="0" step="10000" value="${p.merceria_costo_ventas_mes || ''}" placeholder="${p.merceria_costo_ventas_real ? 'Real: ' + Math.round(p.merceria_costo_ventas_real) : 'Ej: 3000000'}" style="max-width:200px;"></div>
+        </div>
+        <button class="btn-mini guardar" style="margin-top:10px;" onclick="guardarReglasPrecios(this)">Guardar valores</button></details>` : ''}
+      <div class="panel" style="max-width:none;max-height:none;margin-top:14px;">
+        <h2>Precios de la mercancía</h2>
+        <input type="search" placeholder="🔍 Buscar producto o categoría" oninput="filtrarTablaReglaMerceria(this.value)" style="margin-bottom:10px;">
+        ${productos.length ? `<div style="overflow-x:auto;"><table class="tk" style="width:100%;font-size:12.5px;"><thead><tr><th style="text-align:left;">Producto</th><th style="text-align:right;">Costo (Kardex)</th><th style="text-align:right;">Precio actual</th><th style="text-align:right;">Precio sugerido</th><th></th></tr></thead><tbody id="tablaReglaMerceria">${filas}</tbody></table></div>` : '<div style="opacity:.7;">No hay mercancía de Mercería en el inventario de la Tienda.</div>'}
+        <div style="font-size:11.5px;opacity:.7;margin-top:8px;">"Utilidad" bajo el precio actual = lo que queda después del costo y la carga de costos fijos. En rojo si está por debajo de la regla.</div>
+      </div>`;
+  }
+
+  function filtrarTablaReglaMerceria(texto) {
+    const t = (texto || '').trim().toLowerCase();
+    document.querySelectorAll('#tablaReglaMerceria tr').forEach(tr => { tr.style.display = !t || tr.dataset.rpNombre.includes(t) ? '' : 'none'; });
+  }
+
+  async function aplicarPrecioMerceria(id, precio, boton) {
+    boton.disabled = true; boton.textContent = '...';
+    const { error } = await supabaseClient.from('inventario_items').update({ precio_venta: precio }).eq('id', id);
+    if (error) { boton.disabled = false; boton.textContent = 'Aplicar'; mostrarMensaje('mensajeReglasPrecios', 'No se pudo cambiar el precio: ' + error.message, 'error'); return; }
+    const it = (rpParams.productos_merceria || []).find(x => x.id === id);
+    if (it) it.precio = precio;
+    renderizarReglaMerceria();
+    mostrarMensaje('mensajeReglasPrecios', 'Precio actualizado.', 'exito');
+  }
+
+  async function guardarReglasPrecios(boton) {
+    const num = (id, def) => { const el = document.getElementById(id); return el ? (el.value === '' ? null : Number(el.value)) : def; };
+    const p = rpParams;
+    boton.disabled = true;
+    const { error } = await supabaseClient.rpc('fn_reglas_precios_guardar', {
+      p_margen_merceria: num('rpMargenMer', Number(p.margen_merceria_pct)), p_empleado_pct: num('rpEmpleadoPct', Number(p.merceria_empleado_pct)),
+      p_costo_ventas_mes: num('rpCostoVentas', p.merceria_costo_ventas_mes), p_margen_academia: num('rpMargenAca', Number(p.margen_academia_pct)),
+      p_horas_academia: num('rpHorasAca', p.academia_horas_mes)
+    });
+    boton.disabled = false;
+    if (error) { mostrarMensaje('mensajeReglasPrecios', 'No se pudo guardar: ' + error.message, 'error'); return; }
+    await mostrarPantallaReglasPrecios();
+    mostrarMensaje('mensajeReglasPrecios', 'Valores guardados.', 'exito');
+  }
+
+  function renderizarReglaAcademia() {
+    const p = rpParams, esAdmin = rolActual === 'administrador';
+    const fijosMes = (p.fijos_academia || []).reduce((t, f) => t + Number(f.valor_mes || 0), 0);
+    const horasMes = Number(p.academia_horas_mes || 0);
+    const fijos = (p.fijos_academia || []).map(f => rpFila(escaparHtml(f.concepto), Number(f.valor_mes), false, escaparHtml(f.fuente))).join('');
+    document.getElementById('subtabReglaAcademia').innerHTML = `
+      <div class="grilla-2" style="gap:16px;">
+        <div class="panel" style="max-width:none;max-height:none;">
+          <h2>🧮 Calcular el precio de un curso o clase</h2>
+          <label for="rpaNombre">Curso o clase</label><input type="text" id="rpaNombre" placeholder="Ej: Taller de amigurumi básico">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:120px;"><label for="rpaHoras">Horas de clase</label><input type="number" id="rpaHoras" min="0" step="0.5" oninput="calcularPrecioCurso()"></div>
+            <div style="flex:1;min-width:120px;"><label for="rpaPrep">Horas de preparación <span style="font-size:10px;opacity:.6;">(opcional)</span></label><input type="number" id="rpaPrep" min="0" step="0.5" value="0" oninput="calcularPrecioCurso()"></div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:120px;"><label for="rpaAlumnas">Número de alumnas</label><input type="number" id="rpaAlumnas" min="1" step="1" value="1" oninput="calcularPrecioCurso()"></div>
+            <div style="flex:1;min-width:120px;"><label for="rpaMateriales">Materiales por alumna ($)</label><input type="number" id="rpaMateriales" min="0" step="500" value="0" oninput="calcularPrecioCurso()"></div>
+          </div>
+          <label for="rpaPago">Forma de pago</label>
+          <select id="rpaPago" onchange="calcularPrecioCurso()"><option value="directo">Efectivo / transferencia</option><option value="wompi">Wompi (página web)</option></select>
+        </div>
+        <div class="panel" style="max-width:none;max-height:none;"><div id="rpaResultado"></div></div>
+      </div>
+      <div class="panel" style="max-width:none;max-height:none;margin-top:14px;">
+        <h2>Costos fijos de la Academia al mes</h2>
+        ${fijos}
+        ${rpFila('Total al mes', fijosMes, true)}
+        ${rpFila('Horas de clase al mes', horasMes > 0 ? formatearCantidad(horasMes) + ' h' : 'Falta el dato', false, p.academia_horas_real ? `Real de los últimos 3 meses: ${formatearCantidad(p.academia_horas_real)} h al mes` : 'Lo define la administradora (abajo)')}
+        ${rpFila('Costos fijos por hora de clase (CIF)', horasMes > 0 ? formatearMoneda(Math.round(fijosMes / horasMes)) : '—', true)}
+        ${esAdmin ? `<details style="margin-top:12px;"><summary style="cursor:pointer;font-weight:700;">⚙️ Valores de la regla (solo administradora)</summary>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;">
+            <div><label for="rpMargenAca">Utilidad mínima (% del precio)</label><input type="number" id="rpMargenAca" min="1" max="89" step="1" value="${p.margen_academia_pct}" style="max-width:140px;"></div>
+            <div><label for="rpHorasAca">Horas de clase al mes</label><input type="number" id="rpHorasAca" min="0" step="1" value="${p.academia_horas_mes || ''}" placeholder="Ej: 40" style="max-width:140px;"></div>
+          </div>
+          <button class="btn-mini guardar" style="margin-top:10px;" onclick="guardarReglasPrecios(this)">Guardar valores</button></details>` : ''}
+      </div>`;
+    calcularPrecioCurso();
+  }
+
+  function calcularPrecioCurso() {
+    const p = rpParams; if (!p) return;
+    const num = (id) => Number(document.getElementById(id).value) || 0;
+    const horas = num('rpaHoras'), prep = num('rpaPrep'), alumnas = Math.max(1, Math.round(num('rpaAlumnas'))), mat = num('rpaMateriales');
+    const fijosMes = (p.fijos_academia || []).reduce((t, f) => t + Number(f.valor_mes || 0), 0);
+    const horasMes = Number(p.academia_horas_mes || 0);
+    const cifHora = horasMes > 0 ? fijosMes / horasMes : 0;
+    const manoObra = (horas + prep) * Number(p.valor_hora);
+    const cif = horas * cifHora;
+    const materiales = mat * alumnas;
+    const costo = manoObra + cif + materiales;
+    const margen = Number(p.margen_academia_pct || 50) / 100;
+    const porAlumna = costo / alumnas;
+    const precio = porAlumna > 0 ? Math.ceil(porAlumna / (1 - margen) / 1000) * 1000 : 0;
+    let comision = 0;
+    if (document.getElementById('rpaPago').value === 'wompi' && precio > 0) comision = (precio * Number(p.wompi_pct) / 100 + Number(p.wompi_fija)) * (1 + Number(p.iva_comision_pct) / 100);
+    const simple = p.tarifa_simple_pct != null ? precio * Number(p.tarifa_simple_pct) / 100 : 0;
+    const utilidad = precio - porAlumna - comision - simple;
+    document.getElementById('rpaResultado').innerHTML = `
+      <div style="font-size:12px;font-weight:700;opacity:.7;margin-bottom:4px;">COSTO DE LA CLASE</div>
+      ${rpFila('Mano de obra', manoObra, false, `${formatearCantidad(horas + prep)} h × ${formatearMoneda(p.valor_hora)} (valor de la hora de la empleada)`)}
+      ${rpFila('Costos fijos de la Academia (CIF)', cif, false, horasMes > 0 ? `${formatearCantidad(horas)} h × ${formatearMoneda(Math.round(cifHora))} por hora` : '⚠️ Falta configurar las horas de clase al mes (abajo, en ⚙️)')}
+      ${rpFila('Materiales', materiales, false, `${alumnas} × ${formatearMoneda(mat)}`)}
+      ${rpFila('Costo total', costo, true)}
+      ${rpFila('Costo por alumna', porAlumna, false)}
+      <div style="font-size:12px;font-weight:700;opacity:.7;margin:12px 0 4px;">PRECIO</div>
+      ${rpFila(`Precio mínimo por alumna (utilidad ${Math.round(margen * 100)} %)`, precio, true, 'Costo por alumna ÷ ' + (1 - margen).toFixed(2) + ', redondeado a los $1.000')}
+      ${comision ? rpFila('Comisión de Wompi', -comision) : ''}
+      ${rpFila('Impuesto SIMPLE', -simple, false, p.tarifa_simple_pct != null ? `${p.tarifa_simple_pct} % del precio` : '⚠️ Falta la tarifa del SIMPLE (la confirma el contador)')}
+      ${rpFila('Utilidad que queda por alumna' + (precio > 0 ? ` (${Math.round(utilidad / precio * 100)} %)` : ''), utilidad, true)}
+      ${rpFila(`Total de la clase (${alumnas} alumna${alumnas > 1 ? 's' : ''})`, precio * alumnas, false)}`;
+  }
+
   async function mostrarPantallaInformeCostos() {
     mostrarPantalla('pantallaInformeCostos');
     if (!document.getElementById('icDesde').value) {
