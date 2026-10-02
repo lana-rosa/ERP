@@ -21604,6 +21604,8 @@
           if (f.estado === 'pagado') {
             estado = f.metodo_pago === 'historico_crm'
               ? `<span style="color:var(--verde-exito);font-size:11.5px;">✅ Pagado como honorarios antes del ERP (CRM)</span>`
+              : f.metodo_pago === 'corregido'
+              ? `<span style="font-size:11.5px;"><span style="color:var(--verde-exito);">✅ Pagado ${formatearMoneda(f.valor_pagado)} el ${fecha(f.pagado_at)}</span><br><span style="color:var(--ambar);">Tiempo corregido: la mano de obra es ${formatearMoneda(f.valor)} (diferencia ${formatearMoneda(Number(f.valor) - Number(f.valor_pagado || 0))})</span></span>`
               : `<span style="color:var(--verde-exito);font-size:11.5px;">✅ Pagado ${formatearMoneda(f.valor_pagado)} · ${escaparHtml(MEDIOS_PAGO_HONORARIOS[f.metodo_pago] || f.metodo_pago || '')} · ${fecha(f.pagado_at)}</span>`;
           } else if (f.estado === 'pendiente') {
             estado = Number(f.valor) > 0
@@ -21666,7 +21668,7 @@
       ...honorariosTejedorasCache.map(f => [
         f.orden, f.pedido || '', f.descripcion || '', f.tejedora || '', f.tipo === 'externa' ? 'Externa' : f.tipo === 'nomina' ? 'Nómina' : '',
         f.fecha ? new Date(f.fecha).toLocaleDateString('es-CO') : '', Number(f.horas), Number(f.valor_hora), Number(f.valor),
-        estados[f.estado] || f.estado, f.valor_pagado ? Number(f.valor_pagado) : '', f.metodo_pago === 'historico_crm' ? 'Pagado antes del ERP (CRM)' : (MEDIOS_PAGO_HONORARIOS[f.metodo_pago] || f.metodo_pago || ''),
+        estados[f.estado] || f.estado, f.valor_pagado ? Number(f.valor_pagado) : '', f.metodo_pago === 'historico_crm' ? 'Pagado antes del ERP (CRM)' : f.metodo_pago === 'corregido' ? 'Pagado en el ERP; tiempo corregido después' : (MEDIOS_PAGO_HONORARIOS[f.metodo_pago] || f.metodo_pago || ''),
         f.pagado_at ? new Date(f.pagado_at).toLocaleDateString('es-CO') : '',
       ])
     ];
