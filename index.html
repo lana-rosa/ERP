@@ -4200,7 +4200,7 @@
 <div id="pantallaHonorariosTejedoras" class="oculto contenido">
   <div class="page-header">
     <h1>🧵 Honorarios y mano de obra de tejedoras</h1>
-    <div class="subtitulo">Sale del paso a paso de producción: horas de tejido + detalles × valor de la hora. Lo que tejen las tejedoras de nómina es solo costo de mano de obra del producto (ya se les paga en la nómina). A las tejedoras externas se les paga por honorarios, y ese pago también entra al costo del producto en el cierre de costos del mes.</div>
+    <div class="subtitulo">Sale del paso a paso de producción: horas de tejido + detalles × valor de la hora. Lo que tejen las tejedoras de nómina es solo costo de mano de obra del producto (ya se les paga en la nómina). A las tejedoras externas se les paga por honorarios, y ese pago también entra al costo del producto en el cierre de costos del mes. Lo tejido antes en el CRM ya se pagó como honorarios y cuenta como mano de obra de cada pieza.</div>
   </div>
 
   <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;">
@@ -9780,8 +9780,10 @@
     const pct = Math.round(hechos / pasos.length * 100);
     const t = f ? (Number((f.tiempos || {}).tejido) || 0) + (Number((f.tiempos || {}).detalles) || 0) : 0;
     const puedeEditar = o.estado === 'en_proceso' && (rolActual === 'administrador' || rolActual === 'taller');
+    const manoObra = f && f.mano_obra != null && f.terminada_at ? Number(f.mano_obra) : null;
     const texto = !f ? 'Paso a paso sin empezar'
-      : `Paso a paso: ${hechos} de ${pasos.length} pasos${t ? ' · ' + formatoHorasCorto(t) + ' de trabajo' : ''}${f.tejedora ? ' · ' + escaparHtml(f.tejedora) : ''}`;
+      : `Paso a paso: ${hechos} de ${pasos.length} pasos${t ? ' · ' + formatoHorasCorto(t) + ' de trabajo' : ''}${f.tejedora ? ' · ' + escaparHtml(f.tejedora) : ''}`
+        + (manoObra !== null ? `<br>Mano de obra: <strong>${formatearMoneda(manoObra)}</strong>${o.estado !== 'en_proceso' ? ` · Costo total (material + mano de obra): <strong>${formatearMoneda(Number(o.costo_material || 0) + manoObra)}</strong>` : ''}` : '');
     return `
       <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:10px;padding:10px 12px;border-radius:var(--radius-md);background:var(--tinte-rosa);">
         ${f && f.foto_url ? `<img src="${escaparHtml(f.foto_url)}" alt="" style="width:44px;height:44px;border-radius:10px;object-fit:cover;">` : ''}
@@ -16250,7 +16252,7 @@
         <div style="flex:1;">
           <strong>🏭 ${escaparHtml(o.orden)}</strong> · ${escaparHtml((ESTADOS_ORDEN_PRODUCCION[o.estado] || [o.estado])[0])}
           <br>${o.tejedora ? '🧶 ' + escaparHtml(o.tejedora) + ' · ' : ''}${o.pasos_estado ? `Paso a paso ${hechos} de ${total}` : 'Paso a paso sin empezar'}${horas ? ' · ⏱️ ' + formatoHorasCorto(horas) : ''}
-          ${Number(o.costo_material) > 0 ? `<br>Material: ${formatearMoneda(o.costo_material)}` : ''}
+          ${Number(o.costo_material) > 0 || o.mano_obra != null ? `<br>Material: ${formatearMoneda(o.costo_material || 0)} · Mano de obra: ${formatearMoneda(o.mano_obra || 0)} · <strong>Costo: ${formatearMoneda(Number(o.costo_material || 0) + Number(o.mano_obra || 0))}</strong>` : ''}
         </div></div>`;
     }).join('');
     const eventos = d.eventos || [];
@@ -21600,7 +21602,9 @@
         ${filas.map(f => {
           let estado;
           if (f.estado === 'pagado') {
-            estado = `<span style="color:var(--verde-exito);font-size:11.5px;">✅ Pagado ${formatearMoneda(f.valor_pagado)} · ${escaparHtml(MEDIOS_PAGO_HONORARIOS[f.metodo_pago] || f.metodo_pago || '')} · ${fecha(f.pagado_at)}</span>`;
+            estado = f.metodo_pago === 'historico_crm'
+              ? `<span style="color:var(--verde-exito);font-size:11.5px;">✅ Pagado como honorarios antes del ERP (CRM)</span>`
+              : `<span style="color:var(--verde-exito);font-size:11.5px;">✅ Pagado ${formatearMoneda(f.valor_pagado)} · ${escaparHtml(MEDIOS_PAGO_HONORARIOS[f.metodo_pago] || f.metodo_pago || '')} · ${fecha(f.pagado_at)}</span>`;
           } else if (f.estado === 'pendiente') {
             estado = Number(f.valor) > 0
               ? `<div id="pagoHon-${f.orden_id}"><button class="btn-mini guardar" onclick="abrirPagoHonorario('${f.orden_id}')">💵 Pagar</button></div>`
@@ -21662,7 +21666,7 @@
       ...honorariosTejedorasCache.map(f => [
         f.orden, f.pedido || '', f.descripcion || '', f.tejedora || '', f.tipo === 'externa' ? 'Externa' : f.tipo === 'nomina' ? 'Nómina' : '',
         f.fecha ? new Date(f.fecha).toLocaleDateString('es-CO') : '', Number(f.horas), Number(f.valor_hora), Number(f.valor),
-        estados[f.estado] || f.estado, f.valor_pagado ? Number(f.valor_pagado) : '', MEDIOS_PAGO_HONORARIOS[f.metodo_pago] || f.metodo_pago || '',
+        estados[f.estado] || f.estado, f.valor_pagado ? Number(f.valor_pagado) : '', f.metodo_pago === 'historico_crm' ? 'Pagado antes del ERP (CRM)' : (MEDIOS_PAGO_HONORARIOS[f.metodo_pago] || f.metodo_pago || ''),
         f.pagado_at ? new Date(f.pagado_at).toLocaleDateString('es-CO') : '',
       ])
     ];
