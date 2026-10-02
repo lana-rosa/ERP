@@ -10293,13 +10293,15 @@
     return parametrosCosteo;
   }
 
-  // Costo del producto: mano de obra + materia prima registrada + etiqueta + empaque.
+  // Costo de producción (directo): mano de obra + materia prima registrada + etiqueta (va cosida en la pieza).
+  // El empaque NO es costo de producción: es gasto de venta (se usa al vender o despachar).
   function textoCostoOrden(o, f, manoObra) {
     const p = parametrosCosteo || { costo_etiqueta: 1000, costo_empaque: 2000 };
     const material = Number(o.costo_material || o.valor_en_proceso || 0);
-    const etiqueta = Number(p.costo_etiqueta || 0), empaque = Number(p.costo_empaque || 0);
-    const total = manoObra + material + etiqueta + empaque;
-    return `Mano de obra <strong>${formatearMoneda(manoObra)}</strong> + materia prima <strong>${formatearMoneda(material)}</strong> + etiqueta ${formatearMoneda(etiqueta)} + empaque ${formatearMoneda(empaque)} = <strong>costo ${formatearMoneda(total)}</strong>`
+    const etiqueta = Number(p.costo_etiqueta ?? 1000), empaque = Number(p.costo_empaque ?? 2000);
+    const produccion = manoObra + material + etiqueta;
+    return `Costo de producción: mano de obra <strong>${formatearMoneda(manoObra)}</strong> + materia prima <strong>${formatearMoneda(material)}</strong> + etiqueta ${formatearMoneda(etiqueta)} = <strong>${formatearMoneda(produccion)}</strong>`
+      + `<br><span style="opacity:.8;">Gasto de venta: empaque ${formatearMoneda(empaque)} · Costo total al vender: <strong>${formatearMoneda(produccion + empaque)}</strong></span>`
       + (f && f.peso_gramos ? ` · ⚖️ ${formatearCantidad(f.peso_gramos)} g` : '');
   }
 
