@@ -1120,6 +1120,7 @@
         <button class="nav-btn" id="nav-correo-empresa" onclick="mostrarPantallaCorreoEmpresa()"><span class="nav-icon">📧</span> Correo de la empresa</button>
         <button class="nav-btn" id="nav-copia-seguridad" onclick="mostrarPantallaCopiaSeguridad()"><span class="nav-icon">🛡️</span> Respaldo y auditoría</button>
         <button class="nav-btn" onclick="mostrarPantallaApariencia()"><span class="nav-icon">🎨</span> Apariencia</button>
+        <button class="nav-btn" id="nav-guias-usuario" onclick="mostrarPantallaGuiasUsuario()"><span class="nav-icon">📖</span> Guías de usuario</button>
       </div>
     </div>
   </div>
@@ -1921,6 +1922,21 @@
     <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirKardexEtapas()">🖨️ Imprimir / PDF</button>
   </div>
   <div id="keContenido"><div class="cargando">Elige el rango de fechas y pulsa Generar.</div></div>
+</div>
+
+<!-- ===== PANTALLA: GUÍAS DE USUARIO ===== -->
+<div id="pantallaGuiasUsuario" class="oculto contenido">
+  <div class="page-header">
+    <h1>📖 Guías de usuario</h1>
+    <div class="subtitulo">Cómo se usa cada parte del ERP y de dónde sale cada valor de los informes. Son las mismas explicaciones que usa Rosina, así que siempre dicen lo mismo. Cada quien ve las guías de lo que maneja.</div>
+  </div>
+  <div class="mensaje" id="mensajeGuias"></div>
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+    <input type="search" id="guiasBuscar" placeholder="🔍 Buscar en las guías (ej: utilidad, anticipo, kardex)..." oninput="renderizarGuiasUsuario()" style="flex:1 1 280px;" aria-label="Buscar en las guías">
+    <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirGuiasUsuario()">🖨️ Imprimir / PDF</button>
+  </div>
+  <div class="filtro-tipo" id="guiasModulos" style="margin-bottom:14px;"></div>
+  <div id="guiasContenido"><div class="cargando">Cargando guías...</div></div>
 </div>
 
 <!-- ===== PANTALLA: INVENTARIO GLOBAL ===== -->
@@ -5554,7 +5570,7 @@
   });
 
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaInventarioGlobal', 'pantallaFacturacionElectronica', 'pantallaServiciosDian', 'pantallaCorreoEmpresa', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb', 'pantallaTextosWeb', 'pantallaPaypalConfig', 'pantallaMiProduccion', 'pantallaInformeCostos', 'pantallaReglasPrecios'];
+    const pantallas = ['pantallaLogin', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaInventarioGlobal', 'pantallaGuiasUsuario', 'pantallaFacturacionElectronica', 'pantallaServiciosDian', 'pantallaCorreoEmpresa', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb', 'pantallaTextosWeb', 'pantallaPaypalConfig', 'pantallaMiProduccion', 'pantallaInformeCostos', 'pantallaReglasPrecios'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -5584,6 +5600,7 @@
       pantallaReglasPrecios: 'nav-reglas-precios',
       pantallaKardexEtapas: 'nav-kardex-etapas',
       pantallaInventarioGlobal: 'nav-inventario-global',
+      pantallaGuiasUsuario: 'nav-guias-usuario',
       pantallaFacturacionElectronica: 'nav-facturacion-electronica',
       pantallaServiciosDian: 'nav-servicios-dian',
       pantallaCorreoEmpresa: 'nav-correo-empresa',
@@ -5942,6 +5959,7 @@
     mostrar('deptoConfiguracionGrupo', true);
     mostrar('nav-gestion-usuarios', esAdmin);
     mostrar('nav-config-empresa', esAdmin || esContador);
+    mostrar('nav-guias-usuario', true);
     mostrar('nav-copia-seguridad', esAdmin);
     mostrar('nav-correo-empresa', esAdmin);
 
@@ -11330,6 +11348,127 @@
         ${htmlKardexEtapas(d, false)}
         <div class="firma-impresion"><div>Elaboró</div><div>Revisó</div></div>
       </body></html>`);
+    ventana.document.close();
+    ventana.focus();
+    setTimeout(() => ventana.print(), 400);
+  }
+
+  // ============================================================================
+  // GUÍAS DE USUARIO (salen de la misma base de conocimiento que usa Rosina)
+  // ============================================================================
+  const MODULOS_GUIAS = [
+    ['Primeros pasos', '🚀'], ['Informes: de dónde sale cada valor', '📊'], ['Punto de Venta', '🛍️'], ['Compras y gastos', '🛒'],
+    ['Inventarios y producción', '📦'], ['Costos y precios', '🧮'], ['Contabilidad e impuestos', '📑'],
+    ['DIAN: facturación y nómina electrónica', '🏛️'], ['Talento humano', '👥'], ['Fondo Emprender', '🏦'],
+    ['Configuración y administración', '⚙️'], ['Otros temas', '📌'],
+  ];
+  let guiasUsuarioCache = [];
+  let moduloGuiasActivo = '';
+
+  async function mostrarPantallaGuiasUsuario() {
+    mostrarPantalla('pantallaGuiasUsuario');
+    ocultarMensaje('mensajeGuias');
+    if (guiasUsuarioCache.length) { renderizarGuiasUsuario(); return; }
+    const { data, error } = await supabaseClient.rpc('fn_guias_usuario');
+    if (error) { document.getElementById('guiasContenido').innerHTML = `<div class="cargando">No se pudieron cargar las guías: ${escaparHtml(error.message)}</div>`; return; }
+    guiasUsuarioCache = data || [];
+    renderizarGuiasUsuario();
+  }
+
+  function iconoModuloGuia(modulo) { return (MODULOS_GUIAS.find(m => m[0] === modulo) || [, '📌'])[1]; }
+
+  function ordenModuloGuia(modulo) {
+    const i = MODULOS_GUIAS.findIndex(m => m[0] === modulo);
+    return i < 0 ? MODULOS_GUIAS.length : i;
+  }
+
+  function normalizarTextoGuia(t) { return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
+
+  // Párrafos separados por línea en blanco; las líneas que empiezan con "- " son viñetas.
+  function htmlContenidoGuia(texto) {
+    return String(texto || '').trim().split(/\n\s*\n/).map(bloque => {
+      const lineas = bloque.split('\n').map(l => l.trim()).filter(Boolean);
+      let html = '', items = [];
+      const cerrarLista = () => { if (items.length) { html += `<ul style="margin:6px 0 10px;padding-left:20px;">${items.join('')}</ul>`; items = []; } };
+      lineas.forEach(l => {
+        if (/^[-•]\s+/.test(l)) items.push(`<li style="margin-bottom:4px;">${escaparHtml(l.replace(/^[-•]\s+/, ''))}</li>`);
+        else { cerrarLista(); html += `<p style="margin:0 0 10px;">${escaparHtml(l)}</p>`; }
+      });
+      cerrarLista();
+      return html;
+    }).join('');
+  }
+
+  function guiasFiltradas() {
+    const termino = normalizarTextoGuia(document.getElementById('guiasBuscar').value.trim());
+    const palabras = termino.split(/\s+/).filter(Boolean);
+    return guiasUsuarioCache.filter(g => {
+      if (moduloGuiasActivo && g.modulo !== moduloGuiasActivo) return false;
+      if (!palabras.length) return true;
+      const texto = normalizarTextoGuia(g.titulo + ' ' + g.contenido + ' ' + g.modulo);
+      return palabras.every(p => texto.includes(p));
+    });
+  }
+
+  function filtrarModuloGuias(modulo) {
+    moduloGuiasActivo = moduloGuiasActivo === modulo ? '' : modulo;
+    renderizarGuiasUsuario();
+  }
+
+  function renderizarGuiasUsuario() {
+    const conteo = {};
+    guiasUsuarioCache.forEach(g => { conteo[g.modulo] = (conteo[g.modulo] || 0) + 1; });
+    const modulos = Object.keys(conteo).sort((a, b) => ordenModuloGuia(a) - ordenModuloGuia(b));
+    document.getElementById('guiasModulos').innerHTML =
+      `<button class="chip-filtro ${moduloGuiasActivo ? '' : 'activo'}" onclick="filtrarModuloGuias('')">Todas (${guiasUsuarioCache.length})</button>`
+      + modulos.map(m => `<button class="chip-filtro ${moduloGuiasActivo === m ? 'activo' : ''}" onclick="filtrarModuloGuias(this.dataset.modulo)" data-modulo="${escaparHtml(m)}">${iconoModuloGuia(m)} ${escaparHtml(m)} (${conteo[m]})</button>`).join('');
+
+    const lista = guiasFiltradas();
+    const cont = document.getElementById('guiasContenido');
+    if (!guiasUsuarioCache.length) { cont.innerHTML = '<div class="cargando">Todavía no hay guías para tu usuario.</div>'; return; }
+    if (!lista.length) { cont.innerHTML = '<div class="cargando">Ninguna guía coincide con la búsqueda. Prueba con otra palabra o pregúntale a Rosina.</div>'; return; }
+    const buscando = !!document.getElementById('guiasBuscar').value.trim();
+    const grupos = {};
+    lista.forEach(g => { (grupos[g.modulo] = grupos[g.modulo] || []).push(g); });
+    cont.innerHTML = Object.keys(grupos).sort((a, b) => ordenModuloGuia(a) - ordenModuloGuia(b)).map(m => `
+      <h2 style="margin:20px 0 10px;font-size:17px;">${iconoModuloGuia(m)} ${escaparHtml(m)}</h2>
+      ${grupos[m].map(g => `
+        <details class="panel guia-usuario" data-seccion="${escaparHtml(g.seccion)}" style="max-width:none;max-height:none;margin-bottom:10px;padding:14px 18px;" ${buscando || lista.length === 1 ? 'open' : ''}>
+          <summary style="cursor:pointer;font-weight:700;font-size:14.5px;">${escaparHtml(g.titulo)}</summary>
+          <div style="font-size:13.5px;line-height:1.65;margin-top:10px;">${htmlContenidoGuia(g.contenido)}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:6px;">
+            <span style="font-size:11px;opacity:0.55;">Actualizada: ${new Date(g.actualizado).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+            <button class="btn-mini editar" style="flex:0 0 auto;" onclick="imprimirGuiasUsuario('${escaparHtml(g.seccion)}')">🖨️ Imprimir esta guía</button>
+          </div>
+        </details>`).join('')}`).join('');
+  }
+
+  // Imprime una guía o todas las que se ven en pantalla (respeta el filtro y la búsqueda).
+  function imprimirGuiasUsuario(seccion) {
+    const lista = seccion ? guiasUsuarioCache.filter(g => g.seccion === seccion) : guiasFiltradas();
+    if (!lista.length) { mostrarMensaje('mensajeGuias', 'No hay guías para imprimir con este filtro.', 'error'); return; }
+    const ventana = window.open('', '_blank');
+    if (!ventana) { mostrarMensaje('mensajeGuias', 'El navegador bloqueó la ventana de impresión: permite las ventanas emergentes para este sitio.', 'error'); return; }
+    let moduloAnterior = '';
+    const cuerpo = lista.slice().sort((a, b) => ordenModuloGuia(a.modulo) - ordenModuloGuia(b.modulo)).map(g => {
+      const encabezado = g.modulo !== moduloAnterior ? `<h2>${escaparHtml(g.modulo)}</h2>` : '';
+      moduloAnterior = g.modulo;
+      return `${encabezado}<section><h3>${escaparHtml(g.titulo)}</h3>${htmlContenidoGuia(g.contenido)}</section>`;
+    }).join('');
+    ventana.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>Guías de usuario — Lana Rosa Crochet</title>
+      <style>
+        body { font-family: Arial, Helvetica, sans-serif; color: #2d2d2d; padding: 24px; font-size: 13px; line-height: 1.6; }
+        h1 { color: #d8017c; font-size: 20px; margin: 0 0 2px; }
+        .sub { font-size: 12px; color: #666; margin-bottom: 18px; }
+        h2 { color: #d8017c; font-size: 16px; border-bottom: 2px solid #f3d3e6; padding-bottom: 4px; margin: 22px 0 8px; }
+        h3 { font-size: 14px; margin: 14px 0 6px; }
+        section { break-inside: avoid-page; }
+        @media print { body { padding: 0; } @page { margin: 14mm; } }
+      </style></head><body>
+      <h1>Lana Rosa Crochet — Guías de usuario del ERP</h1>
+      <div class="sub">Generado el ${new Date().toLocaleString('es-CO')}</div>
+      ${cuerpo}
+    </body></html>`);
     ventana.document.close();
     ventana.focus();
     setTimeout(() => ventana.print(), 400);
