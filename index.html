@@ -3854,6 +3854,47 @@
     <div class="subtitulo">Ofrécele un precio al cliente antes de que se confirme como pedido — envíasela por WhatsApp, y cuando la apruebe, la conviertes en pedido con un clic.</div>
   </div>
 
+  <details class="panel" id="panelCotizador" style="max-width:none;max-height:none;margin-bottom:16px;" open>
+    <summary style="cursor:pointer;font-weight:700;font-size:15px;">🧮 Calcular el precio de un amigurumi</summary>
+    <div style="font-size:12.5px;opacity:.8;margin:6px 0 12px;">Escribe el tamaño y el tiempo estimado. El sistema estima el peso y la materia prima, suma la mano de obra, los costos fijos del Taller, la etiqueta y la utilidad, y muestra cuánto queda después de la comisión de pago y el impuesto.</div>
+    <div class="grilla-2" style="gap:14px;">
+      <div>
+        <label for="ctzDesc">Descripción</label>
+        <input type="text" id="ctzDesc" placeholder="Ej: Amigurumi personalizado de mascota con gafas">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:120px;"><label for="ctzTamano">Alto (cm)</label><input type="number" id="ctzTamano" min="1" step="0.5" oninput="calcularCotizador(true)"></div>
+          <div style="flex:1;min-width:120px;"><label for="ctzPeso">Peso estimado (g)</label><input type="number" id="ctzPeso" min="0" step="1" oninput="calcularCotizador()"></div>
+        </div>
+        <div id="ctzPesoAyuda" style="font-size:11.5px;opacity:.7;margin-top:2px;"></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:120px;"><label for="ctzHorasTejido">Horas de tejido</label><input type="number" id="ctzHorasTejido" min="0" step="0.25" oninput="calcularCotizador()"></div>
+          <div style="flex:1;min-width:120px;"><label for="ctzHorasDetalles">Horas de detalles</label><input type="number" id="ctzHorasDetalles" min="0" step="0.25" oninput="calcularCotizador()"></div>
+        </div>
+        <label for="ctzInsumos">Insumos aparte del hilo <span style="font-size:10px;opacity:.6;">(ojos, accesorios, módulo de audio...)</span></label>
+        <input type="number" id="ctzInsumos" min="0" step="100" value="0" oninput="calcularCotizador()">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:120px;"><label for="ctzCantidad">Cantidad</label><input type="number" id="ctzCantidad" min="1" step="1" value="1" oninput="calcularCotizador()"></div>
+          <div style="flex:1;min-width:150px;"><label for="ctzPago">Forma de pago</label>
+            <select id="ctzPago" onchange="calcularCotizador()"><option value="wompi">Wompi (página web)</option><option value="directo">Efectivo / transferencia</option><option value="paypal">PayPal (exterior)</option></select></div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:150px;"><label for="ctzBolsa">Bolsa (se le cobra)</label>
+            <select id="ctzBolsa" onchange="calcularCotizador()"><option value="0">Sin bolsa</option><option value="1000">Bolsa de papel ($1.000)</option><option value="2000">Bolsa de tela ($2.000)</option></select></div>
+          <div style="flex:1;min-width:150px;"><label for="ctzEnvio">Envío (se le cobra)</label>
+            <select id="ctzEnvio" onchange="calcularCotizador()"><option value="0">Recoge en tienda</option><option value="8000">Villamaría ($8.000)</option><option value="13000">Manizales ($13.000)</option><option value="18000">Otra ciudad ($18.000)</option></select></div>
+        </div>
+      </div>
+      <div>
+        <div id="ctzResultado"><div class="cargando">Cargando valores...</div></div>
+        <button class="btn-principal" style="margin-top:10px;" onclick="agregarCotizadorACotizacion()">➕ Agregar a la cotización</button>
+      </div>
+    </div>
+    <details id="ctzConfig" class="oculto" style="margin-top:14px;border-top:1px dashed var(--gris-borde);padding-top:10px;">
+      <summary style="cursor:pointer;font-weight:600;font-size:13px;">⚙️ Valores del cotizador (solo administradora)</summary>
+      <div id="ctzConfigCuerpo" style="margin-top:10px;"></div>
+    </details>
+  </details>
+
   <div class="grilla-2">
     <div class="panel">
       <h2>+ Nueva cotización</h2>
@@ -9818,7 +9859,7 @@
     { id: 'detalles',    icono: '✨', titulo: 'Tiempo de detalles',       desc: 'Agrega todos los detalles específicos del cliente: gafas, ropa, accesorios, color de ojos, bordados, etc.' },
     { id: 'marquilla',   icono: '🏷️', titulo: 'Poner marquilla',          desc: 'Coloca la marquilla de Lana Rosa Crochet. Asegúrate de que esté bien cosida y visible.' },
     { id: 'calidad',     icono: '🔍', titulo: 'Control de calidad',       desc: 'Revisa toda la pieza: puntadas uniformes, relleno parejo, detalles correctos, sin hilos sueltos. Si hay algo mal, corrígelo antes de continuar.' },
-    { id: 'foto',        icono: '📷', titulo: 'Foto y peso de la pieza',   desc: 'Toma una foto de la pieza terminada y pésala en gramos (sin empaque). La foto queda en la orden y sirve para redes sociales, portafolio o catálogo.' },
+    { id: 'foto',        icono: '📷', titulo: 'Foto, peso y tamaño',       desc: 'Toma una foto de la pieza terminada, pésala en gramos (sin empaque) y mide su alto en centímetros. Con el peso y el tamaño el cotizador aprende a estimar la materia prima de piezas nuevas.' },
     { id: 'empaquetado', icono: '📦', titulo: 'Empaquetado',              desc: 'Empaca la pieza con el packaging de Lana Rosa. Incluye la tarjeta con el mensaje personalizado del cliente. Deja todo listo para entrega.' },
   ];
   const PAUSA_ACTIVA_SEG = 60 * 60;
@@ -9903,6 +9944,7 @@
       existe: !!data,
       soloLectura: o.estado !== 'en_proceso' || !(rolActual === 'administrador' || rolActual === 'taller' || miTejedora.vinculada),
       peso_gramos: f.peso_gramos || null,
+      tamano_cm: f.tamano_cm || null,
     };
     // Una tejedora que abre una pieza sin tejedora queda asignada a ella.
     if (miTejedora.vinculada && rolActual !== 'administrador' && !fichaActiva.soloLectura && !fichaActiva.tejedora_id && !fichaActiva.tejedora_tercero_id) {
@@ -10044,9 +10086,13 @@
           <strong>${hay ? 'Cambiar foto' : '📷 Tomar foto · 🖼️ Galería'}</strong>
           <div style="font-size:11.5px;opacity:.7;margin-top:4px;">Desde la cámara o la galería del celular</div>
         </div>
-        <label for="fpPeso" style="font-weight:600;">⚖️ Peso de la pieza terminada (gramos)</label>
-        <input type="number" id="fpPeso" min="1" step="0.5" inputmode="decimal" value="${fichaActiva.peso_gramos || ''}" placeholder="Ej: 120" oninput="fichaActiva.peso_gramos = Number(this.value) || null; actualizarBotonFoto()" style="margin:4px 0 12px;max-width:200px;">
-        <button class="fp-completar" id="fpBtnFoto" onclick="completarFotoFicha()" ${hay && fichaActiva.peso_gramos ? '' : 'disabled'}>${hay ? (fichaActiva.peso_gramos ? '✓ Foto y peso listos — continuar' : '⚖️ Escribe el peso para continuar') : '📷 Sube una foto para continuar'}</button>`;
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+          <div><label for="fpPeso" style="font-weight:600;">⚖️ Peso terminada (gramos)</label>
+            <input type="number" id="fpPeso" min="1" step="0.5" inputmode="decimal" value="${fichaActiva.peso_gramos || ''}" placeholder="Ej: 120" oninput="fichaActiva.peso_gramos = Number(this.value) || null; actualizarBotonFoto()" style="margin-top:4px;max-width:170px;"></div>
+          <div><label for="fpTamano" style="font-weight:600;">📏 Alto (cm)</label>
+            <input type="number" id="fpTamano" min="1" step="0.5" inputmode="decimal" value="${fichaActiva.tamano_cm || ''}" placeholder="Ej: 20" oninput="fichaActiva.tamano_cm = Number(this.value) || null; actualizarBotonFoto()" style="margin-top:4px;max-width:170px;"></div>
+        </div>
+        <button class="fp-completar" id="fpBtnFoto" onclick="completarFotoFicha()" ${hay && fichaActiva.peso_gramos && fichaActiva.tamano_cm ? '' : 'disabled'}>${hay ? (fichaActiva.peso_gramos && fichaActiva.tamano_cm ? '✓ Foto, peso y tamaño listos — continuar' : '⚖️ Escribe el peso y el alto para continuar') : '📷 Sube una foto para continuar'}</button>`;
     }
     return `<button class="fp-completar" onclick="completarPasoFicha('${id}')">✓ Paso completado — continuar</button>`;
   }
@@ -10246,12 +10292,13 @@
     const btn = document.getElementById('fpBtnFoto');
     if (!btn) return;
     const hay = fichaActiva.foto_url || fichaFotoArchivo;
-    btn.disabled = !(hay && fichaActiva.peso_gramos);
-    btn.textContent = hay ? (fichaActiva.peso_gramos ? '✓ Foto y peso listos — continuar' : '⚖️ Escribe el peso para continuar') : '📷 Sube una foto para continuar';
+    const medidas = fichaActiva.peso_gramos && fichaActiva.tamano_cm;
+    btn.disabled = !(hay && medidas);
+    btn.textContent = hay ? (medidas ? '✓ Foto, peso y tamaño listos — continuar' : '⚖️ Escribe el peso y el alto para continuar') : '📷 Sube una foto para continuar';
   }
 
   async function completarFotoFicha() {
-    if (!fichaActiva.peso_gramos || fichaActiva.peso_gramos <= 0) { alert('Escribe el peso de la pieza en gramos.'); return; }
+    if (!fichaActiva.peso_gramos || fichaActiva.peso_gramos <= 0 || !fichaActiva.tamano_cm) { alert('Escribe el peso (gramos) y el alto (cm) de la pieza.'); return; }
     const btn = document.getElementById('fpBtnFoto');
     if (fichaFotoArchivo) {
       if (btn) { btn.disabled = true; btn.textContent = '⏳ Subiendo foto...'; }
@@ -10282,6 +10329,7 @@
       tiempos: { tejido: Math.round(segundosDe('tejido')), detalles: Math.round(segundosDe('detalles')) },
       foto_url: fa.foto_url,
       peso_gramos: fa.peso_gramos || null,
+      tamano_cm: fa.tamano_cm || null,
       terminada_at: fa.terminada_at,
       updated_at: new Date().toISOString(),
     };
@@ -18875,10 +18923,178 @@
   // ============================================================
   // COTIZACIONES
   // ============================================================
+  // ============================================================================
+  // COTIZADOR DE AMIGURUMIS: precio sugerido a partir del tamaño y el tiempo estimado
+  // ============================================================================
+  let ctzParams = null;
+
+  async function cargarCotizador() {
+    const { data, error } = await supabaseClient.rpc('fn_cotizador_parametros');
+    if (error) { document.getElementById('ctzResultado').innerHTML = `<div class="cargando">${escaparHtml(error.message)}</div>`; return; }
+    ctzParams = data;
+    document.getElementById('ctzConfig').classList.toggle('oculto', rolActual !== 'administrador');
+    if (rolActual === 'administrador') renderizarConfigCotizador();
+    calcularCotizador();
+  }
+
+  // Tabla tamaño → peso: la real (piezas con 3 o más registros) manda sobre la configurada.
+  function tablaTamanosCotizador() {
+    const mapa = new Map();
+    (ctzParams.tamanos || []).forEach(t => mapa.set(Number(t.cm), { cm: Number(t.cm), peso: Number(t.peso_g), fuente: 'tabla' }));
+    (ctzParams.tamanos_reales || []).filter(t => Number(t.piezas) >= 3).forEach(t => mapa.set(Number(t.cm), { cm: Number(t.cm), peso: Number(t.peso_g), fuente: `promedio de ${t.piezas} piezas` }));
+    return [...mapa.values()].sort((a, b) => a.cm - b.cm);
+  }
+
+  function estimarPesoCotizador(cm) {
+    const t = tablaTamanosCotizador();
+    if (!t.length || !(cm > 0)) return null;
+    const exacto = t.find(x => x.cm === cm);
+    if (exacto) return { peso: exacto.peso, texto: `Peso de ${cm} cm según ${exacto.fuente}.` };
+    const menor = [...t].reverse().find(x => x.cm < cm), mayor = t.find(x => x.cm > cm);
+    if (menor && mayor) {
+      const peso = menor.peso + (mayor.peso - menor.peso) * (cm - menor.cm) / (mayor.cm - menor.cm);
+      return { peso: Math.round(peso), texto: `Estimado entre ${menor.cm} cm (${menor.peso} g) y ${mayor.cm} cm (${mayor.peso} g).` };
+    }
+    // Fuera de la tabla: el peso crece más o menos con el cuadrado del tamaño.
+    const ref = menor || mayor;
+    return { peso: Math.round(ref.peso * Math.pow(cm / ref.cm, 2)), texto: `Fuera de la tabla: calculado a partir de ${ref.cm} cm (${ref.peso} g). Revísalo.` };
+  }
+
+  let ctzUltimo = null;
+  function calcularCotizador(desdeTamano) {
+    if (!ctzParams) return;
+    const num = (id) => Number(document.getElementById(id).value) || 0;
+    const cm = num('ctzTamano');
+    const ayuda = document.getElementById('ctzPesoAyuda');
+    if (desdeTamano) {
+      const est = estimarPesoCotizador(cm);
+      if (est) { document.getElementById('ctzPeso').value = est.peso; ayuda.textContent = est.texto; }
+      else ayuda.textContent = cm ? 'Todavía no hay tabla de tamaños: escribe el peso a mano (la administradora la llena abajo, en ⚙️).' : '';
+    }
+    const p = ctzParams;
+    const peso = num('ctzPeso'), horas = num('ctzHorasTejido') + num('ctzHorasDetalles');
+    const cant = Math.max(1, Math.round(num('ctzCantidad')));
+    const hilo = peso * Number(p.precio_gramo || 0);
+    const insumos = num('ctzInsumos');
+    const etiqueta = Number(p.costo_etiqueta || 0);
+    const manoObra = horas * Number(p.valor_hora || 0);
+    const fijosMes = (p.costos_fijos_taller || []).reduce((t, f) => t + Number(f.valor_mes || 0), 0);
+    const horasMes = Number(p.horas_produccion_mes || 0);
+    const tasaFija = horasMes > 0 ? fijosMes / horasMes : 0;
+    const fijos = horas * tasaFija;
+    const costo = hilo + insumos + etiqueta + manoObra + fijos;
+    const margen = Number(p.margen_pct || 35) / 100;
+    const precio = costo > 0 ? Math.ceil(costo / (1 - margen) / 1000) * 1000 : 0;   // redondeado a los $1.000 de arriba
+    const pago = document.getElementById('ctzPago').value;
+    const bolsa = num('ctzBolsa'), envio = num('ctzEnvio');
+    const totalCliente = precio * cant + bolsa + envio;
+    let comision = 0, notaComision = '';
+    if (pago === 'wompi' && totalCliente > 0) comision = (totalCliente * Number(p.wompi_pct) / 100 + Number(p.wompi_fija)) * (1 + Number(p.iva_comision_pct) / 100) / cant;
+    if (pago === 'paypal') notaComision = ' (pendiente: la comisión de PayPal se conoce con el primer pago real)';
+    const simple = p.tarifa_simple_pct != null ? precio * Number(p.tarifa_simple_pct) / 100 : 0;
+    const utilidadBruta = precio - costo;
+    const utilidadNeta = utilidadBruta - comision - simple;
+    ctzUltimo = { precio, cant, bolsa, envio };
+
+    const dinero = (v) => v < 0 ? '−' + formatearMoneda(Math.abs(v)) : formatearMoneda(Math.abs(v) < 0.5 ? 0 : v);
+    const fila = (t, v, fuerte, nota) => `<div class="resumen-fila${fuerte ? ' total' : ''}"><span>${t}${nota ? `<br><span style="font-size:10.5px;opacity:.65;font-weight:400;">${nota}</span>` : ''}</span><strong>${dinero(v)}</strong></div>`;
+    const pct = (v) => precio > 0 ? ` (${Math.round(v / precio * 100)} %)` : '';
+    document.getElementById('ctzResultado').innerHTML = `
+      <div style="font-size:12px;font-weight:700;opacity:.7;margin-bottom:4px;">COSTO DE PRODUCCIÓN (por unidad)</div>
+      ${fila('Hilo', hilo, false, `${formatearCantidad(peso)} g × ${formatearMoneda(p.precio_gramo)}`)}
+      ${insumos ? fila('Otros insumos', insumos) : ''}
+      ${fila('Etiqueta', etiqueta)}
+      ${fila('Mano de obra', manoObra, false, `${formatearCantidad(horas)} h × ${formatearMoneda(p.valor_hora)}`)}
+      ${fila('Costos fijos del Taller', fijos, false, horasMes > 0 ? `${formatearCantidad(horas)} h × ${formatearMoneda(tasaFija)} por hora (${formatearMoneda(fijosMes)} al mes ÷ ${formatearCantidad(horasMes)} h)` : '⚠️ Falta configurar las horas de producción al mes (abajo, en ⚙️)')}
+      ${fila('Costo total', costo, true)}
+      <div style="font-size:12px;font-weight:700;opacity:.7;margin:12px 0 4px;">PRECIO</div>
+      ${fila(`Precio sugerido (utilidad ${Math.round(margen * 100)} %)`, precio, true, 'Costo ÷ ' + (1 - margen).toFixed(2) + ', redondeado a los $1.000')}
+      ${fila('Comisión de pago' + notaComision, -comision)}
+      ${fila('Impuesto SIMPLE', -simple, false, p.tarifa_simple_pct != null ? `${p.tarifa_simple_pct} % del precio` : '⚠️ Falta la tarifa del SIMPLE (la confirma el contador)')}
+      ${fila('Utilidad que queda' + pct(utilidadNeta), utilidadNeta, true)}
+      <div style="font-size:12px;font-weight:700;opacity:.7;margin:12px 0 4px;">LO QUE PAGA EL CLIENTE</div>
+      ${fila(`${cant} × ${formatearMoneda(precio)}`, precio * cant)}
+      ${bolsa ? fila('Bolsa', bolsa) : ''}${envio ? fila('Envío', envio) : ''}
+      ${fila('Total', totalCliente, true)}`;
+  }
+
+  function agregarCotizadorACotizacion() {
+    if (!ctzUltimo || !ctzUltimo.precio) { mostrarMensaje('mensajeCotizacion', 'Primero calcula el precio del amigurumi.', 'error'); return; }
+    const desc = document.getElementById('ctzDesc').value.trim() || 'Amigurumi personalizado';
+    const cm = Number(document.getElementById('ctzTamano').value) || 0;
+    carritoCotizacion.push({ descripcion: desc + (cm ? ` (${cm} cm)` : ''), cantidad: ctzUltimo.cant, precio_unitario: ctzUltimo.precio });
+    if (ctzUltimo.bolsa) carritoCotizacion.push({ descripcion: ctzUltimo.bolsa === 2000 ? 'Bolsa de tela' : 'Bolsa de papel', cantidad: 1, precio_unitario: ctzUltimo.bolsa });
+    if (ctzUltimo.envio) carritoCotizacion.push({ descripcion: 'Envío', cantidad: 1, precio_unitario: ctzUltimo.envio });
+    renderizarItemsCotizacion();
+    document.getElementById('listaItemsCotizacion').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function renderizarConfigCotizador() {
+    const p = ctzParams;
+    const filasTam = (p.tamanos.length ? p.tamanos : [{ cm: '', peso_g: '' }]).map(t => `
+      <div class="ctz-tam" style="display:flex;gap:8px;margin-bottom:6px;">
+        <input type="number" class="ctz-tam-cm" min="1" step="0.5" value="${t.cm}" placeholder="cm" style="max-width:110px;" aria-label="Alto en cm">
+        <input type="number" class="ctz-tam-g" min="1" step="1" value="${t.peso_g}" placeholder="gramos" style="max-width:130px;" aria-label="Peso en gramos">
+      </div>`).join('');
+    const reales = (p.tamanos_reales || []).length
+      ? `<div style="font-size:12px;margin:6px 0;">Promedios reales del paso a paso: ${p.tamanos_reales.map(t => `${t.cm} cm → ${t.peso_g} g (${t.piezas} pieza${t.piezas > 1 ? 's' : ''})`).join(' · ')}. Con 3 o más piezas, el cotizador usa el promedio real.</div>`
+      : '<div style="font-size:12px;opacity:.7;margin:6px 0;">Todavía no hay piezas con peso y tamaño registrados en el paso a paso. Cuando las haya, el cotizador usará el promedio real.</div>';
+    const fijos = (p.costos_fijos_taller || []).map(f => `<div class="resumen-fila"><span>${escaparHtml(f.concepto)}<br><span style="font-size:10.5px;opacity:.65;">${escaparHtml(f.fuente)}</span></span><strong>${formatearMoneda(f.valor_mes)}</strong></div>`).join('');
+    document.getElementById('ctzConfigCuerpo').innerHTML = `
+      <div class="grilla-2" style="gap:14px;">
+        <div>
+          <div style="font-weight:600;font-size:13px;">📏 Tabla de tamaño → peso</div>
+          <div style="font-size:11.5px;opacity:.7;margin-bottom:6px;">Alto en cm y peso típico en gramos de un amigurumi de ese tamaño.</div>
+          <div id="ctzTamFilas">${filasTam}</div>
+          <button class="btn-mini editar" onclick="agregarFilaTamanoCtz()">+ Otro tamaño</button>
+          ${reales}
+        </div>
+        <div>
+          <label for="ctzCfgHoras">Horas de tejido que produce el Taller al mes</label>
+          <input type="number" id="ctzCfgHoras" min="1" step="1" value="${p.horas_produccion_mes || ''}" placeholder="Ej: 360">
+          <div style="font-size:11.5px;opacity:.7;">Con esto se reparten los costos fijos del Taller por hora de producción.</div>
+          <label for="ctzCfgSimple">Tarifa del SIMPLE (% de las ventas)</label>
+          <input type="number" id="ctzCfgSimple" min="0" step="0.1" value="${p.tarifa_simple_pct ?? ''}" placeholder="La confirma el contador">
+          <label for="ctzCfgMargen">Utilidad bruta (% del precio)</label>
+          <input type="number" id="ctzCfgMargen" min="1" max="90" step="1" value="${p.margen_pct}">
+          <div style="font-weight:600;font-size:13px;margin-top:10px;">Costos fijos del Taller al mes</div>${fijos}
+          <div class="resumen-fila total"><span>Total</span><strong>${formatearMoneda((p.costos_fijos_taller || []).reduce((t, f) => t + Number(f.valor_mes || 0), 0))}</strong></div>
+        </div>
+      </div>
+      <button class="btn-mini guardar" style="margin-top:10px;" onclick="guardarConfigCotizador(this)">Guardar valores</button>
+      <div class="mensaje" id="mensajeCtzConfig"></div>`;
+  }
+
+  function agregarFilaTamanoCtz() {
+    document.getElementById('ctzTamFilas').insertAdjacentHTML('beforeend', `
+      <div class="ctz-tam" style="display:flex;gap:8px;margin-bottom:6px;">
+        <input type="number" class="ctz-tam-cm" min="1" step="0.5" placeholder="cm" style="max-width:110px;" aria-label="Alto en cm">
+        <input type="number" class="ctz-tam-g" min="1" step="1" placeholder="gramos" style="max-width:130px;" aria-label="Peso en gramos">
+      </div>`);
+  }
+
+  async function guardarConfigCotizador(boton) {
+    const tamanos = [...document.querySelectorAll('#ctzTamFilas .ctz-tam')].map(f => ({ cm: Number(f.querySelector('.ctz-tam-cm').value), peso_g: Number(f.querySelector('.ctz-tam-g').value) }))
+      .filter(t => t.cm > 0 && t.peso_g > 0);
+    const simpleTxt = document.getElementById('ctzCfgSimple').value;
+    boton.disabled = true;
+    const { error } = await supabaseClient.rpc('fn_cotizador_guardar_config', {
+      p_horas_mes: Number(document.getElementById('ctzCfgHoras').value) || null,
+      p_simple_pct: simpleTxt === '' ? null : Number(simpleTxt),
+      p_margen_pct: Number(document.getElementById('ctzCfgMargen').value) || null,
+      p_tamanos: tamanos,
+    });
+    boton.disabled = false;
+    if (error) { mostrarMensaje('mensajeCtzConfig', 'No se pudo guardar: ' + error.message, 'error'); return; }
+    mostrarMensaje('mensajeCtzConfig', '✅ Guardado.', 'exito');
+    await cargarCotizador();
+  }
+
   let carritoCotizacion = [];
   let filtroCotizacionesActual = '';
 
   async function mostrarPantallaCotizaciones() {
+    cargarCotizador();
     mostrarPantalla('pantallaCotizaciones');
     carritoCotizacion = [];
     renderizarItemsCotizacion();
