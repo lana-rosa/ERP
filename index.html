@@ -3883,6 +3883,7 @@
         <input type="text" id="ctzDesc" placeholder="Ej: Amigurumi personalizado de mascota con gafas">
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
           <div style="flex:1;min-width:120px;"><label for="ctzTamano">Alto (cm)</label><input type="number" id="ctzTamano" min="1" step="0.5" oninput="calcularCotizador(true)"></div>
+          <div style="flex:1;min-width:120px;"><label for="ctzAncho">Ancho (cm)</label><input type="number" id="ctzAncho" min="1" step="0.5" oninput="calcularCotizador()"></div>
           <div style="flex:1;min-width:120px;"><label for="ctzPeso">Peso estimado (g)</label><input type="number" id="ctzPeso" min="0" step="1" oninput="calcularCotizador()"></div>
         </div>
         <div id="ctzPesoAyuda" style="font-size:11.5px;opacity:.7;margin-top:2px;"></div>
@@ -3890,8 +3891,9 @@
           <div style="flex:1;min-width:120px;"><label for="ctzHorasTejido">Horas de tejido</label><input type="number" id="ctzHorasTejido" min="0" step="0.25" oninput="calcularCotizador()"></div>
           <div style="flex:1;min-width:120px;"><label for="ctzHorasDetalles">Horas de detalles</label><input type="number" id="ctzHorasDetalles" min="0" step="0.25" oninput="calcularCotizador()"></div>
         </div>
-        <label for="ctzInsumos">Insumos aparte del hilo <span style="font-size:10px;opacity:.6;">(ojos, accesorios, módulo de audio...)</span></label>
-        <input type="number" id="ctzInsumos" min="0" step="100" value="0" oninput="calcularCotizador()">
+        <label>Otros materiales que no están en la tienda <span style="font-size:10px;opacity:.6;">(ojos de seguridad, módulo de audio, accesorios...)</span></label>
+        <div id="ctzOtros"></div>
+        <button type="button" class="btn-mini editar" onclick="agregarOtroMaterialCtz()">+ Agregar material</button>
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
           <div style="flex:1;min-width:120px;"><label for="ctzCantidad">Cantidad</label><input type="number" id="ctzCantidad" min="1" step="1" value="1" oninput="calcularCotizador()"></div>
           <div style="flex:1;min-width:150px;"><label for="ctzPago">Forma de pago</label>
@@ -19063,6 +19065,15 @@
     return { peso: Math.round(ref.peso * Math.pow(cm / ref.cm, 2)), texto: `Fuera de la tabla: calculado a partir de ${ref.cm} cm (${ref.peso} g). Revísalo.` };
   }
 
+  function agregarOtroMaterialCtz() {
+    document.getElementById('ctzOtros').insertAdjacentHTML('beforeend', `
+      <div class="ctz-otro" style="display:flex;gap:8px;margin-bottom:6px;align-items:center;">
+        <input type="text" class="ctz-otro-n" placeholder="Ej: Módulo de sonido" aria-label="Material" style="flex:2;" oninput="calcularCotizador()">
+        <input type="number" class="ctz-otro-v" min="0" step="100" placeholder="Valor $" aria-label="Valor" style="flex:1;" oninput="calcularCotizador()">
+        <button type="button" class="btn-mini desactivar" aria-label="Quitar" onclick="this.parentElement.remove();calcularCotizador()">✕</button>
+      </div>`);
+  }
+
   let ctzUltimo = null;
   function calcularCotizador(desdeTamano) {
     if (!ctzParams) return;
@@ -19078,7 +19089,8 @@
     const peso = num('ctzPeso'), horas = num('ctzHorasTejido') + num('ctzHorasDetalles');
     const cant = Math.max(1, Math.round(num('ctzCantidad')));
     const hilo = peso * Number(p.precio_gramo || 0);
-    const insumos = num('ctzInsumos');
+    const otros = [...document.querySelectorAll('#ctzOtros .ctz-otro')].map(f => ({ nombre: f.querySelector('.ctz-otro-n').value.trim(), valor: Number(f.querySelector('.ctz-otro-v').value) || 0 })).filter(o => o.valor > 0);
+    const insumos = otros.reduce((t, o) => t + o.valor, 0);
     const etiqueta = Number(p.costo_etiqueta || 0);
     const manoObra = horas * Number(p.valor_hora || 0);
     const fijosMes = (p.costos_fijos_taller || []).reduce((t, f) => t + Number(f.valor_mes || 0), 0);
@@ -19105,7 +19117,7 @@
     document.getElementById('ctzResultado').innerHTML = `
       <div style="font-size:12px;font-weight:700;opacity:.7;margin-bottom:4px;">COSTO DE PRODUCCIÓN (por unidad)</div>
       ${fila('Hilo', hilo, false, `${formatearCantidad(peso)} g × ${formatearMoneda(p.precio_gramo)}`)}
-      ${insumos ? fila('Otros insumos', insumos) : ''}
+      ${otros.map(o => fila(escaparHtml(o.nombre || 'Otro material'), o.valor)).join('')}
       ${fila('Etiqueta', etiqueta)}
       ${fila('Mano de obra', manoObra, false, `${formatearCantidad(horas)} h × ${formatearMoneda(p.valor_hora)}`)}
       ${fila('Costos fijos del Taller', fijos, false, horasMes > 0 ? `${formatearCantidad(horas)} h × ${formatearMoneda(tasaFija)} por hora (${formatearMoneda(fijosMes)} al mes ÷ ${formatearCantidad(horasMes)} h)` : '⚠️ Falta configurar las horas de producción al mes (abajo, en ⚙️)')}
@@ -19125,7 +19137,9 @@
     if (!ctzUltimo || !ctzUltimo.precio) { mostrarMensaje('mensajeCotizacion', 'Primero calcula el precio del amigurumi.', 'error'); return; }
     const desc = document.getElementById('ctzDesc').value.trim() || 'Amigurumi personalizado';
     const cm = Number(document.getElementById('ctzTamano').value) || 0;
-    carritoCotizacion.push({ descripcion: desc + (cm ? ` (${cm} cm)` : ''), cantidad: ctzUltimo.cant, precio_unitario: ctzUltimo.precio });
+    const an = Number(document.getElementById('ctzAncho').value) || 0;
+    const medida = cm && an ? ` (${cm} cm de alto × ${an} cm de ancho)` : cm ? ` (${cm} cm de alto)` : an ? ` (${an} cm de ancho)` : '';
+    carritoCotizacion.push({ descripcion: desc + medida, cantidad: ctzUltimo.cant, precio_unitario: ctzUltimo.precio });
     if (ctzUltimo.bolsa) carritoCotizacion.push({ descripcion: ctzUltimo.bolsa === 2000 ? 'Bolsa de tela' : 'Bolsa de papel', cantidad: 1, precio_unitario: ctzUltimo.bolsa });
     if (ctzUltimo.envio) carritoCotizacion.push({ descripcion: 'Envío', cantidad: 1, precio_unitario: ctzUltimo.envio });
     renderizarItemsCotizacion();
