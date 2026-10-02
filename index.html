@@ -1068,6 +1068,7 @@
         <div class="sidebar-seccion">Reportes e indicadores</div>
         <button class="nav-btn" id="nav-reportes-financieros" onclick="mostrarPantallaReportesFinancieros()"><span class="nav-icon">📊</span> Informes de Ventas</button>
         <button class="nav-btn" id="nav-costeo-real" onclick="mostrarPantallaCosteoReal()"><span class="nav-icon">🧮</span> Costeo Real</button>
+        <button class="nav-btn" id="nav-informe-costos" onclick="mostrarPantallaInformeCostos()"><span class="nav-icon">🏷️</span> Informe de costos por área</button>
         <button class="nav-btn" id="nav-presupuesto-empresa" onclick="mostrarPantallaPresupuestoEmpresa()"><span class="nav-icon">💰</span> Presupuesto</button>
         <div class="sidebar-seccion">Bancos y tesorería</div>
         <button class="nav-btn" id="nav-reportes" onclick="mostrarPantallaReportes()"><span class="nav-icon">📈</span> Reportes de turno</button>
@@ -1839,6 +1840,25 @@
 <!-- Ventanas del paso a paso de producción: se usan desde Órdenes de producción y desde Mi producción -->
 <div id="fichaProduccion" class="fp-fondo oculto" role="dialog" aria-modal="true" aria-labelledby="fpTitulo"></div>
 <div id="fichaPausa" class="fp-pausa oculto" role="alertdialog" aria-labelledby="fpPausaTit"></div>
+
+<!-- ===== PANTALLA: INFORME DE COSTOS POR ÁREA ===== -->
+<div id="pantallaInformeCostos" class="oculto contenido">
+  <div class="page-header">
+    <h1>🏷️ Informe de costos por área</h1>
+    <div class="subtitulo">Ingresos, costos y gastos de toda la empresa y de cada área: Mercería, Taller de Tejido y Academia. Sale de la contabilidad: cada venta, compra, gasto y pago queda en el área donde se registró.</div>
+  </div>
+  <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px;">
+    <div><label for="icDesde" style="font-size:11px;">Desde</label><input type="date" id="icDesde" onchange="cargarInformeCostos()" style="padding:9px 10px;"></div>
+    <div><label for="icHasta" style="font-size:11px;">Hasta</label><input type="date" id="icHasta" onchange="cargarInformeCostos()" style="padding:9px 10px;"></div>
+    <div class="filtro-tipo" style="margin:0;">
+      <button class="chip-filtro" onclick="periodoInformeCostos('mes', this)">Este mes</button>
+      <button class="chip-filtro" onclick="periodoInformeCostos('anterior', this)">Mes anterior</button>
+      <button class="chip-filtro" onclick="periodoInformeCostos('anio', this)">Este año</button>
+    </div>
+    <button class="btn-secundario" style="width:auto;margin:0;" onclick="imprimirSeccion('pantallaInformeCostos', 'Informe de costos por área')">🖨️ PDF</button>
+  </div>
+  <div id="contenidoInformeCostos"><div class="cargando">Cargando...</div></div>
+</div>
 
 <!-- ===== PANTALLA: MI PRODUCCIÓN (tejedoras) ===== -->
 <div id="pantallaMiProduccion" class="oculto contenido">
@@ -5503,7 +5523,7 @@
   });
 
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaInventarioGlobal', 'pantallaFacturacionElectronica', 'pantallaServiciosDian', 'pantallaCorreoEmpresa', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb', 'pantallaTextosWeb', 'pantallaPaypalConfig', 'pantallaMiProduccion'];
+    const pantallas = ['pantallaLogin', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaInventarioGlobal', 'pantallaFacturacionElectronica', 'pantallaServiciosDian', 'pantallaCorreoEmpresa', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb', 'pantallaTextosWeb', 'pantallaPaypalConfig', 'pantallaMiProduccion', 'pantallaInformeCostos'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -5529,6 +5549,7 @@
       pantallaPedidosCrm: 'nav-consumotaller',
       pantallaOrdenesProduccion: 'nav-ordenes-produccion',
       pantallaMiProduccion: 'nav-mi-produccion',
+      pantallaInformeCostos: 'nav-informe-costos',
       pantallaKardexEtapas: 'nav-kardex-etapas',
       pantallaInventarioGlobal: 'nav-inventario-global',
       pantallaFacturacionElectronica: 'nav-facturacion-electronica',
@@ -5931,6 +5952,7 @@
     mostrar('nav-talento-humano', esAdmin);
     mostrar('nav-reportes-financieros', esAdmin || esContador);
     mostrar('nav-costeo-real', esAdmin || esContador);
+    mostrar('nav-informe-costos', esAdmin || esContador);
     mostrar('nav-presupuesto-empresa', esAdmin || esContador);
     mostrar('nav-dashboard-contable', esAdmin || esContador);
     mostrar('nav-honorarios-tejedoras', esAdmin || esContador);
@@ -10346,6 +10368,87 @@
   window.addEventListener('beforeunload', (e) => {
     if (fichaActiva && (corriendo('tejido') || corriendo('detalles'))) { guardarFichaProduccion(); e.preventDefault(); e.returnValue = ''; }
   });
+
+  // ============================================================================
+  // INFORME DE COSTOS: global y por área (Mercería, Taller, Academia)
+  // ============================================================================
+  async function mostrarPantallaInformeCostos() {
+    mostrarPantalla('pantallaInformeCostos');
+    if (!document.getElementById('icDesde').value) {
+      const hoy = new Date();
+      document.getElementById('icDesde').value = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().slice(0, 10);
+      document.getElementById('icHasta').value = hoy.toISOString().slice(0, 10);
+    }
+    await cargarInformeCostos();
+  }
+
+  function periodoInformeCostos(cual, boton) {
+    document.querySelectorAll('#pantallaInformeCostos .chip-filtro').forEach(b => b.classList.toggle('activo', b === boton));
+    const hoy = new Date();
+    let desde, hasta;
+    if (cual === 'mes') { desde = new Date(hoy.getFullYear(), hoy.getMonth(), 1); hasta = hoy; }
+    else if (cual === 'anterior') { desde = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1); hasta = new Date(hoy.getFullYear(), hoy.getMonth(), 0); }
+    else { desde = new Date(hoy.getFullYear(), 0, 1); hasta = hoy; }
+    const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    document.getElementById('icDesde').value = iso(desde);
+    document.getElementById('icHasta').value = iso(hasta);
+    cargarInformeCostos();
+  }
+
+  async function cargarInformeCostos() {
+    const cont = document.getElementById('contenidoInformeCostos');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    const { data, error } = await supabaseClient.rpc('fn_informe_costos_areas', {
+      p_desde: document.getElementById('icDesde').value, p_hasta: document.getElementById('icHasta').value,
+    });
+    if (error) { cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(error.message)}</div>`; return; }
+    const areas = data.areas || {};
+    const columnas = [['01', 'Mercería'], ['03', 'Taller'], ['04', 'Academia']];
+    Object.keys(areas).filter(k => !['01', '03', '04'].includes(k)).forEach(k => columnas.push([k, (data.nombres || {})[k] || 'Sin área']));
+    const g = (area, grupo) => Number(((areas[area] || {}).grupos || {})[grupo] || 0);
+    const total = (grupo) => columnas.reduce((t, [k]) => t + g(k, grupo), 0);
+    const calc = (k) => {
+      const ing = g(k, 'ingresos') + g(k, 'otros_ingresos');
+      const bruta = g(k, 'ingresos') - g(k, 'costo_ventas');
+      const oper = bruta - g(k, 'gastos_admin') - g(k, 'gastos_ventas');
+      return { ing, bruta, oper, neta: oper + g(k, 'otros_ingresos') - g(k, 'no_operacionales') };
+    };
+    const dinero = (v) => v < 0 ? '−' + formatearMoneda(Math.abs(v)) : formatearMoneda(v);
+    const ncol = columnas.length + 2;
+    const col = `grid-template-columns:1.7fr repeat(${ncol - 1}, minmax(95px, 1fr));`;
+    const filaGrupo = (titulo, grupo, opciones = {}) => {
+      const vals = columnas.map(([k]) => opciones.fn ? opciones.fn(k) : g(k, grupo));
+      const tot = opciones.fn ? vals.reduce((a, b) => a + b, 0) : total(grupo);
+      const detalle = grupo && !opciones.fn ? columnas.flatMap(([k]) => ((areas[k] || {}).detalle || []).filter(d => d.grupo === grupo).map(d => d.cuenta + ' ' + d.nombre)) : [];
+      const cuentas = [...new Set(detalle)];
+      const filasDetalle = cuentas.map(c => {
+        const codigo = c.split(' ')[0];
+        const v = columnas.map(([k]) => ((areas[k] || {}).detalle || []).filter(d => d.cuenta === codigo).reduce((t, d) => t + Number(d.valor), 0));
+        return `<div class="tabla-lista-fila" style="${col}cursor:default;font-size:11.5px;opacity:.8;"><span style="padding-left:14px;">${escaparHtml(c)}</span>${v.map(x => `<span style="text-align:right;">${x ? dinero(x) : '—'}</span>`).join('')}<span style="text-align:right;">${dinero(v.reduce((a, b) => a + b, 0))}</span></div>`;
+      }).join('');
+      return `<div class="tabla-lista-fila" style="${col}cursor:default;${opciones.fuerte ? 'font-weight:700;background:var(--tinte-rosa);' : ''}"><span>${titulo}</span>${vals.map(v => `<span style="text-align:right;">${dinero(v)}</span>`).join('')}<span style="text-align:right;font-weight:700;">${dinero(tot)}</span></div>${filasDetalle}`;
+    };
+    const vacio = !Object.keys(areas).length;
+    cont.innerHTML = vacio ? '<div class="cargando">No hay movimientos contables en este período.</div>' : `
+      <div style="overflow-x:auto;">
+      <div class="tabla-lista" style="min-width:${180 + ncol * 100}px;">
+        <div class="tabla-lista-header header-rosa" style="${col}"><span>CONCEPTO</span>${columnas.map(([, n]) => `<span style="text-align:right;">${escaparHtml(n.toUpperCase())}</span>`).join('')}<span style="text-align:right;">TOTAL EMPRESA</span></div>
+        ${filaGrupo('Ingresos por ventas', 'ingresos')}
+        ${filaGrupo('− Costo de lo vendido', 'costo_ventas')}
+        ${filaGrupo('Utilidad bruta', null, { fn: k => calc(k).bruta, fuerte: true })}
+        ${filaGrupo('− Gastos de administración', 'gastos_admin')}
+        ${filaGrupo('− Gastos de ventas', 'gastos_ventas')}
+        ${filaGrupo('Utilidad operacional', null, { fn: k => calc(k).oper, fuerte: true })}
+        ${filaGrupo('+ Otros ingresos', 'otros_ingresos')}
+        ${filaGrupo('− Gastos no operacionales (financieros)', 'no_operacionales')}
+        ${filaGrupo('Utilidad del período (antes de impuestos)', null, { fn: k => calc(k).neta, fuerte: true })}
+        ${total('costos_produccion') ? filaGrupo('Costos de producción del período (Taller)', 'costos_produccion') : ''}
+      </div></div>
+      <div style="font-size:11.5px;opacity:.7;margin-top:10px;line-height:1.6;">
+        Los gastos que se registran como "repartidos" (arriendo, servicios, software, publicidad, contador) ya aparecen 1/3 en cada área.
+        Los "Costos de producción del período" son lo que el Taller gastó en producir (material, mano de obra, honorarios de tejedoras externas y costos indirectos); pasan al inventario y, cuando se vende la pieza, al "Costo de lo vendido".
+      </div>`;
+  }
 
   // ============================================================================
   // MI PRODUCCIÓN: pantalla de las tejedoras (antes llenaban el paso a paso en el CRM)
