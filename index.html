@@ -1003,6 +1003,7 @@
   <div class="sidebar-nav">
     <button class="nav-btn" id="nav-dashboard" onclick="mostrarPantallaDashboard()"><span class="nav-icon">🏠</span> Dashboard</button>
     <button class="nav-btn" id="nav-calendario" onclick="mostrarPantallaCalendario()"><span class="nav-icon">📅</span> Calendario del equipo</button>
+    <button class="nav-btn" id="nav-mi-produccion" onclick="mostrarPantallaMiProduccion()" style="display:none;"><span class="nav-icon">🧵</span> Mi producción</button>
     <button class="nav-btn" id="nav-enviar-correo" onclick="abrirRedactarCorreo()" style="display:none;"><span class="nav-icon">✉️</span> Enviar correo</button>
 
     <!-- 1. VENTAS Y CLIENTES -->
@@ -1833,8 +1834,28 @@
     <button class="chip-filtro" data-filtro-op="todas" onclick="filtrarOrdenesProduccion('todas', this)">📋 Todas</button>
   </div>
   <div id="listaOrdenesProduccion"><div class="cargando">Cargando...</div></div>
-  <div id="fichaProduccion" class="fp-fondo oculto" role="dialog" aria-modal="true" aria-labelledby="fpTitulo"></div>
-  <div id="fichaPausa" class="fp-pausa oculto" role="alertdialog" aria-labelledby="fpPausaTit"></div>
+</div>
+
+<!-- Ventanas del paso a paso de producción: se usan desde Órdenes de producción y desde Mi producción -->
+<div id="fichaProduccion" class="fp-fondo oculto" role="dialog" aria-modal="true" aria-labelledby="fpTitulo"></div>
+<div id="fichaPausa" class="fp-pausa oculto" role="alertdialog" aria-labelledby="fpPausaTit"></div>
+
+<!-- ===== PANTALLA: MI PRODUCCIÓN (tejedoras) ===== -->
+<div id="pantallaMiProduccion" class="oculto contenido">
+  <div class="page-header">
+    <h1>🧵 Mi producción</h1>
+    <div class="subtitulo" id="miProduccionSubtitulo">Las piezas que tienes por tejer. Abre una y llena el paso a paso: cronómetro, material que gastaste, foto y peso de la pieza terminada.</div>
+  </div>
+  <div class="mensaje" id="mensajeMiProduccion"></div>
+  <details id="panelAccesoTejedoras" class="panel oculto" style="max-width:none;max-height:none;margin-bottom:16px;">
+    <summary style="cursor:pointer;font-weight:700;">👩‍🎨 Acceso de las tejedoras al ERP (solo administradora)</summary>
+    <div style="font-size:12.5px;opacity:.8;margin:8px 0 12px;">Une cada usuario del ERP con su nombre de tejedora. Con <strong>"Solo producción"</strong> la persona solo ve esta pantalla (ideal para las tejedoras externas). Los usuarios nuevos se crean en Configuración → Gestión de usuarios con el rol <strong>Taller</strong>.</div>
+    <div id="listaAccesoTejedoras"><div class="cargando">Cargando...</div></div>
+  </details>
+  <h2 style="font-size:15px;margin:6px 0 10px;">Por tejer</h2>
+  <div id="listaMiProduccionPendientes"><div class="cargando">Cargando...</div></div>
+  <h2 style="font-size:15px;margin:18px 0 10px;">Terminadas (últimos 45 días)</h2>
+  <div id="listaMiProduccionTerminadas"></div>
 </div>
 
 <!-- ===== PANTALLA: KARDEX POR ETAPAS ===== -->
@@ -5413,7 +5434,7 @@
   });
 
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaInventarioGlobal', 'pantallaFacturacionElectronica', 'pantallaServiciosDian', 'pantallaCorreoEmpresa', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb', 'pantallaTextosWeb', 'pantallaPaypalConfig'];
+    const pantallas = ['pantallaLogin', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaInventarioGlobal', 'pantallaFacturacionElectronica', 'pantallaServiciosDian', 'pantallaCorreoEmpresa', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb', 'pantallaTextosWeb', 'pantallaPaypalConfig', 'pantallaMiProduccion'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -5438,6 +5459,7 @@
       pantallaConsumoTaller: 'nav-consumotaller',
       pantallaPedidosCrm: 'nav-consumotaller',
       pantallaOrdenesProduccion: 'nav-ordenes-produccion',
+      pantallaMiProduccion: 'nav-mi-produccion',
       pantallaKardexEtapas: 'nav-kardex-etapas',
       pantallaInventarioGlobal: 'nav-inventario-global',
       pantallaFacturacionElectronica: 'nav-facturacion-electronica',
@@ -5636,12 +5658,19 @@
   // ============================================================================
   async function despuesDeLogin() {
     mostrarPantalla('pantallaCargando');
+    await cargarMiTejedora();
 
     // El menú lateral se configura aquí, apenas se sabe el rol — así siempre
     // aparece completo, sin depender de si ya se abrió un turno o no.
     configurarSidebarPorRol();
     actualizarSidebar();
     cargarLogoEmpresa();
+
+    // Las tejedoras (que no son administradoras) entran directo a su producción.
+    if (miTejedora.vinculada && rolActual !== 'administrador') {
+      await mostrarPantallaMiProduccion();
+      return;
+    }
 
     // El rol Taller no maneja caja ni turnos: va directo a sus órdenes de producción.
     if (rolActual === 'taller') {
@@ -5848,6 +5877,13 @@
     document.getElementById('barraBusquedaGlobal').classList.remove('oculto');
     mostrar('nav-calendario', true);
     mostrar('nav-enviar-correo', esAdmin || esContador);
+    mostrar('nav-mi-produccion', esAdmin || !!miTejedora.vinculada);
+    // Tejedoras con "solo producción": solo ven Mi producción (y Apariencia / Mi perfil en Configuración).
+    if (miTejedora.solo_produccion && !esAdmin) {
+      ['nav-dashboard', 'nav-calendario', 'deptoVentasGrupo', 'deptoComprasGrupo', 'deptoInventarioGrupo', 'deptoContabilidadGrupo',
+       'deptoTalentoGrupo', 'deptoFondoEmprenderGrupo', 'nav-turno', 'nav-enviar-correo', 'nav-nomina-electronica']
+        .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+    }
     document.querySelectorAll('.btn-correo-informe').forEach(b => { b.style.display = (esAdmin || esContador) ? '' : 'none'; });
 
     // Si el usuario solo tiene un departamento, se abre expandido automáticamente
@@ -9655,6 +9691,7 @@
     const { data, error } = await supabaseClient.rpc('fn_op_listar', { p_estado: filtroOrdenesProduccion });
     if (error) { cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(error.message)}</div>`; return; }
     ordenesProduccionCache = data || [];
+    await cargarParametrosCosteo();
     const { data: fichas } = await supabaseClient.rpc('fn_op_fichas', { p_ordenes: ordenesProduccionCache.map(o => o.id) });
     fichasProduccionCache = fichas || {};
     renderizarOrdenesProduccion();
@@ -9748,12 +9785,12 @@
   // ============================================================================
   const PASOS_PRODUCCION = [
     { id: 'patron',      icono: '📋', titulo: 'Selección de patrón',      desc: 'Elige el patrón correcto para este pedido. Verifica que coincida con la imagen de referencia del cliente.' },
-    { id: 'materiales',  icono: '🎨', titulo: 'Selección de materiales',  desc: 'Prepara todos los materiales: lana del color correcto, aguja adecuada, relleno, ojos, accesorios específicos.' },
+    { id: 'materiales',  icono: '🎨', titulo: 'Selección de materiales',  desc: 'Prepara todos los materiales: lana del color correcto, aguja adecuada, relleno, ojos, accesorios específicos. Registra aquí lo que vas a gastar de cada insumo: se descuenta del inventario del Taller y suma al costo de la pieza. Puedes agregar más en cualquier momento.' },
     { id: 'tejido',      icono: '🧵', titulo: 'Tiempo de tejido',         desc: 'Teje la pieza siguiendo el patrón. Usa el cronómetro para registrar el tiempo. Cada 60 minutos suena una alarma de pausa activa.' },
     { id: 'detalles',    icono: '✨', titulo: 'Tiempo de detalles',       desc: 'Agrega todos los detalles específicos del cliente: gafas, ropa, accesorios, color de ojos, bordados, etc.' },
     { id: 'marquilla',   icono: '🏷️', titulo: 'Poner marquilla',          desc: 'Coloca la marquilla de Lana Rosa Crochet. Asegúrate de que esté bien cosida y visible.' },
     { id: 'calidad',     icono: '🔍', titulo: 'Control de calidad',       desc: 'Revisa toda la pieza: puntadas uniformes, relleno parejo, detalles correctos, sin hilos sueltos. Si hay algo mal, corrígelo antes de continuar.' },
-    { id: 'foto',        icono: '📷', titulo: 'Tomar foto del resultado', desc: 'Toma una foto de la pieza terminada. Queda guardada en la orden y sirve para redes sociales, portafolio o catálogo.' },
+    { id: 'foto',        icono: '📷', titulo: 'Foto y peso de la pieza',   desc: 'Toma una foto de la pieza terminada y pésala en gramos (sin empaque). La foto queda en la orden y sirve para redes sociales, portafolio o catálogo.' },
     { id: 'empaquetado', icono: '📦', titulo: 'Empaquetado',              desc: 'Empaca la pieza con el packaging de Lana Rosa. Incluye la tarjeta con el mensaje personalizado del cliente. Deja todo listo para entrega.' },
   ];
   const PAUSA_ACTIVA_SEG = 60 * 60;
@@ -9783,7 +9820,7 @@
     const manoObra = f && f.mano_obra != null && f.terminada_at ? Number(f.mano_obra) : null;
     const texto = !f ? 'Paso a paso sin empezar'
       : `Paso a paso: ${hechos} de ${pasos.length} pasos${t ? ' · ' + formatoHorasCorto(t) + ' de trabajo' : ''}${f.tejedora ? ' · ' + escaparHtml(f.tejedora) : ''}`
-        + (manoObra !== null ? `<br>Mano de obra: <strong>${formatearMoneda(manoObra)}</strong>${o.estado !== 'en_proceso' ? ` · Costo total (material + mano de obra): <strong>${formatearMoneda(Number(o.costo_material || 0) + manoObra)}</strong>` : ''}` : '');
+        + (manoObra !== null ? '<br>' + textoCostoOrden(o, f, manoObra) : '');
     return `
       <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:10px;padding:10px 12px;border-radius:var(--radius-md);background:var(--tinte-rosa);">
         ${f && f.foto_url ? `<img src="${escaparHtml(f.foto_url)}" alt="" style="width:44px;height:44px;border-radius:10px;object-fit:cover;">` : ''}
@@ -9836,8 +9873,16 @@
       foto_url: f.foto_url || null,
       terminada_at: f.terminada_at || null,
       existe: !!data,
-      soloLectura: o.estado !== 'en_proceso' || !(rolActual === 'administrador' || rolActual === 'taller'),
+      soloLectura: o.estado !== 'en_proceso' || !(rolActual === 'administrador' || rolActual === 'taller' || miTejedora.vinculada),
+      peso_gramos: f.peso_gramos || null,
     };
+    // Una tejedora que abre una pieza sin tejedora queda asignada a ella.
+    if (miTejedora.vinculada && rolActual !== 'administrador' && !fichaActiva.soloLectura && !fichaActiva.tejedora_id && !fichaActiva.tejedora_tercero_id) {
+      if (miTejedora.tipo === 'externa') fichaActiva.tejedora_tercero_id = miTejedora.id; else fichaActiva.tejedora_id = miTejedora.id;
+      fichaActiva.tejedora_nombre = null;
+    }
+    fichaMateriales = []; fichaInsumosTaller = [];
+    cargarMaterialesFicha(o.id);
     crono.tejido.base = Number((f.tiempos || {}).tejido) || 0;
     crono.detalles.base = Number((f.tiempos || {}).detalles) || 0;
     crono.tejido.desde = crono.detalles.desde = null;
@@ -9854,7 +9899,8 @@
     fichaActiva = null;
     document.getElementById('fichaProduccion').classList.add('oculto');
     document.body.style.overflow = '';
-    cargarOrdenesProduccion();
+    if (!document.getElementById('pantallaMiProduccion').classList.contains('oculto')) cargarMiProduccion();
+    else cargarOrdenesProduccion();
   }
 
   function renderizarFichaProduccion() {
@@ -9892,7 +9938,7 @@
 
         <div class="fp-resumen">
           <label for="fpTejedora" style="font-size:12.5px;font-weight:600;">🧶 Tejedora</label>
-          <select id="fpTejedora" onchange="cambiarTejedoraFicha(this.value)" ${fa.soloLectura ? 'disabled' : ''} style="margin-top:4px;">
+          <select id="fpTejedora" onchange="cambiarTejedoraFicha(this.value)" ${fa.soloLectura || (miTejedora.vinculada && rolActual !== 'administrador') ? 'disabled' : ''} style="margin-top:4px;">
             <option value="">— Elige quién la teje —</option>${opcionesTej}
           </select>
           <div class="fp-barra" style="margin-top:14px;"><div style="width:${pct}%;"></div></div>
@@ -9957,6 +10003,9 @@
         </div>
         <button class="fp-completar" onclick="completarPasoFicha('detalles')">✓ Detalles listos — continuar</button>`;
     }
+    if (id === 'materiales') {
+      return `${htmlMaterialesFicha()}<button class="fp-completar" onclick="completarPasoFicha('materiales')">✓ Materiales listos — continuar</button>`;
+    }
     if (id === 'foto') {
       const hay = fichaActiva.foto_url || fichaFotoArchivo;
       return `
@@ -9967,7 +10016,9 @@
           <strong>${hay ? 'Cambiar foto' : '📷 Tomar foto · 🖼️ Galería'}</strong>
           <div style="font-size:11.5px;opacity:.7;margin-top:4px;">Desde la cámara o la galería del celular</div>
         </div>
-        <button class="fp-completar" id="fpBtnFoto" onclick="completarFotoFicha()" ${hay ? '' : 'disabled'}>${hay ? '✓ Foto lista — continuar' : '📷 Sube una foto para continuar'}</button>`;
+        <label for="fpPeso" style="font-weight:600;">⚖️ Peso de la pieza terminada (gramos)</label>
+        <input type="number" id="fpPeso" min="1" step="0.5" inputmode="decimal" value="${fichaActiva.peso_gramos || ''}" placeholder="Ej: 120" oninput="fichaActiva.peso_gramos = Number(this.value) || null; actualizarBotonFoto()" style="margin:4px 0 12px;max-width:200px;">
+        <button class="fp-completar" id="fpBtnFoto" onclick="completarFotoFicha()" ${hay && fichaActiva.peso_gramos ? '' : 'disabled'}>${hay ? (fichaActiva.peso_gramos ? '✓ Foto y peso listos — continuar' : '⚖️ Escribe el peso para continuar') : '📷 Sube una foto para continuar'}</button>`;
     }
     return `<button class="fp-completar" onclick="completarPasoFicha('${id}')">✓ Paso completado — continuar</button>`;
   }
@@ -10160,9 +10211,19 @@
     renderizarFichaProduccion();
     const vista = document.getElementById('fpFotoVista');
     if (vista) vista.src = URL.createObjectURL(fichaFotoArchivo);
+    actualizarBotonFoto();
+  }
+
+  function actualizarBotonFoto() {
+    const btn = document.getElementById('fpBtnFoto');
+    if (!btn) return;
+    const hay = fichaActiva.foto_url || fichaFotoArchivo;
+    btn.disabled = !(hay && fichaActiva.peso_gramos);
+    btn.textContent = hay ? (fichaActiva.peso_gramos ? '✓ Foto y peso listos — continuar' : '⚖️ Escribe el peso para continuar') : '📷 Sube una foto para continuar';
   }
 
   async function completarFotoFicha() {
+    if (!fichaActiva.peso_gramos || fichaActiva.peso_gramos <= 0) { alert('Escribe el peso de la pieza en gramos.'); return; }
     const btn = document.getElementById('fpBtnFoto');
     if (fichaFotoArchivo) {
       if (btn) { btn.disabled = true; btn.textContent = '⏳ Subiendo foto...'; }
@@ -10192,6 +10253,7 @@
       pasos_estado: fa.pasos,
       tiempos: { tejido: Math.round(segundosDe('tejido')), detalles: Math.round(segundosDe('detalles')) },
       foto_url: fa.foto_url,
+      peso_gramos: fa.peso_gramos || null,
       terminada_at: fa.terminada_at,
       updated_at: new Date().toISOString(),
     };
@@ -10208,6 +10270,177 @@
   window.addEventListener('beforeunload', (e) => {
     if (fichaActiva && (corriendo('tejido') || corriendo('detalles'))) { guardarFichaProduccion(); e.preventDefault(); e.returnValue = ''; }
   });
+
+  // ============================================================================
+  // MI PRODUCCIÓN: pantalla de las tejedoras (antes llenaban el paso a paso en el CRM)
+  // ============================================================================
+  let miTejedora = { vinculada: false };
+  let parametrosCosteo = null;
+  let fichaMateriales = [];
+  let fichaInsumosTaller = [];
+
+  async function cargarMiTejedora() {
+    try {
+      const { data } = await supabaseClient.rpc('fn_mi_tejedora');
+      miTejedora = data || { vinculada: false };
+    } catch (e) { miTejedora = { vinculada: false }; }
+  }
+
+  async function cargarParametrosCosteo() {
+    if (parametrosCosteo) return parametrosCosteo;
+    const { data } = await supabaseClient.rpc('fn_parametros_costeo');
+    parametrosCosteo = data || { precio_gramo: 100, costo_etiqueta: 1000, costo_empaque: 2000 };
+    return parametrosCosteo;
+  }
+
+  // Costo de producción (directo): mano de obra + materia prima registrada + etiqueta (va cosida en la pieza).
+  // El empaque o bolsa no es costo: se le cobra al cliente si lo quiere. Los gastos variables de venta
+  // (comisión de Wompi/PayPal, envío asumido...) van en la ficha de costos y precios, no aquí.
+  function textoCostoOrden(o, f, manoObra) {
+    const p = parametrosCosteo || {};
+    const material = Number(o.costo_material || o.valor_en_proceso || 0);
+    const etiqueta = Number(p.costo_etiqueta ?? 1000);
+    const produccion = manoObra + material + etiqueta;
+    return `Costo de producción: mano de obra <strong>${formatearMoneda(manoObra)}</strong> + materia prima <strong>${formatearMoneda(material)}</strong> + etiqueta ${formatearMoneda(etiqueta)} = <strong>${formatearMoneda(produccion)}</strong>`
+      + (f && f.peso_gramos ? ` · ⚖️ ${formatearCantidad(f.peso_gramos)} g` : '');
+  }
+
+  async function mostrarPantallaMiProduccion() {
+    mostrarPantalla('pantallaMiProduccion');
+    ocultarMensaje('mensajeMiProduccion');
+    document.getElementById('miProduccionSubtitulo').textContent = miTejedora.vinculada
+      ? `Hola, ${miTejedora.nombre}. Estas son las piezas que tienes por tejer y las que no tienen tejedora todavía. Abre una y llena el paso a paso: cronómetro, material que gastaste, foto y peso de la pieza terminada.`
+      : 'Todas las piezas en proceso. Abre una y llena el paso a paso: cronómetro, material que gastaste, foto y peso de la pieza terminada.';
+    const panel = document.getElementById('panelAccesoTejedoras');
+    panel.classList.toggle('oculto', rolActual !== 'administrador');
+    if (rolActual === 'administrador') cargarAccesoTejedoras();
+    await cargarMiProduccion();
+  }
+
+  async function cargarMiProduccion() {
+    const contP = document.getElementById('listaMiProduccionPendientes');
+    const contT = document.getElementById('listaMiProduccionTerminadas');
+    contP.innerHTML = '<div class="cargando">Cargando...</div>';
+    const { data, error } = await supabaseClient.rpc('fn_mis_ordenes_produccion');
+    if (error) { contP.innerHTML = `<div class="cargando">${escaparHtml(error.message)}</div>`; contT.innerHTML = ''; return; }
+    // El paso a paso usa la misma lista que Órdenes de producción.
+    ordenesProduccionCache = (data || []).map(o => Object.assign({ materiales: [] }, o));
+    fichasProduccionCache = Object.fromEntries(ordenesProduccionCache.filter(o => o.ficha).map(o => [o.id, o.ficha]));
+    const pendientes = ordenesProduccionCache.filter(o => o.estado === 'en_proceso');
+    const terminadas = ordenesProduccionCache.filter(o => o.estado !== 'en_proceso');
+    const tarjeta = (o) => {
+      const f = o.ficha;
+      const pasos = pasosDeOrden(o);
+      const hechos = f ? pasos.filter(p => (f.pasos_estado || {})[p.id] === 'done').length : 0;
+      const t = f ? (Number((f.tiempos || {}).tejido) || 0) + (Number((f.tiempos || {}).detalles) || 0) : 0;
+      const destino = esOrdenParaStock(o) ? '📦 Para inventario' : `🧾 Pedido ${escaparHtml(o.pedido || '')}`;
+      return `
+        <div class="panel" style="max-width:none;max-height:none;margin-bottom:12px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+          ${f && f.foto_url ? `<img src="${escaparHtml(f.foto_url)}" alt="" style="width:56px;height:56px;border-radius:12px;object-fit:cover;">` : '<div style="width:56px;height:56px;border-radius:12px;background:var(--tinte-rosa);display:flex;align-items:center;justify-content:center;font-size:24px;">🧶</div>'}
+          <div style="flex:1;min-width:180px;">
+            <div class="fredoka" style="font-size:15px;"><span style="color:var(--rosa-principal);">${escaparHtml(o.orden)}</span> · ${escaparHtml(o.descripcion || '')}</div>
+            <div style="font-size:12px;opacity:.75;margin-top:2px;">${destino} · ${formatearCantidad(o.cantidad_planeada)} unidad(es)${f && f.tejedora ? ' · ' + escaparHtml(f.tejedora) : ' · Sin tejedora'}</div>
+            <div style="font-size:12px;margin-top:4px;">${hechos} de ${pasos.length} pasos${t ? ' · ⏱️ ' + formatoHorasCorto(t) : ''}${f && f.peso_gramos ? ' · ⚖️ ' + formatearCantidad(f.peso_gramos) + ' g' : ''}</div>
+            <div class="fp-mini-barra"><div style="width:${Math.round(hechos / pasos.length * 100)}%;"></div></div>
+          </div>
+          <button class="btn-mini ${o.estado === 'en_proceso' ? 'guardar' : 'editar'}" style="flex:0 0 auto;padding:10px 16px;" onclick="abrirFichaProduccion('${o.id}')">${o.estado !== 'en_proceso' ? '👁️ Ver' : (f ? '🧵 Seguir' : '🧵 Empezar')}</button>
+        </div>`;
+    };
+    contP.innerHTML = pendientes.length ? pendientes.map(tarjeta).join('') : '<div class="cargando">No tienes piezas por tejer en este momento. 🎉</div>';
+    contT.innerHTML = terminadas.length ? terminadas.map(tarjeta).join('') : '<div class="cargando">Todavía no hay piezas terminadas.</div>';
+  }
+
+  // ---- Acceso de las tejedoras (administradora) ----
+  async function cargarAccesoTejedoras() {
+    const cont = document.getElementById('listaAccesoTejedoras');
+    const [{ data: usuarios, error }, tej] = await Promise.all([
+      supabaseClient.rpc('fn_tejedoras_usuarios_listar'),
+      fichaTejedoras.length ? Promise.resolve({ data: fichaTejedoras }) : supabaseClient.rpc('fn_op_tejedoras_todas'),
+    ]);
+    if (error) { cont.innerHTML = `<div class="cargando">${escaparHtml(error.message)}</div>`; return; }
+    fichaTejedoras = tej.data || fichaTejedoras;
+    const opciones = (u) => '<option value="">— No es tejedora —</option>' + fichaTejedoras.map(t => {
+      const v = (t.tipo === 'externa' ? 'externa:' : 'nomina:') + t.id;
+      return `<option value="${v}" ${u.tejedora_id === t.id ? 'selected' : ''}>${escaparHtml(t.nombre)}${t.tipo === 'externa' ? ' (externa)' : ''}</option>`;
+    }).join('');
+    cont.innerHTML = `<div class="tabla-lista">${(usuarios || []).map(u => `
+      <div class="tabla-lista-fila" style="grid-template-columns:1fr 1.4fr 150px 110px;cursor:default;align-items:center;">
+        <span><strong>${escaparHtml(u.usuario || '')}</strong><br><span style="font-size:11px;opacity:.65;">Rol: ${escaparHtml(u.rol || '')}</span></span>
+        <select id="accTej-${u.user_id}" style="font-size:12.5px;">${opciones(u)}</select>
+        <label style="display:flex;gap:6px;align-items:center;font-size:12px;margin:0;"><input type="checkbox" id="accSolo-${u.user_id}" ${u.solo_produccion ? 'checked' : ''} style="width:auto;margin:0;"> Solo producción</label>
+        <button class="btn-mini guardar" onclick="guardarAccesoTejedora('${u.user_id}', this)">Guardar</button>
+      </div>`).join('')}</div><div class="mensaje" id="mensajeAccesoTejedoras"></div>`;
+  }
+
+  async function guardarAccesoTejedora(userId, boton) {
+    const valor = document.getElementById('accTej-' + userId).value;
+    const [tipo, id] = valor ? valor.split(':') : [null, null];
+    boton.disabled = true;
+    const { error } = await supabaseClient.rpc('fn_vincular_tejedora', {
+      p_user_id: userId, p_tipo: tipo, p_id: id, p_solo_produccion: document.getElementById('accSolo-' + userId).checked,
+    });
+    boton.disabled = false;
+    if (error) { mostrarMensaje('mensajeAccesoTejedoras', 'No se pudo guardar: ' + error.message, 'error'); return; }
+    mostrarMensaje('mensajeAccesoTejedoras', '✅ Guardado. La persona lo verá la próxima vez que entre al ERP.', 'exito');
+  }
+
+  // ---- Materiales que la tejedora gasta en la pieza (salen del inventario del Taller) ----
+  async function cargarMaterialesFicha(ordenId) {
+    const [{ data: mats }, { data: insumos }] = await Promise.all([
+      supabaseClient.rpc('fn_tejedora_materiales_orden', { p_orden_id: ordenId }),
+      supabaseClient.rpc('fn_tejedora_insumos_taller'),
+    ]);
+    if (!fichaActiva || fichaActiva.orden.id !== ordenId) return;
+    fichaMateriales = mats || [];
+    fichaInsumosTaller = insumos || [];
+    const caja = document.getElementById('fpMateriales');
+    if (caja) caja.outerHTML = htmlMaterialesFicha();
+  }
+
+  function htmlMaterialesFicha() {
+    const fa = fichaActiva;
+    const lista = fichaMateriales.length ? `
+      <div style="margin-bottom:10px;">${fichaMateriales.map(m => `
+        <div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--gris-borde);font-size:12.5px;">
+          <span style="flex:1;">${escaparHtml(m.nombre)}</span>
+          <strong>${formatearCantidad(m.cantidad)} ${escaparHtml(m.unidad || '')}</strong>
+          ${fa.soloLectura ? '' : `<button class="fp-enlace" onclick="quitarMaterialFicha('${m.inventario_item_id}', ${Number(m.cantidad)})" title="Devolver al inventario">↩️ Quitar</button>`}
+        </div>`).join('')}</div>` : '<div style="font-size:12.5px;opacity:.7;margin-bottom:10px;">Todavía no has registrado material.</div>';
+    const form = fa.soloLectura ? '' : `
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+        <select id="fpMatItem" style="flex:2;min-width:160px;" aria-label="Insumo">
+          <option value="">— Elige el insumo —</option>
+          ${fichaInsumosTaller.map(i => `<option value="${i.id}">${escaparHtml(i.nombre)} (hay ${formatearCantidad(i.stock)} ${escaparHtml(i.unidad || '')})</option>`).join('')}
+        </select>
+        <input type="number" id="fpMatCant" min="0" step="0.1" inputmode="decimal" placeholder="Cantidad" style="flex:1;min-width:90px;" aria-label="Cantidad">
+        <button class="fp-btn iniciar" onclick="agregarMaterialFicha(this)">➕ Registrar</button>
+      </div>
+      <div style="font-size:11px;opacity:.65;margin-top:6px;">Sale del inventario del Taller. Si falta algo, pídelo a la Tienda para que lo trasladen al Taller.</div>`;
+    return `<div id="fpMateriales" style="background:var(--gris-fondo);border-radius:var(--radius-md);padding:12px;margin-bottom:12px;">
+      <div style="font-weight:600;font-size:13px;margin-bottom:8px;">🧶 Material gastado en esta pieza</div>${lista}${form}</div>`;
+  }
+
+  async function agregarMaterialFicha(boton) {
+    const item = document.getElementById('fpMatItem').value;
+    const cant = Number(document.getElementById('fpMatCant').value);
+    if (!item || !(cant > 0)) { alert('Elige el insumo y escribe la cantidad.'); return; }
+    boton.disabled = true;
+    if (!fichaActiva.existe) await guardarFichaProduccion(); // así la pieza queda a nombre de la tejedora
+    const { error } = await supabaseClient.rpc('fn_tejedora_registrar_material', { p_orden_id: fichaActiva.orden.id, p_inventario_item_id: item, p_cantidad: cant, p_devolver: false });
+    boton.disabled = false;
+    if (error) { alert('No se pudo registrar: ' + error.message); return; }
+    await cargarMaterialesFicha(fichaActiva.orden.id);
+  }
+
+  async function quitarMaterialFicha(item, cantidad) {
+    const texto = prompt('¿Cuánto vuelve al inventario del Taller?', String(cantidad));
+    if (texto === null) return;
+    const cant = Number(String(texto).replace(',', '.'));
+    if (!(cant > 0)) return;
+    const { error } = await supabaseClient.rpc('fn_tejedora_registrar_material', { p_orden_id: fichaActiva.orden.id, p_inventario_item_id: item, p_cantidad: cant, p_devolver: true });
+    if (error) { alert('No se pudo devolver: ' + error.message); return; }
+    await cargarMaterialesFicha(fichaActiva.orden.id);
+  }
 
   function abrirAccionOrden(id, accion) {
     ordenAccionAbierta = ordenAccionAbierta && ordenAccionAbierta.id === id && ordenAccionAbierta.accion === accion ? null : { id, accion };
