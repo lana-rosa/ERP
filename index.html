@@ -4199,8 +4199,8 @@
 <!-- ===== PANTALLA: HONORARIOS TEJEDORAS ===== -->
 <div id="pantallaHonorariosTejedoras" class="oculto contenido">
   <div class="page-header">
-    <h1>🧵 Honorarios Tejedoras</h1>
-    <div class="subtitulo">Pago por producto elaborado, según el tiempo real de tejido registrado en el CRM — al valor de la hora/fracción de hora (SMLV + prestaciones).</div>
+    <h1>🧵 Honorarios y mano de obra de tejedoras</h1>
+    <div class="subtitulo">Sale del paso a paso de producción: horas de tejido + detalles × valor de la hora. Lo que tejen las tejedoras de nómina es solo costo de mano de obra del producto (ya se les paga en la nómina). A las tejedoras externas se les paga por honorarios, y ese pago también entra al costo del producto en el cierre de costos del mes.</div>
   </div>
 
   <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;">
@@ -4208,21 +4208,24 @@
     <button class="btn-mini editar" onclick="alternarConfigValorHoraHonorarios()">⚙️ Configurar</button>
   </div>
   <div id="panelConfigValorHoraHonorarios" class="oculto" style="background:#fff;border:1.5px solid var(--rosa-medio);border-radius:9px;padding:12px 14px;margin-bottom:16px;">
-    <label for="inputValorHoraHonorarios">Valor de la hora para Honorarios Tejedoras (COP) <span style="font-size:10px;opacity:0.6;">(déjalo vacío para volver a calcularlo automático con el SMLV — esto no afecta el valor que usa Costeo Real)</span></label>
+    <label for="inputValorHoraHonorarios">Valor de la hora para tejedoras (COP) <span style="font-size:10px;opacity:0.6;">(déjalo vacío para usar el calculado con el SMLV y todos los cargos; esto no afecta el valor que usa Costeo Real)</span></label>
     <input type="number" id="inputValorHoraHonorarios" min="0" step="1" placeholder="Ej: 15000">
     <button class="btn-mini guardar" style="margin-top:8px;" onclick="guardarValorHoraHonorarios()">Guardar</button>
     <div class="mensaje" id="mensajeConfigValorHoraHonorarios"></div>
   </div>
 
-  <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
-    <input type="text" id="buscarHonorariosTejedoras" placeholder="🔍 Radicado, producto o tejedora..." oninput="filtrarHonorariosTejedoras()" style="flex:1;">
+  <div id="resumenHonorariosTejedoras" class="grilla-2" style="gap:12px;margin-bottom:16px;"></div>
+
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
+    <input type="text" id="buscarHonorariosTejedoras" placeholder="🔍 Orden, pedido, producto o tejedora..." oninput="filtrarHonorariosTejedoras()" style="flex:1;min-width:200px;">
     <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarHonorariosTejedorasExcel()">📥 Excel</button>
-<button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirSeccion('pantallaHonorariosTejedoras', 'Honorarios de tejedoras')">🖨️ PDF</button>
+    <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirSeccion('pantallaHonorariosTejedoras', 'Honorarios de tejedoras')">🖨️ PDF</button>
   </div>
   <div class="filtro-tipo" style="margin-bottom:16px;">
-    <button class="chip-filtro activo" data-filtro-hon="pendientes" onclick="cambiarFiltroHonorarios('pendientes', this)">Pendientes</button>
-    <button class="chip-filtro" data-filtro-hon="pagados" onclick="cambiarFiltroHonorarios('pagados', this)">Ya pagados</button>
-    <button class="chip-filtro" data-filtro-hon="todos" onclick="cambiarFiltroHonorarios('todos', this)">Todos</button>
+    <button class="chip-filtro activo" data-filtro-hon="pendientes" onclick="cambiarFiltroHonorarios('pendientes', this)">💵 Por pagar (externas)</button>
+    <button class="chip-filtro" data-filtro-hon="pagados" onclick="cambiarFiltroHonorarios('pagados', this)">✅ Ya pagados</button>
+    <button class="chip-filtro" data-filtro-hon="nomina" onclick="cambiarFiltroHonorarios('nomina', this)">👩 Nómina (costo)</button>
+    <button class="chip-filtro" data-filtro-hon="todos" onclick="cambiarFiltroHonorarios('todos', this)">📋 Todos</button>
   </div>
 
   <div class="mensaje" id="mensajeHonorariosTejedoras"></div>
@@ -9812,7 +9815,7 @@
     const { data, error } = await supabaseClient.from('produccion_fichas').select('*').eq('orden_id', ordenId).maybeSingle();
     if (error) { mostrarMensaje('mensajeOrdenesProd', 'No se pudo abrir el paso a paso: ' + error.message, 'error'); return; }
     if (!fichaTejedoras.length) {
-      const { data: tej } = await supabaseClient.rpc('fn_op_tejedoras');
+      const { data: tej } = await supabaseClient.rpc('fn_op_tejedoras_todas');
       fichaTejedoras = tej || [];
     }
     let f = data;
@@ -9826,6 +9829,7 @@
       orden: o,
       pasos: Object.assign({}, f.pasos_estado || {}),
       tejedora_id: f.tejedora_id || null,
+      tejedora_tercero_id: f.tejedora_tercero_id || null,
       tejedora_nombre: f.tejedora_nombre || null,
       foto_url: f.foto_url || null,
       terminada_at: f.terminada_at || null,
@@ -9860,8 +9864,18 @@
     const pct = Math.round(hechos / pasos.length * 100);
     const total = segundosDe('tejido') + segundosDe('detalles');
     const unidades = Number(o.cantidad_planeada) || 1;
-    const opcionesTej = fichaTejedoras.map(t => `<option value="${t.id}" ${t.id === fa.tejedora_id ? 'selected' : ''}>${escaparHtml(t.nombre)}</option>`).join('')
-      + (fa.tejedora_nombre && !fa.tejedora_id ? `<option value="" selected>${escaparHtml(fa.tejedora_nombre)}</option>` : '');
+    // Nómina (empleadas) y externas (se les paga por honorarios). El valor lleva el tipo: "e:" empleada, "t:" tercero.
+    const opcionTej = (t) => {
+      const valor = (t.tipo === 'externa' ? 't:' : 'e:') + t.id;
+      const elegida = t.tipo === 'externa' ? t.id === fa.tejedora_tercero_id : t.id === fa.tejedora_id;
+      return `<option value="${valor}" ${elegida ? 'selected' : ''}>${escaparHtml(t.nombre)}</option>`;
+    };
+    const grupoTej = (tipo, etiqueta) => {
+      const lista = fichaTejedoras.filter(t => (t.tipo || 'nomina') === tipo);
+      return lista.length ? `<optgroup label="${etiqueta}">${lista.map(opcionTej).join('')}</optgroup>` : '';
+    };
+    const opcionesTej = grupoTej('nomina', 'Nómina') + grupoTej('externa', 'Externas (honorarios)')
+      + (fa.tejedora_nombre && !fa.tejedora_id && !fa.tejedora_tercero_id ? `<option value="" selected>${escaparHtml(fa.tejedora_nombre)}</option>` : '');
 
     const destino = esOrdenParaStock(o) ? `📦 Para inventario · ${formatearCantidad(unidades)} unidad(es)` : `🧾 Pedido ${escaparHtml(o.pedido || '')}`;
     document.getElementById('fichaProduccion').innerHTML = `
@@ -10114,7 +10128,9 @@
   }
 
   async function cambiarTejedoraFicha(valor) {
-    fichaActiva.tejedora_id = valor || null;
+    const [tipo, id] = (valor || '').split(':');
+    fichaActiva.tejedora_id = tipo === 'e' ? id : null;
+    fichaActiva.tejedora_tercero_id = tipo === 't' ? id : null;
     if (valor) fichaActiva.tejedora_nombre = null;
     await guardarFichaProduccion();
   }
@@ -10169,6 +10185,7 @@
     const fila = {
       orden_id: fa.orden.id,
       tejedora_id: fa.tejedora_id,
+      tejedora_tercero_id: fa.tejedora_tercero_id,
       tejedora_nombre: fa.tejedora_nombre,
       pasos_estado: fa.pasos,
       tiempos: { tejido: Math.round(segundosDe('tejido')), detalles: Math.round(segundosDe('detalles')) },
@@ -21497,21 +21514,33 @@
     await cargarHonorariosTejedoras();
   }
 
+  // Honorarios y mano de obra, calculados con el paso a paso de producción del ERP (fn_honorarios_produccion).
   async function cargarHonorariosTejedoras() {
     const cont = document.getElementById('listaHonorariosTejedoras');
-    cont.innerHTML = '<div class="cargando">Cargando desde el CRM...</div>';
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
     ocultarMensaje('mensajeHonorariosTejedoras');
-
-    const resp = await fetch(WORKER_URL + '/api/pos/contabilidad/honorarios-tejedoras', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
-    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
-    const d = await resp.json();
+    const { data: d, error } = await supabaseClient.rpc('fn_honorarios_produccion');
+    if (error) { cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(error.message)}</div>`; return; }
 
     document.getElementById('valorHoraHonorarios').textContent = d.valor_hora_manual
-      ? `💰 Valor de la hora/fracción de hora (configurado manualmente): ${formatearMoneda(d.valor_hora_mano_obra)}`
-      : `💰 Valor de la hora/fracción de hora (SMLV + prestaciones + ARL + parafiscales): ${formatearMoneda(d.valor_hora_mano_obra)}`;
+      ? `💰 Valor de la hora (configurado a mano): ${formatearMoneda(d.valor_hora)}`
+      : `💰 Valor de la hora (SMLV + prestaciones + ARL + parafiscales): ${formatearMoneda(d.valor_hora)}`;
     const inputValorHora = document.getElementById('inputValorHoraHonorarios');
     if (inputValorHora && document.activeElement !== inputValorHora) inputValorHora.value = d.valor_hora_manual || '';
     honorariosTejedorasCache = d.filas || [];
+
+    const suma = (lista, campo = 'valor') => lista.reduce((t, f) => t + Number(f[campo] || 0), 0);
+    const porPagar = honorariosTejedorasCache.filter(f => f.estado === 'pendiente');
+    const nomina = honorariosTejedorasCache.filter(f => f.estado === 'nomina');
+    const tarjeta = (titulo, valor, detalle, color) => `
+      <div class="panel" style="max-width:none;max-height:none;margin:0;padding:14px 16px;border-left:4px solid ${color};">
+        <div style="font-size:12px;opacity:.75;">${titulo}</div>
+        <div class="fredoka" style="font-size:22px;margin:4px 0;">${formatearMoneda(valor)}</div>
+        <div style="font-size:11.5px;opacity:.7;">${detalle}</div>
+      </div>`;
+    document.getElementById('resumenHonorariosTejedoras').innerHTML =
+      tarjeta('💵 Por pagar a tejedoras externas', suma(porPagar), `${porPagar.length} pieza(s) terminadas sin pagar`, 'var(--ambar)') +
+      tarjeta('🧶 Mano de obra de nómina (costo)', suma(nomina), `${nomina.length} pieza(s) · ya se paga en la nómina`, 'var(--azul-acero)');
     renderizarHonorariosTejedoras();
   }
 
@@ -21523,18 +21552,12 @@
     ocultarMensaje('mensajeConfigValorHoraHonorarios');
     const valorTexto = document.getElementById('inputValorHoraHonorarios').value;
     const valor = valorTexto === '' ? null : Number(valorTexto);
-    if (valor !== null && (isNaN(valor) || valor < 0)) {
+    if (valor !== null && (isNaN(valor) || valor <= 0)) {
       mostrarMensaje('mensajeConfigValorHoraHonorarios', 'Escribe un valor válido, o déjalo vacío para volver al cálculo automático.', 'error');
       return;
     }
-
-    const resp = await fetch(WORKER_URL + '/api/pos/contabilidad/honorarios-tejedoras/valor-hora', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ valor_hora: valor })
-    });
-    if (!resp.ok) { mostrarMensaje('mensajeConfigValorHoraHonorarios', 'No se pudo guardar.', 'error'); return; }
-
+    const { error } = await supabaseClient.rpc('fn_guardar_valor_hora_honorarios', { p_valor: valor });
+    if (error) { mostrarMensaje('mensajeConfigValorHoraHonorarios', 'No se pudo guardar: ' + error.message, 'error'); return; }
     mostrarMensaje('mensajeConfigValorHoraHonorarios', valor ? '✅ Guardado — ya se está usando este valor.' : '✅ Guardado — vuelve a calcularse automático con el SMLV.', 'exito');
     await cargarHonorariosTejedoras();
   }
@@ -21550,110 +21573,102 @@
     renderizarHonorariosTejedoras();
   }
 
+  const MEDIOS_PAGO_HONORARIOS = { efectivo: 'Efectivo (Caja)', transferencia: 'Transferencia (Bancos)', nequi: 'Nequi', daviplata: 'Daviplata' };
+
   function renderizarHonorariosTejedoras() {
     const texto = document.getElementById('buscarHonorariosTejedoras').value.trim().toLowerCase();
     let filas = honorariosTejedorasCache;
-
-    if (filtroHonorariosActual === 'pendientes') filas = filas.filter(f => !f.pagado);
-    else if (filtroHonorariosActual === 'pagados') filas = filas.filter(f => f.pagado);
-
+    if (filtroHonorariosActual === 'pendientes') filas = filas.filter(f => f.estado === 'pendiente');
+    else if (filtroHonorariosActual === 'pagados') filas = filas.filter(f => f.estado === 'pagado');
+    else if (filtroHonorariosActual === 'nomina') filas = filas.filter(f => f.tipo === 'nomina' && f.estado !== 'pagado');
     if (texto) {
-      filas = filas.filter(f =>
-        f.radicado.toLowerCase().includes(texto) ||
-        (f.producto || '').toLowerCase().includes(texto) ||
-        (f.proveedor || '').toLowerCase().includes(texto)
-      );
+      filas = filas.filter(f => [f.orden, f.pedido, f.descripcion, f.tejedora].some(v => String(v || '').toLowerCase().includes(texto)));
     }
 
     const cont = document.getElementById('listaHonorariosTejedoras');
-    if (filas.length === 0) { cont.innerHTML = '<div class="cargando">Sin registros que coincidan.</div>'; return; }
-
-    cont.innerHTML = `
-      <div class="tabla-lista">
-        <div class="tabla-lista-header header-rosa" style="grid-template-columns:110px 1fr 140px 80px 110px 250px;">
-          <span>RADICADO</span><span>PRODUCTO</span><span>PROVEEDOR</span><span style="text-align:right;">TIEMPO</span><span style="text-align:right;">VALOR</span><span>PAGO</span>
-        </div>
-        ${filas.map(f => `
-          <div class="tabla-lista-fila" style="grid-template-columns:110px 1fr 140px 80px 110px 250px;cursor:default;">
-            <span style="font-weight:600;">${escaparHtml(f.radicado)}</span>
-            <span>${escaparHtml(f.producto)}</span>
-            <span style="display:flex;align-items:center;gap:6px;">${avatarIniciales(f.proveedor)}${escaparHtml(f.proveedor)}</span>
-            <span style="text-align:right;">${f.horas} h</span>
-            <span style="text-align:right;font-weight:700;">${formatearMoneda(f.valor_a_pagar)}</span>
-            <span>${f.pagado
-              ? (f.metodo_pago === 'taller_lana_rosa'
-                  ? `<span style="color:var(--rosa-principal);font-size:11.5px;">🧶 Taller Lana Rosa — ${new Date(f.fecha_pago).toLocaleDateString('es-CO')}</span>`
-                  : `<span style="color:var(--verde-exito);font-size:11.5px;">✅ ${f.metodo_pago === 'efectivo' ? 'Efectivo' : 'Bancos'} — ${new Date(f.fecha_pago).toLocaleDateString('es-CO')}</span>`)
-              : `<div id="pagoInline-${f.pedido_crm_id}"><label style="display:flex;align-items:center;gap:6px;font-weight:400;margin:0;"><input type="checkbox" style="width:auto;" onchange="alternarPagoInlineHonorario('${f.pedido_crm_id}', this.checked)"><span style="font-size:12px;">Marcar como pagado</span></label></div>`
-            }</span>
-          </div>
-        `).join('')}
-      </div>
-    `;
-  }
-
-  function alternarPagoInlineHonorario(pedidoCrmId, marcado) {
-    const cont = document.getElementById(`pagoInline-${pedidoCrmId}`);
-    if (!marcado) {
-      cont.innerHTML = `<label style="display:flex;align-items:center;gap:6px;font-weight:400;margin:0;"><input type="checkbox" style="width:auto;" onchange="alternarPagoInlineHonorario('${pedidoCrmId}', this.checked)"><span style="font-size:12px;">Marcar como pagado</span></label>`;
+    if (!filas.length) {
+      cont.innerHTML = `<div class="cargando">${filtroHonorariosActual === 'pendientes' ? 'No hay honorarios por pagar. Aparecen aquí cuando una tejedora externa termina el paso a paso de una pieza.' : 'Sin registros que coincidan.'}</div>`;
       return;
     }
+    const fecha = (f) => f ? new Date(f).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+    const columnas = 'grid-template-columns:120px 1fr 170px 70px 110px 230px;';
     cont.innerHTML = `
-      <div style="display:flex;gap:6px;align-items:center;">
-        <select id="metodoPagoHonorario-${pedidoCrmId}" style="flex:1;padding:6px 8px;font-size:12px;">
-          <option value="efectivo">Efectivo (Caja)</option>
-          <option value="transferencia">Bancos</option>
-          <option value="taller_lana_rosa">🧶 Taller Lana Rosa (nómina, sin descuento)</option>
-        </select>
-        <button class="btn-mini guardar" onclick="confirmarPagoHonorarioTejedora('${pedidoCrmId}')">Confirmar</button>
-      </div>
-    `;
+      <div class="tabla-lista">
+        <div class="tabla-lista-header header-rosa" style="${columnas}">
+          <span>ORDEN</span><span>PRODUCTO</span><span>TEJEDORA</span><span style="text-align:right;">TIEMPO</span><span style="text-align:right;">VALOR</span><span>ESTADO</span>
+        </div>
+        ${filas.map(f => {
+          let estado;
+          if (f.estado === 'pagado') {
+            estado = `<span style="color:var(--verde-exito);font-size:11.5px;">✅ Pagado ${formatearMoneda(f.valor_pagado)} · ${escaparHtml(MEDIOS_PAGO_HONORARIOS[f.metodo_pago] || f.metodo_pago || '')} · ${fecha(f.pagado_at)}</span>`;
+          } else if (f.estado === 'pendiente') {
+            estado = Number(f.valor) > 0
+              ? `<div id="pagoHon-${f.orden_id}"><button class="btn-mini guardar" onclick="abrirPagoHonorario('${f.orden_id}')">💵 Pagar</button></div>`
+              : '<span style="font-size:11.5px;color:var(--rojo-error);">Sin tiempo registrado: corrígelo en el paso a paso</span>';
+          } else if (f.estado === 'nomina') {
+            estado = '<span style="font-size:11.5px;opacity:.75;">👩 Nómina · costo de mano de obra</span>';
+          } else {
+            estado = '<span style="font-size:11.5px;opacity:.75;">Sin tejedora asignada</span>';
+          }
+          return `
+          <div class="tabla-lista-fila" style="${columnas}cursor:default;">
+            <span><strong>${escaparHtml(f.orden)}</strong>${f.pedido ? `<br><span style="font-size:11px;opacity:.7;">${escaparHtml(f.pedido)}</span>` : ''}</span>
+            <span style="font-size:12.5px;">${escaparHtml(f.descripcion || '')}<br><span style="font-size:11px;opacity:.65;">Terminada ${fecha(f.fecha)}</span></span>
+            <span style="display:flex;align-items:center;gap:6px;font-size:12.5px;">${avatarIniciales(f.tejedora || '?')}<span>${escaparHtml(f.tejedora || '—')}<br><span style="font-size:10.5px;opacity:.65;">${f.tipo === 'externa' ? 'Externa' : f.tipo === 'nomina' ? 'Nómina' : ''}</span></span></span>
+            <span style="text-align:right;">${formatoHorasCorto(Number(f.horas) * 3600)}</span>
+            <span style="text-align:right;font-weight:700;">${formatearMoneda(f.valor)}</span>
+            <span>${estado}</span>
+          </div>`;
+        }).join('')}
+      </div>`;
   }
 
-  async function confirmarPagoHonorarioTejedora(pedidoCrmId) {
+  function abrirPagoHonorario(ordenId) {
+    const f = honorariosTejedorasCache.find(x => x.orden_id === ordenId);
+    const cont = document.getElementById('pagoHon-' + ordenId);
+    if (!f || !cont) return;
+    cont.innerHTML = `
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+        <select id="metodoPagoHon-${ordenId}" style="flex:1;min-width:120px;padding:6px 8px;font-size:12px;" aria-label="Medio de pago">
+          ${Object.entries(MEDIOS_PAGO_HONORARIOS).map(([v, t]) => `<option value="${v}" ${v === 'transferencia' ? 'selected' : ''}>${t}</option>`).join('')}
+        </select>
+        <select id="cajaPagoHon-${ordenId}" style="flex:1;min-width:120px;padding:6px 8px;font-size:12px;" aria-label="Caja de la que sale el dinero">
+          <option value="01" selected>Sale de: Tienda</option>
+          <option value="03">Sale de: Taller</option>
+          <option value="04">Sale de: Academy</option>
+        </select>
+        <button class="btn-mini guardar" onclick="pedirConfirmacionBoton(this, '¿Pagar ${formatearMoneda(f.valor)}?', () => confirmarPagoHonorarioTejedora('${ordenId}'))">Confirmar</button>
+        <button class="btn-mini" onclick="renderizarHonorariosTejedoras()">✕</button>
+      </div>`;
+  }
+
+  async function confirmarPagoHonorarioTejedora(ordenId) {
     ocultarMensaje('mensajeHonorariosTejedoras');
-    const fila = honorariosTejedorasCache.find(f => f.pedido_crm_id === pedidoCrmId);
-    if (!fila) return;
-    const metodoPago = document.getElementById(`metodoPagoHonorario-${pedidoCrmId}`).value;
-
-    const resp = await fetch(WORKER_URL + '/api/pos/contabilidad/honorarios-tejedoras/pagar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({
-        pedido_crm_id: fila.pedido_crm_id,
-        tejedora_id: fila.tejedora_id,
-        radicado: fila.radicado,
-        producto: fila.producto,
-        proveedor: fila.proveedor,
-        monto: fila.valor_a_pagar,
-        horas: fila.horas,
-        metodo_pago: metodoPago
-      })
-    });
-    const datos = await resp.json();
-    if (!resp.ok) { mostrarMensaje('mensajeHonorariosTejedoras', datos.error || 'No se pudo registrar el pago.', 'error'); return; }
-
-    const mensajeExito = metodoPago === 'taller_lana_rosa'
-      ? `✅ "${fila.producto}" (${fila.radicado}) marcado como parte del trabajo habitual de ${fila.proveedor} en el Taller — no se descontó dinero.`
-      : `✅ Pago de ${formatearMoneda(fila.valor_a_pagar)} a ${fila.proveedor} registrado — ya se descontó de ${metodoPago === 'efectivo' ? 'Caja' : 'Bancos'}.`;
-    mostrarMensaje('mensajeHonorariosTejedoras', mensajeExito, 'exito');
+    const metodo = document.getElementById('metodoPagoHon-' + ordenId).value;
+    const caja = document.getElementById('cajaPagoHon-' + ordenId).value;
+    const { data, error } = await supabaseClient.rpc('fn_pagar_honorario_produccion', { p_orden_id: ordenId, p_metodo_pago: metodo, p_caja: caja });
+    if (error) { mostrarMensaje('mensajeHonorariosTejedoras', 'No se pudo registrar el pago: ' + error.message, 'error'); return; }
+    mostrarMensaje('mensajeHonorariosTejedoras', `✅ Pago de ${formatearMoneda(data.valor)} a ${escaparHtml(data.tejedora)} (${data.horas} h) registrado y contabilizado como honorarios del Taller. En el cierre de costos del mes pasa al costo de producción.`, 'exito');
     await cargarHonorariosTejedoras();
   }
 
   function exportarHonorariosTejedorasExcel() {
-    if (!honorariosTejedorasCache || honorariosTejedorasCache.length === 0) { mostrarMensaje('mensajeHonorariosTejedoras', 'No hay datos para exportar.', 'error'); return; }
+    if (!honorariosTejedorasCache || !honorariosTejedorasCache.length) { mostrarMensaje('mensajeHonorariosTejedoras', 'No hay datos para exportar.', 'error'); return; }
+    const estados = { pagado: 'Pagado', pendiente: 'Por pagar', nomina: 'Nómina (costo)', sin_tejedora: 'Sin tejedora' };
     const filas = [
-      ['Lana Rosa Crochet — Honorarios Tejedoras'],
+      ['Lana Rosa Crochet — Honorarios y mano de obra de tejedoras'],
       [],
-      ['Radicado', 'Producto', 'Proveedor', 'Tiempo (h)', 'Valor a pagar', 'Pagado', 'Método de pago', 'Fecha de pago'],
+      ['Orden', 'Pedido', 'Producto', 'Tejedora', 'Tipo', 'Terminada', 'Horas', 'Valor hora', 'Valor', 'Estado', 'Valor pagado', 'Medio de pago', 'Fecha de pago'],
       ...honorariosTejedorasCache.map(f => [
-        f.radicado, f.producto, f.proveedor, f.horas, Number(f.valor_a_pagar),
-        f.pagado ? 'Sí' : 'No', f.metodo_pago || '', f.fecha_pago ? new Date(f.fecha_pago).toLocaleDateString('es-CO') : ''
+        f.orden, f.pedido || '', f.descripcion || '', f.tejedora || '', f.tipo === 'externa' ? 'Externa' : f.tipo === 'nomina' ? 'Nómina' : '',
+        f.fecha ? new Date(f.fecha).toLocaleDateString('es-CO') : '', Number(f.horas), Number(f.valor_hora), Number(f.valor),
+        estados[f.estado] || f.estado, f.valor_pagado ? Number(f.valor_pagado) : '', MEDIOS_PAGO_HONORARIOS[f.metodo_pago] || f.metodo_pago || '',
+        f.pagado_at ? new Date(f.pagado_at).toLocaleDateString('es-CO') : '',
       ])
     ];
     const hoja = XLSX.utils.aoa_to_sheet(filas);
     const libro = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(libro, hoja, 'Honorarios Tejedoras');
+    XLSX.utils.book_append_sheet(libro, hoja, 'Honorarios tejedoras');
     XLSX.writeFile(libro, `LanaRosa_HonorariosTejedoras_${new Date().toISOString().slice(0, 10)}.xlsx`);
   }
 
