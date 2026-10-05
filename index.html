@@ -6631,7 +6631,7 @@
 
     const { data, error } = await supabaseClient
       .from('inventario_items')
-      .select('id, tipo, nombre, stock_actual, stock_minimo, precio_venta, unidad_medida')
+      .select('id, tipo, nombre, stock_actual, stock_minimo, precio_venta, unidad_medida, peso_gramos')
       .eq('activo', true)
       .eq('centro_costo_id', centroCostoTiendaId)
       .order('nombre', { ascending: true });
@@ -6648,7 +6648,9 @@
       precio: Number(item.precio_venta) || 0,
       stock_actual: Number(item.stock_actual),
       stock_minimo: Number(item.stock_minimo),
-      unidad_medida: item.unidad_medida
+      unidad_medida: item.unidad_medida,
+      // Lanas por gramo: se venden por ovillo completo (peso del ovillo) o por los gramos que pida el cliente.
+      peso: Number(item.peso_gramos) || 0
     }));
 
     renderizarCatalogo();
@@ -6703,7 +6705,9 @@
             <div class="item-producto-nombre">${escaparHtml(item.nombre)}${stockBajoTag}${sinStockTag}</div>
             <div class="item-producto-meta">${etiquetaTipo} · Stock: ${item.stock_actual} ${item.unidad_medida}</div>
           </div>
-          <div class="item-producto-precio">${formatearMoneda(item.precio)}</div>
+          <div class="item-producto-precio">${item.unidad_medida === 'gramo'
+            ? `${formatearMoneda(item.precio)}/g${item.peso ? `<div style="font-size:11px;opacity:0.7;">Ovillo ${formatearCantidad(item.peso)} g: ${formatearMoneda(item.precio * item.peso)}</div>` : ''}`
+            : formatearMoneda(item.precio)}</div>
         </div>
       `;
     }).join('');
@@ -6737,16 +6741,19 @@
 
     const existente = carrito.find(c => c.id === itemId);
     const cantidadActualEnCarrito = existente ? existente.cantidad : 0;
+    // Por gramo: cada clic suma un ovillo completo (su peso); los gramos sueltos se escriben en el carrito.
+    const porGramo = item.unidad_medida === 'gramo';
+    const paso = porGramo && item.peso > 0 ? item.peso : 1;
 
-    if (cantidadActualEnCarrito + 1 > item.stock_actual) {
-      mostrarMensaje('mensajeVenta', `No hay suficiente stock de "${item.nombre}". Disponible: ${item.stock_actual}.`, 'error');
+    if (cantidadActualEnCarrito + paso > item.stock_actual) {
+      mostrarMensaje('mensajeVenta', `No hay suficiente stock de "${item.nombre}". Disponible: ${item.stock_actual}${porGramo ? ' g' : ''}.`, 'error');
       return;
     }
 
     if (existente) {
-      existente.cantidad += 1;
+      existente.cantidad += paso;
     } else {
-      carrito.push({ id: item.id, nombre: item.nombre, precio: item.precio, stock_actual: item.stock_actual, cantidad: 1 });
+      carrito.push({ id: item.id, nombre: item.nombre, precio: item.precio, stock_actual: item.stock_actual, cantidad: paso, porGramo, peso: item.peso });
     }
     ocultarMensaje('mensajeVenta');
 
@@ -6756,6 +6763,22 @@
     document.getElementById('listaCatalogo').style.display = 'none';
     document.getElementById('listaCatalogo').innerHTML = '';
 
+    renderizarCarrito();
+  }
+
+  // Gramos escritos a mano en una línea por gramo (venta suelta de lana).
+  function fijarCantidadCarrito(itemId, valor) {
+    const linea = carrito.find(c => c.id === itemId);
+    if (!linea) return;
+    const gramos = Math.round(Number(valor));
+    if (!gramos || gramos <= 0) { carrito = carrito.filter(c => c.id !== itemId); renderizarCarrito(); return; }
+    if (gramos > linea.stock_actual) {
+      mostrarMensaje('mensajeVenta', `No hay suficiente stock de "${linea.nombre}". Disponible: ${linea.stock_actual} g.`, 'error');
+      renderizarCarrito();
+      return;
+    }
+    ocultarMensaje('mensajeVenta');
+    linea.cantidad = gramos;
     renderizarCarrito();
   }
 
@@ -6874,7 +6897,21 @@
     if (carrito.length === 0) {
       contenedor.innerHTML = '<div class="carrito-vacio">Aún no has agregado productos</div>';
     } else {
-      contenedor.innerHTML = carrito.map(linea => `
+      contenedor.innerHTML = carrito.map(linea => linea.porGramo ? `
+        <div class="fila-carrito" style="flex-wrap:wrap;">
+          <div class="fila-carrito-info" style="flex-basis:100%;min-width:100%;margin-bottom:6px;">
+            <div class="fila-carrito-nombre" style="white-space:normal;">${escaparHtml(linea.nombre)}</div>
+            <div class="fila-carrito-precio">${formatearMoneda(linea.precio)} por gramo${linea.peso ? ` · ovillo de ${formatearCantidad(linea.peso)} g` : ''}</div>
+          </div>
+          <div class="control-cantidad">
+            ${linea.peso ? `<button class="btn-cantidad" title="Quitar un ovillo" onclick="cambiarCantidadCarrito('${linea.id}', -${linea.peso})">−</button>` : ''}
+            <input type="number" min="1" step="1" value="${linea.cantidad}" aria-label="Gramos" style="width:72px;padding:4px 6px;text-align:center;" onchange="fijarCantidadCarrito('${linea.id}', this.value)"><span style="font-size:12px;">g</span>
+            ${linea.peso ? `<button class="btn-cantidad" title="Agregar un ovillo" onclick="cambiarCantidadCarrito('${linea.id}', ${linea.peso})">+</button>` : ''}
+          </div>
+          <div class="fila-carrito-subtotal">${formatearMoneda(linea.precio * linea.cantidad)}</div>
+          <button class="btn-quitar" onclick="quitarDelCarrito('${linea.id}')" title="Quitar">✕</button>
+        </div>
+      ` : `
         <div class="fila-carrito" style="flex-wrap:wrap;">
           <div class="fila-carrito-info" style="flex-basis:100%;min-width:100%;margin-bottom:6px;">
             <div class="fila-carrito-nombre" style="white-space:normal;">${escaparHtml(linea.nombre)}</div>
