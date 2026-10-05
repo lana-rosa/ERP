@@ -6167,6 +6167,10 @@
         <div class="resumen-fila"><span>+ Efectivo Tienda</span><strong>${formatearMoneda(d.tienda_efectivo)}</strong></div>
         <div class="resumen-fila"><span>+ Efectivo WhatsApp/Redes</span><strong>${formatearMoneda(d.whatsapp_efectivo)}</strong></div>
         <div class="resumen-fila"><span>+ Efectivo Cursos/clases</span><strong>${formatearMoneda(d.academia_efectivo)}</strong></div>
+        ${d.pagos_proveedores_efectivo > 0 ? `<div class="resumen-fila"><span>− Pagos a proveedores en efectivo</span><strong>${formatearMoneda(d.pagos_proveedores_efectivo)}</strong></div>` : ''}
+        ${d.devoluciones_efectivo > 0 ? `<div class="resumen-fila"><span>− Devoluciones en efectivo</span><strong>${formatearMoneda(d.devoluciones_efectivo)}</strong></div>` : ''}
+        ${d.consignaciones_efectivo ? `<div class="resumen-fila"><span>${d.consignaciones_efectivo > 0 ? '− Consignado de la caja al banco' : '+ Traído del banco a la caja'}</span><strong>${formatearMoneda(Math.abs(d.consignaciones_efectivo))}</strong></div>` : ''}
+        <div style="font-size:11px;opacity:0.65;margin:4px 0 2px;">Solo cuenta el efectivo recibido en la caja durante este turno. El efectivo de pedidos registrados sin turno abierto no suma aquí.</div>
         <div class="resumen-fila total"><span>💵 Total efectivo esperado</span><strong>${formatearMoneda(d.total_efectivo_esperado)}</strong></div>
         <div class="resumen-fila"><span>💳 Total en otros medios de pago (no está en caja física)</span><strong>${formatearMoneda(d.total_otros_medios)}</strong></div>
       </div>
