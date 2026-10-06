@@ -4214,6 +4214,18 @@
     <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="alternarPanelBancos('bancosPanelNueva')">＋ Agregar cuenta</button>
     <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="alternarPanelBancos('bancosPanelMedios')">💳 ¿A qué cuenta llega cada medio de pago?</button>
     <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="alternarPanelBancos('bancosPanelTraslado')">🔁 Traslado entre cuentas</button>
+    <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="alternarPanelBancos('bancosPanelWompi'); cargarHistorialWompi();">🧾 Desembolsos de Wompi</button>
+  </div>
+
+  <div id="bancosPanelWompi" class="panel oculto" style="max-width:none;max-height:none;margin-bottom:16px;">
+    <h2>🧾 Desembolsos de Wompi</h2>
+    <div class="subtitulo">Sube el reporte de desembolso que descargas de Wompi (.xlsx). El sistema compara la comisión de cada pago con la que ya registró y, si es distinta, hace el ajuste contable. No duplica pagos que ya subiste.</div>
+    <input type="file" id="wompiArchivo" accept=".xlsx,.xls,.csv" style="margin-bottom:8px;">
+    <button class="btn-principal" id="btnConciliarWompi" style="width:auto;" onclick="conciliarDesembolsoWompi()">Conciliar desembolso</button>
+    <div class="mensaje" id="mensajeWompi"></div>
+    <div id="resultadoWompi"></div>
+    <h3 style="margin-top:18px;font-size:14px;">Desembolsos ya conciliados</h3>
+    <div id="historialWompi"><div class="cargando">Abre este panel para ver el historial.</div></div>
   </div>
 
   <div id="bancosPanelNueva" class="panel oculto" style="max-width:none;max-height:none;margin-bottom:16px;">
@@ -21106,9 +21118,60 @@
   }
 
   function alternarPanelBancos(id) {
-    ['bancosPanelNueva', 'bancosPanelMedios', 'bancosPanelTraslado'].forEach(p => {
+    ['bancosPanelNueva', 'bancosPanelMedios', 'bancosPanelTraslado', 'bancosPanelWompi'].forEach(p => {
       document.getElementById(p).classList.toggle('oculto', p !== id || !document.getElementById(p).classList.contains('oculto'));
     });
+  }
+
+  // ---- Desembolsos de Wompi: lee el .xlsx del reporte y lo concilia contra los pedidos del ERP ----
+  const quitarTildes = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  async function conciliarDesembolsoWompi() {
+    const archivo = document.getElementById('wompiArchivo').files[0];
+    ocultarMensaje('mensajeWompi');
+    if (!archivo) { mostrarMensaje('mensajeWompi', 'Elige primero el archivo del reporte de desembolso.', 'error'); return; }
+    const btn = document.getElementById('btnConciliarWompi');
+    btn.disabled = true; btn.textContent = 'Conciliando...';
+    try {
+      const libro = XLSX.read(await archivo.arrayBuffer(), { type: 'array' });
+      const filas = XLSX.utils.sheet_to_json(libro.Sheets[libro.SheetNames[0]], { defval: '' });
+      const num = (v) => Number(String(v).replace(/[^0-9.\-]/g, '')) || 0;
+      const enviar = filas.map(f => {
+        const g = {}; Object.keys(f).forEach(k => { g[quitarTildes(k)] = f[k]; });
+        return {
+          transaccion_id: String(g['id de la transaccion'] || '').trim(), disbursement_id: String(g['disbursement id'] || '').trim(),
+          referencia: String(g['referencia'] || '').trim(), fecha: String(g['fecha'] || '').trim(), medio_pago: String(g['medio de pago'] || '').trim(),
+          monto: num(g['monto']), comision: num(g['comision']), iva_comision: num(g['iva comision']),
+          retenciones: num(g['reteica']) + num(g['reteiva']) + num(g['retefuente']) + num(g['impoconsumo']),
+          total_desembolsado: num(g['total desembolsado'])
+        };
+      }).filter(f => f.transaccion_id);
+      if (!enviar.length) throw new Error('No encontré transacciones en el archivo. ¿Es el reporte de desembolso de Wompi?');
+      const res = await llamarReporteContable('fn_wompi_conciliar_desembolso', { p_filas: enviar });
+      const etiqueta = { conciliado: '✅ Conciliado', ajustado: '🛠️ Ajustado', revisar: '⚠️ Revisar', ya_registrado: '↩️ Ya estaba' };
+      document.getElementById('resultadoWompi').innerHTML = `<table style="width:100%;font-size:12.5px;border-collapse:collapse;margin-top:12px;">
+        <tr style="text-align:left;opacity:0.7;"><th>Referencia</th><th>Pedido</th><th>Wompi cobró</th><th>ERP había registrado</th><th>Resultado</th></tr>
+        ${res.map(r => `<tr style="border-top:1px solid #f1e6ee;"><td>${escaparHtml(r.referencia || r.transaccion_id)}</td><td>${escaparHtml(r.pedido || '—')}</td>
+          <td>${r.comision_wompi != null ? formatearMoneda(r.comision_wompi) : '—'}</td><td>${r.comision_registrada != null ? formatearMoneda(r.comision_registrada) : '—'}</td>
+          <td>${etiqueta[r.estado] || r.estado}${Number(r.diferencia) ? ' (' + formatearMoneda(r.diferencia) + ')' : ''}${r.nota ? '<div style="font-size:11px;opacity:0.75;">' + escaparHtml(r.nota) + '</div>' : ''}</td></tr>`).join('')}
+      </table>`;
+      mostrarMensaje('mensajeWompi', `Listo: ${res.length} transacción(es) procesada(s).`, 'exito');
+      cargarHistorialWompi();
+    } catch (e) {
+      mostrarMensaje('mensajeWompi', e.message || 'No se pudo conciliar el archivo.', 'error');
+    } finally { btn.disabled = false; btn.textContent = 'Conciliar desembolso'; }
+  }
+
+  async function cargarHistorialWompi() {
+    const cont = document.getElementById('historialWompi');
+    const { data, error } = await supabaseClient.from('wompi_desembolsos')
+      .select('created_at, referencia, medio_pago, monto, comision, iva_comision, total_desembolsado, estado, diferencia, nota')
+      .order('created_at', { ascending: false }).limit(30);
+    if (error) { cont.innerHTML = '<div class="cargando">No se pudo cargar: ' + escaparHtml(error.message) + '</div>'; return; }
+    cont.innerHTML = data.length ? `<table style="width:100%;font-size:12px;border-collapse:collapse;">
+      <tr style="text-align:left;opacity:0.7;"><th>Fecha</th><th>Referencia</th><th>Monto</th><th>Comisión + IVA</th><th>Desembolsado</th><th>Estado</th></tr>
+      ${data.map(d => `<tr style="border-top:1px solid #f1e6ee;"><td>${new Date(d.created_at).toLocaleDateString('es-CO')}</td><td>${escaparHtml(d.referencia || '')}</td>
+        <td>${formatearMoneda(d.monto)}</td><td>${formatearMoneda(Number(d.comision) + Number(d.iva_comision))}</td><td>${formatearMoneda(d.total_desembolsado)}</td>
+        <td>${d.estado}${d.nota ? ' · ' + escaparHtml(d.nota) : ''}</td></tr>`).join('')}</table>` : '<div class="cargando">Todavía no has subido ningún desembolso.</div>';
   }
 
   async function cargarBancos() {
