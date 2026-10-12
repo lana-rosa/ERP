@@ -1584,6 +1584,7 @@
         <button class="btn-secundario" style="margin-top:0;" onclick="sincronizarStockCrm(this)">🔄 Volver a traer stock del CRM</button>
       </div>
       <div id="mensajeSincronizarCrm" class="mensaje"></div>
+      <div id="resumenUbicacionInventario" class="oculto" style="margin-bottom:14px;"></div>
       <div class="barra-busqueda">
         <input type="text" id="inputBuscarInventario" placeholder="Buscar por nombre o SKU..." oninput="renderizarTablaInventario()">
       </div>
@@ -8102,10 +8103,38 @@
     }
 
     await cargarInventarioGestion();
+    cargarResumenUbicacionInventario();
     actualizarVisibilidadSincronizarCrm();
     if (inventarioDeptoActivo === centroCostoTiendaId) {
       await sincronizarStockCrm(null, true); // silencioso, automático al entrar
     }
+  }
+
+  // Franja "dónde está el inventario" (insumos Tienda / Taller / en proceso / terminado) sobre la lista de inventario
+  async function cargarResumenUbicacionInventario() {
+    const caja = document.getElementById('resumenUbicacionInventario');
+    if (!caja) return;
+    caja.classList.add('oculto');
+    const rolesQueVen = [rolActual, ...(rolesAdicionalesActual || [])];
+    if (!rolesQueVen.includes('administrador') && !rolesQueVen.includes('contador')) return;
+    try {
+      const hoy = fechaLocalIso(new Date());
+      const d = await llamarReporteContable('fn_kardex_etapas', { p_desde: hoy, p_hasta: hoy });
+      const g = armarInventarioGlobal(d, hoy);
+      const m = formatearMoneda;
+      caja.innerHTML = `
+        <div style="background:var(--rosa-suave);border-radius:10px;padding:10px 14px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+            <strong style="font-size:12.5px;">📍 ¿Dónde está el inventario hoy?</strong>
+            <button class="btn-mini" onclick="mostrarPantallaInventarioGlobal()">Ver informe completo</button>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;">
+            ${g.bloques.map(b => `<div style="background:var(--fondo-panel, #fff);border-radius:8px;padding:8px 10px;"><div style="font-size:11.5px;opacity:0.8;">${b.icono} ${escaparHtml(b.titulo.replace('Insumos en inventario — ', 'Insumos · '))}</div><div style="font-size:16px;font-weight:700;">${m(b.valor)}</div><div style="font-size:10.5px;opacity:0.6;">${b.referencias} ${b.tipo === 'proceso' ? 'orden(es)' : 'referencia(s)'}</div></div>`).join('')}
+          </div>
+          <div style="font-size:11px;opacity:0.7;margin-top:6px;">Cada producto está en un solo lugar: <strong>insumos</strong> (Tienda o Taller) → <strong>en proceso</strong> (al entregarlos a una orden de producción) → <strong>terminado</strong> (cuando la orden se termina). Los traslados se hacen con "🔄 Trasladar Tienda ↔ Taller".</div>
+        </div>`;
+      caja.classList.remove('oculto');
+    } catch (e) { /* si no hay permiso o falla, simplemente no se muestra */ }
   }
 
   async function cargarProveedoresParaSelectorInventario() {
@@ -16118,6 +16147,30 @@
 
   let costeoAmigurumisCache = [];
   let costeoClasesCache = [];
+  let valorHoraManoObraCache = 0;
+
+  // "¿De dónde sale cada valor?" de una fila del costeo: explica cada cifra con sus números
+  function htmlOrigenCosteoAmigurumi(p) {
+    const vh = valorHoraManoObraCache, pg = precioGramoHiloCache;
+    const horas = Number(p.horas_tejido) || 0;
+    const calcMO = Math.round(horas * vh);
+    const moOk = Math.abs(calcMO - Number(p.mano_obra || 0)) <= Math.max(50, calcMO * 0.02);
+    const gramosEq = pg > 0 ? Math.round(Number(p.materiales || 0) / pg) : 0;
+    const linea = (titulo, valor, texto) => `<div style="display:grid;grid-template-columns:140px 110px 1fr;gap:10px;padding:5px 0;border-bottom:1px dashed var(--borde);">
+      <strong>${titulo}</strong><span style="text-align:right;font-weight:700;">${valor}</span><span style="opacity:0.85;">${texto}</span></div>`;
+    const textoMat = p.materiales_son_estimados
+      ? `<strong>Estimado</strong>: no hay consumo real en "Órdenes de producción" para este pedido, así que se calcula con el peso del producto${gramosEq ? ` (≈ ${gramosEq} g × ${formatearMoneda(pg)}/g de hilo)` : ''} + ojos, empaque y accesorios configurados en Inventario. Si el peso no está configurado, sale en $0.`
+      : `<strong>Real</strong>: suma del material entregado a la orden de producción (cantidad × costo promedio de cada insumo en el momento de entregarlo) menos lo devuelto al terminar.`;
+    return `<div style="grid-column:1/-1;background:var(--fondo-suave, #fff7f9);border-radius:8px;padding:10px 14px;margin:4px 0 8px;font-size:12px;">
+      <div style="font-weight:700;margin-bottom:4px;">🔎 De dónde sale cada valor${p.numero_pedido ? ' — pedido #' + escaparHtml(p.numero_pedido) : ''}</div>
+      ${linea('Horas', horas + ' h', 'Tiempos de cada paso (tejido, armado, detalles…) que la tejedora marcó en el CRM, convertidos a horas. Si no hay tiempos registrados, la mano de obra sale en $0.')}
+      ${linea('Mano de obra', formatearMoneda(p.mano_obra), `${horas} h × ${formatearMoneda(vh)} por hora (SMLV + prestaciones + ARL + parafiscales)${moOk ? ' = ' + formatearMoneda(calcMO) : ' (el sistema aplicó un valor de hora distinto al vigente: ' + (horas > 0 ? formatearMoneda(Math.round(p.mano_obra / horas)) + '/h' : 'sin horas') + ')'}.`)}
+      ${linea('Materiales', formatearMoneda(p.materiales), textoMat)}
+      ${linea('Costo total', formatearMoneda(p.costo_total), `Mano de obra ${formatearMoneda(p.mano_obra)} + materiales ${formatearMoneda(p.materiales)}.`)}
+      ${linea('Precio de venta', formatearMoneda(p.precio_venta), 'Valor del pedido registrado en el CRM para este producto. Si el precio está mal, se corrige en el CRM (el envío no debe sumarse aquí).')}
+      ${linea('Margen', formatearMoneda(p.margen), `Precio de venta ${formatearMoneda(p.precio_venta)} − costo total ${formatearMoneda(p.costo_total)}. El % es margen ÷ precio de venta.`)}
+    </div>`;
+  }
 
   function filtrarCosteoAmigurumis() {
     const texto = document.getElementById('buscarCosteoAmigurumis').value.trim().toLowerCase();
@@ -16141,6 +16194,7 @@
       const { valor_hora_mano_obra, precio_gramo_hilo, productos } = await respAmigurumis.json();
       document.getElementById('valorHoraManoObra').textContent = `💰 Valor de la hora de mano de obra (SMLV + prestaciones + ARL + parafiscales): ${formatearMoneda(valor_hora_mano_obra)}`;
       precioGramoHiloCache = Number(precio_gramo_hilo) || 0;
+      valorHoraManoObraCache = Number(valor_hora_mano_obra) || 0;
       const inputPrecioGramo = document.getElementById('inputPrecioGramoHilo');
       if (inputPrecioGramo && document.activeElement !== inputPrecioGramo) inputPrecioGramo.value = precioGramoHiloCache || '';
 
@@ -16155,16 +16209,29 @@
     }
   }
 
+  let costeoAmigurumisVisibles = [];
+
+  function alternarOrigenCosteo(fila, i) {
+    const caja = document.getElementById('origenCosteo' + i);
+    if (!caja) return;
+    const abrir = caja.style.display === 'none';
+    if (abrir && !caja.innerHTML) caja.innerHTML = htmlOrigenCosteoAmigurumi(costeoAmigurumisVisibles[i]);
+    caja.style.display = abrir ? 'block' : 'none';
+    const flecha = fila.querySelector('.flecha-origen');
+    if (flecha) flecha.textContent = abrir ? '▾' : '▸';
+  }
+
   function renderizarCosteoAmigurumis(productos) {
+    costeoAmigurumisVisibles = productos;
     const contA = document.getElementById('listaCosteoAmigurumis');
     contA.innerHTML = productos.length === 0 ? '<div class="cargando">Sin productos que coincidan.</div>' : `
       <div class="tabla-lista">
         <div class="tabla-lista-header header-rosa" style="grid-template-columns:1fr 90px 100px 100px 100px 100px 90px 90px;">
           <span>PRODUCTO</span><span style="text-align:right;">HORAS</span><span style="text-align:right;">MANO DE OBRA</span><span style="text-align:right;">MATERIALES</span><span style="text-align:right;">COSTO TOTAL</span><span style="text-align:right;">PRECIO VENTA</span><span style="text-align:right;">MARGEN</span><span style="text-align:right;">%</span>
         </div>
-        ${productos.map(p => `
-          <div class="tabla-lista-fila" style="grid-template-columns:1fr 90px 100px 100px 100px 100px 90px 90px;cursor:default;">
-            <span>${escaparHtml(p.descripcion || 'Sin descripción')}${p.numero_pedido ? ' <span style="opacity:0.5;">#' + escaparHtml(p.numero_pedido) + '</span>' : ''}</span>
+        ${productos.map((p, i) => `
+          <div class="tabla-lista-fila" style="grid-template-columns:1fr 90px 100px 100px 100px 100px 90px 90px;cursor:pointer;" onclick="alternarOrigenCosteo(this, ${i})" title="Clic para ver de dónde sale cada valor">
+            <span><span class="flecha-origen">▸</span> ${escaparHtml(p.descripcion || 'Sin descripción')}${p.numero_pedido ? ' <span style="opacity:0.5;">#' + escaparHtml(p.numero_pedido) + '</span>' : ''}</span>
             <span style="text-align:right;">${p.horas_tejido}</span>
             <span style="text-align:right;">${formatearMoneda(p.mano_obra)}</span>
             <span style="text-align:right;">${formatearMoneda(p.materiales)}${p.materiales_son_estimados ? ' <span style="font-size:9.5px;opacity:0.6;" title="No hay consumo real registrado en el Taller — este valor es un estimado por el peso configurado del producto.">(estimado)</span>' : ''}</span>
@@ -16173,6 +16240,7 @@
             <span style="text-align:right;color:${p.margen >= 0 ? 'var(--verde-exito)' : 'var(--rojo-error)'};font-weight:700;">${formatearMoneda(p.margen)}</span>
             <span style="text-align:right;">${p.margen_pct}%</span>
           </div>
+          <div class="origen-costeo" id="origenCosteo${i}" style="display:none;"></div>
         `).join('')}
       </div>
     `;
@@ -16208,18 +16276,46 @@
         <div class="tabla-lista-header header-rosa" style="grid-template-columns:1fr 90px 110px 110px 110px 100px;">
           <span>PRODUCTO</span><span style="text-align:right;">UNID. VENDIDAS</span><span style="text-align:right;">COSTO MAT. UNIT.</span><span style="text-align:right;">COSTO MAT. TOTAL</span><span style="text-align:right;">PRECIO VENTA PROM.</span><span style="text-align:right;">MARGEN MAT.</span>
         </div>
-        ${productos.map(p => `
-          <div class="tabla-lista-fila" style="grid-template-columns:1fr 90px 110px 110px 110px 100px;cursor:default;">
-            <span>${escaparHtml(p.nombre)}</span>
+        ${productos.map((p, i) => `
+          <div class="tabla-lista-fila" style="grid-template-columns:1fr 90px 110px 110px 110px 100px;cursor:pointer;" onclick="alternarOrigenMateriaPrima(this, ${i})" title="Clic para ver de dónde sale cada valor">
+            <span><span class="flecha-origen">▸</span> ${escaparHtml(p.nombre)}</span>
             <span style="text-align:right;">${p.unidades_vendidas}</span>
             <span style="text-align:right;">${formatearMoneda(p.costo_materiales_unitario)}${p.materiales_son_estimados ? ' <span style="font-size:9.5px;opacity:0.6;" title="No hay consumo real registrado en Órdenes de producción para este producto en este período — este valor es un estimado por el peso configurado del producto.">(estimado)</span>' : ' <span style="font-size:9.5px;opacity:0.6;color:var(--verde-exito);" title="Calculado con el consumo real de mercería registrado en Órdenes de producción.">(real)</span>'}</span>
             <span style="text-align:right;">${formatearMoneda(p.costo_materiales_total)}</span>
             <span style="text-align:right;">${formatearMoneda(p.precio_venta_promedio)}</span>
             <span style="text-align:right;color:${p.margen_materiales_unitario >= 0 ? 'var(--verde-exito)' : 'var(--rojo-error)'};font-weight:700;">${formatearMoneda(p.margen_materiales_unitario)}</span>
           </div>
+          <div id="origenMP${i}" style="display:none;"></div>
         `).join('')}
       </div>
     `;
+  }
+
+  function alternarOrigenMateriaPrima(fila, i) {
+    const caja = document.getElementById('origenMP' + i);
+    const p = cacheCostoMateriaPrima && cacheCostoMateriaPrima.productos[i];
+    if (!caja || !p) return;
+    const abrir = caja.style.display === 'none';
+    if (abrir && !caja.innerHTML) {
+      const pg = Number(cacheCostoMateriaPrima.precio_gramo_hilo) || 0;
+      const peso = Number(p.peso_gramos) || 0;
+      const extras = Number(p.costo_ojos) + Number(p.costo_empaque) + Number(p.costo_otros_accesorios);
+      const linea = (t, v, x) => `<div style="display:grid;grid-template-columns:150px 110px 1fr;gap:10px;padding:5px 0;border-bottom:1px dashed var(--borde);"><strong>${t}</strong><span style="text-align:right;font-weight:700;">${v}</span><span style="opacity:0.85;">${x}</span></div>`;
+      const origen = p.materiales_son_estimados
+        ? linea('Costo materiales unit.', formatearMoneda(p.costo_materiales_unitario), `<strong>Estimado</strong>: peso ${peso ? peso + ' g' : '<span style="color:var(--rojo-error);">sin configurar</span>'} × ${formatearMoneda(pg)}/g = ${formatearMoneda(peso * pg)}, más ojos ${formatearMoneda(p.costo_ojos)}, empaque ${formatearMoneda(p.costo_empaque)} y otros accesorios ${formatearMoneda(p.costo_otros_accesorios)} (${formatearMoneda(extras)}). Se configura en Inventario → editar producto.`)
+        : linea('Costo materiales unit.', formatearMoneda(p.costo_materiales_unitario), `<strong>Real</strong>: ${p.ordenes_reales} orden(es) de producción terminadas en el período gastaron ${formatearMoneda(p.costo_real_total)} de material para ${p.unidades_producidas_periodo} unidad(es) → ${formatearMoneda(p.costo_real_total)} ÷ ${p.unidades_producidas_periodo}.`);
+      caja.innerHTML = `<div style="background:var(--fondo-suave, #fff7f9);border-radius:8px;padding:10px 14px;margin:4px 0 8px;font-size:12px;">
+        <div style="font-weight:700;margin-bottom:4px;">🔎 De dónde sale cada valor — ${escaparHtml(p.nombre)}</div>
+        ${linea('Unidades vendidas', p.unidades_vendidas, 'Suma de las ventas del POS (estado completada) de este producto en el período.')}
+        ${origen}
+        ${linea('Costo materiales total', formatearMoneda(p.costo_materiales_total), `Costo unitario ${formatearMoneda(p.costo_materiales_unitario)} × ${p.unidades_vendidas} unidades vendidas.`)}
+        ${linea('Precio venta prom.', formatearMoneda(p.precio_venta_promedio), 'Total vendido del producto en el período ÷ unidades vendidas.')}
+        ${linea('Margen materiales', formatearMoneda(p.margen_materiales_unitario), 'Precio de venta promedio − costo de materiales unitario. No incluye mano de obra.')}
+      </div>`;
+    }
+    caja.style.display = abrir ? 'block' : 'none';
+    const flecha = fila.querySelector('.flecha-origen');
+    if (flecha) flecha.textContent = abrir ? '▾' : '▸';
   }
 
   function exportarCostoMateriaPrimaExcel() {
