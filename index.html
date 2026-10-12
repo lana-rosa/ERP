@@ -2603,6 +2603,7 @@
   <div class="filtro-tipo" style="margin-bottom:20px;">
     <button class="chip-filtro activo" data-subtab-btn="costeoReal" onclick="mostrarSubTabGrupo('costeoReal', 'subtabCosteoAmigurumis', this)">🧶 Amigurumis y productos tejidos</button>
     <button class="chip-filtro" data-subtab-btn="costeoReal" onclick="mostrarSubTabGrupo('costeoReal', 'subtabCosteoMateriaPrima', this); cargarCostoMateriaPrima();">📅 Costo de materia prima por período</button>
+    <button class="chip-filtro" data-subtab-btn="costeoReal" onclick="mostrarSubTabGrupo('costeoReal', 'subtabCosteoPesos', this); cargarPesosProductos();">⚖️ Pesos y materia prima</button>
     <button class="chip-filtro" data-subtab-btn="costeoReal" onclick="mostrarSubTabGrupo('costeoReal', 'subtabCosteoClases', this)">🎓 Cursos y clases</button>
     <button class="chip-filtro" data-subtab-btn="costeoReal" onclick="mostrarSubTabGrupo('costeoReal', 'subtabCosteoConfig', this)">⚙️ Configuración</button>
   </div>
@@ -2628,6 +2629,20 @@
       <h2>📅 Costo promedio de materia prima por producto de venta</h2>
       <div class="subtitulo">Para cada producto vendido en el período: costo estimado de materiales (peso configurado × precio del gramo de hilo, más ojos/empaque/accesorios) y el margen frente al precio de venta promedio del período. No incluye mano de obra — para el costo total con mano de obra, ve a "Amigurumis y productos tejidos".</div>
       <div id="contenidoCostoMateriaPrima"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+
+  <div id="subtabCosteoPesos" data-subtab-grupo="costeoReal" class="oculto">
+    <div class="panel" style="max-width:none;max-height:none;">
+      <h2>⚖️ Pesos y materia prima de los productos terminados</h2>
+      <div class="subtitulo">Escribe el peso en gramos de cada producto. El costo de la materia prima se calcula así: <strong>peso × precio del gramo de hilo</strong> (<span id="pesosPrecioGramo"></span>) + ojos + empaque + otros accesorios. Es un costo estimado mientras las tejedoras no registren el consumo real en "Órdenes de producción". Guardar el peso no genera movimientos contables ni cambia el costo del inventario; alimenta el Costeo Real.</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+        <input type="text" id="buscarPesos" placeholder="🔍 Buscar producto..." oninput="renderizarPesosProductos()" style="max-width:300px;margin:0;">
+        <label style="display:flex;gap:6px;align-items:center;font-size:12.5px;margin:0;"><input type="checkbox" id="soloSinPeso" onchange="renderizarPesosProductos()" style="width:auto;margin:0;"> Solo sin peso</label>
+        <button class="btn-principal" style="width:auto;margin:0;" onclick="guardarPesosProductos(this)">💾 Guardar pesos</button>
+      </div>
+      <div id="mensajePesosProductos" class="mensaje"></div>
+      <div id="listaPesosProductos"><div class="cargando">Cargando...</div></div>
     </div>
   </div>
 
@@ -16289,6 +16304,79 @@
         `).join('')}
       </div>
     `;
+  }
+
+  let pesosProductosCache = [];
+  const pesosModificados = {};
+
+  async function cargarPesosProductos() {
+    const cont = document.getElementById('listaPesosProductos');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    await cargarPrecioGramoHilo();
+    document.getElementById('pesosPrecioGramo').textContent = formatearMoneda(precioGramoHiloCache) + ' por gramo';
+    const { data, error } = await supabaseClient.from('inventario_items')
+      .select('id, nombre, stock_actual, peso_gramos, costo_ojos, costo_empaque, costo_otros_accesorios')
+      .eq('tipo', 'producto_terminado').eq('activo', true).order('nombre');
+    if (error) { cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(error.message)}</div>`; return; }
+    pesosProductosCache = data || [];
+    Object.keys(pesosModificados).forEach(k => delete pesosModificados[k]);
+    renderizarPesosProductos();
+  }
+
+  function costoMateriaPrimaPorPeso(item, peso) {
+    return (Number(peso) || 0) * (Number(precioGramoHiloCache) || 0) + (Number(item.costo_ojos) || 0) + (Number(item.costo_empaque) || 0) + (Number(item.costo_otros_accesorios) || 0);
+  }
+
+  function renderizarPesosProductos() {
+    const cont = document.getElementById('listaPesosProductos');
+    const texto = document.getElementById('buscarPesos').value.trim().toLowerCase();
+    const solo = document.getElementById('soloSinPeso').checked;
+    const lista = pesosProductosCache.filter(i => (!texto || i.nombre.toLowerCase().includes(texto)) && (!solo || !(Number(i.peso_gramos) > 0)));
+    const sinPeso = pesosProductosCache.filter(i => !(Number(i.peso_gramos) > 0)).length;
+    cont.innerHTML = `<div style="font-size:12px;opacity:0.75;margin-bottom:8px;">${pesosProductosCache.length} productos · ${sinPeso} sin peso</div>` + (lista.length === 0 ? '<div class="cargando">Sin productos que coincidan.</div>' : `
+      <div class="tabla-lista">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:1fr 70px 110px 90px 130px;">
+          <span>PRODUCTO</span><span style="text-align:right;">EN STOCK</span><span style="text-align:right;">PESO (g)</span><span style="text-align:right;">EXTRAS</span><span style="text-align:right;">MATERIA PRIMA</span>
+        </div>
+        ${lista.map(i => {
+          const peso = i.id in pesosModificados ? pesosModificados[i.id] : i.peso_gramos;
+          const extras = (Number(i.costo_ojos) || 0) + (Number(i.costo_empaque) || 0) + (Number(i.costo_otros_accesorios) || 0);
+          return `<div class="tabla-lista-fila" style="grid-template-columns:1fr 70px 110px 90px 130px;cursor:default;">
+            <span>${escaparHtml(i.nombre)}</span>
+            <span style="text-align:right;">${formatearCantidad(i.stock_actual)}</span>
+            <span style="text-align:right;"><input type="number" min="0" step="0.5" inputmode="decimal" value="${peso ?? ''}" oninput="cambioPesoProducto('${i.id}', this.value)" style="width:90px;padding:5px 7px;margin:0;text-align:right;"></span>
+            <span style="text-align:right;">${formatearMoneda(extras)}</span>
+            <span style="text-align:right;font-weight:700;" id="mpPeso-${i.id}">${formatearMoneda(costoMateriaPrimaPorPeso(i, peso))}</span>
+          </div>`;
+        }).join('')}
+      </div>`);
+  }
+
+  function cambioPesoProducto(id, valor) {
+    const item = pesosProductosCache.find(i => i.id === id);
+    if (!item) return;
+    const v = valor === '' ? null : Math.max(0, Number(valor));
+    pesosModificados[id] = v;
+    const celda = document.getElementById('mpPeso-' + id);
+    if (celda) celda.textContent = formatearMoneda(costoMateriaPrimaPorPeso(item, v));
+  }
+
+  async function guardarPesosProductos(boton) {
+    const ids = Object.keys(pesosModificados).filter(id => {
+      const item = pesosProductosCache.find(i => i.id === id);
+      return item && (item.peso_gramos ?? null) !== pesosModificados[id];
+    });
+    if (!ids.length) { mostrarMensaje('mensajePesosProductos', 'No hay cambios por guardar.', 'error'); return; }
+    boton.disabled = true;
+    let fallidos = 0;
+    for (const id of ids) {
+      const { error } = await supabaseClient.from('inventario_items').update({ peso_gramos: pesosModificados[id], updated_at: new Date().toISOString() }).eq('id', id);
+      if (error) fallidos++;
+      else { pesosProductosCache.find(i => i.id === id).peso_gramos = pesosModificados[id]; delete pesosModificados[id]; }
+    }
+    boton.disabled = false;
+    mostrarMensaje('mensajePesosProductos', fallidos ? `Se guardaron ${ids.length - fallidos} pesos; ${fallidos} fallaron, inténtalo de nuevo.` : `✅ Se guardaron ${ids.length} peso(s).`, fallidos ? 'error' : 'exito');
+    renderizarPesosProductos();
   }
 
   function alternarOrigenMateriaPrima(fila, i) {
