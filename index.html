@@ -1078,6 +1078,7 @@
         <button class="nav-btn" id="nav-activos-fijos" onclick="mostrarPantallaActivosFijos()"><span class="nav-icon">🪑</span> Activos fijos</button>
         <div class="sidebar-seccion">Reportes e indicadores</div>
         <button class="nav-btn" id="nav-reportes-financieros" onclick="mostrarPantallaReportesFinancieros()"><span class="nav-icon">📊</span> Informes de Ventas</button>
+        <button class="nav-btn" id="nav-indicadores" onclick="mostrarPantallaIndicadores()"><span class="nav-icon">📈</span> Indicadores</button>
         <button class="nav-btn" id="nav-costeo-real" onclick="mostrarPantallaCosteoReal()"><span class="nav-icon">🧮</span> Costeo Real</button>
         <button class="nav-btn" id="nav-informe-costos" onclick="mostrarPantallaInformeCostos()"><span class="nav-icon">🏷️</span> Informe de costos por área</button>
         <button class="nav-btn" id="nav-reglas-precios" onclick="mostrarPantallaReglasPrecios()"><span class="nav-icon">💲</span> Reglas de precios</button>
@@ -2590,6 +2591,24 @@
   </div>
 
   <div id="subtabFinPresupuestos" class="oculto"></div>
+</div>
+
+<!-- ===== PANTALLA: INDICADORES ===== -->
+<div id="pantallaIndicadores" class="oculto contenido">
+  <div class="page-header">
+    <h1>📈 Indicadores</h1>
+    <div class="subtitulo">Los números clave del negocio, calculados con lo que se registra en el ERP (contabilidad, caja, pedidos y producción). Haz clic en cada indicador para ver de dónde sale.</div>
+  </div>
+  <div class="mensaje" id="mensajeIndicadores"></div>
+  <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+    <div><label for="indDesde" style="font-size:11px;">Desde</label><input type="date" id="indDesde" onchange="cargarIndicadores()" style="padding:9px 10px;"></div>
+    <div><label for="indHasta" style="font-size:11px;">Hasta</label><input type="date" id="indHasta" onchange="cargarIndicadores()" style="padding:9px 10px;"></div>
+    <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="periodoIndicadores('mes')">Este mes</button>
+    <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="periodoIndicadores('trimestre')">Últimos 90 días</button>
+    <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="periodoIndicadores('anio')">Este año</button>
+    <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirSeccion('contenidoIndicadores', 'Indicadores')">🖨️ Imprimir / PDF</button>
+  </div>
+  <div id="contenidoIndicadores"><div class="cargando">Cargando...</div></div>
 </div>
 
 <!-- ===== PANTALLA: COSTEO REAL ===== -->
@@ -5598,7 +5617,7 @@
   });
 
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaInventarioGlobal', 'pantallaGuiasUsuario', 'pantallaFacturacionElectronica', 'pantallaServiciosDian', 'pantallaCorreoEmpresa', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb', 'pantallaTextosWeb', 'pantallaPaypalConfig', 'pantallaMiProduccion', 'pantallaInformeCostos', 'pantallaReglasPrecios'];
+    const pantallas = ['pantallaLogin', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaInventarioGlobal', 'pantallaGuiasUsuario', 'pantallaFacturacionElectronica', 'pantallaServiciosDian', 'pantallaCorreoEmpresa', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaIndicadores', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb', 'pantallaTextosWeb', 'pantallaPaypalConfig', 'pantallaMiProduccion', 'pantallaInformeCostos', 'pantallaReglasPrecios'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -5636,6 +5655,7 @@
       pantallaReportes: 'nav-reportes',
       pantallaReportesFinancieros: 'nav-reportes-financieros',
       pantallaCosteoReal: 'nav-costeo-real',
+      pantallaIndicadores: 'nav-indicadores',
       pantallaPresupuestoEmpresa: 'nav-presupuesto-empresa',
       pantallaDashboardContable: 'nav-dashboard-contable',
       pantallaContabilidadImpuestos: 'nav-contabilidad-impuestos',
@@ -6030,6 +6050,7 @@
     mostrar('nav-talento-humano', esAdmin);
     mostrar('nav-reportes-financieros', esAdmin || esContador);
     mostrar('nav-costeo-real', esAdmin || esContador);
+    mostrar('nav-indicadores', esAdmin || esContador);
     mostrar('nav-informe-costos', esAdmin || esContador);
     mostrar('nav-reglas-precios', esAdmin || esContador);
     mostrar('nav-presupuesto-empresa', esAdmin || esContador);
@@ -13114,6 +13135,7 @@
     { clave: 'nav-contabilidad-impuestos', etiqueta: '　　Impuestos, PUC y ajustes' },
     { clave: 'nav-activos-fijos', etiqueta: '　　Activos fijos' },
     { clave: 'nav-reportes-financieros', etiqueta: '　　Informes de Ventas' },
+    { clave: 'nav-indicadores', etiqueta: '　　Indicadores' },
     { clave: 'nav-costeo-real', etiqueta: '　　Costeo Real' },
     { clave: 'nav-presupuesto-empresa', etiqueta: '　　Presupuesto' },
     { clave: 'nav-reportes', etiqueta: '　　Reportes de turno' },
@@ -16147,6 +16169,117 @@
     contenedor.innerHTML = html;
   }
 
+
+  // ============================================================================
+  // INDICADORES (tablero gerencial: resultados, balance, ventas, producción)
+  // ============================================================================
+  function periodoIndicadores(tipo) {
+    const hoy = new Date();
+    let d = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+    if (tipo === 'trimestre') d = new Date(hoy.getTime() - 89 * 86400000);
+    if (tipo === 'anio') d = new Date(hoy.getFullYear(), 0, 1);
+    document.getElementById('indDesde').value = fechaLocalIso(d);
+    document.getElementById('indHasta').value = fechaLocalIso(hoy);
+    cargarIndicadores();
+  }
+
+  async function mostrarPantallaIndicadores() {
+    mostrarPantalla('pantallaIndicadores');
+    asegurarEstiloTablaKardex();
+    if (!document.getElementById('indDesde').value) { periodoIndicadores('trimestre'); return; }
+    await cargarIndicadores();
+  }
+
+  let datosIndicadores = null;
+
+  async function cargarIndicadores() {
+    const cont = document.getElementById('contenidoIndicadores');
+    const desde = document.getElementById('indDesde').value, hasta = document.getElementById('indHasta').value;
+    if (!desde || !hasta) return;
+    cont.innerHTML = '<div class="cargando">Calculando indicadores...</div>';
+    try {
+      datosIndicadores = await llamarReporteContable('fn_indicadores', { p_desde: desde, p_hasta: hasta });
+    } catch (e) { cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(e.message)}</div>`; return; }
+    cont.innerHTML = htmlIndicadores(datosIndicadores);
+  }
+
+  function alternarOrigenIndicador(id) {
+    const c = document.getElementById(id);
+    if (c) c.style.display = c.style.display === 'none' ? 'block' : 'none';
+  }
+
+  function htmlIndicadores(d) {
+    const m = formatearMoneda, n = formatearCantidad;
+    const r = d.resultados, b = d.balance, pr = d.produccion, ant = d.anterior;
+    const pct = (x) => x === null || x === undefined ? '—' : (Number(x)).toLocaleString('es-CO') + '%';
+    const num = (x, dec = 2) => x === null || x === undefined ? '—' : Number(x).toLocaleString('es-CO', { maximumFractionDigits: dec });
+    const variacion = (act, prev) => {
+      act = Number(act); prev = Number(prev);
+      if (!prev) return '<span style="opacity:0.55;">sin datos del período anterior</span>';
+      const v = (act - prev) / Math.abs(prev) * 100;
+      return `<span style="color:${v >= 0 ? 'var(--verde-exito)' : 'var(--rojo-error)'};">${v >= 0 ? '▲' : '▼'} ${Math.abs(Math.round(v))}% vs período anterior</span>`;
+    };
+    let nOrigen = 0;
+    const tarjeta = (titulo, valor, pie, origen) => {
+      const id = 'indOrigen' + (nOrigen++);
+      return `<div style="border:1px solid var(--gris-borde, #eee);border-radius:12px;padding:12px 14px;background:var(--fondo-panel, #fff);cursor:pointer;" onclick="alternarOrigenIndicador('${id}')" title="Clic para ver de dónde sale">
+        <div style="font-size:12px;font-weight:600;opacity:0.85;">${titulo}</div>
+        <div style="font-size:21px;font-weight:700;margin:4px 0;">${valor}</div>
+        <div style="font-size:11.5px;">${pie || ''}</div>
+        <div id="${id}" style="display:none;font-size:11.5px;opacity:0.8;margin-top:8px;border-top:1px dashed var(--gris-borde, #ddd);padding-top:6px;">🔎 ${origen}</div>
+      </div>`;
+    };
+    const grilla = (items) => `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-bottom:6px;">${items.join('')}</div>`;
+    const titulo = (t, sub) => `<h2 style="margin:22px 0 4px;font-size:16px;">${t}</h2>${sub ? `<div style="font-size:12px;opacity:0.7;margin-bottom:10px;">${sub}</div>` : ''}`;
+    const tabla = (cabeceras, filas) => filas.length === 0 ? '<div class="cargando">Sin datos en este período.</div>' : `
+      <table class="tk"><thead><tr>${cabeceras.map((h, i) => `<th${i ? ' class="n"' : ''}>${h}</th>`).join('')}</tr></thead>
+      <tbody>${filas.map(f => `<tr>${f.map((c, i) => `<td${i ? ' class="n"' : ''}>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+
+    const costosSinCerrar = Number(r.ingresos) > 0 && Number(r.costos) < Number(r.ingresos) * 0.2;
+    const aviso = costosSinCerrar ? `<div style="background:var(--tinte-ambar);color:var(--ambar);border-radius:var(--radius-md);padding:8px 12px;font-size:12.5px;margin-bottom:12px;">⚠️ Los <strong>costos de lo vendido y producido</strong> son muy bajos frente a los ingresos (${m(r.costos)} vs ${m(r.ingresos)}). Mientras no se ejecute el cierre de costos del mes y las tejedoras no registren el material en "Órdenes de producción", el <strong>margen bruto y la utilidad salen más altos que la realidad</strong>. Úsalos como referencia, no como cifra final.</div>` : '';
+
+    const resultados = grilla([
+      tarjeta('💰 Ingresos', m(r.ingresos), variacion(r.ingresos, ant.ingresos), 'Cuentas 41 del Estado de resultados (ventas del POS, pedidos web y de redes) en el período. Incluye lo que cobraste por envíos si se registró como ingreso.'),
+      tarjeta('🧶 Costos de ventas y producción', m(r.costos), '', 'Cuentas 61 y 7 del Estado de resultados: costo de lo vendido más mano de obra y costos de producción contabilizados.'),
+      tarjeta('📊 Margen bruto', pct(r.margen_bruto_pct), `Utilidad bruta ${m(r.utilidad_bruta)}`, '(Ingresos − costos) ÷ ingresos.'),
+      tarjeta('🏢 Gastos de operación', m(r.gastos), '', 'Cuentas 51 y 52: administración y ventas (arriendo, servicios, honorarios, etc.).'),
+      tarjeta('📈 Utilidad operacional', m(r.utilidad_operacional), `Margen ${pct(r.margen_operacional_pct)}`, 'Ingresos − costos − gastos de operación.'),
+      tarjeta('✅ Utilidad neta', m(r.utilidad_neta), variacion(r.utilidad_neta, ant.utilidad_neta) + `<br>Margen ${pct(r.margen_neto_pct)}`, 'Utilidad operacional + otros ingresos − otros gastos − impuestos, según el Estado de resultados del mismo período.'),
+    ]);
+    const finanzas = grilla([
+      tarjeta('💵 Efectivo y bancos', m(b.efectivo), '', 'Saldo a la fecha final de las cuentas 11 (Caja, Bancos y medios electrónicos).'),
+      tarjeta('📥 Cartera (por cobrar)', m(b.cartera), '', 'Saldo de las cuentas 13: lo que te deben los clientes.'),
+      tarjeta('📦 Inventario', m(b.inventario), '', 'Saldo de las cuentas 14 (materias primas, productos terminados, mercancía). Coincide con el Inventario global.'),
+      tarjeta('🏛️ Patrimonio', m(b.patrimonio), `Activo ${m(b.activo)} · Pasivo ${m(b.pasivo)}`, 'Saldo de las cuentas 3 a la fecha final. Activo = pasivo + patrimonio.'),
+      tarjeta('💧 Razón corriente', num(b.razon_corriente), b.razon_corriente === null ? 'No hay deudas registradas' : 'Más de 1 es sano', '(Efectivo + cartera + inventario) ÷ pasivos. Cuánto tienes para cubrir lo que debes.'),
+      tarjeta('🧮 Endeudamiento', pct(b.endeudamiento_pct), 'Pasivo ÷ activo', 'Qué parte de lo que tienes está financiada con deuda.'),
+      tarjeta('🔄 Rotación de inventario', num(b.rotacion_inventario), b.dias_inventario ? `≈ ${num(b.dias_inventario, 0)} días de inventario` : '', 'Costo de ventas del período ÷ inventario a la fecha final. Depende de que los costos estén contabilizados (ver aviso).'),
+    ]);
+    const ventas = grilla([
+      tarjeta('🛍️ Ventas en tienda (POS)', m(d.ventas_pos.total), `${d.ventas_pos.num_ventas} venta(s)`, 'Ventas completadas del punto de venta en el período (sin anuladas).'),
+      tarjeta('🎟️ Ticket promedio', m(d.ventas_pos.ticket_promedio), 'POS', 'Total vendido en el POS ÷ número de ventas.'),
+    ]);
+    const canales = tabla(['Canal', 'Pedidos / ventas', 'Valor del producto'], (d.ventas_por_canal || []).map(c => [escaparHtml(c.canal), n(c.pedidos), m(c.total)]));
+    const top = tabla(['Producto', 'Unidades', 'Vendido', 'Costo unit.', 'Margen unit. aprox.'], (d.top_productos || []).map(p => {
+      const u = Number(p.unidades) || 1, pu = Number(p.total) / u;
+      return [escaparHtml(p.producto), n(p.unidades), m(p.total), m(p.costo_unit), m(pu - Number(p.costo_unit))];
+    }));
+    const produccion = grilla([
+      tarjeta('🏭 Órdenes terminadas', n(pr.ordenes_terminadas), `${n(pr.unidades_terminadas)} unidades · ${n(pr.ordenes_anuladas)} anulada(s)`, 'Órdenes de producción en estado terminada o entregada, con fecha de terminación en el período.'),
+      tarjeta('🧵 Material consumido', m(pr.costo_material), Number(pr.costo_material) === 0 ? 'Sin registrar todavía' : '', 'Suma del costo del material entregado a las órdenes terminadas. Si está en $0, las tejedoras aún no registran el material en las órdenes.'),
+    ]);
+    const tej = tabla(['Tejedora', 'Piezas', 'Horas', 'Horas por pieza', 'Gramos'], (d.tejedoras || []).map(t => [escaparHtml(t.tejedora), n(t.piezas), num(t.horas), num(Number(t.horas) / (Number(t.piezas) || 1)), n(t.gramos)]));
+
+    return `<div style="font-size:12px;opacity:0.7;margin-bottom:8px;">Período: ${escaparHtml(d.periodo.desde)} a ${escaparHtml(d.periodo.hasta)} (${d.periodo.dias} días). Comparado con ${escaparHtml(ant.desde)} a ${escaparHtml(ant.hasta)}.</div>
+      ${aviso}
+      ${titulo('💰 Resultados', 'Del Estado de resultados contable.')}${resultados}
+      ${titulo('🏦 Situación financiera', 'A la fecha final del período.')}${finanzas}
+      ${titulo('🛒 Ventas')}${ventas}
+      <div style="font-weight:600;font-size:13px;margin:10px 0 4px;">Ventas por canal</div>${canales}
+      <div style="font-weight:600;font-size:13px;margin:14px 0 4px;">Productos más vendidos en la tienda (POS)</div>${top}
+      ${titulo('🧶 Producción', 'De las órdenes de producción y las fichas de las tejedoras.')}${produccion}
+      <div style="font-weight:600;font-size:13px;margin:10px 0 4px;">Productividad por tejedora</div>${tej}`;
+  }
 
   async function mostrarPantallaCosteoReal() {
     mostrarPantalla('pantallaCosteoReal');
