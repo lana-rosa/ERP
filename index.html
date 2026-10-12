@@ -16200,7 +16200,53 @@
     try {
       datosIndicadores = await llamarReporteContable('fn_indicadores', { p_desde: desde, p_hasta: hasta });
     } catch (e) { cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(e.message)}</div>`; return; }
-    cont.innerHTML = htmlIndicadores(datosIndicadores);
+    cont.innerHTML = htmlIndicadores(datosIndicadores) + '<div id="indicadoresCrm" style="margin-top:6px;"><div class="cargando">Cargando indicadores de clientes (CRM)...</div></div>';
+    cargarIndicadoresCrm(desde, hasta);
+  }
+
+  // Indicadores de clientes que vienen del CRM (otro proyecto de Supabase) a través de la función indicadores-crm
+  async function cargarIndicadoresCrm(desde, hasta) {
+    const caja = document.getElementById('indicadoresCrm');
+    if (!caja) return;
+    try {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      const resp = await fetch(SUPABASE_URL + '/functions/v1/indicadores-crm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + (session ? session.access_token : '') },
+        body: JSON.stringify({ desde, hasta }),
+      });
+      const d = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(d.error || ('error ' + resp.status));
+      if (document.getElementById('indicadoresCrm') !== caja) return;
+      caja.innerHTML = htmlIndicadoresCrm(d.indicadores);
+    } catch (e) {
+      caja.innerHTML = `<div class="cargando">No se pudieron cargar los indicadores del CRM: ${escaparHtml(e.message)}</div>`;
+    }
+  }
+
+  function htmlIndicadoresCrm(c) {
+    const m = formatearMoneda;
+    const pct = (x) => x === null || x === undefined ? '—' : Number(x).toLocaleString('es-CO') + '%';
+    const nombres = { campeon: '🏆 Campeones', leal: '💖 Leales', nuevo: '🌱 Nuevos', ocasional: '🙂 Ocasionales', en_riesgo: '⚠️ En riesgo', dormido: '😴 Dormidos', prospecto: '🔎 Prospectos' };
+    const t = (titulo, valor, pie, origen) => `<div style="border:1px solid var(--gris-borde, #eee);border-radius:12px;padding:12px 14px;background:var(--fondo-panel, #fff);cursor:pointer;" onclick="var o=this.querySelector('.org');o.style.display=o.style.display==='none'?'block':'none'" title="Clic para ver de dónde sale">
+      <div style="font-size:12px;font-weight:600;opacity:0.85;">${titulo}</div><div style="font-size:21px;font-weight:700;margin:4px 0;">${valor}</div><div style="font-size:11.5px;">${pie || ''}</div>
+      <div class="org" style="display:none;font-size:11.5px;opacity:0.8;margin-top:8px;border-top:1px dashed var(--gris-borde, #ddd);padding-top:6px;">🔎 ${origen}</div></div>`;
+    const g = (items) => `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-bottom:6px;">${items.join('')}</div>`;
+    const seg = (c.segmentos || []).map(s => `<tr><td>${nombres[s.segmento] || escaparHtml(s.segmento)}</td><td class="n">${s.clientes}</td><td class="n">${m(s.total)}</td></tr>`).join('');
+    const embudo = (c.embudo || []).map(e => `<tr><td>${escaparHtml(e.etapa)}</td><td class="n">${e.n}</td><td class="n">${m(e.valor)}</td></tr>`).join('');
+    return `<h2 style="margin:22px 0 4px;font-size:16px;">👥 Clientes (CRM)</h2>
+      <div style="font-size:12px;opacity:0.7;margin-bottom:10px;">Vienen del CRM de clientes (base de datos separada, conectada con el ERP). Se detallan allí en "Indicadores CRM".</div>
+      ${g([
+        t('👤 Clientes registrados', c.clientes_total, `${c.clientes_nuevos} nuevos en el período`, 'Clientes del CRM; nuevos según su fecha de primer contacto.'),
+        t('🔁 Recompra', pct(c.recompra_pct), `${c.clientes_con_compra} clientes han comprado`, 'De los clientes que han comprado, cuántos lo hicieron 2 veces o más.'),
+        t('💎 Valor por cliente', m(c.valor_por_cliente || 0), `Ticket promedio ${m(c.ticket_promedio || 0)}`, 'Total comprado ÷ clientes que han comprado (pedidos del CRM).'),
+        t('📦 Pedidos del CRM', c.pedidos_periodo, m(c.ventas_periodo), 'Pedidos creados en el período en el CRM y su valor. Incluye pedidos de la web y de WhatsApp/redes.'),
+        t('⏱️ Días de entrega', c.dias_entrega_prom ?? '—', 'Promedio desde el pedido hasta la entrega', 'Fecha de entrega real − fecha del pedido, en pedidos entregados.'),
+        t('🎯 Conversión de cotizaciones', pct(c.conversion_cotizacion_pct), `${(c.embudo || []).reduce((a, e) => a + e.n, 0)} oportunidades en el embudo`, 'Oportunidades que llegaron a anticipo o más, sobre las que pasaron de la consulta.'),
+      ])}
+      <div style="font-weight:600;font-size:13px;margin:10px 0 4px;">Clientes por segmento</div>
+      ${seg ? `<table class="tk"><thead><tr><th>Segmento</th><th class="n">Clientes</th><th class="n">Total comprado</th></tr></thead><tbody>${seg}</tbody></table>` : '<div class="cargando">Sin datos.</div>'}
+      ${embudo ? `<div style="font-weight:600;font-size:13px;margin:14px 0 4px;">Embudo de ventas del CRM</div><table class="tk"><thead><tr><th>Etapa</th><th class="n">Oportunidades</th><th class="n">Valor</th></tr></thead><tbody>${embudo}</tbody></table>` : ''}`;
   }
 
   function alternarOrigenIndicador(id) {
