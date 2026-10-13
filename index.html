@@ -4888,6 +4888,9 @@
       <div style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;font-size:12.5px;">
         ℹ️ El archivo <strong>.json</strong> es el que realmente sirve para restaurar — guárdalo tal cual, sin abrirlo ni editarlo. El <strong>.xlsx</strong> es solo para que tú lo revises cómodamente, no se puede usar para restaurar.
       </div>
+      <div style="background:#fff6e0;color:#7a4d00;border-radius:9px;padding:10px 14px;font-size:12.5px;margin-top:10px;">
+        ⏰ <strong>Haz una copia cada semana.</strong> Esta base de datos no tiene copias automáticas: si algo se borra por error, solo se recupera con tu último archivo. <span id="ultimaCopiaSeguridad" style="font-weight:700;"></span>
+      </div>
       <button class="btn-principal" id="btnExportarDatosJson" onclick="confirmarExportarDatosJson()" style="margin-top:14px;">💾 Descargar respaldo para restaurar (.json)</button>
       <button class="btn-secundario" id="btnExportarDatos" onclick="confirmarExportarDatos()">📊 Descargar para revisar (.xlsx)</button>
       <div class="mensaje" id="mensajeExportarDatos"></div>
@@ -19540,6 +19543,7 @@
 
     await cargarAlertasDashboard();
     await cargarBannerAlertasWhatsapp();
+    await cargarAvisoCopiaSeguridad();
     await Promise.all([
       cargarKpisYComparativo(fmt(hace30), fmt(hoy), fmt(hace60), fmt(hace30)),
       cargarEquilibrioDashboard(fmt(hace30), fmt(hoy)),
@@ -25419,8 +25423,40 @@
     ventana.document.close();
   }
 
+  // Aviso de copia de seguridad (solo administradora): esta base de datos está en el plan gratuito de Supabase,
+  // que NO guarda copias automáticas; la única copia es el archivo .json que se descarga aquí. Se registra cada descarga
+  // (fn_respaldo_registrar) y el Dashboard avisa si pasan 7 días (amarillo) o 15 días / nunca (rojo).
+  async function estadoCopiaSeguridad() {
+    const { data, error } = await supabaseClient.rpc('fn_respaldo_estado');
+    if (error || !data) return null;
+    return data;
+  }
+  function textoUltimaCopia(est) {
+    if (!est || !est.ultimo) return 'Todavía no hay ninguna copia registrada.';
+    const cuando = new Date(est.ultimo).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' });
+    return est.dias === 0 ? `Última copia: hoy (${cuando}).` : `Última copia: ${cuando} (hace ${est.dias} día${est.dias === 1 ? '' : 's'}).`;
+  }
+  async function cargarAvisoCopiaSeguridad() {
+    const cont = document.getElementById('panelAlertasDashboard');
+    if (!cont) return;
+    const est = await estadoCopiaSeguridad();
+    if (!est) return; // no es administradora o no se pudo leer
+    if (est.ultimo && est.dias < 7) return;
+    const rojo = !est.ultimo || est.dias >= 15;
+    const cuanto = !est.ultimo ? 'Todavía no has descargado ninguna copia de seguridad.' : `Hace ${est.dias} días que no descargas una copia de seguridad.`;
+    const banner = document.createElement('div');
+    banner.style.cssText = `background:${rojo ? '#fdecea' : '#fff6e0'};color:${rojo ? 'var(--rojo-error)' : '#a86b00'};padding:12px 14px;border-radius:9px;font-size:12.5px;font-weight:600;margin-bottom:8px;`;
+    banner.innerHTML = `
+      ${rojo ? '🔴' : '🟡'} ${cuanto} Esta base de datos no hace copias automáticas: si algo se borra por error, solo se recupera con tu último archivo.
+      <button class="btn-mini editar" style="margin-left:8px;" onclick="mostrarPantallaCopiaSeguridad()">💾 Hacer la copia ahora</button>
+    `;
+    cont.prepend(banner);
+  }
+
   async function mostrarPantallaCopiaSeguridad() {
     mostrarPantalla('pantallaCopiaSeguridad');
+    const infoUltima = document.getElementById('ultimaCopiaSeguridad');
+    if (infoUltima) { infoUltima.textContent = 'Consultando…'; estadoCopiaSeguridad().then(est => { infoUltima.textContent = textoUltimaCopia(est); }); }
     ocultarMensaje('mensajeExportarDatos');
     ocultarMensaje('mensajeRestaurarDatos');
     document.getElementById('confirmacionRestaurarTexto').value = '';
@@ -25447,6 +25483,9 @@
       a.click();
       URL.revokeObjectURL(url);
 
+      await supabaseClient.rpc('fn_respaldo_registrar', { p_tipo: 'descarga_json' });
+      const infoUltima = document.getElementById('ultimaCopiaSeguridad');
+      if (infoUltima) infoUltima.textContent = 'Última copia: hoy.';
       mostrarMensaje('mensajeExportarDatos', `✅ Respaldo descargado (${datos.tablas_incluidas.length} tablas). Guárdalo en un lugar seguro.`, 'exito');
     } catch (err) {
       mostrarMensaje('mensajeExportarDatos', err.message || 'No se pudo generar el respaldo.', 'error');
