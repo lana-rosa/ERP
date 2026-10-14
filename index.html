@@ -1335,6 +1335,14 @@
         <button class="btn-agregar-pago" onclick="agregarFilaPago()">+ Agregar otro método de pago</button>
         <div class="resumen-pagos" id="resumenPagos"></div>
       </div>
+      <div id="bloqueFacturaElectronica" style="margin:12px 0;padding:10px 12px;border:1.5px solid #f1e2ec;border-radius:var(--radius-md);">
+        <div style="font-weight:700;font-size:13px;">🧾 ¿El cliente quiere factura electrónica?</div>
+        <div style="display:flex;gap:18px;margin-top:6px;font-size:13px;">
+          <label style="display:flex;gap:6px;align-items:center;margin:0;cursor:pointer;"><input type="radio" name="feQuiere" value="si"> Sí, la quiere</label>
+          <label style="display:flex;gap:6px;align-items:center;margin:0;cursor:pointer;"><input type="radio" name="feQuiere" value="no"> No, solo recibo del ERP</label>
+        </div>
+        <div style="font-size:11.5px;opacity:.7;margin-top:4px;">Si dice que sí, la factura se emite en la DIAN y el ERP la registra. Si dice que no, queda solo el recibo del ERP.</div>
+      </div>
       <button class="btn-principal" id="btnConfirmarVenta" onclick="confirmarVenta()">Confirmar venta</button>
       <button class="btn-secundario" id="btnPonerEnEspera" onclick="ponerVentaEnEspera()">🅿️ Poner en espera y atender otro cliente</button>
       <div class="mensaje" id="mensajeVenta"></div>
@@ -5557,9 +5565,9 @@
     actualizarIndicadorOffline();
   }
 
-  function encolarVentaOffline(cuerpoVenta) {
+  function encolarVentaOffline(cuerpoVenta, feQuiere) {
     const cola = obtenerColaOffline();
-    cola.push({ id: 'offline-' + Date.now() + '-' + Math.random().toString(36).slice(2), cuerpo: cuerpoVenta, guardadaEn: new Date().toISOString() });
+    cola.push({ id: 'offline-' + Date.now() + '-' + Math.random().toString(36).slice(2), cuerpo: cuerpoVenta, feQuiere: feQuiere ?? null, guardadaEn: new Date().toISOString() });
     guardarColaOffline(cola);
   }
 
@@ -5593,6 +5601,8 @@
           // se deja visible para que la administradora la revise a mano.
           venta.error = (await resp.json()).error || 'Error al sincronizar';
           pendientes.push(venta);
+        } else if (venta.feQuiere !== null && venta.feQuiere !== undefined) {
+          try { const d = await resp.json(); if (d.consecutivo) await supabaseClient.rpc('fn_fe_marcar_preferencia', { p_consecutivo: d.consecutivo, p_quiere: venta.feQuiere }); } catch { /* se puede marcar luego en Por facturar */ }
         }
         // Si resp.ok, la venta ya quedó registrada — se descarta de la cola.
       } catch {
@@ -6217,6 +6227,11 @@
       mostrarMensaje('mensajeCerrarTurno', 'Escribe el monto exacto que contaste en efectivo.', 'error');
       return;
     }
+
+    try {
+      const { data: solicitadas } = await supabaseClient.rpc('fn_fe_solicitadas_pendientes');
+      if (solicitadas && solicitadas.length && !confirm(`Hay ${solicitadas.length} venta(s) en las que el cliente pidió factura electrónica y todavía no está emitida.\n\nEmítelas en la DIAN antes de cerrar (Facturación electrónica → Por facturar).\n\n¿Cerrar el turno de todas formas?`)) return;
+    } catch (e) { /* si no se puede consultar, no se bloquea el cierre */ }
 
     const btn = document.getElementById('btnCerrarTurno');
     btn.disabled = true;
@@ -7187,6 +7202,11 @@
       return false;
     }
 
+    if (!document.querySelector('input[name="feQuiere"]:checked')) {
+      mostrarMensaje('mensajeVenta', 'Pregunta al cliente si quiere factura electrónica y marca Sí o No.', 'error');
+      return false;
+    }
+
     const esPedidoMarketplace = document.getElementById('checkPedidoMarketplace').checked;
     if (esPedidoMarketplace) {
       const nombreOk = document.getElementById('clienteNombre').value.trim();
@@ -7341,6 +7361,7 @@
         }))
       };
 
+      const feQuiere = document.querySelector('input[name="feQuiere"]:checked')?.value === 'si';
       let resp, datos;
       try {
         resp = await fetch(WORKER_URL + '/api/pos/ventas', {
@@ -7352,7 +7373,7 @@
       } catch (errorRed) {
         // No hubo forma de contactar al servidor (sin internet en este momento):
         // se guarda la venta localmente en vez de perderla, y se avisa al cajero.
-        encolarVentaOffline(cuerpoVenta);
+        encolarVentaOffline(cuerpoVenta, feQuiere);
         mostrarMensaje('mensajeVenta', '📴 Sin conexión — la venta quedó guardada en este dispositivo y se enviará sola apenas vuelva el internet. No cierres esta pantalla en el navegador sin haber sincronizado.', 'exito');
         carrito = [];
         document.getElementById('checkPedidoMarketplace').checked = false;
@@ -7394,7 +7415,14 @@
         }).catch(() => {});
       }
 
-      mostrarMensaje('mensajeVenta', `✅ Venta registrada correctamente.${datos.puntos_ganados > 0 ? ` ⭐ El cliente ganó ${datos.puntos_ganados} puntos.` : ''}`, 'exito');
+      let avisoFactura = '';
+      try {
+        const { error: errPref } = await supabaseClient.rpc('fn_fe_marcar_preferencia', { p_consecutivo: datos.consecutivo, p_quiere: feQuiere });
+        if (errPref) throw errPref;
+        avisoFactura = feQuiere ? ' 🧾 El cliente pidió factura electrónica: emítela en la DIAN (queda en "Por facturar").' : ' Sin factura electrónica: solo recibo del ERP.';
+      } catch (e) { avisoFactura = ' ⚠️ No se pudo guardar si el cliente quería factura electrónica: márcala luego en Facturación electrónica.'; }
+      document.querySelectorAll('input[name="feQuiere"]').forEach(r => { r.checked = false; });
+      mostrarMensaje('mensajeVenta', `✅ Venta registrada correctamente.${datos.puntos_ganados > 0 ? ` ⭐ El cliente ganó ${datos.puntos_ganados} puntos.` : ''}${avisoFactura}`, 'exito');
       carrito = [];
       clienteVentaTerceroId = null;
       puntosCanjeadosActual = { puntos: 0, valorDescuento: 0 };
@@ -21326,9 +21354,11 @@
     if (!cacheFePendientes.length) { cont.innerHTML = '<div class="cargando">🎉 No hay ventas pendientes por facturar en este rango.</div>'; return; }
     const total = cacheFePendientes.reduce((a, v) => a + Number(v.total), 0);
     const c = cacheFeConfig || {};
+    const solicitadas = cacheFePendientes.filter(v => v.quiere_factura === true).length;
+    const ordenadas = [...cacheFePendientes].sort((a, b) => (b.quiere_factura === true) - (a.quiere_factura === true));
     cont.innerHTML = `
-      <div style="font-size:13px;margin-bottom:10px;"><strong>${cacheFePendientes.length}</strong> venta(s) sin factura registrada · ${formatearMoneda(total)}</div>
-      ${cacheFePendientes.map(v => {
+      <div style="font-size:13px;margin-bottom:10px;"><strong>${cacheFePendientes.length}</strong> venta(s) sin factura registrada · ${formatearMoneda(total)}${solicitadas ? ` · <strong style="color:var(--rojo-error);">🧾 ${solicitadas} la pidió el cliente: hay que emitirla</strong>` : ''}</div>
+      ${ordenadas.map(v => {
         const clave = `${v.origen}:${v.origen_id}`;
         const cli = v.cliente;
         const abierta = (acc) => feAccionAbierta === `${clave}:${acc}`;
@@ -21336,7 +21366,7 @@
         <div class="panel" style="max-width:none;max-height:none;margin-bottom:12px;">
           <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;">
             <div>
-              <div style="font-weight:700;">${ORIGEN_VENTA_FE[v.origen] || v.origen} · ${escaparHtml(v.consecutivo || '')} · ${new Date(v.fecha + 'T00:00:00').toLocaleDateString('es-CO')}</div>
+              <div style="font-weight:700;">${v.quiere_factura === true ? '<span style="background:var(--rojo-error);color:#fff;border-radius:6px;padding:2px 7px;font-size:11px;margin-right:6px;">FACTURA SOLICITADA</span>' : ''}${ORIGEN_VENTA_FE[v.origen] || v.origen} · ${escaparHtml(v.consecutivo || '')} · ${new Date(v.fecha + 'T00:00:00').toLocaleDateString('es-CO')}</div>
               <div style="font-size:12.5px;opacity:0.8;margin-top:2px;">
                 ${cli.consumidor_final ? `Consumidor final (222222222222)${cli.nombre_real ? ' — ' + escaparHtml(cli.nombre_real) : ''}` : `${escaparHtml(cli.nombre)} · ${escaparHtml(cli.tipo_documento)} ${escaparHtml(cli.numero_documento)}${cli.dv ? '-' + cli.dv : ''}`}
                 ${cli.correo ? ' · ' + escaparHtml(cli.correo) : ''}
