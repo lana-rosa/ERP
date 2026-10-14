@@ -2006,6 +2006,7 @@
     <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px;">
       <div><label for="feDesde" style="font-size:11px;">Ventas desde</label><input type="date" id="feDesde" onchange="cargarFePendientes()" style="padding:9px 10px;"></div>
       <div><label for="feHasta" style="font-size:11px;">Hasta</label><input type="date" id="feHasta" onchange="cargarFePendientes()" style="padding:9px 10px;"></div>
+      <label style="display:flex;gap:6px;align-items:center;margin:0 0 6px;font-size:12.5px;cursor:pointer;"><input type="checkbox" id="feVerSoloRecibo" style="width:auto;" onchange="cargarFePendientes()"> Ver las ventas que quedaron solo con recibo</label>
     </div>
     <div style="background:var(--tinte-azul);border-radius:var(--radius-md);padding:10px 14px;margin-bottom:14px;font-size:12.5px;line-height:1.5;">
       ℹ️ La DIAN espera la factura en el momento de la venta: emítela en el portal apenas vendas y regístrala aquí. Esta lista sirve para que no se quede ninguna. Aparecen las ventas de la tienda, las clases de la Academia y los pedidos cuando están pagados por completo o entregados.
@@ -21380,7 +21381,10 @@
     const cont = document.getElementById('feListaPendientes');
     cont.innerHTML = '<div class="cargando">Cargando...</div>';
     try {
-      cacheFePendientes = await llamarReporteContable('fn_fe_ventas', { p_desde: document.getElementById('feDesde').value, p_hasta: document.getElementById('feHasta').value, p_solo_pendientes: true });
+      const soloRecibo = !!document.getElementById('feVerSoloRecibo')?.checked;
+      const lista = await llamarReporteContable('fn_fe_ventas', { p_desde: document.getElementById('feDesde').value, p_hasta: document.getElementById('feHasta').value, p_solo_pendientes: !soloRecibo });
+      // Modo recibo: ventas que no llevan factura (anteriores a la obligación o que el cliente no pidió).
+      cacheFePendientes = soloRecibo ? lista.filter(v => v.quiere_factura === false && !v.documento) : lista;
     } catch (e) {
       cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(e.message)}</div>`;
       return;
@@ -21390,14 +21394,15 @@
 
   function renderizarFePendientes() {
     const cont = document.getElementById('feListaPendientes');
-    if (!cacheFePendientes.length) { cont.innerHTML = '<div class="cargando">🎉 No hay ventas pendientes por facturar en este rango.</div>'; return; }
+    const modoRecibo = !!document.getElementById('feVerSoloRecibo')?.checked;
+    if (!cacheFePendientes.length) { cont.innerHTML = `<div class="cargando">${modoRecibo ? 'No hay ventas con solo recibo en este rango.' : '🎉 No hay ventas pendientes por facturar en este rango.'}</div>`; return; }
     const total = cacheFePendientes.reduce((a, v) => a + Number(v.total), 0);
     const c = cacheFeConfig || {};
     const solicitadas = cacheFePendientes.filter(v => v.quiere_factura === true).length;
     const ordenadas = [...cacheFePendientes].sort((a, b) => (b.quiere_factura === true) - (a.quiere_factura === true));
     cont.innerHTML = `
       <div style="margin-bottom:10px;"><button class="btn-mini editar" style="flex:0 0 auto;padding:7px 12px;" onclick="imprimirRecibosFe(cacheFePendientes)">🖨️ Imprimir los recibos de venta de toda la lista (${cacheFePendientes.length})</button></div>
-      <div style="font-size:13px;margin-bottom:10px;"><strong>${cacheFePendientes.length}</strong> venta(s) sin factura registrada · ${formatearMoneda(total)}${solicitadas ? ` · <strong style="color:var(--rojo-error);">🧾 ${solicitadas} la pidió el cliente: hay que emitirla</strong>` : ''}</div>
+      <div style="font-size:13px;margin-bottom:10px;"><strong>${cacheFePendientes.length}</strong> venta(s) ${modoRecibo ? 'con solo recibo del ERP (sin factura electrónica)' : 'sin factura registrada'} · ${formatearMoneda(total)}${solicitadas ? ` · <strong style="color:var(--rojo-error);">🧾 ${solicitadas} la pidió el cliente: hay que emitirla</strong>` : ''}</div>
       ${ordenadas.map(v => {
         const clave = `${v.origen}:${v.origen_id}`;
         const cli = v.cliente;
@@ -21419,8 +21424,8 @@
             </div>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
-            <button class="btn-mini editar" style="flex:0 0 auto;padding:7px 12px;" onclick="alternarAccionFe('${clave}:datos')">📋 Datos para la DIAN</button>
-            <button class="btn-mini" style="flex:0 0 auto;padding:7px 12px;background:var(--verde-exito);color:#fff;" onclick="alternarAccionFe('${clave}:registrar')">✅ Registrar factura emitida</button>
+            ${modoRecibo ? '' : `<button class="btn-mini editar" style="flex:0 0 auto;padding:7px 12px;" onclick="alternarAccionFe('${clave}:datos')">📋 Datos para la DIAN</button>`}
+            ${modoRecibo ? '' : `<button class="btn-mini" style="flex:0 0 auto;padding:7px 12px;background:var(--verde-exito);color:#fff;" onclick="alternarAccionFe('${clave}:registrar')">✅ Registrar factura emitida</button>`}
             <button class="btn-mini editar" style="flex:0 0 auto;padding:7px 12px;" title="Comprobante de venta de Lana Rosa con la fecha de la venta (no es factura electrónica)" onclick="imprimirReciboVentaFe('${v.origen}', '${v.origen_id}')">🖨️ Recibo de venta</button>
           </div>
           ${abierta('datos') ? `
