@@ -1069,6 +1069,7 @@
       <button class="sidebar-depto-header" id="headerDeptoContabilidad" onclick="toggleSidebarDepto('deptoContabilidadSubmenu', 'headerDeptoContabilidad')">📊 Contabilidad <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoContabilidadSubmenu">
         <div class="sidebar-seccion">Contabilidad e impuestos</div>
+        <button class="nav-btn" id="nav-panel-contador" onclick="mostrarPantallaPanelContador()"><span class="nav-icon">🧑‍💼</span> Panel del contador</button>
         <button class="nav-btn" id="nav-dashboard-contable" onclick="mostrarPantallaDashboardContable()"><span class="nav-icon">💹</span> Dashboard Contable</button>
         <button class="nav-btn" id="nav-honorarios-tejedoras" onclick="mostrarPantallaHonorariosTejedoras()"><span class="nav-icon">🧵</span> Honorarios Tejedoras</button>
         <button class="nav-btn" id="nav-estados-financieros" onclick="mostrarPantallaEstadosFinancieros()"><span class="nav-icon">📑</span> Estados financieros y libros</button>
@@ -4363,6 +4364,21 @@
 </div>
 
 <!-- ===== PANTALLA: DASHBOARD CONTABLE ===== -->
+<!-- ===== PANTALLA: PANEL DEL CONTADOR ===== -->
+<div id="pantallaPanelContador" class="oculto contenido">
+  <div class="page-header">
+    <h1>🧑‍💼 Panel del contador</h1>
+    <div class="subtitulo">Todo lo que necesita el contador para acompañar el negocio cada mes: controles de calidad de la contabilidad, resultados frente al mes anterior, obligaciones y vencimientos, gastos con su soporte, y dónde está cada cosa de su propuesta de servicios.</div>
+  </div>
+  <div class="mensaje" id="mensajePanelContador"></div>
+  <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+    <div><label for="pcMes" style="font-size:11px;">Mes a revisar</label><input type="month" id="pcMes" onchange="cargarPanelContador()" style="padding:9px 10px;"></div>
+    <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirSeccion('contenidoPanelContador', 'Panel del contador')">🖨️ Imprimir / PDF</button>
+  </div>
+  <div id="contenidoPanelContador"><div class="cargando">Cargando...</div></div>
+</div>
+
+<!-- ===== PANTALLA: DASHBOARD CONTABLE ===== -->
 <div id="pantallaDashboardContable" class="oculto contenido">
   <div class="page-header">
     <h1>💹 Dashboard Contable</h1>
@@ -5623,7 +5639,7 @@
   });
 
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaInventarioGlobal', 'pantallaGuiasUsuario', 'pantallaFacturacionElectronica', 'pantallaServiciosDian', 'pantallaCorreoEmpresa', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaIndicadores', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb', 'pantallaTextosWeb', 'pantallaPaypalConfig', 'pantallaMiProduccion', 'pantallaInformeCostos', 'pantallaReglasPrecios'];
+    const pantallas = ['pantallaLogin', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaInventarioGlobal', 'pantallaGuiasUsuario', 'pantallaFacturacionElectronica', 'pantallaServiciosDian', 'pantallaCorreoEmpresa', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaIndicadores', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaPanelContador', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb', 'pantallaTextosWeb', 'pantallaPaypalConfig', 'pantallaMiProduccion', 'pantallaInformeCostos', 'pantallaReglasPrecios'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -5664,6 +5680,7 @@
       pantallaIndicadores: 'nav-indicadores',
       pantallaPresupuestoEmpresa: 'nav-presupuesto-empresa',
       pantallaDashboardContable: 'nav-dashboard-contable',
+      pantallaPanelContador: 'nav-panel-contador',
       pantallaContabilidadImpuestos: 'nav-contabilidad-impuestos',
       pantallaHonorariosTejedoras: 'nav-honorarios-tejedoras',
       pantallaNomina: 'nav-nomina',
@@ -6060,6 +6077,7 @@
     mostrar('nav-informe-costos', esAdmin || esContador);
     mostrar('nav-reglas-precios', esAdmin || esContador);
     mostrar('nav-presupuesto-empresa', esAdmin || esContador);
+    mostrar('nav-panel-contador', esAdmin || esContador);
     mostrar('nav-dashboard-contable', esAdmin || esContador);
     mostrar('nav-honorarios-tejedoras', esAdmin || esContador);
     mostrar('nav-estados-financieros', esAdmin || esContador);
@@ -13135,6 +13153,7 @@
     { clave: 'nav-fe-contabilidad', etiqueta: '　　Facturación y nómina electrónica (contador)' },
     { clave: 'nav-servicios-dian', etiqueta: '　　Servicios digitales DIAN' },
     { clave: 'deptoContabilidadGrupo', etiqueta: '📊 Contabilidad (grupo completo)' },
+    { clave: 'nav-panel-contador', etiqueta: '　　Panel del contador' },
     { clave: 'nav-dashboard-contable', etiqueta: '　　Dashboard Contable' },
     { clave: 'nav-honorarios-tejedoras', etiqueta: '　　Honorarios Tejedoras' },
     { clave: 'nav-estados-financieros', etiqueta: '　　Estados financieros y libros' },
@@ -16331,6 +16350,140 @@
       <div style="font-weight:600;font-size:13px;margin:14px 0 4px;">Productos más vendidos en la tienda (POS)</div>${top}
       ${titulo('🧶 Producción', 'De las órdenes de producción y las fichas de las tejedoras.')}${produccion}
       <div style="font-weight:600;font-size:13px;margin:10px 0 4px;">Productividad por tejedora</div>${tej}`;
+  }
+
+  // ============================================================================
+  // PANEL DEL CONTADOR (propuesta de servicios contables, 30-sep-2026)
+  // ============================================================================
+  async function mostrarPantallaPanelContador() {
+    mostrarPantalla('pantallaPanelContador');
+    asegurarEstiloTablaKardex();
+    const mes = document.getElementById('pcMes');
+    if (!mes.value) {
+      const h = new Date();
+      const ant = new Date(h.getFullYear(), h.getMonth() - 1, 1);
+      mes.value = ant.getFullYear() + '-' + String(ant.getMonth() + 1).padStart(2, '0');
+    }
+    await cargarPanelContador();
+  }
+
+  let obligacionesContadorCache = [];
+
+  async function cargarPanelContador() {
+    const cont = document.getElementById('contenidoPanelContador');
+    const [anio, mes] = document.getElementById('pcMes').value.split('-').map(Number);
+    if (!anio || !mes) return;
+    cont.innerHTML = '<div class="cargando">Calculando los controles del mes...</div>';
+    let d;
+    try { d = await llamarReporteContable('fn_panel_contador', { p_anio: anio, p_mes: mes }); }
+    catch (e) { cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(e.message)}</div>`; return; }
+    const desde = d.periodo.desde, hasta = d.periodo.hasta;
+    const [obl, gas] = await Promise.all([
+      supabaseClient.from('obligaciones_contador').select('*').order('orden').order('fecha_vencimiento', { nullsFirst: false }),
+      supabaseClient.from('gastos_departamentales').select('id, created_at, fecha_factura, categoria, descripcion, monto, tipo_documento, es_documento_soporte, foto_comprobante, centro_costo_id').gte('created_at', desde + 'T00:00:00-05:00').lte('created_at', hasta + 'T23:59:59-05:00').order('created_at'),
+    ]);
+    obligacionesContadorCache = obl.data || [];
+    cont.innerHTML = htmlPanelContador(d, gas.data || []);
+  }
+
+  function htmlPanelContador(d, gastos) {
+    const m = formatearMoneda, c = d.controles, r = d.resultado;
+    const mesFin = new Date(d.periodo.hasta + 'T23:59:59');
+    const mesTerminado = mesFin < new Date();
+    const fila = (estado, titulo, detalle, donde) => {
+      const icono = estado === 'ok' ? '✅' : estado === 'aviso' ? '⚠️' : estado === 'info' ? 'ℹ️' : '❌';
+      return `<tr><td style="width:28px;">${icono}</td><td><strong>${titulo}</strong><div style="font-size:11.5px;opacity:0.75;">${detalle}</div></td><td class="n" style="white-space:nowrap;">${donde ? `<button class="btn-mini editar" onclick="${donde}">Ir →</button>` : ''}</td></tr>`;
+    };
+    const controles = [
+      fila(c.asientos_descuadrados === 0 ? 'ok' : 'mal', 'Asientos cuadrados', c.asientos_descuadrados === 0 ? 'Todos los asientos tienen débitos = créditos.' : `${c.asientos_descuadrados} asiento(s) descuadrado(s).`, 'mostrarPantallaEstadosFinancieros()'),
+      fila(Number(c.diferencia_debitos_creditos) === 0 ? 'ok' : 'mal', 'Balance de prueba cuadra', Number(c.diferencia_debitos_creditos) === 0 ? 'Débitos y créditos acumulados a fin de mes son iguales.' : 'Diferencia de ' + m(c.diferencia_debitos_creditos), 'mostrarPantallaEstadosFinancieros()'),
+      c.ventas_sin_asiento === 0 ? fila('ok', 'Ventas del POS contabilizadas', 'Toda venta completada del mes tiene su asiento.', 'mostrarPantallaEstadosFinancieros()') : fila('mal', 'Ventas del POS sin asiento', `${c.ventas_sin_asiento} venta(s) sin contabilizar.`, 'mostrarPantallaEstadosFinancieros()'),
+      !c.cierre_costos_aplica ? fila('info', 'Cierre de costos', 'Este mes es anterior al inicio del costeo (septiembre de 2026): no aplica.', '') :
+        c.cierre_costos_asiento ? fila('ok', 'Cierre de costos registrado', `Asiento n.º ${c.cierre_costos_asiento}.`, 'mostrarPantallaContabilidadImpuestos()') :
+        fila(mesTerminado ? 'mal' : 'info', 'Cierre de costos pendiente', mesTerminado ? 'El mes ya terminó y no se ha cerrado: mientras tanto el margen bruto sale inflado. Pestaña "Cierre de costos".' : 'Se podrá registrar desde el primer día del mes siguiente.', 'mostrarPantallaContabilidadImpuestos()'),
+      c.extracto_movimientos === 0 ? fila('info', 'Conciliación bancaria', 'No hay movimientos de extracto cargados en este mes.', 'mostrarPantallaConciliacion()') :
+        c.extracto_sin_conciliar === 0 ? fila('ok', 'Conciliación bancaria al día', `${c.extracto_movimientos} movimientos conciliados.`, 'mostrarPantallaConciliacion()') :
+        fila('aviso', 'Movimientos de banco sin conciliar', `${c.extracto_sin_conciliar} de ${c.extracto_movimientos} sin conciliar.`, 'mostrarPantallaConciliacion()'),
+      c.cierre_contable_registrado ? fila('ok', 'Cierre contable del período', 'Ya hay un cierre contable que cubre este mes.', 'mostrarPantallaEstadosFinancieros()') : fila('info', 'Cierre contable del período', 'Todavía no se ha hecho el cierre contable que cubre este mes (se hace al cierre del año).', 'mostrarPantallaEstadosFinancieros()'),
+      c.bloqueo_cubre_mes ? fila('ok', 'Período bloqueado', `No se pueden registrar movimientos hasta el ${c.bloqueo_hasta}.`, 'mostrarPantallaEstadosFinancieros()') : fila(mesTerminado ? 'aviso' : 'info', 'Período sin bloquear', 'Cuando el contador termine la revisión conviene bloquear el mes para que nadie cambie las cifras (pestaña "Bloqueo de período").', 'mostrarPantallaEstadosFinancieros()'),
+      c.revision_contador > 0 ? fila('ok', 'Revisión del contador registrada', `${c.revision_contador} constancia(s) que cubren este mes.`, 'mostrarPantallaEstadosFinancieros()') : fila(mesTerminado ? 'aviso' : 'info', 'Revisión del contador pendiente', 'Al terminar la revisión mensual, regístrala en "Revisión del contador" (queda como constancia con su observación).', 'mostrarPantallaEstadosFinancieros()'),
+      fila('info', 'Retención en la fuente por pagar (2365)', 'Saldo a fin de mes: ' + m(c.retencion_fuente_por_pagar) + '. En régimen SIMPLE normalmente no se practica retención.', ''),
+    ].join('');
+
+    const delta = (a, b) => { a = Number(a); b = Number(b); if (!b) return '<span style="opacity:0.55;">—</span>'; const v = (a - b) / Math.abs(b) * 100; return `${v >= 0 ? '▲' : '▼'} ${Math.abs(Math.round(v))}%`; };
+    const resultados = `<table class="tk"><thead><tr><th>Concepto</th><th class="n">Este mes</th><th class="n">Mes anterior</th><th class="n">Variación</th></tr></thead><tbody>
+      ${[['Ingresos', r.ingresos, r.ingresos_ant], ['Costos', r.costos, r.costos_ant], ['Gastos', r.gastos, r.gastos_ant], ['Utilidad neta', r.utilidad_neta, r.utilidad_neta_ant]].map(([n, a, b]) => `<tr><td>${n}</td><td class="n">${m(a)}</td><td class="n">${m(b)}</td><td class="n">${delta(a, b)}</td></tr>`).join('')}</tbody></table>`;
+
+    const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+    const obligaciones = obligacionesContadorCache.map(o => {
+      let vence = '<span style="opacity:0.55;">sin fecha</span>', alerta = '';
+      if (o.fecha_vencimiento) {
+        const dias = Math.round((new Date(o.fecha_vencimiento + 'T00:00:00') - hoy) / 86400000);
+        const cerrado = o.estado === 'presentada' || o.estado === 'pagada' || o.estado === 'no_aplica';
+        vence = fechaCortaPanel(o.fecha_vencimiento);
+        if (!cerrado) alerta = dias < 0 ? ` <span style="color:var(--rojo-error);font-weight:700;">vencida hace ${-dias} d</span>` : dias <= 10 ? ` <span style="color:var(--ambar);font-weight:700;">en ${dias} d</span>` : '';
+      }
+      const opciones = ['pendiente', 'presentada', 'pagada', 'no_aplica'].map(e => `<option value="${e}" ${o.estado === e ? 'selected' : ''}>${{ pendiente: 'Pendiente', presentada: 'Presentada', pagada: 'Pagada', no_aplica: 'No aplica' }[e]}</option>`).join('');
+      return `<tr><td><strong>${escaparHtml(o.nombre)}</strong><div style="font-size:11px;opacity:0.7;">${escaparHtml(o.categoria)} · ${escaparHtml(o.periodicidad)}${o.responsable ? ' · ' + escaparHtml(o.responsable) : ''}${o.notas ? '<br>' + escaparHtml(o.notas) : ''}</div></td>
+        <td class="n"><input type="date" value="${o.fecha_vencimiento || ''}" onchange="actualizarObligacion('${o.id}', { fecha_vencimiento: this.value || null })" style="padding:4px;width:135px;">${alerta}</td>
+        <td class="n"><select onchange="actualizarObligacion('${o.id}', { estado: this.value })" style="padding:4px;">${opciones}</select></td></tr>`;
+    }).join('');
+
+    const tiposGasto = gastos.length;
+    const sinSoporte = gastos.filter(g => !g.foto_comprobante && !g.es_documento_soporte).length;
+    const tablaGastos = gastos.length === 0 ? '<div class="cargando">No hay gastos o compras registrados en este mes.</div>' : `<table class="tk"><thead><tr><th>Fecha</th><th>Categoría</th><th>Descripción</th><th>Documento</th><th class="n">Valor</th><th class="n">Soporte</th></tr></thead><tbody>
+      ${gastos.map(g => `<tr><td>${fechaCortaPanel((g.fecha_factura || g.created_at).slice(0, 10))}</td><td>${escaparHtml(g.categoria || '')}</td><td>${escaparHtml((g.descripcion || '').slice(0, 70))}</td><td>${escaparHtml(g.tipo_documento || '')}${g.es_documento_soporte ? ' (doc. soporte)' : ''}</td><td class="n">${m(g.monto)}</td><td class="n">${g.foto_comprobante || g.es_documento_soporte ? '📎' : '—'}</td></tr>`).join('')}</tbody></table>`;
+
+    const ir = (txt, fn) => `<button class="btn-mini editar" onclick="${fn}">${txt}</button>`;
+    const propuesta = [
+      ['3.1 Revisión mensual de la información contable', 'Este panel (controles) · Libro diario · Libro mayor · Libro auxiliar', ir('Estados y libros', 'mostrarPantallaEstadosFinancieros()')],
+      ['3.1 Análisis de cuentas, saldos y conciliaciones', 'Balance de prueba · Libro auxiliar · Conciliación bancaria · Cartera', ir('Conciliación', 'mostrarPantallaConciliacion()')],
+      ['3.1 Reconocimiento de ingresos, costos y gastos', 'Estado de resultados · Estado de costos · Cierre de costos · Informe de costos por área', ir('Cierre de costos', 'mostrarPantallaContabilidadImpuestos()')],
+      ['3.1 Revisión de cierres y estados financieros', 'Cierre contable · Bloqueo de período · Balance general · Flujo de caja', ir('Estados y libros', 'mostrarPantallaEstadosFinancieros()')],
+      ['3.1 Observaciones y recomendaciones', 'Revisión del contador (constancia con observaciones) · Bitácora de auditoría (no se puede borrar)', ir('Revisión', 'mostrarPantallaEstadosFinancieros()')],
+      ['3.2 Obligaciones tributarias según el RUT', 'Obligaciones y vencimientos (abajo) · Servicios digitales DIAN (estado del RUT, SIMPLE, firma, facturación)', ir('Servicios DIAN', 'mostrarPantallaServiciosDian()')],
+      ['3.2 Declaraciones periódicas', 'Impuesto SIMPLE (anticipos bimestrales) · Declaración anual (Excel para el contador) · Exógena DIAN', ir('Impuestos', 'mostrarPantallaContabilidadImpuestos()')],
+      ['3.2 Facturación electrónica y documentos soporte', 'Facturación y nómina electrónica · Registro de compras y gastos (documento soporte)', ir('Facturación', 'mostrarPantallaFacturacionElectronica()')],
+      ['3.2 Alertas de vencimientos', 'Obligaciones y vencimientos (abajo) con aviso a 10 días y vencidas en rojo', ''],
+      ['3.3 Evolución de ingresos, costos y gastos', 'Comparativo con el mes anterior (arriba) · Indicadores (márgenes, liquidez, endeudamiento, rotación)', ir('Indicadores', 'mostrarPantallaIndicadores()')],
+      ['3.3 Recomendaciones de control', 'Presupuesto y punto de equilibrio · Costeo Real · Informe de costos por área', ir('Presupuesto', 'mostrarPantallaPresupuestoEmpresa()')],
+      ['Entregable 2: estados financieros', 'Estado de resultados, Balance general y Flujo de caja, con Excel y PDF en cada pestaña', ir('Estados', 'mostrarPantallaEstadosFinancieros()')],
+      ['Responsabilidad del cliente: soportes', 'Registro de compras y gastos (foto del comprobante) · Documentos legales · tabla de gastos del mes (abajo)', ''],
+      ['Fuera del alcance (los hace Sara y el equipo)', 'Digitación y archivo de soportes, emisión de facturas, caja y bancos, nómina operativa e inventarios físicos (Toma física)', ir('Inventario global', 'mostrarPantallaInventarioGlobal()')],
+    ].map(([a, b, c]) => `<tr><td>${a}</td><td style="font-size:12px;">${b}</td><td class="n">${c}</td></tr>`).join('');
+
+    return `<div style="font-size:12px;opacity:0.7;margin-bottom:8px;">Mes: ${escaparHtml(d.periodo.desde)} a ${escaparHtml(d.periodo.hasta)}.</div>
+      <h2 style="margin:14px 0 6px;font-size:16px;">✅ Controles del mes</h2>
+      <table class="tk"><tbody>${controles}</tbody></table>
+      <h2 style="margin:22px 0 6px;font-size:16px;">📊 Resultados frente al mes anterior</h2>${resultados}
+      <div style="font-size:11.5px;opacity:0.7;margin-top:4px;">Mientras el cierre de costos no esté registrado, los costos del mes están incompletos (la mano de obra y el material de producción aún no pasan a costo).</div>
+      <h2 style="margin:22px 0 6px;font-size:16px;">📅 Obligaciones y vencimientos</h2>
+      <div style="font-size:12px;opacity:0.7;margin-bottom:6px;">Las fechas de la DIAN las confirma el contador según el RUT. Cambia la fecha o el estado y queda guardado.</div>
+      <table class="tk"><thead><tr><th>Obligación</th><th class="n">Vence</th><th class="n">Estado</th></tr></thead><tbody>${obligaciones}</tbody></table>
+      <button class="btn-secundario" style="width:auto;margin-top:8px;" onclick="agregarObligacion()">+ Agregar obligación</button>
+      <h2 style="margin:22px 0 6px;font-size:16px;">🧾 Gastos y compras del mes (soportes)</h2>
+      <div style="font-size:12px;opacity:0.7;margin-bottom:6px;">${tiposGasto} registro(s)${sinSoporte ? ` · <strong style="color:var(--ambar);">${sinSoporte} sin foto del comprobante</strong>` : ''}. Solo lectura.</div>${tablaGastos}
+      <h2 style="margin:22px 0 6px;font-size:16px;">🗺️ Propuesta de servicios: dónde está cada cosa</h2>
+      <table class="tk"><thead><tr><th>Punto de la propuesta</th><th>Dónde verlo en el sistema</th><th></th></tr></thead><tbody>${propuesta}</tbody></table>`;
+  }
+
+  function fechaCortaPanel(f) { return new Date(f + 'T00:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' }); }
+
+  async function actualizarObligacion(id, cambios) {
+    const { error } = await supabaseClient.from('obligaciones_contador').update({ ...cambios, updated_at: new Date().toISOString() }).eq('id', id);
+    if (error) { mostrarMensaje('mensajePanelContador', 'No se pudo guardar: ' + error.message, 'error'); return; }
+    mostrarMensaje('mensajePanelContador', 'Guardado.', 'exito');
+    cargarPanelContador();
+  }
+
+  async function agregarObligacion() {
+    const nombre = prompt('Nombre de la obligación (ej: Renovación de la firma electrónica)');
+    if (!nombre || !nombre.trim()) return;
+    const fecha = prompt('Fecha de vencimiento (AAAA-MM-DD), o déjala vacía si aún no se sabe');
+    if (fecha && !/^\d{4}-\d{2}-\d{2}$/.test(fecha.trim())) { mostrarMensaje('mensajePanelContador', 'La fecha debe tener el formato AAAA-MM-DD.', 'error'); return; }
+    const { error } = await supabaseClient.from('obligaciones_contador').insert({ nombre: nombre.trim(), fecha_vencimiento: fecha ? fecha.trim() : null, orden: 99 });
+    if (error) { mostrarMensaje('mensajePanelContador', 'No se pudo agregar: ' + error.message, 'error'); return; }
+    cargarPanelContador();
   }
 
   async function mostrarPantallaCosteoReal() {
