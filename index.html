@@ -2303,7 +2303,6 @@
       <label for="honMetodoPago" style="margin-top:10px;">Método de pago (del neto)</label>
       <select id="honMetodoPago">
         <option value="efectivo">Efectivo (se descuenta del arqueo de caja)</option>
-        <option value="nequi">Nequi</option>
         <option value="daviplata">Daviplata</option>
         <option value="transferencia">Transferencia</option>
         <option value="tarjeta_debito">Tarjeta débito</option>
@@ -2376,7 +2375,6 @@
           <label for="pagoAdminMetodoPago">Método de pago</label>
           <select id="pagoAdminMetodoPago">
             <option value="efectivo">Efectivo (se descuenta del arqueo de caja)</option>
-            <option value="nequi">Nequi</option>
             <option value="daviplata">Daviplata</option>
             <option value="transferencia">Transferencia</option>
             <option value="tarjeta_debito">Tarjeta débito</option>
@@ -2454,7 +2452,6 @@
             <label for="gastoMetodoPago">Método de pago</label>
             <select id="gastoMetodoPago">
               <option value="efectivo">Efectivo (se descuenta del arqueo de caja)</option>
-              <option value="nequi">Nequi</option>
               <option value="daviplata">Daviplata</option>
               <option value="transferencia">Transferencia</option>
               <option value="tarjeta_debito">Tarjeta débito</option>
@@ -3924,7 +3921,6 @@
       <label for="afMetodoPago">Método de pago</label>
       <select id="afMetodoPago">
         <option value="efectivo">Efectivo</option>
-        <option value="nequi">Nequi</option>
         <option value="daviplata">Daviplata</option>
         <option value="transferencia">Transferencia</option>
         <option value="tarjeta_debito">Tarjeta débito</option>
@@ -4115,7 +4111,6 @@
         <label for="ncdMetodoPago">Método de pago</label>
         <select id="ncdMetodoPago">
           <option value="efectivo">Efectivo</option>
-          <option value="nequi">Nequi</option>
           <option value="daviplata">Daviplata</option>
           <option value="transferencia">Transferencia</option>
         </select>
@@ -4246,7 +4241,7 @@
 <div id="pantallaConciliacion" class="oculto contenido">
   <div class="page-header">
     <h1>🏦 Cuentas bancarias y conciliación</h1>
-    <div class="subtitulo">Cada cuenta (banco, Nequi, Daviplata…) tiene su propia subcuenta contable y se concilia por separado contra su extracto.</div>
+    <div class="subtitulo">Cada cuenta (banco, billetera digital…) tiene su propia subcuenta contable y se concilia por separado contra su extracto.</div>
   </div>
   <div class="mensaje" id="mensajeConciliacion"></div>
 
@@ -4273,7 +4268,7 @@
   <div id="bancosPanelNueva" class="panel oculto" style="max-width:none;max-height:none;margin-bottom:16px;">
     <h2>＋ Agregar cuenta bancaria o billetera</h2>
     <div class="grilla-2" style="gap:12px;">
-      <div><label for="bcNombre">Nombre para reconocerla</label><input type="text" id="bcNombre" placeholder="Ej: Ahorros Bancolombia, Nequi de la tienda"></div>
+      <div><label for="bcNombre">Nombre para reconocerla</label><input type="text" id="bcNombre" placeholder="Ej: Ahorros Bancolombia"></div>
       <div><label for="bcEntidad">Entidad</label><input type="text" id="bcEntidad" list="bcEntidades" placeholder="Ej: Bancolombia"><datalist id="bcEntidades"><option>Bancolombia</option><option>Nequi</option><option>Daviplata</option><option>Davivienda</option><option>Banco de Bogotá</option><option>Banco Agrario</option><option>BBVA</option><option>Caja Social</option></datalist></div>
       <div><label for="bcTipo">Tipo</label><select id="bcTipo"><option value="ahorros">Cuenta de ahorros</option><option value="corriente">Cuenta corriente</option><option value="billetera_digital">Billetera digital (Nequi, Daviplata…)</option><option value="otra">Otra</option></select></div>
       <div><label for="bcNumero">Número de cuenta o celular</label><input type="text" id="bcNumero"></div>
@@ -4289,7 +4284,7 @@
 
   <div id="bancosPanelTraslado" class="panel oculto" style="max-width:none;max-height:none;margin-bottom:16px;">
     <h2>🔁 Traslado entre cuentas</h2>
-    <div class="subtitulo">Para cuando pasas plata de una cuenta a otra (ej: de Nequi a Bancolombia). No es ingreso ni gasto.</div>
+    <div class="subtitulo">Para cuando pasas plata de una cuenta a otra (ej: de una cuenta de ahorros a otra). No es ingreso ni gasto.</div>
     <div class="grilla-2" style="gap:12px;">
       <div><label for="btOrigen">Sale de</label><select id="btOrigen"></select></div>
       <div><label for="btDestino">Llega a</label><select id="btDestino"></select></div>
@@ -4504,7 +4499,6 @@
         <label for="ciAntMetodo">Pagado desde</label>
         <select id="ciAntMetodo">
           <option value="transferencia">Banco (transferencia / PSE)</option>
-          <option value="nequi">Nequi</option>
           <option value="efectivo">Efectivo (caja)</option>
         </select>
         <label for="ciAntRecibo">N° de recibo 2593 <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
@@ -4532,7 +4526,6 @@
         <label for="ciSaldoMetodo">Pagado desde</label>
         <select id="ciSaldoMetodo">
           <option value="transferencia">Banco (transferencia / PSE)</option>
-          <option value="nequi">Nequi</option>
           <option value="efectivo">Efectivo (caja)</option>
         </select>
         <button class="btn-secundario" onclick="confirmarPagoSaldoSimple()">Registrar pago del saldo</button>
@@ -7072,7 +7065,6 @@
         <div style="display:flex;gap:8px;">
           <select onchange="actualizarFilaPago(${indice}, 'metodo_pago', this.value)" style="flex:1.2;">
             <option value="efectivo" ${pago.metodo_pago === 'efectivo' ? 'selected' : ''}>Efectivo</option>
-            <option value="nequi" ${pago.metodo_pago === 'nequi' ? 'selected' : ''}>Nequi</option>
             <option value="daviplata" ${pago.metodo_pago === 'daviplata' ? 'selected' : ''}>Daviplata</option>
             <option value="tarjeta_debito" ${pago.metodo_pago === 'tarjeta_debito' ? 'selected' : ''}>Tarjeta débito</option>
             <option value="tarjeta_credito" ${pago.metodo_pago === 'tarjeta_credito' ? 'selected' : ''}>Tarjeta crédito</option>
@@ -9042,7 +9034,6 @@
         <label style="margin-top:8px;font-size:11px;">¿Cómo se le devuelve el dinero al cliente?</label>
         <select id="devolucionMetodoPago-${ventaId}">
           <option value="efectivo">Efectivo (se descuenta del arqueo de caja)</option>
-          <option value="nequi">Nequi</option>
           <option value="daviplata">Daviplata</option>
           <option value="transferencia">Transferencia</option>
           <option value="tarjeta_debito">Tarjeta débito</option>
@@ -17809,7 +17800,6 @@
         <div style="display:flex;gap:8px;">
           <select onchange="actualizarFilaPagoPedidoUI(${indice}, 'metodo_pago', this.value)" style="flex:1.2;">
             <option value="efectivo" ${pago.metodo_pago === 'efectivo' ? 'selected' : ''}>Efectivo</option>
-            <option value="nequi" ${pago.metodo_pago === 'nequi' ? 'selected' : ''}>Nequi</option>
             <option value="daviplata" ${pago.metodo_pago === 'daviplata' ? 'selected' : ''}>Daviplata</option>
             <option value="transferencia" ${pago.metodo_pago === 'transferencia' ? 'selected' : ''}>Transferencia</option>
             <option value="tarjeta_debito" ${pago.metodo_pago === 'tarjeta_debito' ? 'selected' : ''}>Tarjeta débito</option>
@@ -21684,7 +21674,7 @@
   let cacheConciliacion = null;
 
   const MEDIOS_PAGO_BANCO = [
-    ['nequi', 'Nequi'], ['daviplata', 'Daviplata'], ['transferencia', 'Transferencia bancaria'],
+    ['daviplata', 'Daviplata'], ['transferencia', 'Transferencia bancaria'],
     ['tarjeta_debito', 'Tarjeta débito (datáfono)'], ['tarjeta_credito', 'Tarjeta crédito (datáfono)'],
   ];
   const TIPOS_CUENTA_BANCO = { ahorros: 'Ahorros', corriente: 'Corriente', billetera_digital: 'Billetera digital', otra: 'Otra' };
@@ -21794,7 +21784,7 @@
       ${cuentas.length ? `<div class="grilla-3" style="gap:14px;">${cuentas.map(tarjeta).join('')}</div>` : `
         <div class="panel" style="max-width:none;max-height:none;">
           <h2>Todavía no hay cuentas registradas</h2>
-          <div style="font-size:13px;line-height:1.6;">Agrega cada cuenta bancaria y billetera (Nequi, Daviplata…) con el botón "＋ Agregar cuenta". Luego indica a qué cuenta llega cada medio de pago y registra el saldo de cada una según su extracto: desde ahí se concilian por separado.</div>
+          <div style="font-size:13px;line-height:1.6;">Agrega cada cuenta bancaria o billetera de la empresa con el botón "＋ Agregar cuenta". Luego indica a qué cuenta llega cada medio de pago y registra el saldo de cada una según su extracto: desde ahí se concilian por separado.</div>
         </div>`}
       ${Math.abs(sinAsignar) >= 1 ? `
         <div style="background:${sinAsignar < 0 ? 'var(--tinte-rojo)' : 'var(--tinte-ambar)'};border-radius:var(--radius-md);padding:10px 14px;margin-top:14px;font-size:12.5px;line-height:1.6;">
@@ -22849,7 +22839,6 @@
           <label style="font-size:11px;">Método de pago</label>
           <select id="abonoMetodo-${cuentaId}" style="width:auto;">
             <option value="efectivo">Efectivo</option>
-            <option value="nequi">Nequi</option>
             <option value="daviplata">Daviplata</option>
             <option value="transferencia">Transferencia</option>
             <option value="tarjeta_debito">Tarjeta débito</option>
@@ -22913,7 +22902,7 @@
   }
 
   async function confirmarPagarCuentaPendiente(cuentaId) {
-    const metodoPago = prompt('¿Con qué método de pago? (efectivo, nequi, daviplata, transferencia, tarjeta_debito, tarjeta_credito)', 'efectivo');
+    const metodoPago = prompt('¿Con qué método de pago? (efectivo, daviplata, transferencia, tarjeta_debito, tarjeta_credito)', 'efectivo');
     if (!metodoPago) return;
 
     const resp = await fetch(WORKER_URL + '/api/pos/finanzas/cuentas-pendientes/pagar', {
@@ -26691,7 +26680,6 @@
         <div style="display:flex;gap:8px;">
           <select onchange="actualizarFilaPagoAcademia(${indice}, 'metodo_pago', this.value)" style="flex:1.2;">
             <option value="efectivo" ${pago.metodo_pago === 'efectivo' ? 'selected' : ''}>Efectivo</option>
-            <option value="nequi" ${pago.metodo_pago === 'nequi' ? 'selected' : ''}>Nequi</option>
             <option value="daviplata" ${pago.metodo_pago === 'daviplata' ? 'selected' : ''}>Daviplata</option>
             <option value="transferencia" ${pago.metodo_pago === 'transferencia' ? 'selected' : ''}>Transferencia</option>
             <option value="tarjeta_debito" ${pago.metodo_pago === 'tarjeta_debito' ? 'selected' : ''}>Tarjeta débito</option>
@@ -29122,7 +29110,7 @@
           ${pagado
             ? '<div style="margin-top:8px;"><span class="badge-rol" style="background:#eaf6ef;color:var(--verde-exito);">✅ Pagado</span></div>'
             : `<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
-                ${['efectivo','nequi','daviplata','transferencia'].map(m => `<button class="btn-mini guardar" onclick="pedirConfirmacionBoton(this, '¿Ya pagó?', () => confirmarPagoNomina('${l.id}', '${m}'))">${m}</button>`).join('')}
+                ${['efectivo','daviplata','transferencia'].map(m => `<button class="btn-mini guardar" onclick="pedirConfirmacionBoton(this, '¿Ya pagó?', () => confirmarPagoNomina('${l.id}', '${m}'))">${m}</button>`).join('')}
               </div>`
           }
         </div>
