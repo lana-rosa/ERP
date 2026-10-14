@@ -2658,6 +2658,9 @@
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
         <input type="text" id="buscarPesos" placeholder="🔍 Buscar producto..." oninput="renderizarPesosProductos()" style="max-width:300px;margin:0;">
         <label style="display:flex;gap:6px;align-items:center;font-size:12.5px;margin:0;"><input type="checkbox" id="soloSinPeso" onchange="renderizarPesosProductos()" style="width:auto;margin:0;"> Solo sin peso</label>
+        <select id="ordenPesos" onchange="renderizarPesosProductos()" style="width:auto;margin:0;padding:8px 10px;"><option value="stock">Más existencias primero</option><option value="nombre">Por nombre</option></select>
+        <button class="btn-secundario" style="width:auto;margin:0;" onclick="exportarPlantillaPesos()">📥 Excel para llenar</button>
+        <label class="btn-secundario" style="width:auto;margin:0;cursor:pointer;">📤 Importar Excel<input type="file" accept=".xlsx,.xls,.csv" style="display:none;" onchange="importarPesosExcel(this)"></label>
         <button class="btn-principal" style="width:auto;margin:0;" onclick="guardarPesosProductos(this)">💾 Guardar pesos</button>
       </div>
       <div id="mensajePesosProductos" class="mensaje"></div>
@@ -16497,7 +16500,7 @@
     await cargarPrecioGramoHilo();
     document.getElementById('pesosPrecioGramo').textContent = formatearMoneda(precioGramoHiloCache) + ' por gramo';
     const { data, error } = await supabaseClient.from('inventario_items')
-      .select('id, nombre, stock_actual, peso_gramos, costo_ojos, costo_empaque, costo_otros_accesorios')
+      .select('id, nombre, stock_actual, precio_venta, peso_gramos, costo_ojos, costo_empaque, costo_otros_accesorios')
       .eq('tipo', 'producto_terminado').eq('activo', true).order('nombre');
     if (error) { cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(error.message)}</div>`; return; }
     pesosProductosCache = data || [];
@@ -16513,22 +16516,27 @@
     const cont = document.getElementById('listaPesosProductos');
     const texto = document.getElementById('buscarPesos').value.trim().toLowerCase();
     const solo = document.getElementById('soloSinPeso').checked;
-    const lista = pesosProductosCache.filter(i => (!texto || i.nombre.toLowerCase().includes(texto)) && (!solo || !(Number(i.peso_gramos) > 0)));
+    const orden = document.getElementById('ordenPesos').value;
+    const lista = pesosProductosCache.filter(i => (!texto || i.nombre.toLowerCase().includes(texto)) && (!solo || !(Number(i.peso_gramos) > 0)))
+      .sort((a, b) => orden === 'stock' ? (Number(b.stock_actual) - Number(a.stock_actual)) || a.nombre.localeCompare(b.nombre) : a.nombre.localeCompare(b.nombre));
     const sinPeso = pesosProductosCache.filter(i => !(Number(i.peso_gramos) > 0)).length;
     cont.innerHTML = `<div style="font-size:12px;opacity:0.75;margin-bottom:8px;">${pesosProductosCache.length} productos · ${sinPeso} sin peso</div>` + (lista.length === 0 ? '<div class="cargando">Sin productos que coincidan.</div>' : `
       <div class="tabla-lista">
-        <div class="tabla-lista-header header-rosa" style="grid-template-columns:1fr 70px 110px 90px 130px;">
-          <span>PRODUCTO</span><span style="text-align:right;">EN STOCK</span><span style="text-align:right;">PESO (g)</span><span style="text-align:right;">EXTRAS</span><span style="text-align:right;">MATERIA PRIMA</span>
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:1fr 60px 100px 80px 110px 90px 70px;">
+          <span>PRODUCTO</span><span style="text-align:right;">STOCK</span><span style="text-align:right;">PESO (g)</span><span style="text-align:right;">EXTRAS</span><span style="text-align:right;">MATERIA PRIMA</span><span style="text-align:right;">PRECIO VENTA</span><span style="text-align:right;" title="Qué parte del precio de venta se va en materia prima. Si pasa del 50% conviene revisar el peso o el precio.">% PRECIO</span>
         </div>
         ${lista.map(i => {
           const peso = i.id in pesosModificados ? pesosModificados[i.id] : i.peso_gramos;
           const extras = (Number(i.costo_ojos) || 0) + (Number(i.costo_empaque) || 0) + (Number(i.costo_otros_accesorios) || 0);
-          return `<div class="tabla-lista-fila" style="grid-template-columns:1fr 70px 110px 90px 130px;cursor:default;">
+          const mp = costoMateriaPrimaPorPeso(i, peso), pv = Number(i.precio_venta) || 0;
+          return `<div class="tabla-lista-fila" style="grid-template-columns:1fr 60px 100px 80px 110px 90px 70px;cursor:default;">
             <span>${escaparHtml(i.nombre)}</span>
             <span style="text-align:right;">${formatearCantidad(i.stock_actual)}</span>
-            <span style="text-align:right;"><input type="number" min="0" step="0.5" inputmode="decimal" value="${peso ?? ''}" oninput="cambioPesoProducto('${i.id}', this.value)" style="width:90px;padding:5px 7px;margin:0;text-align:right;"></span>
+            <span style="text-align:right;"><input type="number" min="0" step="0.5" inputmode="decimal" value="${peso ?? ''}" data-peso-id="${i.id}" oninput="cambioPesoProducto('${i.id}', this.value)" style="width:80px;padding:5px 7px;margin:0;text-align:right;"></span>
             <span style="text-align:right;">${formatearMoneda(extras)}</span>
-            <span style="text-align:right;font-weight:700;" id="mpPeso-${i.id}">${formatearMoneda(costoMateriaPrimaPorPeso(i, peso))}</span>
+            <span style="text-align:right;font-weight:700;" id="mpPeso-${i.id}">${formatearMoneda(mp)}</span>
+            <span style="text-align:right;">${formatearMoneda(pv)}</span>
+            <span style="text-align:right;" id="mpPct-${i.id}">${porcentajeMateriaPrima(mp, pv)}</span>
           </div>`;
         }).join('')}
       </div>`);
@@ -16539,8 +16547,56 @@
     if (!item) return;
     const v = valor === '' ? null : Math.max(0, Number(valor));
     pesosModificados[id] = v;
+    const costo = costoMateriaPrimaPorPeso(item, v);
     const celda = document.getElementById('mpPeso-' + id);
-    if (celda) celda.textContent = formatearMoneda(costoMateriaPrimaPorPeso(item, v));
+    if (celda) celda.textContent = formatearMoneda(costo);
+    const pc = document.getElementById('mpPct-' + id);
+    if (pc) pc.innerHTML = porcentajeMateriaPrima(costo, Number(item.precio_venta) || 0);
+  }
+
+  function porcentajeMateriaPrima(costo, precio) {
+    if (!precio || !costo) return '—';
+    const p = Math.round(costo / precio * 100);
+    return `<span style="color:${p > 50 ? 'var(--rojo-error)' : 'inherit'};font-weight:${p > 50 ? 700 : 400};">${p}%</span>`;
+  }
+
+  // Plantilla de Excel: la llevas a la báscula, escribes los gramos y la importas de vuelta
+  function exportarPlantillaPesos() {
+    if (!pesosProductosCache.length) { mostrarMensaje('mensajePesosProductos', 'Espera a que cargue la lista.', 'error'); return; }
+    const filas = [['Código (no cambiar)', 'Producto', 'Existencias', 'Precio de venta', 'Peso en gramos (llenar)']]
+      .concat([...pesosProductosCache].sort((a, b) => Number(b.stock_actual) - Number(a.stock_actual) || a.nombre.localeCompare(b.nombre))
+        .map(i => [i.id, i.nombre, Number(i.stock_actual), Number(i.precio_venta) || 0, i.id in pesosModificados ? pesosModificados[i.id] : (i.peso_gramos ?? '')]));
+    const hoja = XLSX.utils.aoa_to_sheet(filas);
+    hoja['!cols'] = [{ wch: 10 }, { wch: 48 }, { wch: 12 }, { wch: 15 }, { wch: 22 }];
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Pesos');
+    XLSX.writeFile(libro, `LanaRosa_PesosProductos_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  }
+
+  async function importarPesosExcel(input) {
+    const archivo = input.files && input.files[0];
+    input.value = '';
+    if (!archivo) return;
+    try {
+      const libro = XLSX.read(await archivo.arrayBuffer(), { type: 'array' });
+      const filas = XLSX.utils.sheet_to_json(libro.Sheets[libro.SheetNames[0]], { header: 1, defval: '' });
+      let aplicados = 0, sinMatch = 0, invalidos = 0;
+      const porNombre = new Map(pesosProductosCache.map(i => [i.nombre.trim().toLowerCase(), i]));
+      for (const f of filas.slice(1)) {
+        const bruto = String(f[4] ?? '').replace(',', '.').trim();
+        if (bruto === '') continue;
+        const peso = Number(bruto);
+        const item = pesosProductosCache.find(i => i.id === String(f[0]).trim()) || porNombre.get(String(f[1]).trim().toLowerCase());
+        if (!item) { sinMatch++; continue; }
+        if (!(peso > 0) || peso > 5000) { invalidos++; continue; }
+        pesosModificados[item.id] = peso;
+        aplicados++;
+      }
+      renderizarPesosProductos();
+      mostrarMensaje('mensajePesosProductos', `Se cargaron ${aplicados} peso(s) del Excel${sinMatch ? `; ${sinMatch} fila(s) no coinciden con ningún producto` : ''}${invalidos ? `; ${invalidos} con un peso no válido (debe ser mayor a 0 y menor a 5.000 g)` : ''}. Revisa y pulsa "Guardar pesos" para confirmarlos.`, aplicados ? 'exito' : 'error');
+    } catch (e) {
+      mostrarMensaje('mensajePesosProductos', 'No se pudo leer el Excel: ' + e.message, 'error');
+    }
   }
 
   async function guardarPesosProductos(boton) {
