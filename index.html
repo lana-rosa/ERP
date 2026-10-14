@@ -23394,6 +23394,10 @@
       return;
     }
     cacheEstadoResultados = d;
+    let aportes = null;
+    try {
+      aportes = await llamarReporteContable('fn_aportes_socia_periodo', { p_desde: desde, p_hasta: hasta });
+    } catch (e) { /* línea informativa: si falla, el informe se muestra igual */ }
     const gastosAdmin = d.gastos.filter(g => g.grupo === '51');
     const gastosVentas = d.gastos.filter(g => g.grupo === '52');
 
@@ -23415,6 +23419,13 @@
           <div style="font-size:12px;font-weight:600;opacity:0.75;">UTILIDAD NETA DEL PERÍODO</div>
           <div style="font-size:26px;font-weight:700;color:${d.utilidad_neta >= 0 ? 'var(--verde-exito)' : 'var(--rojo-error)'};margin-top:4px;">${formatearMoneda(d.utilidad_neta)}</div>
         </div>
+        ${aportes && Number(aportes.total) !== 0 ? `
+        <div style="margin-top:12px;padding:12px 14px;border-radius:10px;border:1px dashed var(--borde, #d9c9d2);font-size:13px;">
+          <div style="font-weight:700;">Informativo: aportes de la socia en dinero en el período</div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px;"><span>Gastos pagados con recursos propios de la socia (3130)</span><strong>${formatearMoneda(aportes.total)}</strong></div>
+          ${(aportes.detalle || []).map(x => `<div style="font-size:12px;opacity:.75;margin-top:2px;">${escaparHtml(String(x.fecha).slice(0, 10))} · ${formatearMoneda(x.valor)} · ${escaparHtml(String(x.descripcion || '').slice(0, 90))}</div>`).join('')}
+          <div style="font-size:12px;opacity:.75;margin-top:6px;">Este valor no hace parte de la utilidad: el aporte es capital que pone la socia, no un ingreso. Muestra cuánto de los gastos del período no salió de la caja del negocio.</div>
+        </div>` : ''}
       </div>
     `;
   }
