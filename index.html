@@ -1997,7 +1997,7 @@
     </div>
     <div class="panel" style="max-width:none;max-height:none;margin-bottom:14px;">
       <div style="font-weight:700;">Facturar y traer la factura al ERP</div>
-      <div style="font-size:12.5px;opacity:.8;margin:4px 0 10px;line-height:1.5;">1) Emite la factura en el portal gratuito de la DIAN. 2) La DIAN te envía el correo con la factura (archivo ZIP con el XML y el PDF). 3) Sube ese ZIP o el XML aquí: el ERP lee el número, el CUFE y el valor, y lo une a la venta correcta.</div>
+      <div style="font-size:12.5px;opacity:.8;margin:4px 0 10px;line-height:1.5;">1) Emite la factura en el portal gratuito de la DIAN. 2) La DIAN te envía el correo con la factura (archivo ZIP con el XML y el PDF). 3) Sube ese ZIP o el XML aquí: el ERP lee la factura (número, CUFE, productos, valores y forma de pago). Si ya existe la venta, le une la factura; si no existe, crea la venta desde la factura.</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <a class="btn-secundario" style="width:auto;margin:0;text-decoration:none;" href="https://www.dian.gov.co/impuestos/factura-electronica/facturacion-gratuita/Paginas/default.aspx" target="_blank" rel="noopener">🔗 Ir a la facturación gratuita de la DIAN</a>
         <label class="btn-principal" style="width:auto;margin:0;cursor:pointer;">📤 Subir factura de la DIAN (ZIP o XML)<input type="file" accept=".zip,.xml" multiple style="display:none;" onchange="importarFacturasDian(this)"></label>
@@ -21399,7 +21399,17 @@
     const cliente = hijoLocal(raiz, 'AccountingCustomerParty')[0];
     const total = primero(hijoLocal(raiz, 'LegalMonetaryTotal')[0] || raiz, 'PayableAmount');
     const cufe = [...raiz.children].find(h => h.localName === 'UUID')?.textContent.trim() || '';
+    const lineas = hijoLocal(raiz, 'InvoiceLine').map(l => {
+      const item = hijoLocal(l, 'Item')[0];
+      return {
+        descripcion: (item && (primero(item, 'Description') || primero(item, 'Name'))) || 'Producto',
+        cantidad: Number(primero(l, 'InvoicedQuantity')) || 1,
+        total: Math.round(Number(primero(l, 'LineExtensionAmount')) || 0),
+      };
+    });
+    const codigoPago = primero(hijoLocal(raiz, 'PaymentMeans')[0] || raiz, 'PaymentMeansCode');
     return {
+      lineas, codigoPago,
       prefijo: m ? m[1] : '', numero: m ? m[2] : idCompleto, idCompleto, cufe,
       fecha: [...raiz.children].find(h => h.localName === 'IssueDate')?.textContent.trim() || '',
       total: Math.round(Number(total) || 0),
@@ -21466,7 +21476,7 @@
     if (!FE_CARPETA_OK) { el.innerHTML = 'Esta función necesita Google Chrome o Microsoft Edge en el computador. En este navegador usa el botón de subir el ZIP.'; return; }
     const auto = feCarpetaHandle && feCarpetaPermiso;
     el.innerHTML = `
-      <div style="opacity:.85;">Elige una vez la carpeta donde se guardan los ZIP de la DIAN. Mientras el ERP esté abierto, revisa la carpeta cada 30 segundos, lee las facturas nuevas y las registra solas cuando coincide <strong>una sola venta</strong> (mismo valor, mismo cliente y fecha cercana). Si hay duda, te las muestra arriba para que elijas.</div>
+      <div style="opacity:.85;">Elige una vez la carpeta donde se guardan los ZIP de la DIAN. Mientras el ERP esté abierto, revisa la carpeta cada 30 segundos, lee las facturas nuevas y las registra solas: si ya existe la venta (mismo valor, mismo cliente y fecha cercana) le une la factura; si no existe ninguna, <strong>crea la venta desde la factura</strong> con sus productos y su forma de pago. Si hay duda, te la muestra arriba para que elijas.</div>
       <div style="margin-top:8px;">${feCarpetaHandle ? `Carpeta: <strong>${escaparHtml(feCarpetaHandle.name)}</strong> · ${auto ? '🟢 vigilando' + (feCarpetaUltimo ? ' (última revisión ' + feCarpetaUltimo.toLocaleTimeString('es-CO') + ')' : '') : '🟠 desconectada: pulsa "Reconectar"'}` : 'Aún no has elegido carpeta.'}</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
         <button class="btn-secundario" style="width:auto;margin:0;" onclick="elegirCarpetaFe()">📂 ${feCarpetaHandle ? 'Cambiar carpeta' : 'Elegir carpeta'}</button>
@@ -21565,6 +21575,12 @@
               continue;
             }
           }
+          if (!unica.length && !candidatasVentaFe(f, pendientes).length) {
+            const r = await crearVentaDesdeFacturaFe(f);
+            if (r.ok) { ya.add(f.idCompleto); feImportadas.push({ ...f, registrada: true, auto: true, ventaCreada: true, advertencias: r.advertencias }); auto++; continue; }
+            f.errorCreacion = r.error;
+            if (r.creada) { feImportadas.push(f); pendienteRevision = true; revisar++; continue; }
+          }
           feImportadas.push(f); pendienteRevision = true; revisar++;
         }
         if (!pendienteRevision) feMarcarProcesado(clave);
@@ -21583,19 +21599,84 @@
     }
   }
 
+  // Códigos de medio de pago de la DIAN → medio de pago del ERP (si no se reconoce, efectivo).
+  function medioPagoDesdeDian(codigo) {
+    const mapa = { '10': 'efectivo', '48': 'tarjeta_credito', '49': 'tarjeta_debito', '42': 'transferencia', '47': 'transferencia', '31': 'transferencia', '45': 'transferencia', '46': 'transferencia' };
+    return mapa[String(codigo || '').trim()] || 'efectivo';
+  }
+
+  // Forma B: crea la venta en el ERP a partir de la factura, con la misma ruta que usa el punto de venta.
+  async function crearVentaDesdeFacturaFe(f) {
+    if (!turnoActivoActual) return { error: 'Abre el turno de caja para crear ventas desde las facturas.' };
+    if (!f.lineas || !f.lineas.length) return { error: 'La factura no trae líneas de producto.' };
+    const norm = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim();
+    const { data: items } = await supabaseClient.from('inventario_items').select('id, nombre, stock_actual').eq('activo', true).eq('centro_costo_id', centroCostoTiendaId);
+    const porNombre = new Map((items || []).map(i => [norm(i.nombre), i]));
+    const usado = new Map();
+    const advertencias = [];
+    const lineas = f.lineas.map(l => {
+      const it = porNombre.get(norm(l.descripcion));
+      const yaUsado = it ? (usado.get(it.id) || 0) : 0;
+      let id = null;
+      if (it && Number(it.stock_actual) - yaUsado >= l.cantidad) { id = it.id; usado.set(it.id, yaUsado + l.cantidad); }
+      else advertencias.push(it ? `Sin existencias suficientes de "${l.descripcion}": se registró sin descontar inventario.` : `"${l.descripcion}" no está en el inventario: se registró sin descontar inventario.`);
+      return { inventario_item_id: id, descripcion: l.descripcion, cantidad: l.cantidad, precio_unitario: Math.round(l.total / (l.cantidad || 1)) };
+    });
+    const subtotal = lineas.reduce((a, l) => a + l.cantidad * l.precio_unitario, 0);
+    if (Math.abs(subtotal - f.total) > 1) advertencias.push(`El valor de las líneas (${formatearMoneda(subtotal)}) no coincide con el total de la factura (${formatearMoneda(f.total)}): revisa impuestos o descuentos.`);
+    const cuerpo = {
+      centro_costo_id: centroCostoTiendaId, turno_id: turnoActivoActual.id, tercero_id: null, canal: 'tienda', lineas,
+      pagos: [{ metodo_pago: medioPagoDesdeDian(f.codigoPago), monto: subtotal, referencia: 'Factura ' + f.idCompleto }],
+    };
+    let resp, datos;
+    try {
+      resp = await fetch(WORKER_URL + '/api/pos/ventas', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token }, body: JSON.stringify(cuerpo) });
+      datos = await resp.json();
+    } catch (e) { return { error: 'No se pudo contactar al servidor: ' + e.message }; }
+    if (!resp.ok) return { error: datos.error || 'No se pudo crear la venta.' };
+    let ventaId = datos.venta_id || null;
+    if (!ventaId) {
+      const hoy = fechaLocalIso();
+      const lista = await llamarReporteContable('fn_fe_ventas', { p_desde: fechaLocalIso(new Date(Date.now() - 3 * 864e5)), p_hasta: hoy, p_solo_pendientes: true });
+      ventaId = (lista.find(v => v.origen === 'venta_pos' && v.consecutivo === datos.consecutivo) || {}).origen_id || null;
+    }
+    if (!ventaId) return { error: 'La venta se creó pero no pude unirla con la factura: regístrala desde la lista "Por facturar".', creada: true };
+    const cliente = f.nombreCliente ? `Cliente en la factura: ${f.nombreCliente}${f.documentoCliente ? ' (' + f.documentoCliente + ')' : ''}. ` : '';
+    const { error } = await supabaseClient.rpc('fn_fe_registrar_factura', {
+      p_origen: 'venta_pos', p_origen_id: ventaId, p_prefijo: f.prefijo || null, p_numero: f.numero, p_cufe: f.cufe || null, p_fecha: f.fecha,
+      p_observaciones: cliente + 'Venta creada desde la factura de la DIAN.',
+    });
+    if (error) return { error: 'La venta se creó pero no se pudo registrar la factura: ' + error.message, creada: true };
+    return { ok: true, advertencias, consecutivo: datos.consecutivo };
+  }
+
+  async function crearVentaDesdeImportadaFe(i) {
+    const f = feImportadas[i];
+    if (!f || f.registrada) return;
+    const r = await crearVentaDesdeFacturaFe(f);
+    if (r.error) { mostrarMensaje('mensajeFe', r.error, 'error'); return; }
+    f.registrada = true; f.ventaCreada = true;
+    if (f.clave) feMarcarProcesado(f.clave);
+    mostrarMensaje('mensajeFe', '✅ Venta creada y factura registrada.' + (r.advertencias.length ? ' ⚠️ ' + r.advertencias.join(' ') : ''), r.advertencias.length ? 'error' : 'exito');
+    await cargarFePendientes();
+    renderizarImportacionFe();
+  }
+
   function renderizarImportacionFe() {
     const cont = document.getElementById('feResultadoImportacion');
     cont.innerHTML = feImportadas.map((f, i) => {
       if (f.error) return `<div style="padding:10px;border-radius:8px;background:var(--tinte-rojo);margin-bottom:8px;font-size:12.5px;">⚠️ ${escaparHtml(f.origen)}: ${escaparHtml(f.error)}</div>`;
-      if (f.registrada) return `<div style="padding:10px;border-radius:8px;background:var(--tinte-verde);margin-bottom:8px;font-size:12.5px;">✅ Factura ${escaparHtml(f.idCompleto)} registrada${f.auto ? ' automáticamente' : ''}.</div>`;
+      if (f.registrada) return `<div style="padding:10px;border-radius:8px;background:var(--tinte-verde);margin-bottom:8px;font-size:12.5px;">✅ Factura ${escaparHtml(f.idCompleto)} registrada${f.auto ? ' automáticamente' : ''}${f.ventaCreada ? ' · venta creada desde la factura' : ''}.${(f.advertencias || []).map(a => '<div style="opacity:.8;">⚠️ ' + escaparHtml(a) + '</div>').join('')}</div>`;
       const cands = candidatasVentaFe(f);
       return `<div style="padding:10px;border:1px solid #f1e2ec;border-radius:8px;margin-bottom:8px;font-size:12.5px;">
         <div><strong>Factura ${escaparHtml(f.idCompleto)}</strong> · ${escaparHtml(f.fecha)} · ${formatearMoneda(f.total)} · ${escaparHtml(f.nombreCliente || 'Sin nombre')} (${escaparHtml(f.documentoCliente || 'sin documento')})</div>
         <div style="opacity:.65;word-break:break-all;">CUFE: ${escaparHtml(f.cufe || 'no encontrado')}</div>
         ${cands.length ? `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px;">
           <select id="feImpVenta-${i}" style="max-width:420px;">${cands.map(v => `<option value="${v.origen}:${v.origen_id}">${escaparHtml((ORIGEN_VENTA_FE[v.origen] || v.origen) + ' · ' + (v.consecutivo || '') + ' · ' + v.fecha + ' · ' + (v.cliente.consumidor_final ? 'Consumidor final' : v.cliente.nombre))}</option>`).join('')}</select>
-          <button class="btn-mini" style="flex:0 0 auto;padding:7px 12px;background:var(--verde-exito);color:#fff;" onclick="registrarFacturaImportada(${i})">✅ Registrar en esa venta</button></div>`
-        : '<div style="margin-top:6px;">No hay una venta pendiente con ese valor. Revisa el rango de fechas de arriba o que la venta esté registrada.</div>'}
+          <button class="btn-mini" style="flex:0 0 auto;padding:7px 12px;background:var(--verde-exito);color:#fff;" onclick="registrarFacturaImportada(${i})">✅ Registrar en esa venta</button>
+          <button class="btn-mini editar" style="flex:0 0 auto;padding:7px 12px;" onclick="crearVentaDesdeImportadaFe(${i})">➕ Es otra venta: crearla desde la factura</button></div>`
+        : `<div style="margin-top:6px;">No hay una venta pendiente que coincida.${f.errorCreacion ? ' <strong>' + escaparHtml(f.errorCreacion) + '</strong>' : ''}</div>
+          <button class="btn-mini" style="flex:0 0 auto;padding:7px 12px;margin-top:6px;background:var(--verde-exito);color:#fff;" onclick="crearVentaDesdeImportadaFe(${i})">➕ Crear la venta desde la factura</button>`}
       </div>`;
     }).join('');
   }
