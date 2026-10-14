@@ -21515,12 +21515,12 @@
       for (const a of archivos) {
         if (/\.zip$/i.test(a.name)) {
           const zip = await JSZip.loadAsync(await a.arrayBuffer());
-          for (const nombre of Object.keys(zip.files)) if (/\.xml$/i.test(nombre) && !zip.files[nombre].dir) xmls.push({ origen: a.name + ' › ' + nombre, texto: await zip.files[nombre].async('string') });
-        } else xmls.push({ origen: a.name, texto: await a.text() });
+          for (const nombre of Object.keys(zip.files)) if (/\.xml$/i.test(nombre) && !zip.files[nombre].dir) xmls.push({ origen: a.name + ' › ' + nombre, archivo: a, texto: await zip.files[nombre].async('string') });
+        } else xmls.push({ origen: a.name, archivo: a, texto: await a.text() });
       }
     } catch (e) { cont.innerHTML = `<div class="cargando">No se pudo abrir el archivo: ${escaparHtml(e.message)}</div>`; return; }
     if (!cacheFePendientes.length) await cargarFePendientes();
-    feImportadas = xmls.map(x => { const f = { origen: x.origen, ...leerFacturaXmlDian(x.texto) }; return f.esPrueba ? { ...f, error: `La factura ${f.idCompleto} es de PRUEBA (habilitación de la DIAN): no se registra como venta.` } : f; });
+    feImportadas = xmls.map(x => { const f = { origen: x.origen, archivoOrigen: x.archivo, ...leerFacturaXmlDian(x.texto) }; return f.esPrueba ? { ...f, error: `La factura ${f.idCompleto} es de PRUEBA (habilitación de la DIAN): no se registra como venta.` } : f; });
     renderizarImportacionFe();
   }
 
@@ -21611,10 +21611,10 @@
     if (/\.zip$/i.test(archivo.name)) {
       const zip = await JSZip.loadAsync(await archivo.arrayBuffer());
       const r = [];
-      for (const nombre of Object.keys(zip.files)) if (/\.xml$/i.test(nombre) && !zip.files[nombre].dir) r.push({ origen: archivo.name + ' › ' + nombre, texto: await zip.files[nombre].async('string') });
+      for (const nombre of Object.keys(zip.files)) if (/\.xml$/i.test(nombre) && !zip.files[nombre].dir) r.push({ origen: archivo.name + ' › ' + nombre, archivo, texto: await zip.files[nombre].async('string') });
       return r;
     }
-    return [{ origen: archivo.name, texto: await archivo.text() }];
+    return [{ origen: archivo.name, archivo, texto: await archivo.text() }];
   }
 
   async function escanearCarpetaFe(manual) {
@@ -21643,7 +21643,7 @@
         try { xmls = await xmlsDeArchivoFe(archivo); } catch (e) { feImportadas.push({ origen: archivo.name, error: 'No se pudo abrir el archivo: ' + e.message }); feMarcarProcesado(clave); continue; }
         let pendienteRevision = false;
         for (const x of xmls) {
-          const f = { origen: x.origen, clave, ...leerFacturaXmlDian(x.texto) };
+          const f = { origen: x.origen, clave, archivoOrigen: x.archivo, ...leerFacturaXmlDian(x.texto) };
           if (f.error) { feImportadas.push(f); continue; }
           if (f.esPrueba) { feImportadas.push({ ...f, error: `La factura ${f.idCompleto} es de PRUEBA (habilitación de la DIAN): no se registra como venta.` }); continue; }
           if ((f.cufe && ya.has(f.cufe)) || ya.has(f.idCompleto)) continue;   // ya estaba registrada
@@ -21656,13 +21656,14 @@
             });
             if (!error) {
               pendientes.splice(pendientes.indexOf(v), 1); ya.add(f.idCompleto);
+              await guardarArchivoFacturaFe(f);
               feImportadas.push({ ...f, registrada: true, auto: true }); auto++;
               continue;
             }
           }
           if (!unica.length && !candidatasVentaFe(f, pendientes).length) {
             const r = await crearVentaDesdeFacturaFe(f);
-            if (r.ok) { ya.add(f.idCompleto); feImportadas.push({ ...f, registrada: true, auto: true, ventaCreada: true, advertencias: r.advertencias }); auto++; continue; }
+            if (r.ok) { ya.add(f.idCompleto); await guardarArchivoFacturaFe(f); feImportadas.push({ ...f, registrada: true, auto: true, ventaCreada: true, advertencias: r.advertencias }); auto++; continue; }
             f.errorCreacion = r.error;
             if (r.creada) { feImportadas.push(f); pendienteRevision = true; revisar++; continue; }
           }
@@ -21742,6 +21743,7 @@
     if (r.error) { mostrarMensaje('mensajeFe', r.error, 'error'); return; }
     f.registrada = true; f.ventaCreada = true;
     if (f.clave) feMarcarProcesado(f.clave);
+    await guardarArchivoFacturaFe(f);
     mostrarMensaje('mensajeFe', '✅ Venta creada y factura registrada.' + (r.advertencias.length ? ' ⚠️ ' + r.advertencias.join(' ') : ''), r.advertencias.length ? 'error' : 'exito');
     await cargarFePendientes();
     renderizarImportacionFe();
@@ -21792,6 +21794,29 @@
     if (v) imprimirRecibosFe([v]);
   }
 
+  // Conserva el ZIP/XML original de la factura (el soporte que descarga el portal de la DIAN).
+  async function guardarArchivoFacturaFe(f) {
+    const archivo = f && f.archivoOrigen;
+    if (!archivo || !f.numero) return;
+    try {
+      const ext = /\.zip$/i.test(archivo.name) ? 'zip' : 'xml';
+      const ruta = `${String(f.fecha || '').slice(0, 4) || 'sin-fecha'}/${f.idCompleto}_${String(f.cufe || '').slice(0, 8)}.${ext}`;
+      const { error } = await supabaseClient.storage.from('facturas-dian').upload(ruta, archivo, { upsert: true, contentType: ext === 'zip' ? 'application/zip' : 'application/xml' });
+      if (error) throw error;
+      await supabaseClient.rpc('fn_fe_adjuntar_archivo', { p_prefijo: f.prefijo || null, p_numero: f.numero, p_path: ruta });
+    } catch (e) {
+      mostrarMensaje('mensajeFe', 'La factura quedó registrada, pero no se pudo guardar su archivo ZIP en el ERP: ' + (e.message || e) + '. Conserva el archivo en tu computador.', 'error');
+    }
+  }
+
+  async function descargarArchivoFacturaFe(id) {
+    const { data: ruta } = await supabaseClient.rpc('fn_fe_archivo_de', { p_id: id });
+    if (!ruta) { mostrarMensaje('mensajeFe', 'Esta factura no tiene archivo guardado.', 'error'); return; }
+    const { data, error } = await supabaseClient.storage.from('facturas-dian').createSignedUrl(ruta, 300);
+    if (error) { mostrarMensaje('mensajeFe', 'No se pudo abrir el archivo: ' + error.message, 'error'); return; }
+    window.open(data.signedUrl, '_blank');
+  }
+
   function renderizarImportacionFe() {
     const cont = document.getElementById('feResultadoImportacion');
     cont.innerHTML = feImportadas.map((f, i) => {
@@ -21823,6 +21848,7 @@
     if (error) { mostrarMensaje('mensajeFe', error.message, 'error'); return; }
     f.registrada = true;
     if (f.clave) feMarcarProcesado(f.clave);
+    await guardarArchivoFacturaFe(f);
     const adv = (data && data.advertencias) || [];
     mostrarMensaje('mensajeFe', adv.length ? '⚠️ Factura registrada, pero revisa: ' + adv.join(' ') : '✅ Factura registrada.', adv.length ? 'error' : 'exito');
     await cargarFePendientes();
@@ -21872,7 +21898,7 @@
             <span style="font-size:12px;">${escaparHtml(d.nombre_receptor || '')}<div style="font-size:10.5px;opacity:0.6;">${escaparHtml(d.documento_receptor || '')}${d.registrado_por ? ' · registró ' + escaparHtml(d.registrado_por) : ''}</div></span>
             <span style="text-align:right;">${formatearMoneda(d.valor)}</span>
             <span style="font-size:10.5px;word-break:break-all;opacity:0.75;">${d.cufe ? escaparHtml(d.cufe.slice(0, 18)) + '…' : '<span style="color:var(--ambar);">Sin CUFE</span>'}</span>
-            <span>${d.estado === 'emitida' && puedeAnular ? `<button class="btn-mini desactivar" style="flex:0 0 auto;padding:4px 8px;" onclick="anularRegistroFe('${d.id}')">Anular registro</button>` : (d.estado === 'anulada' ? `<span style="font-size:10.5px;">${escaparHtml(d.motivo_anulacion || '')}</span>` : '')}</span>
+            <span>${d.tiene_archivo ? `<button class="btn-mini editar" style="flex:0 0 auto;padding:4px 8px;margin-right:4px;" title="ZIP original de la DIAN (XML y PDF)" onclick="descargarArchivoFacturaFe('${d.id}')">📎 ZIP</button>` : ''}${d.estado === 'emitida' && puedeAnular ? `<button class="btn-mini desactivar" style="flex:0 0 auto;padding:4px 8px;" onclick="anularRegistroFe('${d.id}')">Anular registro</button>` : (d.estado === 'anulada' ? `<span style="font-size:10.5px;">${escaparHtml(d.motivo_anulacion || '')}</span>` : '')}</span>
           </div>`).join('')}
       </div>`;
   }
