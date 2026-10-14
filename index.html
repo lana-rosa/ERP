@@ -2541,7 +2541,7 @@
             <label for="gastoProveedorNombre">Nombre / Razón social</label>
             <input type="text" id="gastoProveedorNombre" placeholder="Nombre del proveedor">
             <label for="gastoProveedorNit">NIT / Documento</label>
-            <input type="text" id="gastoProveedorNit">
+            <input type="text" id="gastoProveedorNit" oninput="actualizarRequisitosCompra()">
             <label for="gastoProveedorTelefono">Teléfono</label>
             <input type="tel" id="gastoProveedorTelefono">
             <label for="gastoProveedorDireccion">Dirección <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
@@ -2565,14 +2565,14 @@
 
         <div>
           <label for="gastoCategoria">Categoría</label>
-          <select id="gastoCategoria">
+          <select id="gastoCategoria" onchange="document.getElementById('gastoTipoCompra').value = this.value === 'insumos' ? 'insumos' : 'otros'; actualizarRequisitosCompra();">
             <option value="insumos">Insumo</option>
             <option value="otros_gastos">Gastos de almacén</option>
           </select>
           <label for="gastoDescripcion">¿Qué se compró?</label>
           <input type="text" id="gastoDescripcion" placeholder="Ej: Lana acrílica varios colores">
           <label for="gastoMonto">Monto (COP)</label>
-          <input type="number" id="gastoMonto" placeholder="0" min="1" step="1">
+          <input type="number" id="gastoMonto" placeholder="0" min="1" step="1" oninput="actualizarRequisitosCompra()">
 
           <label style="margin-top:14px;">¿Cómo se pagó esta compra?</label>
           <div style="display:flex;gap:10px;margin-bottom:10px;">
@@ -2602,6 +2602,22 @@
         </div>
       </div>
 
+      <div id="bloqueRequisitosSena" style="margin-top:16px;padding:12px 14px;border:1.5px solid #f1e2ec;border-radius:var(--radius-md);">
+        <div style="font-weight:700;font-size:13px;">📋 Requisitos del instructivo del SENA (Fondo Emprender) para esta compra</div>
+        <label for="gastoTipoCompra" style="margin-top:8px;">Tipo de compra</label>
+        <select id="gastoTipoCompra" onchange="actualizarRequisitosCompra()">
+          <option value="insumos">Insumos y materia prima</option>
+          <option value="empaques">Empaques</option>
+          <option value="publicidad">Publicidad</option>
+          <option value="maquinaria">Maquinaria y herramientas</option>
+          <option value="equipos_computo">Equipos de cómputo y tecnología</option>
+          <option value="muebles">Muebles y enseres</option>
+          <option value="software">Software</option>
+          <option value="adecuaciones">Adecuaciones del local</option>
+          <option value="otros">Otros gastos del almacén</option>
+        </select>
+        <div id="gastoRequisitosDetalle" style="margin-top:8px;font-size:12.5px;line-height:1.5;"><span style="opacity:.7;">Escribe el monto para ver qué documentos pide el instructivo.</span></div>
+      </div>
       <button class="btn-principal" id="btnRegistrarGasto" onclick="confirmarRegistrarGasto()">Registrar compra</button>
       <div class="mensaje" id="mensajeGasto"></div>
     </div>
@@ -2622,6 +2638,10 @@
         <input type="text" id="comprasBuscar" placeholder="🔍 Buscar..." oninput="debounceBuscarCompras()" style="padding:9px 10px;">
       </div>
       <button class="btn-mini desactivar" onclick="limpiarFiltroCompras()" style="margin-bottom:1px;">Quitar filtros</button>
+    </div>
+    <div id="bloqueComprasSinRequisitos" class="oculto" style="margin-bottom:12px;">
+      <button class="btn-mini editar" style="flex:0 0 auto;padding:7px 12px;" onclick="verComprasSinRequisitos()">📋 Ver compras del rango sin los documentos del instructivo del SENA</button>
+      <div id="listaComprasSinRequisitos" style="margin-top:8px;font-size:12.5px;"></div>
     </div>
     <div class="panel" style="max-width:none;max-height:none;">
       <div id="listaHistorialComprasTabla"><div class="cargando">Cargando...</div></div>
@@ -12899,6 +12919,8 @@
     document.getElementById('gastoMonto').value = '';
     document.getElementById('gastoNumeroFactura').value = '';
     document.getElementById('gastoFechaFactura').value = '';
+    document.getElementById('bloqueComprasSinRequisitos').classList.toggle('oculto', !esRolFe('administrador', 'contador'));
+    actualizarRequisitosCompra();
     await cargarAprobadoresCompra();
     await cargarProveedoresParaFacturaCredito();
   }
@@ -13088,6 +13110,7 @@
 
   function seleccionarProveedorGasto(id, nombre) {
     proveedorGastoSeleccionadoId = id;
+    setTimeout(actualizarRequisitosCompra, 0);
     document.getElementById('sugerenciasProveedorGasto').style.display = 'none';
     document.getElementById('gastoProveedorBuscar').value = '';
     document.getElementById('proveedorGastoSeleccionado').classList.remove('oculto');
@@ -13097,6 +13120,7 @@
 
   function quitarProveedorGastoSeleccionado() {
     proveedorGastoSeleccionadoId = null;
+    setTimeout(actualizarRequisitosCompra, 0);
     document.getElementById('proveedorGastoSeleccionado').classList.add('oculto');
     document.getElementById('bloqueNuevoProveedorGasto').classList.remove('oculto');
   }
@@ -13167,6 +13191,97 @@
     document.getElementById('bloqueCompraQuedoDebiendo').classList.toggle('oculto', modo !== 'credito');
   }
 
+  async function verComprasSinRequisitos() {
+    const cont = document.getElementById('listaComprasSinRequisitos');
+    cont.innerHTML = 'Cargando...';
+    const { data, error } = await supabaseClient.rpc('fn_compras_sin_requisitos', { p_desde: document.getElementById('comprasFechaDesde').value || '2026-01-01', p_hasta: document.getElementById('comprasFechaHasta').value || fechaLocalIso() });
+    if (error) { cont.innerHTML = escaparHtml(error.message); return; }
+    cont.innerHTML = data.length ? `<div style="margin-bottom:6px;"><strong>${data.length}</strong> compra(s) registradas sin los documentos del instructivo (las hechas antes de que existiera este control, o desde otra pantalla):</div>` +
+      data.map(g => `<div>• ${new Date(g.fecha + 'T00:00:00').toLocaleDateString('es-CO')} · ${escaparHtml(g.proveedor || 'sin proveedor')} · ${escaparHtml(g.descripcion || '')} · ${formatearMoneda(g.monto)}</div>`).join('') : '✅ Todas las compras del rango tienen sus documentos.';
+  }
+
+  // ---- Requisitos del instructivo del SENA (Fondo Emprender) para toda compra ----
+  let requisitosCompraInfo = null, requisitosCompraTimer = null;
+  function actualizarRequisitosCompra(inmediato) {
+    clearTimeout(requisitosCompraTimer);
+    return new Promise((resolve) => {
+      requisitosCompraTimer = setTimeout(async () => {
+        const cont = document.getElementById('gastoRequisitosDetalle');
+        const monto = Number(document.getElementById('gastoMonto').value);
+        const tipo = document.getElementById('gastoTipoCompra').value;
+        if (!monto || monto <= 0) { requisitosCompraInfo = null; cont.innerHTML = '<span style="opacity:.7;">Escribe el monto para ver qué documentos pide el instructivo.</span>'; resolve(); return; }
+        const previo = { archivos: {}, marcas: {} };
+        ['reqCotizacion', 'reqContrato', 'reqPoliza', 'reqFicha'].forEach(id => { const el = document.getElementById(id); if (el && el.files[0]) previo.archivos[id] = el.files[0]; });
+        ['reqFacturaEmpresa', 'reqFichaGarantia', 'reqLogos', 'reqSS'].forEach(id => { const el = document.getElementById(id); if (el) previo.marcas[id] = el.checked; });
+        const comp = document.getElementById('reqComparativo'); previo.comparativo = comp ? comp.value : '';
+        const { data, error } = await supabaseClient.rpc('fn_compra_requisitos_info', {
+          p_proveedor_tercero: proveedorGastoSeleccionadoId || null, p_proveedor_nit: document.getElementById('gastoProveedorNit').value.trim() || null, p_monto: monto, p_tipo: tipo,
+        });
+        if (error) { requisitosCompraInfo = null; cont.innerHTML = `<span style="color:var(--rojo-error);">No se pudieron calcular los requisitos: ${escaparHtml(error.message)}</span>`; resolve(); return; }
+        requisitosCompraInfo = data;
+        const r = data.requiere || {};
+        const fila = (id, etiqueta, ayuda) => `<div style="margin-top:8px;"><label for="${id}" style="font-weight:600;">${etiqueta}</label><input type="file" id="${id}" accept="application/pdf,image/*">${ayuda ? `<div style="font-size:10.5px;opacity:.65;">${ayuda}</div>` : ''}</div>`;
+        const marca = (id, texto) => `<label style="display:flex;gap:8px;align-items:flex-start;margin-top:8px;font-weight:400;cursor:pointer;"><input type="checkbox" id="${id}" style="width:auto;margin-top:3px;"><span>${texto}</span></label>`;
+        cont.innerHTML = `
+          <div style="opacity:.8;">Para esta compra de ${formatearMoneda(monto)} se necesitan estos documentos (6 salarios mínimos = ${formatearMoneda(data.umbral_6_smmlv)}):</div>
+          ${marca('reqFacturaEmpresa', 'La factura (o el documento soporte) está <strong>a nombre de la empresa con su NIT</strong>, con la descripción de lo comprado, sin tachaduras ni enmendaduras. <em>(obligatorio)</em>')}
+          ${r.cotizacion_archivo ? fila('reqCotizacion', 'Cotización del proveedor elegido (PDF) — obligatoria', 'Máximo 90 días de expedida, a nombre de la empresa, con NIT, régimen de IVA, cantidades, precio unitario, firma, tiempos de entrega, garantía, forma de pago y vigencia.') : `<div style="margin-top:8px;opacity:.75;">Cotización: para este monto basta con la factura o la lista de precios del proveedor (el instructivo pide ${data.cotizaciones_requeridas} cotización).</div>`}
+          ${r.comparativo ? `<div style="margin-top:8px;"><label for="reqComparativo" style="font-weight:600;">Proveedores comparados y por qué se eligió este — obligatorio</label><textarea id="reqComparativo" rows="2" placeholder="Ej: Se cotizó con A, B y C; se eligió A por precio y garantía."></textarea><div style="font-size:10.5px;opacity:.65;">Para este monto se comparan ${data.cotizaciones_requeridas} proveedores; solo se adjunta la cotización del elegido.</div></div>` : ''}
+          ${r.contrato ? fila('reqContrato', 'Contrato escrito con el proveedor (PDF) — obligatorio', escaparHtml(data.motivo_contrato || '') + ' Debe incluir forma de pago, garantía y fecha de entrega.') : (data.contrato_existente ? '<div style="margin-top:8px;opacity:.75;">✅ Ya hay un contrato guardado con este proveedor.</div>' : '')}
+          ${r.poliza ? fila('reqPoliza', 'Póliza de cumplimiento y calidad (PDF) — obligatoria', 'Se exige en compras de maquinaria, equipos, muebles, software o adecuaciones por 6 salarios mínimos o más.') : ''}
+          ${r.ficha_garantia ? marca('reqFichaGarantia', 'Tengo la ficha técnica y la <strong>garantía del fabricante</strong> (o las especificaciones, si es hecho a la medida). <em>(obligatorio)</em>') + fila('reqFicha', 'Ficha técnica / garantía (PDF, opcional)', '') : ''}
+          ${r.logos ? marca('reqLogos', 'La pieza publicitaria lleva de forma destacada los logos del <strong>SENA y Fondo Emprender</strong>. <em>(obligatorio)</em>') : ''}
+          ${r.seguridad_social ? marca('reqSS', 'Si el proveedor es persona natural y cobra un servicio, tengo el pago de su <strong>seguridad social como independiente</strong> (o no aplica). <em>(obligatorio)</em>') : ''}
+          <div style="font-size:10.5px;opacity:.65;margin-top:8px;">Proveedor nuevo: debe quedar registrado en el "Registro de Beneficiarios" de la plataforma del Fondo Emprender antes de pedir el pago. Los pagos van por la cuenta del Fondo, con el avance aprobado por la interventoría.</div>`;
+        Object.entries(previo.marcas).forEach(([id, v]) => { const el = document.getElementById(id); if (el) el.checked = v; });
+        const comp2 = document.getElementById('reqComparativo'); if (comp2) comp2.value = previo.comparativo;
+        Object.entries(previo.archivos).forEach(([id, f]) => { const el = document.getElementById(id); if (el) { const dt = new DataTransfer(); dt.items.add(f); el.files = dt.files; } });
+        resolve();
+      }, inmediato === true ? 0 : 400);
+    });
+  }
+
+  function validarRequisitosCompra() {
+    const info = requisitosCompraInfo;
+    if (!info) return { error: 'No se pudieron calcular los requisitos del instructivo del SENA. Revisa tu conexión e inténtalo de nuevo.' };
+    const r = info.requiere || {};
+    const archivo = (id) => { const el = document.getElementById(id); return el ? el.files[0] || null : null; };
+    const marcado = (id) => { const el = document.getElementById(id); return !!(el && el.checked); };
+    if (!marcado('reqFacturaEmpresa')) return { error: 'Confirma que la factura (o documento soporte) está a nombre de la empresa con su NIT: es un requisito del instructivo del SENA.' };
+    if (r.cotizacion_archivo && !archivo('reqCotizacion')) return { error: 'Adjunta la cotización del proveedor elegido (PDF): el instructivo del SENA la exige para esta compra.' };
+    const comparativo = (document.getElementById('reqComparativo')?.value || '').trim();
+    if (r.comparativo && comparativo.length < 10) return { error: `Escribe con qué proveedores se comparó y por qué se eligió este (el instructivo pide ${info.cotizaciones_requeridas} cotizaciones para este monto).` };
+    if (r.contrato && !archivo('reqContrato')) return { error: 'Adjunta el contrato con el proveedor (PDF): ' + (info.motivo_contrato || 'el instructivo del SENA lo exige.') };
+    if (r.poliza && !archivo('reqPoliza')) return { error: 'Adjunta la póliza de cumplimiento y calidad (PDF): el instructivo del SENA la exige en compras de este tipo por 6 salarios mínimos o más.' };
+    if (r.ficha_garantia && !marcado('reqFichaGarantia')) return { error: 'Confirma que tienes la ficha técnica y la garantía del fabricante.' };
+    if (r.logos && !marcado('reqLogos')) return { error: 'La publicidad debe llevar los logos del SENA y Fondo Emprender: confírmalo.' };
+    if (r.seguridad_social && !marcado('reqSS')) return { error: 'Confirma lo de la seguridad social del proveedor (persona natural que cobra un servicio), o que no aplica.' };
+    return {
+      tipo: document.getElementById('gastoTipoCompra').value,
+      datos: { factura_a_nombre_empresa: true, cotizaciones_requeridas: info.cotizaciones_requeridas, comparativo: comparativo || null, ficha_garantia: marcado('reqFichaGarantia'), logos: marcado('reqLogos'), seguridad_social: marcado('reqSS'), requiere: r },
+      archivos: { cotizacion: archivo('reqCotizacion'), contrato: archivo('reqContrato'), poliza: archivo('reqPoliza'), ficha: archivo('reqFicha') },
+    };
+  }
+
+  async function guardarRequisitosCompra(req, monto, fechaFactura, numeroFactura, proveedorId) {
+    const rutas = {};
+    const base = `${fechaFactura.slice(0, 4)}/req/${Date.now()}_${String(numeroFactura).replace(/[^A-Za-z0-9_-]/g, '')}`;
+    for (const [clave, archivo] of Object.entries(req.archivos)) {
+      if (!archivo) continue;
+      const ext = (archivo.name.split('.').pop() || 'pdf').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const ruta = `${base}_${clave}.${ext}`;
+      const { error } = await supabaseClient.storage.from('soportes-compras').upload(ruta, archivo, { contentType: archivo.type || 'application/octet-stream' });
+      if (error) throw error;
+      rutas[clave] = ruta;
+    }
+    const { error } = await supabaseClient.rpc('fn_compra_registrar_requisitos', {
+      p_monto: monto, p_fecha: fechaFactura, p_numero_factura: numeroFactura, p_proveedor_tercero: proveedorId || null,
+      p_proveedor_nit: document.getElementById('gastoProveedorNit').value.trim() || null, p_tipo: req.tipo, p_datos: req.datos,
+      p_cotizacion_path: rutas.cotizacion || null, p_contrato_path: rutas.contrato || null, p_poliza_path: rutas.poliza || null, p_ficha_path: rutas.ficha || null,
+    });
+    if (error) throw error;
+  }
+
   async function confirmarRegistrarGasto() {
     const centroCostoId = obtenerCentroCostoPropio();
     const categoria = document.getElementById('gastoCategoria').value;
@@ -13187,6 +13302,9 @@
     const archivoSoporte = document.getElementById('gastoArchivoSoporte').files[0] || null;
     if (!archivoSoporte && !document.getElementById('gastoEsDocumentoSoporte').checked) { mostrarMensaje('mensajeGasto', 'Adjunta la foto o el PDF de la factura. Si el proveedor no está obligado a facturar, marca "Este proveedor no está obligado a facturar" (documento soporte).', 'error'); return; }
     if (modoPagoCompraActual === 'completo' && !aprobadoPor) { mostrarMensaje('mensajeGasto', 'Selecciona quién aprobó esta compra.', 'error'); return; }
+    await actualizarRequisitosCompra(true);
+    const reqSena = validarRequisitosCompra();
+    if (reqSena.error) { mostrarMensaje('mensajeGasto', reqSena.error, 'error'); return; }
 
     const btn = document.getElementById('btnRegistrarGasto');
     btn.disabled = true;
@@ -13260,6 +13378,8 @@
     }
 
     let avisoSoporte = '';
+    try { await guardarRequisitosCompra(reqSena, monto, fechaFactura, numeroFactura, proveedorId); }
+    catch (e) { avisoSoporte += ' ⚠️ La compra quedó registrada, pero no se pudieron guardar los documentos del instructivo del SENA: ' + (e.message || e) + '. Guárdalos y avisa a la administradora.'; }
     if (archivoSoporte) {
       try {
         const ext = (archivoSoporte.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -13267,13 +13387,14 @@
         const { error: errSubir } = await supabaseClient.storage.from('soportes-compras').upload(ruta, archivoSoporte, { contentType: archivoSoporte.type || 'application/octet-stream' });
         if (errSubir) throw errSubir;
         if (modoPagoCompraActual !== 'credito') await supabaseClient.rpc('fn_gasto_adjuntar_soporte', { p_monto: monto, p_fecha: fechaFactura, p_path: ruta });
-      } catch (e) { avisoSoporte = ' ⚠️ La compra quedó registrada, pero no se pudo guardar la foto: guárdala en tu equipo y súbela luego.'; }
+      } catch (e) { avisoSoporte += ' ⚠️ La compra quedó registrada, pero no se pudo guardar la foto: guárdala en tu equipo y súbela luego.'; }
     }
     document.getElementById('gastoArchivoSoporte').value = '';
     mostrarMensaje('mensajeGasto', (modoPagoCompraActual === 'credito' ? '✅ Factura registrada — quedó pendiente en Cartera → Cuentas por pagar.' : `✅ Compra registrada correctamente.${datos.numero_documento_soporte ? ' Documento soporte interno: ' + datos.numero_documento_soporte : ''}`) + avisoSoporte, avisoSoporte ? 'error' : 'exito');
     document.getElementById('gastoEsDocumentoSoporte').checked = false;
     document.getElementById('gastoDescripcion').value = '';
     document.getElementById('gastoMonto').value = '';
+    actualizarRequisitosCompra();
     document.getElementById('gastoProveedorNombre').value = '';
     document.getElementById('gastoProveedorNit').value = '';
     document.getElementById('gastoProveedorTelefono').value = '';
