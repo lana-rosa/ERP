@@ -1108,6 +1108,7 @@
     <div class="sidebar-depto" id="deptoFondoEmprenderGrupo" style="display:none;">
       <button class="sidebar-depto-header" id="headerDeptoFE" onclick="toggleSidebarDepto('deptoFESubmenu', 'headerDeptoFE')">🏦 Fondo Emprender <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoFESubmenu">
+        <button class="nav-btn" onclick="mostrarPantallaFeEstado()"><span class="nav-icon">🚦</span> Estado del proyecto</button>
         <button class="nav-btn" onclick="mostrarPantallaFeCalendario()"><span class="nav-icon">📅</span> Calendario de entregables</button>
         <button class="nav-btn" onclick="mostrarPantallaFeDocumentos()"><span class="nav-icon">📄</span> Validar documentos</button>
         <button class="nav-btn" onclick="mostrarPantallaFePresupuesto()"><span class="nav-icon">💰</span> Ejecución presupuestal</button>
@@ -5120,6 +5121,27 @@
 
 <!-- ===== PANTALLA: LANA ROSA ACADEMY ===== -->
 <!-- ===== FONDO EMPRENDER: CONFIGURACIÓN ===== -->
+<div id="pantallaFeEstado" class="oculto contenido">
+  <div class="page-header">
+    <h1>🚦 Fondo Emprender — Estado del proyecto</h1>
+    <div class="subtitulo">Los pasos que la interventoría debe aprobar antes de ejecutar el plan operativo. Mientras el plan operativo y el lugar de operaciones no estén aprobados, no se ejecutan gastos con recursos del Fondo.</div>
+  </div>
+  <div class="mensaje" id="mensajeHitosFe"></div>
+  <div id="resumenHitosFe"></div>
+  <div class="panel" style="max-width:none;max-height:none;">
+    <h2>Hitos</h2>
+    <div id="listaHitosFe"><div class="cargando">Cargando...</div></div>
+  </div>
+  <div class="panel" style="max-width:none;max-height:none;margin-top:16px;font-size:13px;line-height:1.6;">
+    <h2>Mientras tanto</h2>
+    <ul style="padding-left:18px;margin:6px 0 0;">
+      <li>Los pagos hechos hasta hoy (arriendo, insumos, tejido) son <strong>recursos propios de la socia</strong> y no se cargan al Fondo.</li>
+      <li>El cronograma de rubros (mes 1, mes 2…) empieza a contar cuando registres el <strong>inicio de la ejecución</strong>, no con el acta de inicio.</li>
+      <li>El plazo del contrato (12 meses, visitas cada 4 meses) sí cuenta desde el <strong>acta de inicio</strong>.</li>
+    </ul>
+  </div>
+</div>
+
 <div id="pantallaFeConfig" class="oculto contenido">
   <div class="page-header">
     <h1>🏦 Fondo Emprender — Configuración del proyecto</h1>
@@ -5132,7 +5154,7 @@
       <input type="text" id="feNombreProyecto" placeholder="Lana Rosa Crochet">
       <label for="feMontoAsignado">Monto total asignado (COP)</label>
       <input type="number" id="feMontoAsignado" min="0" step="1">
-      <label for="feFechaInicio">Fecha de inicio de ejecución</label>
+      <label for="feFechaInicio">Fecha de inicio de ejecución del plan operativo (déjala vacía hasta que lo aprueben)</label>
       <input type="date" id="feFechaInicio">
       <label for="feInterventorNombre">Nombre del interventor</label>
       <input type="text" id="feInterventorNombre" placeholder="Nombre de la persona/entidad interventora">
@@ -5279,6 +5301,7 @@
     <h1>💰 Ejecución presupuestal</h1>
     <div class="subtitulo">Libro de compromisos contra el monto asignado por la convocatoria.</div>
   </div>
+  <div id="avisoHitosFePresupuesto"></div>
   <div class="panel" style="max-width:none;">
     <h2>Saldo disponible</h2>
     <div id="resumenSaldoFe2"><div class="cargando">Cargando...</div></div>
@@ -5644,7 +5667,7 @@
   });
 
   function mostrarPantalla(idPantalla) {
-    const pantallas = ['pantallaLogin', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaInventarioGlobal', 'pantallaGuiasUsuario', 'pantallaFacturacionElectronica', 'pantallaServiciosDian', 'pantallaCorreoEmpresa', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaIndicadores', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaPanelContador', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb', 'pantallaTextosWeb', 'pantallaPaypalConfig', 'pantallaMiProduccion', 'pantallaInformeCostos', 'pantallaReglasPrecios'];
+    const pantallas = ['pantallaLogin', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaInventarioGlobal', 'pantallaGuiasUsuario', 'pantallaFacturacionElectronica', 'pantallaServiciosDian', 'pantallaCorreoEmpresa', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaIndicadores', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeEstado', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaPanelContador', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb', 'pantallaTextosWeb', 'pantallaPaypalConfig', 'pantallaMiProduccion', 'pantallaInformeCostos', 'pantallaReglasPrecios'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -27348,6 +27371,59 @@
     `;
   }
 
+  // --- Estado del proyecto (hitos de la interventoría) ---
+  let hitosFeCache = [];
+  const ESTADOS_HITO_FE = { pendiente: ['⏳ Pendiente', '#e6a700'], en_revision: ['🔎 En revisión', '#3b82c4'], cumplido: ['✅ Cumplido', 'var(--verde-exito)'] };
+
+  async function cargarHitosFe() {
+    const { data, error } = await supabaseClient.from('fe_hitos').select('*').order('orden');
+    if (error) return null;
+    hitosFeCache = data || [];
+    return hitosFeCache;
+  }
+
+  function htmlAvisoHitosFe() {
+    const bloqueantes = hitosFeCache.filter(h => h.bloquea_ejecucion && h.estado !== 'cumplido');
+    if (!bloqueantes.length) return '';
+    return `<div style="background:#fff6e0;border-left:4px solid #e6a700;border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:13px;">
+      <strong>⏳ Ejecución aún no autorizada.</strong> Falta la aprobación de la interventoría: ${bloqueantes.map(h => escaparHtml(h.titulo.replace(/^Aprobación del /, '').replace(/^Aprobación de /, ''))).join(' y ')}.
+      No ejecutes gastos con recursos del Fondo hasta que estén aprobados.</div>`;
+  }
+
+  async function mostrarPantallaFeEstado() {
+    mostrarPantalla('pantallaFeEstado');
+    ocultarMensaje('mensajeHitosFe');
+    const cont = document.getElementById('listaHitosFe');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    if (!(await cargarHitosFe())) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    renderizarHitosFe();
+  }
+
+  function renderizarHitosFe() {
+    document.getElementById('resumenHitosFe').innerHTML = htmlAvisoHitosFe() || '<div style="background:var(--tinte-verde);border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:13px;"><strong>✅ Plan operativo y lugar aprobados.</strong> Ya puedes ejecutar el plan.</div>';
+    document.getElementById('listaHitosFe').innerHTML = hitosFeCache.map(h => {
+      const [txt, color] = ESTADOS_HITO_FE[h.estado] || [h.estado, ''];
+      return `<div style="display:grid;grid-template-columns:1fr 150px 150px;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #f4eef2;">
+        <div><div style="font-weight:700;">${escaparHtml(h.titulo)} ${h.bloquea_ejecucion ? '<span style="font-size:11px;opacity:.65;">(condiciona la ejecución)</span>' : ''}</div>
+          <div style="font-size:12px;opacity:.75;">${escaparHtml(h.detalle || '')}</div>
+          <input type="text" value="${escaparHtml(h.notas || '')}" placeholder="Notas (ej: observaciones de la interventoría)" onchange="guardarHitoFe('${h.id}', { notas: this.value.trim() || null })" style="margin-top:6px;font-size:12px;">
+        </div>
+        <select onchange="guardarHitoFe('${h.id}', { estado: this.value })" style="color:${color};font-weight:600;">
+          ${Object.entries(ESTADOS_HITO_FE).map(([k, v]) => `<option value="${k}" ${k === h.estado ? 'selected' : ''}>${v[0]}</option>`).join('')}
+        </select>
+        <input type="date" value="${h.fecha || ''}" onchange="guardarHitoFe('${h.id}', { fecha: this.value || null })" title="Fecha en que se cumplió o se espera">
+      </div>`;
+    }).join('');
+  }
+
+  async function guardarHitoFe(id, cambios) {
+    const { error } = await supabaseClient.from('fe_hitos').update({ ...cambios, updated_at: new Date().toISOString() }).eq('id', id);
+    if (error) { mostrarMensaje('mensajeHitosFe', 'No se pudo guardar: ' + error.message, 'error'); return; }
+    Object.assign(hitosFeCache.find(h => h.id === id), cambios);
+    renderizarHitosFe();
+    mostrarMensaje('mensajeHitosFe', '✅ Guardado.', 'exito');
+  }
+
   async function mostrarPantallaFeConfig() {
     mostrarPantalla('pantallaFeConfig');
     const resp = await fetch(WORKER_URL + '/api/pos/fe/proyecto', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
@@ -27877,6 +27953,7 @@
 
   async function mostrarPantallaFePresupuesto() {
     mostrarPantalla('pantallaFePresupuesto');
+    cargarHitosFe().then(() => { const el = document.getElementById('avisoHitosFePresupuesto'); if (el) el.innerHTML = htmlAvisoHitosFe(); });
     await cargarSaldoFe('resumenSaldoFe2');
     await cargarCommitmentsFe();
     document.getElementById('feDesembolsoFecha').value = new Date().toISOString().slice(0, 10);

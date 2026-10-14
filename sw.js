@@ -1,7 +1,7 @@
 // Service Worker de Lana Rosa OS — permite que la aplicación ABRA aunque no
 // haya internet en ese momento (no descarga datos nuevos sin conexión, solo
 // deja entrar a la pantalla y usar lo que ya estaba cargado en memoria).
-const CACHE_NAME = 'lana-rosa-os-v6';
+const CACHE_NAME = 'lana-rosa-os-v7';
 const ARCHIVOS_APP_SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './icon-maskable-192.png', './icon-maskable-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', (event) => {
