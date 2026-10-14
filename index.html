@@ -4613,6 +4613,7 @@
 
   <div class="filtro-tipo" style="margin-bottom:20px;">
     <button class="chip-filtro activo" data-subtab-btn="contaImp" onclick="mostrarSubTabGrupo('contaImp', 'subtabCiSimple', this); cargarSimple();">🧾 Impuesto SIMPLE</button>
+    <button class="chip-filtro" data-subtab-btn="contaImp" onclick="mostrarSubTabGrupo('contaImp', 'subtabCiPrevision', this); cargarPrevisionImpuestos();">💰 Previsión de impuestos</button>
     <button class="chip-filtro" data-subtab-btn="contaImp" onclick="mostrarSubTabGrupo('contaImp', 'subtabCiPuc', this); cargarPlanCuentas();">📒 Plan de cuentas</button>
     <button class="chip-filtro" data-subtab-btn="contaImp" onclick="mostrarSubTabGrupo('contaImp', 'subtabCiCostos', this); cargarCierreCostos();">🏭 Cierre de costos</button>
     <button class="chip-filtro" data-subtab-btn="contaImp" onclick="mostrarSubTabGrupo('contaImp', 'subtabCiAjuste', this); prepararAsientoAjuste();">✍️ Asiento de ajuste</button>
@@ -4621,6 +4622,15 @@
     <button class="chip-filtro" data-subtab-btn="contaImp" onclick="mostrarSubTabGrupo('contaImp', 'subtabCiBitacora', this); cargarBitacoraContable();">🕵️ Bitácora</button>
   </div>
   <div class="mensaje" id="mensajeContaImp"></div>
+
+  <div id="subtabCiPrevision" data-subtab-grupo="contaImp" class="oculto">
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+      <div><label for="ciPrevAnio" style="font-size:11px;">Año gravable</label>
+        <select id="ciPrevAnio" onchange="cargarPrevisionImpuestos()" style="padding:9px 10px;"></select>
+      </div>
+    </div>
+    <div id="ciPrevContenido"><div class="cargando">Cargando...</div></div>
+  </div>
 
   <div id="subtabCiSimple" data-subtab-grupo="contaImp">
     <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
@@ -24694,6 +24704,88 @@
     return new Date().toISOString().slice(0, 10);
   }
 
+  // ---------- Previsión de impuestos (cuánto apartar para impuestos) ----------
+  async function cargarPrevisionImpuestos() {
+    const selectAnio = document.getElementById('ciPrevAnio');
+    if (selectAnio.options.length === 0) {
+      const a = new Date().getFullYear();
+      selectAnio.innerHTML = [a, a - 1].map(x => `<option value="${x}">${x}</option>`).join('');
+    }
+    const cont = document.getElementById('ciPrevContenido');
+    cont.innerHTML = '<div class="cargando">Calculando...</div>';
+    let d, cfg;
+    try {
+      d = await llamarReporteContable('fn_prevision_impuestos', { p_anio: Number(selectAnio.value) });
+      cfg = (await supabaseClient.from('prevision_impuestos_config').select('*').eq('id', 1).single()).data || {};
+    } catch (e) { cont.innerHTML = `<div class="cargando">No se pudo calcular: ${escaparHtml(e.message)}</div>`; return; }
+    const m = (v) => v === null || v === undefined ? '—' : formatearMoneda(v);
+    const mensual = (v) => v === null || v === undefined ? '—' : formatearMoneda(Math.round(v / 12));
+    const fecha = new Date(d.hasta + 'T00:00:00').toLocaleDateString('es-CO');
+    const sinProy = d.ingresos_proyectados === null;
+    const puedeEditar = esRolFe('administrador', 'contador');
+    cont.innerHTML = `
+      <div style="background:var(--tinte-ambar);border-radius:var(--radius-md);padding:10px 14px;margin-bottom:14px;font-size:12.5px;line-height:1.5;">
+        ⚠️ Es una <strong>estimación para planear cuánto apartar</strong>, no una declaración. Las cifras salen de los libros contables a ${fecha} y la proyección al año extiende el ritmo de ventas desde la primera venta (${d.dias_con_ventas} días con ventas${sinProy ? ': todavía son muy pocos para proyectar, se necesitan al menos 30' : ''}). Confírmalas con el contador antes de decidir.
+      </div>
+      <div class="panel" style="max-width:none;max-height:none;margin-bottom:16px;">
+        <h2 style="margin-top:0;">Punto de partida ${d.anio}</h2>
+        <div class="resumen-cierre" style="margin-top:0;">
+          <div class="resumen-fila"><span>Ingresos a la fecha</span><strong>${m(d.ingresos)}</strong></div>
+          <div class="resumen-fila"><span>Costos y gastos a la fecha</span><strong>${m(d.costos_gastos)}</strong></div>
+          <div class="resumen-fila"><span>Utilidad (o pérdida) a la fecha</span><strong style="${d.utilidad < 0 ? 'color:var(--rojo-error);' : ''}">${m(d.utilidad)}</strong></div>
+          <div class="resumen-fila"><span>Proyección de ingresos al año</span><strong>${m(d.ingresos_proyectados)}</strong></div>
+          <div class="resumen-fila"><span>Proyección de utilidad al año</span><strong>${m(d.utilidad_proyectada)}</strong></div>
+        </div>
+      </div>
+      <div class="panel" style="max-width:none;max-height:none;margin-bottom:16px;">
+        <h2 style="margin-top:0;">¿Cuánto apartar? Comparativo de las dos formas de tributar</h2>
+        <div class="tabla-lista">
+          <div class="tabla-lista-header header-rosa" style="grid-template-columns:1.6fr 1fr 1fr 1fr;"><span>FORMA DE TRIBUTAR</span><span style="text-align:right;">A LA FECHA</span><span style="text-align:right;">PROYECTADO AL AÑO</span><span style="text-align:right;">APARTAR POR MES</span></div>
+          <div class="tabla-lista-fila" style="grid-template-columns:1.6fr 1fr 1fr 1fr;cursor:default;">
+            <span><strong>Régimen SIMPLE</strong><div style="font-size:10.5px;opacity:.65;">Un solo pago sobre los ingresos (${d.simple_tarifa_pct === null ? 'faltan UVT y tarifas del año en la pestaña Impuesto SIMPLE' : d.simple_tarifa_pct + '%'}). Incluye el ICA.</div></span>
+            <span style="text-align:right;">${m(d.simple_hoy)}</span><span style="text-align:right;">${m(d.simple_proyectado)}</span><span style="text-align:right;font-weight:700;">${mensual(d.simple_proyectado)}</span>
+          </div>
+          <div class="tabla-lista-fila" style="grid-template-columns:1.6fr 1fr 1fr 1fr;cursor:default;">
+            <span><strong>Renta ordinaria de persona natural + ICA</strong><div style="font-size:10.5px;opacity:.65;">Renta: ${m(d.renta_proyectada)} proyectada sobre la utilidad (tabla del art. 241 E.T., sin deducciones). ICA: ${m(d.ica_proyectado)} (con mínimo).</div></span>
+            <span style="text-align:right;">${m(d.ordinario_hoy)}</span><span style="text-align:right;">${m(d.ordinario_proyectado)}</span><span style="text-align:right;font-weight:700;">${mensual(d.ordinario_proyectado)}</span>
+          </div>
+        </div>
+        <div style="font-size:12px;opacity:.75;margin-top:8px;line-height:1.5;">En el SIMPLE se paga sobre los ingresos aunque haya pérdidas; en la renta ordinaria se paga sobre la utilidad, pero la tarifa sube por rangos y el ICA se paga aparte. Con pérdidas como las de este año la renta ordinaria da cero; el ICA siempre tiene un mínimo.</div>
+      </div>
+      <div class="panel" style="max-width:none;max-height:none;margin-bottom:16px;">
+        <h2 style="margin-top:0;">ICA de ${escaparHtml(d.municipio)} (${escaparHtml(d.ica_acuerdo)})</h2>
+        <div style="font-size:12.5px;line-height:1.5;margin-bottom:8px;">Actividades no incluidas expresamente en la tabla: <strong>${d.ica_tarifas.industrial} por mil</strong> industriales y <strong>${d.ica_tarifas.comercial_servicios} por mil</strong> comerciales y de servicios. Pago mínimo: <strong>${cfg.ica_minimo_uvt} UVT = ${m(d.ica_minimo)}</strong> al año.</div>
+        <div class="tabla-lista">
+          <div class="tabla-lista-header header-rosa" style="grid-template-columns:1.6fr 1fr 80px 1fr;"><span>LÍNEA DE NEGOCIO</span><span style="text-align:right;">INGRESOS</span><span style="text-align:right;">POR MIL</span><span style="text-align:right;">ICA A LA FECHA</span></div>
+          ${d.ica_lineas.map(l => `<div class="tabla-lista-fila" style="grid-template-columns:1.6fr 1fr 80px 1fr;cursor:default;"><span>${escaparHtml(l.nombre)} <span style="font-size:10.5px;opacity:.6;">(${escaparHtml(l.grupo)})</span></span><span style="text-align:right;">${m(l.ingresos)}</span><span style="text-align:right;">${l.tarifa_x_mil}</span><span style="text-align:right;">${m(l.ica)}</span></div>`).join('') || '<div class="cargando">Aún no hay ingresos en el año.</div>'}
+          <div class="tabla-lista-fila" style="grid-template-columns:1.6fr 1fr 80px 1fr;font-weight:700;background:var(--gris-fondo);cursor:default;"><span>Total</span><span></span><span></span><span style="text-align:right;">${m(d.ica_hoy)}</span></div>
+        </div>
+        <div style="font-size:12px;opacity:.75;margin-top:8px;line-height:1.5;">Si estás en el SIMPLE, el ICA va incluido en el pago del SIMPLE y no se paga aparte. Si tributas en renta ordinaria, se paga al municipio. Las líneas se agrupan así: Mercería y Marketplace = comercial, Taller de Tejido = industrial, Academy, Hotmart y YouTube = servicios.</div>
+      </div>
+      ${puedeEditar ? `<div class="panel" style="max-width:none;max-height:none;">
+        <h2 style="margin-top:0;">Parámetros del ICA</h2>
+        <div class="grilla-2" style="gap:10px;">
+          <div><label for="pvIndustrial">Industrial (por mil)</label><input type="number" step="0.1" id="pvIndustrial" value="${cfg.ica_tarifa_industrial_x_mil}"></div>
+          <div><label for="pvComercial">Comercial y servicios (por mil)</label><input type="number" step="0.1" id="pvComercial" value="${cfg.ica_tarifa_comercial_servicios_x_mil}"></div>
+          <div><label for="pvMinimo">Pago mínimo (UVT)</label><input type="number" step="0.5" id="pvMinimo" value="${cfg.ica_minimo_uvt}"></div>
+          <div><label for="pvAcuerdo">Acuerdo municipal</label><input type="text" id="pvAcuerdo" value="${escaparHtml(cfg.ica_acuerdo || '')}"></div>
+        </div>
+        <button class="btn-principal" style="width:auto;" onclick="guardarPrevisionConfig()">Guardar</button>
+        <div style="font-size:11px;opacity:.65;margin-top:6px;">Las tarifas del SIMPLE y la UVT se cargan en la pestaña Impuesto SIMPLE. La tabla de renta ordinaria usa la UVT del año y los rangos del art. 241 del Estatuto Tributario; el contador debe confirmarla.</div>
+      </div>` : ''}`;
+  }
+
+  async function guardarPrevisionConfig() {
+    try {
+      await llamarReporteContable('fn_prevision_guardar_config', { p: {
+        ica_tarifa_industrial_x_mil: document.getElementById('pvIndustrial').value, ica_tarifa_comercial_servicios_x_mil: document.getElementById('pvComercial').value,
+        ica_minimo_uvt: document.getElementById('pvMinimo').value, ica_acuerdo: document.getElementById('pvAcuerdo').value,
+      } });
+    } catch (e) { mostrarMensaje('mensajeContaImp', 'No se pudo guardar: ' + e.message, 'error'); return; }
+    mostrarMensaje('mensajeContaImp', '✅ Parámetros guardados.', 'exito');
+    await cargarPrevisionImpuestos();
+  }
+
   // ---------- Impuesto SIMPLE ----------
   let cacheSimple = null;
 
@@ -26117,6 +26209,7 @@
     ['subtabCierreContable', 'Cierres contables'],
     ['subtabRevisionContador', 'Revisiones del contador'],
     ['subtabCiSimple', 'Impuesto SIMPLE'],
+    ['subtabCiPrevision', 'Previsión de impuestos'],
     ['subtabCiPuc', 'Plan de cuentas'],
     ['subtabCiCostos', 'Cierre de costos'],
     ['subtabCiBitacora', 'Bitácora contable'],
