@@ -1375,7 +1375,7 @@
       <input type="text" id="pedidoNombreCliente" placeholder="Nombre del cliente" style="text-transform:uppercase;" oninput="this.value = this.value.toUpperCase()">
       <label for="pedidoTelefonoCliente">Teléfono *</label>
       <input type="tel" id="pedidoTelefonoCliente" placeholder="300 000 0000">
-      <label for="pedidoCorreoCliente">Correo electrónico <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <label for="pedidoCorreoCliente">Correo electrónico <span style="font-size:10px;opacity:0.6;">(obligatorio si la factura va a nombre del cliente)</span></label>
       <input type="email" id="pedidoCorreoCliente" placeholder="correo@gmail.com">
       <label for="pedidoDireccionCliente">Dirección de envío *</label>
       <input type="text" id="pedidoDireccionCliente" placeholder="Calle, carrera, número, barrio...">
@@ -7292,6 +7292,10 @@
     }
     if (feSel.value === 'cliente' && (!document.getElementById('clienteNombre').value.trim() || !document.getElementById('clienteIdentificacion').value.trim())) {
       mostrarMensaje('mensajeVenta', 'Para facturar a nombre del cliente escribe su nombre y su cédula o NIT en "Datos del cliente" (o elige Consumidor final).', 'error');
+      return false;
+    }
+    if (feSel.value === 'cliente' && !/^\S+@\S+\.\S+$/.test(document.getElementById('clienteCorreo').value.trim())) {
+      mostrarMensaje('mensajeVenta', 'Para facturar a nombre del cliente escribe su correo electrónico: ahí le llega la factura de la DIAN.', 'error');
       return false;
     }
 
@@ -17494,6 +17498,7 @@
     }
     const feSelPedido = document.querySelector('input[name="feQuierePedido"]:checked');
     if (!feSelPedido) { mostrarMensaje('mensajePedidoCanal', 'Marca a nombre de quién va la factura electrónica: del cliente o consumidor final.', 'error'); return; }
+    if (feSelPedido.value === 'cliente' && !/^\S+@\S+\.\S+$/.test(document.getElementById('pedidoCorreoCliente').value.trim())) { mostrarMensaje('mensajePedidoCanal', 'Para facturar a nombre del cliente escribe su correo electrónico: ahí le llega la factura de la DIAN.', 'error'); return; }
 
     const descripcion = carritoPedidoCanal.map(p => `${p.cantidad}x ${p.descripcion}`).join(', ');
     const cantidad = carritoPedidoCanal.reduce((acc, p) => acc + p.cantidad, 0);
@@ -21472,6 +21477,7 @@
     ];
     if (c.correo) lineas.push(`Correo: ${c.correo}`);
     if (c.telefono) lineas.push(`Teléfono: ${c.telefono}`);
+    if (v.direccion_entrega) lineas.push(`Dirección de entrega (obligatoria en la factura si la entrega es fuera del local): ${v.direccion_entrega}`);
     lineas.push('', 'Productos (sin IVA — no responsable de IVA):');
     v.items.forEach(i => lineas.push(`- ${i.descripcion} | Cantidad ${formatearCantidad(i.cantidad)} | Valor unitario ${Math.round(Number(i.valor_unitario))} | Total ${Math.round(Number(i.total))}`));
     lineas.push('', `Forma de pago: Contado`, `Medio de pago: ${(v.medio_pago || '').split(', ').map(m => MEDIO_PAGO_DIAN[m] || m).join(' / ')}`, `Total: ${Math.round(Number(v.total))}`);
@@ -21516,8 +21522,9 @@
               <div style="font-weight:700;">${v.quiere_factura === true ? `<span style="background:var(--rojo-error);color:#fff;border-radius:6px;padding:2px 7px;font-size:11px;margin-right:6px;">FACTURAR${v.a_nombre_de === 'consumidor_final' ? ' · CONSUMIDOR FINAL' : (v.a_nombre_de === 'cliente' ? ' · A NOMBRE DEL CLIENTE' : '')}</span>` : ''}${ORIGEN_VENTA_FE[v.origen] || v.origen} · ${escaparHtml(v.consecutivo || '')} · ${new Date(v.fecha + 'T00:00:00').toLocaleDateString('es-CO')}</div>
               <div style="font-size:12.5px;opacity:0.8;margin-top:2px;">
                 ${cli.consumidor_final ? `Consumidor final (222222222222)${cli.nombre_real ? ' — ' + escaparHtml(cli.nombre_real) : ''}` : `${escaparHtml(cli.nombre)} · ${escaparHtml(cli.tipo_documento)} ${escaparHtml(cli.numero_documento)}${cli.dv ? '-' + cli.dv : ''}`}
-                ${cli.correo ? ' · ' + escaparHtml(cli.correo) : ''}
+                ${cli.correo ? ' · ' + escaparHtml(cli.correo) : ' · <strong style="color:var(--rojo-error);">sin correo</strong>'}
               </div>
+              ${v.direccion_entrega ? `<div style="font-size:12px;opacity:.75;">📍 Entrega: ${escaparHtml(v.direccion_entrega)}</div>` : ''}
               <div style="font-size:12px;opacity:0.7;">${v.items.map(i => escaparHtml(i.descripcion)).join(' · ')}</div>
             </div>
             <div style="text-align:right;">
@@ -21548,6 +21555,9 @@
                 <div><label>Fecha de emisión</label><input type="date" id="feRegFecha" value="${fechaLocalIso()}"></div>
                 <div><label>CUFE <span style="font-size:10px;opacity:0.6;">(código largo que aparece en la factura)</span></label><input type="text" id="feRegCufe"></div>
               </div>
+              <label>Archivo de la factura <span style="font-size:10px;opacity:0.6;">(obligatorio: el ZIP que descarga la DIAN, o su PDF/XML)</span></label>
+              <input type="file" id="feRegArchivo" accept=".zip,.xml,.pdf,image/*">
+              <label style="display:flex;gap:6px;align-items:center;margin:8px 0 0;cursor:pointer;font-size:12.5px;"><input type="checkbox" id="feRegContingencia"> Fue una factura de contingencia (talonario, por falla del portal o de internet)</label>
               <label>Observaciones <span style="font-size:10px;opacity:0.6;">(opcional)</span></label><input type="text" id="feRegObs">
               <div class="mensaje" id="mensajeFeRegistro"></div>
               <button class="btn-principal" style="width:auto;" onclick="confirmarRegistrarFactura('${v.origen}', '${v.origen_id}')">Guardar</button>
@@ -21895,9 +21905,9 @@
     const archivo = f && f.archivoOrigen;
     if (!archivo || !f.numero) return;
     try {
-      const ext = /\.zip$/i.test(archivo.name) ? 'zip' : 'xml';
+      const ext = (String(archivo.name).match(/\.([a-z0-9]+)$/i) || [, 'xml'])[1].toLowerCase();
       const ruta = `${String(f.fecha || '').slice(0, 4) || 'sin-fecha'}/${f.idCompleto}_${String(f.cufe || '').slice(0, 8)}.${ext}`;
-      const { error } = await supabaseClient.storage.from('facturas-dian').upload(ruta, archivo, { upsert: true, contentType: ext === 'zip' ? 'application/zip' : 'application/xml' });
+      const { error } = await supabaseClient.storage.from('facturas-dian').upload(ruta, archivo, { upsert: true, contentType: archivo.type || (ext === 'zip' ? 'application/zip' : 'application/xml') });
       if (error) throw error;
       await supabaseClient.rpc('fn_fe_adjuntar_archivo', { p_prefijo: f.prefijo || null, p_numero: f.numero, p_path: ruta });
     } catch (e) {
@@ -21959,11 +21969,16 @@
   async function confirmarRegistrarFactura(origen, origenId) {
     const v = (id) => document.getElementById(id).value.trim();
     if (!v('feRegNumero')) { mostrarMensaje('mensajeFeRegistro', 'Escribe el número de la factura.', 'error'); return; }
+    const archivo = document.getElementById('feRegArchivo').files[0];
+    if (!archivo) { mostrarMensaje('mensajeFeRegistro', 'Adjunta el archivo de la factura (el ZIP que descarga la DIAN, o su PDF): hay que conservarlo.', 'error'); return; }
+    const contingencia = document.getElementById('feRegContingencia').checked;
+    const obs = [contingencia ? 'FACTURA DE CONTINGENCIA (talonario): transcrita al sistema de la DIAN dentro de las 48 horas siguientes.' : '', v('feRegObs')].filter(Boolean).join(' ') || null;
     const { data, error } = await supabaseClient.rpc('fn_fe_registrar_factura', {
       p_origen: origen, p_origen_id: origenId, p_prefijo: v('feRegPrefijo') || null, p_numero: v('feRegNumero'),
-      p_cufe: v('feRegCufe') || null, p_fecha: v('feRegFecha'), p_observaciones: v('feRegObs') || null,
+      p_cufe: v('feRegCufe') || null, p_fecha: v('feRegFecha'), p_observaciones: obs,
     });
     if (error) { mostrarMensaje('mensajeFeRegistro', error.message, 'error'); return; }
+    await guardarArchivoFacturaFe({ archivoOrigen: archivo, prefijo: v('feRegPrefijo') || null, numero: v('feRegNumero'), idCompleto: `${v('feRegPrefijo')}${v('feRegNumero')}`, cufe: v('feRegCufe'), fecha: v('feRegFecha') });
     feAccionAbierta = null;
     const adv = (data && data.advertencias) || [];
     mostrarMensaje('mensajeFe', adv.length ? '⚠️ Factura registrada, pero revisa: ' + adv.join(' ') : '✅ Factura registrada.', adv.length ? 'error' : 'exito');
@@ -27398,6 +27413,7 @@
     const feSelAcademia = document.querySelector('input[name="feQuiereAcademia"]:checked');
     if (!feSelAcademia) { mostrarMensaje('mensajeVentaAcademia', 'Marca a nombre de quién va la factura electrónica: del cliente o consumidor final.', 'error'); return; }
     if (feSelAcademia.value === 'cliente' && (!cliente || !identificacion)) { mostrarMensaje('mensajeVentaAcademia', 'Para facturar a nombre del cliente escribe su nombre y su cédula o NIT (o elige Consumidor final).', 'error'); return; }
+    if (feSelAcademia.value === 'cliente' && !/^\S+@\S+\.\S+$/.test(correo || '')) { mostrarMensaje('mensajeVentaAcademia', 'Para facturar a nombre del cliente escribe su correo electrónico: ahí le llega la factura de la DIAN.', 'error'); return; }
     if ((telefono || correo) && !aceptaTratamientoDatos) { mostrarMensaje('mensajeVentaAcademia', 'Marca la casilla de autorización de tratamiento de datos, o borra el teléfono/correo si el cliente no autoriza.', 'error'); return; }
     const hayClasePresencial = carritoAcademia.some(i => i.tipo === 'clase' && i.subarea === 'clase_presencial');
     if (hayClasePresencial && !turnoActivoActual) { mostrarMensaje('mensajeVentaAcademia', 'Las clases presenciales requieren un turno de caja de Tienda abierto (pasan por la caja física). Los demás ingresos (YouTube, cursos virtuales, digitales) se pueden registrar sin turno abierto.', 'error'); return; }
