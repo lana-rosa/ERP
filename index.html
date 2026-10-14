@@ -1220,7 +1220,7 @@
 
   <div class="filtro-tipo" style="margin-bottom:20px;">
     <button class="chip-filtro activo" data-subtab-btn="registrarVenta" onclick="mostrarSubTabGrupo('registrarVenta', 'subtabVentaProductos', this)">🛒 Productos</button>
-    <button class="chip-filtro" data-subtab-btn="registrarVenta" onclick="mostrarSubTabGrupo('registrarVenta', 'subtabVentaWhatsapp', this);">📱 WhatsApp/Redes</button>
+    <button class="chip-filtro" data-subtab-btn="registrarVenta" onclick="mostrarSubTabGrupo('registrarVenta', 'subtabVentaWhatsapp', this); cargarTarifasEnvioParaPedido();">📱 WhatsApp/Redes</button>
     <button class="chip-filtro" data-subtab-btn="registrarVenta" onclick="mostrarSubTabGrupo('registrarVenta', 'subtabVentaAcademia', this); prepararPestanaVentaAcademia();">🎓 Cursos y clases</button>
     <button class="chip-filtro" data-subtab-btn="registrarVenta" onclick="mostrarSubTabGrupo('registrarVenta', 'subtabVentaCartera', this);">📋 Cartera</button>
   </div>
@@ -1359,16 +1359,87 @@
 
   <div id="subtabVentaWhatsapp" data-subtab-grupo="registrarVenta" class="oculto">
     <div class="panel" style="max-width:520px;">
-      <h2>📱 Pedidos por WhatsApp/Redes</h2>
-      <div style="background:var(--rosa-suave);border-radius:9px;padding:14px 16px;font-size:13px;line-height:1.6;">
-        Los pedidos nuevos por WhatsApp, Instagram, Facebook o Tienda virtual se registran en el <strong>CRM</strong>, no aquí — así el seguimiento de la conversación y el historial de cada cliente queda completo en un solo lugar.
-        <br><br>
-        Una vez el pedido esté listo allá, tráelo al ERP con el botón <strong>"🔄 Cargar pedidos nuevos del CRM"</strong> en <strong>Pedidos Web/Redes</strong> (menú lateral) — desde ahí se registra el cobro del anticipo y el saldo, y se marca como entregado (los envíos se siguen manejando en el CRM).
+      <h2>Nuevo pedido por WhatsApp/Redes</h2>
+      <div style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;margin-bottom:12px;font-size:12.5px;">Los pedidos se crean aquí, en el ERP. El historial de la clienta se ve en el CRM.</div>
+      <label for="pedidoCanal">Canal</label>
+      <select id="pedidoCanal" onchange="actualizarResumenAnticipoPedido()">
+        <option value="whatsapp">WhatsApp</option>
+        <option value="instagram">Instagram</option>
+        <option value="facebook">Facebook</option>
+        <option value="tienda_virtual">Tienda virtual</option>
+      </select>
+
+      <label for="pedidoIdentificacionCliente">N° de identificación del cliente *</label>
+      <input type="text" id="pedidoIdentificacionCliente" placeholder="CC, CE, NIT..." oninput="autocompletarClientePedido()">
+      <label for="pedidoNombreCliente">Nombre completo *</label>
+      <input type="text" id="pedidoNombreCliente" placeholder="Nombre del cliente" style="text-transform:uppercase;" oninput="this.value = this.value.toUpperCase()">
+      <label for="pedidoTelefonoCliente">Teléfono *</label>
+      <input type="tel" id="pedidoTelefonoCliente" placeholder="300 000 0000">
+      <label for="pedidoCorreoCliente">Correo electrónico <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <input type="email" id="pedidoCorreoCliente" placeholder="correo@gmail.com">
+      <label for="pedidoDireccionCliente">Dirección de envío *</label>
+      <input type="text" id="pedidoDireccionCliente" placeholder="Calle, carrera, número, barrio...">
+      <label for="pedidoMunicipioCliente">Ciudad / Municipio *</label>
+      <select id="pedidoMunicipioCliente" onchange="calcularEnvioAutomatico()"><option value="">Selecciona...</option></select>
+      <div id="mensajeAutocompletadoPedido" style="font-size:12px;color:var(--verde-exito);margin-top:4px;display:none;">✅ Cliente encontrado</div>
+      <div style="font-size:11px;opacity:0.55;margin-top:2px;">* Estos datos son obligatorios: los pedidos se envían por correo certificado.</div>
+
+      <label style="display:flex;align-items:flex-start;gap:8px;margin-top:10px;font-weight:400;">
+        <input type="checkbox" id="pedidoAceptaTratamientoDatos" style="width:auto;margin-top:3px;">
+        <span style="font-size:12px;">El cliente autorizó el tratamiento de sus datos personales (según el aviso enviado en la confirmación del pedido)</span>
+      </label>
+
+      <label for="pedidoBuscarProducto">Buscar producto en el inventario de Tienda <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <div style="position:relative;">
+        <input type="text" id="pedidoBuscarProducto" placeholder="Si ya existe en stock, búscalo aquí..." oninput="buscarProductoPedido()" autocomplete="off">
+        <div id="sugerenciasPedidoProducto" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--fondo-panel);border:1.5px solid var(--rosa-medio);border-radius:9px;margin-top:4px;max-height:200px;overflow-y:auto;z-index:50;box-shadow:var(--sombra);"></div>
       </div>
-      <a href="https://lana-rosa.github.io/CRM/" target="_blank" style="display:block;margin-top:14px;">
-        <button class="btn-principal" type="button">🔗 Ir al CRM a crear el pedido</button>
-      </a>
-      <button class="btn-secundario" style="margin-top:10px;" onclick="mostrarPantallaPedidosCanal()">📱 Ir a Pedidos Web/Redes (gestionar los que ya existen)</button>
+      <div id="pedidoProductoInfo" style="display:none;margin-top:8px;padding:9px 11px;background:var(--rosa-suave);border-radius:9px;font-size:12.5px;"></div>
+
+      <label for="pedidoDescripcionProducto">Descripción del producto</label>
+      <input type="text" id="pedidoDescripcionProducto" placeholder="Ej: Amigurumi personalizado conejo azul">
+      <label for="pedidoCantidad">Cantidad</label>
+      <input type="number" id="pedidoCantidad" placeholder="1" min="1" step="1" value="1">
+      <label for="pedidoValorProducto">Valor de este producto (COP)</label>
+      <input type="number" id="pedidoValorProducto" placeholder="0" min="0" step="1">
+      <button type="button" class="btn-secundario" style="margin-top:8px;" onclick="agregarProductoAPedido()">+ Agregar producto a la lista</button>
+
+      <div id="listaProductosPedido" style="margin-top:10px;"></div>
+
+      <label for="pedidoFechaEstimadaEntrega" style="margin-top:10px;">Fecha estimada de entrega <span style="font-size:10px;opacity:0.6;">(si algún producto de la lista se va a elaborar — déjalo vacío si todo está listo ya)</span></label>
+      <input type="date" id="pedidoFechaEstimadaEntrega">
+
+      <div id="bloqueDescuentoPedido" style="margin-top:10px;">
+        <button type="button" class="btn-mini editar" id="btnMostrarDescuentoPedido" onclick="alternarDescuentoPedido()">🏷️ Aplicar código de descuento</button>
+        <div id="formDescuentoPedido" class="oculto" style="margin-top:8px;display:flex;gap:8px;align-items:center;">
+          <input type="text" id="codigoDescuentoPedidoInput" placeholder="Código de descuento" style="flex:1;text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
+          <button type="button" class="btn-mini editar" onclick="aplicarCodigoDescuentoPedido()">Aplicar</button>
+          <button type="button" class="btn-quitar-pago" onclick="quitarDescuentoPedido()" title="Quitar descuento">✕</button>
+        </div>
+        <div id="textoDescuentoPedidoAplicado" class="oculto" style="font-size:12.5px;color:var(--rosa-principal);font-weight:600;margin-top:6px;"></div>
+        <div id="mensajeCodigoDescuentoPedido" style="font-size:11.5px;margin-top:4px;"></div>
+      </div>
+
+      <label for="pedidoValorEnvio" style="margin-top:14px;">Valor del envío (COP) <span style="font-size:10px;opacity:0.6;">(se calcula solo según la ciudad, pero puedes ajustarlo)</span></label>
+      <input type="number" id="pedidoValorEnvio" placeholder="0" min="0" step="1" oninput="actualizarResumenAnticipoPedido()">
+
+      <div id="resumenAnticipoPedido" class="resumen-cierre" style="margin-top:12px;"></div>
+
+      <div style="margin:12px 0;padding:10px 12px;border:1.5px solid #f1e2ec;border-radius:var(--radius-md);">
+        <div style="font-weight:700;font-size:13px;">🧾 Factura electrónica: ¿a nombre de quién?</div>
+        <div style="display:flex;gap:18px;margin-top:6px;font-size:13px;flex-wrap:wrap;">
+          <label style="display:flex;gap:6px;align-items:center;margin:0;cursor:pointer;"><input type="radio" name="feQuierePedido" value="cliente"> Del cliente (con su cédula o NIT)</label>
+          <label style="display:flex;gap:6px;align-items:center;margin:0;cursor:pointer;"><input type="radio" name="feQuierePedido" value="consumidor_final"> Consumidor final</label>
+        </div>
+        <div style="font-size:11.5px;opacity:.7;margin-top:4px;">Toda venta lleva factura electrónica. Se emite en la DIAN cuando el pedido esté pagado por completo o entregado.</div>
+      </div>
+      <button class="btn-principal" id="btnCrearPedido" onclick="confirmarCrearPedidoCanal()">Crear pedido</button>
+      <div class="mensaje" id="mensajePedidoCanal"></div>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button class="btn-secundario" style="margin-top:0;" onclick="imprimirReciboVenta()" id="btnImprimirReciboPedido" disabled title="Se activa después de crear un pedido">🖨️ Imprimir recibo</button>
+        <button class="btn-secundario" style="margin-top:0;" onclick="enviarReciboVentaWhatsapp()" id="btnWhatsappReciboPedido" disabled title="Se activa después de crear un pedido">📱 Enviar WhatsApp</button>
+      </div>
+      <div style="font-size:11.5px;opacity:0.6;margin-top:10px;">Para ver o gestionar pedidos ya creados, ve a "Pedidos WhatsApp/Redes" en el menú.</div>
     </div>
   </div>
 
@@ -2156,7 +2227,7 @@
   </div>
 
   <div style="background:var(--rosa-suave);border-radius:9px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;line-height:1.6;">
-    ℹ️ Los pedidos nuevos del CRM se traen solos al abrir esta pantalla (o con el botón 🔄). Cuando el pedido está listo, registra aquí la entrega (recoge en tienda, domicilio o transportadora con su guía): la clienta lo ve en su cuenta de la web. Lo que se le cobra al cliente por el envío va en el valor de envío del pedido y sale en la factura como una línea aparte.
+    ℹ️ Los pedidos nuevos se crean aquí en el ERP (Registrar venta → 📱 WhatsApp/Redes). Los pedidos que llegan desde el CRM (los anteriores) se siguen trayendo con el botón 🔄. Cuando el pedido está listo, registra aquí la entrega (recoge en tienda, domicilio o transportadora con su guía): la clienta lo ve en su cuenta de la web. Lo que se le cobra al cliente por el envío va en el valor de envío del pedido y sale en la factura como una línea aparte.
   </div>
 
   <div class="panel" style="max-width:none;max-height:none;margin-bottom:16px;">
@@ -17404,6 +17475,8 @@
       mostrarMensaje('mensajePedidoCanal', 'Agrega al menos un producto a la lista.', 'error');
       return;
     }
+    const feSelPedido = document.querySelector('input[name="feQuierePedido"]:checked');
+    if (!feSelPedido) { mostrarMensaje('mensajePedidoCanal', 'Marca a nombre de quién va la factura electrónica: del cliente o consumidor final.', 'error'); return; }
 
     const descripcion = carritoPedidoCanal.map(p => `${p.cantidad}x ${p.descripcion}`).join(', ');
     const cantidad = carritoPedidoCanal.reduce((acc, p) => acc + p.cantidad, 0);
@@ -17459,7 +17532,13 @@
         return;
       }
 
-      mostrarMensaje('mensajePedidoCanal', '✅ Pedido creado. Ahora regístrale el anticipo cuando el cliente pague.', 'exito');
+      let avisoFacturaPedido = '';
+      try {
+        const { error: errPref } = await supabaseClient.rpc('fn_fe_marcar_preferencia_origen', { p_origen: 'pedido_canal', p_ref: String(datos.consecutivo || datos.pedido_id || datos.id), p_quiere: true, p_a_nombre_de: feSelPedido.value });
+        if (errPref) throw errPref;
+      } catch (e) { avisoFacturaPedido = ' ⚠️ No se pudo guardar a nombre de quién va la factura: defínelo en "Pedidos Web/Redes" antes de cobrar.'; }
+      document.querySelectorAll('input[name="feQuierePedido"]').forEach(r => { r.checked = false; });
+      mostrarMensaje('mensajePedidoCanal', '✅ Pedido creado. Ahora regístrale el anticipo cuando el cliente pague.' + avisoFacturaPedido, 'exito');
 
       // Aviso de tratamiento de datos por WhatsApp (Ley 1581) — se ofrece
       // como un paso aparte, no automático, porque abrir WhatsApp exige que
