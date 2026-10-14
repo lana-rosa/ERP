@@ -7479,7 +7479,7 @@
   }
 
   function generarContenidoReciboVenta(v) {
-    const fechaTexto = v.fecha.toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
+    const fechaTexto = v.soloFecha ? v.fecha.toLocaleDateString('es-CO', { dateStyle: 'medium' }) : v.fecha.toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
     const etiquetasPago = { efectivo: 'Efectivo', nequi: 'Nequi', daviplata: 'Daviplata', tarjeta_debito: 'Tarjeta débito', tarjeta_credito: 'Tarjeta crédito' };
     const filasProductos = v.lineas.map(l => `
       <tr>
@@ -7542,7 +7542,7 @@
       ` : ''}
 
       <div style="margin-top:16px;font-size:10.5px;color:#888;text-align:center;">
-        Recibo de venta — Este documento es un comprobante de pago. La factura electrónica la envía la DIAN por separado.
+        ${v.nota ? escaparHtml(v.nota) : 'Recibo de venta — Este documento es un comprobante de pago. La factura electrónica la envía la DIAN por separado.'}
       </div>
 
       ${politicaCambiosCache ? `
@@ -21322,7 +21322,7 @@
     document.getElementById('chipFeNomina').style.display = esRolFe('administrador', 'contador') ? '' : 'none';
     const hoy = new Date();
     if (!document.getElementById('feDesde').value) {
-      document.getElementById('feDesde').value = fechaLocalIso(new Date(hoy.getFullYear(), hoy.getMonth() - 2, 1));
+      document.getElementById('feDesde').value = fechaLocalIso(new Date(hoy.getFullYear(), 0, 1));
       document.getElementById('feHasta').value = fechaLocalIso(hoy);
       document.getElementById('feEmDesde').value = fechaLocalIso(new Date(hoy.getFullYear(), hoy.getMonth(), 1));
       document.getElementById('feEmHasta').value = fechaLocalIso(hoy);
@@ -21396,6 +21396,7 @@
     const solicitadas = cacheFePendientes.filter(v => v.quiere_factura === true).length;
     const ordenadas = [...cacheFePendientes].sort((a, b) => (b.quiere_factura === true) - (a.quiere_factura === true));
     cont.innerHTML = `
+      <div style="margin-bottom:10px;"><button class="btn-mini editar" style="flex:0 0 auto;padding:7px 12px;" onclick="imprimirRecibosFe(cacheFePendientes)">🖨️ Imprimir los recibos de venta de toda la lista (${cacheFePendientes.length})</button></div>
       <div style="font-size:13px;margin-bottom:10px;"><strong>${cacheFePendientes.length}</strong> venta(s) sin factura registrada · ${formatearMoneda(total)}${solicitadas ? ` · <strong style="color:var(--rojo-error);">🧾 ${solicitadas} la pidió el cliente: hay que emitirla</strong>` : ''}</div>
       ${ordenadas.map(v => {
         const clave = `${v.origen}:${v.origen_id}`;
@@ -21420,6 +21421,7 @@
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
             <button class="btn-mini editar" style="flex:0 0 auto;padding:7px 12px;" onclick="alternarAccionFe('${clave}:datos')">📋 Datos para la DIAN</button>
             <button class="btn-mini" style="flex:0 0 auto;padding:7px 12px;background:var(--verde-exito);color:#fff;" onclick="alternarAccionFe('${clave}:registrar')">✅ Registrar factura emitida</button>
+            <button class="btn-mini editar" style="flex:0 0 auto;padding:7px 12px;" title="Comprobante de venta de Lana Rosa con la fecha de la venta (no es factura electrónica)" onclick="imprimirReciboVentaFe('${v.origen}', '${v.origen_id}')">🖨️ Recibo de venta</button>
           </div>
           ${abierta('datos') ? `
             <div style="margin-top:10px;padding:12px;border-radius:var(--radius-md);background:var(--gris-fondo);">
@@ -21732,6 +21734,51 @@
     mostrarMensaje('mensajeFe', '✅ Venta creada y factura registrada.' + (r.advertencias.length ? ' ⚠️ ' + r.advertencias.join(' ') : ''), r.advertencias.length ? 'error' : 'exito');
     await cargarFePendientes();
     renderizarImportacionFe();
+  }
+
+  // --- Recibos de venta del ERP para ventas ya hechas (con la fecha original de cada venta) ---
+  // Es un comprobante interno de Lana Rosa; NO es una factura electrónica de la DIAN.
+  function reciboDesdeVentaFe(v) {
+    const cli = v.cliente || {};
+    const nombre = cli.consumidor_final ? (cli.nombre_real || '') : (cli.nombre || '');
+    const medio = String(v.medio_pago || 'efectivo').split(', ')[0].split('+')[0];
+    return {
+      consecutivo: v.consecutivo,
+      fecha: new Date(v.fecha + 'T12:00:00'),
+      lineas: (v.items || []).map(i => ({ nombre: String(i.descripcion || '').replace(/^\[CRM [^\]]+\]\s*/, ''), cantidad: Number(i.cantidad) || 1, precio: Number(i.valor_unitario) || 0 })),
+      subtotal: Number(v.total), descuento: 0, total: Number(v.total),
+      pagos: [{ metodo_pago: medio, monto: Number(v.total) }],
+      cliente: { nombre, identificacion: cli.consumidor_final ? '' : (cli.numero_documento || ''), telefono: '' },
+      cajero: 'Lana Rosa', soloFecha: true,
+      nota: 'Comprobante de venta de Lana Rosa Crochet. Este documento no es una factura electrónica de venta.',
+    };
+  }
+
+  function imprimirRecibosFe(lista) {
+    if (!lista.length) { mostrarMensaje('mensajeFe', 'No hay ventas para imprimir con este filtro.', 'error'); return; }
+    const ventana = window.open('', '_blank');
+    if (!ventana) { mostrarMensaje('mensajeFe', 'El navegador bloqueó la ventana: permite las ventanas emergentes para este sitio.', 'error'); return; }
+    const cuerpo = lista.map(v => `<div class="recibo-pagina">${generarContenidoReciboVenta(reciboDesdeVentaFe(v))}</div>`).join('');
+    ventana.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>Recibos de venta — Lana Rosa Crochet</title>
+      <style>
+        body{font-family:'Courier New',monospace;color:#222;font-size:13px;margin:0;}
+        .recibo-pagina{max-width:420px;margin:0 auto;padding:24px;page-break-after:always;break-after:page;}
+        .recibo-pagina:last-child{page-break-after:auto;}
+        h1{font-size:16px;color:#d8017c;margin-bottom:2px;}
+        table{width:100%;border-collapse:collapse;margin-top:10px;font-size:12.5px;}
+        th{text-align:left;border-bottom:1px solid #ccc;padding-bottom:4px;font-size:11px;color:#666;}
+        td{border-bottom:1px dashed #eee;}
+        .resumen-fila-recibo{display:flex;justify-content:space-between;padding:3px 0;}
+        .total-recibo{display:flex;justify-content:space-between;font-weight:bold;font-size:15px;border-top:2px solid #d8017c;margin-top:8px;padding-top:8px;}
+        .encabezado-recibo{text-align:center;border-bottom:2px dashed #d8017c;padding-bottom:10px;margin-bottom:10px;}
+        @media screen { .recibo-pagina{border-bottom:1px dashed #bbb;} }
+      </style></head><body>${cuerpo}<script>window.onload = () => window.print();<\/script></body></html>`);
+    ventana.document.close();
+  }
+
+  function imprimirReciboVentaFe(origen, origenId) {
+    const v = cacheFePendientes.find(x => x.origen === origen && x.origen_id === origenId);
+    if (v) imprimirRecibosFe([v]);
   }
 
   function renderizarImportacionFe() {
