@@ -2070,6 +2070,8 @@
   <div class="filtro-tipo" style="margin-bottom:16px;">
     <button class="chip-filtro activo" data-subtab-btn="fe" onclick="mostrarSubTabGrupo('fe', 'subtabFePendientes', this); cargarFePendientes();">🧾 Por facturar</button>
     <button class="chip-filtro" data-subtab-btn="fe" onclick="mostrarSubTabGrupo('fe', 'subtabFeEmitidas', this); cargarFeEmitidas();">✅ Facturas emitidas</button>
+    <button class="chip-filtro" data-subtab-btn="fe" id="chipFeDs" onclick="mostrarSubTabGrupo('fe', 'subtabFeDs', this); cargarFeDs();">📑 Documentos soporte</button>
+    <button class="chip-filtro" data-subtab-btn="fe" id="chipFeRespaldo" onclick="mostrarSubTabGrupo('fe', 'subtabFeRespaldo', this); cargarFeRespaldo();">💾 Respaldo</button>
     <button class="chip-filtro" data-subtab-btn="fe" id="chipFeNomina" onclick="mostrarSubTabGrupo('fe', 'subtabFeNomina', this); cargarNominaElectronica();">👥 Nómina electrónica</button>
     <button class="chip-filtro" data-subtab-btn="fe" onclick="mostrarSubTabGrupo('fe', 'subtabFeConfig', this); cargarFeConfiguracion();">⚙️ Configuración y guía</button>
   </div>
@@ -2107,6 +2109,21 @@
 <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirSeccion('subtabFeEmitidas', 'Facturas electrónicas')">🖨️ PDF</button>
     </div>
     <div id="feListaEmitidas"><div class="cargando">Cargando...</div></div>
+  </div>
+
+  <div id="subtabFeDs" data-subtab-grupo="fe" class="oculto">
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px;">
+      <div><label for="feDsDesde" style="font-size:11px;">Compras desde</label><input type="date" id="feDsDesde" onchange="cargarFeDs()" style="padding:9px 10px;"></div>
+      <div><label for="feDsHasta" style="font-size:11px;">Hasta</label><input type="date" id="feDsHasta" onchange="cargarFeDs()" style="padding:9px 10px;"></div>
+    </div>
+    <div style="background:var(--tinte-azul);border-radius:var(--radius-md);padding:10px 14px;margin-bottom:14px;font-size:12.5px;line-height:1.5;">
+      ℹ️ Cuando se le compra a alguien que <strong>no está obligado a facturar</strong> (persona natural, artesano) y se marca así en la compra, el soporte válido de la compra es un <strong>documento soporte</strong> que se transmite a la DIAN con numeración propia (Resolución 167 de 2021). Se emite en la solución gratuita de la DIAN (documento soporte en adquisiciones a no obligados a facturar). Aquí ves las compras que faltan por transmitir, con los datos listos para copiar, y registras el número y el CUDS que te da la DIAN. Antes de usarlo hay que tener la numeración de documento soporte (Configuración y guía).
+    </div>
+    <div id="feDsContenido"><div class="cargando">Cargando...</div></div>
+  </div>
+
+  <div id="subtabFeRespaldo" data-subtab-grupo="fe" class="oculto">
+    <div id="feRespaldoContenido"><div class="cargando">Cargando...</div></div>
   </div>
 
   <div id="subtabFeNomina" data-subtab-grupo="fe" class="oculto">
@@ -2543,7 +2560,7 @@
             <input type="checkbox" id="gastoEsDocumentoSoporte" style="width:auto;">
             <span>Este proveedor no está obligado a facturar (persona natural, artesano, etc.)</span>
           </label>
-          <div style="font-size:10.5px;opacity:0.6;">Genera un documento soporte interno con los datos que exige la norma — no reemplaza la transmisión electrónica a la DIAN, es un respaldo para tu contabilidad y tu contador.</div>
+          <div style="font-size:10.5px;opacity:0.6;">La compra queda en Facturación electrónica → Documentos soporte: la administradora o el contador lo emiten en la solución gratuita de la DIAN y registran su número. Es el soporte válido del costo de esa compra.</div>
         </div>
 
         <div>
@@ -21427,11 +21444,13 @@
   async function mostrarPantallaFacturacionElectronica(p_subtab) {
     mostrarPantalla('pantallaFacturacionElectronica');
     ocultarMensaje('mensajeFe');
-    document.getElementById('chipFeNomina').style.display = esRolFe('administrador', 'contador') ? '' : 'none';
+    ['chipFeNomina', 'chipFeDs', 'chipFeRespaldo'].forEach(id => { document.getElementById(id).style.display = esRolFe('administrador', 'contador') ? '' : 'none'; });
     const hoy = new Date();
     if (!document.getElementById('feDesde').value) {
       document.getElementById('feDesde').value = fechaLocalIso(new Date(hoy.getFullYear(), 0, 1));
       document.getElementById('feHasta').value = fechaLocalIso(hoy);
+      document.getElementById('feDsDesde').value = fechaLocalIso(new Date(hoy.getFullYear(), 0, 1));
+      document.getElementById('feDsHasta').value = fechaLocalIso(hoy);
       document.getElementById('feEmDesde').value = fechaLocalIso(new Date(hoy.getFullYear(), hoy.getMonth(), 1));
       document.getElementById('feEmHasta').value = fechaLocalIso(hoy);
       const mesAnterior = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1);
@@ -21464,6 +21483,11 @@
     if (c.vigencia_hasta) {
       const dias = Math.round((new Date(c.vigencia_hasta + 'T00:00:00') - new Date()) / 86400000);
       if (dias < 30) avisos.push(dias < 0 ? 'La resolución de numeración está vencida: solicita una nueva en la DIAN.' : `La resolución de numeración vence en ${dias} días: solicita la renovación a tiempo.`);
+    }
+    if (c.facturador_habilitado && esRolFe('administrador', 'contador')) {
+      const hoyD = new Date();
+      const finMesAnterior = fechaLocalIso(new Date(hoyD.getFullYear(), hoyD.getMonth(), 0));
+      if (hoyD.getDate() >= 5 && (!c.ultimo_respaldo_hasta || c.ultimo_respaldo_hasta < finMesAnterior)) avisos.push('Falta el respaldo mensual de las facturas y soportes (hasta el ' + new Date(finMesAnterior + 'T00:00:00').toLocaleDateString('es-CO') + '). Hazlo en la pestaña "💾 Respaldo": la ley exige conservarlos y poder exhibirlos.');
     }
     document.getElementById('feAvisoConfig').innerHTML = avisos.map(a => `<div style="background:var(--tinte-ambar);border-radius:var(--radius-md);padding:10px 14px;margin-bottom:12px;font-size:12.5px;">⚠️ ${escaparHtml(a)}</div>`).join('');
   }
@@ -22014,6 +22038,164 @@
       </div>`;
   }
 
+  // ---- Documentos soporte (compras a proveedores no obligados a facturar) ----
+  let cacheFeDs = [], feDsAccion = null;
+  function textoDatosDianDs(g) {
+    const p = g.proveedor || {};
+    const l = [
+      'Documento soporte en adquisiciones a no obligados a facturar',
+      `Vendedor: ${p.nombre || '(sin tercero: completa sus datos en Directorio)'}`,
+      `Tipo de documento: ${p.tipo_documento || ''}`,
+      `Número: ${p.numero_documento || ''}${p.dv ? '-' + p.dv : ''}`,
+    ];
+    if (p.direccion) l.push(`Dirección: ${p.direccion}${p.ciudad ? ', ' + p.ciudad : ''}`);
+    if (p.correo) l.push(`Correo: ${p.correo}`);
+    if (p.telefono) l.push(`Teléfono: ${p.telefono}`);
+    l.push('', `Fecha de la compra: ${g.fecha}`, `Descripción: ${g.descripcion}`, `Valor total: ${Math.round(Number(g.monto))}`, `Forma de pago: Contado`, `Medio de pago: ${g.metodo_pago || ''}`, `Referencia interna: ${g.numero_interno || g.id.slice(0, 8)}`);
+    return l.join('\n');
+  }
+
+  async function cargarFeDs() {
+    const cont = document.getElementById('feDsContenido');
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    let pend, emit;
+    try {
+      const desde = document.getElementById('feDsDesde').value, hasta = document.getElementById('feDsHasta').value;
+      pend = await llamarReporteContable('fn_fe_documentos_soporte', { p_desde: desde, p_hasta: hasta, p_solo_pendientes: true });
+      emit = await llamarReporteContable('fn_fe_emitidos', { p_desde: desde, p_hasta: hasta, p_tipo: 'documento_soporte' });
+    } catch (e) { cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(e.message)}</div>`; return; }
+    cacheFeDs = pend;
+    const c = cacheFeConfig || {};
+    const aviso = c.documento_soporte_habilitado ? '' : '<div style="background:var(--tinte-ambar);border-radius:var(--radius-md);padding:10px 14px;margin-bottom:12px;font-size:12.5px;">⚠️ Todavía no está marcada la numeración de documento soporte: solicítala/habilítala en el portal de la DIAN y regístrala en "⚙️ Configuración y guía".</div>';
+    const tarjetas = pend.length ? pend.map(g => {
+      const abierta = (a) => feDsAccion === `${g.id}:${a}`;
+      return `<div class="panel" style="max-width:none;max-height:none;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+          <div>
+            <div style="font-weight:700;"><span style="background:var(--rojo-error);color:#fff;border-radius:6px;padding:2px 7px;font-size:11px;margin-right:6px;">DOCUMENTO SOPORTE POR EMITIR</span>${new Date(g.fecha + 'T00:00:00').toLocaleDateString('es-CO')}</div>
+            <div style="font-size:12.5px;opacity:.85;margin-top:2px;">${g.proveedor ? `${escaparHtml(g.proveedor.nombre || '')} · ${escaparHtml(g.proveedor.tipo_documento || '')} ${escaparHtml(g.proveedor.numero_documento || '')}` : '<strong style="color:var(--rojo-error);">Sin proveedor registrado</strong>'}</div>
+            <div style="font-size:12px;opacity:.7;">${escaparHtml(g.descripcion || '')}</div>
+          </div>
+          <div style="text-align:right;font-size:17px;font-weight:700;">${formatearMoneda(g.monto)}</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+          <button class="btn-mini editar" style="flex:0 0 auto;padding:7px 12px;" onclick="feDsAccion = (feDsAccion === '${g.id}:datos' ? null : '${g.id}:datos'); cargarFeDs();">📋 Datos para la DIAN</button>
+          <button class="btn-mini" style="flex:0 0 auto;padding:7px 12px;background:var(--verde-exito);color:#fff;" onclick="feDsAccion = (feDsAccion === '${g.id}:registrar' ? null : '${g.id}:registrar'); cargarFeDs();">✅ Registrar documento soporte emitido</button>
+        </div>
+        ${abierta('datos') ? `<div style="margin-top:10px;padding:12px;border-radius:var(--radius-md);background:var(--gris-fondo);">
+          <pre style="white-space:pre-wrap;font-family:inherit;font-size:12.5px;margin:0;">${escaparHtml(textoDatosDianDs(g))}</pre>
+          <button class="btn-mini editar" style="flex:0 0 auto;padding:6px 12px;margin-top:8px;" onclick="copiarTexto(textoDatosDianDs(cacheFeDs.find(x => x.id === '${g.id}')), this)">Copiar todo</button></div>` : ''}
+        ${abierta('registrar') ? `<div style="margin-top:10px;padding:12px;border-radius:var(--radius-md);background:var(--gris-fondo);">
+          <div class="grilla-2" style="gap:10px;">
+            <div><label>Prefijo</label><input type="text" id="feDsPrefijo" value="${escaparHtml(c.prefijo_documento_soporte || '')}"></div>
+            <div><label>Número del documento soporte</label><input type="text" id="feDsNumero" inputmode="numeric"></div>
+            <div><label>Fecha de emisión</label><input type="date" id="feDsFecha" value="${fechaLocalIso()}"></div>
+            <div><label>CUDS <span style="font-size:10px;opacity:0.6;">(código largo del documento)</span></label><input type="text" id="feDsCuds"></div>
+          </div>
+          <label>Archivo del documento soporte <span style="font-size:10px;opacity:0.6;">(obligatorio: el ZIP/PDF que descarga la DIAN)</span></label>
+          <input type="file" id="feDsArchivo" accept=".zip,.xml,.pdf,image/*">
+          <label>Observaciones <span style="font-size:10px;opacity:0.6;">(opcional)</span></label><input type="text" id="feDsObs">
+          <div class="mensaje" id="mensajeFeDs"></div>
+          <button class="btn-principal" style="width:auto;" onclick="confirmarRegistrarDs('${g.id}')">Guardar</button></div>` : ''}
+      </div>`;
+    }).join('') : '<div class="cargando">🎉 No hay compras con documento soporte pendientes en este rango.</div>';
+    const filas = emit.length ? `<h3 style="margin:18px 0 8px;font-size:14px;">Documentos soporte registrados (${emit.filter(d => d.estado === 'emitida').length})</h3>
+      <div class="tabla-lista">${emit.map(d => `<div class="tabla-lista-fila" style="grid-template-columns:110px 100px 1.4fr 120px 110px;cursor:default;${d.estado === 'anulada' ? 'opacity:0.5;text-decoration:line-through;' : ''}">
+        <span style="font-weight:600;">${escaparHtml((d.prefijo || '') + d.numero)}</span>
+        <span>${new Date(d.fecha_emision + 'T00:00:00').toLocaleDateString('es-CO')}</span>
+        <span style="font-size:12px;">${escaparHtml(d.nombre_receptor || '')}<div style="font-size:10.5px;opacity:.6;">${escaparHtml(d.documento_receptor || '')}</div></span>
+        <span style="text-align:right;">${formatearMoneda(d.valor)}</span>
+        <span>${d.tiene_archivo ? `<button class="btn-mini editar" style="flex:0 0 auto;padding:4px 8px;" onclick="descargarArchivoFacturaFe('${d.id}')">📎 Archivo</button>` : ''}${d.estado === 'emitida' ? `<button class="btn-mini desactivar" style="flex:0 0 auto;padding:4px 8px;margin-left:4px;" onclick="anularRegistroDs('${d.id}')">Anular</button>` : ''}</span></div>`).join('')}</div>` : '';
+    cont.innerHTML = aviso + `<div style="font-size:13px;margin-bottom:10px;"><strong>${pend.length}</strong> compra(s) con documento soporte por emitir · ${formatearMoneda(pend.reduce((a, g) => a + Number(g.monto), 0))}</div>` + tarjetas + filas;
+  }
+
+  async function confirmarRegistrarDs(gastoId) {
+    const v = (id) => document.getElementById(id).value.trim();
+    if (!v('feDsNumero')) { mostrarMensaje('mensajeFeDs', 'Escribe el número del documento soporte.', 'error'); return; }
+    const archivo = document.getElementById('feDsArchivo').files[0];
+    if (!archivo) { mostrarMensaje('mensajeFeDs', 'Adjunta el archivo del documento soporte (ZIP o PDF de la DIAN): hay que conservarlo.', 'error'); return; }
+    const { data, error } = await supabaseClient.rpc('fn_fe_registrar_documento_soporte', {
+      p_gasto_id: gastoId, p_prefijo: v('feDsPrefijo') || null, p_numero: v('feDsNumero'), p_cuds: v('feDsCuds') || null, p_fecha: v('feDsFecha'), p_observaciones: v('feDsObs') || null,
+    });
+    if (error) { mostrarMensaje('mensajeFeDs', error.message, 'error'); return; }
+    await guardarArchivoFacturaFe({ archivoOrigen: archivo, prefijo: v('feDsPrefijo') || null, numero: v('feDsNumero'), idCompleto: `DS_${v('feDsPrefijo')}${v('feDsNumero')}`, cufe: v('feDsCuds'), fecha: v('feDsFecha') });
+    feDsAccion = null;
+    const adv = (data && data.advertencias) || [];
+    mostrarMensaje('mensajeFe', adv.length ? '⚠️ Documento soporte registrado, pero revisa: ' + adv.join(' ') : '✅ Documento soporte registrado.', adv.length ? 'error' : 'exito');
+    await cargarFeDs();
+  }
+
+  async function anularRegistroDs(id) {
+    const motivo = await pedirTexto('Esto solo anula el registro en el ERP (por ejemplo, si se digitó mal). Un documento soporte ya transmitido se corrige con una nota de ajuste en el portal de la DIAN.', 'Motivo');
+    if (!motivo) return;
+    const { error } = await supabaseClient.rpc('fn_fe_anular_registro', { p_id: id, p_motivo: motivo });
+    if (error) { mostrarMensaje('mensajeFe', error.message, 'error'); return; }
+    mostrarMensaje('mensajeFe', '✅ Registro anulado. La compra vuelve a aparecer como pendiente.', 'exito');
+    await cargarFeDs();
+  }
+
+  // ---- Respaldo mensual de facturas, documentos soporte y soportes de compras ----
+  function cargarFeRespaldo() {
+    const c = cacheFeConfig || {};
+    const hoy = new Date();
+    const ini = fechaLocalIso(new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1));
+    const fin = fechaLocalIso(new Date(hoy.getFullYear(), hoy.getMonth(), 0));
+    const ultimo = c.ultimo_respaldo_en ? `${new Date(c.ultimo_respaldo_en).toLocaleDateString('es-CO')} (cubre hasta el ${new Date(c.ultimo_respaldo_hasta + 'T00:00:00').toLocaleDateString('es-CO')})` : 'todavía no se ha hecho ninguno';
+    document.getElementById('feRespaldoContenido').innerHTML = `
+      <div class="panel" style="max-width:none;max-height:none;">
+        <h2 style="margin-top:0;">💾 Respaldo de facturas y soportes</h2>
+        <div style="font-size:13px;line-height:1.55;margin-bottom:10px;">La ley exige conservar las facturas electrónicas, los documentos soporte y los soportes de las compras, y poder exhibirlos a la DIAN (art. 632 del Estatuto Tributario; Resolución 165 de 2023). Están guardados en el ERP; este botón baja una copia a tu computador en un solo archivo ZIP (con un índice en Excel/CSV). Guárdalo también en Drive o en un disco externo.<br><strong>Último respaldo:</strong> ${ultimo}.</div>
+        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+          <div><label for="feRespDesde" style="font-size:11px;">Desde</label><input type="date" id="feRespDesde" value="${ini}" style="padding:9px 10px;"></div>
+          <div><label for="feRespHasta" style="font-size:11px;">Hasta</label><input type="date" id="feRespHasta" value="${fin}" style="padding:9px 10px;"></div>
+          <button class="btn-principal" id="btnFeRespaldo" style="width:auto;margin:0;" onclick="descargarRespaldoFe()">⬇️ Descargar respaldo (ZIP)</button>
+        </div>
+        <div class="mensaje" id="mensajeFeRespaldo"></div>
+        <div id="feRespaldoProgreso" style="font-size:12.5px;margin-top:8px;"></div>
+      </div>`;
+  }
+
+  async function descargarRespaldoFe() {
+    const desde = document.getElementById('feRespDesde').value, hasta = document.getElementById('feRespHasta').value;
+    const btn = document.getElementById('btnFeRespaldo'), prog = document.getElementById('feRespaldoProgreso');
+    if (!desde || !hasta || desde > hasta) { mostrarMensaje('mensajeFeRespaldo', 'Elige un rango de fechas válido.', 'error'); return; }
+    btn.disabled = true; ocultarMensaje('mensajeFeRespaldo');
+    try {
+      const archivos = await llamarReporteContable('fn_fe_respaldo_archivos', { p_desde: desde, p_hasta: hasta });
+      if (!archivos.length) { mostrarMensaje('mensajeFeRespaldo', 'No hay archivos guardados en ese rango.', 'error'); return; }
+      const zip = new JSZip();
+      const NOMBRES = { factura: 'facturas', nota_credito: 'notas_credito', documento_soporte: 'documentos_soporte', soporte_compra: 'soportes_compras', soporte_documento_soporte: 'soportes_compras_documento_soporte' };
+      const indice = [['Carpeta', 'Archivo', 'Referencia', 'Fecha', 'Valor', 'Tercero', 'Documento', 'Estado']];
+      const fallidos = [];
+      for (let i = 0; i < archivos.length; i++) {
+        const a = archivos[i];
+        prog.textContent = `Descargando ${i + 1} de ${archivos.length}...`;
+        const { data, error } = await supabaseClient.storage.from(a.bucket).download(a.path);
+        if (error || !data) { fallidos.push(a.ref + ' (' + (error ? error.message : 'sin datos') + ')'); continue; }
+        const carpeta = NOMBRES[a.clase] || a.clase;
+        const nombre = `${carpeta}/${String(a.fecha).slice(0, 10)}_${String(a.ref).replace(/[^A-Za-z0-9_-]/g, '')}_${a.path.split('/').pop()}`;
+        zip.file(nombre, data);
+        indice.push([carpeta, nombre, a.ref, a.fecha, a.valor, a.tercero || '', a.documento || '', a.estado || '']);
+      }
+      const csv = '\ufeff' + indice.map(f => f.map(x => '"' + String(x ?? '').replace(/"/g, '""') + '"').join(';')).join('\r\n');
+      zip.file('INDICE.csv', csv);
+      prog.textContent = 'Armando el archivo ZIP...';
+      const blob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = `LanaRosa_Respaldo_Facturas_${desde}_a_${hasta}.zip`; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      if (!fallidos.length) {
+        await supabaseClient.rpc('fn_fe_respaldo_registrar', { p_hasta: hasta });
+        const { data: cfg } = await supabaseClient.from('fe_configuracion').select('*').eq('id', 1).single();
+        cacheFeConfig = cfg || cacheFeConfig; renderizarAvisoFe();
+      }
+      mostrarMensaje('mensajeFeRespaldo', fallidos.length ? `⚠️ Se bajaron ${indice.length - 1} de ${archivos.length} archivos. No se pudieron bajar: ${fallidos.join(', ')}. El respaldo NO quedó marcado como hecho.` : `✅ Respaldo descargado: ${indice.length - 1} archivos. Guárdalo también en Drive o en un disco externo.`, fallidos.length ? 'error' : 'exito');
+      prog.textContent = '';
+    } catch (e) {
+      mostrarMensaje('mensajeFeRespaldo', 'No se pudo hacer el respaldo: ' + (e.message || e), 'error');
+    } finally { btn.disabled = false; }
+  }
+
   async function anularRegistroFe(id) {
     const motivo = await pedirTexto('Esto solo anula el registro en el ERP (por ejemplo, si se digitó mal). Una factura ya emitida en la DIAN se corrige con una nota crédito en el portal.', 'Motivo');
     if (!motivo) return;
@@ -22141,6 +22323,11 @@
             ${campo('fcDesde', 'Rango desde', c.rango_desde, 'number')}
             ${campo('fcHasta', 'Rango hasta', c.rango_hasta, 'number')}
           </div>
+          <h2>📑 Documento soporte (compras a no obligados a facturar)</h2>
+          <label style="display:flex;gap:8px;align-items:center;font-weight:500;"><input type="checkbox" id="fcDsHab" style="width:auto;" ${c.documento_soporte_habilitado ? 'checked' : ''} ${puedeEditar ? '' : 'disabled'}> Ya tenemos numeración para documento soporte en la solución gratuita</label>
+          <div class="grilla-2" style="gap:10px;">
+            ${campo('fcPrefijoDs', 'Prefijo del documento soporte', c.prefijo_documento_soporte, 'text', 'maxlength="6"')}
+          </div>
           <h2>👥 Nómina electrónica</h2>
           <label style="display:flex;gap:8px;align-items:center;font-weight:500;"><input type="checkbox" id="fcNomina" style="width:auto;" ${c.nomina_habilitada ? 'checked' : ''} ${puedeEditar ? '' : 'disabled'}> Ya estamos habilitados en la solución gratuita de nómina</label>
           <div class="grilla-2" style="gap:10px;">
@@ -22178,7 +22365,8 @@
       facturador_habilitado: document.getElementById('fcHabilitado').checked, fecha_habilitacion: v('fcFechaHab'),
       resolucion_numero: v('fcResolucion'), resolucion_fecha: v('fcResFecha'), vigencia_hasta: v('fcVigencia'), prefijo: v('fcPrefijo'),
       rango_desde: v('fcDesde'), rango_hasta: v('fcHasta'), nomina_habilitada: document.getElementById('fcNomina').checked,
-      fecha_habilitacion_nomina: v('fcFechaNom'), prefijo_nomina: v('fcPrefijoNom'), notas: v('fcNotas'),
+      fecha_habilitacion_nomina: v('fcFechaNom'), prefijo_nomina: v('fcPrefijoNom'),
+      prefijo_documento_soporte: v('fcPrefijoDs'), documento_soporte_habilitado: document.getElementById('fcDsHab').checked, notas: v('fcNotas'),
     } });
     if (error) { mostrarMensaje('mensajeFe', 'No se pudo guardar: ' + error.message, 'error'); return; }
     const { data } = await supabaseClient.from('fe_configuracion').select('*').eq('id', 1).single();
