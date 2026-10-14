@@ -1336,12 +1336,12 @@
         <div class="resumen-pagos" id="resumenPagos"></div>
       </div>
       <div id="bloqueFacturaElectronica" style="margin:12px 0;padding:10px 12px;border:1.5px solid #f1e2ec;border-radius:var(--radius-md);">
-        <div style="font-weight:700;font-size:13px;">🧾 ¿Desea la factura electrónica?</div>
-        <div style="display:flex;gap:18px;margin-top:6px;font-size:13px;">
-          <label style="display:flex;gap:6px;align-items:center;margin:0;cursor:pointer;"><input type="radio" name="feQuiere" value="si"> Sí</label>
-          <label style="display:flex;gap:6px;align-items:center;margin:0;cursor:pointer;"><input type="radio" name="feQuiere" value="no"> No, solo recibo del ERP</label>
+        <div style="font-weight:700;font-size:13px;">🧾 Factura electrónica: ¿a nombre de quién?</div>
+        <div style="display:flex;gap:18px;margin-top:6px;font-size:13px;flex-wrap:wrap;">
+          <label style="display:flex;gap:6px;align-items:center;margin:0;cursor:pointer;"><input type="radio" name="feQuiere" value="cliente"> Del cliente (con su cédula o NIT)</label>
+          <label style="display:flex;gap:6px;align-items:center;margin:0;cursor:pointer;"><input type="radio" name="feQuiere" value="consumidor_final"> Consumidor final</label>
         </div>
-        <div style="font-size:11.5px;opacity:.7;margin-top:4px;">Si dice que sí, la factura se emite en la DIAN y el ERP la registra. Si dice que no, queda solo el recibo del ERP.</div>
+        <div style="font-size:11.5px;opacity:.7;margin-top:4px;">Toda venta lleva factura electrónica (responsabilidad 52 del RUT). Se emite en la DIAN y el ERP la registra.</div>
       </div>
       <button class="btn-principal" id="btnConfirmarVenta" onclick="confirmarVenta()">Confirmar venta</button>
       <button class="btn-secundario" id="btnPonerEnEspera" onclick="ponerVentaEnEspera()">🅿️ Poner en espera y atender otro cliente</button>
@@ -1455,10 +1455,10 @@
         </div>
 
         <div style="margin:12px 0;padding:10px 12px;border:1.5px solid #f1e2ec;border-radius:var(--radius-md);">
-          <div style="font-weight:700;font-size:13px;">🧾 ¿Desea la factura electrónica?</div>
-          <div style="display:flex;gap:18px;margin-top:6px;font-size:13px;">
-            <label style="display:flex;gap:6px;align-items:center;margin:0;cursor:pointer;"><input type="radio" name="feQuiereAcademia" value="si"> Sí</label>
-            <label style="display:flex;gap:6px;align-items:center;margin:0;cursor:pointer;"><input type="radio" name="feQuiereAcademia" value="no"> No, solo recibo del ERP</label>
+          <div style="font-weight:700;font-size:13px;">🧾 Factura electrónica: ¿a nombre de quién?</div>
+          <div style="display:flex;gap:18px;margin-top:6px;font-size:13px;flex-wrap:wrap;">
+            <label style="display:flex;gap:6px;align-items:center;margin:0;cursor:pointer;"><input type="radio" name="feQuiereAcademia" value="cliente"> Del cliente (con su cédula o NIT)</label>
+            <label style="display:flex;gap:6px;align-items:center;margin:0;cursor:pointer;"><input type="radio" name="feQuiereAcademia" value="consumidor_final"> Consumidor final</label>
           </div>
         </div>
         <button class="btn-principal" id="btnRegistrarVentaAcademia" onclick="confirmarRegistrarVentaAcademia()">Registrar venta</button>
@@ -5610,7 +5610,7 @@
           venta.error = (await resp.json()).error || 'Error al sincronizar';
           pendientes.push(venta);
         } else if (venta.feQuiere !== null && venta.feQuiere !== undefined) {
-          try { const d = await resp.json(); if (d.consecutivo) await supabaseClient.rpc('fn_fe_marcar_preferencia', { p_consecutivo: d.consecutivo, p_quiere: venta.feQuiere }); } catch { /* se puede marcar luego en Por facturar */ }
+          try { const d = await resp.json(); if (d.consecutivo) await supabaseClient.rpc('fn_fe_marcar_preferencia', { p_consecutivo: d.consecutivo, p_quiere: true, p_a_nombre_de: (venta.feQuiere === 'cliente' ? 'cliente' : 'consumidor_final') }); } catch { /* se puede marcar luego en Por facturar */ }
         }
         // Si resp.ok, la venta ya quedó registrada — se descarta de la cola.
       } catch {
@@ -6238,7 +6238,7 @@
 
     try {
       const { data: solicitadas } = await supabaseClient.rpc('fn_fe_solicitadas_pendientes');
-      if (solicitadas && solicitadas.length && !confirm(`Hay ${solicitadas.length} venta(s) en las que el cliente pidió factura electrónica y todavía no está emitida.\n\nEmítelas en la DIAN antes de cerrar (Facturación electrónica → Por facturar).\n\n¿Cerrar el turno de todas formas?`)) return;
+      if (solicitadas && solicitadas.length && !confirm(`Hay ${solicitadas.length} venta(s) con la factura electrónica todavía sin emitir.\n\nEmítelas en la DIAN antes de cerrar (Facturación electrónica → Por facturar).\n\n¿Cerrar el turno de todas formas?`)) return;
     } catch (e) { /* si no se puede consultar, no se bloquea el cierre */ }
 
     const btn = document.getElementById('btnCerrarTurno');
@@ -7210,8 +7210,13 @@
       return false;
     }
 
-    if (!document.querySelector('input[name="feQuiere"]:checked')) {
-      mostrarMensaje('mensajeVenta', 'Pregunta al cliente "¿Desea la factura electrónica?" y marca Sí o No.', 'error');
+    const feSel = document.querySelector('input[name="feQuiere"]:checked');
+    if (!feSel) {
+      mostrarMensaje('mensajeVenta', 'Marca a nombre de quién va la factura electrónica: del cliente o consumidor final.', 'error');
+      return false;
+    }
+    if (feSel.value === 'cliente' && (!document.getElementById('clienteNombre').value.trim() || !document.getElementById('clienteIdentificacion').value.trim())) {
+      mostrarMensaje('mensajeVenta', 'Para facturar a nombre del cliente escribe su nombre y su cédula o NIT en "Datos del cliente" (o elige Consumidor final).', 'error');
       return false;
     }
 
@@ -7369,7 +7374,7 @@
         }))
       };
 
-      const feQuiere = document.querySelector('input[name="feQuiere"]:checked')?.value === 'si';
+      const feANombre = document.querySelector('input[name="feQuiere"]:checked')?.value || 'consumidor_final';
       let resp, datos;
       try {
         resp = await fetch(WORKER_URL + '/api/pos/ventas', {
@@ -7381,7 +7386,7 @@
       } catch (errorRed) {
         // No hubo forma de contactar al servidor (sin internet en este momento):
         // se guarda la venta localmente en vez de perderla, y se avisa al cajero.
-        encolarVentaOffline(cuerpoVenta, feQuiere);
+        encolarVentaOffline(cuerpoVenta, feANombre);
         mostrarMensaje('mensajeVenta', '📴 Sin conexión — la venta quedó guardada en este dispositivo y se enviará sola apenas vuelva el internet. No cierres esta pantalla en el navegador sin haber sincronizado.', 'exito');
         carrito = [];
         document.getElementById('checkPedidoMarketplace').checked = false;
@@ -7425,10 +7430,10 @@
 
       let avisoFactura = '';
       try {
-        const { error: errPref } = await supabaseClient.rpc('fn_fe_marcar_preferencia', { p_consecutivo: datos.consecutivo, p_quiere: feQuiere });
+        const { error: errPref } = await supabaseClient.rpc('fn_fe_marcar_preferencia', { p_consecutivo: datos.consecutivo, p_quiere: true, p_a_nombre_de: feANombre });
         if (errPref) throw errPref;
-        avisoFactura = feQuiere ? ' 🧾 El cliente pidió factura electrónica: emítela en la DIAN (queda en "Por facturar").' : ' Sin factura electrónica: solo recibo del ERP.';
-      } catch (e) { avisoFactura = ' ⚠️ No se pudo guardar si el cliente quería factura electrónica: márcala luego en Facturación electrónica.'; }
+        avisoFactura = ' 🧾 Emite ahora la factura electrónica en la DIAN (queda en "Por facturar").';
+      } catch (e) { avisoFactura = ' ⚠️ No se pudo guardar a nombre de quién va la factura: la venta queda en Facturación electrónica → Por facturar.'; }
       document.querySelectorAll('input[name="feQuiere"]').forEach(r => { r.checked = false; });
       mostrarMensaje('mensajeVenta', `✅ Venta registrada correctamente.${datos.puntos_ganados > 0 ? ` ⭐ El cliente ganó ${datos.puntos_ganados} puntos.` : ''}${avisoFactura}`, 'exito');
       carrito = [];
@@ -17496,29 +17501,30 @@
   }
 
   let pedidosCanalCache = [];
-  let fePrefPedidos = {};   // { pedido_id: true|false } — ¿el cliente quiere factura electrónica?
+  let fePrefPedidos = {};   // { pedido_id: 'cliente' | 'consumidor_final' | 'recibo' } — a nombre de quién va la factura electrónica
 
   function bloqueFacturaPedido(p) {
     const v = fePrefPedidos[p.id];
     const op = (val, txt) => `<option value="${val}" ${String(v) === val ? 'selected' : ''}>${txt}</option>`;
     return `<div style="font-size:12px;margin-bottom:6px;">🧾 <strong>Factura electrónica</strong> —
       <select onchange="guardarPreferenciaFacturaPedido('${p.id}', this.value)" style="width:auto;padding:4px 8px;${v === undefined ? 'border-color:var(--rojo-error);' : ''}">
-        <option value="" ${v === undefined ? 'selected' : ''}>Falta preguntar al cliente</option>${op('true', 'Sí desea la factura')}${op('false', 'No la desea')}
+        <option value="" ${v === undefined ? 'selected' : ''}>Falta definir a nombre de quién</option>${op('cliente', 'A nombre del cliente')}${op('consumidor_final', 'Consumidor final')}${v === 'recibo' ? op('recibo', 'Solo recibo (venta anterior al 14-oct-2026)') : ''}
       </select></div>`;
   }
 
   async function guardarPreferenciaFacturaPedido(id, valor) {
     if (valor === '') return;
-    const { error } = await supabaseClient.rpc('fn_fe_marcar_preferencia_origen', { p_origen: 'pedido_canal', p_ref: id, p_quiere: valor === 'true' });
+    if (valor === 'recibo') return;
+    const { error } = await supabaseClient.rpc('fn_fe_marcar_preferencia_origen', { p_origen: 'pedido_canal', p_ref: id, p_quiere: true, p_a_nombre_de: valor });
     if (error) { mostrarMensaje('mensajePedidosCanal', 'No se pudo guardar: ' + error.message, 'error'); return; }
-    fePrefPedidos[id] = valor === 'true';
+    fePrefPedidos[id] = valor;
     cargarPedidosCanal();
   }
 
   // Obliga a preguntar antes de cobrar o entregar un pedido.
   function exigirDecisionFacturaPedido(id) {
     if (fePrefPedidos[id] !== undefined) return true;
-    mostrarMensaje('mensajePedidosCanal', 'Antes de continuar, pregunta al cliente "¿Desea la factura electrónica?" y márcalo en este pedido (🧾 Factura electrónica).', 'error');
+    mostrarMensaje('mensajePedidosCanal', 'Antes de continuar, define en este pedido a nombre de quién va la factura electrónica (🧾 Factura electrónica): del cliente o consumidor final.', 'error');
     return false;
   }
 
@@ -17540,8 +17546,8 @@
     pedidosCanalCache = pedidos || [];
     fePrefPedidos = {};
     try {
-      const { data: prefs } = await supabaseClient.from('fe_preferencia_factura').select('origen_id, quiere').eq('origen', 'pedido_canal').in('origen_id', pedidosCanalCache.map(x => x.id));
-      (prefs || []).forEach(r => { fePrefPedidos[r.origen_id] = r.quiere; });
+      const { data: prefs } = await supabaseClient.from('fe_preferencia_factura').select('origen_id, quiere, a_nombre_de').eq('origen', 'pedido_canal').in('origen_id', pedidosCanalCache.map(x => x.id));
+      (prefs || []).forEach(r => { fePrefPedidos[r.origen_id] = r.quiere === false ? 'recibo' : (r.a_nombre_de || 'cliente'); });
     } catch (e) { /* sin permiso: se muestra "Falta preguntar" */ }
     const idsEnvio = pedidosCanalCache.filter(p => p.estado === 'listo_despacho' || p.estado === 'entregado').map(p => p.id);
     envioPedidosCache = {};
@@ -21362,7 +21368,7 @@
   }
 
   function textoDatosDianVenta(v) {
-    const c = v.cliente;
+    const c = v.a_nombre_de === 'consumidor_final' ? { ...v.cliente, consumidor_final: true, numero_documento: '222222222222', dv: null, correo: '', telefono: '' } : v.cliente;
     const lineas = [
       `Cliente: ${c.consumidor_final ? 'Consumidor final' : c.nombre}`,
       `Tipo de documento: ${c.consumidor_final ? 'Cédula de ciudadanía' : c.tipo_documento}`,
@@ -21402,7 +21408,7 @@
     const ordenadas = [...cacheFePendientes].sort((a, b) => (b.quiere_factura === true) - (a.quiere_factura === true));
     cont.innerHTML = `
       <div style="margin-bottom:10px;"><button class="btn-mini editar" style="flex:0 0 auto;padding:7px 12px;" onclick="imprimirRecibosFe(cacheFePendientes)">🖨️ Imprimir los recibos de venta de toda la lista (${cacheFePendientes.length})</button></div>
-      <div style="font-size:13px;margin-bottom:10px;"><strong>${cacheFePendientes.length}</strong> venta(s) ${modoRecibo ? 'con solo recibo del ERP (sin factura electrónica)' : 'sin factura registrada'} · ${formatearMoneda(total)}${solicitadas ? ` · <strong style="color:var(--rojo-error);">🧾 ${solicitadas} la pidió el cliente: hay que emitirla</strong>` : ''}</div>
+      <div style="font-size:13px;margin-bottom:10px;"><strong>${cacheFePendientes.length}</strong> venta(s) ${modoRecibo ? 'con solo recibo del ERP (sin factura electrónica)' : 'sin factura registrada'} · ${formatearMoneda(total)}${solicitadas ? ` · <strong style="color:var(--rojo-error);">🧾 ${solicitadas} ya tienen definido a nombre de quién: hay que emitir la factura</strong>` : ''}</div>
       ${ordenadas.map(v => {
         const clave = `${v.origen}:${v.origen_id}`;
         const cli = v.cliente;
@@ -21411,7 +21417,7 @@
         <div class="panel" style="max-width:none;max-height:none;margin-bottom:12px;">
           <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;">
             <div>
-              <div style="font-weight:700;">${v.quiere_factura === true ? '<span style="background:var(--rojo-error);color:#fff;border-radius:6px;padding:2px 7px;font-size:11px;margin-right:6px;">FACTURA SOLICITADA</span>' : ''}${ORIGEN_VENTA_FE[v.origen] || v.origen} · ${escaparHtml(v.consecutivo || '')} · ${new Date(v.fecha + 'T00:00:00').toLocaleDateString('es-CO')}</div>
+              <div style="font-weight:700;">${v.quiere_factura === true ? `<span style="background:var(--rojo-error);color:#fff;border-radius:6px;padding:2px 7px;font-size:11px;margin-right:6px;">FACTURAR${v.a_nombre_de === 'consumidor_final' ? ' · CONSUMIDOR FINAL' : (v.a_nombre_de === 'cliente' ? ' · A NOMBRE DEL CLIENTE' : '')}</span>` : ''}${ORIGEN_VENTA_FE[v.origen] || v.origen} · ${escaparHtml(v.consecutivo || '')} · ${new Date(v.fecha + 'T00:00:00').toLocaleDateString('es-CO')}</div>
               <div style="font-size:12.5px;opacity:0.8;margin-top:2px;">
                 ${cli.consumidor_final ? `Consumidor final (222222222222)${cli.nombre_real ? ' — ' + escaparHtml(cli.nombre_real) : ''}` : `${escaparHtml(cli.nombre)} · ${escaparHtml(cli.tipo_documento)} ${escaparHtml(cli.numero_documento)}${cli.dv ? '-' + cli.dv : ''}`}
                 ${cli.correo ? ' · ' + escaparHtml(cli.correo) : ''}
@@ -27267,7 +27273,9 @@
     ocultarMensaje('mensajeVentaAcademia');
 
     if (carritoAcademia.length === 0) { mostrarMensaje('mensajeVentaAcademia', 'Agrega al menos una clase o un kit a la lista.', 'error'); return; }
-    if (!document.querySelector('input[name="feQuiereAcademia"]:checked')) { mostrarMensaje('mensajeVentaAcademia', 'Pregunta al cliente "¿Desea la factura electrónica?" y marca Sí o No.', 'error'); return; }
+    const feSelAcademia = document.querySelector('input[name="feQuiereAcademia"]:checked');
+    if (!feSelAcademia) { mostrarMensaje('mensajeVentaAcademia', 'Marca a nombre de quién va la factura electrónica: del cliente o consumidor final.', 'error'); return; }
+    if (feSelAcademia.value === 'cliente' && (!cliente || !identificacion)) { mostrarMensaje('mensajeVentaAcademia', 'Para facturar a nombre del cliente escribe su nombre y su cédula o NIT (o elige Consumidor final).', 'error'); return; }
     if ((telefono || correo) && !aceptaTratamientoDatos) { mostrarMensaje('mensajeVentaAcademia', 'Marca la casilla de autorización de tratamiento de datos, o borra el teléfono/correo si el cliente no autoriza.', 'error'); return; }
     const hayClasePresencial = carritoAcademia.some(i => i.tipo === 'clase' && i.subarea === 'clase_presencial');
     if (hayClasePresencial && !turnoActivoActual) { mostrarMensaje('mensajeVentaAcademia', 'Las clases presenciales requieren un turno de caja de Tienda abierto (pasan por la caja física). Los demás ingresos (YouTube, cursos virtuales, digitales) se pueden registrar sin turno abierto.', 'error'); return; }
@@ -27360,11 +27368,11 @@
 
     let avisoFacturaAcademia = '';
     try {
-      const quiere = document.querySelector('input[name="feQuiereAcademia"]:checked')?.value === 'si';
-      const { error: errPref } = await supabaseClient.rpc('fn_fe_marcar_preferencia_origen', { p_origen: 'venta_academia', p_ref: String(datos.venta_id), p_quiere: quiere });
+      const aNombreAcademia = document.querySelector('input[name="feQuiereAcademia"]:checked')?.value || 'consumidor_final';
+      const { error: errPref } = await supabaseClient.rpc('fn_fe_marcar_preferencia_origen', { p_origen: 'venta_academia', p_ref: String(datos.venta_id), p_quiere: true, p_a_nombre_de: aNombreAcademia });
       if (errPref) throw errPref;
-      avisoFacturaAcademia = quiere ? ' 🧾 El cliente pidió factura electrónica: emítela en la DIAN (queda en "Por facturar").' : ' Sin factura electrónica: solo recibo del ERP.';
-    } catch (e) { avisoFacturaAcademia = ' ⚠️ No se pudo guardar si el cliente quería factura electrónica: márcala luego en Facturación electrónica.'; }
+      avisoFacturaAcademia = ' 🧾 Emite ahora la factura electrónica en la DIAN (queda en "Por facturar").';
+    } catch (e) { avisoFacturaAcademia = ' ⚠️ No se pudo guardar a nombre de quién va la factura: la venta queda en Facturación electrónica → Por facturar.'; }
     document.querySelectorAll('input[name="feQuiereAcademia"]').forEach(r => { r.checked = false; });
     btn.disabled = false;
     btn.textContent = 'Registrar venta';
