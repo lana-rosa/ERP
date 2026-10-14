@@ -2535,6 +2535,9 @@
           <input type="text" id="gastoNumeroFactura" placeholder="Ej: FV-00123 (o el N° de recibo/nota si el vendedor no factura)">
           <label for="gastoFechaFactura">Fecha de la factura</label>
           <input type="date" id="gastoFechaFactura">
+          <label for="gastoArchivoSoporte">Foto o PDF de la factura (obligatorio)</label>
+          <input type="file" id="gastoArchivoSoporte" accept="image/*,application/pdf" capture="environment">
+          <div style="font-size:10.5px;opacity:0.6;">El soporte es lo que permite llevar la compra como costo o deducción. Si el proveedor no está obligado a facturar, marca la casilla de abajo (documento soporte) y la foto pasa a ser opcional.</div>
 
           <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-weight:400;">
             <input type="checkbox" id="gastoEsDocumentoSoporte" style="width:auto;">
@@ -13160,6 +13163,8 @@
     if (!monto || monto <= 0) { mostrarMensaje('mensajeGasto', 'Escribe un monto válido mayor a cero.', 'error'); return; }
     if (!numeroFactura) { mostrarMensaje('mensajeGasto', 'Escribe el número de factura.', 'error'); return; }
     if (!fechaFactura) { mostrarMensaje('mensajeGasto', 'Escribe la fecha de la factura.', 'error'); return; }
+    const archivoSoporte = document.getElementById('gastoArchivoSoporte').files[0] || null;
+    if (!archivoSoporte && !document.getElementById('gastoEsDocumentoSoporte').checked) { mostrarMensaje('mensajeGasto', 'Adjunta la foto o el PDF de la factura. Si el proveedor no está obligado a facturar, marca "Este proveedor no está obligado a facturar" (documento soporte).', 'error'); return; }
     if (modoPagoCompraActual === 'completo' && !aprobadoPor) { mostrarMensaje('mensajeGasto', 'Selecciona quién aprobó esta compra.', 'error'); return; }
 
     const btn = document.getElementById('btnRegistrarGasto');
@@ -13233,7 +13238,18 @@
       return;
     }
 
-    mostrarMensaje('mensajeGasto', modoPagoCompraActual === 'credito' ? '✅ Factura registrada — quedó pendiente en Cartera → Cuentas por pagar.' : `✅ Compra registrada correctamente.${datos.numero_documento_soporte ? ' Documento soporte interno: ' + datos.numero_documento_soporte : ''}`, 'exito');
+    let avisoSoporte = '';
+    if (archivoSoporte) {
+      try {
+        const ext = (archivoSoporte.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
+        const ruta = `${fechaFactura.slice(0, 4)}/${Date.now()}_${String(numeroFactura).replace(/[^A-Za-z0-9_-]/g, '')}.${ext}`;
+        const { error: errSubir } = await supabaseClient.storage.from('soportes-compras').upload(ruta, archivoSoporte, { contentType: archivoSoporte.type || 'application/octet-stream' });
+        if (errSubir) throw errSubir;
+        if (modoPagoCompraActual !== 'credito') await supabaseClient.rpc('fn_gasto_adjuntar_soporte', { p_monto: monto, p_fecha: fechaFactura, p_path: ruta });
+      } catch (e) { avisoSoporte = ' ⚠️ La compra quedó registrada, pero no se pudo guardar la foto: guárdala en tu equipo y súbela luego.'; }
+    }
+    document.getElementById('gastoArchivoSoporte').value = '';
+    mostrarMensaje('mensajeGasto', (modoPagoCompraActual === 'credito' ? '✅ Factura registrada — quedó pendiente en Cartera → Cuentas por pagar.' : `✅ Compra registrada correctamente.${datos.numero_documento_soporte ? ' Documento soporte interno: ' + datos.numero_documento_soporte : ''}`) + avisoSoporte, avisoSoporte ? 'error' : 'exito');
     document.getElementById('gastoEsDocumentoSoporte').checked = false;
     document.getElementById('gastoDescripcion').value = '';
     document.getElementById('gastoMonto').value = '';
