@@ -24769,8 +24769,9 @@
       <div class="panel" style="max-width:none;max-height:none;margin-bottom:16px;">
         <h2 style="margin-top:0;">📒 Provisión mensual en la contabilidad</h2>
         <div style="font-size:12.5px;line-height:1.5;margin-bottom:8px;">Cada mes se registra lo que se debe ir apartando: <strong>gasto de impuestos (5405) contra impuestos por pagar (2404)</strong>. Es el acumulado estimado a fin de mes menos lo ya provisionado, así que puedes repetirlo sin duplicar (si la estimación baja, se registra un ajuste a la baja). Escenario usado: <strong>${{ mayor: 'el mayor entre SIMPLE y renta ordinaria + ICA (prudente)', simple: 'Régimen SIMPLE', ordinario: 'renta ordinaria + ICA' }[cfg.escenario_provision] || cfg.escenario_provision}</strong>. En el ICA mínimo se va causando de a 1/12 por mes. Al registrar la declaración anual del SIMPLE, el ERP descuenta lo ya provisionado para no duplicar el gasto.</div>
+        ${cfg.provision_desde ? `<div style="font-size:12.5px;margin-bottom:8px;">La provisión empieza desde la inauguración del almacén: <strong>${new Date(cfg.provision_desde + 'T00:00:00').toLocaleDateString('es-CO')}</strong>.</div>` : '<div style="background:var(--tinte-ambar);border-radius:var(--radius-md);padding:10px 14px;margin-bottom:10px;font-size:12.5px;">⏸️ <strong>La provisión está en espera:</strong> se activa cuando se inaugure el almacén. Cuando tengan la fecha, regístrala en los parámetros de abajo ("La provisión empieza desde") y el botón se habilita.</div>'}
         <div style="font-size:12.5px;margin-bottom:8px;"><strong>Provisionado en ${d.anio}:</strong> ${m(provisiones.reduce((a, x) => a + Number(x.monto), 0))}${provisiones.length ? ' · ' + provisiones.map(x => 'mes ' + x.mes + ': ' + m(x.monto)).join(' · ') : ' (todavía nada)'}</div>
-        ${puedeEditar ? `<div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+        ${puedeEditar && cfg.provision_desde ? `<div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
           <div><label for="pvMes" style="font-size:11px;">Provisionar hasta el mes</label>
             <select id="pvMes" style="padding:9px 10px;">${Array.from({ length: (d.anio === new Date().getFullYear() ? new Date().getMonth() + 1 : 12) }, (_, i) => `<option value="${i + 1}" ${i + 1 === (d.anio === new Date().getFullYear() ? new Date().getMonth() + 1 : 12) ? 'selected' : ''}>${['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'][i]}</option>`).join('')}</select></div>
           <button class="btn-secundario" style="width:auto;margin:0;" onclick="simularProvisionImpuestos()">Ver cuánto se registraría</button>
@@ -24785,6 +24786,7 @@
           <div><label for="pvComercial">Comercial y servicios (por mil)</label><input type="number" step="0.1" id="pvComercial" value="${cfg.ica_tarifa_comercial_servicios_x_mil}"></div>
           <div><label for="pvMinimo">Pago mínimo (UVT)</label><input type="number" step="0.5" id="pvMinimo" value="${cfg.ica_minimo_uvt}"></div>
           <div><label for="pvAcuerdo">Acuerdo municipal</label><input type="text" id="pvAcuerdo" value="${escaparHtml(cfg.ica_acuerdo || '')}"></div>
+          <div><label for="pvDesde">La provisión empieza desde (inauguración del almacén)</label><input type="date" id="pvDesde" value="${cfg.provision_desde || ''}"></div>
           <div><label for="pvEscenario">Escenario de la provisión mensual</label>
             <select id="pvEscenario">${[['mayor', 'El mayor de los dos (prudente)'], ['simple', 'Régimen SIMPLE'], ['ordinario', 'Renta ordinaria + ICA']].map(([v, t]) => `<option value="${v}" ${cfg.escenario_provision === v ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
           <div><label for="pvTopeIng">Tope de ingresos para declarar (UVT)</label><input type="number" id="pvTopeIng" value="${cfg.tope_ingresos_uvt}"></div>
@@ -24891,7 +24893,7 @@
       await llamarReporteContable('fn_prevision_guardar_config', { p: {
         ica_tarifa_industrial_x_mil: document.getElementById('pvIndustrial').value, ica_tarifa_comercial_servicios_x_mil: document.getElementById('pvComercial').value,
         ica_minimo_uvt: document.getElementById('pvMinimo').value, ica_acuerdo: document.getElementById('pvAcuerdo').value,
-        escenario_provision: document.getElementById('pvEscenario').value, tope_ingresos_uvt: document.getElementById('pvTopeIng').value, tope_patrimonio_uvt: document.getElementById('pvTopePat').value,
+        provision_desde: document.getElementById('pvDesde').value, escenario_provision: document.getElementById('pvEscenario').value, tope_ingresos_uvt: document.getElementById('pvTopeIng').value, tope_patrimonio_uvt: document.getElementById('pvTopePat').value,
       } });
     } catch (e) { mostrarMensaje('mensajeContaImp', 'No se pudo guardar: ' + e.message, 'error'); return; }
     mostrarMensaje('mensajeContaImp', '✅ Parámetros guardados.', 'exito');
