@@ -13281,7 +13281,7 @@
         }
       } else {
         const t = e.value.trim(); datos[it.clave] = t || null;
-        if (it.obligatorio && t.length < 15) return { error: 'Escribe con qué proveedores comparaste (mínimo 3) y por qué elegiste este.' };
+        if (it.obligatorio && t.length < 15) return { error: 'Escribe por qué elegiste este proveedor (precio, calidad, garantía, entrega...).' };
       }
     }
     const fuente = (document.getElementById('gastoFuente') || {}).value || 'propios';
