@@ -1454,6 +1454,13 @@
           <button type="button" class="btn-mini editar" onclick="agregarFilaPagoAcademia()">+ Agregar otro método</button>
         </div>
 
+        <div style="margin:12px 0;padding:10px 12px;border:1.5px solid #f1e2ec;border-radius:var(--radius-md);">
+          <div style="font-weight:700;font-size:13px;">🧾 ¿El cliente quiere factura electrónica?</div>
+          <div style="display:flex;gap:18px;margin-top:6px;font-size:13px;">
+            <label style="display:flex;gap:6px;align-items:center;margin:0;cursor:pointer;"><input type="radio" name="feQuiereAcademia" value="si"> Sí, la quiere</label>
+            <label style="display:flex;gap:6px;align-items:center;margin:0;cursor:pointer;"><input type="radio" name="feQuiereAcademia" value="no"> No, solo recibo del ERP</label>
+          </div>
+        </div>
         <button class="btn-principal" id="btnRegistrarVentaAcademia" onclick="confirmarRegistrarVentaAcademia()">Registrar venta</button>
         <div class="mensaje" id="mensajeVentaAcademia"></div>
         <div style="display:flex;gap:8px;margin-top:10px;">
@@ -17488,6 +17495,31 @@
   }
 
   let pedidosCanalCache = [];
+  let fePrefPedidos = {};   // { pedido_id: true|false } — ¿el cliente quiere factura electrónica?
+
+  function bloqueFacturaPedido(p) {
+    const v = fePrefPedidos[p.id];
+    const op = (val, txt) => `<option value="${val}" ${String(v) === val ? 'selected' : ''}>${txt}</option>`;
+    return `<div style="font-size:12px;margin-bottom:6px;">🧾 <strong>Factura electrónica</strong> —
+      <select onchange="guardarPreferenciaFacturaPedido('${p.id}', this.value)" style="width:auto;padding:4px 8px;${v === undefined ? 'border-color:var(--rojo-error);' : ''}">
+        <option value="" ${v === undefined ? 'selected' : ''}>Falta preguntar al cliente</option>${op('true', 'Sí la quiere')}${op('false', 'No la quiere')}
+      </select></div>`;
+  }
+
+  async function guardarPreferenciaFacturaPedido(id, valor) {
+    if (valor === '') return;
+    const { error } = await supabaseClient.rpc('fn_fe_marcar_preferencia_origen', { p_origen: 'pedido_canal', p_ref: id, p_quiere: valor === 'true' });
+    if (error) { mostrarMensaje('mensajePedidosCanal', 'No se pudo guardar: ' + error.message, 'error'); return; }
+    fePrefPedidos[id] = valor === 'true';
+    cargarPedidosCanal();
+  }
+
+  // Obliga a preguntar antes de cobrar o entregar un pedido.
+  function exigirDecisionFacturaPedido(id) {
+    if (fePrefPedidos[id] !== undefined) return true;
+    mostrarMensaje('mensajePedidosCanal', 'Antes de continuar, pregunta al cliente si quiere factura electrónica y márcalo en este pedido (🧾 Factura electrónica).', 'error');
+    return false;
+  }
 
   async function cargarPedidosCanal() {
     const contenedor = document.getElementById('listaPedidosCanal');
@@ -17505,6 +17537,11 @@
 
     const { pedidos } = await resp.json();
     pedidosCanalCache = pedidos || [];
+    fePrefPedidos = {};
+    try {
+      const { data: prefs } = await supabaseClient.from('fe_preferencia_factura').select('origen_id, quiere').eq('origen', 'pedido_canal').in('origen_id', pedidosCanalCache.map(x => x.id));
+      (prefs || []).forEach(r => { fePrefPedidos[r.origen_id] = r.quiere; });
+    } catch (e) { /* sin permiso: se muestra "Falta preguntar" */ }
     const idsEnvio = pedidosCanalCache.filter(p => p.estado === 'listo_despacho' || p.estado === 'entregado').map(p => p.id);
     envioPedidosCache = {};
     if (idsEnvio.length) {
@@ -17591,7 +17628,7 @@
               <span style="text-align:right;font-weight:700;">${formatearMoneda(p.total_pedido)}</span>
               <span><span class="badge-estado-pedido" style="background:${colorEstado.bg};color:${colorEstado.color};">${etiquetasEstado[p.estado] || p.estado}</span></span>
             </div>
-            <div class="tabla-lista-detalle" style="display:block;">${lineaMedio}${acciones}<div data-envio-pedido="${p.id}">${bloqueEnvioPedido(p)}</div>
+            <div class="tabla-lista-detalle" style="display:block;">${lineaMedio}${bloqueFacturaPedido(p)}${acciones}<div data-envio-pedido="${p.id}">${bloqueEnvioPedido(p)}</div>
               <button class="btn-mini editar" style="margin-top:8px;" onclick="abrirTrazaPedido('${p.id}')">🧭 Ver trazabilidad</button></div>
           `;
         }).join('')}
@@ -17845,6 +17882,7 @@
   let pedidoPagoContexto = null; // { pedidoId, tipoPago, montoRequerido }
 
   function abrirPanelPagoPedido(pedidoId, tipoPago, montoRequerido) {
+    if (!exigirDecisionFacturaPedido(pedidoId)) return;
     const panel = document.getElementById(`panelPagoPedido-${pedidoId}`);
     const yaAbierto = !panel.classList.contains('oculto');
     document.querySelectorAll('[id^="panelPagoPedido-"]').forEach(p => p.classList.add('oculto'));
@@ -18030,6 +18068,7 @@
   }
 
   async function entregarPedidoSinSaldoUI(pedidoId) {
+    if (!exigirDecisionFacturaPedido(pedidoId)) return;
     const resp = await fetch(WORKER_URL + '/api/pos/pedidos-canal/entregar-sin-saldo', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
@@ -27173,6 +27212,7 @@
     ocultarMensaje('mensajeVentaAcademia');
 
     if (carritoAcademia.length === 0) { mostrarMensaje('mensajeVentaAcademia', 'Agrega al menos una clase o un kit a la lista.', 'error'); return; }
+    if (!document.querySelector('input[name="feQuiereAcademia"]:checked')) { mostrarMensaje('mensajeVentaAcademia', 'Pregunta al cliente si quiere factura electrónica y marca Sí o No.', 'error'); return; }
     if ((telefono || correo) && !aceptaTratamientoDatos) { mostrarMensaje('mensajeVentaAcademia', 'Marca la casilla de autorización de tratamiento de datos, o borra el teléfono/correo si el cliente no autoriza.', 'error'); return; }
     const hayClasePresencial = carritoAcademia.some(i => i.tipo === 'clase' && i.subarea === 'clase_presencial');
     if (hayClasePresencial && !turnoActivoActual) { mostrarMensaje('mensajeVentaAcademia', 'Las clases presenciales requieren un turno de caja de Tienda abierto (pasan por la caja física). Los demás ingresos (YouTube, cursos virtuales, digitales) se pueden registrar sin turno abierto.', 'error'); return; }
@@ -27263,9 +27303,17 @@
       if (respAgendar.ok) clasesAgendadas++; else clasesFallidas++;
     }
 
+    let avisoFacturaAcademia = '';
+    try {
+      const quiere = document.querySelector('input[name="feQuiereAcademia"]:checked')?.value === 'si';
+      const { error: errPref } = await supabaseClient.rpc('fn_fe_marcar_preferencia_origen', { p_origen: 'venta_academia', p_ref: String(datos.venta_id), p_quiere: quiere });
+      if (errPref) throw errPref;
+      avisoFacturaAcademia = quiere ? ' 🧾 El cliente pidió factura electrónica: emítela en la DIAN (queda en "Por facturar").' : ' Sin factura electrónica: solo recibo del ERP.';
+    } catch (e) { avisoFacturaAcademia = ' ⚠️ No se pudo guardar si el cliente quería factura electrónica: márcala luego en Facturación electrónica.'; }
+    document.querySelectorAll('input[name="feQuiereAcademia"]').forEach(r => { r.checked = false; });
     btn.disabled = false;
     btn.textContent = 'Registrar venta';
-    mostrarMensaje('mensajeVentaAcademia', `✅ Venta registrada correctamente.${clasesAgendadas > 0 ? ` ${clasesAgendadas} clase(s) agendada(s) en el calendario.` : ''}${clasesFallidas > 0 ? ` ⚠️ ${clasesFallidas} clase(s) no se pudieron agendar — revisa el calendario manualmente.` : ''}`, clasesFallidas > 0 ? 'error' : 'exito');
+    mostrarMensaje('mensajeVentaAcademia', `✅ Venta registrada correctamente.${avisoFacturaAcademia}${clasesAgendadas > 0 ? ` ${clasesAgendadas} clase(s) agendada(s) en el calendario.` : ''}${clasesFallidas > 0 ? ` ⚠️ ${clasesFallidas} clase(s) no se pudieron agendar — revisa el calendario manualmente.` : ''}`, clasesFallidas > 0 ? 'error' : 'exito');
 
     ultimaVentaCache = {
       consecutivo: datos.venta_id ? String(datos.venta_id).slice(0, 8).toUpperCase() : 'ACADEMY',
