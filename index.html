@@ -2004,6 +2004,10 @@
       </div>
       <div id="feResultadoImportacion" style="margin-top:12px;"></div>
     </div>
+    <div class="panel" style="max-width:none;max-height:none;margin-bottom:14px;">
+      <div style="font-weight:700;">📂 Carpeta de facturas de la DIAN (automático)</div>
+      <div id="feCarpetaPanel" style="font-size:12.5px;line-height:1.55;margin-top:6px;"></div>
+    </div>
     <div id="feListaPendientes"><div class="cargando">Cargando...</div></div>
   </div>
 
@@ -21274,6 +21278,7 @@
     } else {
       mostrarSubTabGrupo('fe', 'subtabFePendientes', document.querySelector('[data-subtab-btn="fe"]'));
       await cargarFePendientes();
+      iniciarCarpetaFe();
     }
   }
 
@@ -21425,8 +21430,8 @@
     renderizarImportacionFe();
   }
 
-  function candidatasVentaFe(f) {
-    return cacheFePendientes.filter(v => Math.round(Number(v.total)) === f.total)
+  function candidatasVentaFe(f, lista) {
+    return (lista || cacheFePendientes).filter(v => Math.round(Number(v.total)) === f.total)
       .sort((a, b) => {
         const da = (a.cliente.numero_documento === f.documentoCliente ? 0 : 1) + Math.abs(new Date(a.fecha) - new Date(f.fecha)) / 864e5 / 1000;
         const db = (b.cliente.numero_documento === f.documentoCliente ? 0 : 1) + Math.abs(new Date(b.fecha) - new Date(f.fecha)) / 864e5 / 1000;
@@ -21434,11 +21439,155 @@
       });
   }
 
+  // Coincidencia segura para registrar sola: mismo valor, mismo cliente (o consumidor final) y fecha cercana.
+  function candidatasEstrictasFe(f, lista) {
+    return candidatasVentaFe(f, lista).filter(v =>
+      (v.cliente.consumidor_final || v.cliente.numero_documento === f.documentoCliente) &&
+      Math.abs(new Date(v.fecha) - new Date(f.fecha)) <= 7 * 864e5);
+  }
+
+  // --- Carpeta vigilada: el ERP revisa solo los ZIP/XML nuevos de la DIAN ---
+  const FE_CARPETA_OK = typeof window.showDirectoryPicker === 'function';
+  const FE_PROC_CLAVE = 'fe_carpeta_procesados_v1';
+  let feCarpetaHandle = null, feCarpetaTimer = null, feEscaneando = false, feCarpetaUltimo = null, feCarpetaPermiso = false;
+
+  function feProcesados() { try { return new Set(JSON.parse(localStorage.getItem(FE_PROC_CLAVE) || '[]')); } catch (e) { return new Set(); } }
+  function feMarcarProcesado(clave) { try { const s = feProcesados(); s.add(clave); localStorage.setItem(FE_PROC_CLAVE, JSON.stringify([...s].slice(-2000))); } catch (e) { /* sin almacenamiento */ } }
+
+  function feIdb() {
+    return new Promise((ok, mal) => { const r = indexedDB.open('lana-rosa-fe', 1); r.onupgradeneeded = () => r.result.createObjectStore('k'); r.onsuccess = () => ok(r.result); r.onerror = () => mal(r.error); });
+  }
+  async function feIdbGuardar(valor) { const db = await feIdb(); return new Promise((ok, mal) => { const t = db.transaction('k', 'readwrite'); t.objectStore('k').put(valor, 'carpeta'); t.oncomplete = ok; t.onerror = () => mal(t.error); }); }
+  async function feIdbLeer() { const db = await feIdb(); return new Promise((ok, mal) => { const q = db.transaction('k').objectStore('k').get('carpeta'); q.onsuccess = () => ok(q.result || null); q.onerror = () => mal(q.error); }); }
+
+  function renderizarPanelCarpetaFe() {
+    const el = document.getElementById('feCarpetaPanel');
+    if (!el) return;
+    if (!FE_CARPETA_OK) { el.innerHTML = 'Esta función necesita Google Chrome o Microsoft Edge en el computador. En este navegador usa el botón de subir el ZIP.'; return; }
+    const auto = feCarpetaHandle && feCarpetaPermiso;
+    el.innerHTML = `
+      <div style="opacity:.85;">Elige una vez la carpeta donde se guardan los ZIP de la DIAN. Mientras el ERP esté abierto, revisa la carpeta cada 30 segundos, lee las facturas nuevas y las registra solas cuando coincide <strong>una sola venta</strong> (mismo valor, mismo cliente y fecha cercana). Si hay duda, te las muestra arriba para que elijas.</div>
+      <div style="margin-top:8px;">${feCarpetaHandle ? `Carpeta: <strong>${escaparHtml(feCarpetaHandle.name)}</strong> · ${auto ? '🟢 vigilando' + (feCarpetaUltimo ? ' (última revisión ' + feCarpetaUltimo.toLocaleTimeString('es-CO') + ')' : '') : '🟠 desconectada: pulsa "Reconectar"'}` : 'Aún no has elegido carpeta.'}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+        <button class="btn-secundario" style="width:auto;margin:0;" onclick="elegirCarpetaFe()">📂 ${feCarpetaHandle ? 'Cambiar carpeta' : 'Elegir carpeta'}</button>
+        ${feCarpetaHandle && !auto ? '<button class="btn-principal" style="width:auto;margin:0;" onclick="reconectarCarpetaFe()">🔌 Reconectar</button>' : ''}
+        ${auto ? '<button class="btn-secundario" style="width:auto;margin:0;" onclick="escanearCarpetaFe(true)">🔄 Revisar ahora</button>' : ''}
+      </div>
+      <div style="font-size:11.5px;opacity:.7;margin-top:8px;">Chrome no deja elegir la carpeta "Descargas" directamente: crea una carpeta (por ejemplo "Facturas DIAN") y, en Chrome → Configuración → Descargas, ponla como ubicación de descarga.</div>`;
+  }
+
+  async function iniciarCarpetaFe() {
+    renderizarPanelCarpetaFe();
+    if (!FE_CARPETA_OK) return;
+    try {
+      feCarpetaHandle = await feIdbLeer();
+      if (feCarpetaHandle) feCarpetaPermiso = (await feCarpetaHandle.queryPermission({ mode: 'read' })) === 'granted';
+    } catch (e) { feCarpetaHandle = null; }
+    renderizarPanelCarpetaFe();
+    if (feCarpetaPermiso) arrancarVigilanciaFe();
+  }
+
+  async function elegirCarpetaFe() {
+    try {
+      const h = await window.showDirectoryPicker({ id: 'facturas-dian', mode: 'read' });
+      feCarpetaHandle = h; feCarpetaPermiso = true;
+      await feIdbGuardar(h);
+      arrancarVigilanciaFe();
+    } catch (e) {
+      if (e.name !== 'AbortError') mostrarMensaje('mensajeFe', 'No se pudo abrir la carpeta: ' + e.message + ' (si es "Descargas", crea otra carpeta).', 'error');
+    }
+    renderizarPanelCarpetaFe();
+  }
+
+  async function reconectarCarpetaFe() {
+    try {
+      feCarpetaPermiso = (await feCarpetaHandle.requestPermission({ mode: 'read' })) === 'granted';
+      if (feCarpetaPermiso) arrancarVigilanciaFe();
+    } catch (e) { mostrarMensaje('mensajeFe', 'No se pudo reconectar: ' + e.message, 'error'); }
+    renderizarPanelCarpetaFe();
+  }
+
+  function arrancarVigilanciaFe() {
+    clearInterval(feCarpetaTimer);
+    escanearCarpetaFe();
+    feCarpetaTimer = setInterval(() => escanearCarpetaFe(), 30000);
+  }
+
+  async function xmlsDeArchivoFe(archivo) {
+    if (/\.zip$/i.test(archivo.name)) {
+      const zip = await JSZip.loadAsync(await archivo.arrayBuffer());
+      const r = [];
+      for (const nombre of Object.keys(zip.files)) if (/\.xml$/i.test(nombre) && !zip.files[nombre].dir) r.push({ origen: archivo.name + ' › ' + nombre, texto: await zip.files[nombre].async('string') });
+      return r;
+    }
+    return [{ origen: archivo.name, texto: await archivo.text() }];
+  }
+
+  async function escanearCarpetaFe(manual) {
+    if (feEscaneando || !feCarpetaHandle || !feCarpetaPermiso) return;
+    feEscaneando = true;
+    try {
+      const hoy = fechaLocalIso(), desde = fechaLocalIso(new Date(Date.now() - 120 * 864e5));
+      const procesados = feProcesados();
+      const nuevos = [];
+      for await (const entrada of feCarpetaHandle.values()) {
+        if (entrada.kind !== 'file' || !/\.(zip|xml)$/i.test(entrada.name)) continue;
+        const archivo = await entrada.getFile();
+        const clave = `${archivo.name}|${archivo.lastModified}|${archivo.size}`;
+        if (!procesados.has(clave)) nuevos.push({ archivo, clave });
+      }
+      feCarpetaUltimo = new Date();
+      if (!nuevos.length) { if (manual) mostrarMensaje('mensajeFe', 'No hay archivos nuevos en la carpeta.', 'exito'); return; }
+      const [pendientes, emitidas] = await Promise.all([
+        llamarReporteContable('fn_fe_ventas', { p_desde: desde, p_hasta: hoy, p_solo_pendientes: true }),
+        llamarReporteContable('fn_fe_emitidos', { p_desde: '2000-01-01', p_hasta: '2999-12-31', p_tipo: 'factura' }),
+      ]);
+      const ya = new Set(emitidas.filter(d => d.estado === 'emitida').flatMap(d => [d.cufe, `${d.prefijo || ''}${d.numero}`].filter(Boolean)));
+      let auto = 0, revisar = 0;
+      for (const { archivo, clave } of nuevos) {
+        let xmls;
+        try { xmls = await xmlsDeArchivoFe(archivo); } catch (e) { feImportadas.push({ origen: archivo.name, error: 'No se pudo abrir el archivo: ' + e.message }); feMarcarProcesado(clave); continue; }
+        let pendienteRevision = false;
+        for (const x of xmls) {
+          const f = { origen: x.origen, clave, ...leerFacturaXmlDian(x.texto) };
+          if (f.error) { feImportadas.push(f); continue; }
+          if ((f.cufe && ya.has(f.cufe)) || ya.has(f.idCompleto)) continue;   // ya estaba registrada
+          const unica = candidatasEstrictasFe(f, pendientes);
+          if (unica.length === 1) {
+            const v = unica[0];
+            const { error } = await supabaseClient.rpc('fn_fe_registrar_factura', {
+              p_origen: v.origen, p_origen_id: v.origen_id, p_prefijo: f.prefijo || null, p_numero: f.numero,
+              p_cufe: f.cufe || null, p_fecha: f.fecha, p_observaciones: 'Registrada automáticamente desde la carpeta de la DIAN',
+            });
+            if (!error) {
+              pendientes.splice(pendientes.indexOf(v), 1); ya.add(f.idCompleto);
+              feImportadas.push({ ...f, registrada: true, auto: true }); auto++;
+              continue;
+            }
+          }
+          feImportadas.push(f); pendienteRevision = true; revisar++;
+        }
+        if (!pendienteRevision) feMarcarProcesado(clave);
+      }
+      renderizarImportacionFe();
+      if (auto || revisar) {
+        mostrarMensaje('mensajeFe', `${auto ? '✅ ' + auto + ' factura(s) registrada(s) automáticamente. ' : ''}${revisar ? '⚠️ ' + revisar + ' necesita(n) que elijas la venta (arriba).' : ''}`, revisar ? 'error' : 'exito');
+        if (auto) await cargarFePendientes();
+      }
+    } catch (e) {
+      if (manual) mostrarMensaje('mensajeFe', 'No se pudo revisar la carpeta: ' + e.message, 'error');
+      if (e.name === 'NotAllowedError' || e.name === 'NotFoundError') { feCarpetaPermiso = false; clearInterval(feCarpetaTimer); }
+    } finally {
+      feEscaneando = false;
+      renderizarPanelCarpetaFe();
+    }
+  }
+
   function renderizarImportacionFe() {
     const cont = document.getElementById('feResultadoImportacion');
     cont.innerHTML = feImportadas.map((f, i) => {
       if (f.error) return `<div style="padding:10px;border-radius:8px;background:var(--tinte-rojo);margin-bottom:8px;font-size:12.5px;">⚠️ ${escaparHtml(f.origen)}: ${escaparHtml(f.error)}</div>`;
-      if (f.registrada) return `<div style="padding:10px;border-radius:8px;background:var(--tinte-verde);margin-bottom:8px;font-size:12.5px;">✅ Factura ${escaparHtml(f.idCompleto)} registrada.</div>`;
+      if (f.registrada) return `<div style="padding:10px;border-radius:8px;background:var(--tinte-verde);margin-bottom:8px;font-size:12.5px;">✅ Factura ${escaparHtml(f.idCompleto)} registrada${f.auto ? ' automáticamente' : ''}.</div>`;
       const cands = candidatasVentaFe(f);
       return `<div style="padding:10px;border:1px solid #f1e2ec;border-radius:8px;margin-bottom:8px;font-size:12.5px;">
         <div><strong>Factura ${escaparHtml(f.idCompleto)}</strong> · ${escaparHtml(f.fecha)} · ${formatearMoneda(f.total)} · ${escaparHtml(f.nombreCliente || 'Sin nombre')} (${escaparHtml(f.documentoCliente || 'sin documento')})</div>
@@ -21462,6 +21611,7 @@
     });
     if (error) { mostrarMensaje('mensajeFe', error.message, 'error'); return; }
     f.registrada = true;
+    if (f.clave) feMarcarProcesado(f.clave);
     const adv = (data && data.advertencias) || [];
     mostrarMensaje('mensajeFe', adv.length ? '⚠️ Factura registrada, pero revisa: ' + adv.join(' ') : '✅ Factura registrada.', adv.length ? 'error' : 'exito');
     await cargarFePendientes();
