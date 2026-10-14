@@ -24718,6 +24718,10 @@
       d = await llamarReporteContable('fn_prevision_impuestos', { p_anio: Number(selectAnio.value) });
       cfg = (await supabaseClient.from('prevision_impuestos_config').select('*').eq('id', 1).single()).data || {};
     } catch (e) { cont.innerHTML = `<div class="cargando">No se pudo calcular: ${escaparHtml(e.message)}</div>`; return; }
+    let provisiones = [], tarifasSimple = [];
+    try { provisiones = (await supabaseClient.from('prevision_impuestos_asientos').select('mes, monto, escenario, created_at, asiento_id').eq('anio', d.anio).order('created_at')).data || []; } catch (e) { /* sin historial */ }
+    try { tarifasSimple = (await llamarReporteContable('fn_simple_resumen', { p_anio: d.anio })).tarifas || []; } catch (e) { /* sin tarifas */ }
+    prevCache = { d, cfg, tarifasSimple };
     const m = (v) => v === null || v === undefined ? '—' : formatearMoneda(v);
     const mensual = (v) => v === null || v === undefined ? '—' : formatearMoneda(Math.round(v / 12));
     const fecha = new Date(d.hasta + 'T00:00:00').toLocaleDateString('es-CO');
@@ -24762,6 +24766,18 @@
         </div>
         <div style="font-size:12px;opacity:.75;margin-top:8px;line-height:1.5;">Si estás en el SIMPLE, el ICA va incluido en el pago del SIMPLE y no se paga aparte. Si tributas en renta ordinaria, se paga al municipio. Las líneas se agrupan así: Mercería y Marketplace = comercial, Taller de Tejido = industrial, Academy, Hotmart y YouTube = servicios.</div>
       </div>
+      <div class="panel" style="max-width:none;max-height:none;margin-bottom:16px;">
+        <h2 style="margin-top:0;">📒 Provisión mensual en la contabilidad</h2>
+        <div style="font-size:12.5px;line-height:1.5;margin-bottom:8px;">Cada mes se registra lo que se debe ir apartando: <strong>gasto de impuestos (5405) contra impuestos por pagar (2404)</strong>. Es el acumulado estimado a fin de mes menos lo ya provisionado, así que puedes repetirlo sin duplicar (si la estimación baja, se registra un ajuste a la baja). Escenario usado: <strong>${{ mayor: 'el mayor entre SIMPLE y renta ordinaria + ICA (prudente)', simple: 'Régimen SIMPLE', ordinario: 'renta ordinaria + ICA' }[cfg.escenario_provision] || cfg.escenario_provision}</strong>. En el ICA mínimo se va causando de a 1/12 por mes. Al registrar la declaración anual del SIMPLE, el ERP descuenta lo ya provisionado para no duplicar el gasto.</div>
+        <div style="font-size:12.5px;margin-bottom:8px;"><strong>Provisionado en ${d.anio}:</strong> ${m(provisiones.reduce((a, x) => a + Number(x.monto), 0))}${provisiones.length ? ' · ' + provisiones.map(x => 'mes ' + x.mes + ': ' + m(x.monto)).join(' · ') : ' (todavía nada)'}</div>
+        ${puedeEditar ? `<div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+          <div><label for="pvMes" style="font-size:11px;">Provisionar hasta el mes</label>
+            <select id="pvMes" style="padding:9px 10px;">${Array.from({ length: (d.anio === new Date().getFullYear() ? new Date().getMonth() + 1 : 12) }, (_, i) => `<option value="${i + 1}" ${i + 1 === (d.anio === new Date().getFullYear() ? new Date().getMonth() + 1 : 12) ? 'selected' : ''}>${['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'][i]}</option>`).join('')}</select></div>
+          <button class="btn-secundario" style="width:auto;margin:0;" onclick="simularProvisionImpuestos()">Ver cuánto se registraría</button>
+        </div><div id="pvSimulacion" style="margin-top:10px;"></div>` : ''}
+      </div>
+      <div class="panel" style="max-width:none;max-height:none;margin-bottom:16px;" id="pvTopes"></div>
+      <div class="panel" style="max-width:none;max-height:none;margin-bottom:16px;" id="pvPresupuesto"></div>
       ${puedeEditar ? `<div class="panel" style="max-width:none;max-height:none;">
         <h2 style="margin-top:0;">Parámetros del ICA</h2>
         <div class="grilla-2" style="gap:10px;">
@@ -24769,10 +24785,105 @@
           <div><label for="pvComercial">Comercial y servicios (por mil)</label><input type="number" step="0.1" id="pvComercial" value="${cfg.ica_tarifa_comercial_servicios_x_mil}"></div>
           <div><label for="pvMinimo">Pago mínimo (UVT)</label><input type="number" step="0.5" id="pvMinimo" value="${cfg.ica_minimo_uvt}"></div>
           <div><label for="pvAcuerdo">Acuerdo municipal</label><input type="text" id="pvAcuerdo" value="${escaparHtml(cfg.ica_acuerdo || '')}"></div>
+          <div><label for="pvEscenario">Escenario de la provisión mensual</label>
+            <select id="pvEscenario">${[['mayor', 'El mayor de los dos (prudente)'], ['simple', 'Régimen SIMPLE'], ['ordinario', 'Renta ordinaria + ICA']].map(([v, t]) => `<option value="${v}" ${cfg.escenario_provision === v ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+          <div><label for="pvTopeIng">Tope de ingresos para declarar (UVT)</label><input type="number" id="pvTopeIng" value="${cfg.tope_ingresos_uvt}"></div>
+          <div><label for="pvTopePat">Tope de patrimonio bruto para declarar (UVT)</label><input type="number" id="pvTopePat" value="${cfg.tope_patrimonio_uvt}"></div>
         </div>
         <button class="btn-principal" style="width:auto;" onclick="guardarPrevisionConfig()">Guardar</button>
         <div style="font-size:11px;opacity:.65;margin-top:6px;">Las tarifas del SIMPLE y la UVT se cargan en la pestaña Impuesto SIMPLE. La tabla de renta ordinaria usa la UVT del año y los rangos del art. 241 del Estatuto Tributario; el contador debe confirmarla.</div>
       </div>` : ''}`;
+    renderTopesYPresupuesto();
+  }
+
+  let prevCache = null;
+  const MESES_PREV = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+
+  async function simularProvisionImpuestos() {
+    const mes = Number(document.getElementById('pvMes').value), anio = prevCache.d.anio, out = document.getElementById('pvSimulacion');
+    out.innerHTML = 'Calculando...';
+    let r;
+    try { r = await llamarReporteContable('fn_prevision_provisionar', { p_anio: anio, p_mes: mes, p_simular: true }); }
+    catch (e) { out.innerHTML = `<span style="color:var(--rojo-error);">${escaparHtml(e.message)}</span>`; return; }
+    const m = (v) => formatearMoneda(v);
+    out.innerHTML = `<div class="resumen-cierre" style="margin-top:0;">
+        <div class="resumen-fila"><span>Estimado acumulado a fin de ${MESES_PREV[mes - 1]}</span><strong>${m(r.objetivo_acumulado)}</strong></div>
+        <div class="resumen-fila"><span>Ya provisionado en el año</span><strong>${m(r.provisionado_antes)}</strong></div>
+        <div class="resumen-fila"><span>${r.monto >= 0 ? 'Provisión a registrar' : 'Ajuste a la baja a registrar'}</span><strong>${m(Math.abs(r.monto))}</strong></div></div>
+      ${Math.abs(r.monto) < 1000 ? '<div style="font-size:12.5px;">No hay nada que registrar: la provisión ya está al día.</div>' : `<button class="btn-principal" style="width:auto;" onclick="confirmarProvisionImpuestos(${mes})">Registrar en la contabilidad (${m(Math.abs(r.monto))})</button>`}`;
+  }
+
+  async function confirmarProvisionImpuestos(mes) {
+    let r;
+    try { r = await llamarReporteContable('fn_prevision_provisionar', { p_anio: prevCache.d.anio, p_mes: mes, p_simular: false }); }
+    catch (e) { mostrarMensaje('mensajeContaImp', 'No se pudo registrar: ' + e.message, 'error'); return; }
+    mostrarMensaje('mensajeContaImp', r.sin_cambio ? 'La provisión ya estaba al día.' : '✅ Provisión registrada en la contabilidad (asiento en el Libro Diario).', 'exito');
+    await cargarPrevisionImpuestos();
+  }
+
+  // Topes para declarar y presupuesto del próximo año (cálculo en pantalla con los parámetros guardados)
+  function renderTopesYPresupuesto() {
+    const { d, cfg, tarifasSimple } = prevCache;
+    const m = (v) => v === null || v === undefined || Number.isNaN(v) ? '—' : formatearMoneda(Math.round(v));
+    const uvt = Number(d.valor_uvt || 0);
+    const topeIng = uvt * cfg.tope_ingresos_uvt, topePat = uvt * cfg.tope_patrimonio_uvt;
+    const estado = (valor, tope) => valor === null ? '—' : (valor >= tope ? '<strong style="color:var(--rojo-error);">supera el tope</strong>' : '<span style="color:var(--verde-exito);">por debajo del tope</span>');
+    document.getElementById('pvTopes').innerHTML = `
+      <h2 style="margin-top:0;">📏 Topes para declarar renta (año gravable ${d.anio})</h2>
+      <div style="font-size:12.5px;line-height:1.5;margin-bottom:8px;">Una persona natural debe declarar renta si en el año su patrimonio bruto es mayor a ${cfg.tope_patrimonio_uvt} UVT, o si sus ingresos, consumos con tarjeta, compras o consignaciones son iguales o superiores a ${cfg.tope_ingresos_uvt} UVT. Con la UVT de ${d.anio} (${m(uvt)}): patrimonio ${m(topePat)} e ingresos ${m(topeIng)}. Para el año gravable 2025 (UVT $49.799) eran $224.095.500 y $69.718.600. Los topes cambian cada año con la UVT.</div>
+      <div class="resumen-cierre" style="margin-top:0;">
+        <div class="resumen-fila"><span>Patrimonio bruto a la fecha (activos de los libros)</span><strong>${m(d.patrimonio_bruto)} · ${estado(d.patrimonio_bruto, topePat)}</strong></div>
+        <div class="resumen-fila"><span>Ingresos proyectados al año</span><strong>${m(d.ingresos_proyectados)} · ${estado(d.ingresos_proyectados, topeIng)}</strong></div>
+      </div>
+      <div style="font-size:11.5px;opacity:.7;margin-top:6px;">El ERP no ve los consumos con tarjeta ni las consignaciones personales: revisa tus extractos con el contador. Si estás en el SIMPLE, igual se presenta la declaración anual consolidada del SIMPLE.</div>`;
+
+    const ventas = Number(prevPresupuestoVentas || cfg.ventas_objetivo_siguiente), margen = Number(prevPresupuestoMargen ?? cfg.margen_objetivo_pct);
+    const industrial = (d.ica_lineas || []).filter(l => l.grupo === 'industrial').reduce((a, l) => a + Math.max(l.ingresos, 0), 0);
+    const totalLineas = (d.ica_lineas || []).reduce((a, l) => a + Math.max(l.ingresos, 0), 0);
+    const shareInd = totalLineas > 0 ? industrial / totalLineas : 0;
+    const tasaIca = (shareInd * d.ica_tarifas.industrial + (1 - shareInd) * d.ica_tarifas.comercial_servicios) / 1000;
+    const icaAnual = Math.max(ventas * tasaIca, uvt * cfg.ica_minimo_uvt);
+    const utilidad = ventas * margen / 100;
+    let renta = null;
+    if (uvt) {
+      const base = Math.max(utilidad, 0) / uvt; renta = 0;
+      for (const r of cfg.renta_tabla_uvt) { if (base >= r[0] && (r[1] === null || base < r[1])) renta = ((base - r[0]) * r[2] / 100 + r[3]) * uvt; }
+    }
+    let tarifaSimple = null;
+    if (uvt && tarifasSimple.length) {
+      const t = [...tarifasSimple].filter(x => ventas / uvt >= Number(x.desde_uvt) && (x.hasta_uvt === null || ventas / uvt < Number(x.hasta_uvt))).pop();
+      tarifaSimple = t ? Number(t.tarifa_pct) : null;
+    }
+    if (prevTarifaSimpleManual) tarifaSimple = Number(prevTarifaSimpleManual);
+    const simple = tarifaSimple === null ? null : ventas * tarifaSimple / 100;
+    const ordinario = renta === null ? null : renta + icaAnual;
+    const mayor = Math.max(simple ?? 0, ordinario ?? 0);
+    document.getElementById('pvPresupuesto').innerHTML = `
+      <h2 style="margin-top:0;">🎯 Presupuesto de impuestos para el próximo año</h2>
+      <div class="grilla-2" style="gap:10px;">
+        <div><label for="pvVentas">Ventas que aspiramos a lograr en el año (COP)</label><input type="number" id="pvVentas" value="${ventas}" oninput="prevPresupuestoVentas = this.value; renderTopesYPresupuesto();"></div>
+        <div><label for="pvMargen">Utilidad antes de impuestos sobre las ventas (%)</label><input type="number" id="pvMargen" step="0.5" value="${margen}" oninput="prevPresupuestoMargen = this.value; renderTopesYPresupuesto();"></div>
+        <div><label for="pvTarifaSimple">Tarifa del SIMPLE a probar (%) <span style="font-size:10px;opacity:.6;">(opcional si ya cargaste las tarifas)</span></label><input type="number" id="pvTarifaSimple" step="0.1" value="${prevTarifaSimpleManual || ''}" oninput="prevTarifaSimpleManual = this.value; renderTopesYPresupuesto();"></div>
+      </div>
+      <div class="tabla-lista" style="margin-top:10px;">
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:1.8fr 1fr 1fr;"><span>CONCEPTO (año completo)</span><span style="text-align:right;">AL AÑO</span><span style="text-align:right;">POR MES</span></div>
+        <div class="tabla-lista-fila" style="grid-template-columns:1.8fr 1fr 1fr;cursor:default;"><span>Ventas aspiradas · utilidad estimada ${m(utilidad)}</span><span style="text-align:right;">${m(ventas)}</span><span style="text-align:right;">${m(ventas / 12)}</span></div>
+        <div class="tabla-lista-fila" style="grid-template-columns:1.8fr 1fr 1fr;cursor:default;"><span>ICA (${(tasaIca * 1000).toFixed(1)} por mil promedio, mínimo ${cfg.ica_minimo_uvt} UVT)</span><span style="text-align:right;">${m(icaAnual)}</span><span style="text-align:right;">${m(icaAnual / 12)}</span></div>
+        <div class="tabla-lista-fila" style="grid-template-columns:1.8fr 1fr 1fr;cursor:default;"><span>Renta ordinaria de persona natural (sobre la utilidad)</span><span style="text-align:right;">${m(renta)}</span><span style="text-align:right;">${m(renta === null ? null : renta / 12)}</span></div>
+        <div class="tabla-lista-fila" style="grid-template-columns:1.8fr 1fr 1fr;font-weight:600;cursor:default;"><span>Total renta ordinaria + ICA</span><span style="text-align:right;">${m(ordinario)}</span><span style="text-align:right;">${m(ordinario === null ? null : ordinario / 12)}</span></div>
+        <div class="tabla-lista-fila" style="grid-template-columns:1.8fr 1fr 1fr;font-weight:600;cursor:default;"><span>Régimen SIMPLE (${tarifaSimple === null ? 'faltan las tarifas' : tarifaSimple + '% sobre las ventas, incluye ICA'})</span><span style="text-align:right;">${m(simple)}</span><span style="text-align:right;">${m(simple === null ? null : simple / 12)}</span></div>
+        <div class="tabla-lista-fila" style="grid-template-columns:1.8fr 1fr 1fr;font-weight:700;background:var(--gris-fondo);cursor:default;"><span>Presupuesto prudente (el mayor de los dos)</span><span style="text-align:right;">${m(mayor)}</span><span style="text-align:right;">${m(mayor / 12)}</span></div>
+      </div>
+      <div style="font-size:12px;opacity:.75;margin-top:8px;line-height:1.5;">Con ventas de ${m(ventas)} ${ventas >= topeIng ? '<strong>se superan</strong>' : 'no se superan'} los ${m(topeIng)} del tope de ingresos para declarar renta. Se calcula con la UVT de ${d.anio} (la del próximo año aún no se conoce) y sin deducciones ni rentas exentas. Es una guía para presupuestar: el contador define el valor final.</div>
+      ${puedeEditarPrev() ? `<button class="btn-secundario" style="width:auto;margin-top:8px;" onclick="guardarPresupuestoPrevision()">Guardar estas ventas y margen como objetivo</button>` : ''}`;
+  }
+  let prevPresupuestoVentas = null, prevPresupuestoMargen = null, prevTarifaSimpleManual = null;
+  const puedeEditarPrev = () => esRolFe('administrador', 'contador');
+
+  async function guardarPresupuestoPrevision() {
+    try { await llamarReporteContable('fn_prevision_guardar_config', { p: { ventas_objetivo_siguiente: String(prevPresupuestoVentas ?? prevCache.cfg.ventas_objetivo_siguiente), margen_objetivo_pct: String(prevPresupuestoMargen ?? prevCache.cfg.margen_objetivo_pct) } }); }
+    catch (e) { mostrarMensaje('mensajeContaImp', 'No se pudo guardar: ' + e.message, 'error'); return; }
+    mostrarMensaje('mensajeContaImp', '✅ Objetivo guardado.', 'exito');
   }
 
   async function guardarPrevisionConfig() {
@@ -24780,6 +24891,7 @@
       await llamarReporteContable('fn_prevision_guardar_config', { p: {
         ica_tarifa_industrial_x_mil: document.getElementById('pvIndustrial').value, ica_tarifa_comercial_servicios_x_mil: document.getElementById('pvComercial').value,
         ica_minimo_uvt: document.getElementById('pvMinimo').value, ica_acuerdo: document.getElementById('pvAcuerdo').value,
+        escenario_provision: document.getElementById('pvEscenario').value, tope_ingresos_uvt: document.getElementById('pvTopeIng').value, tope_patrimonio_uvt: document.getElementById('pvTopePat').value,
       } });
     } catch (e) { mostrarMensaje('mensajeContaImp', 'No se pudo guardar: ' + e.message, 'error'); return; }
     mostrarMensaje('mensajeContaImp', '✅ Parámetros guardados.', 'exito');
