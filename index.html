@@ -1336,9 +1336,9 @@
         <div class="resumen-pagos" id="resumenPagos"></div>
       </div>
       <div id="bloqueFacturaElectronica" style="margin:12px 0;padding:10px 12px;border:1.5px solid #f1e2ec;border-radius:var(--radius-md);">
-        <div style="font-weight:700;font-size:13px;">🧾 ¿El cliente quiere factura electrónica?</div>
+        <div style="font-weight:700;font-size:13px;">🧾 ¿Desea la factura electrónica?</div>
         <div style="display:flex;gap:18px;margin-top:6px;font-size:13px;">
-          <label style="display:flex;gap:6px;align-items:center;margin:0;cursor:pointer;"><input type="radio" name="feQuiere" value="si"> Sí, la quiere</label>
+          <label style="display:flex;gap:6px;align-items:center;margin:0;cursor:pointer;"><input type="radio" name="feQuiere" value="si"> Sí</label>
           <label style="display:flex;gap:6px;align-items:center;margin:0;cursor:pointer;"><input type="radio" name="feQuiere" value="no"> No, solo recibo del ERP</label>
         </div>
         <div style="font-size:11.5px;opacity:.7;margin-top:4px;">Si dice que sí, la factura se emite en la DIAN y el ERP la registra. Si dice que no, queda solo el recibo del ERP.</div>
@@ -1455,9 +1455,9 @@
         </div>
 
         <div style="margin:12px 0;padding:10px 12px;border:1.5px solid #f1e2ec;border-radius:var(--radius-md);">
-          <div style="font-weight:700;font-size:13px;">🧾 ¿El cliente quiere factura electrónica?</div>
+          <div style="font-weight:700;font-size:13px;">🧾 ¿Desea la factura electrónica?</div>
           <div style="display:flex;gap:18px;margin-top:6px;font-size:13px;">
-            <label style="display:flex;gap:6px;align-items:center;margin:0;cursor:pointer;"><input type="radio" name="feQuiereAcademia" value="si"> Sí, la quiere</label>
+            <label style="display:flex;gap:6px;align-items:center;margin:0;cursor:pointer;"><input type="radio" name="feQuiereAcademia" value="si"> Sí</label>
             <label style="display:flex;gap:6px;align-items:center;margin:0;cursor:pointer;"><input type="radio" name="feQuiereAcademia" value="no"> No, solo recibo del ERP</label>
           </div>
         </div>
@@ -7210,7 +7210,7 @@
     }
 
     if (!document.querySelector('input[name="feQuiere"]:checked')) {
-      mostrarMensaje('mensajeVenta', 'Pregunta al cliente si quiere factura electrónica y marca Sí o No.', 'error');
+      mostrarMensaje('mensajeVenta', 'Pregunta al cliente "¿Desea la factura electrónica?" y marca Sí o No.', 'error');
       return false;
     }
 
@@ -17502,7 +17502,7 @@
     const op = (val, txt) => `<option value="${val}" ${String(v) === val ? 'selected' : ''}>${txt}</option>`;
     return `<div style="font-size:12px;margin-bottom:6px;">🧾 <strong>Factura electrónica</strong> —
       <select onchange="guardarPreferenciaFacturaPedido('${p.id}', this.value)" style="width:auto;padding:4px 8px;${v === undefined ? 'border-color:var(--rojo-error);' : ''}">
-        <option value="" ${v === undefined ? 'selected' : ''}>Falta preguntar al cliente</option>${op('true', 'Sí la quiere')}${op('false', 'No la quiere')}
+        <option value="" ${v === undefined ? 'selected' : ''}>Falta preguntar al cliente</option>${op('true', 'Sí desea la factura')}${op('false', 'No la desea')}
       </select></div>`;
   }
 
@@ -17517,7 +17517,7 @@
   // Obliga a preguntar antes de cobrar o entregar un pedido.
   function exigirDecisionFacturaPedido(id) {
     if (fePrefPedidos[id] !== undefined) return true;
-    mostrarMensaje('mensajePedidosCanal', 'Antes de continuar, pregunta al cliente si quiere factura electrónica y márcalo en este pedido (🧾 Factura electrónica).', 'error');
+    mostrarMensaje('mensajePedidosCanal', 'Antes de continuar, pregunta al cliente "¿Desea la factura electrónica?" y márcalo en este pedido (🧾 Factura electrónica).', 'error');
     return false;
   }
 
@@ -21468,6 +21468,8 @@
     const cliente = hijoLocal(raiz, 'AccountingCustomerParty')[0];
     const total = primero(hijoLocal(raiz, 'LegalMonetaryTotal')[0] || raiz, 'PayableAmount');
     const cufe = [...raiz.children].find(h => h.localName === 'UUID')?.textContent.trim() || '';
+    // ProfileExecutionID: 1 = producción, 2 = pruebas/habilitación de la DIAN.
+    const esPrueba = ([...raiz.children].find(h => h.localName === 'ProfileExecutionID')?.textContent.trim() || '') === '2';
     const lineas = hijoLocal(raiz, 'InvoiceLine').map(l => {
       const item = hijoLocal(l, 'Item')[0];
       return {
@@ -21478,7 +21480,7 @@
     });
     const codigoPago = primero(hijoLocal(raiz, 'PaymentMeans')[0] || raiz, 'PaymentMeansCode');
     return {
-      lineas, codigoPago,
+      lineas, codigoPago, esPrueba,
       prefijo: m ? m[1] : '', numero: m ? m[2] : idCompleto, idCompleto, cufe,
       fecha: [...raiz.children].find(h => h.localName === 'IssueDate')?.textContent.trim() || '',
       total: Math.round(Number(total) || 0),
@@ -21505,7 +21507,7 @@
       }
     } catch (e) { cont.innerHTML = `<div class="cargando">No se pudo abrir el archivo: ${escaparHtml(e.message)}</div>`; return; }
     if (!cacheFePendientes.length) await cargarFePendientes();
-    feImportadas = xmls.map(x => ({ origen: x.origen, ...leerFacturaXmlDian(x.texto) }));
+    feImportadas = xmls.map(x => { const f = { origen: x.origen, ...leerFacturaXmlDian(x.texto) }; return f.esPrueba ? { ...f, error: `La factura ${f.idCompleto} es de PRUEBA (habilitación de la DIAN): no se registra como venta.` } : f; });
     renderizarImportacionFe();
   }
 
@@ -21630,6 +21632,7 @@
         for (const x of xmls) {
           const f = { origen: x.origen, clave, ...leerFacturaXmlDian(x.texto) };
           if (f.error) { feImportadas.push(f); continue; }
+          if (f.esPrueba) { feImportadas.push({ ...f, error: `La factura ${f.idCompleto} es de PRUEBA (habilitación de la DIAN): no se registra como venta.` }); continue; }
           if ((f.cufe && ya.has(f.cufe)) || ya.has(f.idCompleto)) continue;   // ya estaba registrada
           const unica = candidatasEstrictasFe(f, pendientes);
           if (unica.length === 1) {
@@ -27212,7 +27215,7 @@
     ocultarMensaje('mensajeVentaAcademia');
 
     if (carritoAcademia.length === 0) { mostrarMensaje('mensajeVentaAcademia', 'Agrega al menos una clase o un kit a la lista.', 'error'); return; }
-    if (!document.querySelector('input[name="feQuiereAcademia"]:checked')) { mostrarMensaje('mensajeVentaAcademia', 'Pregunta al cliente si quiere factura electrónica y marca Sí o No.', 'error'); return; }
+    if (!document.querySelector('input[name="feQuiereAcademia"]:checked')) { mostrarMensaje('mensajeVentaAcademia', 'Pregunta al cliente "¿Desea la factura electrónica?" y marca Sí o No.', 'error'); return; }
     if ((telefono || correo) && !aceptaTratamientoDatos) { mostrarMensaje('mensajeVentaAcademia', 'Marca la casilla de autorización de tratamiento de datos, o borra el teléfono/correo si el cliente no autoriza.', 'error'); return; }
     const hayClasePresencial = carritoAcademia.some(i => i.tipo === 'clase' && i.subarea === 'clase_presencial');
     if (hayClasePresencial && !turnoActivoActual) { mostrarMensaje('mensajeVentaAcademia', 'Las clases presenciales requieren un turno de caja de Tienda abierto (pasan por la caja física). Los demás ingresos (YouTube, cursos virtuales, digitales) se pueden registrar sin turno abierto.', 'error'); return; }
