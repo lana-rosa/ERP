@@ -19,6 +19,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
@@ -1993,6 +1994,15 @@
     </div>
     <div style="background:var(--tinte-azul);border-radius:var(--radius-md);padding:10px 14px;margin-bottom:14px;font-size:12.5px;line-height:1.5;">
       ℹ️ La DIAN espera la factura en el momento de la venta: emítela en el portal apenas vendas y regístrala aquí. Esta lista sirve para que no se quede ninguna. Aparecen las ventas de la tienda, las clases de la Academia y los pedidos cuando están pagados por completo o entregados.
+    </div>
+    <div class="panel" style="max-width:none;max-height:none;margin-bottom:14px;">
+      <div style="font-weight:700;">Facturar y traer la factura al ERP</div>
+      <div style="font-size:12.5px;opacity:.8;margin:4px 0 10px;line-height:1.5;">1) Emite la factura en el portal gratuito de la DIAN. 2) La DIAN te envía el correo con la factura (archivo ZIP con el XML y el PDF). 3) Sube ese ZIP o el XML aquí: el ERP lee el número, el CUFE y el valor, y lo une a la venta correcta.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <a class="btn-secundario" style="width:auto;margin:0;text-decoration:none;" href="https://www.dian.gov.co/impuestos/factura-electronica/facturacion-gratuita/Paginas/default.aspx" target="_blank" rel="noopener">🔗 Ir a la facturación gratuita de la DIAN</a>
+        <label class="btn-principal" style="width:auto;margin:0;cursor:pointer;">📤 Subir factura de la DIAN (ZIP o XML)<input type="file" accept=".zip,.xml" multiple style="display:none;" onchange="importarFacturasDian(this)"></label>
+      </div>
+      <div id="feResultadoImportacion" style="margin-top:12px;"></div>
     </div>
     <div id="feListaPendientes"><div class="cargando">Cargando...</div></div>
   </div>
@@ -21361,6 +21371,101 @@
             </div>` : ''}
         </div>`;
       }).join('')}`;
+  }
+
+  // --- Leer la factura electrónica que envía la DIAN (UBL 2.1; puede venir dentro de un AttachedDocument) ---
+  function leerFacturaXmlDian(texto) {
+    const parsear = (t) => new DOMParser().parseFromString(t, 'application/xml');
+    const hijoLocal = (raiz, nombre) => { const r = []; (function rec(n) { for (const h of n.children) { if (h.localName === nombre) r.push(h); rec(h); } })(raiz); return r; };
+    const primero = (raiz, nombre) => (hijoLocal(raiz, nombre)[0] || {}).textContent?.trim() || '';
+    let doc = parsear(texto);
+    if (doc.getElementsByTagName('parsererror').length) return { error: 'El archivo no es un XML válido.' };
+    // El correo de la DIAN trae un AttachedDocument con la factura dentro de <cbc:Description>.
+    if (doc.documentElement.localName === 'AttachedDocument') {
+      const incrustado = hijoLocal(doc.documentElement, 'Description').map(n => n.textContent).find(t => /<(\w+:)?(Invoice|CreditNote|DebitNote)[\s>]/.test(t));
+      if (!incrustado) return { error: 'No encontré la factura dentro del documento.' };
+      doc = parsear(incrustado.trim());
+      if (doc.getElementsByTagName('parsererror').length) return { error: 'La factura incluida en el archivo no se pudo leer.' };
+    }
+    const raiz = doc.documentElement;
+    if (raiz.localName !== 'Invoice') return { error: raiz.localName === 'CreditNote' || raiz.localName === 'DebitNote' ? 'Es una nota crédito/débito: por ahora solo se cargan facturas.' : 'No es una factura electrónica.' };
+    const idCompleto = [...raiz.children].find(h => h.localName === 'ID')?.textContent.trim() || '';
+    const m = idCompleto.match(/^([A-Za-z]*)(\d+)$/);
+    const cliente = hijoLocal(raiz, 'AccountingCustomerParty')[0];
+    const total = primero(hijoLocal(raiz, 'LegalMonetaryTotal')[0] || raiz, 'PayableAmount');
+    const cufe = [...raiz.children].find(h => h.localName === 'UUID')?.textContent.trim() || '';
+    return {
+      prefijo: m ? m[1] : '', numero: m ? m[2] : idCompleto, idCompleto, cufe,
+      fecha: [...raiz.children].find(h => h.localName === 'IssueDate')?.textContent.trim() || '',
+      total: Math.round(Number(total) || 0),
+      documentoCliente: cliente ? primero(cliente, 'CompanyID') : '',
+      nombreCliente: cliente ? (primero(cliente, 'RegistrationName') || primero(cliente, 'Name')) : '',
+    };
+  }
+
+  let feImportadas = [];
+
+  async function importarFacturasDian(input) {
+    const archivos = [...(input.files || [])];
+    input.value = '';
+    if (!archivos.length) return;
+    const cont = document.getElementById('feResultadoImportacion');
+    cont.innerHTML = '<div class="cargando">Leyendo...</div>';
+    const xmls = [];
+    try {
+      for (const a of archivos) {
+        if (/\.zip$/i.test(a.name)) {
+          const zip = await JSZip.loadAsync(await a.arrayBuffer());
+          for (const nombre of Object.keys(zip.files)) if (/\.xml$/i.test(nombre) && !zip.files[nombre].dir) xmls.push({ origen: a.name + ' › ' + nombre, texto: await zip.files[nombre].async('string') });
+        } else xmls.push({ origen: a.name, texto: await a.text() });
+      }
+    } catch (e) { cont.innerHTML = `<div class="cargando">No se pudo abrir el archivo: ${escaparHtml(e.message)}</div>`; return; }
+    if (!cacheFePendientes.length) await cargarFePendientes();
+    feImportadas = xmls.map(x => ({ origen: x.origen, ...leerFacturaXmlDian(x.texto) }));
+    renderizarImportacionFe();
+  }
+
+  function candidatasVentaFe(f) {
+    return cacheFePendientes.filter(v => Math.round(Number(v.total)) === f.total)
+      .sort((a, b) => {
+        const da = (a.cliente.numero_documento === f.documentoCliente ? 0 : 1) + Math.abs(new Date(a.fecha) - new Date(f.fecha)) / 864e5 / 1000;
+        const db = (b.cliente.numero_documento === f.documentoCliente ? 0 : 1) + Math.abs(new Date(b.fecha) - new Date(f.fecha)) / 864e5 / 1000;
+        return da - db;
+      });
+  }
+
+  function renderizarImportacionFe() {
+    const cont = document.getElementById('feResultadoImportacion');
+    cont.innerHTML = feImportadas.map((f, i) => {
+      if (f.error) return `<div style="padding:10px;border-radius:8px;background:var(--tinte-rojo);margin-bottom:8px;font-size:12.5px;">⚠️ ${escaparHtml(f.origen)}: ${escaparHtml(f.error)}</div>`;
+      if (f.registrada) return `<div style="padding:10px;border-radius:8px;background:var(--tinte-verde);margin-bottom:8px;font-size:12.5px;">✅ Factura ${escaparHtml(f.idCompleto)} registrada.</div>`;
+      const cands = candidatasVentaFe(f);
+      return `<div style="padding:10px;border:1px solid #f1e2ec;border-radius:8px;margin-bottom:8px;font-size:12.5px;">
+        <div><strong>Factura ${escaparHtml(f.idCompleto)}</strong> · ${escaparHtml(f.fecha)} · ${formatearMoneda(f.total)} · ${escaparHtml(f.nombreCliente || 'Sin nombre')} (${escaparHtml(f.documentoCliente || 'sin documento')})</div>
+        <div style="opacity:.65;word-break:break-all;">CUFE: ${escaparHtml(f.cufe || 'no encontrado')}</div>
+        ${cands.length ? `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px;">
+          <select id="feImpVenta-${i}" style="max-width:420px;">${cands.map(v => `<option value="${v.origen}:${v.origen_id}">${escaparHtml((ORIGEN_VENTA_FE[v.origen] || v.origen) + ' · ' + (v.consecutivo || '') + ' · ' + v.fecha + ' · ' + (v.cliente.consumidor_final ? 'Consumidor final' : v.cliente.nombre))}</option>`).join('')}</select>
+          <button class="btn-mini" style="flex:0 0 auto;padding:7px 12px;background:var(--verde-exito);color:#fff;" onclick="registrarFacturaImportada(${i})">✅ Registrar en esa venta</button></div>`
+        : '<div style="margin-top:6px;">No hay una venta pendiente con ese valor. Revisa el rango de fechas de arriba o que la venta esté registrada.</div>'}
+      </div>`;
+    }).join('');
+  }
+
+  async function registrarFacturaImportada(i) {
+    const f = feImportadas[i];
+    const sel = document.getElementById('feImpVenta-' + i);
+    if (!f || !sel) return;
+    const [origen, origenId] = sel.value.split(':');
+    const { data, error } = await supabaseClient.rpc('fn_fe_registrar_factura', {
+      p_origen: origen, p_origen_id: origenId, p_prefijo: f.prefijo || null, p_numero: f.numero,
+      p_cufe: f.cufe || null, p_fecha: f.fecha, p_observaciones: 'Cargada desde el archivo de la DIAN',
+    });
+    if (error) { mostrarMensaje('mensajeFe', error.message, 'error'); return; }
+    f.registrada = true;
+    const adv = (data && data.advertencias) || [];
+    mostrarMensaje('mensajeFe', adv.length ? '⚠️ Factura registrada, pero revisa: ' + adv.join(' ') : '✅ Factura registrada.', adv.length ? 'error' : 'exito');
+    await cargarFePendientes();
+    renderizarImportacionFe();
   }
 
   function alternarAccionFe(clave) {
