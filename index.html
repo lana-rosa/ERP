@@ -5376,7 +5376,7 @@
 <div id="pantallaFeDocumentos" class="oculto contenido">
   <div class="page-header">
     <h1>📄 Validar cotizaciones y facturas</h1>
-    <div class="subtitulo">Revisa el documento y marca cada casilla según lo que veas. El sistema aplica automáticamente las reglas del Instructivo de Pagos y del Manual Financiero.</div>
+    <div class="subtitulo">Revisa el documento y marca cada casilla según lo que veas. El sistema aplica las reglas del Instructivo de Pagos del Fondo Emprender (mayo de 2024): una cotización por compra (la del proveedor elegido, con máximo 90 días), la factura con los requisitos del art. 617 y los documentos que exige cada tipo de compra. Marca solo las casillas que aplican a tu rubro.</div>
   </div>
   <div class="grilla-2">
     <div class="panel no-exportar">
@@ -28791,28 +28791,48 @@
   }
 
   // --- Validación de documentos ---
+  // Checklist según el Instructivo de pagos del Fondo Emprender (mayo de 2024, v2): numerales 1.2 y 2.4.
   const camposChecklistCotizacion = [
     { campo: 'precio_unitario', label: 'Incluye precio unitario' },
-    { campo: 'descripcion_producto_servicio', label: 'Describe el producto/servicio' },
+    { campo: 'descripcion_producto_servicio', label: 'Describe el producto o servicio (denominación técnica y comercial)' },
+    { campo: 'cantidades', label: 'Indica cantidades y unidad de medida' },
+    { campo: 'impuestos_iva', label: 'Indica impuestos y tasas (IVA desglosado o nota de exento)' },
+    { campo: 'datos_contacto_proveedor', label: 'Trae los datos de contacto del proveedor (teléfono, correo, dirección)' },
     { campo: 'forma_pago', label: 'Indica forma de pago' },
     { campo: 'tiempos_entrega', label: 'Indica tiempos de entrega' },
-    { campo: 'garantias', label: 'Indica garantías' },
-    { campo: 'plazo_vigencia_oferta', label: 'Indica plazo de vigencia de la oferta' },
-    { campo: 'firma_proveedor', label: 'Tiene firma del proveedor' },
-    { campo: 'dirigida_a_empresa_correcta', label: 'Está dirigida a la empresa correcta' },
+    { campo: 'garantias', label: 'Indica garantías aplicables' },
+    { campo: 'plazo_vigencia_oferta', label: 'Indica hasta cuándo se sostiene la oferta' },
+    { campo: 'firma_proveedor', label: 'Está firmada por la empresa proveedora' },
+    { campo: 'dirigida_a_empresa_correcta', label: 'Está dirigida a nombre de la empresa' },
+    { campo: 'montaje_instalacion', label: 'Describe el montaje e instalaciones (maquinaria y adecuaciones)' },
     { campo: 'declara_proveedor_unico', label: '¿Declara proveedor único?' },
-    { campo: 'certificado_exclusividad', label: 'Si aplica, ¿tiene certificado de exclusividad?' },
+    { campo: 'certificado_exclusividad', label: 'Si es proveedor único: tiene certificación de exclusividad o distribuidor único' },
   ];
   const camposChecklistFactura = [
-    { campo: 'denominada_factura_venta', label: "Está denominada 'Factura de Venta'" },
+    { campo: 'denominada_factura_venta', label: "Está denominada expresamente 'Factura de venta'" },
     { campo: 'numero_consecutivo', label: 'Tiene numeración consecutiva' },
     { campo: 'cufe_presente', label: 'Tiene CUFE (código único de factura electrónica)' },
     { campo: 'qr_code_presente', label: 'Tiene código QR de validación DIAN' },
-    { campo: 'autorizacion_dian_vigente', label: 'El rango de autorización DIAN está vigente' },
+    { campo: 'autorizacion_dian_vigente', label: 'Muestra la autorización DIAN vigente (resolución, rango y vigencia)' },
+    { campo: 'dirigida_a_empresa_correcta', label: 'Está a nombre de la empresa, con su NIT' },
+    { campo: 'nit_coincide_cotizacion', label: 'El NIT del vendedor coincide con la cotización aprobada' },
+    { campo: 'descripcion_especifica', label: 'Describe específicamente lo vendido' },
+    { campo: 'iva_correcto', label: 'El IVA está discriminado y liquidado correctamente' },
+    { campo: 'valor_total_correcto', label: 'La sumatoria y el valor total son correctos' },
     { campo: 'sin_tachaduras', label: 'No tiene tachaduras ni enmendaduras' },
-    { campo: 'iva_correcto', label: 'El IVA está liquidado correctamente' },
-    { campo: 'nit_coincide_cotizacion', label: 'El NIT coincide con la cotización aprobada' },
-    { campo: 'dirigida_a_empresa_correcta', label: 'Está dirigida a la empresa correcta' },
+    { campo: 'calidad_tributaria', label: 'Indica la calidad tributaria (gran contribuyente, responsable de IVA, autorretenedor)' },
+    { campo: 'actividad_ica_tarifa', label: 'Indica la actividad de industria y comercio con su tarifa' },
+    { campo: 'valores_coinciden_cotizacion', label: 'Los valores coinciden con la cotización y con el contrato (forma de pago)' },
+    { campo: 'rut_proveedor_vigente', label: 'Tengo el RUT del proveedor con actividades CIIU, de menos de 1 año' },
+    { campo: 'no_conflicto_interes', label: 'El proveedor no es funcionario ni contratista del SENA/Fondo Emprender, ni familiar' },
+    { campo: 'registro_beneficiario', label: 'El proveedor está en el Registro de Beneficiarios de la plataforma (con pantallazo)' },
+    { campo: 'varias_entregas', label: 'Hay 2 o más entregas o desembolsos (insumos: exige contrato)', informativo: true },
+    { campo: 'ficha_tecnica', label: 'Tengo la ficha o especificaciones técnicas (maquinaria, equipos, muebles)' },
+    { campo: 'contrato_o_orden', label: 'Tengo el contrato u orden de compra (maquinaria, muebles, adecuaciones; más de 6 salarios mínimos: contrato)' },
+    { campo: 'garantia_fabricante', label: 'Tengo la garantía del fabricante o proveedor (maquinaria, muebles)' },
+    { campo: 'poliza', label: 'Tengo la póliza de cumplimiento y calidad (compras de más de 6 salarios mínimos; adecuaciones desde 6)' },
+    { campo: 'concepto_tecnico', label: 'Tengo el concepto técnico del profesional (adecuaciones)' },
+    { campo: 'tarjeta_profesional', label: 'Tengo la tarjeta profesional y los antecedentes disciplinarios (adecuaciones, máx. 3 meses)' },
   ];
 
   function renderizarChecklistFe() {
