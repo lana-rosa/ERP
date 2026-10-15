@@ -15784,6 +15784,28 @@
       </div>
       <div class="mensaje" id="mensajeOportunidades"></div>
     `;
+    hidratarFotosOportunidades();
+  }
+
+  // Fotos de referencia que suben las clientas desde la web (bucket PRIVADO «solicitudes-personalizadas», 15-oct-2026):
+  // se muestran con enlaces firmados de 1 hora. La URL guardada en la oportunidad sirve solo para sacar la ruta del archivo.
+  async function hidratarFotosOportunidades() {
+    try {
+      const ids = (oportunidadesCache || []).map(o => o.id);
+      if (!ids.length) return;
+      const { data } = await supabaseClient.from('oportunidades_venta').select('id, foto_referencia_url').in('id', ids).not('foto_referencia_url', 'is', null);
+      for (const fila of data || []) {
+        const cont = document.getElementById('opFotos-' + fila.id);
+        if (!cont) continue;
+        const urls = Array.isArray(fila.foto_referencia_url) ? fila.foto_referencia_url : [fila.foto_referencia_url];
+        for (const url of urls) {
+          const m = /\/solicitudes-personalizadas\/([^?]+)/.exec(String(url || ''));
+          if (!m) continue;
+          const { data: f } = await supabaseClient.storage.from('solicitudes-personalizadas').createSignedUrl(decodeURIComponent(m[1]), 3600);
+          if (f && f.signedUrl) cont.insertAdjacentHTML('beforeend', `<a href="${escaparHtml(f.signedUrl)}" target="_blank" rel="noopener" title="Ver foto de referencia"><img src="${escaparHtml(f.signedUrl)}" alt="Foto de referencia" style="width:54px;height:54px;object-fit:cover;border-radius:8px;"></a>`);
+        }
+      }
+    } catch (e) { /* si no se pueden firmar, la tarjeta queda sin fotos */ }
   }
 
   function enviarMensajeOportunidad(id) {
@@ -15809,6 +15831,7 @@
         <div style="font-size:11.5px;opacity:0.7;margin:3px 0;">${escaparHtml(o.descripcion)}</div>
         <div style="font-weight:700;font-size:13px;color:var(--rosa-principal);">${formatearMoneda(o.monto_estimado)}</div>
         ${o.notas ? `<div style="font-size:10.5px;opacity:0.55;margin-top:3px;">${escaparHtml(o.notas)}</div>` : ''}
+        <div id="opFotos-${o.id}" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;"></div>
         ${columna === 'cierre' ? `
           <div style="margin-top:6px;font-size:11px;font-weight:700;color:${esGanada ? 'var(--verde-exito)' : esPerdida ? 'var(--rojo-error)' : '#999'};">
             ${esGanada ? '🎉 Ganada' : esPerdida ? '❌ Perdida' : '⏳ Sin definir'}
