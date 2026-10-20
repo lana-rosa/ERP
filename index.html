@@ -18018,7 +18018,9 @@
     if (!valorUnitario || valorUnitario <= 0) { mostrarMensaje('mensajePedidoCanal', 'Escribe el valor de una unidad del producto.', 'error'); return; }
 
     // «valor» es el total de la línea (cantidad × valor de una unidad): el resto del formulario suma y reparte con ese total
-    carritoPedidoCanal.push({ descripcion, cantidad, valorUnitario, valor: valorUnitario * cantidad });
+    const delInventario = productoPedidoSeleccionado && productoPedidoSeleccionado.nombre === descripcion ? productoPedidoSeleccionado.id : null;
+    carritoPedidoCanal.push({ descripcion, cantidad, valorUnitario, valor: valorUnitario * cantidad, inventario_item_id: delInventario });
+    productoPedidoSeleccionado = null;
     document.getElementById('pedidoDescripcionProducto').value = '';
     document.getElementById('pedidoCantidad').value = '1';
     document.getElementById('pedidoValorProducto').value = '';
@@ -18263,7 +18265,7 @@
           canal,
           centro_costo_id: centroCostoTiendaId,
           tercero_id: terceroId,
-          inventario_item_id: productoPedidoSeleccionado ? productoPedidoSeleccionado.id : null,
+          inventario_item_id: carritoPedidoCanal.length === 1 ? (carritoPedidoCanal[0].inventario_item_id || null) : null,
           descripcion_producto: descripcion,
           cantidad,
           valor_producto: valorProducto,
@@ -18277,6 +18279,22 @@
         mostrarMensaje('mensajePedidoCanal', datos.error || 'No se pudo crear el pedido.', 'error');
         return;
       }
+
+      // Cada producto del pedido queda guardado como una línea (para apartar el stock y el costo de venta de cada uno)
+      let avisoLineas = '';
+      try {
+        let pedidoIdLineas = datos.pedido_id || datos.id;
+        if (!pedidoIdLineas && datos.consecutivo) {
+          const { data: filaLineas } = await supabaseClient.from('pedidos_canal_venta').select('id').eq('consecutivo', datos.consecutivo).maybeSingle();
+          pedidoIdLineas = filaLineas && filaLineas.id;
+        }
+        if (!pedidoIdLineas) throw new Error('no se encontró el pedido');
+        const { error: errLineas } = await supabaseClient.rpc('fn_guardar_lineas_pedido_canal', {
+          p_pedido_id: pedidoIdLineas,
+          p_lineas: carritoPedidoCanal.map(l => ({ inventario_item_id: l.inventario_item_id || null, descripcion: l.descripcion, cantidad: l.cantidad, valor_unitario: l.valorUnitario }))
+        });
+        if (errLineas) throw errLineas;
+      } catch (e) { avisoLineas = ` ⚠️ El pedido se creó, pero no se pudieron guardar sus productos uno por uno (${e.message || 'error'}). Avísale a la administradora antes de cobrar el anticipo.`; }
 
       // El servidor crea el pedido con el 50 % mínimo; si se eligió otro anticipo, se ajusta aquí (la función valida mínimo 50 % y máximo el total)
       let avisoAnticipo = '';
@@ -18300,7 +18318,7 @@
       } catch (e) { avisoFacturaPedido = ' ⚠️ No se pudo guardar a nombre de quién va la factura: defínelo en "Pedidos Web/Redes" antes de cobrar.'; }
       document.querySelectorAll('input[name="feQuierePedido"]').forEach(r => { r.checked = false; });
       const anticipoFinal = calcAnticipo ? (avisoAnticipo ? calcAnticipo.minimo : calcAnticipo.anticipo) : null;
-      mostrarMensaje('mensajePedidoCanal', '✅ Pedido creado. Ahora regístrale el anticipo' + (anticipoFinal != null ? ' de ' + formatearMoneda(anticipoFinal) : '') + ' cuando el cliente pague.' + avisoAnticipo + avisoFacturaPedido, avisoAnticipo ? 'error' : 'exito');
+      mostrarMensaje('mensajePedidoCanal', '✅ Pedido creado. Ahora regístrale el anticipo' + (anticipoFinal != null ? ' de ' + formatearMoneda(anticipoFinal) : '') + ' cuando el cliente pague.' + avisoLineas + avisoAnticipo + avisoFacturaPedido, (avisoAnticipo || avisoLineas) ? 'error' : 'exito');
 
       // Aviso de tratamiento de datos por WhatsApp (Ley 1581) — se ofrece
       // como un paso aparte, no automático, porque abrir WhatsApp exige que
