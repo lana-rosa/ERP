@@ -7183,11 +7183,12 @@
         <div style="border:1.5px solid var(--rosa-suave);border-radius:12px;padding:10px 12px;margin-bottom:8px;">
           <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;">
             <div><strong>${escaparHtml(f.nombre)}</strong><div style="font-size:12px;opacity:.7;">${escaparHtml([f.lugar, f.fecha_inicio ? (f.fecha_inicio + (f.fecha_fin && f.fecha_fin !== f.fecha_inicio ? ' al ' + f.fecha_fin : '')) : ''].filter(Boolean).join(' · ') || 'Sin lugar ni fecha')}</div></div>
-            <div style="text-align:right;font-size:12.5px;"><strong>${f.n_ventas} venta(s)</strong> · ${formatearMoneda(f.total_vendido)}${esAdmin ? `<div style="opacity:.7;">Stand: ${formatearMoneda(f.costo_stand || 0)}</div>` : ''}</div>
+            <div style="text-align:right;font-size:12.5px;"><strong>${f.n_ventas} venta(s)</strong> · ${formatearMoneda(f.total_vendido)}${esAdmin ? `<div style="opacity:.7;">Stand: ${formatearMoneda(f.costo_stand || 0)}${f.gasto_registrado ? ' · ✅ ya es gasto' : ''}</div>` : ''}</div>
           </div>
           <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
             <button class="btn-mini editar" onclick="feriasMostrarResumen('${f.id}')">📊 Resumen</button>
             ${esAdmin ? `<button class="btn-mini editar" onclick="feriasMostrarForm('${f.id}')">✏️ Editar</button>` : ''}
+            ${esAdmin && Number(f.costo_stand) > 0 && !f.gasto_registrado ? `<button class="btn-mini editar" onclick="feriasMostrarGastoStand('${f.id}')">💸 Registrar stand como gasto</button>` : ''}
             <button class="btn-mini editar" onclick="feriaActivaId='${f.id}'; try{localStorage.setItem('lrFeriaActiva','${f.id}')}catch(e){}; cerrarFerias();">Usar en las ventas</button>
           </div>
         </div>`).join('') : '<div class="cargando">Todavía no hay ferias. ' + (esAdmin ? 'Crea la primera con «Nueva feria».' : 'Pídele a la administradora que la cree.') + '</div>');
@@ -7203,12 +7204,40 @@
       <div class="grilla-2" style="gap:10px;"><div><label for="feInicio">Fecha de inicio</label><input type="date" id="feInicio" value="${v(f.fecha_inicio)}"></div><div><label for="feFin">Fecha final</label><input type="date" id="feFin" value="${v(f.fecha_fin)}"></div></div>
       <label for="feContNombre">Contacto (organizador)</label><input type="text" id="feContNombre" value="${v(f.contacto_nombre)}" placeholder="Nombre de la persona">
       <div class="grilla-2" style="gap:10px;"><div><label for="feContTel">Teléfono</label><input type="tel" id="feContTel" value="${v(f.contacto_telefono)}"></div><div><label for="feContCorreo">Correo</label><input type="email" id="feContCorreo" value="${v(f.contacto_correo)}"></div></div>
-      <label for="feStand">Costo del stand (COP)</label><input type="number" id="feStand" min="0" step="1000" value="${v(f.costo_stand != null ? f.costo_stand : '')}" placeholder="0">
+      <label for="feStand">Costo del stand (COP)</label><input type="number" id="feStand" min="0" step="1000" value="${v(f.costo_stand != null ? f.costo_stand : '')}" placeholder="0" ${f.gasto_registrado ? 'readonly title="Ya se registró como gasto"' : ''}>${f.gasto_registrado ? '<div style="font-size:11.5px;opacity:.7;">✅ Este costo ya se registró como gasto contable; no se puede cambiar aquí.</div>' : ''}
       <label for="feNotas">Notas</label><input type="text" id="feNotas" value="${v(f.notas)}" placeholder="Ej: pagaron el stand en efectivo">
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
         <button class="btn-principal" style="width:auto;margin:0;" onclick="feriasGuardar('${id || ''}')">Guardar feria</button>
         <button class="btn-secundario" style="width:auto;margin:0;" onclick="feriasMostrarLista()">Volver</button>
       </div>`;
+  }
+
+  function feriasMostrarGastoStand(id) {
+    const f = feriasCache.find(x => x.id === id);
+    if (!f) return;
+    document.getElementById('feriasContenido').innerHTML = `
+      <h3 style="margin:0 0 6px;font-size:14.5px;">💸 Registrar el stand como gasto</h3>
+      <div style="font-size:12.5px;opacity:.8;margin-bottom:6px;">${escaparHtml(f.nombre)}: <strong>${formatearMoneda(f.costo_stand)}</strong>. Sale de la caja que elijas, queda en la cuenta de gastos de ventas y se carga a la Tienda. Solo se puede hacer una vez por feria.</div>
+      <label for="feGMetodo">Método de pago</label>
+      <select id="feGMetodo"><option value="efectivo">Efectivo (sale de la caja)</option><option value="daviplata">Daviplata</option><option value="transferencia">Transferencia</option><option value="tarjeta_debito">Tarjeta débito</option><option value="tarjeta_credito">Tarjeta crédito</option></select>
+      <label for="feGCaja">¿De qué caja sale el dinero?</label>
+      <select id="feGCaja"><option value="01">Tienda / Mercería</option><option value="03">Taller de Tejido</option><option value="04">Academia</option></select>
+      <label for="feGAprobado">Aprobado por</label>
+      <input type="text" id="feGAprobado" value="${escaparHtml((typeof miPropiaIdentidad !== 'undefined' && miPropiaIdentidad.nombre) || '')}">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+        <button class="btn-principal" style="width:auto;margin:0;" onclick="feriasRegistrarStand('${id}')">Registrar gasto</button>
+        <button class="btn-secundario" style="width:auto;margin:0;" onclick="feriasMostrarLista()">Volver</button>
+      </div>`;
+  }
+
+  async function feriasRegistrarStand(id) {
+    ocultarMensaje('mensajeFerias');
+    const aprobado = document.getElementById('feGAprobado').value.trim();
+    if (!aprobado) { mostrarMensaje('mensajeFerias', 'Escribe quién aprobó el pago.', 'error'); return; }
+    const { error } = await supabaseClient.rpc('fn_registrar_stand_feria', { p_feria_id: id, p_metodo_pago: document.getElementById('feGMetodo').value, p_caja: document.getElementById('feGCaja').value, p_aprobado_por: aprobado, p_turno_id: turnoActivoActual ? turnoActivoActual.id : null });
+    if (error) { mostrarMensaje('mensajeFerias', 'No se pudo registrar: ' + error.message, 'error'); return; }
+    await feriasMostrarLista();
+    mostrarMensaje('mensajeFerias', '✅ El costo del stand quedó registrado como gasto.', 'exito');
   }
 
   async function feriasGuardar(id) {
