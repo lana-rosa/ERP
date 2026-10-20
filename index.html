@@ -1425,17 +1425,15 @@
       <input type="number" id="pedidoValorEnvio" placeholder="0" min="0" step="1" oninput="actualizarResumenAnticipoPedido()">
 
       <div id="bloqueAnticipoPedido" style="margin-top:12px;">
-        <label for="pedidoAnticipoPct">Anticipo <span style="font-size:10px;opacity:0.6;">(mínimo 50 % del valor de los productos, sin envío)</span></label>
-        <select id="pedidoAnticipoPct" onchange="actualizarResumenAnticipoPedido()">
-          <option value="50">50 % (mínimo)</option>
-          <option value="60">60 %</option>
-          <option value="70">70 %</option>
-          <option value="80">80 %</option>
-          <option value="100">100 % de los productos (el envío se paga al entregar)</option>
-          <option value="todo">Todo: productos + envío</option>
-          <option value="otro">Otro valor…</option>
-        </select>
-        <input type="number" id="pedidoAnticipoMonto" class="oculto" placeholder="Valor del anticipo (COP)" min="0" step="1" style="margin-top:6px;" oninput="actualizarResumenAnticipoPedido()">
+        <label for="pedidoAnticipoMonto">Anticipo recibido (COP) <span style="font-size:10px;opacity:0.6;">(mínimo 50 % del valor de los productos, sin envío; puede ser mayor)</span></label>
+        <input type="number" id="pedidoAnticipoMonto" min="0" step="1" placeholder="Valor del anticipo" oninput="anticipoPedidoEditado = true; actualizarResumenAnticipoPedido()">
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;">
+          <button type="button" class="btn-secundario" onclick="fijarAnticipoPedido(50)">50 %</button>
+          <button type="button" class="btn-secundario" onclick="fijarAnticipoPedido(70)">70 %</button>
+          <button type="button" class="btn-secundario" onclick="fijarAnticipoPedido(100)">100 % productos</button>
+          <button type="button" class="btn-secundario" onclick="fijarAnticipoPedido('todo')">Todo + envío</button>
+        </div>
+        <div id="ayudaAnticipoPedido" style="font-size:11px;opacity:0.7;margin-top:6px;"></div>
       </div>
       <div id="resumenAnticipoPedido" class="resumen-cierre" style="margin-top:12px;"></div>
 
@@ -17449,7 +17447,7 @@
     document.getElementById('pedidoCantidad').value = '1';
     document.getElementById('pedidoValorProducto').value = '';
     document.getElementById('pedidoValorEnvio').value = '';
-    document.getElementById('pedidoAnticipoPct').value = '50';
+    anticipoPedidoEditado = false;
     document.getElementById('pedidoAnticipoMonto').value = '';
     actualizarTotalLineaPedido();
     document.getElementById('pedidoFechaEstimadaEntrega').value = '';
@@ -17650,18 +17648,27 @@
   }
 
   // Anticipo de un pedido por redes: mínimo el 50 % del valor de los productos (sin envío); puede ser mayor, hasta el total con envío.
+  let anticipoPedidoEditado = false;
   function calcularAnticipoPedido(valorProducto, valorEnvio) {
     const total = valorProducto + valorEnvio;
     const minimo = Math.round(valorProducto * 0.5);
-    const eleccion = document.getElementById('pedidoAnticipoPct').value;
-    let anticipo, error = null;
-    if (eleccion === 'todo') anticipo = total;
-    else if (eleccion === 'otro') {
-      anticipo = Math.round(Number(document.getElementById('pedidoAnticipoMonto').value) || 0);
-      if (anticipo < minimo) error = `El anticipo mínimo es ${formatearMoneda(minimo)} (50 % de los productos).`;
-      else if (anticipo > total) error = `El anticipo no puede superar el total del pedido (${formatearMoneda(total)}).`;
-    } else anticipo = Math.round(valorProducto * Number(eleccion) / 100);
+    const campo = document.getElementById('pedidoAnticipoMonto');
+    // Si no se ha escrito nada a mano, el anticipo es el mínimo (50 %); si se escribe un valor, se respeta mientras esté entre el mínimo y el total
+    const anticipo = (anticipoPedidoEditado && campo.value !== '') ? Math.round(Number(campo.value) || 0) : minimo;
+    let error = null;
+    if (anticipo < minimo) error = `El anticipo mínimo es ${formatearMoneda(minimo)} (50 % de los productos).`;
+    else if (anticipo > total) error = `El anticipo no puede superar el total del pedido (${formatearMoneda(total)}).`;
     return { anticipo, minimo, total, error, esMinimo: anticipo === minimo };
+  }
+
+  function fijarAnticipoPedido(opcion) {
+    const bruto = carritoPedidoCanal.reduce((acc, p) => acc + p.valor, 0);
+    const valorProducto = Math.max(bruto - Math.min(descuentoPedidoActual.valorDescuento || 0, bruto), 0);
+    const valorEnvio = Number(document.getElementById('pedidoValorEnvio').value) || 0;
+    const valor = opcion === 'todo' ? valorProducto + valorEnvio : Math.round(valorProducto * opcion / 100);
+    document.getElementById('pedidoAnticipoMonto').value = valor;
+    anticipoPedidoEditado = true;
+    actualizarResumenAnticipoPedido();
   }
 
   function actualizarResumenAnticipoPedido() {
@@ -17674,7 +17681,6 @@
 
     const bloqueAnticipo = document.getElementById('bloqueAnticipoPedido');
     if (bloqueAnticipo) bloqueAnticipo.classList.toggle('oculto', canal === 'tienda_virtual');
-    document.getElementById('pedidoAnticipoMonto').classList.toggle('oculto', document.getElementById('pedidoAnticipoPct').value !== 'otro');
 
     let anticipo, saldo, notaCanal;
     if (canal === 'tienda_virtual') {
@@ -17683,6 +17689,9 @@
       notaCanal = 'Tienda virtual: se cobra el 100% (producto + envío) de una vez.';
     } else {
       const c = calcularAnticipoPedido(valorProducto, valorEnvio);
+      const campoAnticipo = document.getElementById('pedidoAnticipoMonto');
+      if (!anticipoPedidoEditado) campoAnticipo.value = c.minimo || '';
+      document.getElementById('ayudaAnticipoPedido').textContent = `Mínimo ${formatearMoneda(c.minimo)} · máximo ${formatearMoneda(c.total)}. Escribe el valor que recibiste si es mayor al mínimo.`;
       anticipo = c.error ? c.minimo : c.anticipo;
       saldo = total - anticipo;
       notaCanal = c.error
