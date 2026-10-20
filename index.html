@@ -1665,6 +1665,17 @@
   </div>
   <div class="grilla-2">
     <div class="panel">
+      <div style="background:var(--rosa-suave);border-radius:12px;padding:12px 14px;margin-bottom:14px;">
+        <div style="font-weight:700;font-size:13.5px;">🔑 Llaveros</div>
+        <div style="font-size:12px;opacity:.75;margin:2px 0 8px;">Agrega todos los llaveros de una vez. A los que no tienen código de barras se les asigna uno automáticamente (de 13 dígitos, interno de la tienda).</div>
+        <select id="etiquetaLlaverosModo">
+          <option value="existencias_unidad">Los que tienen existencias — una etiqueta por unidad</option>
+          <option value="existencias_producto">Los que tienen existencias — una etiqueta por producto</option>
+          <option value="todos_producto">Todos los llaveros — una etiqueta por producto</option>
+        </select>
+        <button type="button" class="btn-secundario" id="btnAgregarLlaveros" style="margin-top:8px;" onclick="agregarLlaverosAEtiquetas()">➕ Agregar llaveros a la lista</button>
+        <div class="mensaje" id="mensajeEtiquetaLlaveros"></div>
+      </div>
       <h2>Buscar y seleccionar productos</h2>
       <div class="barra-busqueda"><input type="text" id="buscarProductoEtiqueta" placeholder="🔍 Nombre o SKU..." oninput="buscarProductosParaEtiqueta()"></div>
       <div id="listaProductosEtiqueta" style="margin-top:10px;max-height:400px;overflow-y:auto;"><div class="cargando">Busca un producto arriba...</div></div>
@@ -12888,7 +12899,7 @@
 
       const { data } = await supabaseClient
         .from('inventario_items')
-        .select('id, nombre, sku, precio_venta')
+        .select('id, nombre, sku, precio_venta, tipo')
         .eq('activo', true)
         .or(`nombre.ilike.%${q}%,sku.ilike.%${q}%`)
         .limit(20);
@@ -12903,6 +12914,7 @@
             : `<span style="display:flex;gap:4px;flex-shrink:0;">
                  <input type="text" id="skuNuevo-${p.id}" placeholder="Asignar SKU" style="width:110px;padding:5px;font-size:12px;">
                  <button class="btn-mini editar" onclick='guardarSkuYAgregarEtiqueta(${JSON.stringify(p).replace(/'/g, "&#39;")})'>Guardar</button>
+                 ${p.tipo === 'producto_terminado' ? `<button class="btn-mini editar" onclick='generarSkuYAgregarEtiqueta(${JSON.stringify(p).replace(/'/g, "&#39;")})'>🔢 Generar</button>` : ''}
                </span>`
           }
         </div>
@@ -12923,6 +12935,64 @@
     agregarProductoAEtiquetas(producto);
   }
 
+  // Código de barras: EAN-13 cuando los 13 dígitos tienen un dígito de control válido; si no, CODE128
+  function formatoCodigoBarras(sku) {
+    if (!/^\d{13}$/.test(sku || '')) return 'CODE128';
+    const suma = sku.slice(0, 12).split('').reduce((a, d, i) => a + Number(d) * (i % 2 === 0 ? 1 : 3), 0);
+    return (10 - suma % 10) % 10 === Number(sku[12]) ? 'EAN13' : 'CODE128';
+  }
+
+  async function generarSkuYAgregarEtiqueta(producto) {
+    const { data, error } = await supabaseClient.rpc('fn_asignar_sku_interno_lote', { p_items: [producto.id] });
+    if (error || !data || !data[producto.id]) { alert('No se pudo generar el código de barras' + (error ? ': ' + error.message : '.')); return; }
+    producto.sku = data[producto.id];
+    agregarProductoAEtiquetas(producto);
+    buscarProductosParaEtiqueta();
+  }
+
+  // Llaveros: los de categoría «Llaveros» o «Charms» y cualquiera con «llavero» en el nombre
+  async function agregarLlaverosAEtiquetas() {
+    const msg = (t, tipo) => mostrarMensaje('mensajeEtiquetaLlaveros', t, tipo || 'error');
+    ocultarMensaje('mensajeEtiquetaLlaveros');
+    const modo = document.getElementById('etiquetaLlaverosModo').value;
+    const btn = document.getElementById('btnAgregarLlaveros');
+    btn.disabled = true;
+    try {
+      const { data: cats } = await supabaseClient.from('categorias_inventario').select('id, nombre').in('nombre', ['Llaveros', 'Charms']);
+      const ids = (cats || []).map(c => c.id);
+      const filtro = ids.length ? `nombre.ilike.%llavero%,categoria_id.in.(${ids.join(',')})` : 'nombre.ilike.%llavero%';
+      const { data: items, error } = await supabaseClient.from('inventario_items').select('id, nombre, sku, precio_venta, stock_actual, tipo')
+        .eq('activo', true).eq('tipo', 'producto_terminado').or(filtro).order('nombre', { ascending: true });
+      if (error) throw error;
+      let lista = items || [];
+      if (modo !== 'todos_producto') lista = lista.filter(i => Number(i.stock_actual) > 0);
+      if (!lista.length) { msg('No hay llaveros que cumplan eso.'); return; }
+      const sinCodigo = lista.filter(i => !(i.sku || '').trim());
+      let nuevos = {};
+      if (sinCodigo.length) {
+        const { data: asignados, error: errSku } = await supabaseClient.rpc('fn_asignar_sku_interno_lote', { p_items: sinCodigo.map(i => i.id) });
+        if (errSku) throw new Error('No se pudieron asignar los códigos de barras: ' + errSku.message);
+        nuevos = asignados || {};
+      }
+      let etiquetas = 0, agregados = 0;
+      for (const it of lista) {
+        const sku = (it.sku || '').trim() || nuevos[it.id];
+        if (!sku) continue;
+        const cantidad = modo === 'existencias_unidad' ? Math.max(1, Math.round(Number(it.stock_actual))) : 1;
+        const yaEsta = etiquetasSeleccionadas.find(e => e.id === it.id);
+        if (yaEsta) yaEsta.cantidad = cantidad; else etiquetasSeleccionadas.push({ id: it.id, nombre: it.nombre, sku, precio_venta: it.precio_venta, cantidad });
+        etiquetas += cantidad; agregados++;
+      }
+      renderizarEtiquetasSeleccionadas();
+      const conCodigoNuevo = sinCodigo.filter(i => nuevos[i.id]).map(i => i.nombre);
+      msg(`✅ ${agregados} llavero(s) en la lista (${etiquetas} etiquetas).` + (conCodigoNuevo.length ? ` Código de barras nuevo para: ${conCodigoNuevo.join(', ')}.` : ' Todos ya tenían código de barras.'), 'exito');
+    } catch (e) {
+      msg(e.message || 'No se pudieron agregar los llaveros.');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
   async function agregarProductoAEtiquetas(producto) {
     const yaEsta = etiquetasSeleccionadas.find(e => e.id === producto.id);
     if (yaEsta) { yaEsta.cantidad += 1; }
@@ -12938,6 +13008,8 @@
   function cambiarCantidadEtiqueta(id, cantidad) {
     const item = etiquetasSeleccionadas.find(e => e.id === id);
     if (item) item.cantidad = Math.max(1, Number(cantidad) || 1);
+    const tot = document.getElementById('totalEtiquetasLista');
+    if (tot) tot.textContent = `${etiquetasSeleccionadas.length} producto(s) · ${etiquetasSeleccionadas.reduce((a, e) => a + (Number(e.cantidad) || 0), 0)} etiquetas`;
   }
 
   function renderizarEtiquetasSeleccionadas() {
@@ -12948,7 +13020,7 @@
       contenedor.innerHTML = '<div style="font-size:12px;opacity:0.5;">No has agregado ningún producto todavía.</div>';
       return;
     }
-    contenedor.innerHTML = etiquetasSeleccionadas.map(e => `
+    contenedor.innerHTML = `<div style="font-size:12px;opacity:.7;margin-bottom:4px;" id="totalEtiquetasLista">${etiquetasSeleccionadas.length} producto(s) · ${etiquetasSeleccionadas.reduce((a, e) => a + (Number(e.cantidad) || 0), 0)} etiquetas</div>` + etiquetasSeleccionadas.map(e => `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f4eef2;font-size:12.5px;">
         <span>${escaparHtml(e.nombre)}</span>
         <span style="display:flex;align-items:center;gap:8px;">
@@ -12998,7 +13070,7 @@
           text-align: center; page-break-inside: avoid;
           display: flex; flex-direction: column; justify-content: center; align-items: center; box-sizing: border-box;
         }
-        .etiqueta-nombre { font-size: ${Math.max(altoMm * 0.28, 7)}pt; font-weight: 700; margin-bottom: 1mm; line-height: 1.1; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .etiqueta-nombre { font-size: ${Math.max(altoMm * 0.24, 6.5)}pt; font-weight: 700; margin-bottom: 1mm; line-height: 1.1; width: 100%; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
         .etiqueta-precio { font-size: ${Math.max(altoMm * 0.32, 8)}pt; font-weight: 700; color: #d8017c; margin-top: 1mm; }
         svg { width: 90%; height: ${Math.max(altoMm * 0.4, 8)}mm; }
         @media print { .etiqueta-producto { border: none; } button { display: none; } @page { margin: 5mm; } }
@@ -13018,7 +13090,9 @@
       for (const item of etiquetasSeleccionadas) {
         for (let i = 0; i < item.cantidad; i++) {
           try {
-            ventana.JsBarcode(`#svgEtiqueta${idx}`, item.sku, { format: 'CODE128', width: 1.3, height: Math.max(altoMm * 0.4, 8) * 3.78, fontSize: Math.max(altoMm * 0.22, 6) * 3.78, margin: 0 });
+            const opcionesCodigo = { width: 1.3, height: Math.max(altoMm * 0.4, 8) * 3.78, fontSize: Math.max(altoMm * 0.22, 6) * 3.78, margin: 0 };
+            try { ventana.JsBarcode(`#svgEtiqueta${idx}`, item.sku, { ...opcionesCodigo, format: formatoCodigoBarras(item.sku) }); }
+            catch (e1) { ventana.JsBarcode(`#svgEtiqueta${idx}`, item.sku, { ...opcionesCodigo, format: 'CODE128' }); }
           } catch (e) { /* SKU no válido para código de barras */ }
           idx++;
         }
