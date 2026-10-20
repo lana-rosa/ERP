@@ -471,6 +471,23 @@
 
   .grid-venta-layout { display: grid; grid-template-columns: 340px 1fr; gap: 20px; align-items: start; }
 
+  /* Modo feria: venta rápida con tarjetas de un toque, sin datos del cliente y con factura a consumidor final */
+  .solo-feria { display: none; }
+  .modo-feria .solo-feria { display: block; }
+  .modo-feria .no-feria { display: none !important; }
+  .modo-feria .grid-venta-layout { grid-template-columns: 1fr; }
+  .rejilla-feria { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; margin-top: 12px; }
+  .tarjeta-feria { position: relative; text-align: left; padding: 10px 12px; border: 1.5px solid var(--gris-borde); border-radius: var(--radius-md); background: #fff; cursor: pointer; display: flex; flex-direction: column; gap: 4px; min-height: 74px; font: inherit; color: inherit; }
+  .tarjeta-feria:hover:not(:disabled) { background: var(--tinte-rosa); border-color: var(--rosa-medio); }
+  .tarjeta-feria:disabled { opacity: 0.45; cursor: not-allowed; }
+  .tarjeta-feria .nombre { font-weight: 600; font-size: 13px; line-height: 1.25; }
+  .tarjeta-feria .precio { font-weight: 700; color: var(--rosa-principal); font-size: 14px; margin-top: auto; }
+  .tarjeta-feria .stock { font-size: 11px; opacity: 0.6; }
+  .tarjeta-feria .en-carrito { position: absolute; top: -7px; right: -7px; background: var(--rosa-principal); color: #fff; border-radius: 999px; min-width: 24px; height: 24px; padding: 0 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+  .pago-rapido { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+  .pago-rapido button { flex: 1; min-width: 110px; padding: 12px 8px; font-size: 14px; font-weight: 700; border: 1.5px solid var(--gris-borde); border-radius: var(--radius-md); background: #fff; cursor: pointer; font-family: inherit; }
+  .pago-rapido button.activo { background: var(--rosa-principal); color: #fff; border-color: var(--rosa-principal); }
+
   @media (max-width: 900px) {
     .grilla-2, .grilla-3, .grilla-4 { grid-template-columns: 1fr; }
 
@@ -1238,6 +1255,11 @@
   <div id="subtabVentaProductos" data-subtab-grupo="registrarVenta">
   <!-- Barra de búsqueda de productos, arriba y compacta -->
   <div class="panel" style="max-width:none;margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+      <div class="solo-feria" style="font-size:12.5px;"><strong>🎪 Modo feria</strong> · toca un producto para agregarlo. Sin datos del cliente; la factura sale a consumidor final.</div>
+      <div class="no-feria" style="font-size:12.5px;opacity:.7;">¿Vendes en una feria o evento?</div>
+      <button type="button" class="btn-secundario" id="btnModoFeria" style="margin:0;width:auto;" onclick="alternarModoFeria()">🎪 Activar modo feria</button>
+    </div>
     <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
       <div style="flex:1;min-width:260px;">
         <div class="barra-busqueda" style="position:relative;margin-top:0;">
@@ -1251,12 +1273,13 @@
         <button class="chip-filtro" data-filtro="merceria" onclick="cambiarFiltroTipo('merceria', this)">Mercería</button>
       </div>
     </div>
+    <div class="solo-feria"><div id="rejillaFeria" class="rejilla-feria"></div></div>
   </div>
 
   <div class="grid-venta-layout">
 
     <!-- Datos del cliente: columna angosta, colapsable -->
-    <div class="panel">
+    <div class="panel no-feria">
       <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="alternarDatosClienteVenta()">
         <h2 style="margin:0;">Datos del cliente <span id="etiquetaOpcionalCliente" style="font-size:11px;font-weight:400;opacity:0.6;">(opcional)</span></h2>
         <span id="chevronDatosCliente" style="font-size:12px;transition:transform 0.15s;">▾</span>
@@ -1331,11 +1354,17 @@
       </div>
       <div class="metodos-pago">
         <h2 style="margin-top:12px;">Forma de pago</h2>
+        <div class="solo-feria pago-rapido" id="pagoRapidoFeria">
+          <button type="button" data-metodo="efectivo" onclick="elegirPagoRapidoFeria('efectivo')">💵 Efectivo</button>
+          <button type="button" data-metodo="daviplata" onclick="elegirPagoRapidoFeria('daviplata')">📲 Daviplata</button>
+          <button type="button" data-metodo="tarjeta_debito" onclick="elegirPagoRapidoFeria('tarjeta_debito')">💳 Débito</button>
+          <button type="button" data-metodo="tarjeta_credito" onclick="elegirPagoRapidoFeria('tarjeta_credito')">💳 Crédito</button>
+        </div>
         <div id="listaPagos"></div>
         <button class="btn-agregar-pago" onclick="agregarFilaPago()">+ Agregar otro método de pago</button>
         <div class="resumen-pagos" id="resumenPagos"></div>
       </div>
-      <div id="bloqueFacturaElectronica" style="margin:12px 0;padding:10px 12px;border:1.5px solid #f1e2ec;border-radius:var(--radius-md);">
+      <div id="bloqueFacturaElectronica" class="no-feria" style="margin:12px 0;padding:10px 12px;border:1.5px solid #f1e2ec;border-radius:var(--radius-md);">
         <div style="font-weight:700;font-size:13px;">🧾 Factura electrónica: ¿a nombre de quién?</div>
         <div style="display:flex;gap:18px;margin-top:6px;font-size:13px;flex-wrap:wrap;">
           <label style="display:flex;gap:6px;align-items:center;margin:0;cursor:pointer;"><input type="radio" name="feQuiere" value="cliente"> Del cliente (con su cédula o NIT)</label>
@@ -6926,7 +6955,70 @@
     }));
 
     renderizarCatalogo();
+    aplicarModoFeria();
   }
+
+  // ===== Modo feria (venta rápida) =====
+  let modoFeria = false;
+  try { modoFeria = localStorage.getItem('lrModoFeria') === '1'; } catch { /* sin almacenamiento */ }
+
+  function aplicarModoFeria() {
+    const cont = document.getElementById('subtabVentaProductos');
+    if (!cont) return;
+    cont.classList.toggle('modo-feria', modoFeria);
+    document.getElementById('btnModoFeria').textContent = modoFeria ? '↩ Volver a la venta normal' : '🎪 Activar modo feria';
+    if (modoFeria && !document.querySelector('input[name="feQuiere"]:checked')) {
+      const cf = document.querySelector('input[name="feQuiere"][value="consumidor_final"]');
+      if (cf) cf.checked = true;
+    }
+    renderizarRejillaFeria();
+    marcarPagoRapidoFeria();
+  }
+
+  function alternarModoFeria() {
+    modoFeria = !modoFeria;
+    try { localStorage.setItem('lrModoFeria', modoFeria ? '1' : '0'); } catch { /* sin almacenamiento */ }
+    document.getElementById('inputBuscarProducto').value = '';
+    document.getElementById('listaCatalogo').style.display = 'none';
+    if (!modoFeria) document.querySelectorAll('input[name="feQuiere"]').forEach(r => { r.checked = false; });
+    aplicarModoFeria();
+  }
+
+  function renderizarRejillaFeria() {
+    const cont = document.getElementById('rejillaFeria');
+    if (!cont || !modoFeria) return;
+    const texto = document.getElementById('inputBuscarProducto').value.trim().toLowerCase();
+    let items = catalogoCompleto.filter(i => (filtroTipoActual === 'todos' || i.tipo === filtroTipoActual) && i.nombre.toLowerCase().includes(texto));
+    if (!items.length) { cont.innerHTML = '<div class="cargando" style="grid-column:1/-1;">' + (catalogoCompleto.length ? 'No se encontraron productos.' : 'Cargando inventario...') + '</div>'; return; }
+    items = items.slice().sort((a, b) => (b.stock_actual > 0) - (a.stock_actual > 0) || a.nombre.localeCompare(b.nombre));
+    cont.innerHTML = items.map(item => {
+      const sinStock = item.stock_actual <= 0;
+      const enCarrito = (carrito.find(c => c.id === item.id) || {}).cantidad || 0;
+      const porGramo = item.unidad_medida === 'gramo';
+      const precio = porGramo && item.peso ? item.precio * item.peso : item.precio;
+      return `<button type="button" class="tarjeta-feria" ${sinStock ? 'disabled' : ''} onclick="agregarAlCarrito('${item.id}')">
+        ${enCarrito ? `<span class="en-carrito">${porGramo && item.peso ? Math.round(enCarrito / item.peso) : enCarrito}</span>` : ''}
+        <span class="nombre">${escaparHtml(item.nombre)}</span>
+        <span class="stock">${sinStock ? 'Agotado' : (porGramo ? 'Ovillo ' + formatearCantidad(item.peso) + ' g' : 'Quedan ' + item.stock_actual)}</span>
+        <span class="precio">${formatearMoneda(precio)}</span>
+      </button>`;
+    }).join('');
+  }
+
+  function elegirPagoRapidoFeria(metodo) {
+    filasPago = [{ metodo_pago: metodo, monto: '', referencia: '' }];
+    renderizarPagos();
+    marcarPagoRapidoFeria();
+  }
+
+  function marcarPagoRapidoFeria() {
+    const m = filasPago.length === 1 ? filasPago[0].metodo_pago : null;
+    document.querySelectorAll('#pagoRapidoFeria button').forEach(b => b.classList.toggle('activo', b.dataset.metodo === m));
+  }
+
+  // Se aplica apenas carga la página (aunque no haya internet para traer el inventario)
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', aplicarModoFeria);
+  else aplicarModoFeria();
 
   function cambiarFiltroTipo(filtro, botonEl) {
     filtroTipoActual = filtro;
@@ -6939,6 +7031,8 @@
     const contenedor = document.getElementById('listaCatalogo');
     const inputBusqueda = document.getElementById('inputBuscarProducto');
     const textoBusqueda = inputBusqueda.value.trim().toLowerCase();
+
+    if (modoFeria) { contenedor.style.display = 'none'; contenedor.innerHTML = ''; renderizarRejillaFeria(); return; }
 
     if (!textoBusqueda) {
       contenedor.style.display = 'none';
@@ -7031,9 +7125,12 @@
 
     // Cerrar la lista de búsqueda y limpiar el campo — el carrito de la derecha
     // (que se queda visible hasta que termines la venta) es la confirmación.
-    document.getElementById('inputBuscarProducto').value = '';
-    document.getElementById('listaCatalogo').style.display = 'none';
-    document.getElementById('listaCatalogo').innerHTML = '';
+    // En modo feria la búsqueda se conserva: se pueden tocar varios productos seguidos.
+    if (!modoFeria) {
+      document.getElementById('inputBuscarProducto').value = '';
+      document.getElementById('listaCatalogo').style.display = 'none';
+      document.getElementById('listaCatalogo').innerHTML = '';
+    }
 
     renderizarCarrito();
   }
@@ -7203,6 +7300,7 @@
     const total = calcularTotalCarrito();
     document.getElementById('textoTotalCarrito').textContent = formatearMoneda(total);
     actualizarResumenPagos();
+    renderizarRejillaFeria();
   }
 
   // ============================================================================
@@ -7286,6 +7384,7 @@
       </div>
     `).join('');
     actualizarResumenPagos();
+    marcarPagoRapidoFeria();
   }
 
   function actualizarResumenPagos() {
@@ -7573,6 +7672,7 @@
         avisoFactura = ' 🧾 Emite ahora la factura electrónica en la DIAN (queda en "Por facturar").';
       } catch (e) { avisoFactura = ' ⚠️ No se pudo guardar a nombre de quién va la factura: la venta queda en Facturación electrónica → Por facturar.'; }
       document.querySelectorAll('input[name="feQuiere"]').forEach(r => { r.checked = false; });
+      if (modoFeria) { const cf = document.querySelector('input[name="feQuiere"][value="consumidor_final"]'); if (cf) cf.checked = true; }
       mostrarMensaje('mensajeVenta', `✅ Venta registrada correctamente.${datos.puntos_ganados > 0 ? ` ⭐ El cliente ganó ${datos.puntos_ganados} puntos.` : ''}${avisoFactura}`, 'exito');
       carrito = [];
       clienteVentaTerceroId = null;
