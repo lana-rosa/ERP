@@ -1263,7 +1263,7 @@
     <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
       <div style="flex:1;min-width:260px;">
         <div class="barra-busqueda" style="position:relative;margin-top:0;">
-          <input type="text" id="inputBuscarProducto" placeholder="🔍 Busca un producto o insumo por nombre o SKU..." oninput="renderizarCatalogo()" onblur="setTimeout(() => { document.getElementById('listaCatalogo').style.display = 'none'; }, 200)" onfocus="renderizarCatalogo()" autocomplete="off">
+          <input type="text" id="inputBuscarProducto" placeholder="🔍 Busca un producto o insumo por nombre o SKU..." oninput="renderizarCatalogo()" onkeydown="if (event.key === 'Enter') { event.preventDefault(); buscarYAgregarPorCodigoBarras(); }" onblur="setTimeout(() => { document.getElementById('listaCatalogo').style.display = 'none'; }, 200)" onfocus="renderizarCatalogo()" autocomplete="off">
           <button type="button" class="btn-mini editar" style="max-width:44px;" onclick="abrirEscanerCodigoBarras('inputBuscarProducto', buscarYAgregarPorCodigoBarras, true)" title="Escanear varios productos seguidos">📷</button>
         </div>
       </div>
@@ -1420,7 +1420,7 @@
 
       <label for="pedidoBuscarProducto">Buscar producto en el inventario de Tienda <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
       <div style="position:relative;">
-        <input type="text" id="pedidoBuscarProducto" placeholder="Si ya existe en stock, búscalo aquí..." oninput="buscarProductoPedido()" autocomplete="off">
+        <div style="display:flex;gap:6px;"><input type="text" id="pedidoBuscarProducto" placeholder="Nombre o código de barras (se agrega solo)..." oninput="buscarProductoPedido()" onkeydown="if (event.key === 'Enter') { event.preventDefault(); entrarProductoPedido(); }" autocomplete="off"><button type="button" class="btn-mini editar" style="max-width:44px;" onclick="abrirEscanerCodigoBarras('pedidoBuscarProducto', entrarProductoPedido, false)" title="Escanear código de barras">📷</button></div>
         <div id="sugerenciasPedidoProducto" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--fondo-panel);border:1.5px solid var(--rosa-medio);border-radius:9px;margin-top:4px;max-height:200px;overflow-y:auto;z-index:50;box-shadow:var(--sombra);"></div>
       </div>
       <div id="pedidoProductoInfo" style="display:none;margin-top:8px;padding:9px 11px;background:var(--rosa-suave);border-radius:9px;font-size:12.5px;"></div>
@@ -1432,7 +1432,8 @@
       <label for="pedidoValorProducto">Valor de una unidad (COP)</label>
       <input type="number" id="pedidoValorProducto" placeholder="0" min="0" step="1" oninput="actualizarTotalLineaPedido()">
       <div id="pedidoTotalLineaInfo" style="font-size:12.5px;color:var(--rosa-principal);font-weight:600;margin-top:4px;min-height:16px;"></div>
-      <button type="button" class="btn-secundario" style="margin-top:8px;" onclick="agregarProductoAPedido()">+ Agregar producto a la lista</button>
+      <button type="button" class="btn-secundario" style="margin-top:8px;" onclick="agregarProductoAPedido()">+ Agregar otro producto a la lista</button>
+      <div style="font-size:11px;opacity:.6;margin-top:4px;">Al elegir un producto del inventario se agrega solo. Si escribes uno a mano, se agrega al crear el pedido (o pulsa el botón para sumar otro).</div>
 
       <div id="listaProductosPedido" style="margin-top:10px;"></div>
 
@@ -6932,7 +6933,7 @@
 
     const { data, error } = await supabaseClient
       .from('inventario_items')
-      .select('id, tipo, nombre, stock_actual, stock_minimo, precio_venta, unidad_medida, peso_gramos')
+      .select('id, tipo, nombre, sku, stock_actual, stock_minimo, precio_venta, unidad_medida, peso_gramos')
       .eq('activo', true)
       .eq('centro_costo_id', centroCostoTiendaId)
       .order('nombre', { ascending: true });
@@ -6946,6 +6947,7 @@
       id: item.id,
       tipo: item.tipo,
       nombre: item.nombre,
+      sku: item.sku || '',
       precio: Number(item.precio_venta) || 0,
       stock_actual: Number(item.stock_actual),
       stock_minimo: Number(item.stock_minimo),
@@ -6988,7 +6990,7 @@
     const cont = document.getElementById('rejillaFeria');
     if (!cont || !modoFeria) return;
     const texto = document.getElementById('inputBuscarProducto').value.trim().toLowerCase();
-    let items = catalogoCompleto.filter(i => (filtroTipoActual === 'todos' || i.tipo === filtroTipoActual) && i.nombre.toLowerCase().includes(texto));
+    let items = catalogoCompleto.filter(i => (filtroTipoActual === 'todos' || i.tipo === filtroTipoActual) && (i.nombre.toLowerCase().includes(texto) || (i.sku || '').toLowerCase().includes(texto)));
     if (!items.length) { cont.innerHTML = '<div class="cargando" style="grid-column:1/-1;">' + (catalogoCompleto.length ? 'No se encontraron productos.' : 'Cargando inventario...') + '</div>'; return; }
     items = items.slice().sort((a, b) => (b.stock_actual > 0) - (a.stock_actual > 0) || a.nombre.localeCompare(b.nombre));
     cont.innerHTML = items.map(item => {
@@ -7051,7 +7053,7 @@
     if (filtroTipoActual !== 'todos') {
       items = items.filter(i => i.tipo === filtroTipoActual);
     }
-    items = items.filter(i => i.nombre.toLowerCase().includes(textoBusqueda));
+    items = items.filter(i => i.nombre.toLowerCase().includes(textoBusqueda) || (i.sku || '').toLowerCase().includes(textoBusqueda));
 
     contenedor.style.display = 'block';
 
@@ -7710,16 +7712,24 @@
 
   let ultimaVentaCache = null;
 
+  // Código de barras (lector, cámara o escrito + Enter): el producto con ese SKU se agrega al carrito de una vez.
+  // Si no hay un SKU exacto pero la búsqueda deja un solo producto, también se agrega.
   async function buscarYAgregarPorCodigoBarras() {
     const texto = document.getElementById('inputBuscarProducto').value.trim();
-    renderizarCatalogo();
-    const encontrado = catalogoCompleto.find(i => texto && (i.id === texto || (i.sku && i.sku === texto)));
-    // Si el catálogo no trae "sku" en este objeto, buscamos por nombre exacto como respaldo
-    if (encontrado) {
-      agregarAlCarrito(encontrado.id);
-      document.getElementById('inputBuscarProducto').value = '';
-      renderizarCatalogo();
+    if (!texto) return;
+    const t = texto.toLowerCase();
+    let encontrado = catalogoCompleto.find(i => i.id === texto || (i.sku && i.sku.toLowerCase() === t));
+    if (!encontrado) {
+      const coincidencias = catalogoCompleto.filter(i => (filtroTipoActual === 'todos' || i.tipo === filtroTipoActual) && (i.nombre.toLowerCase().includes(t) || (i.sku || '').toLowerCase().includes(t)));
+      if (coincidencias.length === 1) encontrado = coincidencias[0];
     }
+    if (!encontrado) {
+      mostrarMensaje('mensajeVenta', `No hay ningún producto con el código o nombre «${texto}».`, 'error');
+      return;
+    }
+    agregarAlCarrito(encontrado.id);
+    document.getElementById('inputBuscarProducto').value = '';
+    renderizarCatalogo();
   }
 
   function generarContenidoReciboVenta(v) {
@@ -17606,10 +17616,10 @@
     timeoutBusquedaPedidoProducto = setTimeout(async () => {
       const { data, error } = await supabaseClient
         .from('inventario_items')
-        .select('id, nombre, stock_actual, unidad_medida, precio_venta')
+        .select('id, nombre, sku, stock_actual, unidad_medida, precio_venta')
         .eq('centro_costo_id', centroCostoTiendaId)
         .eq('activo', true)
-        .ilike('nombre', `%${texto}%`)
+        .or(`nombre.ilike.%${texto.replace(/[,()%*]/g, '')}%,sku.ilike.%${texto.replace(/[,()%*]/g, '')}%`)
         .limit(8);
 
       if (error || !data || data.length === 0) {
@@ -17629,24 +17639,39 @@
     }, 300);
   }
 
+  // Enter en el buscador (lector de código de barras) o cámara: toma el producto con ese SKU exacto, o el único que coincida con la búsqueda.
+  async function entrarProductoPedido() {
+    const texto = document.getElementById('pedidoBuscarProducto').value.trim();
+    if (!texto || !centroCostoTiendaId) return;
+    const limpio = texto.replace(/[,()%*]/g, '');
+    const { data } = await supabaseClient.from('inventario_items')
+      .select('id, nombre, sku, stock_actual, unidad_medida, precio_venta')
+      .eq('centro_costo_id', centroCostoTiendaId).eq('activo', true)
+      .or(`sku.eq.${limpio},nombre.ilike.%${limpio}%`).limit(5);
+    if (!data || !data.length) { mostrarMensaje('mensajePedidoCanal', `No hay ningún producto con el código o nombre «${texto}».`, 'error'); return; }
+    const exacto = data.find(i => i.sku && i.sku.toLowerCase() === texto.toLowerCase());
+    const elegido = exacto || (data.length === 1 ? data[0] : null);
+    if (elegido) seleccionarProductoPedido(elegido);
+  }
+
+  // Elegir un producto del inventario lo agrega a la lista del pedido de una vez (con el precio del inventario y la cantidad escrita, 1 por defecto).
   function seleccionarProductoPedido(item) {
     productoPedidoSeleccionado = item;
-    document.getElementById('pedidoBuscarProducto').value = item.nombre;
     document.getElementById('pedidoDescripcionProducto').value = item.nombre;
     document.getElementById('sugerenciasPedidoProducto').style.display = 'none';
+    document.getElementById('pedidoValorProducto').value = Number(item.precio_venta) > 0 ? item.precio_venta : '';
+    actualizarTotalLineaPedido();
+
+    const agregado = Number(item.precio_venta) > 0;
+    if (agregado) { agregarProductoAPedido(); document.getElementById('pedidoBuscarProducto').value = ''; }
+    else document.getElementById('pedidoBuscarProducto').value = item.nombre;
+    actualizarResumenAnticipoPedido();
 
     const infoEl = document.getElementById('pedidoProductoInfo');
     const hayStock = item.stock_actual > 0;
-    infoEl.innerHTML = hayStock
-      ? `✅ Disponible en stock: ${item.stock_actual} ${item.unidad_medida}`
-      : `⚠️ No hay stock disponible ahora mismo — habrá que pedirlo al Taller`;
+    infoEl.innerHTML = (agregado ? `✅ <strong>${escaparHtml(item.nombre)}</strong> agregado a la lista. ` : '⚠️ Este producto no tiene precio en el inventario: escribe el valor de una unidad y pulsa «Agregar». ')
+      + (hayStock ? `Disponible en stock: ${item.stock_actual} ${item.unidad_medida}.` : '⚠️ No hay stock ahora mismo: habrá que pedirlo al Taller.');
     infoEl.style.display = 'block';
-
-    if (!document.getElementById('pedidoValorProducto').value) {
-      document.getElementById('pedidoValorProducto').value = item.precio_venta;
-      actualizarTotalLineaPedido();
-      actualizarResumenAnticipoPedido();
-    }
   }
 
   let carritoPedidoCanal = [];
@@ -17844,6 +17869,12 @@
     const municipioCliente = document.getElementById('pedidoMunicipioCliente').value.trim();
     const aceptaTratamientoDatos = document.getElementById('pedidoAceptaTratamientoDatos').checked;
     ocultarMensaje('mensajePedidoCanal');
+
+    // Si quedó un producto escrito sin pulsar «Agregar», se agrega solo (si le falta algo, se avisa y no se crea el pedido)
+    if (document.getElementById('pedidoDescripcionProducto').value.trim()) {
+      agregarProductoAPedido();
+      if (document.getElementById('pedidoDescripcionProducto').value.trim()) return;
+    }
 
     if (!identificacion) { mostrarMensaje('mensajePedidoCanal', 'Falta el número de identificación del cliente.', 'error'); return; }
     if (!nombreCliente) { mostrarMensaje('mensajePedidoCanal', 'Falta el nombre del cliente.', 'error'); return; }
