@@ -1260,6 +1260,14 @@
       <div class="no-feria" style="font-size:12.5px;opacity:.7;">¿Vendes en una feria o evento?</div>
       <button type="button" class="btn-secundario" id="btnModoFeria" style="margin:0;width:auto;" onclick="alternarModoFeria()">🎪 Activar modo feria</button>
     </div>
+    <div class="solo-feria" style="margin-bottom:12px;">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <label for="feriaVentaSelect" style="margin:0;font-weight:700;">🎪 Feria de esta venta</label>
+        <select id="feriaVentaSelect" style="flex:1;min-width:200px;max-width:340px;" onchange="elegirFeriaVenta()"></select>
+        <button type="button" class="btn-secundario" style="margin:0;width:auto;" onclick="abrirFerias()">⚙️ Ferias</button>
+        <button type="button" class="btn-secundario" id="btnProductoRapido" style="margin:0;width:auto;" onclick="abrirProductoRapido()">➕ Producto que no está en el inventario</button>
+      </div>
+    </div>
     <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
       <div style="flex:1;min-width:260px;">
         <div class="barra-busqueda" style="position:relative;margin-top:0;">
@@ -5625,6 +5633,38 @@
 <div id="listaCatalogo" style="display:none;position:fixed;background:var(--fondo-panel);border:1.5px solid var(--rosa-medio);border-radius:9px;min-height:170px;max-height:min(420px, 60vh);overflow-y:auto;z-index:500;box-shadow:var(--sombra);"></div>
 
 <!-- ===== MODAL: ESCÁNER DE CÓDIGO DE BARRAS ===== -->
+<div id="modalFerias" class="oculto" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:450;display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px 12px;">
+  <div style="background:var(--fondo-panel);border-radius:14px;padding:18px;max-width:760px;width:100%;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:10px;">
+      <h2 style="font-size:16px;margin:0;">🎪 Ferias</h2>
+      <button onclick="cerrarFerias()" style="background:none;border:none;font-size:20px;cursor:pointer;" aria-label="Cerrar">✕</button>
+    </div>
+    <div id="feriasContenido"></div>
+    <div class="mensaje" id="mensajeFerias"></div>
+  </div>
+</div>
+<div id="modalProductoRapido" class="oculto" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:450;display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px 12px;">
+  <div style="background:var(--fondo-panel);border-radius:14px;padding:18px;max-width:460px;width:100%;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:10px;">
+      <h2 style="font-size:16px;margin:0;">➕ Producto que no está en el inventario</h2>
+      <button onclick="cerrarProductoRapido()" style="background:none;border:none;font-size:20px;cursor:pointer;" aria-label="Cerrar">✕</button>
+    </div>
+    <div style="font-size:12px;opacity:.75;margin-bottom:6px;">Se crea en el inventario con su código de barras y las unidades que tienes; luego se agrega al carrito. Después, el Taller completa su ficha técnica.</div>
+    <label for="prNombre">Nombre</label>
+    <input type="text" id="prNombre" placeholder="Ej: Llavero pollito con lentes">
+    <label for="prCategoria">Categoría</label>
+    <select id="prCategoria"><option value="">Sin categoría específica</option></select>
+    <label for="prPrecio">Precio de venta de una unidad (COP)</label>
+    <input type="number" id="prPrecio" min="0" step="100" placeholder="Ej: 15000">
+    <label for="prCantidad">¿Cuántas unidades hay para vender?</label>
+    <input type="number" id="prCantidad" min="1" step="1" value="1">
+    <div class="mensaje" id="mensajeProductoRapido"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+      <button class="btn-principal" style="width:auto;margin:0;" id="btnCrearProductoRapido" onclick="crearProductoRapido()">Crear y agregar al carrito</button>
+      <button class="btn-secundario" style="width:auto;margin:0;" onclick="cerrarProductoRapido()">Cancelar</button>
+    </div>
+  </div>
+</div>
 <div id="modalFichaTecnica" class="oculto" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:450;display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px 12px;">
   <div style="background:var(--fondo-panel);border-radius:14px;padding:18px;max-width:760px;width:100%;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:10px;">
@@ -5803,9 +5843,9 @@
     actualizarIndicadorOffline();
   }
 
-  function encolarVentaOffline(cuerpoVenta, feQuiere) {
+  function encolarVentaOffline(cuerpoVenta, feQuiere, feriaId) {
     const cola = obtenerColaOffline();
-    cola.push({ id: 'offline-' + Date.now() + '-' + Math.random().toString(36).slice(2), cuerpo: cuerpoVenta, feQuiere: feQuiere ?? null, guardadaEn: new Date().toISOString() });
+    cola.push({ id: 'offline-' + Date.now() + '-' + Math.random().toString(36).slice(2), cuerpo: cuerpoVenta, feQuiere: feQuiere ?? null, feriaId: feriaId || null, guardadaEn: new Date().toISOString() });
     guardarColaOffline(cola);
   }
 
@@ -5839,8 +5879,13 @@
           // se deja visible para que la administradora la revise a mano.
           venta.error = (await resp.json()).error || 'Error al sincronizar';
           pendientes.push(venta);
-        } else if (venta.feQuiere !== null && venta.feQuiere !== undefined) {
-          try { const d = await resp.json(); if (d.consecutivo) await supabaseClient.rpc('fn_fe_marcar_preferencia', { p_consecutivo: d.consecutivo, p_quiere: true, p_a_nombre_de: (venta.feQuiere === 'cliente' ? 'cliente' : 'consumidor_final') }); } catch { /* se puede marcar luego en Por facturar */ }
+        } else {
+          let d = {};
+          try { d = await resp.json(); } catch { /* sin cuerpo */ }
+          if (venta.feriaId && d.consecutivo) { try { await supabaseClient.rpc('fn_marcar_venta_feria', { p_consecutivo: d.consecutivo, p_feria_id: venta.feriaId }); } catch { /* se puede asociar luego */ } }
+          if (venta.feQuiere !== null && venta.feQuiere !== undefined) {
+          try { if (d.consecutivo) await supabaseClient.rpc('fn_fe_marcar_preferencia', { p_consecutivo: d.consecutivo, p_quiere: true, p_a_nombre_de: (venta.feQuiere === 'cliente' ? 'cliente' : 'consumidor_final') }); } catch { /* se puede marcar luego en Por facturar */ }
+        }
         }
         // Si resp.ok, la venta ya quedó registrada — se descarta de la cola.
       } catch {
@@ -7041,6 +7086,12 @@
     }
     renderizarRejillaFeria();
     marcarPagoRapidoFeria();
+    if (modoFeria) {
+      renderizarSelectFeria();
+      cargarFerias().catch(() => {});
+      const btnPr = document.getElementById('btnProductoRapido');
+      if (btnPr) btnPr.style.display = ['administrador', 'taller'].includes(rolActual) ? '' : 'none';
+    }
   }
 
   function alternarModoFeria() {
@@ -7082,6 +7133,150 @@
   function marcarPagoRapidoFeria() {
     const m = filasPago.length === 1 ? filasPago[0].metodo_pago : null;
     document.querySelectorAll('#pagoRapidoFeria button').forEach(b => b.classList.toggle('activo', b.dataset.metodo === m));
+  }
+
+
+  // ===== Ferias: datos de cada feria, ventas marcadas con su feria y producto rápido =====
+  let feriasCache = [];
+  let feriaActivaId = null;
+  try { feriaActivaId = localStorage.getItem('lrFeriaActiva') || null; } catch { /* sin almacenamiento */ }
+
+  async function cargarFerias() {
+    const { data, error } = await supabaseClient.rpc('fn_ferias_listar');
+    feriasCache = error ? [] : (data || []);
+    renderizarSelectFeria();
+    return !error;
+  }
+
+  function renderizarSelectFeria() {
+    const sel = document.getElementById('feriaVentaSelect');
+    if (!sel) return;
+    if (feriaActivaId && !feriasCache.some(f => f.id === feriaActivaId)) feriaActivaId = null;
+    sel.innerHTML = '<option value="">Elige la feria…</option>' + feriasCache.map(f => `<option value="${f.id}">${escaparHtml(f.nombre)}${f.fecha_inicio ? ' · ' + f.fecha_inicio : ''}</option>`).join('');
+    sel.value = feriaActivaId || '';
+  }
+
+  function elegirFeriaVenta() {
+    feriaActivaId = document.getElementById('feriaVentaSelect').value || null;
+    try { localStorage.setItem('lrFeriaActiva', feriaActivaId || ''); } catch { /* sin almacenamiento */ }
+  }
+
+  function abrirFerias() {
+    const m = document.getElementById('modalFerias'); m.classList.remove('oculto'); m.style.display = 'flex';
+    ocultarMensaje('mensajeFerias');
+    feriasMostrarLista();
+  }
+
+  function cerrarFerias() {
+    const m = document.getElementById('modalFerias'); m.classList.add('oculto'); m.style.display = 'none';
+    renderizarSelectFeria();
+  }
+
+  async function feriasMostrarLista() {
+    const cont = document.getElementById('feriasContenido');
+    cont.innerHTML = '<div class="cargando">Cargando…</div>';
+    const ok = await cargarFerias();
+    if (!ok) { cont.innerHTML = '<div class="cargando">No se pudieron cargar las ferias.</div>'; return; }
+    const esAdmin = rolActual === 'administrador';
+    cont.innerHTML = (esAdmin ? '<button class="btn-principal" style="width:auto;margin:0 0 12px;" onclick="feriasMostrarForm(null)">➕ Nueva feria</button>' : '')
+      + (feriasCache.length ? feriasCache.map(f => `
+        <div style="border:1.5px solid var(--rosa-suave);border-radius:12px;padding:10px 12px;margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;">
+            <div><strong>${escaparHtml(f.nombre)}</strong><div style="font-size:12px;opacity:.7;">${escaparHtml([f.lugar, f.fecha_inicio ? (f.fecha_inicio + (f.fecha_fin && f.fecha_fin !== f.fecha_inicio ? ' al ' + f.fecha_fin : '')) : ''].filter(Boolean).join(' · ') || 'Sin lugar ni fecha')}</div></div>
+            <div style="text-align:right;font-size:12.5px;"><strong>${f.n_ventas} venta(s)</strong> · ${formatearMoneda(f.total_vendido)}${esAdmin ? `<div style="opacity:.7;">Stand: ${formatearMoneda(f.costo_stand || 0)}</div>` : ''}</div>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+            <button class="btn-mini editar" onclick="feriasMostrarResumen('${f.id}')">📊 Resumen</button>
+            ${esAdmin ? `<button class="btn-mini editar" onclick="feriasMostrarForm('${f.id}')">✏️ Editar</button>` : ''}
+            <button class="btn-mini editar" onclick="feriaActivaId='${f.id}'; try{localStorage.setItem('lrFeriaActiva','${f.id}')}catch(e){}; cerrarFerias();">Usar en las ventas</button>
+          </div>
+        </div>`).join('') : '<div class="cargando">Todavía no hay ferias. ' + (esAdmin ? 'Crea la primera con «Nueva feria».' : 'Pídele a la administradora que la cree.') + '</div>');
+  }
+
+  function feriasMostrarForm(id) {
+    const f = feriasCache.find(x => x.id === id) || {};
+    const v = x => escaparHtml(x == null ? '' : String(x));
+    document.getElementById('feriasContenido').innerHTML = `
+      <h3 style="margin:0 0 6px;font-size:14.5px;">${id ? 'Editar feria' : 'Nueva feria'}</h3>
+      <label for="feNombre">Nombre de la feria *</label><input type="text" id="feNombre" value="${v(f.nombre)}" placeholder="Ej: Feria Jaime Duque">
+      <label for="feLugar">Lugar</label><input type="text" id="feLugar" value="${v(f.lugar)}" placeholder="Ej: Parque Jaime Duque, Manizales">
+      <div class="grilla-2" style="gap:10px;"><div><label for="feInicio">Fecha de inicio</label><input type="date" id="feInicio" value="${v(f.fecha_inicio)}"></div><div><label for="feFin">Fecha final</label><input type="date" id="feFin" value="${v(f.fecha_fin)}"></div></div>
+      <label for="feContNombre">Contacto (organizador)</label><input type="text" id="feContNombre" value="${v(f.contacto_nombre)}" placeholder="Nombre de la persona">
+      <div class="grilla-2" style="gap:10px;"><div><label for="feContTel">Teléfono</label><input type="tel" id="feContTel" value="${v(f.contacto_telefono)}"></div><div><label for="feContCorreo">Correo</label><input type="email" id="feContCorreo" value="${v(f.contacto_correo)}"></div></div>
+      <label for="feStand">Costo del stand (COP)</label><input type="number" id="feStand" min="0" step="1000" value="${v(f.costo_stand != null ? f.costo_stand : '')}" placeholder="0">
+      <label for="feNotas">Notas</label><input type="text" id="feNotas" value="${v(f.notas)}" placeholder="Ej: pagaron el stand en efectivo">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+        <button class="btn-principal" style="width:auto;margin:0;" onclick="feriasGuardar('${id || ''}')">Guardar feria</button>
+        <button class="btn-secundario" style="width:auto;margin:0;" onclick="feriasMostrarLista()">Volver</button>
+      </div>`;
+  }
+
+  async function feriasGuardar(id) {
+    const g = x => document.getElementById(x).value.trim();
+    ocultarMensaje('mensajeFerias');
+    if (!g('feNombre')) { mostrarMensaje('mensajeFerias', 'Escribe el nombre de la feria.', 'error'); return; }
+    if (g('feInicio') && g('feFin') && g('feFin') < g('feInicio')) { mostrarMensaje('mensajeFerias', 'La fecha final no puede ser antes de la inicial.', 'error'); return; }
+    const datos = { nombre: g('feNombre'), lugar: g('feLugar'), fecha_inicio: g('feInicio'), fecha_fin: g('feFin'), contacto_nombre: g('feContNombre'),
+      contacto_telefono: g('feContTel'), contacto_correo: g('feContCorreo'), costo_stand: g('feStand') === '' ? 0 : Number(g('feStand')), notas: g('feNotas') };
+    const { data, error } = await supabaseClient.rpc('fn_feria_guardar', { p_id: id || null, p_datos: datos });
+    if (error) { mostrarMensaje('mensajeFerias', 'No se pudo guardar: ' + error.message, 'error'); return; }
+    if (!id && data) { feriaActivaId = data; try { localStorage.setItem('lrFeriaActiva', data); } catch { /* sin almacenamiento */ } }
+    await feriasMostrarLista();
+    mostrarMensaje('mensajeFerias', '✅ Feria guardada.', 'exito');
+  }
+
+  async function feriasMostrarResumen(id) {
+    const cont = document.getElementById('feriasContenido');
+    cont.innerHTML = '<div class="cargando">Calculando…</div>';
+    const { data, error } = await supabaseClient.rpc('fn_feria_resumen', { p_feria_id: id });
+    if (error) { cont.innerHTML = '<div class="cargando">No se pudo calcular: ' + escaparHtml(error.message) + '</div>'; return; }
+    const metodos = { efectivo: 'Efectivo', daviplata: 'Daviplata', tarjeta_debito: 'Tarjeta débito', tarjeta_credito: 'Tarjeta crédito', nequi: 'Nequi' };
+    const fila = (t, valor, fuerte) => `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f4eef2;${fuerte ? 'font-weight:700;' : ''}"><span>${t}</span><span>${valor}</span></div>`;
+    cont.innerHTML = `
+      <h3 style="margin:0 0 8px;font-size:14.5px;">📊 ${escaparHtml(data.feria.nombre)}</h3>
+      ${fila('Ventas registradas', data.n_ventas)}
+      ${fila('Total vendido', formatearMoneda(data.total_vendido), true)}
+      ${Object.entries(data.por_metodo || {}).map(([m, v]) => fila('&nbsp;&nbsp;' + escaparHtml(metodos[m] || m), formatearMoneda(v))).join('')}
+      ${data.resultado != null ? fila('Costo de lo vendido (costo promedio del inventario)', '− ' + formatearMoneda(data.costo_productos)) + fila('Costo del stand', '− ' + formatearMoneda(data.costo_stand)) + fila('Resultado de la feria', formatearMoneda(data.resultado), true) : ''}
+      <div style="font-weight:700;margin:12px 0 4px;">Lo que se vendió</div>
+      ${(data.productos || []).length ? data.productos.map(p => fila(`${Number(p.cantidad)} × ${escaparHtml(p.descripcion)}`, formatearMoneda(p.total))).join('') : '<div class="cargando">Todavía no hay ventas en esta feria.</div>'}
+      <button class="btn-secundario" style="width:auto;margin-top:12px;" onclick="feriasMostrarLista()">Volver</button>`;
+  }
+
+  // Producto que no está en el inventario: se crea con su código de barras y las unidades que hay, y pasa al carrito
+  async function abrirProductoRapido() {
+    ocultarMensaje('mensajeProductoRapido');
+    ['prNombre', 'prPrecio'].forEach(id => { document.getElementById(id).value = ''; });
+    document.getElementById('prCantidad').value = '1';
+    const { data } = await supabaseClient.from('categorias_inventario').select('id, nombre').eq('tipo', 'producto_terminado').order('nombre', { ascending: true });
+    document.getElementById('prCategoria').innerHTML = '<option value="">Sin categoría específica</option>' + (data || []).map(c => `<option value="${c.id}">${escaparHtml(c.nombre)}</option>`).join('');
+    const m = document.getElementById('modalProductoRapido'); m.classList.remove('oculto'); m.style.display = 'flex';
+    setTimeout(() => document.getElementById('prNombre').focus(), 50);
+  }
+
+  function cerrarProductoRapido() {
+    const m = document.getElementById('modalProductoRapido'); m.classList.add('oculto'); m.style.display = 'none';
+  }
+
+  async function crearProductoRapido() {
+    const msg = (t) => mostrarMensaje('mensajeProductoRapido', t, 'error');
+    ocultarMensaje('mensajeProductoRapido');
+    const nombre = document.getElementById('prNombre').value.trim();
+    const precio = Number(document.getElementById('prPrecio').value);
+    const cantidad = Number(document.getElementById('prCantidad').value);
+    if (!nombre) { msg('Escribe el nombre del producto.'); return; }
+    if (!(precio > 0)) { msg('Escribe el precio de venta.'); return; }
+    if (!(cantidad > 0)) { msg('Escribe cuántas unidades hay.'); return; }
+    const btn = document.getElementById('btnCrearProductoRapido');
+    btn.disabled = true;
+    const { data, error } = await supabaseClient.rpc('fn_producto_rapido', { p_nombre: nombre, p_precio: precio, p_categoria_id: document.getElementById('prCategoria').value || null, p_cantidad: cantidad });
+    btn.disabled = false;
+    if (error) { msg(error.message); return; }
+    catalogoCompleto.push({ id: data.id, tipo: 'producto_terminado', nombre: data.nombre, sku: data.sku, precio: Number(data.precio), stock_actual: Number(data.stock), stock_minimo: 0, unidad_medida: 'unidad', peso: 0 });
+    carrito.push({ id: data.id, nombre: data.nombre, precio: Number(data.precio), stock_actual: Number(data.stock), cantidad: Number(data.stock), porGramo: false, peso: 0 });
+    renderizarCarrito();
+    cerrarProductoRapido();
+    mostrarMensaje('mensajeVenta', `✅ «${data.nombre}» se creó en el inventario (código de barras ${data.sku}) y está en el carrito. Pídele al Taller que complete su ficha técnica.`, 'exito');
   }
 
   // Se aplica apenas carga la página (aunque no haya internet para traer el inventario)
@@ -7595,6 +7790,10 @@
     if (escanerModoContinuo) cerrarEscanerCodigoBarras();
     ocultarMensaje('mensajeVenta');
 
+    if (modoFeria && !feriaActivaId) {
+      mostrarMensaje('mensajeVenta', 'Elige la feria de esta venta (arriba, en «Feria de esta venta»). Si es una feria nueva, créala con «⚙️ Ferias».', 'error');
+      return;
+    }
     if (!(await validarAntesDeConfirmarVenta())) return;
 
     const esPedidoMarketplace = document.getElementById('checkPedidoMarketplace').checked;
@@ -7691,7 +7890,7 @@
       } catch (errorRed) {
         // No hubo forma de contactar al servidor (sin internet en este momento):
         // se guarda la venta localmente en vez de perderla, y se avisa al cajero.
-        encolarVentaOffline(cuerpoVenta, feANombre);
+        encolarVentaOffline(cuerpoVenta, feANombre, modoFeria ? feriaActivaId : null);
         mostrarMensaje('mensajeVenta', '📴 Sin conexión — la venta quedó guardada en este dispositivo y se enviará sola apenas vuelva el internet. No cierres esta pantalla en el navegador sin haber sincronizado.', 'exito');
         carrito = [];
         document.getElementById('checkPedidoMarketplace').checked = false;
@@ -7739,9 +7938,16 @@
         if (errPref) throw errPref;
         avisoFactura = ' 🧾 Emite ahora la factura electrónica en la DIAN (queda en "Por facturar").';
       } catch (e) { avisoFactura = ' ⚠️ No se pudo guardar a nombre de quién va la factura: la venta queda en Facturación electrónica → Por facturar.'; }
+      let avisoFeria = '';
+      if (modoFeria && feriaActivaId) {
+        try {
+          const { error: errFeria } = await supabaseClient.rpc('fn_marcar_venta_feria', { p_consecutivo: datos.consecutivo, p_feria_id: feriaActivaId });
+          if (errFeria) throw errFeria;
+        } catch (e) { avisoFeria = ` ⚠️ La venta quedó registrada, pero no se pudo asociar a la feria (${e.message || 'error'}).`; }
+      }
       document.querySelectorAll('input[name="feQuiere"]').forEach(r => { r.checked = false; });
       if (modoFeria) { const cf = document.querySelector('input[name="feQuiere"][value="consumidor_final"]'); if (cf) cf.checked = true; }
-      mostrarMensaje('mensajeVenta', `✅ Venta registrada correctamente.${datos.puntos_ganados > 0 ? ` ⭐ El cliente ganó ${datos.puntos_ganados} puntos.` : ''}${avisoFactura}`, 'exito');
+      mostrarMensaje('mensajeVenta', `✅ Venta registrada correctamente.${datos.puntos_ganados > 0 ? ` ⭐ El cliente ganó ${datos.puntos_ganados} puntos.` : ''}${avisoFactura}${avisoFeria}`, avisoFeria ? 'error' : 'exito');
       carrito = [];
       clienteVentaTerceroId = null;
       puntosCanjeadosActual = { puntos: 0, valorDescuento: 0 };
