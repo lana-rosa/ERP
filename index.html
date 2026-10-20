@@ -1399,9 +1399,10 @@
       <label for="pedidoDescripcionProducto">Descripción del producto</label>
       <input type="text" id="pedidoDescripcionProducto" placeholder="Ej: Amigurumi personalizado conejo azul">
       <label for="pedidoCantidad">Cantidad</label>
-      <input type="number" id="pedidoCantidad" placeholder="1" min="1" step="1" value="1">
-      <label for="pedidoValorProducto">Valor de este producto (COP)</label>
-      <input type="number" id="pedidoValorProducto" placeholder="0" min="0" step="1">
+      <input type="number" id="pedidoCantidad" placeholder="1" min="1" step="1" value="1" oninput="actualizarTotalLineaPedido()">
+      <label for="pedidoValorProducto">Valor de una unidad (COP)</label>
+      <input type="number" id="pedidoValorProducto" placeholder="0" min="0" step="1" oninput="actualizarTotalLineaPedido()">
+      <div id="pedidoTotalLineaInfo" style="font-size:12.5px;color:var(--rosa-principal);font-weight:600;margin-top:4px;min-height:16px;"></div>
       <button type="button" class="btn-secundario" style="margin-top:8px;" onclick="agregarProductoAPedido()">+ Agregar producto a la lista</button>
 
       <div id="listaProductosPedido" style="margin-top:10px;"></div>
@@ -1423,6 +1424,19 @@
       <label for="pedidoValorEnvio" style="margin-top:14px;">Valor del envío (COP) <span style="font-size:10px;opacity:0.6;">(se calcula solo según la ciudad, pero puedes ajustarlo)</span></label>
       <input type="number" id="pedidoValorEnvio" placeholder="0" min="0" step="1" oninput="actualizarResumenAnticipoPedido()">
 
+      <div id="bloqueAnticipoPedido" style="margin-top:12px;">
+        <label for="pedidoAnticipoPct">Anticipo <span style="font-size:10px;opacity:0.6;">(mínimo 50 % del valor de los productos, sin envío)</span></label>
+        <select id="pedidoAnticipoPct" onchange="actualizarResumenAnticipoPedido()">
+          <option value="50">50 % (mínimo)</option>
+          <option value="60">60 %</option>
+          <option value="70">70 %</option>
+          <option value="80">80 %</option>
+          <option value="100">100 % de los productos (el envío se paga al entregar)</option>
+          <option value="todo">Todo: productos + envío</option>
+          <option value="otro">Otro valor…</option>
+        </select>
+        <input type="number" id="pedidoAnticipoMonto" class="oculto" placeholder="Valor del anticipo (COP)" min="0" step="1" style="margin-top:6px;" oninput="actualizarResumenAnticipoPedido()">
+      </div>
       <div id="resumenAnticipoPedido" class="resumen-cierre" style="margin-top:12px;"></div>
 
       <div style="margin:12px 0;padding:10px 12px;border:1.5px solid #f1e2ec;border-radius:var(--radius-md);">
@@ -17435,6 +17449,9 @@
     document.getElementById('pedidoCantidad').value = '1';
     document.getElementById('pedidoValorProducto').value = '';
     document.getElementById('pedidoValorEnvio').value = '';
+    document.getElementById('pedidoAnticipoPct').value = '50';
+    document.getElementById('pedidoAnticipoMonto').value = '';
+    actualizarTotalLineaPedido();
     document.getElementById('pedidoFechaEstimadaEntrega').value = '';
     productoPedidoSeleccionado = null;
     carritoPedidoCanal = [];
@@ -17529,6 +17546,7 @@
 
     if (!document.getElementById('pedidoValorProducto').value) {
       document.getElementById('pedidoValorProducto').value = item.precio_venta;
+      actualizarTotalLineaPedido();
       actualizarResumenAnticipoPedido();
     }
   }
@@ -17538,18 +17556,28 @@
   function agregarProductoAPedido() {
     const descripcion = document.getElementById('pedidoDescripcionProducto').value.trim();
     const cantidad = Number(document.getElementById('pedidoCantidad').value);
-    const valor = Number(document.getElementById('pedidoValorProducto').value);
+    const valorUnitario = Number(document.getElementById('pedidoValorProducto').value);
 
     ocultarMensaje('mensajePedidoCanal');
     if (!descripcion) { mostrarMensaje('mensajePedidoCanal', 'Describe el producto.', 'error'); return; }
     if (!cantidad || cantidad <= 0) { mostrarMensaje('mensajePedidoCanal', 'Escribe una cantidad válida.', 'error'); return; }
-    if (!valor || valor <= 0) { mostrarMensaje('mensajePedidoCanal', 'Escribe el valor de este producto.', 'error'); return; }
+    if (!valorUnitario || valorUnitario <= 0) { mostrarMensaje('mensajePedidoCanal', 'Escribe el valor de una unidad del producto.', 'error'); return; }
 
-    carritoPedidoCanal.push({ descripcion, cantidad, valor });
+    // «valor» es el total de la línea (cantidad × valor de una unidad): el resto del formulario suma y reparte con ese total
+    carritoPedidoCanal.push({ descripcion, cantidad, valorUnitario, valor: valorUnitario * cantidad });
     document.getElementById('pedidoDescripcionProducto').value = '';
     document.getElementById('pedidoCantidad').value = '1';
     document.getElementById('pedidoValorProducto').value = '';
+    actualizarTotalLineaPedido();
     renderizarListaProductosPedido();
+  }
+
+  function actualizarTotalLineaPedido() {
+    const cantidad = Number(document.getElementById('pedidoCantidad').value) || 0;
+    const valorUnitario = Number(document.getElementById('pedidoValorProducto').value) || 0;
+    const el = document.getElementById('pedidoTotalLineaInfo');
+    if (!el) return;
+    el.textContent = (cantidad > 0 && valorUnitario > 0 && cantidad !== 1) ? `${cantidad} × ${formatearMoneda(valorUnitario)} = ${formatearMoneda(cantidad * valorUnitario)}` : '';
   }
 
   function quitarProductoPedido(indice) {
@@ -17564,7 +17592,7 @@
     } else {
       contenedor.innerHTML = carritoPedidoCanal.map((p, i) => `
         <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f4eef2;font-size:12.5px;">
-          <span>${p.cantidad}x ${escaparHtml(p.descripcion)}</span>
+          <span>${p.cantidad}x ${escaparHtml(p.descripcion)}${p.cantidad > 1 ? ` <span style="opacity:.6;">(${formatearMoneda(p.valorUnitario || p.valor / p.cantidad)} c/u)</span>` : ''}</span>
           <span style="display:flex;align-items:center;gap:8px;">
             ${formatearMoneda(p.valor)}
             <button type="button" class="btn-quitar-pago" onclick="quitarProductoPedido(${i})">✕</button>
@@ -17621,6 +17649,21 @@
     actualizarResumenAnticipoPedido();
   }
 
+  // Anticipo de un pedido por redes: mínimo el 50 % del valor de los productos (sin envío); puede ser mayor, hasta el total con envío.
+  function calcularAnticipoPedido(valorProducto, valorEnvio) {
+    const total = valorProducto + valorEnvio;
+    const minimo = Math.round(valorProducto * 0.5);
+    const eleccion = document.getElementById('pedidoAnticipoPct').value;
+    let anticipo, error = null;
+    if (eleccion === 'todo') anticipo = total;
+    else if (eleccion === 'otro') {
+      anticipo = Math.round(Number(document.getElementById('pedidoAnticipoMonto').value) || 0);
+      if (anticipo < minimo) error = `El anticipo mínimo es ${formatearMoneda(minimo)} (50 % de los productos).`;
+      else if (anticipo > total) error = `El anticipo no puede superar el total del pedido (${formatearMoneda(total)}).`;
+    } else anticipo = Math.round(valorProducto * Number(eleccion) / 100);
+    return { anticipo, minimo, total, error, esMinimo: anticipo === minimo };
+  }
+
   function actualizarResumenAnticipoPedido() {
     const canal = document.getElementById('pedidoCanal').value;
     const valorProductoBruto = carritoPedidoCanal.reduce((acc, p) => acc + p.valor, 0);
@@ -17629,15 +17672,22 @@
     const valorEnvio = Number(document.getElementById('pedidoValorEnvio').value) || 0;
     const total = valorProducto + valorEnvio;
 
+    const bloqueAnticipo = document.getElementById('bloqueAnticipoPedido');
+    if (bloqueAnticipo) bloqueAnticipo.classList.toggle('oculto', canal === 'tienda_virtual');
+    document.getElementById('pedidoAnticipoMonto').classList.toggle('oculto', document.getElementById('pedidoAnticipoPct').value !== 'otro');
+
     let anticipo, saldo, notaCanal;
     if (canal === 'tienda_virtual') {
       anticipo = total;
       saldo = 0;
       notaCanal = 'Tienda virtual: se cobra el 100% (producto + envío) de una vez.';
     } else {
-      anticipo = Math.round(valorProducto * 0.5);
+      const c = calcularAnticipoPedido(valorProducto, valorEnvio);
+      anticipo = c.error ? c.minimo : c.anticipo;
       saldo = total - anticipo;
-      notaCanal = 'Redes sociales: 50% de anticipo (sin envío) para confirmar, el resto + envío se paga al entregar.';
+      notaCanal = c.error
+        ? `⚠️ ${c.error}`
+        : 'Redes sociales: el anticipo (mínimo 50 % de los productos, sin envío) confirma el pedido; el resto + envío se paga al entregar.';
     }
 
     const el = document.getElementById('resumenAnticipoPedido');
@@ -17706,6 +17756,9 @@
     const valorDescuentoPedido = Math.min(descuentoPedidoActual.valorDescuento || 0, valorProductoBruto);
     const valorProducto = Math.max(valorProductoBruto - valorDescuentoPedido, 0);
 
+    const calcAnticipo = canal === 'tienda_virtual' ? null : calcularAnticipoPedido(valorProducto, valorEnvio);
+    if (calcAnticipo && calcAnticipo.error) { mostrarMensaje('mensajePedidoCanal', calcAnticipo.error, 'error'); return; }
+
     const btn = document.getElementById('btnCrearPedido');
     btn.disabled = true;
     btn.textContent = 'Creando...';
@@ -17754,13 +17807,29 @@
         return;
       }
 
+      // El servidor crea el pedido con el 50 % mínimo; si se eligió otro anticipo, se ajusta aquí (la función valida mínimo 50 % y máximo el total)
+      let avisoAnticipo = '';
+      if (calcAnticipo && !calcAnticipo.esMinimo) {
+        try {
+          let pedidoIdAnticipo = datos.pedido_id || datos.id;
+          if (!pedidoIdAnticipo && datos.consecutivo) {
+            const { data: filaPedido } = await supabaseClient.from('pedidos_canal_venta').select('id').eq('consecutivo', datos.consecutivo).maybeSingle();
+            pedidoIdAnticipo = filaPedido && filaPedido.id;
+          }
+          if (!pedidoIdAnticipo) throw new Error('no se encontró el pedido');
+          const { error: errAnticipo } = await supabaseClient.rpc('fn_ajustar_anticipo_pedido_canal', { p_pedido_id: pedidoIdAnticipo, p_monto: calcAnticipo.anticipo });
+          if (errAnticipo) throw errAnticipo;
+        } catch (e) { avisoAnticipo = ` ⚠️ El pedido se creó con el anticipo mínimo (50 %); no se pudo cambiar el anticipo a ${formatearMoneda(calcAnticipo.anticipo)} (${e.message || 'error'}). Revisa el valor del anticipo en el pedido antes de cobrar.`; }
+      }
+
       let avisoFacturaPedido = '';
       try {
         const { error: errPref } = await supabaseClient.rpc('fn_fe_marcar_preferencia_origen', { p_origen: 'pedido_canal', p_ref: String(datos.consecutivo || datos.pedido_id || datos.id), p_quiere: true, p_a_nombre_de: feSelPedido.value });
         if (errPref) throw errPref;
       } catch (e) { avisoFacturaPedido = ' ⚠️ No se pudo guardar a nombre de quién va la factura: defínelo en "Pedidos Web/Redes" antes de cobrar.'; }
       document.querySelectorAll('input[name="feQuierePedido"]').forEach(r => { r.checked = false; });
-      mostrarMensaje('mensajePedidoCanal', '✅ Pedido creado. Ahora regístrale el anticipo cuando el cliente pague.' + avisoFacturaPedido, 'exito');
+      const anticipoFinal = calcAnticipo ? (avisoAnticipo ? calcAnticipo.minimo : calcAnticipo.anticipo) : null;
+      mostrarMensaje('mensajePedidoCanal', '✅ Pedido creado. Ahora regístrale el anticipo' + (anticipoFinal != null ? ' de ' + formatearMoneda(anticipoFinal) : '') + ' cuando el cliente pague.' + avisoAnticipo + avisoFacturaPedido, avisoAnticipo ? 'error' : 'exito');
 
       // Aviso de tratamiento de datos por WhatsApp (Ley 1581) — se ofrece
       // como un paso aparte, no automático, porque abrir WhatsApp exige que
