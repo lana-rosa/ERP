@@ -9083,6 +9083,7 @@
 
   // Costo estimado y precio sugerido de la ficha: materiales del inventario + mano de obra + costos fijos del Taller (igual que el cotizador); precio = costo ÷ 0,7 (utilidad 30 %), redondeado a los $1.000 de arriba. Solo sugiere: el precio lo define Sara a mano.
   let fichaParamsCosto = null;
+  let fichaExtrasCosto = { ojos: 0, empaque: 0, otros: 0 };   // costos que el producto guarda en el inventario (se editan en Inventario → editar producto)
   async function fichaCargarParamsCosto() {
     if (fichaParamsCosto) return fichaParamsCosto;
     const { data } = await supabaseClient.rpc('fn_cotizador_parametros');
@@ -9107,14 +9108,17 @@
     const horasMes = Number(prm.horas_produccion_mes || 0);
     const fijos = horasMes > 0 ? horas * fijosMes / horasMes : 0;
     const etiqueta = Number(prm.costo_etiqueta || 0);
-    const costo = materiales + manoObra + fijos + (materiales + manoObra > 0 ? etiqueta : 0);
-    const precio = costo > 0 ? Math.ceil(costo / 0.7 / 1000) * 1000 : 0;
+    const ex = fichaExtrasCosto;
+    const extras = ex.ojos + ex.empaque + ex.otros;
+    const costo = materiales + manoObra + fijos + extras + (materiales + manoObra + extras > 0 ? etiqueta : 0);
+    const precio = costo > 0 ? Math.ceil(costo / 0.7 / 1000 - 1e-9) * 1000 : 0;
     const avisos = [];
     if (!ficha.materiales.length) avisos.push('Agrega los materiales para estimar el costo.');
     else if (sinCosto) avisos.push(`${sinCosto} material(es) sin costo en el inventario: el costo real es mayor.`);
     if (!horas) avisos.push('Falta el tiempo de elaboración (mano de obra).');
     box.innerHTML = `<strong>💡 Costo estimado y precio sugerido</strong>
       <div style="margin-top:6px;">Materiales ${formatearMoneda(Math.round(materiales))} · Mano de obra ${formatearMoneda(Math.round(manoObra))} · Costos fijos ${formatearMoneda(Math.round(fijos))} · Etiqueta ${formatearMoneda(etiqueta)}</div>
+      <div style="margin-top:4px;">Del inventario del producto: ojos ${formatearMoneda(ex.ojos)} · empaque ${formatearMoneda(ex.empaque)} · otros accesorios ${formatearMoneda(ex.otros)}</div>
       <div style="margin-top:4px;">Costo: <strong>${formatearMoneda(Math.round(costo))}</strong> → Precio sugerido (costo ÷ 0,7): <strong>${precio ? formatearMoneda(precio) : '—'}</strong></div>
       ${avisos.map(a => `<div style="margin-top:4px;opacity:.75;">⚠️ ${a}</div>`).join('')}
       ${precio ? `<button type="button" class="btn-mini editar" style="margin-top:8px;" onclick="document.getElementById('${p}Precio').value=${precio}">Usar este precio</button> <span style="font-size:11px;opacity:.65;">El precio lo defines tú; esto solo lo sugiere.</span>` : ''}`;
@@ -9200,6 +9204,8 @@
     const { data, error } = await supabaseClient.rpc('fn_ficha_obtener', { p_item_id: itemId });
     if (error) { alert('No se pudo abrir la ficha: ' + error.message); return; }
     fichaItemActual = itemId;
+    const { data: it } = await supabaseClient.from('inventario_items').select('costo_ojos, costo_empaque, costo_otros_accesorios').eq('id', itemId).maybeSingle();
+    fichaExtrasCosto = { ojos: Number(it && it.costo_ojos) || 0, empaque: Number(it && it.costo_empaque) || 0, otros: Number(it && it.costo_otros_accesorios) || 0 };
     document.getElementById('fichaModalTitulo').textContent = '📋 Ficha técnica: ' + data.producto.nombre;
     fichaMontar('fM', 'fichaModalContenido', { medidas: true, sku: true, precio: true });
     fichaLlenar('fM', data);
