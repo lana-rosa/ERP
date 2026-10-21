@@ -9021,7 +9021,7 @@
 
   async function cargarInsumosFicha() {
     if (!insumosFichaCache) {
-      const { data } = await supabaseClient.from('inventario_items').select('id, nombre, unidad_medida').eq('tipo', 'merceria').eq('activo', true).order('nombre', { ascending: true });
+      const { data } = await supabaseClient.from('inventario_items').select('id, nombre, unidad_medida, costo_promedio_ponderado').eq('tipo', 'merceria').eq('activo', true).order('nombre', { ascending: true });
       insumosFichaCache = data || [];
     }
     let dl = document.getElementById('datalistInsumosFicha');
@@ -9045,6 +9045,7 @@
         <div class="campo-mini"><label>Relleno (g)</label><input type="number" id="${p}Relleno" min="0" step="0.5" placeholder="Ej: 5"></div>
         ${opc.precio ? `<div class="campo-mini"><label>Precio de venta (COP)</label><input type="number" id="${p}Precio" min="0" step="100" placeholder="Lo defines tú"></div>` : ''}
       </div>
+      ${opc.precio ? `<div id="${p}CostoBox" style="margin-top:10px;padding:10px 12px;border-radius:10px;background:rgba(127,127,127,.10);font-size:12.5px;"></div>` : ''}
       ${opc.sku ? `
       <label style="margin-top:10px;">Código de barras</label>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -9069,9 +9070,54 @@
   }
 
   function fichaMontar(p, contenedorId, opc) {
-    document.getElementById(contenedorId).innerHTML = fichaHtml(p, opc);
-    cargarInsumosFicha();
+    const cont = document.getElementById(contenedorId);
+    cont.innerHTML = fichaHtml(p, opc);
+    cargarInsumosFicha().then(() => fichaCalcularCosto(p));
     fichaAgregarMaterial(p);
+    if (opc && opc.precio) {
+      cont.oninput = () => fichaCalcularCosto(p);
+      cont.onclick = (e) => { if (e.target.closest('.btn-quitar-pago')) setTimeout(() => fichaCalcularCosto(p), 0); };
+      fichaCalcularCosto(p);
+    }
+  }
+
+  // Costo estimado y precio sugerido de la ficha: materiales del inventario + mano de obra + costos fijos del Taller (igual que el cotizador); precio = costo ÷ 0,7 (utilidad 30 %), redondeado a los $1.000 de arriba. Solo sugiere: el precio lo define Sara a mano.
+  let fichaParamsCosto = null;
+  async function fichaCargarParamsCosto() {
+    if (fichaParamsCosto) return fichaParamsCosto;
+    const { data } = await supabaseClient.rpc('fn_cotizador_parametros');
+    fichaParamsCosto = data || {};
+    return fichaParamsCosto;
+  }
+  async function fichaCalcularCosto(p) {
+    const box = document.getElementById(p + 'CostoBox');
+    if (!box) return;
+    const prm = await fichaCargarParamsCosto();
+    const { ficha } = fichaLeer(p);
+    const insumos = insumosFichaCache || [];
+    let materiales = 0, sinCosto = 0;
+    ficha.materiales.forEach(m => {
+      const it = insumos.find(i => i.id === m.inventario_item_id);
+      const c = it ? Number(it.costo_promedio_ponderado || 0) : 0;
+      if (c > 0) materiales += c * m.cantidad; else sinCosto++;
+    });
+    const horas = ficha.tiempo_horas || 0;
+    const manoObra = horas * Number(prm.valor_hora || 0);
+    const fijosMes = (prm.costos_fijos_taller || []).reduce((t, f) => t + Number(f.valor_mes || 0), 0);
+    const horasMes = Number(prm.horas_produccion_mes || 0);
+    const fijos = horasMes > 0 ? horas * fijosMes / horasMes : 0;
+    const etiqueta = Number(prm.costo_etiqueta || 0);
+    const costo = materiales + manoObra + fijos + (materiales + manoObra > 0 ? etiqueta : 0);
+    const precio = costo > 0 ? Math.ceil(costo / 0.7 / 1000) * 1000 : 0;
+    const avisos = [];
+    if (!ficha.materiales.length) avisos.push('Agrega los materiales para estimar el costo.');
+    else if (sinCosto) avisos.push(`${sinCosto} material(es) sin costo en el inventario: el costo real es mayor.`);
+    if (!horas) avisos.push('Falta el tiempo de elaboración (mano de obra).');
+    box.innerHTML = `<strong>💡 Costo estimado y precio sugerido</strong>
+      <div style="margin-top:6px;">Materiales ${formatearMoneda(Math.round(materiales))} · Mano de obra ${formatearMoneda(Math.round(manoObra))} · Costos fijos ${formatearMoneda(Math.round(fijos))} · Etiqueta ${formatearMoneda(etiqueta)}</div>
+      <div style="margin-top:4px;">Costo: <strong>${formatearMoneda(Math.round(costo))}</strong> → Precio sugerido (costo ÷ 0,7): <strong>${precio ? formatearMoneda(precio) : '—'}</strong></div>
+      ${avisos.map(a => `<div style="margin-top:4px;opacity:.75;">⚠️ ${a}</div>`).join('')}
+      ${precio ? `<button type="button" class="btn-mini editar" style="margin-top:8px;" onclick="document.getElementById('${p}Precio').value=${precio}">Usar este precio</button> <span style="font-size:11px;opacity:.65;">El precio lo defines tú; esto solo lo sugiere.</span>` : ''}`;
   }
 
   function fichaAgregarMaterial(p, m) {
@@ -9157,6 +9203,7 @@
     document.getElementById('fichaModalTitulo').textContent = '📋 Ficha técnica: ' + data.producto.nombre;
     fichaMontar('fM', 'fichaModalContenido', { medidas: true, sku: true, precio: true });
     fichaLlenar('fM', data);
+    fichaCalcularCosto('fM');
     document.getElementById('fichaModalEstado').textContent = data.ficha
       ? `Ficha guardada (versión ${data.ficha.version}). Cámbiala solo si el producto cambió.`
       : 'Este producto todavía no tiene ficha: llénala una sola vez y quedará guardada para las próximas veces.';
