@@ -1463,13 +1463,20 @@
       <input type="number" id="pedidoValorEnvio" placeholder="0" min="0" step="1" oninput="actualizarResumenAnticipoPedido()">
 
       <div id="bloqueAnticipoPedido" style="margin-top:12px;">
-        <label for="pedidoAnticipoMonto">Anticipo recibido (COP) <span style="font-size:10px;opacity:0.6;">(mínimo 50 % del valor de los productos, sin envío; puede ser mayor)</span></label>
+        <label for="pedidoAnticipoMonto">Anticipo recibido (COP) <span style="font-size:10px;opacity:0.6;">(lo habitual es mínimo 50 % del valor de los productos, sin envío; la administradora puede agendar con menos)</span></label>
         <input type="number" id="pedidoAnticipoMonto" min="0" step="1" placeholder="Valor del anticipo" oninput="anticipoPedidoEditado = true; actualizarResumenAnticipoPedido()">
         <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;">
+          <button type="button" class="btn-secundario" onclick="fijarAnticipoPedido(20)">20 %</button>
+          <button type="button" class="btn-secundario" onclick="fijarAnticipoPedido(30)">30 %</button>
+          <button type="button" class="btn-secundario" onclick="fijarAnticipoPedido(40)">40 %</button>
           <button type="button" class="btn-secundario" onclick="fijarAnticipoPedido(50)">50 %</button>
           <button type="button" class="btn-secundario" onclick="fijarAnticipoPedido(70)">70 %</button>
           <button type="button" class="btn-secundario" onclick="fijarAnticipoPedido(100)">100 % productos</button>
           <button type="button" class="btn-secundario" onclick="fijarAnticipoPedido('todo')">Todo + envío</button>
+        </div>
+        <div id="bloqueMotivoAnticipoBajo" class="oculto" style="margin-top:8px;">
+          <label for="pedidoMotivoAnticipoBajo">Motivo para agendar con menos del 50 % <span style="font-size:10px;opacity:0.6;">(queda anotado en el pedido con tu nombre)</span></label>
+          <input type="text" id="pedidoMotivoAnticipoBajo" placeholder="Ej: cliente frecuente, paga el resto en 15 días" oninput="actualizarResumenAnticipoPedido()">
         </div>
         <div id="ayudaAnticipoPedido" style="font-size:11px;opacity:0.7;margin-top:6px;"></div>
       </div>
@@ -1761,7 +1768,7 @@
         <div>
           <label for="invNombre">Nombre</label>
           <input type="text" id="invNombre" placeholder="Ej: Amigurumi conejo personalizado">
-          <label for="invSku">SKU / Código de barras <span style="font-size:10px;opacity:0.6;">(opcional — escanea o escribe; en un producto tejido se asigna solo si lo dejas vacío)</span></label>
+          <label for="invSku">SKU / Código de barras <span style="font-size:10px;opacity:0.6;">(opcional — escanea o escribe el código que te asignó GS1; el ERP nunca lo inventa)</span></label>
           <div style="display:flex;gap:8px;">
             <input type="text" id="invSku" placeholder="Ej: AMI-001" style="flex:1;">
             <button type="button" class="btn-mini editar" style="max-width:80px;" onclick="abrirEscanerCodigoBarras('invSku')">📷 Escanear</button>
@@ -1965,6 +1972,11 @@
     </div>
   </div>
 
+  <details id="panelPlanTejido" class="panel no-exportar" style="max-width:none;max-height:none;margin-bottom:16px;font-size:13px;line-height:1.6;" open>
+    <summary style="cursor:pointer;font-weight:700;font-size:14.5px;">🧶 Plan de tejido sugerido (según lo que se está acabando en la tienda)</summary>
+    <div id="planTejidoTodas" style="margin-top:10px;"><div class="cargando">Cargando...</div></div>
+  </details>
+
   <details class="panel no-exportar" style="max-width:none;max-height:none;margin-bottom:16px;font-size:13px;line-height:1.6;" open>
     <summary style="cursor:pointer;font-weight:700;font-size:14.5px;">❓ Cómo registrar lo que tejo (instructivo)</summary>
     <ol style="padding-left:18px;margin:10px 0 0 0;">
@@ -2106,6 +2118,7 @@
     <div style="font-size:12.5px;opacity:.8;margin:8px 0 12px;">Une cada usuario del ERP con su nombre de tejedora. Con <strong>"Solo producción"</strong> la persona solo ve esta pantalla (ideal para las tejedoras externas). Los usuarios nuevos se crean en Configuración → Gestión de usuarios con el rol <strong>Taller</strong>.</div>
     <div id="listaAccesoTejedoras"><div class="cargando">Cargando...</div></div>
   </details>
+  <div id="planTejidoMio" style="margin-bottom:16px;"></div>
   <h2 style="font-size:15px;margin:6px 0 10px;">Por tejer</h2>
   <div id="listaMiProduccionPendientes"><div class="cargando">Cargando...</div></div>
   <h2 style="font-size:15px;margin:18px 0 10px;">Terminadas (últimos 45 días)</h2>
@@ -9049,9 +9062,8 @@
       ${opc.sku ? `
       <label style="margin-top:10px;">Código de barras</label>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <input type="text" id="${p}Sku" placeholder="Se asigna solo si lo dejas vacío" style="flex:1;min-width:180px;">
+        <input type="text" id="${p}Sku" placeholder="Código asignado por GS1" style="flex:1;min-width:180px;">
         <button type="button" class="btn-mini editar" onclick="abrirEscanerCodigoBarras('${p}Sku')">📷 Escanear</button>
-        <button type="button" class="btn-mini editar" onclick="fichaGenerarSku('${p}')">🔢 Generar código</button>
       </div>` : ''}
       <label style="margin-top:12px;">Accesorios</label>
       <div style="display:flex;flex-wrap:wrap;gap:6px 14px;">
@@ -9183,12 +9195,6 @@
                ojos_cantidad: num('OjosCant'), relleno_gramos: num('Relleno'), accesorios, profundidad_cm: num('Prof'), notas: v('Notas') || null },
       producto: { sku: v('Sku') || null, peso_gramos: num('Peso'), alto_cm: num('Alto'), ancho_cm: num('Ancho'), precio_venta: num('Precio') }
     };
-  }
-
-  async function fichaGenerarSku(p) {
-    const { data, error } = await supabaseClient.rpc('fn_siguiente_sku_interno');
-    if (error) { alert('No se pudo generar el código: ' + error.message); return; }
-    document.getElementById(p + 'Sku').value = data;
   }
 
   function actualizarBloqueFichaNuevo() {
@@ -10855,6 +10861,7 @@
     renderizarFilasMaterial('nueva');
     await Promise.all([cargarOrdenesProduccion(), cargarSolicitudesElaboracion()]);
     await cargarPedidosCrmSinOrden();
+    cargarPlanTejido('planTejidoTodas', 'todas');
   }
 
   async function cargarOpcionesNuevaOrden() {
@@ -11838,6 +11845,87 @@
       + (f && f.peso_gramos ? ` · ⚖️ ${formatearCantidad(f.peso_gramos)} g` : '');
   }
 
+  // ---- Plan de tejido sugerido: qué tejer según el stock bajo, el ritmo de ventas y las horas de cada tejedora ----
+  let planTejidoCache = null;
+  async function cargarPlanTejido(contId, modo) {
+    const cont = document.getElementById(contId);
+    if (!cont) return;
+    cont.innerHTML = '<div class="cargando">Calculando qué hace falta...</div>';
+    const { data, error } = await supabaseClient.rpc('fn_sugerencias_tejido');
+    if (error) { cont.innerHTML = `<div class="cargando">No se pudo calcular: ${escaparHtml(error.message)}</div>`; return; }
+    planTejidoCache = data;
+    const edita = modo === 'todas' && (rolActual === 'administrador' || rolActual === 'taller');
+    const fila = (it, tejId) => {
+      const sinHoras = it.horas === null || it.horas === undefined;
+      const vendidas = it.vendidas_periodo > 0 ? ` · vendidas en ${data.config.dias_ventana} días: ${formatearCantidad(it.vendidas_periodo)}` : '';
+      const enProceso = it.en_proceso > 0 ? ` · ya en proceso: ${formatearCantidad(it.en_proceso)}` : '';
+      return `<div style="padding:8px 0;border-bottom:1px solid #f4eef2;">
+        <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;">
+          <div><strong>${escaparHtml(it.nombre)}</strong> · hacer <strong>${formatearCantidad(it.cantidad)}</strong>
+            <div style="font-size:11.5px;opacity:.75;">${escaparHtml(it.motivo)} · en tienda: ${formatearCantidad(it.stock)}${enProceso}${vendidas}</div></div>
+          <div style="text-align:right;font-size:12.5px;">${sinHoras ? '<span style="color:var(--ambar);">⏱️ falta el tiempo</span>' : '≈ ' + it.horas + ' h'}
+            ${edita ? `<button class="btn-mini editar" style="margin-left:6px;" onclick="abrirOrdenDesdePlan('${it.item_id}', ${it.cantidad})">Abrir orden</button>` : ''}</div>
+        </div>
+        ${edita ? `<details style="margin-top:4px;"><summary style="cursor:pointer;font-size:11.5px;opacity:.8;">⚙️ Quién lo teje y cuánto tarda</summary>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:6px;">
+            <div><label style="font-size:11px;">Tejedora habitual</label><select id="pt-tej-${it.item_id}" style="padding:7px;"><option value="">— sin asignar —</option>${data.tejedoras.map(t => `<option value="${t.user_id}" ${t.user_id === tejId ? 'selected' : ''}>${escaparHtml(t.nombre)}</option>`).join('')}</select></div>
+            <div><label style="font-size:11px;">Horas por unidad</label><input type="number" id="pt-hor-${it.item_id}" min="0" step="0.25" value="${it.horas_unidad ?? ''}" style="width:90px;padding:7px;"></div>
+            <div><label style="font-size:11px;">Lote mínimo</label><input type="number" id="pt-lot-${it.item_id}" min="1" step="1" value="1" style="width:80px;padding:7px;"></div>
+            <label style="display:flex;gap:4px;align-items:center;margin:0;font-weight:400;font-size:12px;"><input type="checkbox" id="pt-exc-${it.item_id}" style="width:auto;"> No sugerir este producto</label>
+            <button class="btn-mini guardar" onclick="guardarPlanTejidoItem('${it.item_id}')">Guardar</button>
+          </div></details>` : ''}
+      </div>`;
+    };
+    const bloqueTejedora = (t) => {
+      const pct = Math.min(100, Math.round(t.horas_asignadas / t.horas_semana * 100));
+      return `<div style="margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;">
+          <div style="font-weight:700;font-size:14px;">👩‍🎨 ${escaparHtml(t.nombre)}</div>
+          <div style="font-size:12px;">${t.horas_asignadas} de ${t.horas_semana} h esta semana
+            ${edita ? `<input type="number" id="pt-cap-${t.user_id}" min="1" max="80" step="1" value="${t.horas_semana}" style="width:64px;padding:4px;margin-left:6px;"> <button class="btn-mini editar" onclick="guardarCapacidadTejedora('${t.user_id}')">Guardar horas</button>` : ''}</div>
+        </div>
+        <div style="height:6px;background:#f4eef2;border-radius:6px;margin:4px 0 6px;"><div style="height:6px;width:${pct}%;background:var(--rosa-principal);border-radius:6px;"></div></div>
+        ${t.items.length ? t.items.map(it => fila(it, t.user_id)).join('') : '<div style="font-size:12.5px;opacity:.7;">Nada urgente por tejer 🎉</div>'}
+        ${t.pendientes.length ? `<div style="font-size:12px;margin-top:6px;"><strong>Para la próxima semana</strong> (no cabe en sus horas): ${t.pendientes.map(it => escaparHtml(it.nombre) + ' ×' + formatearCantidad(it.cantidad)).join(' · ')}</div>` : ''}
+      </div>`;
+    };
+    if (modo === 'mia') {
+      const mia = data.tejedoras.find(t => t.user_id === sesionActual.userId);
+      if (!mia) { cont.innerHTML = ''; return; }
+      cont.innerHTML = `<div class="panel" style="max-width:none;max-height:none;"><h2 style="font-size:15px;margin:0 0 8px;">🧶 Lo que te toca tejer esta semana</h2><div style="font-size:12px;opacity:.7;margin-bottom:8px;">Sale automáticamente de lo que se está acabando en la tienda, de lo que más se vende y de tus horas. Lo más urgente va primero.</div>${bloqueTejedora(mia)}</div>`;
+      return;
+    }
+    cont.innerHTML = `<div style="font-size:12px;opacity:.75;margin-bottom:10px;">Se sugiere tejer lo que está agotado, por debajo del mínimo o se vende tan rápido que alcanza para ${data.config.dias_alerta} días o menos. Lo más urgente va primero y a cada tejedora se le reparte según sus horas de la semana. La cantidad apunta a cubrir ${data.config.dias_cobertura} días de ventas (o el mínimo, si es mayor). ${data.productos_sin_horas ? `<strong>${data.productos_sin_horas} producto(s) no tienen el tiempo de tejido:</strong> escríbelo en ⚙️ para que el reparto sea exacto.` : ''}</div>`
+      + data.tejedoras.map(bloqueTejedora).join('')
+      + `<div style="margin-top:6px;"><div style="font-weight:700;font-size:14px;">❓ Sin tejedora asignada (${data.sin_asignar.length})</div>${data.sin_asignar.length ? data.sin_asignar.map(it => fila(it, '')).join('') : '<div style="font-size:12.5px;opacity:.7;">Todo lo urgente ya tiene tejedora.</div>'}</div>`;
+  }
+
+  async function guardarPlanTejidoItem(itemId) {
+    const g = (id) => document.getElementById(id);
+    const { error } = await supabaseClient.rpc('fn_tejido_guardar_plan', {
+      p_item_id: itemId, p_tejedora: g('pt-tej-' + itemId).value || null, p_horas: Number(g('pt-hor-' + itemId).value) || null,
+      p_lote: Number(g('pt-lot-' + itemId).value) || 1, p_excluir: g('pt-exc-' + itemId).checked,
+    });
+    if (error) { mostrarMensaje('mensajeOrdenesProd', 'No se pudo guardar: ' + error.message, 'error'); return; }
+    await cargarPlanTejido('planTejidoTodas', 'todas');
+  }
+
+  async function guardarCapacidadTejedora(userId) {
+    const horas = Number(document.getElementById('pt-cap-' + userId).value);
+    const { error } = await supabaseClient.rpc('fn_tejido_guardar_capacidad', { p_user: userId, p_horas: horas });
+    if (error) { mostrarMensaje('mensajeOrdenesProd', 'No se pudo guardar: ' + error.message, 'error'); return; }
+    await cargarPlanTejido('planTejidoTodas', 'todas');
+  }
+
+  function abrirOrdenDesdePlan(itemId, cantidad) {
+    const sel = document.getElementById('opProducto');
+    if (![...sel.options].some(o => o.value === itemId)) { mostrarMensaje('mensajeOrdenesProd', 'Ese producto no está en la lista de la orden: ábrela a mano.', 'error'); return; }
+    sel.value = itemId; cambiarProductoNuevaOrden();
+    document.getElementById('opCantidad').value = cantidad;
+    sel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    mostrarMensaje('mensajeOrdenesProd', 'Producto y cantidad cargados en "Abrir orden". Revisa el material y pulsa abrir.', 'exito');
+  }
+
   async function mostrarPantallaMiProduccion() {
     mostrarPantalla('pantallaMiProduccion');
     ocultarMensaje('mensajeMiProduccion');
@@ -11847,6 +11935,7 @@
     const panel = document.getElementById('panelAccesoTejedoras');
     panel.classList.toggle('oculto', rolActual !== 'administrador');
     if (rolActual === 'administrador') cargarAccesoTejedoras();
+    cargarPlanTejido('planTejidoMio', 'mia');
     await cargarMiProduccion();
   }
 
@@ -13202,7 +13291,6 @@
             : `<span style="display:flex;gap:4px;flex-shrink:0;">
                  <input type="text" id="skuNuevo-${p.id}" placeholder="Asignar SKU" style="width:110px;padding:5px;font-size:12px;">
                  <button class="btn-mini editar" onclick='guardarSkuYAgregarEtiqueta(${JSON.stringify(p).replace(/'/g, "&#39;")})'>Guardar</button>
-                 ${p.tipo === 'producto_terminado' ? `<button class="btn-mini editar" onclick='generarSkuYAgregarEtiqueta(${JSON.stringify(p).replace(/'/g, "&#39;")})'>🔢 Generar</button>` : ''}
                </span>`
           }
         </div>
@@ -13230,14 +13318,6 @@
     return (10 - suma % 10) % 10 === Number(sku[12]) ? 'EAN13' : 'CODE128';
   }
 
-  async function generarSkuYAgregarEtiqueta(producto) {
-    const { data, error } = await supabaseClient.rpc('fn_asignar_sku_interno_lote', { p_items: [producto.id] });
-    if (error || !data || !data[producto.id]) { alert('No se pudo generar el código de barras' + (error ? ': ' + error.message : '.')); return; }
-    producto.sku = data[producto.id];
-    agregarProductoAEtiquetas(producto);
-    buscarProductosParaEtiqueta();
-  }
-
   // Llaveros: los de categoría «Llaveros» o «Charms» y cualquiera con «llavero» en el nombre
   async function agregarLlaverosAEtiquetas() {
     const msg = (t, tipo) => mostrarMensaje('mensajeEtiquetaLlaveros', t, tipo || 'error');
@@ -13255,13 +13335,11 @@
       let lista = items || [];
       if (modo !== 'todos_producto') lista = lista.filter(i => Number(i.stock_actual) > 0);
       if (!lista.length) { msg('No hay llaveros que cumplan eso.'); return; }
+      if (!lista.some(i => (i.sku || '').trim())) { msg('Ninguno de esos llaveros tiene código de barras de GS1: escríbelo en la ficha de cada producto.'); return; }
+      // Los códigos de barras los asigna GS1: los productos sin código no se pueden etiquetar hasta que se les escriba el suyo.
       const sinCodigo = lista.filter(i => !(i.sku || '').trim());
-      let nuevos = {};
-      if (sinCodigo.length) {
-        const { data: asignados, error: errSku } = await supabaseClient.rpc('fn_asignar_sku_interno_lote', { p_items: sinCodigo.map(i => i.id) });
-        if (errSku) throw new Error('No se pudieron asignar los códigos de barras: ' + errSku.message);
-        nuevos = asignados || {};
-      }
+      lista = lista.filter(i => (i.sku || '').trim());
+      const nuevos = {};
       let etiquetas = 0, agregados = 0;
       for (const it of lista) {
         const sku = (it.sku || '').trim() || nuevos[it.id];
@@ -13272,8 +13350,7 @@
         etiquetas += cantidad; agregados++;
       }
       renderizarEtiquetasSeleccionadas();
-      const conCodigoNuevo = sinCodigo.filter(i => nuevos[i.id]).map(i => i.nombre);
-      msg(`✅ ${agregados} llavero(s) en la lista (${etiquetas} etiquetas).` + (conCodigoNuevo.length ? ` Código de barras nuevo para: ${conCodigoNuevo.join(', ')}.` : ' Todos ya tenían código de barras.'), 'exito');
+      msg(`✅ ${agregados} llavero(s) en la lista (${etiquetas} etiquetas).` + (sinCodigo.length ? ` ⚠️ Sin código de barras de GS1 (escríbelo en su ficha para poder etiquetarlos): ${sinCodigo.map(i => i.nombre).join(', ')}.` : ''), sinCodigo.length ? 'error' : 'exito');
     } catch (e) {
       msg(e.message || 'No se pudieron agregar los llaveros.');
     } finally {
@@ -18250,7 +18327,7 @@
     document.getElementById('pedidoCantidad').value = '1';
     document.getElementById('pedidoValorProducto').value = '';
     document.getElementById('pedidoValorEnvio').value = '';
-    anticipoPedidoEditado = false;
+    anticipoPedidoEditado = false; { const m = document.getElementById('pedidoMotivoAnticipoBajo'); if (m) m.value = ''; }
     document.getElementById('pedidoAnticipoMonto').value = '';
     actualizarTotalLineaPedido();
     document.getElementById('pedidoFechaEstimadaEntrega').value = '';
@@ -18476,9 +18553,14 @@
     // Si no se ha escrito nada a mano, el anticipo es el mínimo (50 %); si se escribe un valor, se respeta mientras esté entre el mínimo y el total
     const anticipo = (anticipoPedidoEditado && campo.value !== '') ? Math.round(Number(campo.value) || 0) : minimo;
     let error = null;
-    if (anticipo < minimo) error = `El anticipo mínimo es ${formatearMoneda(minimo)} (50 % de los productos).`;
+    const bajo = anticipo < minimo;
+    if (bajo && !esRolFe('administrador')) error = `El anticipo habitual es mínimo ${formatearMoneda(minimo)} (50 % de los productos). Solo la administradora puede agendar con menos.`;
+    else if (anticipo <= 0) error = 'Escribe el valor del anticipo (mayor a cero).';
+    else if (bajo && (document.getElementById('pedidoMotivoAnticipoBajo')?.value || '').trim().length < 5) error = 'Escribe el motivo por el que se agenda con menos del 50 %.';
     else if (anticipo > total) error = `El anticipo no puede superar el total del pedido (${formatearMoneda(total)}).`;
-    return { anticipo, minimo, total, error, esMinimo: anticipo === minimo };
+    const bloqueMotivo = document.getElementById('bloqueMotivoAnticipoBajo');
+    if (bloqueMotivo) bloqueMotivo.classList.toggle('oculto', !(bajo && esRolFe('administrador')));
+    return { anticipo, minimo, total, error, bajo, esMinimo: anticipo === minimo };
   }
 
   function fijarAnticipoPedido(opcion) {
@@ -18511,12 +18593,12 @@
       const c = calcularAnticipoPedido(valorProducto, valorEnvio);
       const campoAnticipo = document.getElementById('pedidoAnticipoMonto');
       if (!anticipoPedidoEditado) campoAnticipo.value = c.minimo || '';
-      document.getElementById('ayudaAnticipoPedido').textContent = `Mínimo ${formatearMoneda(c.minimo)} · máximo ${formatearMoneda(c.total)}. Escribe el valor que recibiste si es mayor al mínimo.`;
-      anticipo = c.error ? c.minimo : c.anticipo;
+      document.getElementById('ayudaAnticipoPedido').textContent = `Habitual: mínimo ${formatearMoneda(c.minimo)} (50 %) · máximo ${formatearMoneda(c.total)}. Escribe el valor que recibiste${esRolFe('administrador') ? '; si es menor al 50 % te pido el motivo' : ''}.`;
+      anticipo = (c.error && !c.bajo) ? c.minimo : c.anticipo;
       saldo = total - anticipo;
       notaCanal = c.error
         ? `⚠️ ${c.error}`
-        : 'Redes sociales: el anticipo (mínimo 50 % de los productos, sin envío) confirma el pedido; el resto + envío se paga al entregar.';
+        : (c.bajo ? '⚠️ Anticipo menor al 50 % de los productos: queda anotado el motivo y quién lo autorizó. El resto + envío se paga al entregar.' : 'Redes sociales: el anticipo (lo habitual es mínimo 50 % de los productos, sin envío) confirma el pedido; el resto + envío se paga al entregar.');
     }
 
     const el = document.getElementById('resumenAnticipoPedido');
@@ -18668,7 +18750,9 @@
             pedidoIdAnticipo = filaPedido && filaPedido.id;
           }
           if (!pedidoIdAnticipo) throw new Error('no se encontró el pedido');
-          const { error: errAnticipo } = await supabaseClient.rpc('fn_ajustar_anticipo_pedido_canal', { p_pedido_id: pedidoIdAnticipo, p_monto: calcAnticipo.anticipo });
+          const { error: errAnticipo } = calcAnticipo.bajo
+            ? await supabaseClient.rpc('fn_agendar_pedido_anticipo_bajo', { p_pedido_id: pedidoIdAnticipo, p_monto: calcAnticipo.anticipo, p_motivo: document.getElementById('pedidoMotivoAnticipoBajo').value.trim() })
+            : await supabaseClient.rpc('fn_ajustar_anticipo_pedido_canal', { p_pedido_id: pedidoIdAnticipo, p_monto: calcAnticipo.anticipo });
           if (errAnticipo) throw errAnticipo;
         } catch (e) { avisoAnticipo = ` ⚠️ El pedido se creó con el anticipo mínimo (50 %); no se pudo cambiar el anticipo a ${formatearMoneda(calcAnticipo.anticipo)} (${e.message || 'error'}). Revisa el valor del anticipo en el pedido antes de cobrar.`; }
       }
