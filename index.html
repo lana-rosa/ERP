@@ -1479,6 +1479,18 @@
           <input type="text" id="pedidoMotivoAnticipoBajo" placeholder="Ej: cliente frecuente, paga el resto en 15 días" oninput="actualizarResumenAnticipoPedido()">
         </div>
         <div id="ayudaAnticipoPedido" style="font-size:11px;opacity:0.7;margin-top:6px;"></div>
+        <div style="margin-top:10px;padding:10px;border-radius:10px;background:var(--rosa-suave);">
+          <label style="display:flex;gap:8px;align-items:center;margin:0;font-weight:600;cursor:pointer;"><input type="checkbox" id="pedidoCobrarAnticipoAhora" checked style="width:auto;"> Cobrar el anticipo ahora (queda registrado, con su recibo, al crear el pedido)</label>
+          <label for="pedidoMetodoAnticipo" style="margin-top:6px;">¿Cómo pagó el anticipo?</label>
+          <select id="pedidoMetodoAnticipo">
+            <option value="efectivo">Efectivo (entra a la caja del turno)</option>
+            <option value="transferencia">Transferencia</option>
+            <option value="daviplata">Daviplata</option>
+            <option value="tarjeta_debito">Tarjeta débito</option>
+            <option value="tarjeta_credito">Tarjeta crédito</option>
+          </select>
+          <div style="font-size:11px;opacity:.7;margin-top:4px;">Si el cliente aún no ha pagado, desmarca la casilla y lo cobras después desde Pedidos Web/Redes. Para pagar con varios métodos, también se cobra desde allí.</div>
+        </div>
       </div>
       <div id="resumenAnticipoPedido" class="resumen-cierre" style="margin-top:12px;"></div>
 
@@ -18758,13 +18770,40 @@
       }
 
       let avisoFacturaPedido = '';
+      let reciboAnticipoAhora = null, avisoCobroAnticipo = '';
       try {
         const { error: errPref } = await supabaseClient.rpc('fn_fe_marcar_preferencia_origen', { p_origen: 'pedido_canal', p_ref: String(datos.consecutivo || datos.pedido_id || datos.id), p_quiere: true, p_a_nombre_de: feSelPedido.value });
         if (errPref) throw errPref;
       } catch (e) { avisoFacturaPedido = ' ⚠️ No se pudo guardar a nombre de quién va la factura: defínelo en "Pedidos Web/Redes" antes de cobrar.'; }
       document.querySelectorAll('input[name="feQuierePedido"]').forEach(r => { r.checked = false; });
       const anticipoFinal = calcAnticipo ? (avisoAnticipo ? calcAnticipo.minimo : calcAnticipo.anticipo) : null;
-      mostrarMensaje('mensajePedidoCanal', '✅ Pedido creado. Ahora regístrale el anticipo' + (anticipoFinal != null ? ' de ' + formatearMoneda(anticipoFinal) : '') + ' cuando el cliente pague.' + avisoLineas + avisoAnticipo + avisoFacturaPedido, (avisoAnticipo || avisoLineas) ? 'error' : 'exito');
+      // Cobro del anticipo en el mismo paso: ahorra ir a otra pantalla a marcarlo como pagado
+      const cobrarAhora = calcAnticipo && document.getElementById('pedidoCobrarAnticipoAhora').checked;
+      if (cobrarAhora && !avisoAnticipo && !avisoFacturaPedido && !avisoLineas) {
+        try {
+          let pedidoIdCobro = datos.pedido_id || datos.id;
+          if (!pedidoIdCobro && datos.consecutivo) {
+            const { data: filaCobro } = await supabaseClient.from('pedidos_canal_venta').select('id').eq('consecutivo', datos.consecutivo).maybeSingle();
+            pedidoIdCobro = filaCobro && filaCobro.id;
+          }
+          if (!pedidoIdCobro) throw new Error('no se encontró el pedido');
+          const metodoAnticipo = document.getElementById('pedidoMetodoAnticipo').value;
+          if (metodoAnticipo === 'efectivo' && !turnoActivoActual) throw new Error('no hay un turno de caja abierto para guardar el efectivo: abre el turno y cóbralo desde Pedidos Web/Redes');
+          const respCobro = await fetch(WORKER_URL + '/api/pos/pedidos-canal/pagar-anticipo', {
+            method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+            body: JSON.stringify({ pedido_id: pedidoIdCobro, pagos: [{ metodo_pago: metodoAnticipo, monto: anticipoFinal }] })
+          });
+          const datosCobro = await respCobro.json();
+          if (!respCobro.ok) throw new Error(datosCobro.error || 'no se pudo registrar el pago');
+          reciboAnticipoAhora = datosCobro.recibo; ultimoPagoPedidoCache = datosCobro.recibo;
+        } catch (e) { avisoCobroAnticipo = ` ⚠️ El pedido quedó creado pero el anticipo NO se cobró (${e.message || 'error'}). Cóbralo desde "Pedidos Web/Redes".`; }
+      } else if (cobrarAhora) {
+        avisoCobroAnticipo = ' ⚠️ El anticipo no se cobró automáticamente por los avisos de arriba: revísalos y cóbralo desde "Pedidos Web/Redes".';
+      }
+      mostrarMensaje('mensajePedidoCanal', (reciboAnticipoAhora ? `✅ Pedido creado y anticipo de ${formatearMoneda(anticipoFinal)} cobrado.` : '✅ Pedido creado. Ahora regístrale el anticipo' + (anticipoFinal != null ? ' de ' + formatearMoneda(anticipoFinal) : '') + ' cuando el cliente pague.') + avisoLineas + avisoAnticipo + avisoFacturaPedido + avisoCobroAnticipo, (avisoAnticipo || avisoLineas || avisoCobroAnticipo || avisoFacturaPedido) ? 'error' : 'exito');
+      if (reciboAnticipoAhora) {
+        document.getElementById('mensajePedidoCanal').insertAdjacentHTML('beforeend', `<div style="display:flex;gap:6px;margin-top:8px;"><button type="button" class="btn-mini editar" onclick="imprimirReciboPedido(ultimoPagoPedidoCache)">🖨️ Imprimir recibo</button><button type="button" class="btn-mini editar" onclick="enviarReciboPedidoWhatsapp(ultimoPagoPedidoCache)">📱 Enviar por WhatsApp</button></div>`);
+      };
 
       // Aviso de tratamiento de datos por WhatsApp (Ley 1581) — se ofrece
       // como un paso aparte, no automático, porque abrir WhatsApp exige que
