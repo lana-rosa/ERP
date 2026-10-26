@@ -1848,6 +1848,11 @@
         <div id="fichaNuevoContenedor"></div>
         <div style="font-size:11.5px;opacity:.7;margin-top:8px;">El peso, el alto y el ancho son los de arriba. El código de barras lo asigna GS1: escríbelo cuando lo tengas.</div>
       </div>
+      <div id="bloqueFichaInsumoNuevo" class="oculto" style="margin-top:16px;padding:12px 14px;border:1.5px solid var(--rosa-suave);border-radius:12px;">
+        <div style="font-weight:700;font-size:14px;">📋 Ficha del insumo <span style="font-size:11px;font-weight:400;opacity:.65;">— datos propios de mercería e insumos (hilos, lanas, agujas, relleno, ojos...)</span></div>
+        <div id="fichaInsumoNuevoContenedor"></div>
+        <div style="font-size:11.5px;opacity:.7;margin-top:8px;">La marca, el color, el material, el peso, el proveedor y el stock mínimo son los de arriba. El código de barras lo asigna GS1: escríbelo cuando lo tengas.</div>
+      </div>
       <button class="btn-principal" id="btnGuardarProducto" onclick="guardarNuevoProducto()">Agregar al inventario</button>
       <div class="mensaje" id="mensajeInventarioForm"></div>
     </div>
@@ -9258,13 +9263,16 @@
     const esTejido = document.getElementById('invTipo').value === 'producto_terminado';
     bloque.classList.toggle('oculto', !esTejido);
     if (esTejido && !document.getElementById('fNTiempo')) fichaMontar('fN', 'fichaNuevoContenedor', {});
+    const esInsumo = document.getElementById('invTipo').value === 'merceria';
+    document.getElementById('bloqueFichaInsumoNuevo').classList.toggle('oculto', !esInsumo);
+    if (esInsumo && !document.getElementById('iNTipo')) insumoFichaMontar('iN', 'fichaInsumoNuevoContenedor', false);
   }
 
   let fichaItemActual = null;
   async function abrirFichaTecnica(itemId) {
     const { data, error } = await supabaseClient.rpc('fn_ficha_obtener', { p_item_id: itemId });
     if (error) { alert('No se pudo abrir la ficha: ' + error.message); return; }
-    fichaItemActual = itemId;
+    fichaItemActual = itemId; fichaModalEsInsumo = false;
     const { data: it } = await supabaseClient.from('inventario_items').select('costo_ojos, costo_empaque, costo_otros_accesorios').eq('id', itemId).maybeSingle();
     fichaExtrasCosto = { ojos: Number(it && it.costo_ojos) || 0, empaque: Number(it && it.costo_empaque) || 0, otros: Number(it && it.costo_otros_accesorios) || 0 };
     document.getElementById('fichaModalTitulo').textContent = '📋 Ficha técnica: ' + data.producto.nombre;
@@ -9280,10 +9288,83 @@
 
   function cerrarFichaTecnica() {
     const m = document.getElementById('modalFichaTecnica'); m.classList.add('oculto'); m.style.display = 'none';
-    fichaItemActual = null;
+    fichaItemActual = null; fichaModalEsInsumo = false;
+  }
+
+  // ---- Ficha de mercería e insumos (distinta a la de los productos tejidos) ----
+  let fichaModalEsInsumo = false;
+  const INSUMO_TIPOS = ['Hilo o lana', 'Aguja o gancho', 'Relleno', 'Ojos de seguridad', 'Cierres, botones o argollas', 'Cinta, lazo o tela', 'Empaque', 'Herramienta', 'Otro'];
+  const INSUMO_PRESENTACIONES = ['Ovillo', 'Cono', 'Bolsa', 'Paquete', 'Unidad', 'Metro', 'Caja'];
+  function insumoFichaMontar(p, contenedorId, conDatosItem) {
+    const campo = (id, etiqueta, tipo, ph, extra) => `<div class="campo-mini"><label>${etiqueta}</label><input type="${tipo || 'text'}" id="${p}${id}" placeholder="${ph || ''}" ${extra || ''} oninput="insumoFichaCalcularCosto('${p}')"></div>`;
+    document.getElementById(contenedorId).innerHTML = `
+      ${conDatosItem ? `<label style="margin-top:6px;">Código de barras (GS1)</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;"><input type="text" id="${p}Sku" placeholder="Código asignado por GS1" style="flex:1;min-width:180px;"><button type="button" class="btn-mini editar" onclick="abrirEscanerCodigoBarras('${p}Sku')">📷 Escanear</button></div>
+      <div class="grilla-2" style="gap:10px;margin-top:8px;">${campo('Marca', 'Marca', 'text', 'Ej: Anchor')}${campo('Color', 'Color', 'text', 'Ej: Rosa fuerte')}${campo('Material', 'Material', 'text', 'Ej: Estambre acrílico')}${campo('Peso', 'Peso por unidad (g)', 'number', 'Ej: 100', 'min="0" step="0.1"')}${campo('Min', 'Stock mínimo (para alertas)', 'number', 'Ej: 5', 'min="0" step="1"')}</div>` : ''}
+      <div class="grilla-2" style="gap:10px;margin-top:8px;">
+        <div class="campo-mini"><label>Tipo de insumo</label><select id="${p}Tipo"><option value="">— elige —</option>${INSUMO_TIPOS.map(t => `<option>${t}</option>`).join('')}</select></div>
+        ${campo('Ref', 'Referencia del proveedor', 'text', 'Ej: Chelín 125 m')}
+        ${campo('Comp', 'Composición', 'text', 'Ej: 100 % poliéster')}
+        ${campo('CodColor', 'Código o tono del color', 'text', 'Ej: #2103, lote 250428')}
+        ${campo('Grosor', 'Grosor o calibre (hilos y lanas)', 'text', 'Ej: Worsted, 4 hebras')}
+        ${campo('Aguja', 'Aguja o ganchillo recomendado', 'text', 'Ej: 4 mm')}
+        <div class="campo-mini"><label>Presentación de compra</label><select id="${p}Present"><option value="">— elige —</option>${INSUMO_PRESENTACIONES.map(t => `<option>${t}</option>`).join('')}</select></div>
+        <div class="campo-mini"><label>Contenido por unidad</label><div style="display:flex;gap:6px;"><input type="number" id="${p}Cont" min="0" step="0.01" placeholder="Ej: 100" oninput="insumoFichaCalcularCosto('${p}')" style="flex:1;"><select id="${p}ContU" onchange="insumoFichaCalcularCosto('${p}')" style="width:96px;"><option value="g">g</option><option value="m">m</option><option value="unidades">unid.</option></select></div></div>
+        ${campo('Precio', 'Precio de compra por unidad (COP)', 'number', 'Ej: 9000', 'min="0" step="100"')}
+        ${campo('Pedido', 'Cantidad a pedir cada vez', 'number', 'Ej: 10', 'min="0" step="1"')}
+        ${campo('Dias', 'Días de entrega del proveedor', 'number', 'Ej: 3', 'min="0" step="1"')}
+      </div>
+      <div id="${p}CostoBox" style="margin-top:10px;padding:10px 12px;border-radius:10px;background:rgba(127,127,127,.10);font-size:12.5px;display:none;"></div>
+      <label style="margin-top:10px;">Notas, cuidados o instrucciones de uso <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <input type="text" id="${p}Notas" placeholder="Ej: lavar a mano, no planchar">`;
+  }
+  function insumoFichaCalcularCosto(p) {
+    const box = document.getElementById(p + 'CostoBox'); if (!box) return;
+    const precio = Number(document.getElementById(p + 'Precio').value), cont = Number(document.getElementById(p + 'Cont').value);
+    const u = document.getElementById(p + 'ContU').value;
+    if (precio > 0 && cont > 0) { box.style.display = 'block'; box.innerHTML = `Costo por ${u === 'g' ? 'gramo' : (u === 'm' ? 'metro' : 'unidad')}: <strong>${formatearMoneda(precio / cont)}</strong> <span style="opacity:.7;">(para costear las piezas)</span>`; }
+    else box.style.display = 'none';
+  }
+  function insumoFichaLeer(p) {
+    const v = (id) => { const e = document.getElementById(p + id); const x = e ? String(e.value).trim() : ''; return x === '' ? null : x; };
+    return {
+      ficha: { tipo_insumo: v('Tipo'), referencia_proveedor: v('Ref'), composicion: v('Comp'), codigo_color: v('CodColor'), grosor: v('Grosor'), aguja_recomendada: v('Aguja'), presentacion: v('Present'),
+               contenido_por_unidad: v('Cont'), contenido_unidad: v('Cont') ? v('ContU') : null, precio_compra: v('Precio'), cantidad_pedido: v('Pedido'), dias_entrega: v('Dias'), notas: v('Notas') },
+      producto: { sku: v('Sku'), marca: v('Marca'), color: v('Color'), material: v('Material'), peso_gramos: v('Peso'), stock_minimo: v('Min') },
+    };
+  }
+  function insumoFichaLlenar(p, data) {
+    const f = (data && data.ficha) || {}, it = (data && data.item) || {};
+    const set = (id, val) => { const e = document.getElementById(p + id); if (e) e.value = val === null || val === undefined ? '' : val; };
+    set('Tipo', f.tipo_insumo); set('Ref', f.referencia_proveedor); set('Comp', f.composicion); set('CodColor', f.codigo_color); set('Grosor', f.grosor); set('Aguja', f.aguja_recomendada);
+    set('Present', f.presentacion); set('Cont', f.contenido_por_unidad); set('ContU', f.contenido_unidad || 'g'); set('Precio', f.precio_compra); set('Pedido', f.cantidad_pedido); set('Dias', f.dias_entrega); set('Notas', f.notas);
+    set('Sku', it.sku); set('Marca', it.marca); set('Color', it.color); set('Material', it.material); set('Peso', it.peso_gramos); set('Min', it.stock_minimo);
+    insumoFichaCalcularCosto(p);
+  }
+  async function abrirFichaInsumo(itemId) {
+    const { data, error } = await supabaseClient.rpc('fn_ficha_insumo_obtener', { p_item_id: itemId });
+    if (error) { alert('No se pudo abrir la ficha: ' + error.message); return; }
+    fichaItemActual = itemId; fichaModalEsInsumo = true;
+    document.getElementById('fichaModalTitulo').textContent = '📋 Ficha del insumo: ' + data.item.nombre;
+    insumoFichaMontar('iM', 'fichaModalContenido', true);
+    insumoFichaLlenar('iM', data);
+    document.getElementById('fichaModalEstado').textContent = data.ficha ? 'Ficha guardada. Cámbiala solo si el insumo cambió.' : 'Este insumo todavía no tiene ficha: llénala una sola vez y quedará guardada.';
+    ocultarMensaje('mensajeFichaModal');
+    const m = document.getElementById('modalFichaTecnica'); m.classList.remove('oculto'); m.style.display = 'flex';
+  }
+  async function guardarFichaInsumoModal() {
+    const { ficha, producto } = insumoFichaLeer('iM');
+    const btn = document.getElementById('btnGuardarFichaModal'); btn.disabled = true;
+    const { error } = await supabaseClient.rpc('fn_ficha_insumo_guardar', { p_item_id: fichaItemActual, p_ficha: ficha, p_producto: producto });
+    btn.disabled = false;
+    if (error) { mostrarMensaje('mensajeFichaModal', 'No se pudo guardar: ' + error.message, 'error'); return; }
+    mostrarMensaje('mensajeFichaModal', '✅ Ficha del insumo guardada.', 'exito');
+    document.getElementById('fichaModalEstado').textContent = 'Ficha guardada.';
+    if (typeof cargarInventarioGestion === 'function') cargarInventarioGestion();
   }
 
   async function guardarFichaTecnicaModal() {
+    if (fichaModalEsInsumo) { await guardarFichaInsumoModal(); return; }
     if (!fichaItemActual) return;
     const { ficha, producto } = fichaLeer('fM');
     const btn = document.getElementById('btnGuardarFichaModal');
@@ -9410,6 +9491,7 @@
     ocultarMensaje('mensajeInventarioForm');
     cargarCategoriasParaFormulario();
     if (document.getElementById('fNTiempo')) fichaLimpiar('fN');
+    if (document.getElementById('iNTipo')) insumoFichaLlenar('iN', null);
     actualizarBloqueFichaNuevo();
   }
 
@@ -9499,6 +9581,16 @@
       avisoFicha = errFichaNueva
         ? ` ⚠️ El producto se creó, pero la ficha técnica no se pudo guardar (${errFichaNueva.message}): ábrela con el botón «📋 Ficha» en la lista del inventario.`
         : ` 📋 Ficha técnica creada. Código de barras: ${fichaGuardada.sku}.`;
+    }
+
+    if (tipo === 'merceria' && nuevoItem && document.getElementById('iNTipo')) {
+      const { ficha: fichaIns } = insumoFichaLeer('iN');
+      if (Object.values(fichaIns).some(v => v !== null && v !== '')) {
+        const { error: errFichaIns } = await supabaseClient.rpc('fn_ficha_insumo_guardar', { p_item_id: nuevoItem.id, p_ficha: fichaIns, p_producto: {} });
+        avisoFicha = errFichaIns
+          ? ` ⚠️ El insumo se creó, pero su ficha no se pudo guardar (${errFichaIns.message}): ábrela con el botón «📋 Ficha» en la lista del inventario.`
+          : ' 📋 Ficha del insumo guardada.';
+      }
     }
 
     if (archivoFoto && nuevoItem) {
@@ -9686,7 +9778,7 @@
       <div class="tabla-lista-fila" style="grid-template-columns:1.5fr 100px 90px 100px 130px 150px 30px;${rolActual === 'administrador' ? 'cursor:pointer;' : ''}" ${rolActual === 'administrador' ? `onclick="activarEdicionProducto('${item.id}')"` : ''}>
         <span style="display:flex;align-items:center;gap:10px;">
           <span style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg, var(--rosa-suave), #fff);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">${iconoGrupo || '📦'}</span>
-          <span>${stockBajo ? '⚠️ ' : ''}${escaparHtml(item.nombre)}${tagInactivo}${skuTexto}${item.tipo === 'producto_terminado' && ['administrador', 'taller'].includes(rolActual) ? ` <button type="button" class="btn-mini editar" style="margin-left:6px;" onclick="event.stopPropagation(); abrirFichaTecnica('${item.id}')">📋 Ficha</button>` : ''}</span>
+          <span>${stockBajo ? '⚠️ ' : ''}${escaparHtml(item.nombre)}${tagInactivo}${skuTexto}${item.tipo === 'producto_terminado' && ['administrador', 'taller'].includes(rolActual) ? ` <button type="button" class="btn-mini editar" style="margin-left:6px;" onclick="event.stopPropagation(); abrirFichaTecnica('${item.id}')">📋 Ficha</button>` : (item.tipo === 'merceria' && ['administrador', 'taller'].includes(rolActual) ? ` <button type="button" class="btn-mini editar" style="margin-left:6px;" onclick="event.stopPropagation(); abrirFichaInsumo('${item.id}')">📋 Ficha</button>` : '')}</span>
         </span>
         <span><span style="font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--azul-acero);color:#fff;display:inline-block;">${etiquetaCategoria}</span></span>
         <span style="text-align:center;${stockBajo ? 'color:var(--rojo-error);font-weight:700;' : ''}">${item.stock_actual} ${item.unidad_medida}</span>
