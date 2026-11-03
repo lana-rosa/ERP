@@ -538,7 +538,7 @@
 
   /* Menú lateral en computador: se puede ocultar o fijar (se recuerda en este navegador) */
   #btnSidebarModo { display: none; margin-left: auto; align-self: flex-start; background: rgba(255,255,255,0.12); color: #fff; border: none; border-radius: 8px; padding: 4px 8px; font-size: 11px; cursor: pointer; white-space: nowrap; }
-  #btnMostrarSidebar { display: none; position: fixed; top: 12px; left: 12px; z-index: 99; width: 40px; height: 40px; border-radius: 12px; border: none; background: var(--rosa-principal); color: #fff; font-size: 20px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.2); align-items: center; justify-content: center; }
+  #btnMostrarSidebar { display: none; position: fixed; top: 10px; left: 12px; z-index: 395; width: 40px; height: 40px; border-radius: 12px; border: none; background: var(--rosa-principal); color: #fff; font-size: 20px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.2); align-items: center; justify-content: center; }
   @media (min-width: 901px) {
     #sidebar.visible ~ * #btnSidebarModo, #btnSidebarModo { display: inline-block; }
     #main.con-sidebar { transition: margin-left .2s ease; }
@@ -549,6 +549,7 @@
     body.sidebar-oculto #btnCrearRapido { left: 22px !important; }
     body.sidebar-oculto:has(#sidebar.visible):not(:has(#sidebar.flotante)) #btnMostrarSidebar { display: flex; }
     body.sidebar-oculto:has(#sidebar.visible) .page-header { padding-left: 52px; }
+    body.sidebar-oculto:has(#sidebar.visible) #barraBusquedaGlobal { padding-left: 64px !important; }
   }
   @media (max-width: 900px) { #btnSidebarModo, #btnMostrarSidebar { display: none !important; } }
   @media (min-width: 901px) {
