@@ -2,6 +2,8 @@
 - Pantalla ~l. 2210; `cargarFePendientes` 22875 (por facturar), documentos soporte (compras a no obligados a facturar), respaldo mensual `cargarFeRespaldo` 23501 / `descargarRespaldoFe` 23521.
 - PR #74: correo obligatorio si la factura es a nombre del cliente, dirección de entrega, archivo obligatorio y marca de contingencia al registrar a mano. PR #75: pestaña de documentos soporte y respaldo mensual.
 - Sara es facturadora electrónica desde el 14-oct-2026 (ventas anteriores: responsabilidad 52, ver KB `facturacion_responsabilidad_52`).
-- Pendiente de Sara: registrar resolución de numeración, numeración de documento soporte y primer respaldo.
+- 12-nov-2026: resolución de numeración registrada en `fe_configuracion` (vía `fn_fe_guardar_configuracion`): N° 18764117094883, fecha 14-oct-2026, prefijo LRCT, rango 1–100.000, factura electrónica de venta, habilitada desde 14-oct. Falta la vigencia (no sale en la captura de la DIAN).
+- 12-nov-2026: revisión de ventas sin factura desde el 14-oct (`fn_fe_ventas`): 14 ventas, $2.821.200 (7 con "facturar" definido a consumidor final, $601.000; 6 POS y 1 pedido sin definir). Pregunta al contador anotada en PENDIENTES.
+- Pendiente de Sara: numeración de documento soporte, primer respaldo y vigencia de la resolución.
 - Pendiente del contador: aplicabilidad del documento soporte.
 - Ideas no hechas: ingesta de facturas por correo (`docs/factura-por-correo/`, solo borrador).

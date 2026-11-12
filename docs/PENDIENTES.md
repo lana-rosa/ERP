@@ -47,7 +47,10 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [ ] Probar con archivos reales.
 
 ### Chat 4 · Facturación DIAN
-- [ ] Registrar resolución de numeración (espera datos de Sara: número, fecha, prefijo, rango, vigencia, fecha de habilitación), numeración de documento soporte y primer respaldo mensual.
+- [x] Resolución de numeración registrada (12-nov-2026): N° 18764117094883, prefijo LRCT, rango 1–100.000, habilitada desde 14-oct. Falta anotar su vigencia (no salía en la captura de la DIAN).
+- [ ] Numeración de documento soporte y primer respaldo mensual (Sara).
+- [ ] Emitir en la DIAN las 7 facturas marcadas "facturar" ($601.000: PED-2026-00541, 545, 549, 553, 554, 555, 550) y registrarlas en Por facturar.
+- Revisión 12-nov de ventas sin factura desde el 14-oct: 14 ventas, $2.821.200 (7 con "facturar" definido, $601.000; 6 del punto de venta POS-2026-00016 a 00021, $2.205.000, y PED-2026-00559, $15.200, sin definir).
 
 ### Chat 5 · Impuestos
 - [x] 12-nov: lista de 22 preguntas para Hernando con los números del ERP, en `docs/temas/impuestos-preguntas-contador.md` (PR #113). Sara dio el "sí".
@@ -73,7 +76,7 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 ## Sara
 - [ ] 🔴 Mensaje exacto/captura del error de ventas → chat 1.
 - [ ] Decidir el "sí" del chat 5 (Impuestos).
-- [ ] Datos de la resolución DIAN → chat 4.
+- [x] Datos de la resolución DIAN → chat 4 (entregados 12-nov; falta la vigencia).
 - [ ] Pegar en Políticas legales los textos de la abogada (cambios y anticipos) cuando el chat 2 publique; revisar que la tienda web diga lo mismo.
 - [ ] Servicios públicos y arriendo de octubre (atrasado, fecha 2026-10-05).
 - [ ] Arqueo físico de caja (última referencia $1.353.066).
@@ -100,6 +103,7 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [ ] Verificar ICA Villamaría (preguntas 15–19 del mismo archivo).
 - [ ] Códigos CUIF de 10 dígitos.
 - [ ] Aplicabilidad del documento soporte.
+- [ ] Ventas desde el 14-oct-2026 (ya facturadora electrónica) que quedaron solo con recibo del ERP, sin factura electrónica: 6 del punto de venta (POS-2026-00016 a 00021, $2.205.000) y 1 pedido (PED-2026-00559, $15.200, parece prueba). Además 7 pedidos con "facturar" definido a consumidor final ($601.000). Pregunta: ¿se emite factura electrónica extemporánea a consumidor final por cada una, o cómo se regulariza? (12-nov-2026)
 - [ ] Retenciones, libros y declaraciones como sociedad.
 - [ ] Viejos: retiros 3805 vs honorarios, aportes vs deuda, arriendo mayo/junio, confirmación escrita de 27 recibos, medio de pago de 17 ventas antiguas.
 
