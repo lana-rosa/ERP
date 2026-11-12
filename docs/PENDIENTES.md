@@ -34,5 +34,6 @@ Actualizado: 2026-11-03
 - [ ] Soporte para facturas manuales antiguas
 - [ ] Ingesta de facturas por correo (solo borrador)
 - [ ] Probar sincronización CRM↔ERP y pedidos de la tienda virtual
-- [ ] Probar cobro de anticipo con el Worker real
+- [ ] Probar cobro de anticipo con el Worker real (revisar: que cobre el monto ajustado y no el 50 %; qué id devuelve crear pedido; que `pagar-anticipo` devuelva `recibo`)
+- [ ] Sara: pegar en Políticas legales el texto de la abogada para "Anticipos y cancelación de pedidos personalizados" (campo creado, vacío)
 - [ ] Borrar edge functions sin uso y columnas/función antiguas en Supabase

@@ -1497,6 +1497,7 @@
           <input type="text" id="pedidoMotivoAnticipoBajo" placeholder="Ej: cliente frecuente, paga el resto en 15 días" oninput="actualizarResumenAnticipoPedido()">
         </div>
         <div id="ayudaAnticipoPedido" style="font-size:11px;opacity:0.7;margin-top:6px;"></div>
+        <button type="button" class="btn-secundario" style="margin-top:10px;width:auto;" onclick="enviarResumenPedidoWhatsapp()">📤 Enviar resumen del pedido por WhatsApp (antes de pagar)</button>
         <div style="margin-top:10px;padding:10px;border-radius:10px;background:var(--rosa-suave);">
           <label style="display:flex;gap:8px;align-items:center;margin:0;font-weight:600;cursor:pointer;"><input type="checkbox" id="pedidoCobrarAnticipoAhora" checked style="width:auto;"> Cobrar el anticipo ahora (queda registrado, con su recibo, al crear el pedido)</label>
           <label for="pedidoMetodoAnticipo" style="margin-top:6px;">¿Cómo pagó el anticipo?</label>
@@ -5195,6 +5196,14 @@
     <textarea id="textoPoliticaCambios" rows="4" style="width:100%;font-family:inherit;font-size:13px;padding:12px;border-radius:8px;border:1px solid #e5dde2;line-height:1.5;"></textarea>
     <button class="btn-principal" onclick="guardarPoliticasLegales()" style="margin-top:10px;">💾 Guardar cambios</button>
   </div>
+
+  <div class="panel" style="max-width:700px;margin-top:20px;">
+    <h2>Anticipos y cancelación de pedidos personalizados</h2>
+    <div class="subtitulo">Este texto aparece solo en el recibo de anticipo y en el resumen del pedido que se le envía al cliente antes de pagar. No sale en los recibos de venta de la tienda.</div>
+    <textarea id="textoPoliticaAnticipos" rows="6" style="width:100%;font-family:inherit;font-size:13px;padding:12px;border-radius:8px;border:1px solid #e5dde2;line-height:1.5;"></textarea>
+    <button class="btn-principal" onclick="guardarPoliticaAnticipos()" style="margin-top:10px;">💾 Guardar política de anticipos</button>
+    <div class="mensaje" id="mensajePoliticaAnticipos"></div>
+  </div>
 </div>
 
 <div id="pantallaCopiaSeguridad" class="oculto contenido">
@@ -6715,8 +6724,17 @@
   let rolesAdicionalesActual = [];
   let logoEmpresaCache = null;
   let politicaCambiosCache = null;
+  let politicaAnticiposCache = null; // vive en Supabase (configuracion_empresa.politica_anticipos), no en el Worker
+
+  async function cargarPoliticaAnticipos() {
+    try {
+      const { data } = await supabaseClient.from('configuracion_empresa').select('politica_anticipos').limit(1).maybeSingle();
+      politicaAnticiposCache = (data && data.politica_anticipos) || null;
+    } catch { /* si falla, el recibo de anticipo sale sin ese texto */ }
+  }
 
   async function cargarLogoEmpresa() {
+    cargarPoliticaAnticipos();
     try {
       const resp = await fetch(WORKER_URL + '/api/pos/config-empresa', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
       if (resp.ok) {
@@ -8174,7 +8192,7 @@
       </div>
 
       ${politicaCambiosCache ? `
-        <div style="margin-top:8px;padding-top:8px;border-top:1px dashed #ccc;font-size:10.5px;color:#888;text-align:center;">
+        <div style="margin-top:8px;padding-top:8px;border-top:1px dashed #ccc;font-size:10.5px;color:#888;text-align:left;white-space:pre-line;">
           🔄 ${escaparHtml(politicaCambiosCache)}
         </div>
       ` : ''}
@@ -18712,6 +18730,31 @@
     return { anticipo, minimo, total, error, bajo, esMinimo: anticipo === minimo };
   }
 
+  // Resumen del pedido para el cliente ANTES de que pague el anticipo: productos, total, anticipo, saldo y política de anticipos.
+  function enviarResumenPedidoWhatsapp() {
+    ocultarMensaje('mensajePedidoCanal');
+    const telefono = document.getElementById('pedidoTelefonoCliente').value.trim();
+    if (!carritoPedidoCanal.length) { mostrarMensaje('mensajePedidoCanal', 'Agrega al menos un producto para armar el resumen.', 'error'); return; }
+    if (!telefono) { mostrarMensaje('mensajePedidoCanal', 'Escribe el teléfono del cliente para enviarle el resumen.', 'error'); return; }
+    const bruto = carritoPedidoCanal.reduce((acc, p) => acc + p.valor, 0);
+    const valorProducto = Math.max(bruto - Math.min(descuentoPedidoActual.valorDescuento || 0, bruto), 0);
+    const valorEnvio = Number(document.getElementById('pedidoValorEnvio').value) || 0;
+    const c = calcularAnticipoPedido(valorProducto, valorEnvio);
+    const nombre = document.getElementById('pedidoNombreCliente').value.trim().split(' ')[0];
+    const lineas = [
+      `Hola${nombre ? ' ' + nombre : ''} 👋 Este es el resumen de tu pedido en Lana Rosa Crochet 🐑:`,
+      '',
+      ...carritoPedidoCanal.map(p => `• ${p.cantidad}x ${p.descripcion} — ${formatearMoneda(p.valor)}`),
+      ...(valorEnvio > 0 ? [`• Envío — ${formatearMoneda(valorEnvio)}`] : []),
+      '',
+      `Total del pedido: ${formatearMoneda(valorProducto + valorEnvio)}`,
+      `Anticipo para confirmarlo: ${formatearMoneda(c.anticipo)}`,
+      `Saldo a pagar al entregar: ${formatearMoneda(c.total - c.anticipo)}`
+    ];
+    if (politicaAnticiposCache) lineas.push('', 'Anticipos y cancelación de pedidos personalizados:', politicaAnticiposCache);
+    if (!abrirWhatsAppTexto(telefono, lineas.join('\n'))) mostrarMensaje('mensajePedidoCanal', 'El número de teléfono no es válido.', 'error');
+  }
+
   function fijarAnticipoPedido(opcion) {
     const bruto = carritoPedidoCanal.reduce((acc, p) => acc + p.valor, 0);
     const valorProducto = Math.max(bruto - Math.min(descuentoPedidoActual.valorDescuento || 0, bruto), 0);
@@ -19598,7 +19641,8 @@
       <div style="margin-top:16px;font-size:10.5px;color:#888;text-align:center;">
         Este documento es un comprobante de pago. La factura electrónica la envía la DIAN por separado.
       </div>
-      ${politicaCambiosCache ? `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed #ccc;font-size:10.5px;color:#888;text-align:center;">🔄 ${escaparHtml(politicaCambiosCache)}</div>` : ''}
+      ${recibo.tipo_pago === 'anticipo' && politicaAnticiposCache ? `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed #ccc;font-size:10.5px;color:#888;text-align:left;white-space:pre-line;"><strong>Anticipos y cancelación de pedidos personalizados</strong>\n${escaparHtml(politicaAnticiposCache)}</div>` : ''}
+      ${politicaCambiosCache ? `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed #ccc;font-size:10.5px;color:#888;text-align:left;white-space:pre-line;">🔄 ${escaparHtml(politicaCambiosCache)}</div>` : ''}
     `;
   }
 
@@ -28004,6 +28048,21 @@
       document.getElementById('textoAvisoPrivacidadFisico').value = d.aviso_privacidad_fisico || '';
       document.getElementById('textoPoliticaCambios').value = d.politica_cambios || '';
     }
+    ocultarMensaje('mensajePoliticaAnticipos');
+    await cargarPoliticaAnticipos();
+    document.getElementById('textoPoliticaAnticipos').value = politicaAnticiposCache || '';
+  }
+
+  // Se guarda directo en Supabase (el Worker no la conoce); solo la administradora puede escribir (RLS).
+  async function guardarPoliticaAnticipos() {
+    ocultarMensaje('mensajePoliticaAnticipos');
+    const texto = document.getElementById('textoPoliticaAnticipos').value.trim();
+    const { data: fila, error: errLeer } = await supabaseClient.from('configuracion_empresa').select('id').limit(1).maybeSingle();
+    if (errLeer || !fila) { mostrarMensaje('mensajePoliticaAnticipos', 'No se pudo guardar la política de anticipos.', 'error'); return; }
+    const { data: filas, error } = await supabaseClient.from('configuracion_empresa').update({ politica_anticipos: texto || null }).eq('id', fila.id).select('id');
+    if (error || !filas || !filas.length) { mostrarMensaje('mensajePoliticaAnticipos', 'No se pudo guardar. Solo la administradora puede cambiar este texto.', 'error'); return; }
+    politicaAnticiposCache = texto || null;
+    mostrarMensaje('mensajePoliticaAnticipos', '✅ Guardado. Ya sale en los recibos de anticipo y en el resumen del pedido.', 'exito');
   }
 
   async function guardarPoliticasLegales() {
