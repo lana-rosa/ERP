@@ -70,3 +70,5 @@ Estructura: HTML de pantallas (líneas ~1000–5800), luego un bloque grande `<s
 - `supabase/functions/`: edge functions.
 | Política de anticipos | `cargarPoliticaAnticipos`/`politicaAnticiposCache` (~6717), `guardarPoliticaAnticipos` (Políticas legales), `enviarResumenPedidoWhatsapp` (antes de `fijarAnticipoPedido`) |
 | Editar pedido registrado | `abrirEditarClientePedido`, `guardarClientePedido`, `abrirCambiarEnvioPedido`, `guardarEnvioPedido`, `avisarOrdenesEnProcesoDePedido` (junto a `marcarPedidoListoUI`, ~19660) |
+
+| Pedidos por elaborar: una orden por producto | `cargarSolicitudesElaboracion`, `empezarLineaElaboracion`, `terminarSolicitudDeOrden` (~19880-20050) |

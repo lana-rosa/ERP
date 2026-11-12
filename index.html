@@ -19889,6 +19889,7 @@
     const { solicitudes } = await resp.json();
     const pendientes = (solicitudes || []).filter(s => s.estado !== 'terminado');
     solicitudesElaboracionCache = pendientes;
+    await cargarLineasYOrdenesElaboracion(pendientes);
 
     if (pendientes.length === 0) {
       contenedor.innerHTML = '';
@@ -19908,6 +19909,27 @@
             terminado: { bg: '#e0f2e6', color: 'var(--verde-exito)' },
           };
           const colorElab = coloresEstadoElab[s.estado] || { bg: 'var(--rosa-suave)', color: 'var(--rosa-principal)' };
+          const lineasPedido = lineasElaboracionDe(s);
+          if (lineasPedido.length > 1) {
+            // Pedido con varios productos: una orden por cada producto (línea)
+            return `
+              <div class="tabla-lista-fila" style="grid-template-columns:130px 1fr 140px 200px;">
+                <span style="font-weight:600;">${escaparHtml(pedido.consecutivo || '—')}</span>
+                <span style="opacity:0.75;font-size:11.5px;">${etiquetasCanalPedido[pedido.canal] || pedido.canal || ''} — ${lineasPedido.length} productos (una orden por cada uno)</span>
+                <span><span class="badge-estado-pedido" style="background:${colorElab.bg};color:${colorElab.color};">${etiquetasEstadoElaboracion[s.estado]}</span></span>
+                <span></span>
+              </div>
+              ${lineasPedido.map(l => {
+                const ord = ordenDeLineaElaboracion(s, l);
+                return `<div class="tabla-lista-fila" style="grid-template-columns:130px 1fr 140px 200px;background:rgba(0,0,0,0.02);">
+                  <span></span>
+                  <span style="font-size:11.5px;">↳ ${Number(l.cantidad) || 1}x ${escaparHtml(l.descripcion || '')}</span>
+                  <span style="font-size:11.5px;">${ord ? '🏭 ' + escaparHtml(ord.orden) + ' · ' + escaparHtml(String(ord.estado).replace('_', ' ')) : '—'}</span>
+                  <span>${ord ? '' : `<button class="btn-mini editar" onclick="empezarLineaElaboracion('${s.id}', '${l.id}', this)">🧶 Empezar este producto</button>`}</span>
+                </div>`;
+              }).join('')}
+            `;
+          }
           return `
             <div class="tabla-lista-fila" style="grid-template-columns:130px 1fr 140px 200px;">
               <span style="font-weight:600;">${escaparHtml(pedido.consecutivo || '—')}</span>
@@ -19928,6 +19950,60 @@
   let solicitudesElaboracionCache = [];
 
   const pedidoCanalDeSolicitud = (s) => s.pedido_canal_id || (s.pedidos_canal_venta || {}).id || null;
+
+  // Líneas (productos) de cada pedido por elaborar y sus órdenes de producción, para abrir una orden por producto
+  let lineasElaboracionCache = {};
+  let ordenesElaboracionCache = [];
+  const normTextoOP = (t) => String(t || '').trim().toLowerCase();
+
+  async function cargarLineasYOrdenesElaboracion(solicitudes) {
+    lineasElaboracionCache = {}; ordenesElaboracionCache = [];
+    const ids = [...new Set((solicitudes || []).map(pedidoCanalDeSolicitud).filter(Boolean))];
+    if (!ids.length) return;
+    try {
+      const { data: lineas } = await supabaseClient.from('pedidos_canal_lineas').select('id, pedido_id, orden, descripcion, cantidad').in('pedido_id', ids).order('orden');
+      (lineas || []).forEach(l => { (lineasElaboracionCache[l.pedido_id] = lineasElaboracionCache[l.pedido_id] || []).push(l); });
+      const { data: ordenes } = await supabaseClient.rpc('fn_op_listar', { p_estado: 'todas' });
+      ordenesElaboracionCache = (ordenes || []).filter(o => o.estado !== 'anulada' && o.pedido_canal_id && ids.includes(o.pedido_canal_id));
+    } catch (e) { /* sin permiso o sin líneas: se usa el flujo de una sola orden por pedido */ }
+  }
+
+  const lineasElaboracionDe = (s) => lineasElaboracionCache[pedidoCanalDeSolicitud(s)] || [];
+
+  // Orden activa que cubre esa línea: la de su propio producto, o una orden antigua que juntó todo el pedido en un solo texto
+  function ordenDeLineaElaboracion(s, linea) {
+    const pid = pedidoCanalDeSolicitud(s);
+    return ordenesElaboracionCache.find(o => o.pedido_canal_id === pid && (normTextoOP(o.descripcion) === normTextoOP(linea.descripcion) || normTextoOP(o.descripcion) === normTextoOP(s.descripcion))) || null;
+  }
+
+  async function empezarLineaElaboracion(solicitudId, lineaId, boton) {
+    const s = solicitudesElaboracionCache.find(x => x.id === solicitudId);
+    const linea = s && lineasElaboracionDe(s).find(l => l.id === lineaId);
+    if (!s || !linea) return;
+    ocultarMensaje('mensajeElaboracion');
+    if (boton) boton.disabled = true;
+    const pedido = s.pedidos_canal_venta || {};
+    const { data: ordenId, error } = await supabaseClient.rpc('fn_op_abrir', {
+      p_producto_item_id: null,
+      p_descripcion: linea.descripcion,
+      p_cantidad: Number(linea.cantidad) || 1,
+      p_pedido_canal_id: pedidoCanalDeSolicitud(s),
+      p_pedido_crm_id: null,
+      p_numero_pedido_crm: pedido.consecutivo || null,
+      p_observaciones: null,
+    });
+    if (error) {
+      if (boton) boton.disabled = false;
+      mostrarMensaje('mensajeElaboracion', 'No se pudo abrir la orden: ' + error.message, 'error');
+      return;
+    }
+    if (s.estado === 'pendiente') await actualizarEstadoElaboracion(solicitudId, 'en_proceso');
+    else await cargarSolicitudesElaboracion();
+    mostrarMensaje('mensajeOrdenesProd', '✅ Orden abierta para "' + linea.descripcion + '" del pedido ' + (pedido.consecutivo || '') + '. En la tarjeta resaltada de la orden, elige el material, escribe la cantidad y pulsa "Entregar".', 'exito');
+    ordenAccionAbierta = { id: ordenId, accion: 'entregar' };
+    ordenRecienAbiertaId = ordenId;
+    filtrarOrdenesProduccion('en_proceso', document.querySelector('[data-filtro-op="en_proceso"]'));
+  }
 
   async function empezarElaboracion(solicitudId, boton) {
     const s = solicitudesElaboracionCache.find(x => x.id === solicitudId);
@@ -20027,7 +20103,18 @@
     const s = solicitudesElaboracionCache.find(x => x.estado !== 'terminado' && (
       (orden.pedido_canal_id && pedidoCanalDeSolicitud(x) === orden.pedido_canal_id) ||
       (orden.pedido && (x.pedidos_canal_venta || {}).consecutivo === orden.pedido)));
-    if (s) await actualizarEstadoElaboracion(s.id, 'terminado');
+    if (!s) return;
+    // Pedido con varios productos: el pedido queda terminado solo cuando todas sus líneas tienen su orden terminada
+    const lineas = lineasElaboracionDe(s);
+    if (lineas.length > 1) {
+      try {
+        const { data: ordenes } = await supabaseClient.rpc('fn_op_listar', { p_estado: 'todas' });
+        const hechas = (ordenes || []).filter(o => o.pedido_canal_id === pedidoCanalDeSolicitud(s) && (o.estado === 'terminada' || o.estado === 'entregada'));
+        const cubierta = (l) => hechas.some(o => normTextoOP(o.descripcion) === normTextoOP(l.descripcion) || normTextoOP(o.descripcion) === normTextoOP(s.descripcion));
+        if (!lineas.every(cubierta)) { await cargarSolicitudesElaboracion(); return; }
+      } catch (e) { /* si no se puede comprobar, se sigue con el comportamiento de siempre */ }
+    }
+    await actualizarEstadoElaboracion(s.id, 'terminado');
   }
 
   async function actualizarEstadoElaboracion(solicitudId, estado) {
