@@ -24,8 +24,8 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [ ] 🔴 **No deja registrar ventas** (desde 03-nov). Falta el mensaje exacto o captura al dar "Confirmar venta". Revisar: "a nombre de quién", marketplace, feria activa, agotados, turno de caja (abierto desde 19-oct), respuesta del Worker.
 
 ### Chat 2 · Pedidos y anticipos (enviado 12-nov, en este orden)
-- [ ] Recibos: el texto de cambios/retracto/garantía respeta saltos de línea y va alineado a la izquierda (venta y anticipo).
-- [ ] Nuevo campo "Anticipos y cancelación de pedidos personalizados" (en Supabase), solo en recibo de anticipo y en el mensaje del pedido antes de pagar.
+- [x] Recibos: el texto de cambios/retracto/garantía respeta saltos de línea y va alineado a la izquierda (venta y anticipo).
+- [x] (hecho; falta que Sara pegue el texto) Nuevo campo "Anticipos y cancelación de pedidos personalizados" (en Supabase), solo en recibo de anticipo y en el mensaje del pedido antes de pagar.
 - [ ] 🔴 Recibo dice "pendiente de pago" aunque el anticipo se cobró al crear el pedido.
 - [ ] 🔴 Se abren 2 órdenes de producción para el mismo pedido de un solo producto (no borrar las existentes, informar).
 - [ ] Pedido entregado/despachado debe salir de órdenes de producción.
