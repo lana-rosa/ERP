@@ -10,7 +10,7 @@ Negocio: amigurumis tejidos (Taller), Mercería, Academia, tienda web. Manizales
 4. Al terminar un tema: actualiza su archivo en `docs/temas/` (decisión, por qué, objetos de Supabase, qué falta). Si Sara dice "guarda en docs", hazlo.
 
 ## Datos fijos
-- Repo `lana-rosa/ERP`, un solo archivo de app `index.html` + `sw.js` (service worker). **Cada cambio en index.html requiere subir `CACHE_NAME` en `sw.js`** (hoy `lana-rosa-os-v39`).
+- Repo `lana-rosa/ERP`, un solo archivo de app `index.html` + `sw.js` (service worker). **Cada cambio en index.html requiere subir `CACHE_NAME` en `sw.js`** (hoy `lana-rosa-os-v44`).
 - Flujo: rama → PR → squash merge a `main`. Rama de trabajo de esta sesión: `claude/inspiring-heisenberg-l2905a` (si su PR ya se fusionó, reiniciarla desde `origin/main`).
 - **Publicar (PR + fusionar a `main`) sin preguntar** si el cambio está probado y funciona; al terminar, avisar a Sara en una frase qué cambió. **Preguntar antes de fusionar** solo si toca temas delicados: ventas/caja, dinero (pagos, anticipos, contabilidad), DIAN/impuestos o borrar datos.
 - Supabase proyecto `ngjoognzvehwjtpqwrqe`. Lógica en funciones RPC plpgsql `security definer`, con RLS.
