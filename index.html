@@ -20196,7 +20196,9 @@
   // Orden activa que cubre esa línea: la de su propio producto, o una orden antigua que juntó todo el pedido en un solo texto
   function ordenDeLineaElaboracion(s, linea) {
     const pid = pedidoCanalDeSolicitud(s);
-    return ordenesElaboracionCache.find(o => o.pedido_canal_id === pid && (normTextoOP(o.descripcion) === normTextoOP(linea.descripcion) || normTextoOP(o.descripcion) === normTextoOP(s.descripcion))) || null;
+    return ordenesElaboracionCache.find(o => o.pedido_canal_id === pid && (normTextoOP(o.descripcion) === normTextoOP(linea.descripcion) || normTextoOP(o.descripcion) === normTextoOP(s.descripcion)
+      // Orden que agrupa varios productos del mismo pedido (ej. "2x Colibrí…, 1x Colibrí…"): cubre las líneas cuyo nombre aparece en su descripción
+      || (normTextoOP(linea.descripcion).length > 3 && normTextoOP(o.descripcion).includes(normTextoOP(linea.descripcion))))) || null;
   }
 
   async function empezarLineaElaboracion(solicitudId, lineaId, boton) {
