@@ -32,7 +32,7 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [x] Número del pedido en el mensaje de WhatsApp y en la imagen del recibo.
 - [x] Editar datos del cliente en un pedido ya registrado.
 - [x] Cambiar el valor del domicilio (recalcular saldo).
-- [x] 12-nov: pedido de varios productos ahora permite abrir una orden por producto (Pedidos por elaborar). Sara: decidir qué hacer con OP-0046 de PED-2026-00565 (junta los 4 productos; tiene material y ficha).
+- [x] 12-nov: pedido de varios productos ahora permite abrir una orden por producto (Pedidos por elaborar). Sara decidió (12-nov): OP-0046 de PED-2026-00565 se deja como orden única de los 4 productos. Cerrado: OP-0037 (duplicada de OP-0038, PED-2026-00555) anulada con motivo, sin borrar.
 - [ ] Probar el cobro de anticipo con el Worker real (3 dudas abiertas, sobre todo si cobra el anticipo ajustado).
 
 ### Chat 3 · Compras SENA (enviado 12-nov)
