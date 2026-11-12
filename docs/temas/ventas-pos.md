@@ -6,5 +6,6 @@ Reglas al confirmar:
 - Modo feria: exige feria activa (`feriaActivaId`); sin datos del cliente, factura a consumidor final.
 - Requiere turno de caja abierto (el de Sara está abierto desde 19-oct-2026).
 - Última venta registrada: 2026-11-02. Problema abierto "no deja registrar ventas": ver `docs/PENDIENTES.md` (falta el mensaje exacto).
+- Revisión 12-nov-2026 (sin el mensaje exacto, causa NO encontrada). Descartado en Supabase: turno abierto OK; `fn_registrar_venta_pos` + `fn_contabilizar_venta_pos` funcionan en una venta de prueba con rollback (efectivo, 1 ítem con stock, consecutivo POS-2026-xxxxx se genera bien); sin errores de Postgres ni de la API en las últimas 24 h (nadie intentó vender en ese lapso, o el fallo ocurre antes de llegar a Supabase: en el Worker o en el navegador). Sin el texto del error no se puede avanzar más.
 Decisión: ya no se reciben pagos por Nequi ni llave Bre-B (oct-2026).
 KB: modulo "Punto de Venta" (venta_tienda, turno_caja, venta_whatsapp, credito_directo_cliente…).
