@@ -61,6 +61,8 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [x] Hasta 3 imágenes de referencia visibles en la orden de producción (se suben en la orden, v43).
 - [x] Insumos automáticos al abrir la entrega de material (ficha técnica → última orden terminada); no mueve inventario hasta "Entregar".
 - [x] Patrones: enlaces de Telegram en la ficha técnica + botón "Ver patrón" en la orden.
+- [x] Llaveros sin tejedora: asignados (Jennifer: pollos y frailejón; Sara: el resto), 0,6 h provisional. OP-0046 partida (OP-0051 frailejón → Jennifer).
+- [ ] Sara: medir horas reales por llavero (las 0,6 h son provisionales).
 - [ ] Sara: pegar en cada ficha técnica el enlace Telegram de su patrón y llenar fichas faltantes.
 - Revisión 12-nov: 8 agotados sin mínimo, 3 bajo mínimo, 32 productos sin horas por unidad, llaveros de pollo sin tejedora.
 
