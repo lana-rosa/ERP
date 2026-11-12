@@ -14435,6 +14435,22 @@
   }
 
   // Con recursos del Fondo Emprender y compra pagada, se piden los soportes del pago (nuevo modelo 2026).
+  function avisarValorPagadoFondo() {
+    const a = document.getElementById('avisoValorPagado'); if (!a) return;
+    const v = Number((document.getElementById('req_valor_pagado') || {}).value), m = Number(document.getElementById('gastoMonto').value);
+    a.textContent = v && m && Math.round(v) !== Math.round(m) ? `⚠️ Ojo: transferiste ${formatearMoneda(v)} y la factura es de ${formatearMoneda(m)}. El Fondo exige que el valor pagado coincida con la factura.` : '';
+  }
+
+  async function avisarProveedorPlanFondo() {
+    const a = document.getElementById('avisoProveedorPlan'); if (!a) return;
+    const fuente = (document.getElementById('gastoFuente') || {}).value || 'propios';
+    a.textContent = '';
+    if (fuente === 'propios') return;
+    if (!proveedorGastoSeleccionadoId) { a.textContent = '⚠️ Proveedor nuevo: no está aprobado en el plan operativo. Con recursos del Fondo solo se debe pagar a proveedores aprobados por la interventora.'; return; }
+    const { data } = await supabaseClient.rpc('fn_proveedor_aprobado_plan', { p_tercero: proveedorGastoSeleccionadoId });
+    if (!data) a.textContent = '⚠️ Este proveedor no está marcado como aprobado en el plan operativo. Con recursos del Fondo solo se debe pagar a proveedores aprobados por la interventora (puedes marcarlo luego en "Ver soportes de pago").';
+  }
+
   function actualizarBloquePagoFondo() {
     const b = document.getElementById('bloquePagoFondo'); if (!b) return;
     const fuente = (document.getElementById('gastoFuente') || {}).value || 'propios';
@@ -14454,17 +14470,46 @@
   async function verSoportesPagoFondo() {
     const cont = document.getElementById('listaSoportesPagoFondo');
     cont.innerHTML = 'Cargando...';
-    const { data, error } = await supabaseClient.from('compras_requisitos_sena').select('id,numero_factura,fecha_factura,monto,proveedor_nit,fuente,documentos')
-      .in('fuente', ['fondo', 'mixto']).gte('fecha_factura', document.getElementById('comprasFechaDesde').value || '2026-01-01').lte('fecha_factura', document.getElementById('comprasFechaHasta').value || fechaLocalIso()).order('fecha_factura', { ascending: false });
+    const { data, error } = await supabaseClient.rpc('fn_soportes_pago_fondo', { p_desde: document.getElementById('comprasFechaDesde').value || '2026-01-01', p_hasta: document.getElementById('comprasFechaHasta').value || fechaLocalIso() });
     if (error) { cont.innerHTML = escaparHtml(error.message); return; }
     if (!data.length) { cont.innerHTML = 'No hay compras con recursos del Fondo en el rango.'; return; }
-    const etiquetas = { cotizacion: 'Cotización', contrato: 'Contrato', poliza: 'Póliza', ficha: 'Ficha técnica', comprobante_pago: 'Comprobante de pago', extracto_bancario: 'Extracto bancario' };
-    cont.innerHTML = data.map(c => {
-      const docs = c.documentos || {};
+    const etiquetas = { cotizacion: 'Cotización', contrato: 'Contrato', poliza: 'Póliza', ficha: 'Ficha técnica', comprobante_pago: 'Comprobante de pago', extracto_bancario: 'Extracto bancario', evidencia_entrega: 'Evidencia de entrega' };
+    const listas = data.filter(c => estadoLegalizarCompra(c).faltan.length === 0 && estadoLegalizarCompra(c).alertas.length === 0).length;
+    cont.innerHTML = `<div style="margin-bottom:6px;"><strong>${listas}</strong> de ${data.length} compra(s) lista(s) para legalizar.</div>` + data.map(c => {
+      const docs = c.documentos || {}, est = estadoLegalizarCompra(c);
       const links = Object.entries(docs).map(([k, ruta]) => `<a href="#" onclick="abrirSoporteCompra('${escaparHtml(ruta)}');return false;">${escaparHtml(etiquetas[k] || k)}</a>`).join(' · ') || '<em>sin documentos</em>';
-      const falta = ['comprobante_pago', 'extracto_bancario'].filter(k => !docs[k]).map(k => `<label style="display:inline-block;margin-right:10px;font-size:11.5px;">Subir ${etiquetas[k].toLowerCase()} (PDF) <input type="file" accept="application/pdf" onchange="subirSoportePagoFondo('${c.id}','${k}',this)"></label>`).join('');
-      return `<div style="border-top:1px solid #eee;padding:6px 0;"><strong>${new Date(c.fecha_factura + 'T00:00:00').toLocaleDateString('es-CO')}</strong> · Factura ${escaparHtml(c.numero_factura || '')} · NIT ${escaparHtml(c.proveedor_nit || '—')} · ${formatearMoneda(c.monto)} · ${c.fuente === 'mixto' ? 'Mixto' : 'Fondo'}<div>${links}</div>${falta ? `<div style="margin-top:4px;">${falta}</div>` : '<div style="color:var(--verde-exito,#2e7d32);">✅ Tiene comprobante y extracto.</div>'}</div>`;
+      const subir = [['comprobante_pago', 'application/pdf'], ['extracto_bancario', 'application/pdf'], ['evidencia_entrega', 'application/pdf,image/*']].filter(([k]) => !docs[k]).map(([k, acc]) => `<label style="display:inline-block;margin-right:10px;font-size:11.5px;">Subir ${etiquetas[k].toLowerCase()} <input type="file" accept="${acc}" onchange="subirSoportePagoFondo('${c.id}','${k}',this)"></label>`).join('');
+      const valor = c.valor_pagado ? `Pagado: ${formatearMoneda(c.valor_pagado)}` : `<label style="font-size:11.5px;">Valor transferido <input type="number" min="1" step="1" style="width:120px;" onchange="guardarValorPagadoFondo('${c.id}',this.value)"></label>`;
+      const prov = c.proveedor_aprobado ? '' : ` <button class="btn-mini editar" style="padding:2px 8px;font-size:11px;" onclick="marcarProveedorPlanFondo('${c.proveedor_tercero_id || ''}')">Marcar proveedor como aprobado en el plan</button>`;
+      const estado = est.faltan.length ? `<span style="color:var(--rojo-error);">Falta: ${est.faltan.join(', ')}</span>` : (est.alertas.length ? '' : '<span style="color:var(--verde-exito,#2e7d32);">✅ Lista para legalizar</span>');
+      return `<div style="border-top:1px solid #eee;padding:6px 0;"><strong>${new Date(c.fecha_factura + 'T00:00:00').toLocaleDateString('es-CO')}</strong> · ${escaparHtml(c.proveedor || 'sin proveedor')} · Factura ${escaparHtml(c.numero_factura || '')} · ${formatearMoneda(c.monto)} · ${c.fuente === 'mixto' ? 'Mixto' : 'Fondo'}<div>${estado}</div>${est.alertas.map(a => `<div style="color:var(--rojo-error);font-size:11.5px;">⚠️ ${a}</div>`).join('')}<div>${links}</div><div style="margin-top:4px;">${valor}${prov}</div>${subir ? `<div style="margin-top:4px;">${subir}</div>` : ''}</div>`;
     }).join('');
+  }
+
+  // Qué le falta a una compra del Fondo para legalizarla (nuevo modelo 2026) y qué alertas tiene.
+  function estadoLegalizarCompra(c) {
+    const docs = c.documentos || {}, faltan = [], alertas = [];
+    if (!c.tiene_factura) faltan.push('factura');
+    if (!docs.comprobante_pago) faltan.push('comprobante de pago');
+    if (!docs.extracto_bancario) faltan.push('extracto');
+    if (!docs.evidencia_entrega) faltan.push('evidencia de entrega');
+    if (!c.proveedor_aprobado) alertas.push('El proveedor no está aprobado en el plan operativo.');
+    if (c.valor_pagado && Math.round(Number(c.valor_pagado)) !== Math.round(Number(c.monto))) alertas.push(`El valor pagado (${formatearMoneda(c.valor_pagado)}) no coincide con la factura (${formatearMoneda(c.monto)}).`);
+    return { faltan, alertas };
+  }
+
+  async function guardarValorPagadoFondo(id, valor) {
+    const { error } = await supabaseClient.rpc('fn_compra_registrar_valor_pagado', { p_id: id, p_valor: Number(valor) });
+    if (error) { alert('No se pudo guardar: ' + error.message); return; }
+    verSoportesPagoFondo();
+  }
+
+  async function marcarProveedorPlanFondo(terceroId) {
+    if (!terceroId) { alert('Esta compra no tiene proveedor registrado en terceros; primero crea el proveedor.'); return; }
+    if (!confirm('¿La interventora ya aprobó a este proveedor en el plan operativo?')) return;
+    const { error } = await supabaseClient.rpc('fn_proveedor_plan_marcar', { p_tercero: terceroId, p_aprobado: true });
+    if (error) { alert('No se pudo marcar: ' + error.message); return; }
+    verSoportesPagoFondo();
   }
 
   async function abrirSoporteCompra(ruta) {
@@ -14475,9 +14520,11 @@
 
   async function subirSoportePagoFondo(id, clave, input) {
     const f = input.files[0]; if (!f) return;
-    if (!/\.pdf$/i.test(f.name) && f.type !== 'application/pdf') { alert('Debe ser un archivo PDF.'); input.value = ''; return; }
-    const ruta = `${fechaLocalIso().slice(0, 4)}/req/${Date.now()}_${id.slice(0, 8)}_${clave}.pdf`;
-    const { error } = await supabaseClient.storage.from('soportes-compras').upload(ruta, f, { contentType: 'application/pdf' });
+    const esPdf = /\.pdf$/i.test(f.name) || f.type === 'application/pdf';
+    if (!esPdf && !(clave === 'evidencia_entrega' && /^image\//.test(f.type))) { alert(clave === 'evidencia_entrega' ? 'Debe ser una foto o un PDF.' : 'Debe ser un archivo PDF.'); input.value = ''; return; }
+    const ext = esPdf ? 'pdf' : ((f.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg');
+    const ruta = `${fechaLocalIso().slice(0, 4)}/req/${Date.now()}_${id.slice(0, 8)}_${clave}.${ext}`;
+    const { error } = await supabaseClient.storage.from('soportes-compras').upload(ruta, f, { contentType: esPdf ? 'application/pdf' : f.type });
     if (error) { alert('No se pudo subir: ' + error.message); return; }
     const { error: e2 } = await supabaseClient.rpc('fn_compra_agregar_documento', { p_id: id, p_clave: clave, p_ruta: ruta });
     if (e2) { alert('No se pudo guardar: ' + e2.message); return; }
@@ -14521,7 +14568,7 @@
           <div style="opacity:.8;">Para esta compra de ${formatearMoneda(monto)} el instructivo pide (6 salarios mínimos = ${formatearMoneda(data.umbral_6_smmlv)}):</div>
           ${filas}
           <div style="margin-top:12px;font-weight:600;">¿Con qué recursos se paga?</div>
-          <select id="gastoFuente" onchange="document.getElementById('bloqueActividadFe').classList.toggle('oculto', this.value === 'propios'); actualizarBloquePagoFondo()">
+          <select id="gastoFuente" onchange="document.getElementById('bloqueActividadFe').classList.toggle('oculto', this.value === 'propios'); actualizarBloquePagoFondo(); avisarProveedorPlanFondo()">
             <option value="propios">Aporte del emprendedor (recursos propios)</option>
             <option value="fondo">Fondo Emprender</option>
             <option value="mixto">Mixto (Fondo Emprender y aporte del emprendedor)</option>
@@ -14534,10 +14581,14 @@
           <div id="bloquePagoFondo" class="oculto" style="margin-top:10px;padding:8px 10px;border:1px solid #e3d3df;border-radius:8px;">
             <div style="font-weight:600;">Soportes del pago (legalización del Fondo)</div>
             <div style="margin-top:6px;"><label for="req_comprobante_pago" style="font-weight:600;">Comprobante de la transferencia <em id="obligComprobantePago" style="font-size:10.5px;opacity:.7;">(obligatorio si ya pagaste)</em></label><input type="file" data-req="comprobante_pago" id="req_comprobante_pago" accept="application/pdf"><div style="font-size:10.5px;opacity:.65;">PDF del comprobante de la transferencia hecha desde la cuenta bancaria exclusiva.</div></div>
-            <div style="margin-top:8px;"><label for="req_extracto_bancario" style="font-weight:600;">Extracto bancario <em style="font-size:10.5px;opacity:.7;">(si lo tienes)</em></label><input type="file" data-req="extracto_bancario" id="req_extracto_bancario" accept="application/pdf"><div style="font-size:10.5px;opacity:.65;">PDF del extracto donde se vea el débito del pago y el movimiento de la cuenta exclusiva. Si todavía no lo tienes, súbelo cuando lo descargues.</div></div>
+            <div style="margin-top:8px;"><label for="req_extracto_bancario" style="font-weight:600;">Extracto bancario <em style="font-size:10.5px;opacity:.7;">(si lo tienes)</em></label><input type="file" data-req="extracto_bancario" id="req_extracto_bancario" accept="application/pdf"><div style="font-size:10.5px;opacity:.65;">PDF del extracto donde se vea el débito del pago y el movimiento de la cuenta exclusiva. Si todavía no lo tienes, súbelo cuando lo descargues; la compra quedará marcada como "falta extracto" hasta entonces.</div></div>
+            <div style="margin-top:8px;"><label for="req_valor_pagado" style="font-weight:600;">Valor que transferiste <em style="font-size:10.5px;opacity:.7;">(si ya lo sabes)</em></label><input type="number" data-req="valor_pagado" id="req_valor_pagado" min="1" step="1" oninput="avisarValorPagadoFondo()"><div id="avisoValorPagado" style="font-size:11px;color:var(--rojo-error);"></div></div>
+            <div style="margin-top:8px;"><label for="req_evidencia_entrega" style="font-weight:600;">Evidencia de entrega <em style="font-size:10.5px;opacity:.7;">(foto, acta o remisión; si la tienes)</em></label><input type="file" data-req="evidencia_entrega" id="req_evidencia_entrega" accept="application/pdf,image/*"><div style="font-size:10.5px;opacity:.65;">Demuestra que recibiste el producto o servicio. Si todavía no la tienes, súbela después; mientras tanto la compra queda como "falta evidencia de entrega".</div></div>
+            <div id="avisoProveedorPlan" style="font-size:11.5px;margin-top:8px;color:var(--rojo-error);"></div>
           </div>
           <div style="font-size:10.5px;opacity:.65;margin-top:10px;">Los documentos que se suben a la plataforma del Fondo Emprender deben ser PDF legibles, sin tachaduras ni enmendaduras, y fechados en el mismo mes en que se pide el pago. Las reglas valen igual aunque la empresa esté en el Régimen SIMPLE.</div>`;
         Object.entries(previo.marcas).forEach(([k, v]) => { const el = cont.querySelector(`[data-req="${k}"]`); if (el) el.checked = v; });
+        setTimeout(() => { actualizarBloquePagoFondo(); avisarProveedorPlanFondo(); avisarValorPagadoFondo(); }, 0);
         Object.entries(previo.textos).forEach(([k, v]) => { const el = cont.querySelector(`[data-req="${k}"]`); if (el) el.value = v; });
         Object.entries(previo.archivos).forEach(([k, f]) => { const el = cont.querySelector(`[data-req="${k}"]`); if (el) { const dt = new DataTransfer(); dt.items.add(f); el.files = dt.files; } });
         resolve();
@@ -14575,10 +14626,12 @@
     }
     const fuente = (document.getElementById('gastoFuente') || {}).value || 'propios';
     const actividad = (document.getElementById('gastoActividadFe') || {}).value || null;
-    ['comprobante_pago', 'extracto_bancario'].forEach(k => {
+    ['comprobante_pago', 'extracto_bancario', 'evidencia_entrega'].forEach(k => {
       const e = el(k); const f = e && e.files[0];
       if (fuente !== 'propios' && modoPagoCompraActual === 'completo' && f) archivos[k] = f;
     });
+    if (archivos.evidencia_entrega && !/\.(pdf|jpe?g|png|webp|heic)$/i.test(archivos.evidencia_entrega.name) && !/^image\//.test(archivos.evidencia_entrega.type) && archivos.evidencia_entrega.type !== 'application/pdf') return { error: 'La evidencia de entrega debe ser una foto o un PDF.' };
+    if (fuente !== 'propios' && modoPagoCompraActual === 'completo') { const vp = Number((el('valor_pagado') || {}).value); if (vp > 0) datos.valor_pagado = vp; }
     for (const k of ['comprobante_pago', 'extracto_bancario']) {
       const f = archivos[k];
       if (f && !/\.pdf$/i.test(f.name) && f.type !== 'application/pdf') return { error: 'El comprobante y el extracto deben ser archivos PDF (así lo exige la plataforma del Fondo Emprender).' };
@@ -14601,8 +14654,10 @@
     const rutas = {};
     const base = `${fechaFactura.slice(0, 4)}/req/${Date.now()}_${String(numeroFactura).replace(/[^A-Za-z0-9_-]/g, '')}`;
     for (const [clave, archivo] of Object.entries(req.archivos)) {
-      const ruta = `${base}_${clave}.pdf`;
-      const { error } = await supabaseClient.storage.from('soportes-compras').upload(ruta, archivo, { contentType: 'application/pdf' });
+      const esPdf = /\.pdf$/i.test(archivo.name) || archivo.type === 'application/pdf';
+      const ext = esPdf ? 'pdf' : ((archivo.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg');
+      const ruta = `${base}_${clave}.${ext}`;
+      const { error } = await supabaseClient.storage.from('soportes-compras').upload(ruta, archivo, { contentType: esPdf ? 'application/pdf' : (archivo.type || 'image/jpeg') });
       if (error) throw error;
       rutas[clave] = ruta;
     }
