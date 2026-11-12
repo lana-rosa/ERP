@@ -69,3 +69,4 @@ Estructura: HTML de pantallas (líneas ~1000–5800), luego un bloque grande `<s
 - `docs/factura-por-correo/`: borrador de ingesta de facturas por correo.
 - `supabase/functions/`: edge functions.
 | Política de anticipos | `cargarPoliticaAnticipos`/`politicaAnticiposCache` (~6717), `guardarPoliticaAnticipos` (Políticas legales), `enviarResumenPedidoWhatsapp` (antes de `fijarAnticipoPedido`) |
+| Editar pedido registrado | `abrirEditarClientePedido`, `guardarClientePedido`, `abrirCambiarEnvioPedido`, `guardarEnvioPedido`, `avisarOrdenesEnProcesoDePedido` (junto a `marcarPedidoListoUI`, ~19660) |

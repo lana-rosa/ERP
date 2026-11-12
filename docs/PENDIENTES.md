@@ -26,12 +26,12 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 ### Chat 2 · Pedidos y anticipos (enviado 12-nov, en este orden)
 - [x] Recibos: el texto de cambios/retracto/garantía respeta saltos de línea y va alineado a la izquierda (venta y anticipo).
 - [x] (hecho; falta que Sara pegue el texto) Nuevo campo "Anticipos y cancelación de pedidos personalizados" (en Supabase), solo en recibo de anticipo y en el mensaje del pedido antes de pagar.
-- [ ] 🔴 Recibo dice "pendiente de pago" aunque el anticipo se cobró al crear el pedido.
-- [ ] 🔴 Se abren 2 órdenes de producción para el mismo pedido de un solo producto (no borrar las existentes, informar).
-- [ ] Pedido entregado/despachado debe salir de órdenes de producción.
-- [ ] Número del pedido en el mensaje de WhatsApp y en la imagen del recibo.
-- [ ] Editar datos del cliente en un pedido ya registrado.
-- [ ] Cambiar el valor del domicilio (recalcular saldo).
+- [x] 🔴 Recibo dice "pendiente de pago" aunque el anticipo se cobró al crear el pedido.
+- [x] 🔴 Se abren 2 órdenes de producción para el mismo pedido de un solo producto (hecho: bloqueo en Supabase). **Sara decide:** hoy hay 1 duplicada, PED-2026-00555 → OP-0037 (en proceso) y OP-0038 (terminada); no se borró.
+- [x] Pedido entregado/despachado debe salir de órdenes de producción (la orden "en proceso" no se cierra sola: se avisa).
+- [x] Número del pedido en el mensaje de WhatsApp y en la imagen del recibo.
+- [x] Editar datos del cliente en un pedido ya registrado.
+- [x] Cambiar el valor del domicilio (recalcular saldo).
 - [ ] Probar el cobro de anticipo con el Worker real (3 dudas abiertas, sobre todo si cobra el anticipo ajustado).
 
 ### Chat 3 · Compras SENA (enviado 12-nov)

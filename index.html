@@ -8139,7 +8139,8 @@
     `).join('');
     const filasPago = v.pagos.length > 0
       ? v.pagos.map(p => `<div class="resumen-fila-recibo"><span>${etiquetasPago[p.metodo_pago] || p.metodo_pago}</span><span>${formatearMoneda(p.monto)}</span></div>`).join('')
-      : `<div class="resumen-fila-recibo"><span>Pendiente de pago</span><span>—</span></div>`;
+      : `<div class="resumen-fila-recibo"><span>${v.esPedido ? 'Anticipo pendiente de pago' : 'Pendiente de pago'}</span><span>—</span></div>`;
+    const etiquetaRecibo = v.esPedido ? `Recibo de anticipo — Pedido ${escaparHtml(String(v.consecutivo))}` : `Recibo de venta N.° ${escaparHtml(String(v.consecutivo))}`;
 
     return `
       <div class="encabezado-recibo">
@@ -8151,7 +8152,7 @@
       </div>
 
       <div style="font-size:12px;">
-        <strong>Recibo de venta N.° ${escaparHtml(String(v.consecutivo))}</strong><br>
+        <strong>${etiquetaRecibo}</strong><br>
         Fecha: ${fechaTexto}
       </div>
 
@@ -8181,6 +8182,7 @@
       <div style="margin-top:12px;">
         <div style="font-size:11px;font-weight:700;opacity:0.6;margin-bottom:4px;">FORMA DE PAGO</div>
         ${filasPago}
+        ${v.esPedido && v.saldoPendiente != null ? `<div class="resumen-fila-recibo" style="font-weight:700;"><span>Saldo pendiente a la entrega</span><span>${formatearMoneda(v.saldoPendiente)}</span></div>` : ''}
       </div>
 
       ${v.puntos_ganados ? `
@@ -8193,6 +8195,7 @@
         ${v.nota ? escaparHtml(v.nota) : 'Recibo de venta — Este documento es un comprobante de pago. La factura electrónica la envía la DIAN por separado.'}
       </div>
 
+      ${v.esPedido && politicaAnticiposCache ? `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed #ccc;font-size:10.5px;color:#888;text-align:left;white-space:pre-line;"><strong>Anticipos y cancelación de pedidos personalizados</strong>\n${escaparHtml(politicaAnticiposCache)}</div>` : ''}
       ${politicaCambiosCache ? `
         <div style="margin-top:8px;padding-top:8px;border-top:1px dashed #ccc;font-size:10.5px;color:#888;text-align:left;white-space:pre-line;">
           🔄 ${escaparHtml(politicaCambiosCache)}
@@ -8374,7 +8377,9 @@
 
     try {
       const blob = await generarImagenRecibo(v);
-      const mensaje = `Hola${v.cliente.nombre ? ' ' + v.cliente.nombre : ''} 👋 Aquí está tu recibo de compra en Lana Rosa Crochet — Recibo N.° ${v.consecutivo}. ¡Gracias por tu compra! 🐑💕`;
+      const mensaje = v.esPedido
+        ? `Hola${v.cliente.nombre ? ' ' + v.cliente.nombre : ''} 👋 Aquí está tu recibo de ${v.pagos.length ? 'anticipo' : 'pedido'} en Lana Rosa Crochet — Pedido ${v.consecutivo}. ¡Gracias por tu compra! 🐑💕`
+        : `Hola${v.cliente.nombre ? ' ' + v.cliente.nombre : ''} 👋 Aquí está tu recibo de compra en Lana Rosa Crochet — Recibo N.° ${v.consecutivo}. ¡Gracias por tu compra! 🐑💕`;
       await compartirImagenPorWhatsapp(blob, v.cliente.telefono, `recibo_${v.consecutivo}.png`, mensaje);
     } catch (err) {
       mostrarMensaje(idMensaje, 'No se pudo generar la imagen del recibo: ' + err.message, 'error');
@@ -19062,10 +19067,13 @@
         consecutivo: datos.consecutivo || 'PEDIDO',
         fecha: new Date(),
         lineas: [...carritoPedidoCanal.map(p => ({ nombre: p.descripcion, cantidad: p.cantidad, precio: p.valor / p.cantidad })), ...(valorEnvio > 0 ? [{ nombre: 'Envío', cantidad: 1, precio: valorEnvio }] : [])],
-        subtotal: valorProducto + valorEnvio,
-        descuento: 0,
+        subtotal: valorProductoBruto + valorEnvio,
+        descuento: valorDescuentoPedido,
         total: valorProducto + valorEnvio,
-        pagos: [],
+        // Si el anticipo se cobró en este paso, el recibo muestra lo pagado y el saldo (antes decía «pendiente de pago»)
+        pagos: reciboAnticipoAhora ? [{ metodo_pago: document.getElementById('pedidoMetodoAnticipo').value, monto: anticipoFinal }] : [],
+        esPedido: true,
+        saldoPendiente: (valorProducto + valorEnvio) - (reciboAnticipoAhora ? anticipoFinal : 0),
         cliente: { nombre: nombreCliente, telefono: telefonoCliente, identificacion },
         cajero: miPropiaIdentidad.nombre || 'Cajero'
       };
@@ -19223,7 +19231,12 @@
               <span><span class="badge-estado-pedido" style="background:${colorEstado.bg};color:${colorEstado.color};">${etiquetasEstado[p.estado] || p.estado}</span></span>
             </div>
             <div class="tabla-lista-detalle" style="display:block;">${lineaMedio}${bloqueFacturaPedido(p)}${acciones}<div data-envio-pedido="${p.id}">${bloqueEnvioPedido(p)}</div>
-              <button class="btn-mini editar" style="margin-top:8px;" onclick="abrirTrazaPedido('${p.id}')">🧭 Ver trazabilidad</button></div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
+                <button class="btn-mini editar" onclick="abrirTrazaPedido('${p.id}')">🧭 Ver trazabilidad</button>
+                ${(p.tercero_id || (p.tercero && p.tercero.id)) ? `<button class="btn-mini editar" onclick="abrirEditarClientePedido('${p.id}')">✏️ Editar cliente</button>` : ''}
+                ${p.estado !== 'entregado' && !p.saldo_pagado && p.canal !== 'tienda_virtual' ? `<button class="btn-mini editar" onclick="abrirCambiarEnvioPedido('${p.id}')">🚚 Cambiar domicilio</button>` : ''}
+              </div>
+              <div id="panelEditarPedido-${p.id}" class="oculto" style="margin-top:8px;"></div></div>
           `;
         }).join('')}
       </div>
@@ -19659,6 +19672,82 @@
     const datos = await resp.json();
     if (!resp.ok) { mostrarMensaje('mensajePedidosCanal', 'Error: ' + (datos.error || 'No se pudo actualizar'), 'error'); return; }
     await cargarPedidosCanal();
+    await avisarOrdenesEnProcesoDePedido(pedidoId);
+  }
+
+  // Al marcar un pedido listo/entregado, su solicitud sale sola de "Pedidos por elaborar" (trigger en Supabase).
+  // Una orden de producción que siga "en proceso" no se cierra sola (terminarla exige material y sobrantes): se avisa para no dejarla colgada.
+  async function avisarOrdenesEnProcesoDePedido(pedidoId) {
+    try {
+      const { data } = await supabaseClient.rpc('fn_op_listar', { p_estado: 'en_proceso' });
+      const abiertas = (data || []).filter(o => o.pedido_canal_id === pedidoId);
+      if (abiertas.length) mostrarMensaje('mensajePedidosCanal', `⚠️ Este pedido ya está listo, pero la orden de producción ${abiertas.map(o => o.orden).join(', ')} sigue "en proceso". Ve a Órdenes de producción y termínala (o anúlala si ya no hace falta).`, 'error');
+    } catch (e) { /* si este usuario no puede ver las órdenes, no se avisa */ }
+  }
+
+  // Editar un pedido ya registrado: datos del cliente y valor del domicilio (la base recalcula total y saldo)
+  async function abrirEditarClientePedido(pedidoId) {
+    const p = pedidosCanalCache.find(x => x.id === pedidoId);
+    const panel = document.getElementById(`panelEditarPedido-${pedidoId}`);
+    if (!p || !panel) return;
+    ocultarMensaje('mensajePedidosCanal');
+    const { data: t } = await supabaseClient.from('terceros').select('nombre_completo, telefono, numero_documento, direccion, ciudad, email').eq('id', p.tercero_id || (p.tercero && p.tercero.id)).maybeSingle();
+    const c = t || {};
+    panel.classList.remove('oculto');
+    panel.innerHTML = `
+      <div style="padding:10px;border-radius:10px;background:var(--rosa-suave);">
+        <strong style="font-size:12.5px;">Editar datos del cliente</strong>
+        <div style="font-size:11px;opacity:0.7;margin:2px 0 6px;">Se actualizan en el directorio de clientes. Si la factura electrónica ya se emitió, no cambia.</div>
+        <label for="epNombre-${pedidoId}">Nombre</label><input type="text" id="epNombre-${pedidoId}" value="${escaparHtml(c.nombre_completo || '')}">
+        <label for="epTel-${pedidoId}">Teléfono</label><input type="text" id="epTel-${pedidoId}" value="${escaparHtml(c.telefono || '')}">
+        <label for="epDoc-${pedidoId}">Identificación</label><input type="text" id="epDoc-${pedidoId}" value="${escaparHtml(c.numero_documento || '')}">
+        <label for="epDir-${pedidoId}">Dirección de envío</label><input type="text" id="epDir-${pedidoId}" value="${escaparHtml(c.direccion || '')}">
+        <label for="epCiudad-${pedidoId}">Ciudad / municipio</label><input type="text" id="epCiudad-${pedidoId}" value="${escaparHtml(c.ciudad || '')}">
+        <label for="epMail-${pedidoId}">Correo</label><input type="text" id="epMail-${pedidoId}" value="${escaparHtml(c.email || '')}">
+        <div style="display:flex;gap:6px;margin-top:8px;">
+          <button class="btn-mini guardar" onclick="guardarClientePedido('${pedidoId}')">💾 Guardar</button>
+          <button class="btn-mini editar" onclick="document.getElementById('panelEditarPedido-${pedidoId}').classList.add('oculto')">Cancelar</button>
+        </div>
+      </div>`;
+  }
+
+  async function guardarClientePedido(pedidoId) {
+    const v = (k) => document.getElementById(`${k}-${pedidoId}`).value.trim();
+    const { error } = await supabaseClient.rpc('fn_editar_cliente_pedido_canal', {
+      p_pedido_id: pedidoId, p_nombre: v('epNombre'), p_telefono: v('epTel'), p_identificacion: v('epDoc'),
+      p_direccion: v('epDir'), p_ciudad: v('epCiudad'), p_email: v('epMail')
+    });
+    if (error) { mostrarMensaje('mensajePedidosCanal', 'No se pudo guardar: ' + error.message, 'error'); return; }
+    mostrarMensaje('mensajePedidosCanal', '✅ Datos del cliente actualizados.', 'exito');
+    await cargarPedidosCanal();
+  }
+
+  function abrirCambiarEnvioPedido(pedidoId) {
+    const p = pedidosCanalCache.find(x => x.id === pedidoId);
+    const panel = document.getElementById(`panelEditarPedido-${pedidoId}`);
+    if (!p || !panel) return;
+    ocultarMensaje('mensajePedidosCanal');
+    panel.classList.remove('oculto');
+    panel.innerHTML = `
+      <div style="padding:10px;border-radius:10px;background:var(--rosa-suave);">
+        <strong style="font-size:12.5px;">Cambiar el valor del domicilio</strong>
+        <div style="font-size:11px;opacity:0.7;margin:2px 0 6px;">Hoy: ${formatearMoneda(p.valor_envio || 0)} · Total: ${formatearMoneda(p.total_pedido)}${p.anticipo_pagado ? ' · El anticipo ya cobrado no cambia: cambia el saldo.' : ''}</div>
+        <label for="epEnvio-${pedidoId}">Nuevo valor del domicilio (COP)</label>
+        <input type="number" id="epEnvio-${pedidoId}" min="0" step="1" value="${Number(p.valor_envio) || 0}">
+        <div style="display:flex;gap:6px;margin-top:8px;">
+          <button class="btn-mini guardar" onclick="guardarEnvioPedido('${pedidoId}')">💾 Guardar y recalcular saldo</button>
+          <button class="btn-mini editar" onclick="document.getElementById('panelEditarPedido-${pedidoId}').classList.add('oculto')">Cancelar</button>
+        </div>
+      </div>`;
+  }
+
+  async function guardarEnvioPedido(pedidoId) {
+    const valor = Number(document.getElementById(`epEnvio-${pedidoId}`).value);
+    if (!(valor >= 0)) { mostrarMensaje('mensajePedidosCanal', 'Escribe un valor de domicilio válido (0 o más).', 'error'); return; }
+    const { data, error } = await supabaseClient.rpc('fn_cambiar_envio_pedido_canal', { p_pedido_id: pedidoId, p_valor_envio: valor });
+    if (error) { mostrarMensaje('mensajePedidosCanal', 'No se pudo cambiar el domicilio: ' + error.message, 'error'); return; }
+    mostrarMensaje('mensajePedidosCanal', `✅ Domicilio cambiado a ${formatearMoneda(data.valor_envio)}. Nuevo total: ${formatearMoneda(data.total_pedido)} · Saldo pendiente: ${formatearMoneda(data.saldo)}.`, 'exito');
+    await cargarPedidosCanal();
   }
 
   async function entregarPedidoSinSaldoUI(pedidoId) {
@@ -19671,6 +19760,7 @@
     const datos = await resp.json();
     if (!resp.ok) { mostrarMensaje('mensajePedidosCanal', 'Error: ' + (datos.error || 'No se pudo marcar como entregado'), 'error'); return; }
     await cargarPedidosCanal();
+    await avisarOrdenesEnProcesoDePedido(pedidoId);
   }
 
   // Genera el recibo (impreso o imagen para WhatsApp) del pago de un pedido
