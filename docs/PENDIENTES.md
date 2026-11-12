@@ -29,6 +29,11 @@ Actualizado: 2026-11-03
 - [ ] Contrato para cada proveedor nuevo
 - [ ] Informes: bimestral (2-dic-2026), mensuales de producción, ventas y estados financieros, 5 contrapartidas
 
+## Compras SENA — nuevo modelo de pagos (12-nov-2026)
+- [ ] Cambiar textos de compras que dicen "el pago lo gira la fiducia al proveedor": ahora paga Sara desde la cuenta exclusiva (index.html ~l. 14299 y ~14342)
+- [ ] Registrar en cada compra con recursos del Fondo el comprobante de transferencia y el extracto, e incluirlos en `generarPaqueteEvidenciasSena`
+- [ ] Preguntar a la interventora: ¿el Formato de Solicitud de Desembolso y la pestaña AVANCE/PAGOS aplican ya a nuestro proyecto?
+
 ## Opcionales (Claude, si se pide)
 - [ ] Enlazar soporte de compras a crédito
 - [ ] Soporte para facturas manuales antiguas

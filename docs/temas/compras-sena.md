@@ -7,3 +7,7 @@ Para Fondo Emprender se cumple todo como si fuera sociedad, aunque Sara esté en
 - Paquete de evidencias: `generarPaqueteEvidenciasSena` (~31684).
 KB: `compras_requisitos_instructivo_sena` y todas las `fondo_emprender_*`.
 Pendiente con la interventora: contrato para cada proveedor nuevo; aprobación del lugar de operaciones y plan operativo; informes (bimestral 2-dic-2026, mensuales).
+
+## Nuevo modelo de desembolsos y pagos (recibido 2026-11-12)
+Documento guardado en `docs/fondo-emprender/` (PDF + resumen). Cambio clave: la fiducia ya no paga al proveedor; **gira a la cuenta exclusiva de Sara y ella paga**, solo desde esa cuenta, sin efectivo y sin mezclar con otros recursos. La legalización es obligatoria y pide factura, comprobante de transferencia, **extracto bancario**, evidencias de entrega, cumplimiento tributario y coherencia con el plan.
+Estado: solo se guardó y revisó el documento; **no se ha tocado código**. Lo que choca con el ERP (textos "lo gira la fiducia", falta registrar comprobante y extracto) está en la tabla del resumen y en PENDIENTES.
