@@ -17,8 +17,8 @@ Actualizado: 2026-11-03
 - [ ] Registrar resolución de numeración, numeración de documento soporte y primer respaldo mensual
 
 ## Contador (Hernando)
-- [ ] UVT y tarifas SIMPLE, escenario de provisión, tabla de renta
-- [ ] Verificar ICA Villamaría
+- [ ] UVT y tarifas SIMPLE, escenario de provisión, tabla de renta — lista de 22 preguntas lista en `docs/temas/impuestos-preguntas-contador.md` (12-nov-2026). Faltan: UVT 2026 confirmada, tarifas SIMPLE 2026/2027 (hoy 0 cargadas)
+- [ ] Verificar ICA Villamaría (preguntas 15–19 del mismo archivo)
 - [ ] Códigos CUIF de 10 dígitos: qué quiere hacer
 - [ ] Aplicabilidad del documento soporte
 - [ ] Retenciones, libros y declaraciones como sociedad
