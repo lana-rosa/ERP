@@ -54,8 +54,11 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [ ] Provisión mensual en espera de la fecha de inauguración del almacén.
 
 ### Chat 6 · Producción e inventario (en cola, después del chat 2)
-- [ ] La administradora asigna cada pedido/orden a una tejedora (reusar tejedoras del plan de tejido).
-- [ ] Pedidos personalizados: subir hasta 3 imágenes de referencia visibles en la orden de producción.
+- [x] La administradora asigna cada pedido/orden a una tejedora (reusa tejedoras del plan; v43).
+- [x] Hasta 3 imágenes de referencia visibles en la orden de producción (se suben en la orden, v43).
+- [x] Insumos automáticos al abrir la entrega de material (ficha técnica → última orden terminada); no mueve inventario hasta "Entregar".
+- [x] Patrones: enlaces de Telegram en la ficha técnica + botón "Ver patrón" en la orden.
+- [ ] Sara: pegar en cada ficha técnica el enlace Telegram de su patrón y llenar fichas faltantes.
 - Revisión 12-nov: 8 agotados sin mínimo, 3 bajo mínimo, 32 productos sin horas por unidad, llaveros de pollo sin tejedora.
 
 ### Chat 7 · Contabilidad (no creado)

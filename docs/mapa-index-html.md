@@ -50,6 +50,7 @@ Estructura: HTML de pantallas (líneas ~1000–5800), luego un bloque grande `<s
 | Ficha técnica de producto tejido | `fichaHtml` 9107, `fichaMontar` 9145, `fichaCalcularCosto` 9166, `abrirFichaTecnica` 9273, `guardarFichaTecnicaModal` 9367 |
 | Ficha de insumo (mercería) | `insumoFichaMontar` 9299, `abrirFichaInsumo` 9345, `guardarFichaInsumoModal` 9356 |
 | Ficha en Taller (tejido vs mercería) | `actualizarBloqueFichaNuevo` 9261 |
+| Apoyo de la orden (tejedora, imágenes, patrones, insumos automáticos) | `htmlApoyoOrden`, `asignarTejedoraOrden`, `subirImagenReferencia`, `prellenarMaterialesOrden` (~11217, antes del paso a paso) |
 | Producción: ficha de orden y pasos | `abrirFichaProduccion` 11260 … `guardarFichaProduccion` 11664 |
 | Reglas de precio mercería | `renderizarReglaMerceria` 11729 |
 | **Plan de tejido** | `cargarPlanTejido` 11999, `guardarPlanTejidoItem` 12052 |

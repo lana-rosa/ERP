@@ -9161,8 +9161,8 @@
       <button type="button" class="btn-mini editar" style="margin-top:6px;" onclick="fichaAgregarMaterial('${p}')">+ Agregar material</button>
       <label for="${p}Patron" style="margin-top:12px;">Patrón de tejido <span style="font-size:10px;opacity:.6;">(vueltas, puntos, pasos)</span></label>
       <textarea id="${p}Patron" rows="3" placeholder="Ej: Cabeza: anillo mágico, 6 pb; v2: aum x6 (12)…"></textarea>
-      <label for="${p}PatronUrl">Enlace al patrón o a un archivo <span style="font-size:10px;opacity:.6;">(opcional)</span></label>
-      <input type="url" id="${p}PatronUrl" placeholder="https://…">
+      <label for="${p}PatronUrl">Enlace(s) del patrón en Telegram <span style="font-size:10px;opacity:.6;">(opcional; si hay varios, uno por línea. Ej: t.me/c/…)</span></label>
+      <textarea id="${p}PatronUrl" rows="2" placeholder="https://t.me/c/…" style="width:100%;"></textarea>
       <label for="${p}Notas">Notas <span style="font-size:10px;opacity:.6;">(opcional)</span></label>
       <input type="text" id="${p}Notas" placeholder="Ej: coser la marquilla al lado izquierdo">`;
   }
@@ -11129,6 +11129,11 @@
     await cargarParametrosCosteo();
     const { data: fichas } = await supabaseClient.rpc('fn_op_fichas', { p_ordenes: ordenesProduccionCache.map(o => o.id) });
     fichasProduccionCache = fichas || {};
+    await cargarExtrasOrdenes(ordenesProduccionCache.map(o => o.id));
+    if (ordenAccionAbierta && ordenAccionAbierta.accion === 'entregar') {
+      const abierta = ordenesProduccionCache.find(x => x.id === ordenAccionAbierta.id);
+      if (abierta) await prellenarMaterialesOrden(abierta);
+    }
     renderizarOrdenesProduccion();
   }
 
@@ -11208,10 +11213,154 @@
           </div>
         </div>
         ${o.estado !== 'anulada' ? resumenFichaOrden(o) : ''}
+        ${o.estado !== 'anulada' ? htmlApoyoOrden(o, true) : ''}
         ${materiales}
         ${acciones ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">${acciones}</div>` : ''}
         ${abierta}
       </div>`;
+  }
+
+  // ============================================================================
+  // APOYO DE LA ORDEN: tejedora asignada, imágenes de referencia (máx. 3) y patrón (enlaces de Telegram de la ficha)
+  // ============================================================================
+  let extrasOrdenCache = {}; // { orden_id: { imagenes, patrones, materiales_ficha, tejedora_plan } }
+  const prefillMaterialesAviso = {};
+
+  async function cargarExtrasOrdenes(ids, mezclar) {
+    if (!mezclar) extrasOrdenCache = {};
+    if (!ids.length) return;
+    const { data } = await supabaseClient.rpc('fn_op_extras', { p_ordenes: ids });
+    Object.assign(extrasOrdenCache, data || {});
+    if (!fichaTejedoras.length) {
+      const { data: tej } = await supabaseClient.rpc('fn_op_tejedoras_todas');
+      fichaTejedoras = tej || [];
+    }
+  }
+
+  function htmlApoyoOrden(o, conAcciones) {
+    const ex = extrasOrdenCache[o.id] || {};
+    const imagenes = ex.imagenes || [], patrones = ex.patrones || [];
+    const enProceso = o.estado === 'en_proceso';
+    const puedeSubir = conAcciones && enProceso && (rolActual === 'administrador' || rolActual === 'taller');
+    const puedeAsignar = conAcciones && enProceso && rolActual === 'administrador';
+    const f = fichasProduccionCache[o.id] || {};
+    let bloqueTej = '';
+    if (puedeAsignar) {
+      const actual = f.tejedora_tercero_id ? 't:' + f.tejedora_tercero_id : (f.tejedora_id ? 'e:' + f.tejedora_id : '');
+      const grupo = (tipo, etq) => {
+        const lista = fichaTejedoras.filter(t => (t.tipo || 'nomina') === tipo);
+        return lista.length ? `<optgroup label="${etq}">${lista.map(t => { const v = (t.tipo === 'externa' ? 't:' : 'e:') + t.id; return `<option value="${v}" ${v === actual ? 'selected' : ''}>${escaparHtml(t.nombre)}</option>`; }).join('')}</optgroup>` : '';
+      };
+      const plan = ex.tejedora_plan;
+      const sugerida = plan && (plan.tipo + ':' + plan.id) !== actual
+        ? `<button type="button" class="fp-enlace" onclick="asignarTejedoraOrden('${o.id}', '${plan.tipo}:${plan.id}')">Usar la del plan de tejido: ${escaparHtml(plan.nombre || '')}</button>` : '';
+      bloqueTej = `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;">
+        <label for="opTej-${o.id}" style="font-size:12.5px;font-weight:600;margin:0;">🧶 Asignar a</label>
+        <select id="opTej-${o.id}" style="max-width:260px;" onchange="asignarTejedoraOrden('${o.id}', this.value)">
+          <option value="">— Sin asignar (la ve cualquier tejedora) —</option>${grupo('nomina', 'Nómina')}${grupo('externa', 'Externas (honorarios)')}
+        </select>${sugerida}</div>`;
+    }
+    const miniaturas = imagenes.map((u, i) => `
+      <span style="position:relative;display:inline-block;">
+        <a href="${escaparHtml(u)}" target="_blank" rel="noopener noreferrer"><img src="${escaparHtml(u)}" alt="Imagen de referencia ${i + 1}" style="width:72px;height:72px;object-fit:cover;border-radius:10px;border:1px solid var(--gris-borde);"></a>
+        ${puedeSubir ? `<button type="button" aria-label="Quitar imagen" title="Quitar imagen" onclick="quitarImagenReferencia('${o.id}', ${i})" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;border:none;background:var(--rojo-error);color:#fff;font-size:11px;cursor:pointer;">✕</button>` : ''}
+      </span>`).join('');
+    const subir = puedeSubir && imagenes.length < 3 ? `
+      <label class="btn-mini editar" style="cursor:pointer;display:inline-block;">📷 Agregar imagen de referencia (${imagenes.length}/3)
+        <input type="file" accept="image/*" style="display:none;" onchange="subirImagenReferencia('${o.id}', this)"></label>` : '';
+    const botonesPatron = patrones.map((u, i) => `<a class="btn-mini editar" href="${escaparHtml(u)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;">📘 Ver patrón${patrones.length > 1 ? ' ' + (i + 1) : ''}</a>`).join('');
+    if (!bloqueTej && !miniaturas && !subir && !botonesPatron) return '';
+    return `<div style="margin-top:10px;padding:10px 12px;border-radius:var(--radius-md);background:var(--gris-fondo);">
+      ${bloqueTej}
+      ${miniaturas || subir ? `<div style="margin-top:${bloqueTej ? 10 : 0}px;font-size:12px;font-weight:600;">🖼️ Imágenes de referencia</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px;">${miniaturas}${subir}</div>` : ''}
+      ${botonesPatron ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">${botonesPatron}</div>` : ''}
+    </div>`;
+  }
+
+  async function asignarTejedoraOrden(ordenId, valor) {
+    const tipo = valor ? valor.slice(0, 1) : null, id = valor ? valor.slice(2) : null;
+    const { error } = await supabaseClient.rpc('fn_op_asignar_tejedora', { p_orden_id: ordenId, p_tipo: tipo, p_tejedora_id: id });
+    if (error) { mostrarMensaje('mensajeOrdenesProd', 'No se pudo asignar: ' + error.message, 'error'); return; }
+    mostrarMensaje('mensajeOrdenesProd', valor ? '✅ Orden asignada. La tejedora la verá en "Mi producción".' : '✅ Orden sin tejedora asignada.', 'exito');
+    await cargarOrdenesProduccion();
+  }
+
+  // Reduce la foto para que pese poco (máx. 1400 px) antes de subirla
+  async function reducirImagenReferencia(archivo) {
+    try {
+      const bmp = await createImageBitmap(archivo);
+      const k = Math.min(1, 1400 / Math.max(bmp.width, bmp.height));
+      const c = document.createElement('canvas'); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+      c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+      const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.82));
+      return blob || archivo;
+    } catch (e) { return archivo; }
+  }
+
+  async function subirImagenReferencia(ordenId, input) {
+    const archivo = input.files && input.files[0]; input.value = '';
+    if (!archivo) return;
+    const actuales = (extrasOrdenCache[ordenId] || {}).imagenes || [];
+    if (actuales.length >= 3) { mostrarMensaje('mensajeOrdenesProd', 'Máximo 3 imágenes de referencia por orden.', 'error'); return; }
+    if (!(archivo.type || '').startsWith('image/')) { mostrarMensaje('mensajeOrdenesProd', 'Elige una imagen (foto o captura).', 'error'); return; }
+    mostrarMensaje('mensajeOrdenesProd', '⏳ Subiendo imagen...', 'exito');
+    const blob = await reducirImagenReferencia(archivo);
+    const ruta = `referencias/${ordenId}_${Date.now()}.jpg`;
+    const { error } = await supabaseClient.storage.from('produccion-fotos').upload(ruta, blob, { contentType: blob.type || 'image/jpeg' });
+    if (error) { mostrarMensaje('mensajeOrdenesProd', 'No se pudo subir la imagen: ' + error.message, 'error'); return; }
+    const url = supabaseClient.storage.from('produccion-fotos').getPublicUrl(ruta).data.publicUrl;
+    await guardarImagenesReferencia(ordenId, actuales.concat([url]));
+  }
+
+  async function quitarImagenReferencia(ordenId, i) {
+    const actuales = ((extrasOrdenCache[ordenId] || {}).imagenes || []).slice();
+    actuales.splice(i, 1);
+    await guardarImagenesReferencia(ordenId, actuales);
+  }
+
+  async function guardarImagenesReferencia(ordenId, lista) {
+    const { error } = await supabaseClient.rpc('fn_op_guardar_imagenes', { p_orden_id: ordenId, p_imagenes: lista });
+    if (error) { mostrarMensaje('mensajeOrdenesProd', 'No se pudieron guardar las imágenes: ' + error.message, 'error'); return; }
+    extrasOrdenCache[ordenId] = Object.assign({}, extrasOrdenCache[ordenId], { imagenes: lista });
+    ocultarMensaje('mensajeOrdenesProd');
+    renderizarOrdenesProduccion();
+  }
+
+  // Insumos automáticos: al abrir la entrega de material de una orden sin material, se cargan los de la ficha técnica
+  // del producto (por unidad × unidades); si no hay ficha, los de la última orden terminada del mismo producto.
+  // Solo se llenan las filas: nada sale del inventario hasta que se pulsa "Entregar".
+  async function prellenarMaterialesOrden(o) {
+    if (filasMaterialOrden[o.id] || (o.materiales || []).length) return;
+    const unidades = Number(o.cantidad_planeada) || 1;
+    const redondear = (n) => Math.round(n * 100) / 100;
+    let base = ((extrasOrdenCache[o.id] || {}).materiales_ficha || [])
+      .map(m => ({ item: m.inventario_item_id, nombre: m.nombre, cantidad: redondear(Number(m.cantidad) * unidades), origen: 'Taller' }));
+    let fuente = 'la ficha técnica del producto';
+    if (!base.length) {
+      const { data } = await supabaseClient.rpc('fn_op_listar', { p_estado: 'terminada' });
+      const previa = (data || []).find(x => x.id !== o.id && Number(x.cantidad_terminada) > 0
+        && ((o.producto_item_id && x.producto_item_id === o.producto_item_id) || normTextoOP(x.descripcion) === normTextoOP(o.descripcion))
+        && (x.materiales || []).some(m => Number(m.neto) > 0));
+      if (previa) {
+        base = previa.materiales.filter(m => Number(m.neto) > 0).map(m => ({
+          item: m.inventario_item_id, nombre: m.nombre, cantidad: redondear(Number(m.neto) / Number(previa.cantidad_terminada) * unidades),
+          origen: m.ubicacion === 'Tienda' ? 'Tienda' : 'Taller' }));
+        fuente = 'la última orden terminada de este producto (' + previa.orden + ')';
+      }
+    }
+    base = base.filter(m => m.item && m.cantidad > 0);
+    if (!base.length) return;
+    const filas = [], faltan = [];
+    base.forEach(m => {
+      const en = (origen) => (materialesOrdenCache[origen] || []).some(x => x.id === m.item);
+      const origen = en(m.origen) ? m.origen : (m.origen === 'Taller' && en('Tienda') ? 'Tienda' : null);
+      if (origen) filas.push({ origen, item: m.item, cantidad: String(m.cantidad) });
+      else faltan.push(m.nombre);
+    });
+    if (filas.length) filasMaterialOrden[o.id] = filas;
+    prefillMaterialesAviso[o.id] = (filas.length ? `💡 Se cargaron ${filas.length} material(es) de ${fuente}, para ${formatearCantidad(unidades)} unidad(es). Revísalos y ajústalos; no salen del inventario hasta que pulses "Entregar".` : '')
+      + (faltan.length ? `<br>⚠️ Sin existencias en el Taller${rolActual === 'administrador' ? ' ni en la Tienda' : ''}: ${faltan.map(escaparHtml).join(', ')}.` : '');
   }
 
   // ============================================================================
@@ -11286,6 +11435,7 @@
     const o = ordenesProduccionCache.find(x => x.id === ordenId);
     if (!o) return;
     detenerCronosFicha(false);
+    if (!extrasOrdenCache[ordenId]) await cargarExtrasOrdenes([ordenId], true);
     const { data, error } = await supabaseClient.from('produccion_fichas').select('*').eq('orden_id', ordenId).maybeSingle();
     if (error) { mostrarMensaje('mensajeOrdenesProd', 'No se pudo abrir el paso a paso: ' + error.message, 'error'); return; }
     if (!fichaTejedoras.length) {
@@ -11378,6 +11528,7 @@
           <select id="fpTejedora" onchange="cambiarTejedoraFicha(this.value)" ${fa.soloLectura || (miTejedora.vinculada && rolActual !== 'administrador') ? 'disabled' : ''} style="margin-top:4px;">
             <option value="">— Elige quién la teje —</option>${opcionesTej}
           </select>
+          ${htmlApoyoOrden(o, false)}
           <div class="fp-barra" style="margin-top:14px;"><div style="width:${pct}%;"></div></div>
           <div class="fp-fila">
             <span><strong>${pct}%</strong> · ${hechos} de ${pasos.length} pasos</span>
@@ -12122,6 +12273,7 @@
     // El paso a paso usa la misma lista que Órdenes de producción.
     ordenesProduccionCache = (data || []).map(o => Object.assign({ materiales: [] }, o));
     fichasProduccionCache = Object.fromEntries(ordenesProduccionCache.filter(o => o.ficha).map(o => [o.id, o.ficha]));
+    await cargarExtrasOrdenes(ordenesProduccionCache.map(o => o.id));
     const pendientes = ordenesProduccionCache.filter(o => o.estado === 'en_proceso');
     const terminadas = ordenesProduccionCache.filter(o => o.estado !== 'en_proceso');
     const tarjeta = (o) => {
@@ -12138,6 +12290,7 @@
             <div style="font-size:12px;opacity:.75;margin-top:2px;">${destino} · ${formatearCantidad(o.cantidad_planeada)} unidad(es)${f && f.tejedora ? ' · ' + escaparHtml(f.tejedora) : ' · Sin tejedora'}</div>
             <div style="font-size:12px;margin-top:4px;">${hechos} de ${pasos.length} pasos${t ? ' · ⏱️ ' + formatoHorasCorto(t) : ''}${f && f.peso_gramos ? ' · ⚖️ ' + formatearCantidad(f.peso_gramos) + ' g' : ''}</div>
             <div class="fp-mini-barra"><div style="width:${Math.round(hechos / pasos.length * 100)}%;"></div></div>
+            ${o.estado === 'en_proceso' ? htmlApoyoOrden(o, false) : ''}
           </div>
           <button class="btn-mini ${o.estado === 'en_proceso' ? 'guardar' : 'editar'}" style="flex:0 0 auto;padding:10px 16px;" onclick="abrirFichaProduccion('${o.id}')">${o.estado !== 'en_proceso' ? '👁️ Ver' : (f ? '🧵 Seguir' : '🧵 Empezar')}</button>
         </div>`;
@@ -12238,8 +12391,12 @@
     await cargarMaterialesFicha(fichaActiva.orden.id);
   }
 
-  function abrirAccionOrden(id, accion) {
+  async function abrirAccionOrden(id, accion) {
     ordenAccionAbierta = ordenAccionAbierta && ordenAccionAbierta.id === id && ordenAccionAbierta.accion === accion ? null : { id, accion };
+    if (ordenAccionAbierta && accion === 'entregar') {
+      const o = ordenesProduccionCache.find(x => x.id === id);
+      if (o) await prellenarMaterialesOrden(o);
+    }
     renderizarOrdenesProduccion();
   }
 
@@ -12250,6 +12407,7 @@
     if (accion === 'entregar') {
       const puedeTienda = rolActual === 'administrador';
       return caja(`
+        ${prefillMaterialesAviso[o.id] ? `<div style="font-size:12px;line-height:1.6;margin-bottom:10px;padding:8px 10px;border-radius:var(--radius-md);background:var(--tinte-ambar);">${prefillMaterialesAviso[o.id]}</div>` : ''}
         <div id="filasMat-${o.id}">${htmlFilasMaterial(o.id)}</div>
         <div style="margin-top:10px;max-width:420px;"><label>Nota <span style="font-size:10px;opacity:0.6;">(opcional)</span></label><input type="text" id="opEntNota-${o.id}"></div>
         ${puedeTienda ? '' : '<div style="font-size:11.5px;opacity:0.7;margin-top:6px;">¿Falta material? Se trae de la Tienda en "Trasladar entre Tienda y Taller", y allí mismo se puede entregar a esta orden.</div>'}
