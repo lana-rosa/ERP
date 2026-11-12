@@ -10,7 +10,7 @@ Negocio: amigurumis tejidos (Taller), Mercería, Academia, tienda web. Manizales
 4. Al terminar un tema: actualiza su archivo en `docs/temas/` (decisión, por qué, objetos de Supabase, qué falta). Si Sara dice "guarda en docs", hazlo.
 
 ## Datos fijos
-- Repo `lana-rosa/ERP`, un solo archivo de app `index.html` + `sw.js` (service worker). **Cada cambio en index.html requiere subir `CACHE_NAME` en `sw.js`** (hoy `lana-rosa-os-v38`).
+- Repo `lana-rosa/ERP`, un solo archivo de app `index.html` + `sw.js` (service worker). **Cada cambio en index.html requiere subir `CACHE_NAME` en `sw.js`** (hoy `lana-rosa-os-v39`).
 - Flujo: rama → PR → squash merge a `main`. Rama de trabajo de esta sesión: `claude/inspiring-heisenberg-l2905a` (si su PR ya se fusionó, reiniciarla desde `origin/main`).
 - Supabase proyecto `ngjoognzvehwjtpqwrqe`. Lógica en funciones RPC plpgsql `security definer`, con RLS.
 - Cloudflare Worker `lana-rosa-os-pos` (https://lana-rosa-os-pos.saralmunoz1301.workers.dev) maneja ventas, pedidos y compras. **No se puede editar desde aquí**: las reglas nuevas se aplican en el cliente (index.html) y/o en funciones de Supabase.

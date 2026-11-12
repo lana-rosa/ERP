@@ -2791,6 +2791,8 @@
     <div id="bloqueComprasSinRequisitos" class="oculto" style="margin-bottom:12px;">
       <button class="btn-mini editar" style="flex:0 0 auto;padding:7px 12px;" onclick="verComprasSinRequisitos()">📋 Ver compras del rango sin los documentos del instructivo del SENA</button>
       <div id="listaComprasSinRequisitos" style="margin-top:8px;font-size:12.5px;"></div>
+      <button class="btn-mini editar" style="flex:0 0 auto;padding:7px 12px;margin-top:10px;" onclick="verSoportesPagoFondo()">🧾 Ver soportes de pago de las compras con recursos del Fondo</button>
+      <div id="listaSoportesPagoFondo" style="margin-top:8px;font-size:12.5px;"></div>
     </div>
     <div class="panel" style="max-width:none;max-height:none;">
       <div id="listaHistorialComprasTabla"><div class="cargando">Cargando...</div></div>
@@ -14257,6 +14259,40 @@
     if (error) { cont.innerHTML = escaparHtml(error.message); return; }
     cont.innerHTML = data.length ? `<div style="margin-bottom:6px;"><strong>${data.length}</strong> compra(s) registradas sin los documentos del instructivo (las hechas antes de que existiera este control, o desde otra pantalla):</div>` +
       data.map(g => `<div>• ${new Date(g.fecha + 'T00:00:00').toLocaleDateString('es-CO')} · ${escaparHtml(g.proveedor || 'sin proveedor')} · ${escaparHtml(g.descripcion || '')} · ${formatearMoneda(g.monto)}</div>`).join('') : '✅ Todas las compras del rango tienen sus documentos.';
+  }
+
+  // Compras pagadas con recursos del Fondo: ver los soportes guardados y subir el comprobante/extracto que falte (nuevo modelo 2026).
+  async function verSoportesPagoFondo() {
+    const cont = document.getElementById('listaSoportesPagoFondo');
+    cont.innerHTML = 'Cargando...';
+    const { data, error } = await supabaseClient.from('compras_requisitos_sena').select('id,numero_factura,fecha_factura,monto,proveedor_nit,fuente,documentos')
+      .in('fuente', ['fondo', 'mixto']).gte('fecha_factura', document.getElementById('comprasFechaDesde').value || '2026-01-01').lte('fecha_factura', document.getElementById('comprasFechaHasta').value || fechaLocalIso()).order('fecha_factura', { ascending: false });
+    if (error) { cont.innerHTML = escaparHtml(error.message); return; }
+    if (!data.length) { cont.innerHTML = 'No hay compras con recursos del Fondo en el rango.'; return; }
+    const etiquetas = { cotizacion: 'Cotización', contrato: 'Contrato', poliza: 'Póliza', ficha: 'Ficha técnica', comprobante_pago: 'Comprobante de pago', extracto_bancario: 'Extracto bancario' };
+    cont.innerHTML = data.map(c => {
+      const docs = c.documentos || {};
+      const links = Object.entries(docs).map(([k, ruta]) => `<a href="#" onclick="abrirSoporteCompra('${escaparHtml(ruta)}');return false;">${escaparHtml(etiquetas[k] || k)}</a>`).join(' · ') || '<em>sin documentos</em>';
+      const falta = ['comprobante_pago', 'extracto_bancario'].filter(k => !docs[k]).map(k => `<label style="display:inline-block;margin-right:10px;font-size:11.5px;">Subir ${etiquetas[k].toLowerCase()} (PDF) <input type="file" accept="application/pdf" onchange="subirSoportePagoFondo('${c.id}','${k}',this)"></label>`).join('');
+      return `<div style="border-top:1px solid #eee;padding:6px 0;"><strong>${new Date(c.fecha_factura + 'T00:00:00').toLocaleDateString('es-CO')}</strong> · Factura ${escaparHtml(c.numero_factura || '')} · NIT ${escaparHtml(c.proveedor_nit || '—')} · ${formatearMoneda(c.monto)} · ${c.fuente === 'mixto' ? 'Mixto' : 'Fondo'}<div>${links}</div>${falta ? `<div style="margin-top:4px;">${falta}</div>` : '<div style="color:var(--verde-exito,#2e7d32);">✅ Tiene comprobante y extracto.</div>'}</div>`;
+    }).join('');
+  }
+
+  async function abrirSoporteCompra(ruta) {
+    const { data, error } = await supabaseClient.storage.from('soportes-compras').createSignedUrl(ruta, 300);
+    if (error) { alert('No se pudo abrir el documento: ' + error.message); return; }
+    window.open(data.signedUrl, '_blank');
+  }
+
+  async function subirSoportePagoFondo(id, clave, input) {
+    const f = input.files[0]; if (!f) return;
+    if (!/\.pdf$/i.test(f.name) && f.type !== 'application/pdf') { alert('Debe ser un archivo PDF.'); input.value = ''; return; }
+    const ruta = `${fechaLocalIso().slice(0, 4)}/req/${Date.now()}_${id.slice(0, 8)}_${clave}.pdf`;
+    const { error } = await supabaseClient.storage.from('soportes-compras').upload(ruta, f, { contentType: 'application/pdf' });
+    if (error) { alert('No se pudo subir: ' + error.message); return; }
+    const { error: e2 } = await supabaseClient.rpc('fn_compra_agregar_documento', { p_id: id, p_clave: clave, p_ruta: ruta });
+    if (e2) { alert('No se pudo guardar: ' + e2.message); return; }
+    verSoportesPagoFondo();
   }
 
   // ---- Requisitos del instructivo de pagos del Fondo Emprender (mayo de 2024, versión 2) para toda compra ----

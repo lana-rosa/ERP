@@ -32,7 +32,7 @@ Actualizado: 2026-11-03
 ## Compras SENA — nuevo modelo de pagos (12-nov-2026)
 - [x] Cambiar textos de compras ("lo gira la fiducia al proveedor"): ahora paga Sara desde la cuenta exclusiva (12-nov-2026)
 - [x] Pedir comprobante de transferencia (obligatorio) y extracto (opcional) en compras pagadas con recursos del Fondo (12-nov-2026)
-- [ ] Pantalla para ver/descargar los soportes de cada compra del Fondo y subir el extracto después (hoy solo se guardan). Nota: `generarPaqueteEvidenciasSena` es solo de nómina, no de compras
+- [x] Pantalla para ver los soportes de cada compra del Fondo y subir el comprobante/extracto después (12-nov-2026). Nota: `generarPaqueteEvidenciasSena` es solo de nómina, no de compras
 - [ ] Sara: preguntar a la interventora: ¿el Formato de Solicitud de Desembolso y la pestaña AVANCE/PAGOS aplican ya a nuestro proyecto?
 
 ## Opcionales (Claude, si se pide)
