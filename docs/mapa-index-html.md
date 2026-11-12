@@ -54,7 +54,7 @@ Estructura: HTML de pantallas (líneas ~1000–5800), luego un bloque grande `<s
 | Reglas de precio mercería | `renderizarReglaMerceria` 11729 |
 | **Plan de tejido** | `cargarPlanTejido` 11999, `guardarPlanTejidoItem` 12052 |
 | Etiquetas / código de barras | `formatoCodigoBarras` 13464 |
-| **Compras: requisitos SENA** | `actualizarRequisitosCompra` 14257, `validarRequisitosCompra` 14310, `guardarRequisitosCompra` 14348, `verComprasSinRequisitos` 14245; guardado de gasto/compra ~14383–14473 |
+| **Compras: requisitos SENA** | `actualizarRequisitosCompra` 14265, `validarRequisitosCompra` 14323, `guardarRequisitosCompra` 14375, `verComprasSinRequisitos` 14255, `verSoportesPagoFondo` 14265, `actualizarBloquePagoFondo` ~14244; guardado de gasto/compra ~14395–14490 |
 | **Pedido por canal: anticipo** | `calcularAnticipoPedido` 18698, `fijarAnticipoPedido` 18715, `actualizarResumenAnticipoPedido` 18725; crear: `confirmarCrearPedidoCanal` |
 | Reseñas web | `mostrarPantallaResenasWeb` 16568 |
 | Facturación: por facturar / respaldo | `cargarFePendientes` 22875, `cargarFeRespaldo` 23501, `descargarRespaldoFe` 23521 |

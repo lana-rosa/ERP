@@ -19,6 +19,7 @@ Reglas:
 - Responde en español, claro y sin tecnicismos (soy Sara, no programadora).
 - Trabaja solo en este tema. Si ves algo de otro tema, anótalo en docs/PENDIENTES.md bajo "Para otro chat" y sigue.
 - Cada cambio: rama → PR → squash merge a main. Si tocas index.html, sube CACHE_NAME en sw.js.
+- Si lo probaste y funciona, haz el PR y fusiónalo sin preguntarme; solo avísame qué cambió. Pregúntame antes de fusionar solo si toca ventas/caja, dinero, DIAN/impuestos o borrar datos.
 - Antes de decir "listo", pruébalo (Playwright o SQL con rollback) y dime qué probaste.
 - Al terminar: actualiza tu archivo de docs/temas/ (qué se decidió, por qué, qué objetos de Supabase usa, qué falta) y marca en PENDIENTES.md lo cerrado.
 - Si el mapa de index.html quedó desactualizado en lo que tocaste, corrígelo.
