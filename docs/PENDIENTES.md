@@ -3,7 +3,7 @@
 Actualizado: 2026-11-03
 
 ## Para revisar con Claude
-- [ ] **No deja registrar ventas** (reportado 03-nov). Falta el mensaje exacto que sale al dar "Confirmar venta" (texto o captura). Revisar: factura "Consumidor final / Del cliente" (si es del cliente: nombre, cédula, correo válido), marketplace (nombre, teléfono, dirección), feria activa en modo feria, productos agotados, turno de caja (abierto desde 19-oct), respuesta del Worker.
+- [ ] **No deja registrar ventas** (reportado 03-nov). Mensaje: "No hay turno de caja abierto." (lo da el Worker). Causa probable: el turno abierto el 19-oct lleva 24 días y el Worker ya no lo reconoce. Falta que Sara cierre ese turno con arqueo y abra uno nuevo (pantalla "Cerrar turno"), y probar una venta. Ver `docs/temas/ventas-pos.md`. Urgente: tienda física abre el 13-dic.
 - [x] Menú lateral oculto sin forma de volver a mostrarlo (PR #100, resuelto).
 
 ## Sara
