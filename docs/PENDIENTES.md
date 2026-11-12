@@ -63,6 +63,7 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 
 ### Chat 7 · Contabilidad (no creado)
 - Sin tareas de código. Ver preguntas al contador.
+- [x] Resumen de pendientes contables listo para llevarle a Hernando: `docs/resumen-contador.md` (llevarlo junto con las 22 preguntas del chat 5) — 12-nov-2026
 
 ### Chat 8 · Menú/Interfaz
 - [x] Buscadores de **Productos** (Gestionar inventario) y **Clientes**: al entrar solo la caja; la lista aparece al escribir.
