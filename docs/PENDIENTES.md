@@ -30,9 +30,10 @@ Actualizado: 2026-11-03
 - [ ] Informes: bimestral (2-dic-2026), mensuales de producción, ventas y estados financieros, 5 contrapartidas
 
 ## Compras SENA — nuevo modelo de pagos (12-nov-2026)
-- [ ] Cambiar textos de compras que dicen "el pago lo gira la fiducia al proveedor": ahora paga Sara desde la cuenta exclusiva (index.html ~l. 14299 y ~14342)
-- [ ] Registrar en cada compra con recursos del Fondo el comprobante de transferencia y el extracto, e incluirlos en `generarPaqueteEvidenciasSena`
-- [ ] Preguntar a la interventora: ¿el Formato de Solicitud de Desembolso y la pestaña AVANCE/PAGOS aplican ya a nuestro proyecto?
+- [x] Cambiar textos de compras ("lo gira la fiducia al proveedor"): ahora paga Sara desde la cuenta exclusiva (12-nov-2026)
+- [x] Pedir comprobante de transferencia (obligatorio) y extracto (opcional) en compras pagadas con recursos del Fondo (12-nov-2026)
+- [ ] Pantalla para ver/descargar los soportes de cada compra del Fondo y subir el extracto después (hoy solo se guardan). Nota: `generarPaqueteEvidenciasSena` es solo de nómina, no de compras
+- [ ] Sara: preguntar a la interventora: ¿el Formato de Solicitud de Desembolso y la pestaña AVANCE/PAGOS aplican ya a nuestro proyecto?
 
 ## Opcionales (Claude, si se pide)
 - [ ] Enlazar soporte de compras a crédito
