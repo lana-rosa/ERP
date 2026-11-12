@@ -16,7 +16,7 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 3. **Chat 3 Compras SENA** — en curso: ajustes del nuevo modelo de desembolsos (zona Compras, no choca con el chat 2).
 4. **Chat 6 Producción** — en cola: empieza **cuando el chat 2 publique** su lote de pedidos.
 5. **Chat 8 Menú/Interfaz** — hecho: barra de búsqueda en celular + buscadores de Productos y Clientes (v44).
-- Chat 4 DIAN: espera datos de Sara. Chat 5 Impuestos: espera el "sí" de Sara para fusionar.
+- Chat 4 DIAN: espera datos de Sara. Chat 5 Impuestos: preguntas para el contador listas (PR #113).
 
 ## Por chat
 
@@ -50,7 +50,7 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [ ] Registrar resolución de numeración (espera datos de Sara: número, fecha, prefijo, rango, vigencia, fecha de habilitación), numeración de documento soporte y primer respaldo mensual.
 
 ### Chat 5 · Impuestos
-- [ ] Cambio listo esperando el "sí" de Sara para fusionar.
+- [x] 12-nov: lista de 22 preguntas para Hernando con los números del ERP, en `docs/temas/impuestos-preguntas-contador.md` (PR #113). Sara dio el "sí".
 - [ ] Provisión mensual en espera de la fecha de inauguración del almacén.
 
 ### Chat 6 · Producción e inventario (en cola, después del chat 2)
@@ -95,8 +95,8 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 
 ## Contador (Hernando)
 - [ ] Impuestos no se pagan desde la cuenta del Fondo; cómo registrar los giros del Fondo (cuenta exclusiva, sin mezclar).
-- [ ] UVT y tarifas SIMPLE, escenario de provisión, tabla de renta.
-- [ ] Verificar ICA Villamaría.
+- [ ] UVT y tarifas SIMPLE, escenario de provisión, tabla de renta — lista de 22 preguntas en `docs/temas/impuestos-preguntas-contador.md`. Faltan: UVT 2026 confirmada y tarifas SIMPLE 2026/2027 (hoy 0 cargadas).
+- [ ] Verificar ICA Villamaría (preguntas 15–19 del mismo archivo).
 - [ ] Códigos CUIF de 10 dígitos.
 - [ ] Aplicabilidad del documento soporte.
 - [ ] Retenciones, libros y declaraciones como sociedad.
