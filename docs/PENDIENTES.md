@@ -15,7 +15,7 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 2. **Chat 2 Pedidos** — en curso: textos legales en recibos → luego lote de pedidos (ver su sección).
 3. **Chat 3 Compras SENA** — en curso: ajustes del nuevo modelo de desembolsos (zona Compras, no choca con el chat 2).
 4. **Chat 6 Producción** — en cola: empieza **cuando el chat 2 publique** su lote de pedidos.
-5. **Chat 8 Menú/Interfaz** — en cola (aún no creado): buscadores. Falta que Sara diga en qué pantallas.
+5. **Chat 8 Menú/Interfaz** — hecho: barra de búsqueda en celular + buscadores de Productos y Clientes (v44).
 - Chat 4 DIAN: espera datos de Sara. Chat 5 Impuestos: preguntas para el contador listas (PR #113).
 
 ## Por chat
@@ -64,8 +64,9 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 ### Chat 7 · Contabilidad (no creado)
 - Sin tareas de código. Ver preguntas al contador.
 
-### Chat 8 · Menú/Interfaz (no creado, en cola)
-- [ ] Buscadores: solo la caja de búsqueda; la lista aparece al escribir. Falta: ¿en qué pantallas?
+### Chat 8 · Menú/Interfaz
+- [x] Buscadores de **Productos** (Gestionar inventario) y **Clientes**: al entrar solo la caja; la lista aparece al escribir.
+- [x] Celular: la barra de búsqueda ya no queda por encima del fondo oscuro del menú, no tapa la barra rosada y el texto cabe.
 - [x] Menú lateral oculto sin forma de volver a mostrarlo (PR #100).
 
 ## Sara
@@ -73,7 +74,6 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [ ] Decidir el "sí" del chat 5 (Impuestos).
 - [ ] Datos de la resolución DIAN → chat 4.
 - [ ] Pegar en Políticas legales los textos de la abogada (cambios y anticipos) cuando el chat 2 publique; revisar que la tienda web diga lo mismo.
-- [ ] Decir en qué pantallas están los buscadores a cambiar.
 - [ ] Servicios públicos y arriendo de octubre (atrasado, fecha 2026-10-05).
 - [ ] Arqueo físico de caja (última referencia $1.353.066).
 - [ ] Fecha de inauguración del almacén.

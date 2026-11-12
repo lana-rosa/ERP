@@ -533,7 +533,13 @@
        no empuja nada al lado. (Antes esto se rompía por especificidad:
        #main.con-sidebar tenía más peso que la regla de aquí y ganaba
        igual dentro de esta media query, empujando todo el contenido). */
-    #main, #main.con-sidebar { margin-left: 0 !important; padding-top: 52px; }
+    #main, #main.con-sidebar { margin-left: 0 !important; padding-top: 62px; }
+
+    /* La barra de búsqueda quedaba por encima del fondo oscuro del menú y
+       tapaba 10px de la barra rosada de arriba. Ahora va debajo de la barra
+       del ☰ (62px) y el fondo oscuro la cubre cuando el menú está abierto. */
+    #barraBusquedaGlobal { top: 0 !important; z-index: 140 !important; padding: 8px 16px !important; }
+    #overlaySidebarMovil { z-index: 160; }
   }
 
   /* Menú lateral en computador: se puede ocultar o fijar (se recuerda en este navegador) */
@@ -1183,7 +1189,7 @@
 <div id="main">
 <div id="barraBusquedaGlobal" class="oculto" style="position:sticky;top:0;z-index:390;background:#fff;border-bottom:1px solid #f1e2ec;padding:10px 24px;display:flex;justify-content:flex-end;">
   <div style="position:relative;width:100%;max-width:360px;">
-    <input type="text" id="inputBusquedaGlobal" placeholder="🔍 Buscar cliente o proveedor por nombre o cédula/NIT..." oninput="debounceBusquedaGlobal()" style="width:100%;padding:9px 14px;border-radius:10px;border:1.5px solid #f1e2ec;font-family:'Poppins',sans-serif;font-size:13px;outline:none;">
+    <input type="text" id="inputBusquedaGlobal" placeholder="🔍 Buscar cliente o proveedor..." oninput="debounceBusquedaGlobal()" style="width:100%;padding:9px 14px;border-radius:10px;border:1.5px solid #f1e2ec;font-family:'Poppins',sans-serif;font-size:13px;outline:none;">
     <div id="resultadosBusquedaGlobal" class="oculto" style="position:absolute;top:calc(100% + 6px);left:0;right:0;background:#fff;border-radius:12px;border:1px solid #f1e2ec;box-shadow:0 8px 24px rgba(0,0,0,0.12);max-height:340px;overflow-y:auto;z-index:391;"></div>
   </div>
 </div>
@@ -9680,6 +9686,8 @@
   function renderizarTablaInventario() {
     const contenedor = document.getElementById('listaInventarioGestion');
     const textoBusqueda = document.getElementById('inputBuscarInventario').value.trim().toLowerCase();
+    // Al entrar se ve solo la caja: la lista aparece cuando se escribe algo.
+    if (!textoBusqueda) { contenedor.innerHTML = '<div class="cargando">🔍 Escribe el nombre o el SKU de un producto para verlo.</div>'; return; }
 
     let items = inventarioGestionCompleto.filter(i => i.centro_costo_id === inventarioDeptoActivo);
     if (filtroCategoriaInvActual && filtroCategoriaInvActual !== 'todas') {
@@ -17180,8 +17188,10 @@
 
   async function cargarClientesDir() {
     const contenedor = document.getElementById('listaClientesDir');
-    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
     const q = document.getElementById('buscarClienteDir').value.trim();
+    // Al entrar se ve solo la caja: la lista aparece cuando se escribe algo.
+    if (!q) { clientesDirCache = []; contenedor.innerHTML = '<div class="cargando">🔍 Escribe un nombre, cédula o teléfono para ver los clientes.</div>'; return; }
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
     const resp = await fetch(WORKER_URL + '/api/pos/terceros?tipo=cliente' + (q ? '&q=' + encodeURIComponent(q) : ''), { headers: { Authorization: 'Bearer ' + sesionActual.token } });
     if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
     const { terceros } = await resp.json();
