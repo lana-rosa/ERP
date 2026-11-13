@@ -542,6 +542,13 @@
     #overlaySidebarMovil { z-index: 160; }
   }
 
+  /* SEGURIDAD: sin sesión iniciada no se ve nada del ERP (menú, ☰, búsqueda, botón +).
+     El body trae la clase "sin-sesion" desde el HTML y mostrarPantalla la quita solo cuando hay sesión. */
+  body.sin-sesion #sidebar, body.sin-sesion #overlaySidebarMovil, body.sin-sesion .topbar-movil,
+  body.sin-sesion #btnMostrarSidebar, body.sin-sesion #barraBusquedaGlobal, body.sin-sesion #btnCrearRapido,
+  body.sin-sesion #btnSidebarModo { display: none !important; }
+  body.sin-sesion #main, body.sin-sesion #main.con-sidebar { margin-left: 0 !important; padding-top: 0 !important; }
+
   /* Menú lateral en computador: se puede ocultar o fijar (se recuerda en este navegador) */
   #btnSidebarModo { display: none; margin-left: auto; align-self: flex-start; background: rgba(255,255,255,0.12); color: #fff; border: none; border-radius: 8px; padding: 4px 8px; font-size: 11px; cursor: pointer; white-space: nowrap; }
   #btnMostrarSidebar { display: none; position: fixed; top: 10px; left: 12px; z-index: 395; width: 40px; height: 40px; border-radius: 12px; border: none; background: var(--rosa-principal); color: #fff; font-size: 20px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.2); align-items: center; justify-content: center; }
@@ -1033,7 +1040,7 @@
   @media (max-width: 600px) { .tz-etapas { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; } .tz-etapa { font-size: 10px; padding: 8px 2px; } }
 </style>
 </head>
-<body>
+<body class="sin-sesion">
 
 <!-- SIDEBAR DE NAVEGACIÓN -->
 <div id="overlaySidebarMovil" onclick="cerrarSidebarMovil()"></div>
@@ -6064,6 +6071,9 @@
   });
 
   function mostrarPantalla(idPantalla) {
+    // SEGURIDAD: sin sesión solo se puede ver el inicio de sesión (o la pantalla de "cargando").
+    if (!sesionActual && idPantalla !== 'pantallaCargando') idPantalla = 'pantallaLogin';
+    document.body.classList.toggle('sin-sesion', !sesionActual);
     const pantallas = ['pantallaLogin', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaInventarioGlobal', 'pantallaGuiasUsuario', 'pantallaFacturacionElectronica', 'pantallaServiciosDian', 'pantallaCorreoEmpresa', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaIndicadores', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeEstado', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaPanelContador', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb', 'pantallaTextosWeb', 'pantallaPaypalConfig', 'pantallaMiProduccion', 'pantallaInformeCostos', 'pantallaReglasPrecios'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
