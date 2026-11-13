@@ -13,3 +13,10 @@
 - Arreglo: `<body class="sin-sesion">` desde el HTML; el CSS oculta menú, ☰, fondo oscuro, barra de búsqueda y botón "+" con `!important`. `mostrarPantalla` quita la clase solo si hay `sesionActual` y, sin sesión, siempre muestra el inicio de sesión (salvo "cargando"). Al cerrar sesión se vuelve a poner.
 - Probado en 390px y 1280px: sin sesión, con sesión y tras cerrar sesión.
 - **Hallazgo en Supabase (pendiente, decide Sara):** sin sesión (llave pública `anon`) se pueden leer y escribir filas de `pedidos_canal_pagos` (31), `presupuesto_empresa_items` (22), `oportunidades_venta` (2), `ventas_academia_pagos` (2), `disponibilidad_capacitador_mensual` (1). Causa: política "Acceso total via service role" con rol `public` y `true`. `web_textos` (10) es público a propósito. El resto de tablas devuelve 0 filas sin sesión.
+
+## Cerradas las 5 tablas abiertas (13-nov, autorizado por Sara)
+- Política "Acceso total via service role" (era `public`, `true`): ahora solo `service_role` en `pedidos_canal_pagos`, `presupuesto_empresa_items`, `ventas_academia_pagos` y `disponibilidad_capacitador_mensual`; en `oportunidades_venta` quedó para `authenticated` (el ERP la lee con la sesión del usuario, líneas ~17154 y ~17363).
+- Hecho con `ALTER POLICY` (sin DROP). Además `fn_horarios_disponibles_capacitador(uuid,date,numeric)` ahora es `security definer` con `search_path=public`, para que siga dando horarios libres sin exponer la tabla.
+- Probado con rollback y luego revisado: sin sesión (`anon`) solo se ve `web_textos` (público a propósito); con sesión de usuario `oportunidades_venta` se lee; la función da horarios (7) sin sesión y la tabla directa da 0. El Worker y las funciones `security definer` no dependen de la regla vieja.
+- Revertir si algo falla: `alter policy "Acceso total via service role" on public.<tabla> to public;`.
+- Revisar de vez en cuando con el recorrido "contar filas como anon" que se usó aquí.
