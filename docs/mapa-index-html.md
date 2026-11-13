@@ -23,7 +23,7 @@ Estructura: HTML de pantallas (líneas ~1000–5800), luego un bloque grande `<s
 | Servicios digitales DIAN / Correo empresa | 2293 / 2304 |
 | Solicitudes / Ajuste de stock | 2314 / 2356 |
 | Pedidos por canal (lista) | 2389 |
-| Historial ventas / Reportes turno | 2425 / 2516 |
+| Historial ventas / Reportes turno | 2425 / 2516 (Historial: `cargarHistorialRedes` 10356, `renderizarFilaVentaHistorial` 10691; botón editar cliente en ambos) |
 | **Pagos internos pendientes + Registro de compras y gastos** | 2542 |
 | Reportes financieros / Indicadores / Costeo real / Presupuesto | 2803 / 2898 / 2916 / 2993 |
 | Nómina / Talento humano | 3061 / 3306 |
@@ -58,7 +58,7 @@ Estructura: HTML de pantallas (líneas ~1000–5800), luego un bloque grande `<s
 | **Compras: requisitos SENA** | `verComprasSinRequisitos` 14452, `verSoportesPagoFondo` 14462, `estadoLegalizarCompra` 14482, `avisarProveedorPlanFondo` 14436, `actualizarRequisitosCompra` 14529, `validarRequisitosCompra` 14591, `guardarRequisitosCompra` 14645 |
 | **Pedido por canal: anticipo** | `calcularAnticipoPedido` 18698, `fijarAnticipoPedido` 18715, `actualizarResumenAnticipoPedido` 18725; crear: `confirmarCrearPedidoCanal` |
 | Reseñas web | `mostrarPantallaResenasWeb` 16568 |
-| Facturación: por facturar / respaldo | `cargarFePendientes` 23416, `abrirEditarClienteFe`/`guardarClienteFe` 23950, `cargarFeRespaldo` 24094, `descargarRespaldoFe` 24114 |
+| Facturación: por facturar / respaldo | `cargarFePendientes` 23421, editar cliente (`formularioClienteVenta`… `guardarClienteFe`) 23959-24060, `cargarFeRespaldo` 24162, `descargarRespaldoFe` 24182 |
 | Cartera / pagos pendientes | `mostrarPantallaCuentasPendientes` 24670, `mostrarPantallaPagosPendientes` 13957 |
 | **Previsión de impuestos** | `cargarPrevisionImpuestos` 25911, `guardarPrevisionConfig` 26094, `guardarPresupuestoPrevision` 26088 |
 | Anticipo SIMPLE | `confirmarAnticipoSimple` 26204 |
