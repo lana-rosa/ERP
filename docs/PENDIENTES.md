@@ -73,7 +73,7 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 ### Chat 8 · Menú/Interfaz
 - [ ] 🔴 Mudanza a Cloudflare Pages: **bloqueo** — el Worker de ventas solo acepta el origen github.io. Falta decisión de Sara (editar Worker o función proxy en Pages). Detalle en `docs/temas/hosting.md`. Ya revisado: rutas, funciones Supabase, Auth.
 - [x] 🔴 Sin sesión se veía el ☰ y se abría el menú (13-nov): corregido, nada visible sin iniciar sesión.
-- [ ] 🔴 Supabase: 5 tablas con política abierta a cualquiera con la llave pública (pagos de pedidos, presupuesto, oportunidades, pagos academia, disponibilidad capacitador). Esperando el "sí" de Sara para cerrarlas (ver menu-lateral.md).
+- [x] 🔴 Supabase: 5 tablas con política abierta a cualquiera con la llave pública: cerradas 13-nov con el "sí" de Sara (ver menu-lateral.md).
 - [x] Buscadores de **Productos** (Gestionar inventario) y **Clientes**: al entrar solo la caja; la lista aparece al escribir.
 - [x] Celular: la barra de búsqueda ya no queda por encima del fondo oscuro del menú, no tapa la barra rosada y el texto cabe.
 - [x] Menú lateral oculto sin forma de volver a mostrarlo (PR #100).
