@@ -16,7 +16,7 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 3. **Chat 3 Compras SENA** — en curso: ajustes del nuevo modelo de desembolsos (zona Compras, no choca con el chat 2).
 4. **Chat 6 Producción** — en cola: empieza **cuando el chat 2 publique** su lote de pedidos.
 5. **Chat 8 Menú/Interfaz** — hecho: barra de búsqueda en celular + buscadores de Productos y Clientes (v44).
-- Chat 4 DIAN: resolución registrada; editar cliente listo, espera aprobación de Sara para publicar. Chat 5 Impuestos: preguntas para el contador listas (PR #113).
+- Chat 4 DIAN: resolución registrada; editar cliente publicado (PR #124); falta emitir las 7 facturas. Chat 5 Impuestos: preguntas para el contador listas (PR #113).
 
 ## Por chat
 
@@ -50,7 +50,7 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [x] Resolución de numeración registrada (12-nov-2026): N° 18764117094883, prefijo LRCT, rango 1–100.000, habilitada desde 14-oct. Falta anotar su vigencia (no salía en la captura de la DIAN).
 - [ ] Numeración de documento soporte y primer respaldo mensual (Sara).
 - [ ] Emitir en la DIAN las 7 facturas marcadas "facturar" ($601.000: PED-2026-00541, 545, 549, 553, 554, 555, 550) y registrarlas en Por facturar.
-- [ ] **Editar datos del cliente de una venta/pedido** (pedido de Sara 13-nov, regla: solo si NO tiene factura DIAN registrada). Hecho y probado, **falta que Sara apruebe publicar** (primero se aplica `docs/migraciones/2026-11-13-editar-cliente-venta-sin-factura.sql` en Supabase y luego el PR). Botón "✏️ Datos del cliente" en Por facturar.
+- [x] **Editar datos del cliente de una venta/pedido** (pedido de Sara 13-nov, regla: solo si NO tiene factura DIAN registrada). Publicado 13-nov (PR #124, función `fn_editar_cliente_venta` aplicada en Supabase). Botón "✏️ Datos del cliente" en Por facturar.
 - **Para otro chat (Chat 2 Pedidos):** el panel "Editar datos del cliente" del pedido usa `fn_editar_cliente_pedido_canal`, que sí deja a un cajero editar, modifica el cliente compartido y no revisa si ya hay factura. Conviene que ese panel llame a `fn_editar_cliente_venta('pedido_canal', ...)` o que se bloquee si hay factura.
 - Revisión 12-nov de ventas sin factura desde el 14-oct: 14 ventas, $2.821.200 (7 con "facturar" definido, $601.000; 6 del punto de venta POS-2026-00016 a 00021, $2.205.000, y PED-2026-00559, $15.200, sin definir).
 
