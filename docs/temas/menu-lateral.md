@@ -20,3 +20,8 @@
 - Probado con rollback y luego revisado: sin sesión (`anon`) solo se ve `web_textos` (público a propósito); con sesión de usuario `oportunidades_venta` se lee; la función da horarios (7) sin sesión y la tabla directa da 0. El Worker y las funciones `security definer` no dependen de la regla vieja.
 - Revertir si algo falla: `alter policy "Acceso total via service role" on public.<tabla> to public;`.
 - Revisar de vez en cuando con el recorrido "contar filas como anon" que se usó aquí.
+
+## Inicio de sesión: ojo para ver la contraseña (13-nov, sw v47)
+- Botón 👁 dentro del campo Contraseña (`#btnOjoClave`, función `alternarVerClave`): muestra/oculta mientras se escribe; al cerrar sesión vuelve a quedar oculta y el campo vacío.
+- Mensaje de error "correo o contraseña incorrectos" ahora sugiere revisar que el correo esté bien escrito y usar el ojo.
+- Probado en 390px y 1280px con inicio de sesión fallido simulado.

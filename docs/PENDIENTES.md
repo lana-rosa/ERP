@@ -71,6 +71,7 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [x] Resumen de pendientes contables listo para llevarle a Hernando: `docs/resumen-contador.md` (llevarlo junto con las 22 preguntas del chat 5) — 12-nov-2026
 
 ### Chat 8 · Menú/Interfaz
+- [x] Inicio de sesión: botón 👁 para ver la contraseña y error que sugiere revisar el correo (13-nov, v47).
 - [x] Worker de ventas ya acepta la dirección nueva (13-nov). [ ] Sara: crear el proyecto en Cloudflare Pages (reintentar), decidir comando de compilación para no publicar `docs/` y `supabase/`, borrar el token de Cloudflare. [ ] Luego probar inicio de sesión, venta de prueba, pedidos y app instalable. Detalle en `docs/temas/hosting.md`.
 - [x] 🔴 Sin sesión se veía el ☰ y se abría el menú (13-nov): corregido, nada visible sin iniciar sesión.
 - [x] 🔴 Supabase: 5 tablas con política abierta a cualquiera con la llave pública: cerradas 13-nov con el "sí" de Sara (ver menu-lateral.md).
