@@ -2268,6 +2268,7 @@
       <div style="font-weight:700;">📂 Carpeta de facturas de la DIAN (automático)</div>
       <div id="feCarpetaPanel" style="font-size:12.5px;line-height:1.55;margin-top:6px;"></div>
     </div>
+    <div class="mensaje" id="mensajeFePend"></div>
     <div id="feListaPendientes"><div class="cargando">Cargando...</div></div>
   </div>
 
@@ -23463,7 +23464,9 @@
             ${modoRecibo ? '' : `<button class="btn-mini editar" style="flex:0 0 auto;padding:7px 12px;" onclick="alternarAccionFe('${clave}:datos')">📋 Datos para la DIAN</button>`}
             ${modoRecibo ? '' : `<button class="btn-mini" style="flex:0 0 auto;padding:7px 12px;background:var(--verde-exito);color:#fff;" onclick="alternarAccionFe('${clave}:registrar')">✅ Registrar factura emitida</button>`}
             <button class="btn-mini editar" style="flex:0 0 auto;padding:7px 12px;" title="Comprobante de venta de Lana Rosa con la fecha de la venta (no es factura electrónica)" onclick="imprimirReciboVentaFe('${v.origen}', '${v.origen_id}')">🖨️ Recibo de venta</button>
+            ${esRolFe('administrador') ? `<button class="btn-mini editar" style="flex:0 0 auto;padding:7px 12px;" title="Completar o corregir los datos del cliente antes de emitir la factura" onclick="abrirEditarClienteFe('${v.origen}', '${v.origen_id}')">✏️ Datos del cliente</button>` : ''}
           </div>
+          <div id="feEdCli-${v.origen_id}" class="oculto"></div>
           ${abierta('datos') ? `
             <div style="margin-top:10px;padding:12px;border-radius:var(--radius-md);background:var(--gris-fondo);">
               <pre style="white-space:pre-wrap;font-family:inherit;font-size:12.5px;margin:0;">${escaparHtml(textoDatosDianVenta(v))}</pre>
@@ -23939,6 +23942,56 @@
             <span>${d.tiene_archivo ? `<button class="btn-mini editar" style="flex:0 0 auto;padding:4px 8px;margin-right:4px;" title="ZIP original de la DIAN (XML y PDF)" onclick="descargarArchivoFacturaFe('${d.id}')">📎 ZIP</button>` : ''}${d.estado === 'emitida' && puedeAnular ? `<button class="btn-mini desactivar" style="flex:0 0 auto;padding:4px 8px;" onclick="anularRegistroFe('${d.id}')">Anular registro</button>` : (d.estado === 'anulada' ? `<span style="font-size:10.5px;">${escaparHtml(d.motivo_anulacion || '')}</span>` : '')}</span>
           </div>`).join('')}
       </div>`;
+  }
+
+  // ---- Editar los datos del cliente de una venta que todavía NO tiene factura electrónica (solo administradora) ----
+  // La base (fn_editar_cliente_venta) también bloquea si ya hay factura DIAN registrada: para cambiar el comprador
+  // de una factura emitida se necesita nota crédito y nueva factura (consultar al contador).
+  function abrirEditarClienteFe(origen, origenId) {
+    const v = cacheFePendientes.find(x => x.origen === origen && x.origen_id === origenId);
+    const panel = document.getElementById(`feEdCli-${origenId}`);
+    if (!v || !panel) return;
+    if (!panel.classList.contains('oculto')) { panel.classList.add('oculto'); panel.innerHTML = ''; return; }
+    const cli = v.cliente || {};
+    const sinDoc = cli.consumidor_final || !cli.numero_documento || /^(NA|222222222222)$/i.test(String(cli.numero_documento).trim());
+    const nombre = cli.consumidor_final ? (cli.nombre_real || '') : (cli.nombre || '');
+    const val = (x) => escaparHtml(x || '');
+    const tipoSel = sinDoc ? 'CC' : (cli.tipo_documento || 'CC');
+    panel.classList.remove('oculto');
+    panel.innerHTML = `
+      <div style="margin-top:10px;padding:12px;border-radius:var(--radius-md);background:var(--rosa-suave);">
+        <strong style="font-size:12.5px;">Datos del cliente de ${escaparHtml(v.consecutivo || '')}</strong>
+        <div style="font-size:11.5px;opacity:0.75;margin:2px 0 8px;">Solo cambia quién es el cliente: no toca valores, pagos ni caja. Queda registrado quién lo cambió y cuándo.</div>
+        <div class="grilla-2" style="gap:10px;">
+          <div><label>Nombre o razón social</label><input type="text" id="edcNombre-${origenId}" value="${val(nombre)}"></div>
+          <div><label>Tipo de documento</label><select id="edcTipo-${origenId}">${['CC', 'NIT', 'CE', 'PASAPORTE', 'TI'].map(t => `<option value="${t}"${t === tipoSel ? ' selected' : ''}>${t}</option>`).join('')}</select></div>
+          <div><label>Número de documento / NIT</label><input type="text" id="edcDoc-${origenId}" inputmode="numeric" value="${sinDoc ? '' : val(cli.numero_documento)}"></div>
+          <div><label>Dígito de verificación <span style="font-size:10px;opacity:0.6;">(solo NIT)</span></label><input type="text" id="edcDv-${origenId}" inputmode="numeric" maxlength="1" value="${val(cli.dv)}"></div>
+          <div><label>Correo</label><input type="text" id="edcCorreo-${origenId}" value="${val(cli.correo)}"></div>
+          <div><label>Teléfono</label><input type="text" id="edcTel-${origenId}" inputmode="tel" value="${val(cli.telefono)}"></div>
+          <div><label>Dirección</label><input type="text" id="edcDir-${origenId}" value="${val(cli.direccion || v.direccion_entrega)}"></div>
+          <div><label>Ciudad / municipio</label><input type="text" id="edcCiudad-${origenId}" value="${val(cli.ciudad)}"></div>
+        </div>
+        <label style="display:flex;gap:6px;align-items:flex-start;margin:10px 0 0;cursor:pointer;font-size:12.5px;"><input type="checkbox" id="edcAut-${origenId}" style="margin-top:2px;"> El cliente autorizó el tratamiento de sus datos personales <span style="opacity:0.65;">(necesario si el cliente queda como nuevo; si ese documento ya existe en Clientes, se usa ese)</span></label>
+        <div class="mensaje" id="mensajeEdCli-${origenId}"></div>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="btn-principal" style="width:auto;" onclick="guardarClienteFe('${origen}', '${origenId}')">Guardar cliente</button>
+          <button class="btn-mini editar" style="flex:0 0 auto;padding:7px 12px;" onclick="abrirEditarClienteFe('${origen}', '${origenId}')">Cancelar</button>
+        </div>
+      </div>`;
+  }
+
+  async function guardarClienteFe(origen, origenId) {
+    const g = (c) => (document.getElementById(`${c}-${origenId}`).value || '').trim();
+    const msg = `mensajeEdCli-${origenId}`;
+    const { error } = await supabaseClient.rpc('fn_editar_cliente_venta', {
+      p_origen: origen, p_origen_id: origenId, p_nombre: g('edcNombre'), p_tipo_documento: g('edcTipo'), p_numero_documento: g('edcDoc'),
+      p_dv: g('edcDv'), p_correo: g('edcCorreo'), p_telefono: g('edcTel'), p_direccion: g('edcDir'), p_ciudad: g('edcCiudad'),
+      p_acepta_datos: document.getElementById(`edcAut-${origenId}`).checked, p_medio_autorizacion: null,
+    });
+    if (error) { mostrarMensaje(msg, error.message, 'error'); return; }
+    await cargarFePendientes();
+    mostrarMensaje('mensajeFePend', '✅ Datos del cliente guardados. Ya puedes copiarlos con "Datos para la DIAN".', 'exito');
   }
 
   // ---- Documentos soporte (compras a proveedores no obligados a facturar) ----

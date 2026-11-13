@@ -58,7 +58,7 @@ Estructura: HTML de pantallas (líneas ~1000–5800), luego un bloque grande `<s
 | **Compras: requisitos SENA** | `verComprasSinRequisitos` 14452, `verSoportesPagoFondo` 14462, `estadoLegalizarCompra` 14482, `avisarProveedorPlanFondo` 14436, `actualizarRequisitosCompra` 14529, `validarRequisitosCompra` 14591, `guardarRequisitosCompra` 14645 |
 | **Pedido por canal: anticipo** | `calcularAnticipoPedido` 18698, `fijarAnticipoPedido` 18715, `actualizarResumenAnticipoPedido` 18725; crear: `confirmarCrearPedidoCanal` |
 | Reseñas web | `mostrarPantallaResenasWeb` 16568 |
-| Facturación: por facturar / respaldo | `cargarFePendientes` 22875, `cargarFeRespaldo` 23501, `descargarRespaldoFe` 23521 |
+| Facturación: por facturar / respaldo | `cargarFePendientes` 23416, `abrirEditarClienteFe`/`guardarClienteFe` 23950, `cargarFeRespaldo` 24094, `descargarRespaldoFe` 24114 |
 | Cartera / pagos pendientes | `mostrarPantallaCuentasPendientes` 24670, `mostrarPantallaPagosPendientes` 13957 |
 | **Previsión de impuestos** | `cargarPrevisionImpuestos` 25911, `guardarPrevisionConfig` 26094, `guardarPresupuestoPrevision` 26088 |
 | Anticipo SIMPLE | `confirmarAnticipoSimple` 26204 |
