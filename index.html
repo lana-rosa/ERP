@@ -2508,6 +2508,7 @@
       <button class="btn-mini desactivar" onclick="limpiarFiltrosHistorialRedes()" style="margin-bottom:1px;">Quitar filtros</button>
     </div>
     <div class="panel" style="max-height:none;max-width:none;">
+      <div class="mensaje" id="mensajeHistorialRedes"></div>
       <div id="listaHistorialRedes"><div class="cargando">Cargando...</div></div>
     </div>
   </div>
@@ -10368,6 +10369,7 @@
     const resp = await fetch(WORKER_URL + '/api/pos/pedidos-canal?' + params.toString(), { headers: { Authorization: 'Bearer ' + sesionActual.token } });
     if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
     const { pedidos } = await resp.json();
+    historialRedesCache = pedidos || [];
 
     if (!pedidos || pedidos.length === 0) {
       contenedor.innerHTML = '<div class="cargando">No hay pedidos que coincidan con la búsqueda.</div>';
@@ -10388,10 +10390,11 @@
           return `
             <div class="tabla-lista-fila" style="grid-template-columns:170px 1fr 110px 200px;">
               <span style="font-weight:600;">${etiquetasCanalHist[p.canal] || p.canal}<br><span style="font-weight:400;font-size:11px;opacity:0.7;">${escaparHtml(p.consecutivo || '')}</span></span>
-              <span style="opacity:0.9;display:flex;align-items:center;gap:8px;">${avatarIniciales(nombreCliente)}<span>${escaparHtml(nombreCliente)}${escaparHtml(detalleContacto)}<br><span style="font-size:11px;opacity:0.75;">${escaparHtml(p.descripcion_producto || '')}</span></span></span>
+              <span style="opacity:0.9;display:flex;align-items:center;gap:8px;">${avatarIniciales(nombreCliente)}<span>${escaparHtml(nombreCliente)}${escaparHtml(detalleContacto)}<br><span style="font-size:11px;opacity:0.75;">${escaparHtml(p.descripcion_producto || '')}</span>${esRolFe('administrador') ? `<br><button class="btn-mini editar" style="flex:0 0 auto;padding:4px 10px;margin-top:4px;" onclick="abrirEditarClienteHistorialRedes('${p.id}')">✏️ Datos del cliente</button>` : ''}</span></span>
               <span style="text-align:right;font-weight:700;">${formatearMoneda(p.total_pedido)}</span>
               <span style="opacity:0.75;font-size:11px;">${new Date(p.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}<br>${etiquetasEstadoHist[p.estado] || p.estado}</span>
             </div>
+            <div id="panelEditarClienteVenta-${p.id}" class="oculto" style="padding:0 12px 12px;"></div>
           `;
         }).join('')}
       </div>
@@ -10711,11 +10714,13 @@
           ${puedeAnular ? `<button class="btn-mini desactivar" onclick="event.stopPropagation(); pedirConfirmacionBoton(this, '¿Seguro?', () => anularVenta('${venta.id}', '${venta.consecutivo}'))">❌ Anular venta</button>` : ''}
           ${venta.estado === 'completada' ? `<button class="btn-mini editar" onclick="event.stopPropagation(); abrirCambioArticulo('${venta.id}', '${venta.consecutivo}')">🔄 Cambiar artículo</button>` : ''}
           ${venta.estado === 'completada' ? `<button class="btn-mini desactivar" onclick="event.stopPropagation(); abrirDevolucionSimple('${venta.id}', '${venta.consecutivo}')">💵 Devolver dinero</button>` : ''}
+          ${venta.estado === 'completada' && esRolFe('administrador') ? `<button class="btn-mini editar" onclick="event.stopPropagation(); abrirEditarClienteHistorialTienda('${venta.id}')">✏️ Datos del cliente</button>` : ''}
           <button class="btn-mini editar" onclick="event.stopPropagation(); verReciboHistorial('${venta.id}')">🖨️ Ver / imprimir recibo</button>
           <button class="btn-mini editar" onclick="event.stopPropagation(); enviarReciboHistorialWhatsapp('${venta.id}')">📱 Enviar por WhatsApp</button>
           ${correoEmpresaActivo() ? `<button class="btn-mini editar" onclick="event.stopPropagation(); enviarReciboHistorialCorreo('${venta.id}', this)">📧 Enviar por correo</button>` : ''}
         </div>
         <div id="panelCambioArticulo-${venta.id}" class="oculto" style="margin-top:10px;"></div>
+        <div id="panelEditarClienteVenta-${venta.id}" class="oculto" onclick="event.stopPropagation()"></div>
       </div>
     `;
   }
@@ -23945,40 +23950,103 @@
   }
 
   // ---- Editar los datos del cliente de una venta que todavía NO tiene factura electrónica (solo administradora) ----
+  // Se usa en Por facturar y en el Historial de ventas (Tienda y WhatsApp/Redes).
   // La base (fn_editar_cliente_venta) también bloquea si ya hay factura DIAN registrada: para cambiar el comprador
   // de una factura emitida se necesita nota crédito y nueva factura (consultar al contador).
-  function abrirEditarClienteFe(origen, origenId) {
-    const v = cacheFePendientes.find(x => x.origen === origen && x.origen_id === origenId);
-    const panel = document.getElementById(`feEdCli-${origenId}`);
-    if (!v || !panel) return;
-    if (!panel.classList.contains('oculto')) { panel.classList.add('oculto'); panel.innerHTML = ''; return; }
-    const cli = v.cliente || {};
-    const sinDoc = cli.consumidor_final || !cli.numero_documento || /^(NA|222222222222)$/i.test(String(cli.numero_documento).trim());
-    const nombre = cli.consumidor_final ? (cli.nombre_real || '') : (cli.nombre || '');
+  const TEXTO_FACTURA_BLOQUEA_CLIENTE = 'Esta venta ya tiene factura DIAN; para cambiar el comprador se necesita nota crédito y nueva factura. Consulta al contador.';
+  const edcAlGuardar = {};
+
+  function formularioClienteVenta(origen, origenId, cli, titulo) {
+    const sinDoc = !cli.numero_documento || /^(NA|222222222222)$/i.test(String(cli.numero_documento).trim());
     const val = (x) => escaparHtml(x || '');
     const tipoSel = sinDoc ? 'CC' : (cli.tipo_documento || 'CC');
-    panel.classList.remove('oculto');
-    panel.innerHTML = `
+    return `
       <div style="margin-top:10px;padding:12px;border-radius:var(--radius-md);background:var(--rosa-suave);">
-        <strong style="font-size:12.5px;">Datos del cliente de ${escaparHtml(v.consecutivo || '')}</strong>
+        <strong style="font-size:12.5px;">Datos del cliente de ${escaparHtml(titulo || '')}</strong>
         <div style="font-size:11.5px;opacity:0.75;margin:2px 0 8px;">Solo cambia quién es el cliente: no toca valores, pagos ni caja. Queda registrado quién lo cambió y cuándo.</div>
         <div class="grilla-2" style="gap:10px;">
-          <div><label>Nombre o razón social</label><input type="text" id="edcNombre-${origenId}" value="${val(nombre)}"></div>
+          <div><label>Nombre o razón social</label><input type="text" id="edcNombre-${origenId}" value="${val(cli.nombre)}"></div>
           <div><label>Tipo de documento</label><select id="edcTipo-${origenId}">${['CC', 'NIT', 'CE', 'PASAPORTE', 'TI'].map(t => `<option value="${t}"${t === tipoSel ? ' selected' : ''}>${t}</option>`).join('')}</select></div>
           <div><label>Número de documento / NIT</label><input type="text" id="edcDoc-${origenId}" inputmode="numeric" value="${sinDoc ? '' : val(cli.numero_documento)}"></div>
           <div><label>Dígito de verificación <span style="font-size:10px;opacity:0.6;">(solo NIT)</span></label><input type="text" id="edcDv-${origenId}" inputmode="numeric" maxlength="1" value="${val(cli.dv)}"></div>
           <div><label>Correo</label><input type="text" id="edcCorreo-${origenId}" value="${val(cli.correo)}"></div>
           <div><label>Teléfono</label><input type="text" id="edcTel-${origenId}" inputmode="tel" value="${val(cli.telefono)}"></div>
-          <div><label>Dirección</label><input type="text" id="edcDir-${origenId}" value="${val(cli.direccion || v.direccion_entrega)}"></div>
+          <div><label>Dirección</label><input type="text" id="edcDir-${origenId}" value="${val(cli.direccion)}"></div>
           <div><label>Ciudad / municipio</label><input type="text" id="edcCiudad-${origenId}" value="${val(cli.ciudad)}"></div>
         </div>
         <label style="display:flex;gap:6px;align-items:flex-start;margin:10px 0 0;cursor:pointer;font-size:12.5px;"><input type="checkbox" id="edcAut-${origenId}" style="margin-top:2px;"> El cliente autorizó el tratamiento de sus datos personales <span style="opacity:0.65;">(necesario si el cliente queda como nuevo; si ese documento ya existe en Clientes, se usa ese)</span></label>
         <div class="mensaje" id="mensajeEdCli-${origenId}"></div>
         <div style="display:flex;gap:8px;margin-top:8px;">
-          <button class="btn-principal" style="width:auto;" onclick="guardarClienteFe('${origen}', '${origenId}')">Guardar cliente</button>
-          <button class="btn-mini editar" style="flex:0 0 auto;padding:7px 12px;" onclick="abrirEditarClienteFe('${origen}', '${origenId}')">Cancelar</button>
+          <button class="btn-principal" style="width:auto;" onclick="event.stopPropagation(); guardarClienteFe('${origen}', '${origenId}')">Guardar cliente</button>
+          <button class="btn-mini editar" style="flex:0 0 auto;padding:7px 12px;" onclick="event.stopPropagation(); cerrarPanelClienteVenta('${origenId}')">Cancelar</button>
         </div>
       </div>`;
+  }
+
+  function cerrarPanelClienteVenta(origenId) {
+    const panel = document.getElementById(edcAlGuardar[origenId]?.panelId || '');
+    if (panel) { panel.classList.add('oculto'); panel.innerHTML = ''; }
+  }
+
+  // ¿La venta ya tiene factura DIAN registrada? (la administradora puede leer la tabla)
+  async function ventaTieneFacturaFe(origen, origenId) {
+    try {
+      const { data } = await supabaseClient.from('documentos_electronicos').select('prefijo, numero').eq('origen', origen).eq('origen_id', origenId).eq('tipo', 'factura').eq('estado', 'emitida').limit(1);
+      return data && data.length ? `${data[0].prefijo || ''}${data[0].numero}` : null;
+    } catch (e) { return null; } // si no se puede revisar aquí, la base igual la bloquea al guardar
+  }
+
+  async function abrirPanelClienteVenta(origen, origenId, panelId, cli, titulo, alGuardar) {
+    const panel = document.getElementById(panelId);
+    if (!panel) return;
+    if (!panel.classList.contains('oculto')) { panel.classList.add('oculto'); panel.innerHTML = ''; return; }
+    panel.classList.remove('oculto');
+    const factura = await ventaTieneFacturaFe(origen, origenId);
+    if (factura) {
+      panel.innerHTML = `<div style="margin-top:10px;padding:12px;border-radius:var(--radius-md);background:var(--rosa-suave);font-size:12.5px;">🔒 <strong>Factura ${escaparHtml(factura)}.</strong> ${TEXTO_FACTURA_BLOQUEA_CLIENTE}</div>`;
+      return;
+    }
+    edcAlGuardar[origenId] = { panelId, alGuardar };
+    panel.innerHTML = formularioClienteVenta(origen, origenId, cli, titulo);
+  }
+
+  // Por facturar: los datos salen de la lista ya cargada
+  function abrirEditarClienteFe(origen, origenId) {
+    const v = cacheFePendientes.find(x => x.origen === origen && x.origen_id === origenId);
+    if (!v) return;
+    const c = v.cliente || {};
+    const cli = { nombre: c.consumidor_final ? (c.nombre_real || '') : (c.nombre || ''), tipo_documento: c.tipo_documento, numero_documento: c.consumidor_final ? '' : c.numero_documento, dv: c.dv, correo: c.correo, telefono: c.telefono, direccion: c.direccion || v.direccion_entrega, ciudad: c.ciudad };
+    return abrirPanelClienteVenta(origen, origenId, `feEdCli-${origenId}`, cli, v.consecutivo, async () => {
+      await cargarFePendientes();
+      mostrarMensaje('mensajeFePend', '✅ Datos del cliente guardados. Ya puedes copiarlos con "Datos para la DIAN".', 'exito');
+    });
+  }
+
+  async function datosTerceroParaEditar(terceroId) {
+    if (!terceroId) return {};
+    const { data: t } = await supabaseClient.from('terceros').select('nombre_completo, tipo_documento, numero_documento, digito_verificacion, email, telefono, direccion, ciudad').eq('id', terceroId).maybeSingle();
+    return t ? { nombre: t.nombre_completo, tipo_documento: t.tipo_documento, numero_documento: t.numero_documento, dv: t.digito_verificacion, correo: t.email, telefono: t.telefono, direccion: t.direccion, ciudad: t.ciudad } : {};
+  }
+
+  // Historial de ventas · Tienda (ventas del punto de venta)
+  async function abrirEditarClienteHistorialTienda(ventaId) {
+    const venta = (historialVentasDetalleCache.ventas || []).find(v => v.id === ventaId);
+    if (!venta) return;
+    return abrirPanelClienteVenta('venta_pos', ventaId, `panelEditarClienteVenta-${ventaId}`, await datosTerceroParaEditar(venta.tercero_id), venta.consecutivo, async () => {
+      await cargarHistorialVentas();
+      mostrarMensaje('mensajeHistorialVentas', `✅ Datos del cliente de ${venta.consecutivo} guardados.`, 'exito');
+    });
+  }
+
+  // Historial de ventas · WhatsApp/Redes (pedidos)
+  let historialRedesCache = [];
+  async function abrirEditarClienteHistorialRedes(pedidoId) {
+    const p = historialRedesCache.find(x => x.id === pedidoId);
+    if (!p) return;
+    return abrirPanelClienteVenta('pedido_canal', pedidoId, `panelEditarClienteVenta-${pedidoId}`, await datosTerceroParaEditar(p.tercero_id || (p.tercero && p.tercero.id)), p.consecutivo, async () => {
+      await cargarHistorialRedes();
+      mostrarMensaje('mensajeHistorialRedes', `✅ Datos del cliente de ${p.consecutivo} guardados.`, 'exito');
+    });
   }
 
   async function guardarClienteFe(origen, origenId) {
@@ -23990,8 +24058,8 @@
       p_acepta_datos: document.getElementById(`edcAut-${origenId}`).checked, p_medio_autorizacion: null,
     });
     if (error) { mostrarMensaje(msg, error.message, 'error'); return; }
-    await cargarFePendientes();
-    mostrarMensaje('mensajeFePend', '✅ Datos del cliente guardados. Ya puedes copiarlos con "Datos para la DIAN".', 'exito');
+    const alGuardar = edcAlGuardar[origenId]?.alGuardar;
+    if (alGuardar) await alGuardar();
   }
 
   // ---- Documentos soporte (compras a proveedores no obligados a facturar) ----
