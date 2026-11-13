@@ -50,7 +50,7 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [x] Resolución de numeración registrada (12-nov-2026): N° 18764117094883, prefijo LRCT, rango 1–100.000, habilitada desde 14-oct. Falta anotar su vigencia (no salía en la captura de la DIAN).
 - [ ] Numeración de documento soporte y primer respaldo mensual (Sara).
 - [ ] Emitir en la DIAN las 7 facturas marcadas "facturar" ($601.000: PED-2026-00541, 545, 549, 553, 554, 555, 550) y registrarlas en Por facturar.
-- [x] **Editar datos del cliente de una venta/pedido** (pedido de Sara 13-nov, regla: solo si NO tiene factura DIAN registrada). Publicado 13-nov (PR #124, función `fn_editar_cliente_venta` aplicada en Supabase). Botón "✏️ Datos del cliente" en Por facturar. 13-nov: también en Historial de ventas (Tienda y WhatsApp/Redes), pendiente de publicar (espera visto bueno de Sara).
+- [x] **Editar datos del cliente de una venta/pedido** (pedido de Sara 13-nov, regla: solo si NO tiene factura DIAN registrada). Publicado 13-nov (PR #124, función `fn_editar_cliente_venta` aplicada en Supabase). Botón "✏️ Datos del cliente" en Por facturar. 13-nov: también en Historial de ventas (Tienda y WhatsApp/Redes), publicado (PR #126).
 - **Para otro chat (Chat 2 Pedidos):** el panel "Editar datos del cliente" del pedido usa `fn_editar_cliente_pedido_canal`, que sí deja a un cajero editar, modifica el cliente compartido y no revisa si ya hay factura. Conviene que ese panel llame a `fn_editar_cliente_venta('pedido_canal', ...)` o que se bloquee si hay factura.
 - Revisión 12-nov de ventas sin factura desde el 14-oct: 14 ventas, $2.821.200 (7 con "facturar" definido, $601.000; 6 del punto de venta POS-2026-00016 a 00021, $2.205.000, y PED-2026-00559, $15.200, sin definir).
 
