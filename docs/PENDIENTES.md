@@ -3,7 +3,7 @@
 Actualizado: 2026-11-03
 
 ## Para revisar con Claude
-- [ ] **No deja registrar ventas** (reportado 03-nov). Mensaje: "No hay turno de caja abierto." (lo da el Worker). Causa probable: el turno abierto el 19-oct lleva 24 días y el Worker ya no lo reconoce. Falta que Sara cierre ese turno con arqueo y abra uno nuevo (pantalla "Cerrar turno"), y probar una venta. Ver `docs/temas/ventas-pos.md`. Urgente: tienda física abre el 13-dic.
+- [ ] **No deja registrar ventas** (reportado 03-nov). Mensaje: "No hay turno de caja abierto." (lo da el Worker). Causa probable: el turno abierto el 19-oct lleva 24 días y el Worker ya no lo reconoce. Falta que Sara cierre ese turno con arqueo y abra uno nuevo (pantalla "Cerrar turno"), y probar una venta. Ver `docs/temas/ventas-pos.md`. Urgente: tienda física abre el 13-dic. 13-nov: además "Token inválido o expirado" al abrir turno → arreglo del token listo en la rama, falta aprobación de Sara para fusionar a main.
 - [x] Menú lateral oculto sin forma de volver a mostrarlo (PR #100, resuelto).
 
 ## Sara

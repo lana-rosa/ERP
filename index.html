@@ -5981,6 +5981,24 @@
   aplicarTema(localStorage.getItem('lanarosa_tema') || 'claro');
 
   let sesionActual = null; // { token, userId, email }
+
+  // Supabase renueva el token solo (cada ~1 hora). Sin esto, el ERP seguía
+  // mandando al Worker el token viejo y salía "Token inválido o expirado".
+  // Aquí se mantiene siempre el token vigente en sesionActual.
+  supabaseClient.auth.onAuthStateChange((evento, sesion) => {
+    if (evento === 'SIGNED_OUT') return; // cerrarSesion ya pone sesionActual en null
+    if (sesion && sesion.access_token && sesionActual) {
+      sesionActual.token = sesion.access_token;
+    }
+  });
+  // Al volver a la pestaña (p. ej. tras horas abierta) se pide el token vigente.
+  document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState !== 'visible' || !sesionActual) return;
+    try {
+      const { data } = await supabaseClient.auth.getSession();
+      if (data && data.session) sesionActual.token = data.session.access_token;
+    } catch { /* sin internet: se conserva el token actual */ }
+  });
   let politicaTratamientoDatosCache = null;
   let rolActual = null;
   let turnoActivoActual = null;
