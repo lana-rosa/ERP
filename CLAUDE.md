@@ -39,5 +39,6 @@ Playwright ya instalado: `NODE_PATH=/opt/node22/lib/node_modules`, chromium `/op
 | Plan de tejido, códigos de barras GS1, ficha técnica de productos e insumos | `produccion-inventario.md` |
 | Menú lateral (ocultar/fijar) | `menu-lateral.md` |
 | Decisiones contables y políticas (retiros, aportes, honorarios, CUIF) | `contabilidad-decisiones.md` |
+| Personal: empleados, contratos, turnos, asistencia, vacaciones, tejedoras | `personal.md` |
 
 Mapa del código: `docs/mapa-index-html.md`. Pendientes: `docs/PENDIENTES.md`. Indicaciones para abrir chats por tema y el Orquestador: `docs/chats-iniciales.md`.
