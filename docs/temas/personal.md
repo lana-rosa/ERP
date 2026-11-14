@@ -12,6 +12,17 @@ Construir en el ERP lo del día a día; la **nómina electrónica a la DIAN NO s
 4. **Tejedoras:** horas y pagos (honorarios) usando lo existente: `producto_tejido_plan`, `tejedoras_capacidad`, `tejedoras_usuarios`, `honorarios_tejedora_nomina`.
 5. **Exportar novedades** (horas, extras, ausencias) para el proveedor de nómina.
 
+## Equipo y funciones (Sara, 14-nov)
+| Persona | Cargo | Funciones | Rol ERP |
+|---|---|---|---|
+| **Sara** (propietaria) | Tejedora + Administración y contabilidad + Líder de Lana Rosa Academy | Administración, manejo contable de la mano con el contador; lidera la Academy apoyada en Claude | `administrador` |
+| **Jennifer** | Tejedora + Líder del Taller | Redes sociales, fotos de productos, actualizar productos en la web; mantenimiento del entorno digital (web, CRM, ERP) con Claude | `administrador` |
+| **Manuela** | Líder de la Tienda | Inventarios (surtir almacén, bodega), proveedores, caja, atención al público | `cajero` (+ permisos de inventario/proveedores a revisar) |
+| Contador (Hernando) | Prestación de servicios | Contabilidad e impuestos | `contador` |
+- **5S:** cada una mantiene el aseo y orden de su área (Taller, Tienda/bodega, oficina/Academy). Idea: lista de chequeo 5S por área en el ERP (diaria/semanal, con foto opcional).
+- **Pregunta clave para el contador:** Sara es la dueña (persona natural, régimen SIMPLE). En Colombia una persona natural no puede firmar un contrato laboral consigo misma: confirmar si Sara va como empleada (solo posible si hay sociedad, p. ej. SAS) o si sigue recibiendo pagos como **retiros del propietario (3805)** o honorarios. Igual revisar el caso de Jennifer si es socia.
+- Manuela necesita poder manejar inventario, bodega y proveedores; hoy el rol `cajero` solo ve el inventario de la Tienda. Definir permisos exactos (¿compras?, ¿pagos a proveedores?: el dinero y las compras del Fondo Emprender deberían quedar con aprobación de la administradora).
+
 ## Nómina electrónica (decisión de Sara, 14-nov)
 Se usará la **solución gratuita de la DIAN** (se digita a mano cada mes en el portal de la DIAN). El ERP NO transmite a la DIAN: debe generar un **resumen mensual por empleado listo para copiar** (días/horas trabajadas, salario, horas extra y recargos, auxilio de transporte, incapacidades, vacaciones y licencias, deducciones de salud y pensión), en el mismo orden de los campos del formulario de la DIAN. Confirmar con el contador campos y plazo de transmisión mensual.
 
