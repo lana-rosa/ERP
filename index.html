@@ -21064,7 +21064,107 @@
 
     const { empleados } = await resp.json();
     empleadosActivosCache = (empleados || []).filter(e => e.activo);
+    await cargarFichaExtraEmpleados();
     renderizarListaEmpleados();
+  }
+
+  // ============================================================
+  // FICHA DEL EMPLEADO: cargo, área, jornada, fin de contrato, caja, cuenta de acceso y documentos que faltan
+  // ============================================================
+  const DOCUMENTOS_REQUERIDOS_EMPLEADO = ['cedula', 'hoja_vida', 'contrato', 'afiliacion_eps', 'afiliacion_pension', 'afiliacion_arl', 'afiliacion_ccf'];
+  const AREAS_EMPLEADO = ['Taller', 'Tienda', 'Academy', 'Administración'];
+  const JORNADAS_EMPLEADO = { completa: 'Tiempo completo', medio_tiempo: 'Medio tiempo', por_horas: 'Por horas' };
+  const TIPOS_CONTRATO_EMPLEADO = { fijo: 'Término fijo', indefinido: 'Indefinido', obra_labor: 'Obra o labor' };
+  const ROLES_ERP_ETIQUETA = { administrador: 'Administradora', cajero: 'Tienda / caja', taller: 'Taller', contador: 'Contador' };
+  const DIAS_AVISO_FIN_CONTRATO = 60;
+  let usuariosRolesRhCache = [];
+  let tiposDocEmpleadoCache = {};
+
+  async function cargarFichaExtraEmpleados() {
+    try {
+      const [rEmp, rUsu, rDoc] = await Promise.all([
+        supabaseClient.from('empleados').select('id, cargo, area, jornada, fecha_fin_contrato, caja_compensacion, user_id, tipo_contrato'),
+        supabaseClient.from('usuarios_roles').select('user_id, nombre_completo, rol, activo'),
+        supabaseClient.from('documentos_empleado').select('empleado_id, tipo_documento')
+      ]);
+      const porId = {};
+      (rEmp.data || []).forEach(x => { porId[x.id] = x; });
+      empleadosActivosCache.forEach(e => { if (porId[e.id]) Object.assign(e, porId[e.id]); });
+      usuariosRolesRhCache = rUsu.data || [];
+      tiposDocEmpleadoCache = {};
+      (rDoc.data || []).forEach(d => { (tiposDocEmpleadoCache[d.empleado_id] = tiposDocEmpleadoCache[d.empleado_id] || []).push(d.tipo_documento); });
+    } catch (err) { /* la ficha sigue funcionando con los datos básicos */ }
+  }
+
+  function tiposDocumentoDeEmpleado(empleadoId) {
+    if (documentosPorEmpleadoCache[empleadoId]) return documentosPorEmpleadoCache[empleadoId].map(d => d.tipo_documento);
+    return tiposDocEmpleadoCache[empleadoId] || [];
+  }
+
+  function documentosFaltantesEmpleado(e) {
+    const tiene = new Set(tiposDocumentoDeEmpleado(e.id));
+    return DOCUMENTOS_REQUERIDOS_EMPLEADO.filter(t => !(e.es_propietario && t === 'contrato') && !tiene.has(t));
+  }
+
+  function diasParaFinContratoEmpleado(e) {
+    if (e.tipo_contrato !== 'fijo' || !e.fecha_fin_contrato) return null;
+    const fin = new Date(e.fecha_fin_contrato.slice(0, 10) + 'T00:00:00');
+    const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+    return Math.round((fin - hoy) / 86400000);
+  }
+
+  function usuarioRolDeEmpleado(e) {
+    return e.user_id ? usuariosRolesRhCache.find(u => u.user_id === e.user_id) : null;
+  }
+
+  function htmlFichaResumenEmpleado(e) {
+    const chip = (texto, fondo, color) => `<span style="display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600;background:${fondo};color:${color};margin:2px 4px 2px 0;">${texto}</span>`;
+    const partes = [];
+    if (e.area) partes.push(chip('📍 ' + escaparHtml(e.area), 'var(--rosa-suave)', 'inherit'));
+    if (e.tipo_contrato) partes.push(chip(escaparHtml(TIPOS_CONTRATO_EMPLEADO[e.tipo_contrato] || e.tipo_contrato), 'var(--rosa-suave)', 'inherit'));
+    if (e.jornada) partes.push(chip(escaparHtml(JORNADAS_EMPLEADO[e.jornada] || e.jornada), 'var(--rosa-suave)', 'inherit'));
+    const u = usuarioRolDeEmpleado(e);
+    partes.push(u
+      ? chip('🔑 Acceso al ERP: ' + escaparHtml(ROLES_ERP_ETIQUETA[u.rol] || u.rol), '#e3f1e6', '#2e6b3a')
+      : chip('🔑 Sin cuenta de acceso al ERP', '#f4eef2', '#7a5a6b'));
+    const dias = diasParaFinContratoEmpleado(e);
+    if (e.tipo_contrato === 'fijo' && !e.fecha_fin_contrato) partes.push(chip('⚠️ Falta la fecha de fin del contrato', '#fff3d6', '#8a5a00'));
+    else if (dias !== null && dias < 0) partes.push(chip('⛔ Contrato vencido hace ' + Math.abs(dias) + ' días', '#fde2e2', '#a12d2d'));
+    else if (dias !== null && dias <= DIAS_AVISO_FIN_CONTRATO) partes.push(chip('⏰ El contrato vence en ' + dias + ' días (' + new Date(e.fecha_fin_contrato.slice(0, 10) + 'T00:00:00').toLocaleDateString('es-CO') + ')', '#fff3d6', '#8a5a00'));
+    else if (dias !== null) partes.push(chip('Contrato hasta ' + new Date(e.fecha_fin_contrato.slice(0, 10) + 'T00:00:00').toLocaleDateString('es-CO'), 'var(--rosa-suave)', 'inherit'));
+    const faltan = documentosFaltantesEmpleado(e);
+    partes.push(faltan.length
+      ? chip('📁 Faltan ' + faltan.length + ' documento' + (faltan.length === 1 ? '' : 's'), '#fff3d6', '#8a5a00')
+      : chip('📁 Documentos completos', '#e3f1e6', '#2e6b3a'));
+    const afil = [['EPS', e.eps], ['Pensión', e.fondo_pension], ['Cesantías', e.fondo_cesantias], ['ARL', e.arl_entidad], ['Caja', e.caja_compensacion]].filter(x => !x[1]).map(x => x[0]);
+    if (afil.length) partes.push(chip('Sin dato de: ' + afil.join(', '), '#fff3d6', '#8a5a00'));
+    return `<div style="margin-top:8px;">${e.cargo ? `<div style="font-size:12.5px;font-weight:600;margin-bottom:2px;">${escaparHtml(e.cargo)}</div>` : ''}${partes.join('')}</div>`;
+  }
+
+  function htmlCamposFichaEdicion(e) {
+    const opciones = (obj, actual) => Object.entries(obj).map(([v, t]) => `<option value="${v}" ${v === actual ? 'selected' : ''}>${escaparHtml(t)}</option>`).join('');
+    const opcionesArea = '<option value="">Sin área</option>' + AREAS_EMPLEADO.map(a => `<option value="${a}" ${a === e.area ? 'selected' : ''}>${a}</option>`).join('');
+    const ocupados = new Set(empleadosActivosCache.filter(x => x.id !== e.id && x.user_id).map(x => x.user_id));
+    const opcionesCuenta = '<option value="">Sin cuenta de acceso</option>' + usuariosRolesRhCache
+      .filter(u => u.activo && !ocupados.has(u.user_id))
+      .map(u => `<option value="${u.user_id}" ${u.user_id === e.user_id ? 'selected' : ''}>${escaparHtml(u.nombre_completo || 'Sin nombre')} — ${escaparHtml(ROLES_ERP_ETIQUETA[u.rol] || u.rol)}</option>`).join('');
+    return `
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--rosa-suave);font-size:11.5px;font-weight:600;opacity:0.7;">Cargo y contrato</div>
+      <label style="margin-top:6px;">Cargo</label>
+      <input type="text" id="edit-emp-cargo-${e.id}" value="${escaparHtml(e.cargo || '')}" placeholder="Ej. Tejedora, Atención del almacén">
+      <label style="margin-top:8px;">Área</label>
+      <select id="edit-emp-area-${e.id}">${opcionesArea}</select>
+      <label style="margin-top:8px;">Tipo de contrato</label>
+      <select id="edit-emp-tipocontrato-${e.id}">${opciones(TIPOS_CONTRATO_EMPLEADO, e.tipo_contrato || 'fijo')}</select>
+      <label style="margin-top:8px;">Fecha de fin del contrato <span style="font-size:10px;opacity:0.6;">(solo término fijo)</span></label>
+      <input type="date" id="edit-emp-fincontrato-${e.id}" value="${e.fecha_fin_contrato ? e.fecha_fin_contrato.slice(0, 10) : ''}">
+      <label style="margin-top:8px;">Jornada</label>
+      <select id="edit-emp-jornada-${e.id}"><option value="">Sin definir</option>${opciones(JORNADAS_EMPLEADO, e.jornada)}</select>
+      <label style="margin-top:8px;">Cuenta de acceso al ERP (rol)</label>
+      <select id="edit-emp-cuenta-${e.id}">${opcionesCuenta}</select>
+      <div style="font-size:10.5px;opacity:0.6;margin-top:3px;">El rol lo define la cuenta. Cada persona usa su propia cuenta, nunca se comparte.</div>
+      <label style="margin-top:8px;">Caja de compensación</label>
+      <input type="text" id="edit-emp-caja-${e.id}" value="${escaparHtml(e.caja_compensacion || '')}" placeholder="Ej. Comfamiliares">`;
   }
 
   function renderizarListaEmpleados() {
@@ -21153,6 +21253,7 @@
             <input type="tel" id="edit-emp-telefono-${e.id}" value="${escaparHtml(e.telefono || '')}">
             <label style="margin-top:8px;">Correo electrónico</label>
             <input type="email" id="edit-emp-correo-${e.id}" value="${escaparHtml(e.correo_electronico || '')}">
+            ${htmlCamposFichaEdicion(e)}
             <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--rosa-suave);font-size:11.5px;font-weight:600;opacity:0.7;">Afiliaciones</div>
             <label style="margin-top:6px;">EPS</label>
             <input type="text" id="edit-emp-eps-${e.id}" value="${escaparHtml(e.eps || '')}">
@@ -21182,6 +21283,7 @@
               <span class="fila-inventario-nombre">${escaparHtml(e.nombre_completo)}</span>
               <span class="fila-inventario-tipo-tag" style="background:var(--azul-acero);color:white;">👑 Propietaria</span>
             </div>
+            ${htmlFichaResumenEmpleado(e)}
             <div style="font-size:11.5px;margin-top:6px;opacity:0.75;">No tiene nómina formal (persona natural). Se le registra un retiro + cotización como independiente, garantizando mínimo el SMMLV.</div>
             <div class="fila-inventario-acciones" style="margin-top:8px;flex-wrap:wrap;">
               <button class="btn-mini editar" onclick="activarEdicionEmpleado('${e.id}')">✏️ Editar</button>
@@ -21206,6 +21308,7 @@
             <span class="fila-inventario-nombre">${escaparHtml(e.nombre_completo)}</span>
             <span class="fila-inventario-tipo-tag">Clase ${e.clase_riesgo_arl}</span>
           </div>
+          ${htmlFichaResumenEmpleado(e)}
           <div style="font-size:12.5px;margin-top:6px;">
             Salario: <strong>${formatearMoneda(e.salario_basico)}</strong> · 🏢 ${escaparHtml(nombreDepto)}${edad !== null ? ' · ' + edad + ' años' : ''}<br>
             <span style="opacity:0.6;">Ingreso: ${new Date(e.fecha_ingreso).toLocaleDateString('es-CO')}${e.teletrabajo ? ' · Teletrabajo' : ''}${e.numero_documento ? ' · Doc: ' + escaparHtml(e.numero_documento) : ''}</span>
@@ -29078,6 +29181,12 @@
           `).join('');
     }
 
+    const empDoc = empleadosActivosCache.find(x => x.id === empleadoId) || (typeof empleadosRhCache !== "undefined" ? empleadosRhCache.find(x => x.id === empleadoId) : null);
+    const faltantes = empDoc && documentos ? documentosFaltantesEmpleado(empDoc) : [];
+    const avisoFaltantes = !empDoc || !documentos ? '' : (faltantes.length
+      ? `<div style="font-size:12px;background:#fff3d6;color:#8a5a00;border-radius:8px;padding:8px 10px;margin-bottom:8px;">Faltan: ${faltantes.map(t => etiquetasTipoDocumento[t] || t).join(', ')}</div>`
+      : '<div style="font-size:12px;background:#e3f1e6;color:#2e6b3a;border-radius:8px;padding:8px 10px;margin-bottom:8px;">✓ Tiene todos los documentos requeridos</div>');
+
     const formularioSubida = soloLectura ? `
       <div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--rosa-medio);font-size:11px;opacity:0.6;">
         Para subir o eliminar documentos, ve a <strong>Talento Humano</strong>.
@@ -29105,6 +29214,7 @@
     return `
       <div style="margin-top:10px;padding:12px;background:var(--rosa-suave);border-radius:10px;">
         <div style="font-size:12.5px;font-weight:700;margin-bottom:8px;">📁 Documentos${soloLectura ? ' (solo lectura)' : ''}</div>
+        ${avisoFaltantes}
         ${filas}
         ${formularioSubida}
         <div class="mensaje" id="mensajeDocRh-${empleadoId}"></div>
@@ -32002,6 +32112,25 @@
     if (!resp.ok) {
       const datos = await resp.json().catch(() => ({}));
       mostrarMensaje('mensajeEmpleados', 'No se pudo guardar el cambio: ' + (datos.error || 'Error desconocido'), 'error');
+      return;
+    }
+
+    // Campos de la ficha que se guardan directo en Supabase (la administradora tiene permiso por RLS)
+    const tipoContrato = document.getElementById(`edit-emp-tipocontrato-${empleadoId}`).value;
+    const fechaFin = document.getElementById(`edit-emp-fincontrato-${empleadoId}`).value;
+    if (fechaFin && fechaFin < fechaIngreso) { mostrarMensaje('mensajeEmpleados', 'La fecha de fin del contrato no puede ser anterior a la de ingreso. (Los demás cambios ya quedaron guardados.)', 'error'); await cargarEmpleados(); return; }
+    const { error: errorFicha } = await supabaseClient.from('empleados').update({
+      cargo: document.getElementById(`edit-emp-cargo-${empleadoId}`).value.trim() || null,
+      area: document.getElementById(`edit-emp-area-${empleadoId}`).value || null,
+      jornada: document.getElementById(`edit-emp-jornada-${empleadoId}`).value || null,
+      tipo_contrato: tipoContrato,
+      fecha_fin_contrato: tipoContrato === 'fijo' && fechaFin ? fechaFin : null,
+      caja_compensacion: document.getElementById(`edit-emp-caja-${empleadoId}`).value.trim() || null,
+      user_id: document.getElementById(`edit-emp-cuenta-${empleadoId}`).value || null
+    }).eq('id', empleadoId);
+    if (errorFicha) {
+      mostrarMensaje('mensajeEmpleados', 'Se guardaron los datos básicos, pero no el cargo/contrato/cuenta: ' + errorFicha.message, 'error');
+      await cargarEmpleados();
       return;
     }
 

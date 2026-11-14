@@ -40,3 +40,18 @@ Se usará la **solución gratuita de la DIAN** (se digita a mano cada mes en el 
 - Contrato: los 3 empleados a **término fijo de 1 año** (decisión de Sara, 14-nov; corrigió "indefinido"). Falta: jornada (completa/medio tiempo) y salario de cada uno. Las 2 tejedoras pasan a ser empleadas: definir con el contador si dejan de pagarse por honorarios y desde qué fecha (afecta `honorarios_tejedora_nomina` y la política contable "todo lo tejido se paga como honorarios hasta abrir el local").
 - Si las tejedoras siguen por honorarios o alguna pasa a contrato.
 
+
+## Fase 1 — Ficha del empleado (hecha 15-nov-2026)
+**Qué ya existía** (Nómina → Empleados): datos personales, contrato (tipo, ingreso, retiro, salario, horas por semana), EPS/pensión/cesantías/ARL, beneficiarios, historial de salario, préstamos, certificado laboral y documentos (hoja de vida, contrato, cédula, afiliaciones).
+
+**Qué se agregó** (reusando la tabla `empleados`; ver `index.html`, buscar `FICHA DEL EMPLEADO`):
+- Columnas nuevas en `empleados`: `cargo`, `area` (Taller, Tienda, Academy, Administración), `jornada` (completa, medio tiempo, por horas), `fecha_fin_contrato` (solo término fijo; no puede ser anterior al ingreso) y `caja_compensacion`.
+- Se usa `empleados.user_id` (ya existía, vacío) como **cuenta de acceso**: el rol en el ERP se toma de `usuarios_roles`. En Editar hay un selector (no deja repetir una cuenta en dos empleados).
+- Resumen en la ficha con etiquetas: área, tipo de contrato, jornada, rol del ERP, contrato por vencer (aviso a 60 días, vencido, o "falta fecha de fin" si es término fijo), documentos que faltan y afiliaciones sin dato.
+- Documentos requeridos: cédula, hoja de vida, contrato, afiliación EPS, pensión, ARL y caja (la propietaria no necesita contrato). El panel de documentos lista lo que falta.
+- Los campos nuevos se guardan directo en Supabase (la administradora tiene permiso por RLS); el Worker no se tocó.
+- Las 3 fichas actuales quedaron con cargo y área (Sara: Academy, Jennifer: Taller, Manuela: Tienda). No se cambió ningún salario ni tipo de contrato.
+
+**Probado:** Playwright (se ven las etiquetas, el formulario trae los 7 campos nuevos, el guardado manda los datos correctos y bloquea fecha de fin anterior al ingreso) y SQL con rollback (rechaza área inválida y fecha de fin anterior al ingreso; acepta datos válidos).
+
+**Falta:** al crear un empleado nuevo, pedir estos campos desde el inicio; conectar cada ficha con su cuenta; cargar las 3 fichas reales de la apertura (esperando nombres, jornada y salario de Sara); contador por prestación de servicios va como tercero/honorarios, no en esta lista.

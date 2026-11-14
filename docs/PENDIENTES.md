@@ -81,6 +81,13 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [x] Celular: la barra de búsqueda ya no queda por encima del fondo oscuro del menú, no tapa la barra rosada y el texto cabe.
 - [x] Menú lateral oculto sin forma de volver a mostrarlo (PR #100).
 
+### Chat 9 · Personal
+- [x] Fase 1 — Ficha del empleado (15-nov): cargo, área, jornada, tipo y fin de contrato, caja de compensación, cuenta de acceso (rol) y avisos de documentos que faltan y de contrato por vencer (ver `docs/temas/personal.md`).
+- [ ] Fase 2 — Turnos y asistencia · Fase 3 — Vacaciones y permisos · Fase 4 — Tejedoras · Fase 5 — Exportar novedades / resumen mensual para la DIAN.
+- [ ] Permisos de Manuela (inventario de Tienda y bodega, proveedores, órdenes a proveedores; sin compras/pagos ni contabilidad).
+- [ ] Al crear un empleado nuevo, pedir cargo/área/jornada/fin de contrato desde el inicio (hoy se llenan al "Editar").
+- **Para otro chat:** nada por ahora.
+
 ## Sara
 - [ ] 🔴 Mensaje exacto/captura del error de ventas → chat 1.
 - [ ] Decidir el "sí" del chat 5 (Impuestos).
@@ -89,6 +96,8 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [ ] Servicios públicos y arriendo de octubre (atrasado, fecha 2026-10-05).
 - [ ] Arqueo físico de caja (última referencia $1.353.066).
 - [ ] Fecha de inauguración del almacén.
+- [ ] Personal: nombres de las 2 tejedoras y de quien atiende el almacén (¿Manuela?), con jornada y salario de cada una; decidir si las filas actuales (Sara, Jennifer, Manuela, hoy "indefinido") se quedan o se reemplazan por los 3 contratos a término fijo de 1 año. Sara y Jennifer: ver pregunta al contador.
+- [ ] Personal: en Editar de cada empleado, escoger su "Cuenta de acceso" (hoy ninguna ficha está conectada) y subir los documentos que faltan.
 - [ ] Excel de gramos por orden.
 - [ ] Cambiar los 3 códigos de barras internos por GS1.
 - [ ] Asignar tejedoras y horas en el plan de tejido.
@@ -106,6 +115,7 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [ ] ¿Se puede decir "anticipo de **al menos** el 50 %"? (el ERP permite 50/70/100 % y menos con autorización).
 
 ## Contador (Hernando)
+- [ ] Personal (14-nov): ¿Sara (y Jennifer si es socia) pueden ir como empleadas siendo persona natural, o siguen como retiros del propietario (3805) u honorarios? Prestaciones, seguridad social y tipo de contrato de los 3 empleados; si las 2 tejedoras dejan de pagarse por honorarios y desde qué fecha; campos y plazo mensual de la nómina electrónica gratuita de la DIAN.
 - [ ] Impuestos no se pagan desde la cuenta del Fondo; cómo registrar los giros del Fondo (cuenta exclusiva, sin mezclar).
 - [ ] UVT y tarifas SIMPLE, escenario de provisión, tabla de renta — lista de 22 preguntas en `docs/temas/impuestos-preguntas-contador.md`. Faltan: UVT 2026 confirmada y tarifas SIMPLE 2026/2027 (hoy 0 cargadas).
 - [ ] Verificar ICA Villamaría (preguntas 15–19 del mismo archivo).
