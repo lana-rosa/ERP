@@ -1070,6 +1070,7 @@
   <div class="sidebar-nav">
     <button class="nav-btn" id="nav-dashboard" onclick="mostrarPantallaDashboard()"><span class="nav-icon">🏠</span> Dashboard</button>
     <button class="nav-btn" id="nav-calendario" onclick="mostrarPantallaCalendario()"><span class="nav-icon">📅</span> Calendario del equipo</button>
+    <button class="nav-btn" id="nav-sistema-operativo" onclick="abrirSistemaOperativo()" style="display:none;" title="Se abre en otra pestaña"><span class="nav-icon">🧭</span> Sistema Operativo <span style="margin-left:auto;opacity:0.6;">↗</span></button>
     <button class="nav-btn" id="nav-mi-produccion" onclick="mostrarPantallaMiProduccion()" style="display:none;"><span class="nav-icon">🧵</span> Mi producción</button>
     <button class="nav-btn" id="nav-enviar-correo" onclick="abrirRedactarCorreo()" style="display:none;"><span class="nav-icon">✉️</span> Enviar correo</button>
 
@@ -5947,6 +5948,10 @@
   const SUPABASE_URL = 'https://ngjoognzvehwjtpqwrqe.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5nam9vZ256dmVod2p0cHF3cnFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3MDAzMDYsImV4cCI6MjA5NzI3NjMwNn0.2BNYuaQOTh-lU8GZcYhJAnZPBiJvT5PwB9MYZwNHTUE';
   const WORKER_URL = 'https://lana-rosa-os-pos.saralmunoz1301.workers.dev';
+  // Lana Rosa OS (Sistemas de Gestión). Si cambia de dirección, se cambia solo aquí.
+  const URL_SISTEMA_OPERATIVO = 'https://lana-rosa.github.io/SO/';
+  // Roles personalizados que, además de la administradora, ven el ítem "Sistema Operativo" en el menú.
+  const ROLES_PERSONALIZADOS_SO = ['Gerencia SO', 'Taller SO'];
 
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -6129,6 +6134,7 @@
   let sesionActual = null; // { token, userId, email }
   let politicaTratamientoDatosCache = null;
   let rolActual = null;
+  let nombreRolPersonalizadoActual = null; // nombre del rol personalizado asignado (ej. "Taller SO"), si tiene
   let turnoActivoActual = null;
   let centroCostoTiendaId = null;
   let centroCostoTallerId = null;
@@ -6428,6 +6434,7 @@
     await supabaseClient.auth.signOut();
     sesionActual = null;
     rolActual = null;
+    nombreRolPersonalizadoActual = null;
     turnoActivoActual = null;
     document.getElementById('inputClave').value = '';
     alternarVerClave(true);
@@ -6578,6 +6585,12 @@
     return rolActual === 'administrador' || (rolesAdicionalesActual || []).includes('administrador');
   }
 
+  // Abre Lana Rosa OS en una pestaña nueva (la sesión del ERP no se comparte: allá se inicia sesión una vez).
+  function abrirSistemaOperativo() {
+    window.open(URL_SISTEMA_OPERATIVO, '_blank', 'noopener');
+    cerrarSidebarMovil();
+  }
+
   function configurarSidebarPorRol() {
     const rolesUsuario = [rolActual, ...rolesAdicionalesActual];
     const esAdmin = rolesUsuario.includes('administrador');
@@ -6594,6 +6607,9 @@
     };
 
     // Grupos completos (acordeón) — reorganizados según los 7 puntos estándar de un ERP
+    // Sistema Operativo (otra aplicación): administradora y roles "Gerencia SO" / "Taller SO".
+    // Cajero, Líder de Tienda y contador no lo ven (salvo permiso manual de la administradora).
+    mostrar('nav-sistema-operativo', esAdmin || ROLES_PERSONALIZADOS_SO.includes(nombreRolPersonalizadoActual));
     mostrar('deptoVentasGrupo', esAdmin || esCajero);
     mostrar('deptoComprasGrupo', esAdmin);
     mostrar('deptoInventarioGrupo', esAdmin || esCajero || esTaller || esContador);
@@ -6909,7 +6925,7 @@
   async function obtenerRolUsuario() {
     const { data, error } = await supabaseClient
       .from('usuarios_roles')
-      .select('rol, es_jefe_departamento, centro_costo_liderado_id, centros_costo(nombre)')
+      .select('rol, es_jefe_departamento, centro_costo_liderado_id, centros_costo(nombre), roles_personalizados(nombre)')
       .eq('user_id', sesionActual.userId)
       .eq('activo', true)
       .single();
@@ -6919,6 +6935,7 @@
       return;
     }
     rolActual = data.rol;
+    nombreRolPersonalizadoActual = (data.roles_personalizados && data.roles_personalizados.nombre) || null;
     await cargarIdsDepartamentosClave();
     await cargarIdentidadPropiaEmpleado();
     await cargarRolesYPermisosPropios();
@@ -15020,6 +15037,7 @@
   // USUARIOS Y PERMISOS
   // ============================================================
   const CATALOGO_MODULOS = [
+    { clave: 'nav-sistema-operativo', etiqueta: '🧭 Sistema Operativo (abre otra página)' },
     { clave: 'deptoVentasGrupo', etiqueta: '🛍️ Punto de Venta (grupo completo)' },
     { clave: 'nav-clientes-dir', etiqueta: '　　Clientes' },
     { clave: 'nav-cotizaciones', etiqueta: '　　Cotizaciones' },
