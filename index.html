@@ -15495,11 +15495,12 @@
   // Horario de la persona que entró (aparece en el menú, junto a "Marcar entrada")
   async function agregarMiHorarioAlWidget(cont) {
     try {
-      const { data: emp } = await supabaseClient.from('empleados').select('id').eq('user_id', sesionActual.userId).maybeSingle();
-      if (!emp) return;
+      // Se pregunta por función porque una cajera o tejedora no puede leer la tabla de empleados.
+      const { data: miEmpleadoId } = await supabaseClient.rpc('fn_mi_empleado_id');
+      if (!miEmpleadoId) return;
       const hoy = hoyBogotaISO();
       const { data } = await supabaseClient.from('horarios_personal').select('fecha, hora_inicio, hora_fin')
-        .eq('empleado_id', emp.id).gte('fecha', hoy).lte('fecha', sumarDiasISO(hoy, 6)).order('fecha').order('hora_inicio').limit(4);
+        .eq('empleado_id', miEmpleadoId).gte('fecha', hoy).lte('fecha', sumarDiasISO(hoy, 6)).order('fecha').order('hora_inicio').limit(4);
       if (!data || data.length === 0) return;
       const lineas = data.map(t => `${t.fecha === hoy ? 'Hoy' : fechaCortaISO(t.fecha)} · ${hhmm(t.hora_inicio)}–${hhmm(t.hora_fin)}`).join('<br>');
       cont.insertAdjacentHTML('afterbegin', `<div style="font-size:11px;color:rgba(255,255,255,0.85);margin-bottom:8px;line-height:1.5;">🗓️ <strong>Mi horario</strong><br>${lineas}</div>`);

@@ -71,7 +71,7 @@ Se usará la **solución gratuita de la DIAN** (se digita a mano cada mes en el 
 
 **Probado:** SQL con rollback simulando a la administradora y a un cajero (turno, cruce rechazado, horas invertidas rechazadas, marcación sin motivo rechazada, tarde 15 min, ausente, copiar semana sin duplicar, festivo 16-nov y 8-dic, el cajero no puede programar ni ver el resumen). Playwright con datos de prueba (cuadrícula, guardar varios días, error de cruce, editar, quitar, copiar, resumen mensual, corregir marcación, "Mi horario"). No se probó con datos reales ni con marcaciones reales del Worker (hoy hay 0).
 
-**Falta:** enlazar con el turno de caja; privacidad de `registro_horas_empleado` (hoy la lee cualquier usuario activo); pasar el resumen a Novedades de nómina cuando el contador defina las reglas (fase 5).
+**Falta:** enlazar con el turno de caja; pasar el resumen a Novedades de nómina cuando el contador defina las reglas (fase 5).
 
 ## Permisos de Manuela — rol "Líder de Tienda" (hecho 15-nov-2026)
 **Cómo está armado (para sumar personas por área sin rehacer permisos):** cada puesto es un *rol personalizado* (`roles_personalizados`, con su rol base `cajero`/`taller`/`contador`) más una lista de ítems de menú extra (`permisos_default_rol_personalizado`). Al crear un usuario en Gestión de usuarios con ese rol se copian a `permisos_modulos_usuario`. Se creó **"Líder de Tienda"** (base `cajero`) y se le asignó a Manuela, con sus permisos extra: `nav-proveedores-dir` y `nav-ordenes-compra`. El rol `cajero` no se tocó. Para otra persona de Tienda, o de Taller/Academy, se crea un rol parecido y se elige al crear su usuario.
@@ -91,3 +91,10 @@ Se usará la **solución gratuita de la DIAN** (se digita a mano cada mes en el 
 ## Lo que vive en el Sistema Operativo (SO), no en el ERP
 - **Auditorías 5S** (`sistema_operativo.auditorias_5s`) y **SG-SST** (evaluaciones médicas, encuesta sociodemográfica): ya existen en el SO. **No se construyen en el ERP.** Si Sara pide algo de esto, mandarlo al SO.
 - El ERP solo guarda lo del día a día del personal: ficha, turnos y asistencia, vacaciones y permisos, tejedoras y novedades para la nómina.
+
+## Privacidad de las horas trabajadas (hecha 15-nov-2026, aprobada por Sara)
+- Antes: cualquier usuario activo (también cajero y taller) podía leer `registro_horas_empleado`. Ahora: **cada empleada ve solo las suyas; el líder de área (`usuarios_roles.es_jefe_departamento` + `centro_costo_liderado_id`) las de los empleados de su departamento; administradoras y contador todas** (el contador para preparar la nómina; Sara lo aprobó). Nadie escribe directo: las marcaciones entran por el Worker (menú) o por `fn_rh_marcacion_manual` (administradora).
+- Funciones nuevas (internas, `security definer`): `fn_mi_empleado_id()` y `fn_puede_ver_horas_empleado(empleado)`. Se usan porque una cajera o tejedora **no puede leer la tabla `empleados`**: una regla que la consultara por dentro no le mostraría nada, ni sus propias horas.
+- Se corrigió "Mi horario" (fase 2): buscaba la ficha de la empleada leyendo `empleados` y a una cajera no le salía nada; ahora usa `fn_mi_empleado_id()`. La política de `horarios_personal` ("Empleado ve su horario") usa la misma función.
+- Probado con SQL con rollback: Manuela (líder de Tienda) ve solo su hora y no la de Jennifer, como empleada común ve solo la suya, Sara ve todas, el contador ve todas, un usuario sin ficha ve 0 y no se puede insertar ni modificar directo. Verificado de nuevo después de aplicarlo.
+- Si el Worker deja de funcionar con esto: usa la llave de servicio, que no pasa por estas reglas.
