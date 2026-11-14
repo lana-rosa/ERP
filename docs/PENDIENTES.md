@@ -94,6 +94,7 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [ ] Aviso a las administradoras cuando hay pedidos "por aprobar" (hoy solo se ven en Órdenes de compra → ⏳ Por aprobar).
 - **Para otro chat (Inventario/Compras):** el Worker deja crear/ver órdenes de compra y manejar tomas de inventario solo a `administrador` (no editable desde aquí); por eso se hicieron funciones en Supabase para la Tienda. El directorio de proveedores incluye al equipo y a tejedoras (honorarios): la Tienda los ve.
 - [ ] Al crear un empleado nuevo, pedir cargo/área/jornada/fin de contrato desde el inicio (hoy se llenan al "Editar").
+- **Fuera del ERP (14-nov, Orquestador):** lista de chequeo 5S y todo lo de SG-SST viven en el Sistema Operativo (`sistema_operativo.auditorias_5s`); no se construyen aquí.
 - **Para otro chat:** nada por ahora.
 
 ## Sara
