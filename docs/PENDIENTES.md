@@ -84,7 +84,9 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 ### Chat 9 · Personal
 - [x] Fase 1 — Ficha del empleado (15-nov): cargo, área, jornada, tipo y fin de contrato, caja de compensación, cuenta de acceso (rol) y avisos de documentos que faltan y de contrato por vencer (ver `docs/temas/personal.md`).
 - [x] Fase 2 — Turnos y asistencia (15-nov): turnos por semana, copiar semana, festivos, resumen de asistencia y del mes, corregir marcaciones, "Mi horario" en el menú (ver `docs/temas/personal.md`).
-- [ ] Fase 3 — Vacaciones y permisos · Fase 4 — Tejedoras · Fase 5 — Exportar novedades / resumen mensual para la DIAN.
+- [x] Fase 3 — Vacaciones y permisos (15-nov): la empleada pide desde Mi perfil, una administradora aprueba o rechaza en Talento Humano, saldo de días, y la asistencia no cuenta como ausente lo aprobado (ver `docs/temas/personal.md`).
+- [ ] Fase 4 — Tejedoras · Fase 5 — Exportar novedades / resumen mensual para la DIAN.
+- [ ] Vacaciones: avisar a la empleada cuando le respondan (hoy lo ve al entrar en Mi perfil → Vacaciones y permisos); pantalla para que una administradora registre una ausencia a nombre de otra persona (la función ya existe: `fn_aus_solicitar` con `p_empleado`); mostrar las ausencias aprobadas en el calendario del equipo.
 - [ ] Enlazar la asistencia con el turno de caja de la Tienda (hoy van separados).
 - [x] Privacidad de las horas (15-nov, aprobado por Sara): `registro_horas_empleado` ya no la lee cualquier usuario; cada empleada ve las suyas, el líder de área las de su área, administradoras y contador todas (ver `docs/temas/personal.md`).
 - **Para otro chat (Contabilidad/Calendario):** `fn_festivos_colombia` fallaba siempre (devolvía fecha con hora en los festivos que pasan a lunes). Se corrigió el tipo de dato el 15-nov sin cambiar ninguna fecha; conviene que quien use festivos lo confirme.
@@ -124,6 +126,7 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [ ] ¿Se puede decir "anticipo de **al menos** el 50 %"? (el ERP permite 50/70/100 % y menos con autorización).
 
 ## Contador (Hernando)
+- [ ] Personal (15-nov): vacaciones y permisos. ¿Los días de vacaciones se cuentan de lunes a sábado o de lunes a viernes (hoy lunes a sábado sin festivos)? ¿Se mantiene 15 días hábiles por año, desde cuándo se pueden tomar, y con cuánto aviso se piden? ¿Los permisos y la calamidad doméstica se pagan, se descuentan o se reponen? ¿Hay vacaciones compensadas en dinero? Mientras tanto la administradora ajusta los días al aprobar.
 - [ ] Personal (15-nov): recargos de horas extra y trabajo en domingo/festivo (diurnas, nocturnas, dominicales; desde cuándo cuenta la hora nocturna), jornada máxima semanal, tolerancia para llegadas tarde y qué hacer con el descanso. El ERP hoy solo suma horas y marca domingos y festivos.
 - [ ] Personal (14-nov): ¿Sara (y Jennifer si es socia) pueden ir como empleadas siendo persona natural, o siguen como retiros del propietario (3805) u honorarios? Prestaciones, seguridad social y tipo de contrato de los 3 empleados; si las 2 tejedoras dejan de pagarse por honorarios y desde qué fecha; campos y plazo mensual de la nómina electrónica gratuita de la DIAN.
 - [ ] Impuestos no se pagan desde la cuenta del Fondo; cómo registrar los giros del Fondo (cuenta exclusiva, sin mezclar).
