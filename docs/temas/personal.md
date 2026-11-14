@@ -12,6 +12,9 @@ Construir en el ERP lo del día a día; la **nómina electrónica a la DIAN NO s
 4. **Tejedoras:** horas y pagos (honorarios) usando lo existente: `producto_tejido_plan`, `tejedoras_capacidad`, `tejedoras_usuarios`, `honorarios_tejedora_nomina`.
 5. **Exportar novedades** (horas, extras, ausencias) para el proveedor de nómina.
 
+## Nómina electrónica (decisión de Sara, 14-nov)
+Se usará la **solución gratuita de la DIAN** (se digita a mano cada mes en el portal de la DIAN). El ERP NO transmite a la DIAN: debe generar un **resumen mensual por empleado listo para copiar** (días/horas trabajadas, salario, horas extra y recargos, auxilio de transporte, incapacidades, vacaciones y licencias, deducciones de salud y pensión), en el mismo orden de los campos del formulario de la DIAN. Confirmar con el contador campos y plazo de transmisión mensual.
+
 ## Reglas
 - Acceso total solo Sara y Jennifer (administrador). Cada empleado nuevo tiene su propia cuenta con su rol (`cajero`, `taller`, `contador`); nunca se comparte usuario.
 - Datos personales sensibles (salud, salario): solo administradora; respetar Ley 1581.
@@ -24,4 +27,4 @@ Construir en el ERP lo del día a día; la **nómina electrónica a la DIAN NO s
 ## Pendiente de Sara
 - Contrato: los 3 empleados a **término fijo de 1 año** (decisión de Sara, 14-nov; corrigió "indefinido"). Falta: jornada (completa/medio tiempo) y salario de cada uno. Las 2 tejedoras pasan a ser empleadas: definir con el contador si dejan de pagarse por honorarios y desde qué fecha (afecta `honorarios_tejedora_nomina` y la política contable "todo lo tejido se paga como honorarios hasta abrir el local").
 - Si las tejedoras siguen por honorarios o alguna pasa a contrato.
-- Proveedor de nómina electrónica (preguntar a Hernando).
+
