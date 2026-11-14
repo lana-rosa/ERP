@@ -88,7 +88,11 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [ ] Enlazar la asistencia con el turno de caja de la Tienda (hoy van separados).
 - [ ] Privacidad: la tabla `registro_horas_empleado` la puede leer cualquier usuario activo (también cajero y taller). Conviene dejar que cada quien vea solo las suyas; el Worker `/api/pos/horas/*` no se puede revisar desde aquí.
 - **Para otro chat (Contabilidad/Calendario):** `fn_festivos_colombia` fallaba siempre (devolvía fecha con hora en los festivos que pasan a lunes). Se corrigió el tipo de dato el 15-nov sin cambiar ninguna fecha; conviene que quien use festivos lo confirme.
-- [ ] Permisos de Manuela (inventario de Tienda y bodega, proveedores, órdenes a proveedores; sin compras/pagos ni contabilidad).
+- [x] Permisos de Manuela (15-nov): rol "Líder de Tienda" (base cajero) con Proveedores y Órdenes de compra visibles; pedidos a proveedores quedan "por aprobar" y los aprueba una administradora; cuenta el inventario de la Tienda y la administradora finaliza la toma. Detalle en `docs/temas/personal.md`.
+- [ ] 🔴 **Seguridad (decide Sara):** 131 funciones de la base de datos (nómina, pago de nómina, retiros del propietario, honorarios, cierre contable, eliminar período…) solo comprueban que la persona tenga *algún* rol, así que un cajero con su sesión podría llamarlas directo aunque no vea el menú. La app nunca las llama directo (las llama el Worker con otra llave), así que se pueden restringir a administradora/contador sin romper nada. Falta tu visto bueno por ser dinero. Lista completa: consulta de `pg_proc` con `fn_rol_actual() is null and not public.fn_es_tejedora()`.
+- [ ] Manuela y las compras: hoy puede registrar compras y gastos de Tienda (ya podía como cajero) escogiendo quién las aprobó; no hay aprobación real. ¿Se deja así o solo las registra una administradora?
+- [ ] Aviso a las administradoras cuando hay pedidos "por aprobar" (hoy solo se ven en Órdenes de compra → ⏳ Por aprobar).
+- **Para otro chat (Inventario/Compras):** el Worker deja crear/ver órdenes de compra y manejar tomas de inventario solo a `administrador` (no editable desde aquí); por eso se hicieron funciones en Supabase para la Tienda. El directorio de proveedores incluye al equipo y a tejedoras (honorarios): la Tienda los ve.
 - [ ] Al crear un empleado nuevo, pedir cargo/área/jornada/fin de contrato desde el inicio (hoy se llenan al "Editar").
 - **Para otro chat:** nada por ahora.
 

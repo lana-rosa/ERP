@@ -1920,10 +1920,11 @@
       <div class="panel" style="max-width:none;max-height:none;">
         <h2 id="tituloTomaEnProceso"></h2>
         <div id="listaConteoTomaInventario"></div>
-        <div style="display:flex;gap:10px;margin-top:14px;">
+        <div id="accionesTomaAdmin" style="display:flex;gap:10px;margin-top:14px;">
           <button class="btn-principal" style="width:auto;" onclick="confirmarFinalizarTomaInventario()">✅ Finalizar y ajustar diferencias</button>
           <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => confirmarCancelarTomaInventario())">Cancelar toma</button>
         </div>
+        <div id="avisoTomaSinAdmin" class="oculto" style="font-size:12px;background:var(--rosa-suave);border-radius:9px;padding:10px 14px;margin-top:14px;">Cuando termines de contar, avísale a una administradora: ella revisa las diferencias y finaliza la toma para ajustar el inventario.</div>
         <div class="mensaje" id="mensajeTomaInventario"></div>
       </div>
     </div>
@@ -4546,7 +4547,8 @@
       <label for="ocNotas" style="margin-top:10px;">Notas <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
       <input type="text" id="ocNotas" placeholder="Ej: Entregar en el taller">
 
-      <button class="btn-principal" onclick="confirmarCrearOrdenCompra()">Crear orden de compra</button>
+      <button class="btn-principal" id="btnCrearOrdenCompra" onclick="confirmarCrearOrdenCompra()">Crear orden de compra</button>
+      <div id="avisoOrdenCompraSolicitud" class="oculto" style="font-size:11.5px;opacity:0.75;margin-top:8px;">Tu pedido queda <strong>por aprobar</strong>: una administradora lo revisa y lo envía al proveedor.</div>
       <div class="mensaje" id="mensajeOrdenCompra"></div>
     </div>
 
@@ -4554,6 +4556,7 @@
       <h2>Órdenes</h2>
       <div class="filtro-tipo" style="margin-bottom:12px;">
         <button class="chip-filtro activo" data-filtro-oc="" onclick="cambiarFiltroOrdenesCompra('', this)">Todas</button>
+        <button class="chip-filtro" data-filtro-oc="por_aprobar" onclick="cambiarFiltroOrdenesCompra('por_aprobar', this)">⏳ Por aprobar</button>
         <button class="chip-filtro" data-filtro-oc="enviada" onclick="cambiarFiltroOrdenesCompra('enviada', this)">Enviadas</button>
         <button class="chip-filtro" data-filtro-oc="recibida" onclick="cambiarFiltroOrdenesCompra('recibida', this)">Recibidas</button>
       </div>
@@ -6521,6 +6524,11 @@
   }
 
   let permisosOverrideActual = {};
+
+  // ¿Quien entró es administradora? (las demás personas piden y la administradora aprueba)
+  function esAdministradoraActual() {
+    return rolActual === 'administrador' || (rolesAdicionalesActual || []).includes('administrador');
+  }
 
   function configurarSidebarPorRol() {
     const rolesUsuario = [rolActual, ...rolesAdicionalesActual];
@@ -23328,6 +23336,9 @@
     document.getElementById('ocFechaEntrega').value = '';
     document.getElementById('ocNotas').value = '';
     ocultarMensaje('mensajeOrdenCompra');
+    const esAdminOC = esAdministradoraActual();
+    document.getElementById('btnCrearOrdenCompra').textContent = esAdminOC ? 'Crear orden de compra' : 'Enviar pedido para aprobación';
+    document.getElementById('avisoOrdenCompraSolicitud').classList.toggle('oculto', esAdminOC);
 
     const respProveedores = await fetch(WORKER_URL + '/api/pos/terceros?tipo=proveedor', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
     if (respProveedores.ok) {
@@ -23379,15 +23390,24 @@
     if (!proveedorId) { mostrarMensaje('mensajeOrdenCompra', 'Selecciona el proveedor.', 'error'); return; }
     if (carritoOrdenCompra.length === 0) { mostrarMensaje('mensajeOrdenCompra', 'Agrega al menos un ítem.', 'error'); return; }
 
-    const resp = await fetch(WORKER_URL + '/api/pos/ordenes-compra', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ proveedor_id: proveedorId, fecha_entrega_esperada: fechaEntrega || null, items: carritoOrdenCompra, notas })
-    });
-    const datos = await resp.json();
-    if (!resp.ok) { mostrarMensaje('mensajeOrdenCompra', datos.error || 'No se pudo crear.', 'error'); return; }
+    let numeroCreado;
+    if (esAdministradoraActual()) {
+      const resp = await fetch(WORKER_URL + '/api/pos/ordenes-compra', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+        body: JSON.stringify({ proveedor_id: proveedorId, fecha_entrega_esperada: fechaEntrega || null, items: carritoOrdenCompra, notas })
+      });
+      const datos = await resp.json();
+      if (!resp.ok) { mostrarMensaje('mensajeOrdenCompra', datos.error || 'No se pudo crear.', 'error'); return; }
+      numeroCreado = datos.orden.numero_orden;
+    } else {
+      // La Tienda no crea la orden directamente: queda "por aprobar" hasta que una administradora la apruebe.
+      const { data, error } = await supabaseClient.rpc('fn_oc_crear_solicitud', { p_proveedor: proveedorId, p_fecha_entrega: fechaEntrega || null, p_items: carritoOrdenCompra, p_notas: notas || null });
+      if (error) { mostrarMensaje('mensajeOrdenCompra', error.message, 'error'); return; }
+      numeroCreado = data.numero_orden;
+    }
 
-    mostrarMensaje('mensajeOrdenCompra', `✅ Orden ${datos.orden.numero_orden} creada.`, 'exito');
+    mostrarMensaje('mensajeOrdenCompra', esAdministradoraActual() ? `✅ Orden ${numeroCreado} creada.` : `✅ Pedido ${numeroCreado} enviado. Una administradora debe aprobarlo antes de pedirlo al proveedor.`, 'exito');
     carritoOrdenCompra = [];
     renderizarItemsOrdenCompra();
     document.getElementById('ocNotas').value = '';
@@ -23404,9 +23424,18 @@
   async function cargarOrdenesCompra() {
     const cont = document.getElementById('listaOrdenesCompra');
     cont.innerHTML = '<div class="cargando">Cargando...</div>';
-    const resp = await fetch(`${WORKER_URL}/api/pos/ordenes-compra${filtroOrdenesCompraActual ? '?estado=' + filtroOrdenesCompraActual : ''}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
-    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
-    const { ordenes } = await resp.json();
+    let ordenes;
+    if (esAdministradoraActual()) {
+      const resp = await fetch(`${WORKER_URL}/api/pos/ordenes-compra${filtroOrdenesCompraActual ? '?estado=' + filtroOrdenesCompraActual : ''}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+      if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+      ordenes = (await resp.json()).ordenes;
+    } else {
+      let q = supabaseClient.from('ordenes_compra').select('*, proveedor:proveedor_id(nombre_completo, telefono)').order('created_at', { ascending: false }).limit(200);
+      if (filtroOrdenesCompraActual) q = q.eq('estado', filtroOrdenesCompraActual);
+      const { data, error } = await q;
+      if (error) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+      ordenes = data;
+    }
     ordenesCompraCache = ordenes || [];
     renderizarOrdenesCompra(ordenesCompraCache);
   }
@@ -23425,7 +23454,8 @@
     const cont = document.getElementById('listaOrdenesCompra');
     if (!ordenes || ordenes.length === 0) { cont.innerHTML = '<div class="cargando">Sin órdenes que coincidan.</div>'; return; }
 
-    const etiquetasEstado = { enviada: '📤 Enviada', recibida: '✅ Recibida', cancelada: '❌ Cancelada' };
+    const etiquetasEstado = { por_aprobar: '⏳ Por aprobar', enviada: '📤 Enviada', recibida: '✅ Recibida', cancelada: '❌ Cancelada' };
+    const esAdminOC = esAdministradoraActual();
 
     cont.innerHTML = `
       <div class="tabla-lista">
@@ -23434,6 +23464,7 @@
         </div>
         ${ordenes.map(o => {
           const coloresEstadoOC = {
+            por_aprobar: { bg: '#fff3d6', color: '#8a5a00' },
             enviada: { bg: '#dce8f5', color: '#2d5a8c' },
             recibida: { bg: '#e0f2e6', color: 'var(--verde-exito)' },
             cancelada: { bg: '#fbe1de', color: 'var(--rojo-error)' },
@@ -23446,11 +23477,18 @@
             <span style="text-align:right;font-weight:700;">${formatearMoneda(o.total_estimado)}</span>
             <span style="font-size:11.5px;">${o.fecha_entrega_esperada ? new Date(o.fecha_entrega_esperada + 'T00:00:00').toLocaleDateString('es-CO') + ' ' : ''}<span class="badge-estado-pedido" style="background:${colorOC.bg};color:${colorOC.color};">${etiquetasEstado[o.estado] || o.estado}</span></span>
             <span style="display:flex;gap:5px;flex-wrap:wrap;">
-              ${o.estado === 'enviada' ? `
+              ${o.estado === 'por_aprobar' && esAdminOC ? `
+                <button class="btn-mini guardar" onclick="cambiarEstadoOrdenCompra('${o.id}', 'enviada')">✅ Aprobar y enviar</button>
+                <button class="btn-mini desactivar" onclick="cambiarEstadoOrdenCompra('${o.id}', 'cancelada')">❌ Rechazar</button>
+              ` : ''}
+              ${o.estado === 'por_aprobar' && !esAdminOC && o.registrado_por === sesionActual.userId ? `
+                <button class="btn-mini desactivar" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => cancelarSolicitudOrdenCompra('${o.id}'))">❌ Cancelar mi pedido</button>
+              ` : ''}
+              ${o.estado === 'enviada' && esAdminOC ? `
                 <button class="btn-mini guardar" onclick="cambiarEstadoOrdenCompra('${o.id}', 'recibida')">✅ Recibida</button>
                 <button class="btn-mini desactivar" onclick="cambiarEstadoOrdenCompra('${o.id}', 'cancelada')">❌ Cancelar</button>
               ` : ''}
-              <button class="btn-mini desactivar" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => eliminarOrdenCompra('${o.id}'))">🗑️</button>
+              ${esAdminOC ? `<button class="btn-mini desactivar" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => eliminarOrdenCompra('${o.id}'))">🗑️</button>` : ''}
             </span>
           </div>
         `;
@@ -23469,6 +23507,13 @@
     });
     if (!resp.ok) { mostrarMensaje('mensajeOrdenesCompra', 'No se pudo actualizar.', 'error'); return; }
     if (estado === 'recibida') mostrarMensaje('mensajeOrdenesCompra', '✅ Marcada como recibida. Recuerda registrar la compra real en "Registro de compras y gastos" para que quede contabilizada.', 'exito');
+    await cargarOrdenesCompra();
+  }
+
+  async function cancelarSolicitudOrdenCompra(id) {
+    ocultarMensaje('mensajeOrdenesCompra');
+    const { error } = await supabaseClient.rpc('fn_oc_cancelar_solicitud', { p_id: id });
+    if (error) { mostrarMensaje('mensajeOrdenesCompra', error.message, 'error'); return; }
     await cargarOrdenesCompra();
   }
 
@@ -30538,17 +30583,31 @@
   // ============================================================
   let tomaInventarioActivaId = null;
 
+  // Quien no es administradora (p. ej. la líder de la Tienda) solo cuenta el inventario de la Tienda;
+  // la administradora es quien finaliza la toma y ajusta el stock.
   async function cargarTomasInventario() {
-    // Departamentos para el selector
-    const respDeptos = await fetch(WORKER_URL + '/api/pos/departamentos', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
-    if (respDeptos.ok) {
-      const { departamentos } = await respDeptos.json();
-      document.getElementById('tomaCentroCosto').innerHTML = (departamentos || []).map(d => `<option value="${d.id}">${escaparHtml(d.nombre)}</option>`).join('');
-    }
+    const esAdminToma = esAdministradoraActual();
+    document.getElementById('accionesTomaAdmin').classList.toggle('oculto', !esAdminToma);
+    document.getElementById('avisoTomaSinAdmin').classList.toggle('oculto', esAdminToma);
 
-    const resp = await fetch(WORKER_URL + '/api/pos/tomas-inventario', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
-    if (!resp.ok) return;
-    const { tomas } = await resp.json();
+    let tomas;
+    if (esAdminToma) {
+      // Departamentos para el selector
+      const respDeptos = await fetch(WORKER_URL + '/api/pos/departamentos', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+      if (respDeptos.ok) {
+        const { departamentos } = await respDeptos.json();
+        document.getElementById('tomaCentroCosto').innerHTML = (departamentos || []).map(d => `<option value="${d.id}">${escaparHtml(d.nombre)}</option>`).join('');
+      }
+      const resp = await fetch(WORKER_URL + '/api/pos/tomas-inventario', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+      if (!resp.ok) return;
+      tomas = (await resp.json()).tomas;
+    } else {
+      const { data: tienda } = await supabaseClient.from('centros_costo').select('id, nombre').eq('codigo', '01').maybeSingle();
+      document.getElementById('tomaCentroCosto').innerHTML = tienda ? `<option value="${tienda.id}">${escaparHtml(tienda.nombre)}</option>` : '';
+      const { data, error } = await supabaseClient.from('tomas_inventario').select('*, centro_costo:centro_costo_id(nombre)').order('created_at', { ascending: false }).limit(100);
+      if (error) return;
+      tomas = data;
+    }
 
     const enProceso = (tomas || []).find(t => t.estado === 'en_proceso');
     if (enProceso) {
@@ -30583,21 +30642,33 @@
     ocultarMensaje('mensajeIniciarToma');
     if (!centroCostoId) { mostrarMensaje('mensajeIniciarToma', 'Selecciona el departamento.', 'error'); return; }
 
-    const resp = await fetch(WORKER_URL + '/api/pos/tomas-inventario/abrir', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ centro_costo_id: centroCostoId, notas })
-    });
-    const datos = await resp.json();
-    if (!resp.ok) { mostrarMensaje('mensajeIniciarToma', datos.error || 'No se pudo iniciar.', 'error'); return; }
+    if (esAdministradoraActual()) {
+      const resp = await fetch(WORKER_URL + '/api/pos/tomas-inventario/abrir', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+        body: JSON.stringify({ centro_costo_id: centroCostoId, notas })
+      });
+      const datos = await resp.json();
+      if (!resp.ok) { mostrarMensaje('mensajeIniciarToma', datos.error || 'No se pudo iniciar.', 'error'); return; }
+    } else {
+      const { error } = await supabaseClient.rpc('fn_abrir_toma_inventario', { p_centro_costo_id: centroCostoId, p_registrado_por: sesionActual.userId, p_notas: notas || null });
+      if (error) { mostrarMensaje('mensajeIniciarToma', error.message || 'No se pudo iniciar.', 'error'); return; }
+    }
     await cargarTomasInventario();
   }
 
   async function cargarDetalleTomaInventario(toma) {
     document.getElementById('tituloTomaEnProceso').textContent = `📋 ${toma.consecutivo} — ${toma.centro_costo ? toma.centro_costo.nombre : ''} (en proceso)`;
-    const resp = await fetch(`${WORKER_URL}/api/pos/tomas-inventario/detalle?toma_id=${toma.id}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
-    if (!resp.ok) return;
-    const { detalle } = await resp.json();
+    let detalle;
+    if (esAdministradoraActual()) {
+      const resp = await fetch(`${WORKER_URL}/api/pos/tomas-inventario/detalle?toma_id=${toma.id}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+      if (!resp.ok) return;
+      detalle = (await resp.json()).detalle;
+    } else {
+      const { data, error } = await supabaseClient.from('tomas_inventario_detalle').select('*, item:inventario_item_id(nombre, unidad_medida)').eq('toma_id', toma.id);
+      if (error) return;
+      detalle = (data || []).sort((a, b) => ((a.item && a.item.nombre) || '').localeCompare((b.item && b.item.nombre) || '', 'es'));
+    }
 
     const cont = document.getElementById('listaConteoTomaInventario');
     cont.innerHTML = `
@@ -30622,18 +30693,25 @@
 
   async function guardarConteoItemToma(detalleId, valor) {
     if (valor === '') return;
-    await fetch(WORKER_URL + '/api/pos/tomas-inventario/contar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ detalle_id: detalleId, stock_contado: Number(valor) })
-    });
-    // Refresca solo la lista (para actualizar la columna de diferencia), sin perder el foco de otros campos
-    const resp = await fetch(WORKER_URL + '/api/pos/tomas-inventario', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
-    if (resp.ok) {
-      const { tomas } = await resp.json();
-      const enProceso = (tomas || []).find(t => t.estado === 'en_proceso');
-      if (enProceso) await cargarDetalleTomaInventario(enProceso);
+    let tomas;
+    if (esAdministradoraActual()) {
+      await fetch(WORKER_URL + '/api/pos/tomas-inventario/contar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+        body: JSON.stringify({ detalle_id: detalleId, stock_contado: Number(valor) })
+      });
+      // Refresca solo la lista (para actualizar la columna de diferencia), sin perder el foco de otros campos
+      const resp = await fetch(WORKER_URL + '/api/pos/tomas-inventario', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+      if (resp.ok) tomas = (await resp.json()).tomas;
+    } else {
+      const { error } = await supabaseClient.rpc('fn_toma_guardar_conteo', { p_detalle_id: detalleId, p_stock: Number(valor) });
+      if (error) { mostrarMensaje('mensajeTomaInventario', error.message, 'error'); return; }
+      ocultarMensaje('mensajeTomaInventario');
+      const { data } = await supabaseClient.from('tomas_inventario').select('*, centro_costo:centro_costo_id(nombre)').eq('estado', 'en_proceso');
+      tomas = data;
     }
+    const enProceso = (tomas || []).find(t => t.estado === 'en_proceso');
+    if (enProceso) await cargarDetalleTomaInventario(enProceso);
   }
 
   async function confirmarFinalizarTomaInventario() {
