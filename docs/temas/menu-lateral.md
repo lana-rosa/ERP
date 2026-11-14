@@ -25,3 +25,10 @@
 - Botón 👁 dentro del campo Contraseña (`#btnOjoClave`, función `alternarVerClave`): muestra/oculta mientras se escribe; al cerrar sesión vuelve a quedar oculta y el campo vacío.
 - Mensaje de error "correo o contraseña incorrectos" ahora sugiere revisar que el correo esté bien escrito y usar el ojo.
 - Probado en 390px y 1280px con inicio de sesión fallido simulado.
+
+## Ítem "Sistema Operativo" en el menú (14-nov, sw v55)
+- Botón `#nav-sistema-operativo` (🧭, debajo de "Calendario del equipo") que abre Lana Rosa OS en pestaña nueva (`abrirSistemaOperativo`). La dirección está en la constante `URL_SISTEMA_OPERATIVO` (hoy `https://lana-rosa.github.io/SO/`): al mudar de dominio se cambia solo ahí. La sesión no se comparte: en el SO se inicia sesión una vez.
+- Quién lo ve (`configurarSidebarPorRol`): administradora (rol base o adicional) y los roles personalizados `Gerencia SO` y `Taller SO` (constante `ROLES_PERSONALIZADOS_SO`; se identifica por el nombre del rol, que `obtenerRolUsuario` ahora trae con `roles_personalizados(nombre)` y guarda en `nombreRolPersonalizadoActual`). No lo ven: cajero, Líder de Tienda, contador, Taller sin ese rol personalizado.
+- Un permiso manual de la administradora (módulo `nav-sistema-operativo`, agregado a `CATALOGO_MODULOS`) tiene la última palabra, igual que en el resto del menú.
+- Seguridad de fondo: el ítem solo es comodidad; la protección real de los datos del SO es su RLS (repo SO, migración pendiente de aplicar).
+- Probado con rol simulado (admin, Gerencia SO, Taller SO, Taller, Cajero, Líder de Tienda, Contador, permiso manual) en 390px y 1280px; la lectura del nombre del rol por RLS se probó con rollback.

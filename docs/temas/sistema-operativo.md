@@ -9,3 +9,4 @@ Contexto de Sara (14-nov-2026): en **Lana Rosa OS** se manejan los **Sistemas de
   - El SO **lee** del ERP (empleados, inventario, finanzas) en vez de duplicar datos.
 - Integración fase 1 (acordada 14-nov, falta el sí de Sara para construir): ítem "Sistema Operativo" en el menú del ERP (lo hace el Chat 8), visible para administradora / "Gerencia SO" / "Taller SO". Con la mudanza del ERP a otro dominio la sesión no se comparte: pedirá iniciar sesión una vez.
 - Seguridad (14-nov): el schema estaba abierto a cualquier cuenta con sesión (incluidas clientas web) y a anon (lectura). Migración preparada en el repo SO (`sql/2026-11-14_seguridad_rls_so.sql`): solo administradora todo; taller lectura limitada (PM-02, PA-07), sin datos médicos; anon nada. Pendiente: prueba con rollback (sí de Sara) y aplicación.
+- Fase 1 hecha (14-nov): ítem "Sistema Operativo" en el menú del ERP, ver `menu-lateral.md` (v55). Dirección en `URL_SISTEMA_OPERATIVO`.
