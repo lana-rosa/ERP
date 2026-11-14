@@ -19,9 +19,9 @@ Construir en el ERP lo del día a día; la **nómina electrónica a la DIAN NO s
 - Fecha clave: apertura de la tienda 13-dic-2026 (personal contratado antes).
 
 ## Datos de Sara (14-nov)
-- Para la apertura: **3 empleados** + el **contador por prestación de servicios** (no es empleado: no va en nómina; se le paga con cuenta de cobro/factura y se registra como honorarios).
+- Para la apertura: **3 empleados** = **2 tejedoras** (rol ERP `taller`, Producción) + **1 persona para atender el almacén** (rol ERP `cajero`, punto de venta y caja) + el **contador por prestación de servicios** (no es empleado: no va en nómina; se le paga con cuenta de cobro/factura y se registra como honorarios).
 
 ## Pendiente de Sara
-- Tipo de contrato de los 3 empleados (término fijo/indefinido, tiempo completo/medio) y cargos (¿cajera/vendedora, taller?).
+- Contrato: los 3 empleados a **término fijo de 1 año** (decisión de Sara, 14-nov; corrigió "indefinido"). Falta: jornada (completa/medio tiempo) y salario de cada uno. Las 2 tejedoras pasan a ser empleadas: definir con el contador si dejan de pagarse por honorarios y desde qué fecha (afecta `honorarios_tejedora_nomina` y la política contable "todo lo tejido se paga como honorarios hasta abrir el local").
 - Si las tejedoras siguen por honorarios o alguna pasa a contrato.
 - Proveedor de nómina electrónica (preguntar a Hernando).
