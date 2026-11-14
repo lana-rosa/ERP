@@ -3342,6 +3342,7 @@
     <button class="chip-filtro" data-subtab-btn="talentoHumano" onclick="mostrarSubTabGrupo('talentoHumano', 'subtabRhCodigos', this); cargarCodigosAutorizacion();">🔐 Códigos de autorización</button>
     <button class="chip-filtro" data-subtab-btn="talentoHumano" onclick="mostrarSubTabGrupo('talentoHumano', 'subtabRhHoras', this); cargarRegistroHorasAdmin();">⏱️ Horas trabajadas</button>
     <button class="chip-filtro" data-subtab-btn="talentoHumano" onclick="mostrarSubTabGrupo('talentoHumano', 'subtabRhTurnos', this); cargarTurnosAsistencia();">🗓️ Turnos y asistencia</button>
+    <button class="chip-filtro" id="chipRhAusencias" data-subtab-btn="talentoHumano" onclick="mostrarSubTabGrupo('talentoHumano', 'subtabRhAusencias', this); cargarSolicitudesAusenciaAdmin();">🌴 Vacaciones y permisos</button>
   </div>
 
   <div id="subtabRhDocumentos" data-subtab-grupo="talentoHumano">
@@ -3410,6 +3411,23 @@
         <button class="btn-mini desactivar" style="flex:0 0 auto;" onclick="limpiarMarcacionManual()">Limpiar</button>
       </div>
       <div class="mensaje" id="mensajeMarcacionManual"></div>
+    </div>
+  </div>
+
+  <div id="subtabRhAusencias" data-subtab-grupo="talentoHumano" class="oculto">
+    <div class="panel" style="max-width:none;max-height:none;">
+      <h2>⏳ Solicitudes por responder</h2>
+      <div class="subtitulo">Las pide cada empleada desde Mi perfil. Los días son un cálculo (lunes a sábado, sin domingos ni festivos): puedes ajustarlos al aprobar. Al aprobar, recuerda registrar los días de vacaciones en la nómina del período (Nómina → Empleados → caso especial). Tú no puedes responder tu propia solicitud.</div>
+      <div class="mensaje" id="mensajeAusenciasAdmin"></div>
+      <div id="listaAusenciasPendientes"><div class="cargando">Cargando...</div></div>
+    </div>
+    <div class="panel" style="max-width:none;max-height:none;margin-top:16px;">
+      <h2>🌴 Próximas ausencias aprobadas</h2>
+      <div id="listaAusenciasProximas"><div class="cargando">Cargando...</div></div>
+    </div>
+    <div class="panel" style="max-width:none;max-height:none;margin-top:16px;">
+      <h2>Historial</h2>
+      <div id="listaAusenciasHistorial"><div class="cargando">Cargando...</div></div>
     </div>
   </div>
 
@@ -4118,6 +4136,7 @@
   <div class="filtro-tipo" style="margin-bottom:20px;">
     <button class="chip-filtro activo" data-subtab-btn="miPerfil" onclick="mostrarSubTabGrupo('miPerfil', 'subtabPerfilDatos', this)">👤 Datos personales</button>
     <button class="chip-filtro" data-subtab-btn="miPerfil" onclick="mostrarSubTabGrupo('miPerfil', 'subtabPerfilCuenta', this)">🔐 Cuenta y seguridad</button>
+    <button class="chip-filtro" data-subtab-btn="miPerfil" onclick="mostrarSubTabGrupo('miPerfil', 'subtabPerfilAusencias', this); cargarMisAusencias();">🌴 Vacaciones y permisos</button>
   </div>
 
   <div id="subtabPerfilDatos" data-subtab-grupo="miPerfil">
@@ -4147,6 +4166,35 @@
       <input type="password" id="miPerfilPasswordNueva">
       <button class="btn-secundario" onclick="cambiarMiPassword()">Cambiar contraseña</button>
       <div class="mensaje" id="mensajeMiPassword"></div>
+    </div>
+  </div>
+
+  <div id="subtabPerfilAusencias" data-subtab-grupo="miPerfil" class="oculto">
+    <div id="saldoMisVacaciones" style="margin-bottom:16px;"></div>
+    <div class="grilla-2">
+      <div class="panel">
+        <h2>Pedir vacaciones o un permiso</h2>
+        <div class="subtitulo">Una administradora la revisa y te responde aquí mismo.</div>
+        <label for="ausTipo">¿Qué necesitas?</label>
+        <select id="ausTipo" onchange="actualizarAyudaAusencia()">
+          <option value="vacaciones">🌴 Vacaciones</option>
+          <option value="permiso">🕒 Permiso (cita, trámite, etc.)</option>
+          <option value="calamidad">🏠 Calamidad doméstica</option>
+        </select>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px;">
+          <div><label for="ausDesde" style="margin-top:0;">Desde</label><input type="date" id="ausDesde" onchange="actualizarAyudaAusencia()"></div>
+          <div><label for="ausHasta" style="margin-top:0;">Hasta</label><input type="date" id="ausHasta" onchange="actualizarAyudaAusencia()"></div>
+        </div>
+        <div id="ausDiasEstimados" style="font-size:12.5px;margin-top:8px;font-weight:600;"></div>
+        <label for="ausMotivo" style="margin-top:8px;">Motivo <span id="ausMotivoOpcional" style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+        <input type="text" id="ausMotivo" placeholder="Ej. Cita médica">
+        <button class="btn-principal" onclick="enviarSolicitudAusencia()">Enviar solicitud</button>
+        <div class="mensaje" id="mensajeAusencia"></div>
+      </div>
+      <div class="panel">
+        <h2>Mis solicitudes</h2>
+        <div id="listaMisAusencias"><div class="cargando">Cargando...</div></div>
+      </div>
     </div>
   </div>
 </div>
@@ -15344,6 +15392,7 @@
           if (a.estado === 'cumplio') estado = `<div style="font-size:10.5px;color:#2e6b3a;">✅ ${Number(a.horas_trabajadas).toFixed(1)} h${a.en_curso ? ' (en curso)' : ''}</div>`;
           else if (a.estado === 'tarde') estado = `<div style="font-size:10.5px;color:#8a5a00;">⏰ ${a.minutos_tarde} min tarde · ${Number(a.horas_trabajadas).toFixed(1)} h</div>`;
           else if (a.estado === 'ausente') estado = '<div style="font-size:10.5px;color:#a12d2d;">❌ No marcó</div>';
+          else if (a.estado === 'con_permiso') estado = '<div style="font-size:10.5px;color:#2e6b3a;">🌴 Vacaciones o permiso aprobado</div>';
           else if (a.estado === 'sin_programacion') estado = `<div style="font-size:10.5px;color:#5a5a8a;">➕ Trabajó ${Number(a.horas_trabajadas).toFixed(1)} h sin turno</div>`;
         }
         const chips = turnos.map(t => `
@@ -15505,6 +15554,156 @@
       const lineas = data.map(t => `${t.fecha === hoy ? 'Hoy' : fechaCortaISO(t.fecha)} · ${hhmm(t.hora_inicio)}–${hhmm(t.hora_fin)}`).join('<br>');
       cont.insertAdjacentHTML('afterbegin', `<div style="font-size:11px;color:rgba(255,255,255,0.85);margin-bottom:8px;line-height:1.5;">🗓️ <strong>Mi horario</strong><br>${lineas}</div>`);
     } catch (err) { /* el horario es solo informativo */ }
+  }
+
+  // ============================================================
+  // VACACIONES Y PERMISOS (la empleada pide, una administradora responde)
+  // ============================================================
+  const ETIQUETAS_AUSENCIA = { vacaciones: '🌴 Vacaciones', permiso: '🕒 Permiso', calamidad: '🏠 Calamidad doméstica' };
+  const ESTADOS_AUSENCIA = { pendiente: ['⏳ Pendiente', '#fff3d6', '#8a5a00'], aprobada: ['✅ Aprobada', '#e3f1e6', '#2e6b3a'], rechazada: ['❌ Rechazada', '#fde2e2', '#a12d2d'], cancelada: ['Cancelada', '#f4eef2', '#7a5a6b'] };
+
+  function chipEstadoAusencia(estado) {
+    const [texto, fondo, color] = ESTADOS_AUSENCIA[estado] || [estado, '#f4eef2', 'inherit'];
+    return `<span style="display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600;background:${fondo};color:${color};">${texto}</span>`;
+  }
+
+  function rangoFechasAusencia(a) {
+    return a.fecha_fin === a.fecha_inicio ? fechaCortaISO(a.fecha_inicio) : fechaCortaISO(a.fecha_inicio) + ' al ' + fechaCortaISO(a.fecha_fin);
+  }
+
+  async function cargarMisAusencias() {
+    const hoy = hoyBogotaISO();
+    document.getElementById('ausDesde').min = hoy;
+    document.getElementById('ausHasta').min = hoy;
+    actualizarAyudaAusencia();
+    const saldoEl = document.getElementById('saldoMisVacaciones');
+    const listaEl = document.getElementById('listaMisAusencias');
+    listaEl.innerHTML = '<div class="cargando">Cargando...</div>';
+    const { data: miId } = await supabaseClient.rpc('fn_mi_empleado_id');
+    if (!miId) {
+      saldoEl.innerHTML = '<div class="panel" style="max-height:none;font-size:13px;">Tu ficha de empleada todavía no está conectada con tu cuenta, por eso no puedes pedir vacaciones desde aquí. Pídele a una administradora que la conecte (Nómina → Empleados → Editar → Cuenta de acceso).</div>';
+      listaEl.innerHTML = '<div class="cargando">Sin solicitudes.</div>';
+      return;
+    }
+    const [rs, rl] = await Promise.all([
+      supabaseClient.rpc('fn_saldo_vacaciones_empleado'),
+      supabaseClient.from('solicitudes_ausencia').select('*').eq('empleado_id', miId).order('created_at', { ascending: false }).limit(50)
+    ]);
+    const s = rs.data && rs.data[0];
+    const f1 = n => Number(n).toFixed(1).replace('.0', '');
+    saldoEl.innerHTML = s ? `
+      <div class="grilla-3">
+        <div class="panel" style="max-height:none;text-align:center;"><div style="font-size:12px;opacity:0.7;">Días ganados</div><div style="font-size:22px;font-weight:700;color:var(--rosa-principal);">${f1(s.dias_causados)}</div></div>
+        <div class="panel" style="max-height:none;text-align:center;"><div style="font-size:12px;opacity:0.7;">Ya tomados</div><div style="font-size:22px;font-weight:700;color:var(--rosa-principal);">${f1(s.dias_tomados)}</div></div>
+        <div class="panel" style="max-height:none;text-align:center;"><div style="font-size:12px;opacity:0.7;">Aprobados por tomar</div><div style="font-size:22px;font-weight:700;color:var(--rosa-principal);">${f1(s.dias_aprobados_por_tomar)}</div></div>
+        <div class="panel" style="max-height:none;text-align:center;"><div style="font-size:12px;opacity:0.7;">Te quedan</div><div style="font-size:22px;font-weight:700;color:${Number(s.saldo_disponible) < 0 ? '#a12d2d' : 'var(--rosa-principal)'};">${f1(s.saldo_disponible)}</div></div>
+      </div>
+      <div style="font-size:11px;opacity:0.65;margin-top:6px;">Cálculo aproximado: 15 días hábiles por cada año trabajado. La administradora confirma los días reales.</div>` : '';
+    if (rl.error) { listaEl.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const lista = rl.data || [];
+    listaEl.innerHTML = lista.length === 0 ? '<div class="cargando">Todavía no has pedido nada.</div>' : lista.map(a => `
+      <div style="padding:9px 0;border-bottom:1px solid #f4eef2;font-size:12.5px;">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;"><strong>${ETIQUETAS_AUSENCIA[a.tipo] || a.tipo}</strong>${chipEstadoAusencia(a.estado)}</div>
+        <div style="opacity:0.8;">${rangoFechasAusencia(a)} · ${Number(a.dias).toFixed(1).replace('.0', '')} día${Number(a.dias) === 1 ? '' : 's'}${a.motivo ? ' · ' + escaparHtml(a.motivo) : ''}</div>
+        ${a.respuesta ? `<div style="opacity:0.8;margin-top:2px;">💬 ${escaparHtml(a.respuesta)}</div>` : ''}
+        ${a.estado === 'pendiente' ? `<button class="btn-mini desactivar" style="margin-top:4px;" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => cancelarMiAusencia('${a.id}'))">Cancelar solicitud</button>` : ''}
+      </div>`).join('');
+  }
+
+  async function actualizarAyudaAusencia() {
+    const tipo = document.getElementById('ausTipo').value;
+    document.getElementById('ausMotivoOpcional').textContent = tipo === 'vacaciones' ? '(opcional)' : '(obligatorio)';
+    const desde = document.getElementById('ausDesde').value;
+    let hasta = document.getElementById('ausHasta').value;
+    const cont = document.getElementById('ausDiasEstimados');
+    if (!desde || !hasta) { cont.textContent = ''; return; }
+    if (hasta < desde) { hasta = desde; document.getElementById('ausHasta').value = desde; }
+    const { data } = await supabaseClient.rpc('fn_aus_dias_estimados', { p_inicio: desde, p_fin: hasta });
+    cont.textContent = data === null || data === undefined ? '' : (Number(data) === 0 ? 'Esas fechas son solo domingos o festivos.' : `≈ ${Number(data)} día${Number(data) === 1 ? '' : 's'} hábil${Number(data) === 1 ? '' : 'es'} (lunes a sábado, sin festivos)`);
+  }
+
+  async function enviarSolicitudAusencia() {
+    ocultarMensaje('mensajeAusencia');
+    const tipo = document.getElementById('ausTipo').value;
+    const desde = document.getElementById('ausDesde').value;
+    const hasta = document.getElementById('ausHasta').value || desde;
+    if (!desde) { mostrarMensaje('mensajeAusencia', 'Escoge desde qué día.', 'error'); return; }
+    const { error } = await supabaseClient.rpc('fn_aus_solicitar', { p_tipo: tipo, p_inicio: desde, p_fin: hasta, p_motivo: document.getElementById('ausMotivo').value.trim() || null });
+    if (error) { mostrarMensaje('mensajeAusencia', error.message, 'error'); return; }
+    document.getElementById('ausMotivo').value = '';
+    await cargarMisAusencias();
+    mostrarMensaje('mensajeAusencia', '✅ Solicitud enviada. Una administradora la va a revisar.', 'exito');
+  }
+
+  async function cancelarMiAusencia(id) {
+    const { error } = await supabaseClient.rpc('fn_aus_cancelar', { p_id: id });
+    if (error) { mostrarMensaje('mensajeAusencia', error.message, 'error'); return; }
+    await cargarMisAusencias();
+  }
+
+  // --- Administradora ---
+  async function refrescarChipAusencias() {
+    const chip = document.getElementById('chipRhAusencias');
+    if (!chip) return;
+    try {
+      const { count } = await supabaseClient.from('solicitudes_ausencia').select('id', { count: 'exact', head: true }).eq('estado', 'pendiente');
+      chip.textContent = '🌴 Vacaciones y permisos' + (count ? ` (${count})` : '');
+    } catch (err) { /* el contador es solo un aviso */ }
+  }
+
+  async function cargarSolicitudesAusenciaAdmin() {
+    const hoy = hoyBogotaISO();
+    const { data, error } = await supabaseClient.from('solicitudes_ausencia').select('*, empleado:empleado_id(nombre_completo, area)').order('fecha_inicio', { ascending: false }).limit(200);
+    if (error) { document.getElementById('listaAusenciasPendientes').innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const todas = data || [];
+    const pendientes = todas.filter(a => a.estado === 'pendiente').sort((a, b) => a.fecha_inicio.localeCompare(b.fecha_inicio));
+    const proximas = todas.filter(a => a.estado === 'aprobada' && a.fecha_fin >= hoy).sort((a, b) => a.fecha_inicio.localeCompare(b.fecha_inicio));
+    const historial = todas.filter(a => a.estado !== 'pendiente' && !(a.estado === 'aprobada' && a.fecha_fin >= hoy)).slice(0, 40);
+    const saldos = {};
+    await Promise.all(pendientes.filter(a => a.tipo === 'vacaciones').map(async a => {
+      const { data: s } = await supabaseClient.rpc('fn_saldo_vacaciones_empleado', { p_empleado: a.empleado_id });
+      saldos[a.id] = s && s[0] ? Number(s[0].saldo_disponible) : null;
+    }));
+    const nombre = a => escaparHtml(a.empleado ? a.empleado.nombre_completo : 'Empleado');
+    const sinDatos = (txt) => `<div class="cargando">${txt}</div>`;
+    document.getElementById('listaAusenciasPendientes').innerHTML = pendientes.length === 0 ? sinDatos('No hay solicitudes por responder.') : pendientes.map(a => `
+      <div style="padding:12px;margin-bottom:10px;background:var(--rosa-suave);border-radius:10px;font-size:13px;">
+        <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;"><strong>${nombre(a)}${a.empleado && a.empleado.area ? ` <span style="font-weight:400;opacity:0.65;">· ${escaparHtml(a.empleado.area)}</span>` : ''}</strong><span>${ETIQUETAS_AUSENCIA[a.tipo] || a.tipo}</span></div>
+        <div style="margin-top:3px;">${rangoFechasAusencia(a)}${a.motivo ? ' · ' + escaparHtml(a.motivo) : ''}</div>
+        ${a.tipo === 'vacaciones' && saldos[a.id] !== null && saldos[a.id] !== undefined ? `<div style="font-size:12px;margin-top:3px;color:${saldos[a.id] - Number(a.dias) < 0 ? '#a12d2d' : 'inherit'};">Le quedan ${saldos[a.id].toFixed(1).replace('.0', '')} días de vacaciones${saldos[a.id] - Number(a.dias) < 0 ? ' (esta solicitud los pasa)' : ''}.</div>` : ''}
+        <div style="display:grid;grid-template-columns:110px 1fr;gap:8px;margin-top:8px;align-items:end;">
+          <div><label style="margin-top:0;font-size:11px;">Días</label><input type="number" id="ausDias-${a.id}" min="0.5" step="0.5" value="${Number(a.dias)}" style="padding:7px 8px;"></div>
+          <div><label style="margin-top:0;font-size:11px;">Respuesta <span style="opacity:0.6;">(obligatoria si rechazas)</span></label><input type="text" id="ausResp-${a.id}" style="padding:7px 8px;"></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="btn-mini guardar" onclick="resolverAusencia('${a.id}', true)">✅ Aprobar</button>
+          <button class="btn-mini desactivar" onclick="resolverAusencia('${a.id}', false)">❌ Rechazar</button>
+        </div>
+      </div>`).join('');
+    document.getElementById('listaAusenciasProximas').innerHTML = proximas.length === 0 ? sinDatos('No hay ausencias aprobadas próximas.') : proximas.map(a => `
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f4eef2;font-size:12.5px;">
+        <span><strong>${nombre(a)}</strong> · ${ETIQUETAS_AUSENCIA[a.tipo] || a.tipo} · ${rangoFechasAusencia(a)} · ${Number(a.dias).toFixed(1).replace('.0', '')} d</span>
+        <button class="btn-mini desactivar" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => cancelarAusenciaAdmin('${a.id}'))">Cancelar</button>
+      </div>`).join('');
+    document.getElementById('listaAusenciasHistorial').innerHTML = historial.length === 0 ? sinDatos('Sin historial todavía.') : historial.map(a => `
+      <div style="padding:6px 0;border-bottom:1px solid #f4eef2;font-size:12px;display:flex;justify-content:space-between;gap:8px;align-items:center;">
+        <span><strong>${nombre(a)}</strong> · ${ETIQUETAS_AUSENCIA[a.tipo] || a.tipo} · ${rangoFechasAusencia(a)} · ${Number(a.dias).toFixed(1).replace('.0', '')} d${a.respuesta ? ' · 💬 ' + escaparHtml(a.respuesta) : ''}</span>${chipEstadoAusencia(a.estado)}
+      </div>`).join('');
+    refrescarChipAusencias();
+  }
+
+  async function resolverAusencia(id, aprobar) {
+    ocultarMensaje('mensajeAusenciasAdmin');
+    const dias = Number(document.getElementById(`ausDias-${id}`).value);
+    const { error } = await supabaseClient.rpc('fn_aus_resolver', { p_id: id, p_aprobar: aprobar, p_respuesta: document.getElementById(`ausResp-${id}`).value.trim() || null, p_dias: aprobar && dias > 0 ? dias : null });
+    if (error) { mostrarMensaje('mensajeAusenciasAdmin', error.message, 'error'); return; }
+    await cargarSolicitudesAusenciaAdmin();
+  }
+
+  async function cancelarAusenciaAdmin(id) {
+    const { error } = await supabaseClient.rpc('fn_aus_cancelar', { p_id: id });
+    if (error) { mostrarMensaje('mensajeAusenciasAdmin', error.message, 'error'); return; }
+    await cargarSolicitudesAusenciaAdmin();
   }
 
   // ============================================================
@@ -29634,6 +29833,7 @@
     mostrarSubTabGrupo('talentoHumano', 'subtabRhDocumentos', document.querySelector('[data-subtab-btn="talentoHumano"]'));
     await cargarEmpleadosParaRh();
     await cargarAutorizadosCalendario();
+    refrescarChipAusencias();
   }
 
   // ============================================================
