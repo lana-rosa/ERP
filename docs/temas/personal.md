@@ -55,3 +55,20 @@ Se usará la **solución gratuita de la DIAN** (se digita a mano cada mes en el 
 **Probado:** Playwright (se ven las etiquetas, el formulario trae los 7 campos nuevos, el guardado manda los datos correctos y bloquea fecha de fin anterior al ingreso) y SQL con rollback (rechaza área inválida y fecha de fin anterior al ingreso; acepta datos válidos).
 
 **Falta:** al crear un empleado nuevo, pedir estos campos desde el inicio; conectar cada ficha con su cuenta; cargar las 3 fichas reales de la apertura (esperando nombres, jornada y salario de Sara); contador por prestación de servicios va como tercero/honorarios, no en esta lista.
+
+## Fase 2 — Turnos y asistencia (hecha 15-nov-2026)
+**Qué ya existía:** marcar entrada y salida desde el menú (Worker `/api/pos/horas/*`, tabla `registro_horas_empleado`, hoy vacía) y la lista "Horas trabajadas" en Talento Humano. Solo lo hace quien tiene su ficha conectada con su cuenta (`empleados.user_id`).
+
+**Qué se agregó** (Talento Humano → "🗓️ Turnos y asistencia"; en `index.html` buscar `TURNOS Y ASISTENCIA`):
+- Tabla `horarios_personal` (turnos programados: empleado, fecha, entrada, salida, nota). RLS: la administradora gestiona, el contador lee, cada empleado ve solo los suyos.
+- Funciones en Supabase (solo administradora): `fn_rh_guardar_turno` (no deja turnos que se crucen ni salida antes de la entrada), `fn_rh_copiar_semana` (copia sin duplicar), `fn_rh_marcacion_manual` (agregar/corregir marcación; exige motivo, queda en observaciones), `fn_rh_resumen_asistencia` (administradora y contador).
+- Pantalla: cuadrícula semanal por empleado (programar varios días a la vez, editar, quitar, copiar semana anterior), festivos de Colombia marcados y, bajo cada turno, ✅ cumplió / ⏰ llegó tarde / ❌ no marcó / ➕ trabajó sin turno. Resumen del mes por persona: programadas, trabajadas, diferencia, tardanzas, ausencias y horas en domingo o festivo.
+- "Horas trabajadas": botón "Corregir" por registro y formulario para agregar una marcación olvidada.
+- Menú: "Mi horario" con los turnos de hoy y de los próximos días, para quien tiene cuenta conectada.
+- Se arregló `fn_festivos_colombia` (daba error de tipo de dato siempre; nadie más la usaba).
+
+**Decisiones:** "tarde" = más de 10 minutos después de la hora programada. Las horas se cuentan por la fecha de entrada en hora de Colombia. NO se calculan recargos ni horas extra con recargo: eso es laboral y queda como pregunta al contador (ver PENDIENTES); el resumen solo muestra horas y marca domingos y festivos, para pasarlo luego a Novedades de nómina a mano.
+
+**Probado:** SQL con rollback simulando a la administradora y a un cajero (turno, cruce rechazado, horas invertidas rechazadas, marcación sin motivo rechazada, tarde 15 min, ausente, copiar semana sin duplicar, festivo 16-nov y 8-dic, el cajero no puede programar ni ver el resumen). Playwright con datos de prueba (cuadrícula, guardar varios días, error de cruce, editar, quitar, copiar, resumen mensual, corregir marcación, "Mi horario"). No se probó con datos reales ni con marcaciones reales del Worker (hoy hay 0).
+
+**Falta:** enlazar con el turno de caja; privacidad de `registro_horas_empleado` (hoy la lee cualquier usuario activo); pasar el resumen a Novedades de nómina cuando el contador defina las reglas (fase 5).

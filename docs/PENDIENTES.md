@@ -83,7 +83,11 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 
 ### Chat 9 · Personal
 - [x] Fase 1 — Ficha del empleado (15-nov): cargo, área, jornada, tipo y fin de contrato, caja de compensación, cuenta de acceso (rol) y avisos de documentos que faltan y de contrato por vencer (ver `docs/temas/personal.md`).
-- [ ] Fase 2 — Turnos y asistencia · Fase 3 — Vacaciones y permisos · Fase 4 — Tejedoras · Fase 5 — Exportar novedades / resumen mensual para la DIAN.
+- [x] Fase 2 — Turnos y asistencia (15-nov): turnos por semana, copiar semana, festivos, resumen de asistencia y del mes, corregir marcaciones, "Mi horario" en el menú (ver `docs/temas/personal.md`).
+- [ ] Fase 3 — Vacaciones y permisos · Fase 4 — Tejedoras · Fase 5 — Exportar novedades / resumen mensual para la DIAN.
+- [ ] Enlazar la asistencia con el turno de caja de la Tienda (hoy van separados).
+- [ ] Privacidad: la tabla `registro_horas_empleado` la puede leer cualquier usuario activo (también cajero y taller). Conviene dejar que cada quien vea solo las suyas; el Worker `/api/pos/horas/*` no se puede revisar desde aquí.
+- **Para otro chat (Contabilidad/Calendario):** `fn_festivos_colombia` fallaba siempre (devolvía fecha con hora en los festivos que pasan a lunes). Se corrigió el tipo de dato el 15-nov sin cambiar ninguna fecha; conviene que quien use festivos lo confirme.
 - [ ] Permisos de Manuela (inventario de Tienda y bodega, proveedores, órdenes a proveedores; sin compras/pagos ni contabilidad).
 - [ ] Al crear un empleado nuevo, pedir cargo/área/jornada/fin de contrato desde el inicio (hoy se llenan al "Editar").
 - **Para otro chat:** nada por ahora.
@@ -115,6 +119,7 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [ ] ¿Se puede decir "anticipo de **al menos** el 50 %"? (el ERP permite 50/70/100 % y menos con autorización).
 
 ## Contador (Hernando)
+- [ ] Personal (15-nov): recargos de horas extra y trabajo en domingo/festivo (diurnas, nocturnas, dominicales; desde cuándo cuenta la hora nocturna), jornada máxima semanal, tolerancia para llegadas tarde y qué hacer con el descanso. El ERP hoy solo suma horas y marca domingos y festivos.
 - [ ] Personal (14-nov): ¿Sara (y Jennifer si es socia) pueden ir como empleadas siendo persona natural, o siguen como retiros del propietario (3805) u honorarios? Prestaciones, seguridad social y tipo de contrato de los 3 empleados; si las 2 tejedoras dejan de pagarse por honorarios y desde qué fecha; campos y plazo mensual de la nómina electrónica gratuita de la DIAN.
 - [ ] Impuestos no se pagan desde la cuenta del Fondo; cómo registrar los giros del Fondo (cuenta exclusiva, sin mezclar).
 - [ ] UVT y tarifas SIMPLE, escenario de provisión, tabla de renta — lista de 22 preguntas en `docs/temas/impuestos-preguntas-contador.md`. Faltan: UVT 2026 confirmada y tarifas SIMPLE 2026/2027 (hoy 0 cargadas).

@@ -3340,6 +3340,7 @@
     <button class="chip-filtro" data-subtab-btn="talentoHumano" onclick="mostrarSubTabGrupo('talentoHumano', 'subtabRhAutorizados', this)">📅 Autorizados del calendario</button>
     <button class="chip-filtro" data-subtab-btn="talentoHumano" onclick="mostrarSubTabGrupo('talentoHumano', 'subtabRhCodigos', this); cargarCodigosAutorizacion();">🔐 Códigos de autorización</button>
     <button class="chip-filtro" data-subtab-btn="talentoHumano" onclick="mostrarSubTabGrupo('talentoHumano', 'subtabRhHoras', this); cargarRegistroHorasAdmin();">⏱️ Horas trabajadas</button>
+    <button class="chip-filtro" data-subtab-btn="talentoHumano" onclick="mostrarSubTabGrupo('talentoHumano', 'subtabRhTurnos', this); cargarTurnosAsistencia();">🗓️ Turnos y asistencia</button>
   </div>
 
   <div id="subtabRhDocumentos" data-subtab-grupo="talentoHumano">
@@ -3389,6 +3390,67 @@
     <div id="resumenHorasPorEmpleado" style="margin-bottom:16px;"></div>
     <div class="panel" style="max-width:none;max-height:none;">
       <div id="listaRegistroHoras"><div class="cargando">Cargando...</div></div>
+    </div>
+    <div class="panel" id="panelMarcacionManual" style="max-width:none;max-height:none;margin-top:16px;">
+      <h2 id="tituloMarcacionManual">Agregar o corregir una marcación</h2>
+      <div class="subtitulo">Si alguien olvidó marcar la entrada o la salida, o se marcó mal, la corriges aquí. Queda escrito el motivo en la observación.</div>
+      <input type="hidden" id="marcManualId">
+      <label>Empleado</label>
+      <select id="marcManualEmpleado"></select>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px;">
+        <div><label style="margin-top:0;">Fecha</label><input type="date" id="marcManualFecha"></div>
+        <div><label style="margin-top:0;">Entrada</label><input type="time" id="marcManualEntrada"></div>
+        <div><label style="margin-top:0;">Salida <span style="font-size:10px;opacity:0.6;">(opcional)</span></label><input type="time" id="marcManualSalida"></div>
+      </div>
+      <label style="margin-top:8px;">Motivo de la corrección</label>
+      <input type="text" id="marcManualMotivo" placeholder="Ej. Olvidó marcar la salida">
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button class="btn-mini guardar" style="flex:1;" onclick="guardarMarcacionManual()">Guardar marcación</button>
+        <button class="btn-mini desactivar" style="flex:0 0 auto;" onclick="limpiarMarcacionManual()">Limpiar</button>
+      </div>
+      <div class="mensaje" id="mensajeMarcacionManual"></div>
+    </div>
+  </div>
+
+  <div id="subtabRhTurnos" data-subtab-grupo="talentoHumano" class="oculto">
+    <div class="panel" style="max-width:none;max-height:none;">
+      <h2>🗓️ Turnos de la semana</h2>
+      <div class="subtitulo">Programa quién trabaja cada día. Debajo de cada turno ves si la persona llegó (según lo que marcó). Los festivos de Colombia salen marcados.</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+        <button class="btn-mini editar" onclick="cambiarSemanaTurnos(-7)">◀ Semana anterior</button>
+        <strong id="etiquetaSemanaTurnos" style="font-size:13px;"></strong>
+        <button class="btn-mini editar" onclick="cambiarSemanaTurnos(7)">Semana siguiente ▶</button>
+        <button class="btn-mini editar" onclick="cambiarSemanaTurnos(0)">Esta semana</button>
+        <button class="btn-mini guardar" onclick="copiarSemanaAnteriorTurnos()">📋 Copiar la semana anterior</button>
+      </div>
+      <div class="mensaje" id="mensajeTurnos"></div>
+      <div id="gridTurnosSemana" style="overflow-x:auto;"><div class="cargando">Cargando...</div></div>
+      <div id="formTurno" style="margin-top:14px;padding:12px;background:var(--rosa-suave);border-radius:9px;">
+        <div style="font-size:12.5px;font-weight:700;" id="tituloFormTurno">Programar turno</div>
+        <input type="hidden" id="turnoId">
+        <label style="margin-top:6px;">Empleado</label>
+        <select id="turnoEmpleado"></select>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px;">
+          <div><label style="margin-top:0;">Entrada</label><input type="time" id="turnoInicio" value="08:00"></div>
+          <div><label style="margin-top:0;">Salida</label><input type="time" id="turnoFin" value="17:00"></div>
+        </div>
+        <label style="margin-top:8px;">Días de esta semana</label>
+        <div id="turnoDias" style="display:flex;gap:10px;flex-wrap:wrap;font-size:12.5px;"></div>
+        <label style="margin-top:8px;">Nota <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+        <input type="text" id="turnoNota" placeholder="Ej. Feria, inventario">
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <button class="btn-mini guardar" style="flex:1;" onclick="guardarTurnoPersonal()">Guardar turno</button>
+          <button class="btn-mini desactivar" style="flex:0 0 auto;" onclick="limpiarFormTurno()">Limpiar</button>
+        </div>
+      </div>
+    </div>
+    <div class="panel" style="max-width:none;max-height:none;margin-top:16px;">
+      <h2>Resumen del mes</h2>
+      <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px;">
+        <div><label for="turnosMes" style="font-size:11px;">Mes</label><input type="month" id="turnosMes" onchange="cargarResumenMesTurnos()" style="padding:9px 10px;"></div>
+      </div>
+      <div id="resumenMesTurnos"><div class="cargando">Cargando...</div></div>
+      <div style="font-size:11px;opacity:0.65;margin-top:10px;">Llega tarde = más de 10 minutos después de la hora programada. Aquí solo se cuentan horas y días: los recargos de horas extra nocturnas, dominicales y festivas los define el contador.</div>
     </div>
   </div>
 </div>
@@ -6857,6 +6919,7 @@
         <div class="mensaje" id="mensajeWidgetHoras" style="font-size:10.5px;"></div>
       `;
     }
+    agregarMiHorarioAlWidget(cont);
   }
 
   async function marcarEntradaHorasClick() {
@@ -15147,6 +15210,7 @@
   async function cargarRegistroHorasAdmin() {
     const contenedor = document.getElementById('listaRegistroHoras');
     contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+    cargarEmpleadosParaTurnos();
 
     const params = new URLSearchParams();
     const desde = document.getElementById('horasFechaDesde').value;
@@ -15175,20 +15239,263 @@
 
     contenedor.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header header-rosa" style="grid-template-columns:1fr 90px 90px 90px 90px;">
-          <span>EMPLEADO</span><span>FECHA</span><span>ENTRADA</span><span>SALIDA</span><span style="text-align:right;">HORAS</span>
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:1fr 90px 90px 90px 90px 90px;">
+          <span>EMPLEADO</span><span>FECHA</span><span>ENTRADA</span><span>SALIDA</span><span style="text-align:right;">HORAS</span><span></span>
         </div>
         ${registros.map(r => `
-          <div class="tabla-lista-fila" style="grid-template-columns:1fr 90px 90px 90px 90px;cursor:default;">
+          <div class="tabla-lista-fila" style="grid-template-columns:1fr 90px 90px 90px 90px 90px;cursor:default;">
             <span>${escaparHtml(r.empleados ? r.empleados.nombre_completo : 'Empleado')}</span>
             <span>${new Date(r.fecha + 'T00:00:00').toLocaleDateString('es-CO')}</span>
             <span>${new Date(r.hora_entrada).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}</span>
             <span>${r.hora_salida ? new Date(r.hora_salida).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) + (r.observaciones && r.observaciones.includes('automático') ? ' ⚠️' : '') : '⏳ En curso'}</span>
-            <span style="text-align:right;font-weight:700;">${r.horas_trabajadas ? r.horas_trabajadas.toFixed(1) : '—'}</span>
+            <span style="text-align:right;font-weight:700;">${r.horas_trabajadas ? Number(r.horas_trabajadas).toFixed(1) : '—'}</span>
+            <span style="text-align:right;">${r.id && r.empleado_id ? `<button class="btn-mini editar" onclick="editarMarcacion('${r.id}', '${r.empleado_id}', '${r.fecha}', '${r.hora_entrada}', '${r.hora_salida || ''}')">✏️ Corregir</button>` : ''}</span>
           </div>
         `).join('')}
       </div>
     `;
+  }
+
+  // ============================================================
+  // TURNOS Y ASISTENCIA (Talento Humano)
+  // ============================================================
+  const NOMBRES_DIA_CORTO = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+  let turnosLunes = null;
+  let turnosEmpleadosCache = [];
+  let turnosCache = [];
+  let asistenciaSemanaCache = [];
+  let festivosSemanaCache = {};
+
+  function hoyBogotaISO() { return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }); }
+  function isoLocal(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function sumarDiasISO(s, n) { const d = new Date(s + 'T00:00:00'); d.setDate(d.getDate() + n); return isoLocal(d); }
+  function lunesDeISO(s) { const d = new Date(s + 'T00:00:00'); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return isoLocal(d); }
+  function hhmm(t) { return t ? String(t).slice(0, 5) : ''; }
+  function horaBogota(iso) { return iso ? new Date(iso).toLocaleTimeString('en-GB', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit' }) : ''; }
+  function fechaCortaISO(s) { return new Date(s + 'T00:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }); }
+
+  async function cargarEmpleadosParaTurnos() {
+    const { data } = await supabaseClient.from('empleados').select('id, nombre_completo, area').eq('activo', true).order('nombre_completo');
+    turnosEmpleadosCache = data || [];
+    const opciones = turnosEmpleadosCache.map(e => `<option value="${e.id}">${escaparHtml(e.nombre_completo)}${e.area ? ' · ' + escaparHtml(e.area) : ''}</option>`).join('');
+    ['turnoEmpleado', 'marcManualEmpleado'].forEach(id => {
+      const sel = document.getElementById(id);
+      if (!sel) return;
+      const actual = sel.value;
+      sel.innerHTML = opciones;
+      if (actual) sel.value = actual;
+    });
+  }
+
+  function cambiarSemanaTurnos(dias) {
+    turnosLunes = dias === 0 ? lunesDeISO(hoyBogotaISO()) : sumarDiasISO(turnosLunes, dias);
+    cargarTurnosAsistencia();
+  }
+
+  async function cargarTurnosAsistencia() {
+    if (!turnosLunes) turnosLunes = lunesDeISO(hoyBogotaISO());
+    const campoMes = document.getElementById('turnosMes');
+    if (!campoMes.value) campoMes.value = hoyBogotaISO().slice(0, 7);
+    const fin = sumarDiasISO(turnosLunes, 6);
+    document.getElementById('etiquetaSemanaTurnos').textContent = fechaCortaISO(turnosLunes) + ' al ' + fechaCortaISO(fin);
+    const grid = document.getElementById('gridTurnosSemana');
+    grid.innerHTML = '<div class="cargando">Cargando...</div>';
+    await cargarEmpleadosParaTurnos();
+
+    const anios = [...new Set([turnosLunes.slice(0, 4), fin.slice(0, 4)])];
+    const [rt, ra, ...rf] = await Promise.all([
+      supabaseClient.from('horarios_personal').select('id, empleado_id, fecha, hora_inicio, hora_fin, nota').gte('fecha', turnosLunes).lte('fecha', fin).order('hora_inicio'),
+      supabaseClient.rpc('fn_rh_resumen_asistencia', { p_desde: turnosLunes, p_hasta: fin }),
+      ...anios.map(a => supabaseClient.rpc('fn_festivos_colombia', { p_anio: Number(a) }))
+    ]);
+    if (rt.error || ra.error) { grid.innerHTML = '<div class="cargando">No se pudo cargar: ' + escaparHtml((rt.error || ra.error).message) + '</div>'; return; }
+    turnosCache = rt.data || [];
+    asistenciaSemanaCache = ra.data || [];
+    festivosSemanaCache = {};
+    rf.forEach(r => (r.data || []).forEach(f => { festivosSemanaCache[String(f.fecha).slice(0, 10)] = f.nombre; }));
+    renderizarGridTurnos();
+    limpiarFormTurno();
+    cargarResumenMesTurnos();
+  }
+
+  function renderizarGridTurnos() {
+    const grid = document.getElementById('gridTurnosSemana');
+    if (turnosEmpleadosCache.length === 0) { grid.innerHTML = '<div class="cargando">No hay empleados activos.</div>'; return; }
+    const dias = Array.from({ length: 7 }, (_, i) => sumarDiasISO(turnosLunes, i));
+    const hoy = hoyBogotaISO();
+    const encabezados = dias.map((f, i) => {
+      const fest = festivosSemanaCache[f];
+      return `<th style="padding:6px 4px;text-align:center;font-size:12px;${f === hoy ? 'background:var(--rosa-suave);' : ''}">${NOMBRES_DIA_CORTO[i]} ${new Date(f + 'T00:00:00').getDate()}${fest ? `<div style="font-size:10px;color:#a12d2d;font-weight:600;">🎉 ${escaparHtml(fest)}</div>` : ''}</th>`;
+    }).join('');
+    const filas = turnosEmpleadosCache.map(e => {
+      const celdas = dias.map(f => {
+        const turnos = turnosCache.filter(t => t.empleado_id === e.id && t.fecha === f);
+        const a = asistenciaSemanaCache.find(x => x.empleado_id === e.id && String(x.fecha).slice(0, 10) === f);
+        let estado = '';
+        if (a) {
+          if (a.estado === 'cumplio') estado = `<div style="font-size:10.5px;color:#2e6b3a;">✅ ${Number(a.horas_trabajadas).toFixed(1)} h${a.en_curso ? ' (en curso)' : ''}</div>`;
+          else if (a.estado === 'tarde') estado = `<div style="font-size:10.5px;color:#8a5a00;">⏰ ${a.minutos_tarde} min tarde · ${Number(a.horas_trabajadas).toFixed(1)} h</div>`;
+          else if (a.estado === 'ausente') estado = '<div style="font-size:10.5px;color:#a12d2d;">❌ No marcó</div>';
+          else if (a.estado === 'sin_programacion') estado = `<div style="font-size:10.5px;color:#5a5a8a;">➕ Trabajó ${Number(a.horas_trabajadas).toFixed(1)} h sin turno</div>`;
+        }
+        const chips = turnos.map(t => `
+          <div style="background:#fff;border:1px solid var(--rosa-medio);border-radius:8px;padding:3px 6px;margin-bottom:3px;font-size:11.5px;white-space:nowrap;">
+            ${hhmm(t.hora_inicio)}–${hhmm(t.hora_fin)}${t.nota ? ` <span title="${escaparHtml(t.nota)}">📝</span>` : ''}
+            <button class="btn-mini editar" style="padding:1px 5px;" onclick="editarTurnoPersonal('${t.id}')">✏️</button>
+            <button class="btn-mini desactivar" style="padding:1px 5px;" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => eliminarTurnoPersonal('${t.id}'))">✕</button>
+          </div>`).join('');
+        return `<td style="padding:5px 4px;vertical-align:top;border-top:1px solid #f4eef2;min-width:112px;${f === hoy ? 'background:#fff8fb;' : ''}">${chips}${estado}<button class="btn-mini editar" style="padding:1px 7px;margin-top:2px;" onclick="prepararTurno('${e.id}', '${f}')">+</button></td>`;
+      }).join('');
+      return `<tr><td style="padding:6px 8px 6px 0;border-top:1px solid #f4eef2;font-size:12.5px;font-weight:600;vertical-align:top;white-space:nowrap;">${escaparHtml(e.nombre_completo)}${e.area ? `<div style="font-size:10.5px;opacity:0.6;font-weight:400;">${escaparHtml(e.area)}</div>` : ''}</td>${celdas}</tr>`;
+    }).join('');
+    grid.innerHTML = `<table style="width:100%;border-collapse:collapse;min-width:860px;"><thead><tr><th></th>${encabezados}</tr></thead><tbody>${filas}</tbody></table>`;
+  }
+
+  function dibujarDiasFormTurno(marcados, bloquear) {
+    document.getElementById('turnoDias').innerHTML = Array.from({ length: 7 }, (_, i) => {
+      const f = sumarDiasISO(turnosLunes, i);
+      const marcado = marcados.includes(f);
+      return `<label style="display:flex;align-items:center;gap:4px;margin:0;font-weight:400;"><input type="checkbox" class="chk-dia-turno" value="${f}" style="width:auto;" ${marcado ? 'checked' : ''} ${bloquear && !marcado ? 'disabled' : ''}> ${NOMBRES_DIA_CORTO[i]} ${new Date(f + 'T00:00:00').getDate()}</label>`;
+    }).join('');
+  }
+
+  function limpiarFormTurno() {
+    document.getElementById('turnoId').value = '';
+    document.getElementById('turnoNota').value = '';
+    document.getElementById('tituloFormTurno').textContent = 'Programar turno';
+    dibujarDiasFormTurno([], false);
+  }
+
+  function prepararTurno(empleadoId, fecha) {
+    limpiarFormTurno();
+    document.getElementById('turnoEmpleado').value = empleadoId;
+    dibujarDiasFormTurno([fecha], false);
+    document.getElementById('formTurno').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function editarTurnoPersonal(id) {
+    const t = turnosCache.find(x => x.id === id);
+    if (!t) return;
+    document.getElementById('turnoId').value = t.id;
+    document.getElementById('turnoEmpleado').value = t.empleado_id;
+    document.getElementById('turnoInicio').value = hhmm(t.hora_inicio);
+    document.getElementById('turnoFin').value = hhmm(t.hora_fin);
+    document.getElementById('turnoNota').value = t.nota || '';
+    document.getElementById('tituloFormTurno').textContent = 'Cambiar turno';
+    dibujarDiasFormTurno([t.fecha], true);
+    document.getElementById('formTurno').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  async function guardarTurnoPersonal() {
+    ocultarMensaje('mensajeTurnos');
+    const id = document.getElementById('turnoId').value || null;
+    const empleado = document.getElementById('turnoEmpleado').value;
+    const inicio = document.getElementById('turnoInicio').value;
+    const fin = document.getElementById('turnoFin').value;
+    const nota = document.getElementById('turnoNota').value.trim();
+    const dias = [...document.querySelectorAll('.chk-dia-turno:checked')].map(c => c.value);
+    if (!empleado) { mostrarMensaje('mensajeTurnos', 'Escoge el empleado.', 'error'); return; }
+    if (!inicio || !fin) { mostrarMensaje('mensajeTurnos', 'Escribe la hora de entrada y de salida.', 'error'); return; }
+    if (fin <= inicio) { mostrarMensaje('mensajeTurnos', 'La salida debe ser después de la entrada.', 'error'); return; }
+    if (dias.length === 0) { mostrarMensaje('mensajeTurnos', 'Marca al menos un día.', 'error'); return; }
+    const problemas = [];
+    for (const f of dias) {
+      const { error } = await supabaseClient.rpc('fn_rh_guardar_turno', { p_id: id, p_empleado: empleado, p_fecha: f, p_inicio: inicio, p_fin: fin, p_nota: nota || null });
+      if (error) problemas.push(fechaCortaISO(f) + ': ' + error.message);
+    }
+    await cargarTurnosAsistencia();
+    if (problemas.length) mostrarMensaje('mensajeTurnos', 'No se guardó en: ' + problemas.join(' · '), 'error');
+  }
+
+  async function eliminarTurnoPersonal(id) {
+    const { error } = await supabaseClient.from('horarios_personal').delete().eq('id', id);
+    if (error) { mostrarMensaje('mensajeTurnos', 'No se pudo quitar el turno: ' + error.message, 'error'); return; }
+    await cargarTurnosAsistencia();
+  }
+
+  async function copiarSemanaAnteriorTurnos() {
+    ocultarMensaje('mensajeTurnos');
+    const { data, error } = await supabaseClient.rpc('fn_rh_copiar_semana', { p_desde: sumarDiasISO(turnosLunes, -7), p_hacia: turnosLunes });
+    if (error) { mostrarMensaje('mensajeTurnos', 'No se pudo copiar: ' + error.message, 'error'); return; }
+    await cargarTurnosAsistencia();
+    mostrarMensaje('mensajeTurnos', data > 0 ? `Se copiaron ${data} turnos de la semana anterior.` : 'No había turnos nuevos para copiar (la semana anterior está vacía o ya estaban copiados).', data > 0 ? 'exito' : 'error');
+  }
+
+  async function cargarResumenMesTurnos() {
+    const cont = document.getElementById('resumenMesTurnos');
+    const mes = document.getElementById('turnosMes').value;
+    if (!mes) { cont.innerHTML = ''; return; }
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    const [anio, m] = mes.split('-').map(Number);
+    const ultimo = new Date(anio, m, 0).getDate();
+    const { data, error } = await supabaseClient.rpc('fn_rh_resumen_asistencia', { p_desde: mes + '-01', p_hasta: mes + '-' + String(ultimo).padStart(2, '0') });
+    if (error) { cont.innerHTML = '<div class="cargando">No se pudo cargar: ' + escaparHtml(error.message) + '</div>'; return; }
+    const porEmp = {};
+    (data || []).forEach(r => {
+      const x = porEmp[r.empleado_id] = porEmp[r.empleado_id] || { nombre: r.nombre, prog: 0, trab: 0, tardes: 0, ausencias: 0, fest: 0 };
+      x.prog += Number(r.horas_programadas);
+      x.trab += Number(r.horas_trabajadas);
+      if (r.estado === 'tarde') x.tardes++;
+      if (r.estado === 'ausente') x.ausencias++;
+      if (r.es_festivo || r.es_domingo) x.fest += Number(r.horas_trabajadas);
+    });
+    const lista = Object.values(porEmp);
+    if (lista.length === 0) { cont.innerHTML = '<div class="cargando">Sin turnos ni marcaciones en este mes.</div>'; return; }
+    const f1 = n => n.toFixed(1);
+    cont.innerHTML = `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;min-width:560px;">
+      <tr style="text-align:left;border-bottom:2px solid var(--rosa-medio);"><th style="padding:6px 4px;">Empleado</th><th style="text-align:right;">Programadas</th><th style="text-align:right;">Trabajadas</th><th style="text-align:right;">Diferencia</th><th style="text-align:right;">Tardanzas</th><th style="text-align:right;">Ausencias</th><th style="text-align:right;">Horas en domingo o festivo</th></tr>
+      ${lista.map(x => `<tr style="border-bottom:1px solid #f4eef2;"><td style="padding:6px 4px;font-weight:600;">${escaparHtml(x.nombre)}</td><td style="text-align:right;">${f1(x.prog)} h</td><td style="text-align:right;">${f1(x.trab)} h</td><td style="text-align:right;color:${x.trab - x.prog < 0 ? '#a12d2d' : 'inherit'};">${x.trab - x.prog > 0 ? '+' : ''}${f1(x.trab - x.prog)} h</td><td style="text-align:right;">${x.tardes}</td><td style="text-align:right;">${x.ausencias}</td><td style="text-align:right;">${f1(x.fest)} h</td></tr>`).join('')}
+    </table></div>`;
+  }
+
+  // Corregir o agregar marcaciones de entrada/salida
+  function limpiarMarcacionManual() {
+    ['marcManualId', 'marcManualFecha', 'marcManualEntrada', 'marcManualSalida', 'marcManualMotivo'].forEach(id => { document.getElementById(id).value = ''; });
+    document.getElementById('tituloMarcacionManual').textContent = 'Agregar o corregir una marcación';
+  }
+
+  function editarMarcacion(id, empleadoId, fecha, entradaIso, salidaIso) {
+    document.getElementById('marcManualId').value = id;
+    document.getElementById('marcManualEmpleado').value = empleadoId;
+    document.getElementById('marcManualFecha').value = fecha;
+    document.getElementById('marcManualEntrada').value = horaBogota(entradaIso);
+    document.getElementById('marcManualSalida').value = horaBogota(salidaIso);
+    document.getElementById('marcManualMotivo').value = '';
+    document.getElementById('tituloMarcacionManual').textContent = 'Corregir marcación';
+    document.getElementById('panelMarcacionManual').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  async function guardarMarcacionManual() {
+    ocultarMensaje('mensajeMarcacionManual');
+    const entrada = document.getElementById('marcManualEntrada').value;
+    const salida = document.getElementById('marcManualSalida').value;
+    const fecha = document.getElementById('marcManualFecha').value;
+    if (!fecha || !entrada) { mostrarMensaje('mensajeMarcacionManual', 'Escribe la fecha y la hora de entrada.', 'error'); return; }
+    if (salida && salida <= entrada) { mostrarMensaje('mensajeMarcacionManual', 'La salida debe ser después de la entrada.', 'error'); return; }
+    const { error } = await supabaseClient.rpc('fn_rh_marcacion_manual', {
+      p_id: document.getElementById('marcManualId').value || null,
+      p_empleado: document.getElementById('marcManualEmpleado').value,
+      p_fecha: fecha, p_entrada: entrada, p_salida: salida || null,
+      p_motivo: document.getElementById('marcManualMotivo').value.trim()
+    });
+    if (error) { mostrarMensaje('mensajeMarcacionManual', error.message, 'error'); return; }
+    limpiarMarcacionManual();
+    await cargarRegistroHorasAdmin();
+    mostrarMensaje('mensajeMarcacionManual', 'Marcación guardada.', 'exito');
+  }
+
+  // Horario de la persona que entró (aparece en el menú, junto a "Marcar entrada")
+  async function agregarMiHorarioAlWidget(cont) {
+    try {
+      const { data: emp } = await supabaseClient.from('empleados').select('id').eq('user_id', sesionActual.userId).maybeSingle();
+      if (!emp) return;
+      const hoy = hoyBogotaISO();
+      const { data } = await supabaseClient.from('horarios_personal').select('fecha, hora_inicio, hora_fin')
+        .eq('empleado_id', emp.id).gte('fecha', hoy).lte('fecha', sumarDiasISO(hoy, 6)).order('fecha').order('hora_inicio').limit(4);
+      if (!data || data.length === 0) return;
+      const lineas = data.map(t => `${t.fecha === hoy ? 'Hoy' : fechaCortaISO(t.fecha)} · ${hhmm(t.hora_inicio)}–${hhmm(t.hora_fin)}`).join('<br>');
+      cont.insertAdjacentHTML('afterbegin', `<div style="font-size:11px;color:rgba(255,255,255,0.85);margin-bottom:8px;line-height:1.5;">🗓️ <strong>Mi horario</strong><br>${lineas}</div>`);
+    } catch (err) { /* el horario es solo informativo */ }
   }
 
   // ============================================================
