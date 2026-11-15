@@ -73,3 +73,4 @@ Estructura: HTML de pantallas (líneas ~1000–5800), luego un bloque grande `<s
 | Editar pedido registrado | `abrirEditarClientePedido`, `guardarClientePedido`, `abrirCambiarEnvioPedido`, `guardarEnvioPedido`, `avisarOrdenesEnProcesoDePedido` (junto a `marcarPedidoListoUI`, ~19660) |
 
 | Pedidos por elaborar: una orden por producto | `cargarSolicitudesElaboracion`, `empezarLineaElaboracion`, `terminarSolicitudDeOrden` (~19880-20050) |
+| Cambiar fecha de entrega del pedido | `lineaFechaEntregaPedido`, `abrirCambiarFechaEntregaPedido`, `guardarFechaEntregaPedido` (junto a `abrirCambiarEnvioPedido`, ~20520) |

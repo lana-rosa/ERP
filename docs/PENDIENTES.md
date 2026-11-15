@@ -33,6 +33,7 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [x] Editar datos del cliente en un pedido ya registrado.
 - [x] Cambiar el valor del domicilio (recalcular saldo).
 - [x] 12-nov: pedido de varios productos ahora permite abrir una orden por producto (Pedidos por elaborar). Sara decidió (12-nov): OP-0046 de PED-2026-00565 se deja como orden única de los 4 productos. Cerrado: OP-0037 (duplicada de OP-0038, PED-2026-00555) anulada con motivo, sin borrar.
+- [x] 13-nov: cambiar la fecha de entrega de un pedido con motivo e historial (botón en Pedidos Web/Redes). Falta: pantalla que muestre el cumplimiento de entregas (`fn_cumplimiento_entregas`).
 - [ ] Probar el cobro de anticipo con el Worker real (3 dudas abiertas, sobre todo si cobra el anticipo ajustado).
 
 ### Chat 3 · Compras SENA (enviado 12-nov)
@@ -73,6 +74,7 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [x] Resumen de pendientes contables listo para llevarle a Hernando: `docs/resumen-contador.md` (llevarlo junto con las 22 preguntas del chat 5) — 12-nov-2026
 
 ### Chat 8 · Menú/Interfaz
+- [x] Ítem "Sistema Operativo" en el menú (admin, Gerencia SO, Taller SO), 14-nov v55. Al mudar de dominio: cambiar `URL_SISTEMA_OPERATIVO`.
 - [x] Inicio de sesión: botón 👁 para ver la contraseña y error que sugiere revisar el correo (13-nov, v47).
 - [x] Worker de ventas ya acepta la dirección nueva (13-nov). [ ] Sara: crear el proyecto en Cloudflare Pages (reintentar), decidir comando de compilación para no publicar `docs/` y `supabase/`, borrar el token de Cloudflare. [ ] Luego probar inicio de sesión, venta de prueba, pedidos y app instalable. Detalle en `docs/temas/hosting.md`.
 - [x] 🔴 Sin sesión se veía el ☰ y se abría el menú (13-nov): corregido, nada visible sin iniciar sesión.
@@ -80,6 +82,24 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [x] Buscadores de **Productos** (Gestionar inventario) y **Clientes**: al entrar solo la caja; la lista aparece al escribir.
 - [x] Celular: la barra de búsqueda ya no queda por encima del fondo oscuro del menú, no tapa la barra rosada y el texto cabe.
 - [x] Menú lateral oculto sin forma de volver a mostrarlo (PR #100).
+
+### Chat 9 · Personal
+- [x] Fase 1 — Ficha del empleado (15-nov): cargo, área, jornada, tipo y fin de contrato, caja de compensación, cuenta de acceso (rol) y avisos de documentos que faltan y de contrato por vencer (ver `docs/temas/personal.md`).
+- [x] Fase 2 — Turnos y asistencia (15-nov): turnos por semana, copiar semana, festivos, resumen de asistencia y del mes, corregir marcaciones, "Mi horario" en el menú (ver `docs/temas/personal.md`).
+- [x] Fase 3 — Vacaciones y permisos (15-nov): la empleada pide desde Mi perfil, una administradora aprueba o rechaza en Talento Humano, saldo de días, y la asistencia no cuenta como ausente lo aprobado (ver `docs/temas/personal.md`).
+- [ ] Fase 4 — Tejedoras · Fase 5 — Exportar novedades / resumen mensual para la DIAN.
+- [ ] Vacaciones: avisar a la empleada cuando le respondan (hoy lo ve al entrar en Mi perfil → Vacaciones y permisos); pantalla para que una administradora registre una ausencia a nombre de otra persona (la función ya existe: `fn_aus_solicitar` con `p_empleado`); mostrar las ausencias aprobadas en el calendario del equipo.
+- [ ] Enlazar la asistencia con el turno de caja de la Tienda (hoy van separados).
+- [x] Privacidad de las horas (15-nov, aprobado por Sara): `registro_horas_empleado` ya no la lee cualquier usuario; cada empleada ve las suyas, el líder de área las de su área, administradoras y contador todas (ver `docs/temas/personal.md`).
+- **Para otro chat (Contabilidad/Calendario):** `fn_festivos_colombia` fallaba siempre (devolvía fecha con hora en los festivos que pasan a lunes). Se corrigió el tipo de dato el 15-nov sin cambiar ninguna fecha; conviene que quien use festivos lo confirme.
+- [x] Permisos de Manuela (15-nov): rol "Líder de Tienda" (base cajero) con Proveedores y Órdenes de compra visibles; pedidos a proveedores quedan "por aprobar" y los aprueba una administradora; cuenta el inventario de la Tienda y la administradora finaliza la toma. Detalle en `docs/temas/personal.md`.
+- [ ] 🔴 **Seguridad (decide Sara):** 131 funciones de la base de datos (nómina, pago de nómina, retiros del propietario, honorarios, cierre contable, eliminar período…) solo comprueban que la persona tenga *algún* rol, así que un cajero con su sesión podría llamarlas directo aunque no vea el menú. La app nunca las llama directo (las llama el Worker con otra llave), así que se pueden restringir a administradora/contador sin romper nada. Falta tu visto bueno por ser dinero. Lista completa: consulta de `pg_proc` con `fn_rol_actual() is null and not public.fn_es_tejedora()`.
+- [ ] Manuela y las compras: hoy puede registrar compras y gastos de Tienda (ya podía como cajero) escogiendo quién las aprobó; no hay aprobación real. ¿Se deja así o solo las registra una administradora?
+- [ ] Aviso a las administradoras cuando hay pedidos "por aprobar" (hoy solo se ven en Órdenes de compra → ⏳ Por aprobar).
+- **Para otro chat (Inventario/Compras):** el Worker deja crear/ver órdenes de compra y manejar tomas de inventario solo a `administrador` (no editable desde aquí); por eso se hicieron funciones en Supabase para la Tienda. El directorio de proveedores incluye al equipo y a tejedoras (honorarios): la Tienda los ve.
+- [ ] Al crear un empleado nuevo, pedir cargo/área/jornada/fin de contrato desde el inicio (hoy se llenan al "Editar").
+- **Fuera del ERP (14-nov, Orquestador):** lista de chequeo 5S y todo lo de SG-SST viven en el Sistema Operativo (`sistema_operativo.auditorias_5s`); no se construyen aquí.
+- **Para otro chat:** nada por ahora.
 
 ## Sara
 - [ ] 🔴 Mensaje exacto/captura del error de ventas → chat 1.
@@ -89,6 +109,8 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [ ] Servicios públicos y arriendo de octubre (atrasado, fecha 2026-10-05).
 - [ ] Arqueo físico de caja (última referencia $1.353.066).
 - [ ] Fecha de inauguración del almacén.
+- [ ] Personal: nombres de las 2 tejedoras y de quien atiende el almacén (¿Manuela?), con jornada y salario de cada una; decidir si las filas actuales (Sara, Jennifer, Manuela, hoy "indefinido") se quedan o se reemplazan por los 3 contratos a término fijo de 1 año. Sara y Jennifer: ver pregunta al contador.
+- [ ] Personal: en Editar de cada empleado, escoger su "Cuenta de acceso" (hoy ninguna ficha está conectada) y subir los documentos que faltan.
 - [ ] Excel de gramos por orden.
 - [ ] Cambiar los 3 códigos de barras internos por GS1.
 - [ ] Asignar tejedoras y horas en el plan de tejido.
@@ -106,6 +128,9 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [ ] ¿Se puede decir "anticipo de **al menos** el 50 %"? (el ERP permite 50/70/100 % y menos con autorización).
 
 ## Contador (Hernando)
+- [ ] Personal (15-nov): vacaciones y permisos. ¿Los días de vacaciones se cuentan de lunes a sábado o de lunes a viernes (hoy lunes a sábado sin festivos)? ¿Se mantiene 15 días hábiles por año, desde cuándo se pueden tomar, y con cuánto aviso se piden? ¿Los permisos y la calamidad doméstica se pagan, se descuentan o se reponen? ¿Hay vacaciones compensadas en dinero? Mientras tanto la administradora ajusta los días al aprobar.
+- [ ] Personal (15-nov): recargos de horas extra y trabajo en domingo/festivo (diurnas, nocturnas, dominicales; desde cuándo cuenta la hora nocturna), jornada máxima semanal, tolerancia para llegadas tarde y qué hacer con el descanso. El ERP hoy solo suma horas y marca domingos y festivos.
+- [ ] Personal (14-nov): ¿Sara (y Jennifer si es socia) pueden ir como empleadas siendo persona natural, o siguen como retiros del propietario (3805) u honorarios? Prestaciones, seguridad social y tipo de contrato de los 3 empleados; si las 2 tejedoras dejan de pagarse por honorarios y desde qué fecha; campos y plazo mensual de la nómina electrónica gratuita de la DIAN.
 - [ ] Impuestos no se pagan desde la cuenta del Fondo; cómo registrar los giros del Fondo (cuenta exclusiva, sin mezclar).
 - [ ] UVT y tarifas SIMPLE, escenario de provisión, tabla de renta — lista de 22 preguntas en `docs/temas/impuestos-preguntas-contador.md`. Faltan: UVT 2026 confirmada y tarifas SIMPLE 2026/2027 (hoy 0 cargadas).
 - [ ] Verificar ICA Villamaría (preguntas 15–19 del mismo archivo).
