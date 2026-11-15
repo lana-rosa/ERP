@@ -32,3 +32,8 @@
 - Un permiso manual de la administradora (módulo `nav-sistema-operativo`, agregado a `CATALOGO_MODULOS`) tiene la última palabra, igual que en el resto del menú.
 - Seguridad de fondo: el ítem solo es comodidad; la protección real de los datos del SO es su RLS (repo SO, migración pendiente de aplicar).
 - Probado con rol simulado (admin, Gerencia SO, Taller SO, Taller, Cajero, Líder de Tienda, Contador, permiso manual) en 390px y 1280px; la lectura del nombre del rol por RLS se probó con rollback.
+
+## Tarea futura: verificación en dos pasos (MFA) para administradoras — NO construir antes del 14-dic-2026
+- Decisión de Sara (14-nov): activar MFA TOTP de Supabase Auth (gratis) **solo para cuentas con rol administrador**, **después de la apertura (desde el 14-dic)**, para no arriesgar el acceso durante la apertura.
+- Falta construir: (1) pantalla para inscribir el factor (QR para Google Authenticator), (2) pedir el código al iniciar sesión, (3) plan de recuperación si se pierde el celular: códigos de respaldo o que la otra administradora pueda restablecerlo.
+- Tener en cuenta: hoy el inicio de sesión es correo + contraseña (`signInWithPassword`); MFA agrega el nivel de seguridad `aal2` tras el login. Probar con cuenta de prueba antes de exigirlo, y nunca dejar a las dos administradoras sin forma de entrar.
