@@ -6296,6 +6296,16 @@
     mostrarPantalla('pantallaCargando');
     await cargarMiTejedora();
 
+    // Una cuenta sin rol (y que no sea tejedora) no tiene acceso al ERP — p. ej.
+    // la cuenta de la tienda web. Antes la dejaba pasar a "Abrir turno" y fallaba
+    // con mensajes confusos del Worker.
+    if (!rolActual && !miTejedora.vinculada) {
+      const correoSinAcceso = sesionActual ? sesionActual.email : '';
+      await cerrarSesion();
+      mostrarMensaje('mensajeLogin', 'La cuenta ' + correoSinAcceso + ' no tiene acceso al ERP. Entra con la cuenta que usas para el ERP (si no la recuerdas, pregúntale a la administradora).', 'error');
+      return;
+    }
+
     // El menú lateral se configura aquí, apenas se sabe el rol — así siempre
     // aparece completo, sin depender de si ya se abrió un turno o no.
     configurarSidebarPorRol();
