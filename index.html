@@ -19490,11 +19490,12 @@
               <span style="text-align:right;font-weight:700;">${formatearMoneda(p.total_pedido)}</span>
               <span><span class="badge-estado-pedido" style="background:${colorEstado.bg};color:${colorEstado.color};">${etiquetasEstado[p.estado] || p.estado}</span></span>
             </div>
-            <div class="tabla-lista-detalle" style="display:block;">${lineaMedio}${bloqueFacturaPedido(p)}${acciones}<div data-envio-pedido="${p.id}">${bloqueEnvioPedido(p)}</div>
+            <div class="tabla-lista-detalle" style="display:block;">${lineaMedio}${lineaFechaEntregaPedido(p)}${bloqueFacturaPedido(p)}${acciones}<div data-envio-pedido="${p.id}">${bloqueEnvioPedido(p)}</div>
               <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
                 <button class="btn-mini editar" onclick="abrirTrazaPedido('${p.id}')">🧭 Ver trazabilidad</button>
                 ${(p.tercero_id || (p.tercero && p.tercero.id)) ? `<button class="btn-mini editar" onclick="abrirEditarClientePedido('${p.id}')">✏️ Editar cliente</button>` : ''}
                 ${p.estado !== 'entregado' && !p.saldo_pagado && p.canal !== 'tienda_virtual' ? `<button class="btn-mini editar" onclick="abrirCambiarEnvioPedido('${p.id}')">🚚 Cambiar domicilio</button>` : ''}
+                ${p.estado !== 'entregado' && (rolActual === 'administrador' || rolActual === 'cajero') ? `<button class="btn-mini editar" onclick="abrirCambiarFechaEntregaPedido('${p.id}')">📅 Cambiar fecha de entrega</button>` : ''}
               </div>
               <div id="panelEditarPedido-${p.id}" class="oculto" style="margin-top:8px;"></div></div>
           `;
@@ -19979,6 +19980,57 @@
     });
     if (error) { mostrarMensaje('mensajePedidosCanal', 'No se pudo guardar: ' + error.message, 'error'); return; }
     mostrarMensaje('mensajePedidosCanal', '✅ Datos del cliente actualizados.', 'exito');
+    await cargarPedidosCanal();
+  }
+
+  // Fecha de entrega de un pedido: la vigente se muestra siempre; los cambios quedan con motivo en un historial
+  const MOTIVOS_FECHA_ENTREGA = { cliente: 'La clienta pidió otra fecha', material: 'Falta de material', otro: 'Otro' };
+  const fechaCortaPedido = (f) => f ? new Date(String(f).slice(0, 10) + 'T00:00:00').toLocaleDateString('es-CO') : '';
+
+  function lineaFechaEntregaPedido(p) {
+    if (!p.fecha_estimada_entrega) return '';
+    const hoy = new Date().toISOString().slice(0, 10);
+    const atrasada = p.estado !== 'entregado' && String(p.fecha_estimada_entrega).slice(0, 10) < hoy;
+    return `<div style="font-size:11.5px;margin-bottom:6px;">📅 <strong>Entrega:</strong> ${fechaCortaPedido(p.fecha_estimada_entrega)}${atrasada ? ' <span style="color:var(--rojo-error);font-weight:600;">· ⚠️ atrasado</span>' : ''}</div>`;
+  }
+
+  async function abrirCambiarFechaEntregaPedido(pedidoId) {
+    const p = pedidosCanalCache.find(x => x.id === pedidoId);
+    const panel = document.getElementById(`panelEditarPedido-${pedidoId}`);
+    if (!p || !panel) return;
+    ocultarMensaje('mensajePedidosCanal');
+    let historial = [];
+    try { const { data } = await supabaseClient.rpc('fn_historial_fecha_entrega_pedido', { p_pedido_id: pedidoId }); historial = data || []; } catch (e) { /* sin historial visible */ }
+    panel.classList.remove('oculto');
+    panel.innerHTML = `
+      <div style="padding:10px;border-radius:10px;background:var(--rosa-suave);">
+        <strong style="font-size:12.5px;">Cambiar la fecha de entrega</strong>
+        <div style="font-size:11px;opacity:0.7;margin:2px 0 6px;">Hoy: ${p.fecha_estimada_entrega ? fechaCortaPedido(p.fecha_estimada_entrega) : 'sin fecha'}. El cambio queda anotado con el motivo y quién lo hizo.</div>
+        <label for="epFecha-${pedidoId}">Nueva fecha de entrega</label>
+        <input type="date" id="epFecha-${pedidoId}" value="${p.fecha_estimada_entrega ? String(p.fecha_estimada_entrega).slice(0, 10) : ''}">
+        <label for="epMotivoFecha-${pedidoId}">Motivo</label>
+        <select id="epMotivoFecha-${pedidoId}" onchange="document.getElementById('epMotivoTexto-${pedidoId}').classList.toggle('oculto', this.value !== 'otro')">
+          <option value="">Elige el motivo...</option>
+          ${Object.entries(MOTIVOS_FECHA_ENTREGA).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}
+        </select>
+        <input type="text" id="epMotivoTexto-${pedidoId}" class="oculto" placeholder="Escribe el motivo" style="margin-top:6px;">
+        <div style="display:flex;gap:6px;margin-top:8px;">
+          <button class="btn-mini guardar" onclick="guardarFechaEntregaPedido('${pedidoId}')">💾 Guardar fecha</button>
+          <button class="btn-mini editar" onclick="document.getElementById('panelEditarPedido-${pedidoId}').classList.add('oculto')">Cancelar</button>
+        </div>
+        ${historial.length ? `<div style="font-size:11px;margin-top:10px;"><strong>Cambios anteriores</strong>${historial.map(h => `<div style="opacity:0.8;">• ${h.fecha_anterior ? fechaCortaPedido(h.fecha_anterior) : 'sin fecha'} → ${fechaCortaPedido(h.fecha_nueva)} · ${escaparHtml(MOTIVOS_FECHA_ENTREGA[h.motivo_tipo] || h.motivo_tipo)}${h.motivo ? ' (' + escaparHtml(h.motivo) + ')' : ''} · ${escaparHtml(h.quien || '')} · ${new Date(h.cuando).toLocaleDateString('es-CO')}</div>`).join('')}</div>` : ''}
+      </div>`;
+  }
+
+  async function guardarFechaEntregaPedido(pedidoId) {
+    const fecha = document.getElementById(`epFecha-${pedidoId}`).value;
+    const tipo = document.getElementById(`epMotivoFecha-${pedidoId}`).value;
+    const texto = document.getElementById(`epMotivoTexto-${pedidoId}`).value.trim();
+    if (!fecha) { mostrarMensaje('mensajePedidosCanal', 'Escribe la nueva fecha de entrega.', 'error'); return; }
+    if (!tipo) { mostrarMensaje('mensajePedidosCanal', 'Elige el motivo del cambio de fecha.', 'error'); return; }
+    const { error } = await supabaseClient.rpc('fn_cambiar_fecha_entrega_pedido', { p_pedido_id: pedidoId, p_fecha: fecha, p_motivo_tipo: tipo, p_motivo: texto || null });
+    if (error) { mostrarMensaje('mensajePedidosCanal', 'No se pudo cambiar la fecha: ' + error.message, 'error'); return; }
+    mostrarMensaje('mensajePedidosCanal', `✅ Fecha de entrega cambiada a ${fechaCortaPedido(fecha)}. Quedó anotado el motivo.`, 'exito');
     await cargarPedidosCanal();
   }
 
