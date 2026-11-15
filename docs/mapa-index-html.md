@@ -23,7 +23,7 @@ Estructura: HTML de pantallas (líneas ~1000–5800), luego un bloque grande `<s
 | Servicios digitales DIAN / Correo empresa | 2293 / 2304 |
 | Solicitudes / Ajuste de stock | 2314 / 2356 |
 | Pedidos por canal (lista) | 2389 |
-| Historial ventas / Reportes turno | 2425 / 2516 |
+| Historial ventas / Reportes turno | 2425 / 2516 (Historial: `cargarHistorialRedes` 10356, `renderizarFilaVentaHistorial` 10691; botón editar cliente en ambos) |
 | **Pagos internos pendientes + Registro de compras y gastos** | 2542 |
 | Reportes financieros / Indicadores / Costeo real / Presupuesto | 2803 / 2898 / 2916 / 2993 |
 | Nómina / Talento humano | 3061 / 3306 |
@@ -50,14 +50,15 @@ Estructura: HTML de pantallas (líneas ~1000–5800), luego un bloque grande `<s
 | Ficha técnica de producto tejido | `fichaHtml` 9107, `fichaMontar` 9145, `fichaCalcularCosto` 9166, `abrirFichaTecnica` 9273, `guardarFichaTecnicaModal` 9367 |
 | Ficha de insumo (mercería) | `insumoFichaMontar` 9299, `abrirFichaInsumo` 9345, `guardarFichaInsumoModal` 9356 |
 | Ficha en Taller (tejido vs mercería) | `actualizarBloqueFichaNuevo` 9261 |
+| Apoyo de la orden (tejedora, imágenes, patrones, insumos automáticos) | `htmlApoyoOrden`, `asignarTejedoraOrden`, `subirImagenReferencia`, `prellenarMaterialesOrden` (~11217, antes del paso a paso) |
 | Producción: ficha de orden y pasos | `abrirFichaProduccion` 11260 … `guardarFichaProduccion` 11664 |
 | Reglas de precio mercería | `renderizarReglaMerceria` 11729 |
 | **Plan de tejido** | `cargarPlanTejido` 11999, `guardarPlanTejidoItem` 12052 |
 | Etiquetas / código de barras | `formatoCodigoBarras` 13464 |
-| **Compras: requisitos SENA** | `actualizarRequisitosCompra` 14257, `validarRequisitosCompra` 14310, `guardarRequisitosCompra` 14348, `verComprasSinRequisitos` 14245; guardado de gasto/compra ~14383–14473 |
+| **Compras: requisitos SENA** | `verComprasSinRequisitos` 14452, `verSoportesPagoFondo` 14462, `estadoLegalizarCompra` 14482, `avisarProveedorPlanFondo` 14436, `actualizarRequisitosCompra` 14529, `validarRequisitosCompra` 14591, `guardarRequisitosCompra` 14645 |
 | **Pedido por canal: anticipo** | `calcularAnticipoPedido` 18698, `fijarAnticipoPedido` 18715, `actualizarResumenAnticipoPedido` 18725; crear: `confirmarCrearPedidoCanal` |
 | Reseñas web | `mostrarPantallaResenasWeb` 16568 |
-| Facturación: por facturar / respaldo | `cargarFePendientes` 22875, `cargarFeRespaldo` 23501, `descargarRespaldoFe` 23521 |
+| Facturación: por facturar / respaldo | `cargarFePendientes` 23421, editar cliente (`formularioClienteVenta`… `guardarClienteFe`) 23959-24060, `cargarFeRespaldo` 24162, `descargarRespaldoFe` 24182 |
 | Cartera / pagos pendientes | `mostrarPantallaCuentasPendientes` 24670, `mostrarPantallaPagosPendientes` 13957 |
 | **Previsión de impuestos** | `cargarPrevisionImpuestos` 25911, `guardarPrevisionConfig` 26094, `guardarPresupuestoPrevision` 26088 |
 | Anticipo SIMPLE | `confirmarAnticipoSimple` 26204 |
@@ -68,3 +69,8 @@ Estructura: HTML de pantallas (líneas ~1000–5800), luego un bloque grande `<s
 - `docs/migraciones/*.sql`: migraciones SQL guardadas (las más recientes se aplicaron directo con MCP y no están aquí).
 - `docs/factura-por-correo/`: borrador de ingesta de facturas por correo.
 - `supabase/functions/`: edge functions.
+| Política de anticipos | `cargarPoliticaAnticipos`/`politicaAnticiposCache` (~6717), `guardarPoliticaAnticipos` (Políticas legales), `enviarResumenPedidoWhatsapp` (antes de `fijarAnticipoPedido`) |
+| Editar pedido registrado | `abrirEditarClientePedido`, `guardarClientePedido`, `abrirCambiarEnvioPedido`, `guardarEnvioPedido`, `avisarOrdenesEnProcesoDePedido` (junto a `marcarPedidoListoUI`, ~19660) |
+
+| Pedidos por elaborar: una orden por producto | `cargarSolicitudesElaboracion`, `empezarLineaElaboracion`, `terminarSolicitudDeOrden` (~19880-20050) |
+| Cambiar fecha de entrega del pedido | `lineaFechaEntregaPedido`, `abrirCambiarFechaEntregaPedido`, `guardarFechaEntregaPedido` (junto a `abrirCambiarEnvioPedido`, ~20520) |

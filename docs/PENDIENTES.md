@@ -1,38 +1,149 @@
 # Pendientes ERP / CRM
 
-Actualizado: 2026-11-03
+Actualizado: 2026-11-12 (Orquestador)
 
-## Para revisar con Claude
-- [ ] **No deja registrar ventas** (reportado 03-nov). Mensaje: "No hay turno de caja abierto." (lo da el Worker). Causa probable: el turno abierto el 19-oct lleva 24 días y el Worker ya no lo reconoce. Falta que Sara cierre ese turno con arqueo y abra uno nuevo (pantalla "Cerrar turno"), y probar una venta. Ver `docs/temas/ventas-pos.md`. Urgente: tienda física abre el 13-dic. 13-nov: además "Token inválido o expirado" al abrir turno → arreglo del token listo en la rama, falta aprobación de Sara para fusionar a main.
-- [x] Menú lateral oculto sin forma de volver a mostrarlo (PR #100, resuelto).
+> **Regla para los chats:** cada chat edita **solo su sección** (y marca con [x] lo que cierre, con fecha y PR). El orden de trabajo lo pone el Orquestador. No empieces algo de "En cola" hasta que el chat anterior haya publicado en `main`.
+
+## Fechas límite
+- **2-dic-2026:** informe bimestral a la interventora (empezar la semana del 23-nov; necesita ventas y estados financieros al día).
+- Informes mensuales (producción, ventas, estados financieros): fecha por confirmar con la interventora.
+- Respaldo mensual de facturación electrónica (desde oct-2026).
+
+## Orden de trabajo (turnos)
+Dos chats no deben cambiar `index.html` en la misma zona a la vez.
+1. **Chat 1 Ventas** — causa probable encontrada; arreglos publicados; falta que Sara pruebe turno nuevo y venta.
+2. **Chat 2 Pedidos** — en curso: textos legales en recibos → luego lote de pedidos (ver su sección).
+3. **Chat 3 Compras SENA** — en curso: ajustes del nuevo modelo de desembolsos (zona Compras, no choca con el chat 2).
+4. **Chat 6 Producción** — en cola: empieza **cuando el chat 2 publique** su lote de pedidos.
+5. **Chat 8 Menú/Interfaz** — hecho: barra de búsqueda en celular + buscadores de Productos y Clientes (v44).
+- Chat 4 DIAN: resolución registrada; editar cliente publicado (PR #124); falta emitir las 7 facturas. Chat 5 Impuestos: preguntas para el contador listas (PR #113).
+
+## Por chat
+
+### Chat 1 · Ventas
+- [ ] 🔴 **No deja registrar ventas** (desde 03-nov). Mensaje: "No hay turno de caja abierto." (lo da el Worker). Causas probables: (a) el turno abierto el 19-oct lleva +24 días y el Worker ya no lo reconoce; (b) Sara tiene 2 cuentas (la del ERP `…@gmai.com`, administrador; otra `…@gmail.com` sin rol, creada 3-nov). 13/15-nov: además "Token inválido o expirado" al abrir turno. Arreglos publicados en el PR (token siempre vigente + bloqueo de cuentas sin rol). **Falta (Sara):** entrar con la cuenta del ERP, cerrar el turno del 19-oct con arqueo, abrir uno nuevo y hacer una venta de prueba; luego marcar [x]. Ver `docs/temas/ventas-pos.md`.
+
+### Chat 2 · Pedidos y anticipos (enviado 12-nov, en este orden)
+- [x] Recibos: el texto de cambios/retracto/garantía respeta saltos de línea y va alineado a la izquierda (venta y anticipo).
+- [x] (hecho; falta que Sara pegue el texto) Nuevo campo "Anticipos y cancelación de pedidos personalizados" (en Supabase), solo en recibo de anticipo y en el mensaje del pedido antes de pagar.
+- [x] 🔴 Recibo dice "pendiente de pago" aunque el anticipo se cobró al crear el pedido.
+- [x] 🔴 Se abren 2 órdenes de producción para el mismo pedido de un solo producto (hecho: bloqueo en Supabase). **Sara decide:** hoy hay 1 duplicada, PED-2026-00555 → OP-0037 (en proceso) y OP-0038 (terminada); no se borró.
+- [x] Pedido entregado/despachado debe salir de órdenes de producción (la orden "en proceso" no se cierra sola: se avisa).
+- [x] Número del pedido en el mensaje de WhatsApp y en la imagen del recibo.
+- [x] Editar datos del cliente en un pedido ya registrado.
+- [x] Cambiar el valor del domicilio (recalcular saldo).
+- [x] 12-nov: pedido de varios productos ahora permite abrir una orden por producto (Pedidos por elaborar). Sara decidió (12-nov): OP-0046 de PED-2026-00565 se deja como orden única de los 4 productos. Cerrado: OP-0037 (duplicada de OP-0038, PED-2026-00555) anulada con motivo, sin borrar.
+- [x] 13-nov: cambiar la fecha de entrega de un pedido con motivo e historial (botón en Pedidos Web/Redes). Falta: pantalla que muestre el cumplimiento de entregas (`fn_cumplimiento_entregas`).
+- [ ] Probar el cobro de anticipo con el Worker real (3 dudas abiertas, sobre todo si cobra el anticipo ajustado).
+
+### Chat 3 · Compras SENA (enviado 12-nov)
+- [x] Textos: paga Sara desde la cuenta exclusiva; sin efectivo (12-nov, PR #103).
+- [x] Comprobante de transferencia obligatorio y extracto opcional (12-nov, PR #103).
+- [x] Pantalla de soportes de pago del Fondo (12-nov, PR #104).
+- [ ] Evidencia de entrega (foto/acta/remisión).
+- [ ] Estado por compra: "lista para legalizar" / "falta: …".
+- [ ] Aviso si el proveedor no está aprobado en el plan operativo.
+- [ ] Aviso si el valor pagado ≠ valor de la factura.
+- [ ] Control por desembolso: recibido, legalizado, saldo (depende de la respuesta de la interventora).
+- [ ] Probar con archivos reales.
+
+### Chat 4 · Facturación DIAN
+- [x] Resolución de numeración registrada (12-nov-2026): N° 18764117094883, prefijo LRCT, rango 1–100.000, habilitada desde 14-oct. Falta anotar su vigencia (no salía en la captura de la DIAN).
+- [ ] Numeración de documento soporte y primer respaldo mensual (Sara).
+- [ ] Emitir en la DIAN las 7 facturas marcadas "facturar" ($601.000: PED-2026-00541, 545, 549, 553, 554, 555, 550) y registrarlas en Por facturar.
+- [x] **Editar datos del cliente de una venta/pedido** (pedido de Sara 13-nov, regla: solo si NO tiene factura DIAN registrada). Publicado 13-nov (PR #124, función `fn_editar_cliente_venta` aplicada en Supabase). Botón "✏️ Datos del cliente" en Por facturar. 13-nov: también en Historial de ventas (Tienda y WhatsApp/Redes), publicado (PR #126).
+- **Para otro chat (Chat 2 Pedidos):** el panel "Editar datos del cliente" del pedido usa `fn_editar_cliente_pedido_canal`, que sí deja a un cajero editar, modifica el cliente compartido y no revisa si ya hay factura. Conviene que ese panel llame a `fn_editar_cliente_venta('pedido_canal', ...)` o que se bloquee si hay factura.
+- Revisión 12-nov de ventas sin factura desde el 14-oct: 14 ventas, $2.821.200 (7 con "facturar" definido, $601.000; 6 del punto de venta POS-2026-00016 a 00021, $2.205.000, y PED-2026-00559, $15.200, sin definir).
+
+### Chat 5 · Impuestos
+- [x] 12-nov: lista de 22 preguntas para Hernando con los números del ERP, en `docs/temas/impuestos-preguntas-contador.md` (PR #113). Sara dio el "sí".
+- [ ] Provisión mensual en espera de la fecha de inauguración del almacén.
+
+### Chat 6 · Producción e inventario (en cola, después del chat 2)
+- [x] La administradora asigna cada pedido/orden a una tejedora (reusa tejedoras del plan; v43).
+- [x] Hasta 3 imágenes de referencia visibles en la orden de producción (se suben en la orden, v43).
+- [x] Insumos automáticos al abrir la entrega de material (ficha técnica → última orden terminada); no mueve inventario hasta "Entregar".
+- [x] Patrones: enlaces de Telegram en la ficha técnica + botón "Ver patrón" en la orden.
+- [x] Llaveros sin tejedora: asignados (Jennifer: pollos y frailejón; Sara: el resto), 0,6 h provisional. OP-0046 partida (OP-0051 frailejón → Jennifer).
+- [ ] Sara: medir horas reales por llavero (las 0,6 h son provisionales).
+- [ ] Sara: pegar en cada ficha técnica el enlace Telegram de su patrón y llenar fichas faltantes.
+- Revisión 12-nov: 8 agotados sin mínimo, 3 bajo mínimo, 32 productos sin horas por unidad, llaveros de pollo sin tejedora.
+
+### Chat 7 · Contabilidad (no creado)
+- Sin tareas de código. Ver preguntas al contador.
+- [x] Resumen de pendientes contables listo para llevarle a Hernando: `docs/resumen-contador.md` (llevarlo junto con las 22 preguntas del chat 5) — 12-nov-2026
+
+### Chat 8 · Menú/Interfaz
+- [ ] 🕒 Futuro (desde el 14-dic, después de la apertura): verificación en dos pasos (MFA TOTP, Supabase Auth) solo para administradoras: inscribir factor con QR, pedir código al iniciar sesión y plan de recuperación (códigos de respaldo o restablece la otra administradora). No construir antes. Ver `menu-lateral.md`.
+- [x] Ítem "Sistema Operativo" en el menú (admin, Gerencia SO, Taller SO), 14-nov v55. Al mudar de dominio: cambiar `URL_SISTEMA_OPERATIVO`.
+- [x] Inicio de sesión: botón 👁 para ver la contraseña y error que sugiere revisar el correo (13-nov, v47).
+- [x] Worker de ventas ya acepta la dirección nueva (13-nov). [ ] Sara: crear el proyecto en Cloudflare Pages (reintentar), decidir comando de compilación para no publicar `docs/` y `supabase/`, borrar el token de Cloudflare. [ ] Luego probar inicio de sesión, venta de prueba, pedidos y app instalable. Detalle en `docs/temas/hosting.md`.
+- [x] 🔴 Sin sesión se veía el ☰ y se abría el menú (13-nov): corregido, nada visible sin iniciar sesión.
+- [x] 🔴 Supabase: 5 tablas con política abierta a cualquiera con la llave pública: cerradas 13-nov con el "sí" de Sara (ver menu-lateral.md).
+- [x] Buscadores de **Productos** (Gestionar inventario) y **Clientes**: al entrar solo la caja; la lista aparece al escribir.
+- [x] Celular: la barra de búsqueda ya no queda por encima del fondo oscuro del menú, no tapa la barra rosada y el texto cabe.
+- [x] Menú lateral oculto sin forma de volver a mostrarlo (PR #100).
+
+### Chat 9 · Personal
+- [x] Fase 1 — Ficha del empleado (15-nov): cargo, área, jornada, tipo y fin de contrato, caja de compensación, cuenta de acceso (rol) y avisos de documentos que faltan y de contrato por vencer (ver `docs/temas/personal.md`).
+- [x] Fase 2 — Turnos y asistencia (15-nov): turnos por semana, copiar semana, festivos, resumen de asistencia y del mes, corregir marcaciones, "Mi horario" en el menú (ver `docs/temas/personal.md`).
+- [x] Fase 3 — Vacaciones y permisos (15-nov): la empleada pide desde Mi perfil, una administradora aprueba o rechaza en Talento Humano, saldo de días, y la asistencia no cuenta como ausente lo aprobado (ver `docs/temas/personal.md`).
+- [ ] Fase 4 — Tejedoras · Fase 5 — Exportar novedades / resumen mensual para la DIAN.
+- [ ] Vacaciones: avisar a la empleada cuando le respondan (hoy lo ve al entrar en Mi perfil → Vacaciones y permisos); pantalla para que una administradora registre una ausencia a nombre de otra persona (la función ya existe: `fn_aus_solicitar` con `p_empleado`); mostrar las ausencias aprobadas en el calendario del equipo.
+- [ ] Enlazar la asistencia con el turno de caja de la Tienda (hoy van separados).
+- [x] Privacidad de las horas (15-nov, aprobado por Sara): `registro_horas_empleado` ya no la lee cualquier usuario; cada empleada ve las suyas, el líder de área las de su área, administradoras y contador todas (ver `docs/temas/personal.md`).
+- **Para otro chat (Contabilidad/Calendario):** `fn_festivos_colombia` fallaba siempre (devolvía fecha con hora en los festivos que pasan a lunes). Se corrigió el tipo de dato el 15-nov sin cambiar ninguna fecha; conviene que quien use festivos lo confirme.
+- [x] Permisos de Manuela (15-nov): rol "Líder de Tienda" (base cajero) con Proveedores y Órdenes de compra visibles; pedidos a proveedores quedan "por aprobar" y los aprueba una administradora; cuenta el inventario de la Tienda y la administradora finaliza la toma. Detalle en `docs/temas/personal.md`.
+- [ ] 🔴 **Seguridad (decide Sara):** 131 funciones de la base de datos (nómina, pago de nómina, retiros del propietario, honorarios, cierre contable, eliminar período…) solo comprueban que la persona tenga *algún* rol, así que un cajero con su sesión podría llamarlas directo aunque no vea el menú. La app nunca las llama directo (las llama el Worker con otra llave), así que se pueden restringir a administradora/contador sin romper nada. Falta tu visto bueno por ser dinero. Lista completa: consulta de `pg_proc` con `fn_rol_actual() is null and not public.fn_es_tejedora()`.
+- [ ] Manuela y las compras: hoy puede registrar compras y gastos de Tienda (ya podía como cajero) escogiendo quién las aprobó; no hay aprobación real. ¿Se deja así o solo las registra una administradora?
+- [ ] Aviso a las administradoras cuando hay pedidos "por aprobar" (hoy solo se ven en Órdenes de compra → ⏳ Por aprobar).
+- **Para otro chat (Inventario/Compras):** el Worker deja crear/ver órdenes de compra y manejar tomas de inventario solo a `administrador` (no editable desde aquí); por eso se hicieron funciones en Supabase para la Tienda. El directorio de proveedores incluye al equipo y a tejedoras (honorarios): la Tienda los ve.
+- [ ] Al crear un empleado nuevo, pedir cargo/área/jornada/fin de contrato desde el inicio (hoy se llenan al "Editar").
+- **Fuera del ERP (14-nov, Orquestador):** lista de chequeo 5S y todo lo de SG-SST viven en el Sistema Operativo (`sistema_operativo.auditorias_5s`); no se construyen aquí.
+- **Para otro chat:** nada por ahora.
 
 ## Sara
-- [ ] Excel de gramos por orden
-- [ ] Servicios públicos y arriendo de octubre (fecha 2026-10-05)
-- [ ] Arqueo físico de caja (última referencia $1.353.066)
-- [ ] Fecha de inauguración del almacén (activa la provisión mensual de impuestos)
-- [ ] Cambiar los 3 códigos de barras internos por GS1
-- [ ] Asignar tejedoras y horas en el plan de tejido
-- [ ] Llenar fichas técnicas de insumos
-- [ ] Registrar resolución de numeración, numeración de documento soporte y primer respaldo mensual
-
-## Contador (Hernando)
-- [ ] UVT y tarifas SIMPLE, escenario de provisión, tabla de renta
-- [ ] Verificar ICA Villamaría
-- [ ] Códigos CUIF de 10 dígitos: qué quiere hacer
-- [ ] Aplicabilidad del documento soporte
-- [ ] Retenciones, libros y declaraciones como sociedad
-- [ ] Pendientes viejos: retiros 3805 vs honorarios, aportes vs deuda, arriendo mayo/junio, confirmación escrita de 27 recibos, medio de pago de 17 ventas antiguas
+- [ ] 🔴 Mensaje exacto/captura del error de ventas → chat 1.
+- [ ] Decidir el "sí" del chat 5 (Impuestos).
+- [x] Datos de la resolución DIAN → chat 4 (entregados 12-nov; falta la vigencia).
+- [ ] Pegar en Políticas legales los textos de la abogada (cambios y anticipos) cuando el chat 2 publique; revisar que la tienda web diga lo mismo.
+- [ ] Servicios públicos y arriendo de octubre (atrasado, fecha 2026-10-05).
+- [ ] Arqueo físico de caja (última referencia $1.353.066).
+- [ ] Fecha de inauguración del almacén.
+- [ ] Personal: nombres de las 2 tejedoras y de quien atiende el almacén (¿Manuela?), con jornada y salario de cada una; decidir si las filas actuales (Sara, Jennifer, Manuela, hoy "indefinido") se quedan o se reemplazan por los 3 contratos a término fijo de 1 año. Sara y Jennifer: ver pregunta al contador.
+- [ ] Personal: en Editar de cada empleado, escoger su "Cuenta de acceso" (hoy ninguna ficha está conectada) y subir los documentos que faltan.
+- [ ] Excel de gramos por orden.
+- [ ] Cambiar los 3 códigos de barras internos por GS1.
+- [ ] Asignar tejedoras y horas en el plan de tejido.
+- [ ] Llenar fichas técnicas de insumos.
+- [ ] Certificación bancaria de la cuenta exclusiva del Fondo (si no la tiene).
 
 ## Interventora
-- [ ] Aprobación del lugar de operaciones y plan operativo
-- [ ] Contrato para cada proveedor nuevo
-- [ ] Informes: bimestral (2-dic-2026), mensuales de producción, ventas y estados financieros, 5 contrapartidas
+- [ ] ¿El Formato de Solicitud de Desembolso y las pestañas AVANCE/PAGOS ya aplican a nuestro proyecto? ¿La cuenta exclusiva ya está validada?
+- [ ] Fecha de los informes mensuales.
+- [ ] Aprobación del lugar de operaciones y plan operativo.
+- [ ] Contrato para cada proveedor nuevo.
+- [ ] Informes: bimestral (2-dic-2026), mensuales, 5 contrapartidas.
+
+## Abogada
+- [ ] ¿Se puede decir "anticipo de **al menos** el 50 %"? (el ERP permite 50/70/100 % y menos con autorización).
+
+## Contador (Hernando)
+- [ ] Personal (15-nov): vacaciones y permisos. ¿Los días de vacaciones se cuentan de lunes a sábado o de lunes a viernes (hoy lunes a sábado sin festivos)? ¿Se mantiene 15 días hábiles por año, desde cuándo se pueden tomar, y con cuánto aviso se piden? ¿Los permisos y la calamidad doméstica se pagan, se descuentan o se reponen? ¿Hay vacaciones compensadas en dinero? Mientras tanto la administradora ajusta los días al aprobar.
+- [ ] Personal (15-nov): recargos de horas extra y trabajo en domingo/festivo (diurnas, nocturnas, dominicales; desde cuándo cuenta la hora nocturna), jornada máxima semanal, tolerancia para llegadas tarde y qué hacer con el descanso. El ERP hoy solo suma horas y marca domingos y festivos.
+- [ ] Personal (14-nov): ¿Sara (y Jennifer si es socia) pueden ir como empleadas siendo persona natural, o siguen como retiros del propietario (3805) u honorarios? Prestaciones, seguridad social y tipo de contrato de los 3 empleados; si las 2 tejedoras dejan de pagarse por honorarios y desde qué fecha; campos y plazo mensual de la nómina electrónica gratuita de la DIAN.
+- [ ] Impuestos no se pagan desde la cuenta del Fondo; cómo registrar los giros del Fondo (cuenta exclusiva, sin mezclar).
+- [ ] UVT y tarifas SIMPLE, escenario de provisión, tabla de renta — lista de 22 preguntas en `docs/temas/impuestos-preguntas-contador.md`. Faltan: UVT 2026 confirmada y tarifas SIMPLE 2026/2027 (hoy 0 cargadas).
+- [ ] Verificar ICA Villamaría (preguntas 15–19 del mismo archivo).
+- [ ] Códigos CUIF de 10 dígitos.
+- [ ] Aplicabilidad del documento soporte.
+- [ ] Ventas desde el 14-oct-2026 (ya facturadora electrónica) que quedaron solo con recibo del ERP, sin factura electrónica: 6 del punto de venta (POS-2026-00016 a 00021, $2.205.000) y 1 pedido (PED-2026-00559, $15.200, parece prueba). Además 7 pedidos con "facturar" definido a consumidor final ($601.000). Pregunta: ¿se emite factura electrónica extemporánea a consumidor final por cada una, o cómo se regulariza? (12-nov-2026)
+- [ ] Retenciones, libros y declaraciones como sociedad.
+- [ ] Viejos: retiros 3805 vs honorarios, aportes vs deuda, arriendo mayo/junio, confirmación escrita de 27 recibos, medio de pago de 17 ventas antiguas.
 
 ## Opcionales (Claude, si se pide)
 - [ ] Enlazar soporte de compras a crédito
 - [ ] Soporte para facturas manuales antiguas
 - [ ] Ingesta de facturas por correo (solo borrador)
 - [ ] Probar sincronización CRM↔ERP y pedidos de la tienda virtual
-- [ ] Probar cobro de anticipo con el Worker real
 - [ ] Borrar edge functions sin uso y columnas/función antiguas en Supabase

@@ -10,8 +10,9 @@ Negocio: amigurumis tejidos (Taller), Mercería, Academia, tienda web. Manizales
 4. Al terminar un tema: actualiza su archivo en `docs/temas/` (decisión, por qué, objetos de Supabase, qué falta). Si Sara dice "guarda en docs", hazlo.
 
 ## Datos fijos
-- Repo `lana-rosa/ERP`, un solo archivo de app `index.html` + `sw.js` (service worker). **Cada cambio en index.html requiere subir `CACHE_NAME` en `sw.js`** (hoy `lana-rosa-os-v37`).
+- Repo `lana-rosa/ERP`, un solo archivo de app `index.html` + `sw.js` (service worker). **Cada cambio en index.html requiere subir `CACHE_NAME` en `sw.js`** (hoy `lana-rosa-os-v44`).
 - Flujo: rama → PR → squash merge a `main`. Rama de trabajo de esta sesión: `claude/inspiring-heisenberg-l2905a` (si su PR ya se fusionó, reiniciarla desde `origin/main`).
+- **Publicar (PR + fusionar a `main`) sin preguntar** si el cambio está probado y funciona; al terminar, avisar a Sara en una frase qué cambió. **Preguntar antes de fusionar** solo si toca temas delicados: ventas/caja, dinero (pagos, anticipos, contabilidad), DIAN/impuestos o borrar datos.
 - Supabase proyecto `ngjoognzvehwjtpqwrqe`. Lógica en funciones RPC plpgsql `security definer`, con RLS.
 - Cloudflare Worker `lana-rosa-os-pos` (https://lana-rosa-os-pos.saralmunoz1301.workers.dev) maneja ventas, pedidos y compras. **No se puede editar desde aquí**: las reglas nuevas se aplican en el cliente (index.html) y/o en funciones de Supabase.
 - CRM aparte en `/home/user/crm` (todo fusionado a la fecha).
@@ -38,5 +39,7 @@ Playwright ya instalado: `NODE_PATH=/opt/node22/lib/node_modules`, chromium `/op
 | Plan de tejido, códigos de barras GS1, ficha técnica de productos e insumos | `produccion-inventario.md` |
 | Menú lateral (ocultar/fijar) | `menu-lateral.md` |
 | Decisiones contables y políticas (retiros, aportes, honorarios, CUIF) | `contabilidad-decisiones.md` |
+| Personal: empleados, contratos, turnos, asistencia, vacaciones, tejedoras | `personal.md` |
+| Lana Rosa OS (sistemas de gestión: SG-SST, calidad, 5S, riesgos) y su relación con el ERP | `sistema-operativo.md` |
 
 Mapa del código: `docs/mapa-index-html.md`. Pendientes: `docs/PENDIENTES.md`. Indicaciones para abrir chats por tema y el Orquestador: `docs/chats-iniciales.md`.

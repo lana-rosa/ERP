@@ -533,8 +533,21 @@
        no empuja nada al lado. (Antes esto se rompía por especificidad:
        #main.con-sidebar tenía más peso que la regla de aquí y ganaba
        igual dentro de esta media query, empujando todo el contenido). */
-    #main, #main.con-sidebar { margin-left: 0 !important; padding-top: 52px; }
+    #main, #main.con-sidebar { margin-left: 0 !important; padding-top: 62px; }
+
+    /* La barra de búsqueda quedaba por encima del fondo oscuro del menú y
+       tapaba 10px de la barra rosada de arriba. Ahora va debajo de la barra
+       del ☰ (62px) y el fondo oscuro la cubre cuando el menú está abierto. */
+    #barraBusquedaGlobal { top: 0 !important; z-index: 140 !important; padding: 8px 16px !important; }
+    #overlaySidebarMovil { z-index: 160; }
   }
+
+  /* SEGURIDAD: sin sesión iniciada no se ve nada del ERP (menú, ☰, búsqueda, botón +).
+     El body trae la clase "sin-sesion" desde el HTML y mostrarPantalla la quita solo cuando hay sesión. */
+  body.sin-sesion #sidebar, body.sin-sesion #overlaySidebarMovil, body.sin-sesion .topbar-movil,
+  body.sin-sesion #btnMostrarSidebar, body.sin-sesion #barraBusquedaGlobal, body.sin-sesion #btnCrearRapido,
+  body.sin-sesion #btnSidebarModo { display: none !important; }
+  body.sin-sesion #main, body.sin-sesion #main.con-sidebar { margin-left: 0 !important; padding-top: 0 !important; }
 
   /* Menú lateral en computador: se puede ocultar o fijar (se recuerda en este navegador) */
   #btnSidebarModo { display: none; margin-left: auto; align-self: flex-start; background: rgba(255,255,255,0.12); color: #fff; border: none; border-radius: 8px; padding: 4px 8px; font-size: 11px; cursor: pointer; white-space: nowrap; }
@@ -586,6 +599,10 @@
     background: var(--blanco-hueso);
   }
 
+  .clave-con-ojo { position: relative; }
+  .clave-con-ojo input { padding-right: 46px; }
+  .btn-ojo-clave { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; border: none; background: transparent; font-size: 18px; line-height: 1; cursor: pointer; border-radius: 8px; opacity: 0.65; }
+  .btn-ojo-clave:hover, .btn-ojo-clave[aria-pressed="true"] { opacity: 1; background: rgba(0,0,0,0.06); }
   .login-card {
     background: var(--fondo-panel);
     border-radius: var(--radius-xl);
@@ -1027,7 +1044,7 @@
   @media (max-width: 600px) { .tz-etapas { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; } .tz-etapa { font-size: 10px; padding: 8px 2px; } }
 </style>
 </head>
-<body>
+<body class="sin-sesion">
 
 <!-- SIDEBAR DE NAVEGACIÓN -->
 <div id="overlaySidebarMovil" onclick="cerrarSidebarMovil()"></div>
@@ -1053,6 +1070,7 @@
   <div class="sidebar-nav">
     <button class="nav-btn" id="nav-dashboard" onclick="mostrarPantallaDashboard()"><span class="nav-icon">🏠</span> Dashboard</button>
     <button class="nav-btn" id="nav-calendario" onclick="mostrarPantallaCalendario()"><span class="nav-icon">📅</span> Calendario del equipo</button>
+    <button class="nav-btn" id="nav-sistema-operativo" onclick="abrirSistemaOperativo()" style="display:none;" title="Se abre en otra pestaña"><span class="nav-icon">🧭</span> Sistema Operativo <span style="margin-left:auto;opacity:0.6;">↗</span></button>
     <button class="nav-btn" id="nav-mi-produccion" onclick="mostrarPantallaMiProduccion()" style="display:none;"><span class="nav-icon">🧵</span> Mi producción</button>
     <button class="nav-btn" id="nav-enviar-correo" onclick="abrirRedactarCorreo()" style="display:none;"><span class="nav-icon">✉️</span> Enviar correo</button>
 
@@ -1183,7 +1201,7 @@
 <div id="main">
 <div id="barraBusquedaGlobal" class="oculto" style="position:sticky;top:0;z-index:390;background:#fff;border-bottom:1px solid #f1e2ec;padding:10px 24px;display:flex;justify-content:flex-end;">
   <div style="position:relative;width:100%;max-width:360px;">
-    <input type="text" id="inputBusquedaGlobal" placeholder="🔍 Buscar cliente o proveedor por nombre o cédula/NIT..." oninput="debounceBusquedaGlobal()" style="width:100%;padding:9px 14px;border-radius:10px;border:1.5px solid #f1e2ec;font-family:'Poppins',sans-serif;font-size:13px;outline:none;">
+    <input type="text" id="inputBusquedaGlobal" placeholder="🔍 Buscar cliente o proveedor..." oninput="debounceBusquedaGlobal()" style="width:100%;padding:9px 14px;border-radius:10px;border:1.5px solid #f1e2ec;font-family:'Poppins',sans-serif;font-size:13px;outline:none;">
     <div id="resultadosBusquedaGlobal" class="oculto" style="position:absolute;top:calc(100% + 6px);left:0;right:0;background:#fff;border-radius:12px;border:1px solid #f1e2ec;box-shadow:0 8px 24px rgba(0,0,0,0.12);max-height:340px;overflow-y:auto;z-index:391;"></div>
   </div>
 </div>
@@ -1200,7 +1218,10 @@
     <label for="inputCorreo">Correo</label>
     <input type="email" id="inputCorreo" placeholder="tucorreo@gmail.com" autocomplete="email">
     <label for="inputClave">Contraseña</label>
-    <input type="password" id="inputClave" placeholder="••••••••" autocomplete="current-password">
+    <div class="clave-con-ojo">
+      <input type="password" id="inputClave" placeholder="••••••••" autocomplete="current-password">
+      <button type="button" class="btn-ojo-clave" id="btnOjoClave" onclick="alternarVerClave()" aria-label="Mostrar contraseña" aria-pressed="false" title="Mostrar contraseña">👁</button>
+    </div>
     <button class="btn-principal" id="btnLogin" onclick="iniciarSesion()">Entrar</button>
     <div class="mensaje" id="mensajeLogin"></div>
   </div>
@@ -1497,6 +1518,7 @@
           <input type="text" id="pedidoMotivoAnticipoBajo" placeholder="Ej: cliente frecuente, paga el resto en 15 días" oninput="actualizarResumenAnticipoPedido()">
         </div>
         <div id="ayudaAnticipoPedido" style="font-size:11px;opacity:0.7;margin-top:6px;"></div>
+        <button type="button" class="btn-secundario" style="margin-top:10px;width:auto;" onclick="enviarResumenPedidoWhatsapp()">📤 Enviar resumen del pedido por WhatsApp (antes de pagar)</button>
         <div style="margin-top:10px;padding:10px;border-radius:10px;background:var(--rosa-suave);">
           <label style="display:flex;gap:8px;align-items:center;margin:0;font-weight:600;cursor:pointer;"><input type="checkbox" id="pedidoCobrarAnticipoAhora" checked style="width:auto;"> Cobrar el anticipo ahora (queda registrado, con su recibo, al crear el pedido)</label>
           <label for="pedidoMetodoAnticipo" style="margin-top:6px;">¿Cómo pagó el anticipo?</label>
@@ -1899,10 +1921,11 @@
       <div class="panel" style="max-width:none;max-height:none;">
         <h2 id="tituloTomaEnProceso"></h2>
         <div id="listaConteoTomaInventario"></div>
-        <div style="display:flex;gap:10px;margin-top:14px;">
+        <div id="accionesTomaAdmin" style="display:flex;gap:10px;margin-top:14px;">
           <button class="btn-principal" style="width:auto;" onclick="confirmarFinalizarTomaInventario()">✅ Finalizar y ajustar diferencias</button>
           <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => confirmarCancelarTomaInventario())">Cancelar toma</button>
         </div>
+        <div id="avisoTomaSinAdmin" class="oculto" style="font-size:12px;background:var(--rosa-suave);border-radius:9px;padding:10px 14px;margin-top:14px;">Cuando termines de contar, avísale a una administradora: ella revisa las diferencias y finaliza la toma para ajustar el inventario.</div>
         <div class="mensaje" id="mensajeTomaInventario"></div>
       </div>
     </div>
@@ -2247,6 +2270,7 @@
       <div style="font-weight:700;">📂 Carpeta de facturas de la DIAN (automático)</div>
       <div id="feCarpetaPanel" style="font-size:12.5px;line-height:1.55;margin-top:6px;"></div>
     </div>
+    <div class="mensaje" id="mensajeFePend"></div>
     <div id="feListaPendientes"><div class="cargando">Cargando...</div></div>
   </div>
 
@@ -2486,6 +2510,7 @@
       <button class="btn-mini desactivar" onclick="limpiarFiltrosHistorialRedes()" style="margin-bottom:1px;">Quitar filtros</button>
     </div>
     <div class="panel" style="max-height:none;max-width:none;">
+      <div class="mensaje" id="mensajeHistorialRedes"></div>
       <div id="listaHistorialRedes"><div class="cargando">Cargando...</div></div>
     </div>
   </div>
@@ -2791,6 +2816,8 @@
     <div id="bloqueComprasSinRequisitos" class="oculto" style="margin-bottom:12px;">
       <button class="btn-mini editar" style="flex:0 0 auto;padding:7px 12px;" onclick="verComprasSinRequisitos()">📋 Ver compras del rango sin los documentos del instructivo del SENA</button>
       <div id="listaComprasSinRequisitos" style="margin-top:8px;font-size:12.5px;"></div>
+      <button class="btn-mini editar" style="flex:0 0 auto;padding:7px 12px;margin-top:10px;" onclick="verSoportesPagoFondo()">🧾 Ver soportes de pago de las compras con recursos del Fondo</button>
+      <div id="listaSoportesPagoFondo" style="margin-top:8px;font-size:12.5px;"></div>
     </div>
     <div class="panel" style="max-width:none;max-height:none;">
       <div id="listaHistorialComprasTabla"><div class="cargando">Cargando...</div></div>
@@ -3315,6 +3342,8 @@
     <button class="chip-filtro" data-subtab-btn="talentoHumano" onclick="mostrarSubTabGrupo('talentoHumano', 'subtabRhAutorizados', this)">📅 Autorizados del calendario</button>
     <button class="chip-filtro" data-subtab-btn="talentoHumano" onclick="mostrarSubTabGrupo('talentoHumano', 'subtabRhCodigos', this); cargarCodigosAutorizacion();">🔐 Códigos de autorización</button>
     <button class="chip-filtro" data-subtab-btn="talentoHumano" onclick="mostrarSubTabGrupo('talentoHumano', 'subtabRhHoras', this); cargarRegistroHorasAdmin();">⏱️ Horas trabajadas</button>
+    <button class="chip-filtro" data-subtab-btn="talentoHumano" onclick="mostrarSubTabGrupo('talentoHumano', 'subtabRhTurnos', this); cargarTurnosAsistencia();">🗓️ Turnos y asistencia</button>
+    <button class="chip-filtro" id="chipRhAusencias" data-subtab-btn="talentoHumano" onclick="mostrarSubTabGrupo('talentoHumano', 'subtabRhAusencias', this); cargarSolicitudesAusenciaAdmin();">🌴 Vacaciones y permisos</button>
   </div>
 
   <div id="subtabRhDocumentos" data-subtab-grupo="talentoHumano">
@@ -3364,6 +3393,84 @@
     <div id="resumenHorasPorEmpleado" style="margin-bottom:16px;"></div>
     <div class="panel" style="max-width:none;max-height:none;">
       <div id="listaRegistroHoras"><div class="cargando">Cargando...</div></div>
+    </div>
+    <div class="panel" id="panelMarcacionManual" style="max-width:none;max-height:none;margin-top:16px;">
+      <h2 id="tituloMarcacionManual">Agregar o corregir una marcación</h2>
+      <div class="subtitulo">Si alguien olvidó marcar la entrada o la salida, o se marcó mal, la corriges aquí. Queda escrito el motivo en la observación.</div>
+      <input type="hidden" id="marcManualId">
+      <label>Empleado</label>
+      <select id="marcManualEmpleado"></select>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px;">
+        <div><label style="margin-top:0;">Fecha</label><input type="date" id="marcManualFecha"></div>
+        <div><label style="margin-top:0;">Entrada</label><input type="time" id="marcManualEntrada"></div>
+        <div><label style="margin-top:0;">Salida <span style="font-size:10px;opacity:0.6;">(opcional)</span></label><input type="time" id="marcManualSalida"></div>
+      </div>
+      <label style="margin-top:8px;">Motivo de la corrección</label>
+      <input type="text" id="marcManualMotivo" placeholder="Ej. Olvidó marcar la salida">
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button class="btn-mini guardar" style="flex:1;" onclick="guardarMarcacionManual()">Guardar marcación</button>
+        <button class="btn-mini desactivar" style="flex:0 0 auto;" onclick="limpiarMarcacionManual()">Limpiar</button>
+      </div>
+      <div class="mensaje" id="mensajeMarcacionManual"></div>
+    </div>
+  </div>
+
+  <div id="subtabRhAusencias" data-subtab-grupo="talentoHumano" class="oculto">
+    <div class="panel" style="max-width:none;max-height:none;">
+      <h2>⏳ Solicitudes por responder</h2>
+      <div class="subtitulo">Las pide cada empleada desde Mi perfil. Los días son un cálculo (lunes a sábado, sin domingos ni festivos): puedes ajustarlos al aprobar. Al aprobar, recuerda registrar los días de vacaciones en la nómina del período (Nómina → Empleados → caso especial). Tú no puedes responder tu propia solicitud.</div>
+      <div class="mensaje" id="mensajeAusenciasAdmin"></div>
+      <div id="listaAusenciasPendientes"><div class="cargando">Cargando...</div></div>
+    </div>
+    <div class="panel" style="max-width:none;max-height:none;margin-top:16px;">
+      <h2>🌴 Próximas ausencias aprobadas</h2>
+      <div id="listaAusenciasProximas"><div class="cargando">Cargando...</div></div>
+    </div>
+    <div class="panel" style="max-width:none;max-height:none;margin-top:16px;">
+      <h2>Historial</h2>
+      <div id="listaAusenciasHistorial"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+
+  <div id="subtabRhTurnos" data-subtab-grupo="talentoHumano" class="oculto">
+    <div class="panel" style="max-width:none;max-height:none;">
+      <h2>🗓️ Turnos de la semana</h2>
+      <div class="subtitulo">Programa quién trabaja cada día. Debajo de cada turno ves si la persona llegó (según lo que marcó). Los festivos de Colombia salen marcados.</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+        <button class="btn-mini editar" onclick="cambiarSemanaTurnos(-7)">◀ Semana anterior</button>
+        <strong id="etiquetaSemanaTurnos" style="font-size:13px;"></strong>
+        <button class="btn-mini editar" onclick="cambiarSemanaTurnos(7)">Semana siguiente ▶</button>
+        <button class="btn-mini editar" onclick="cambiarSemanaTurnos(0)">Esta semana</button>
+        <button class="btn-mini guardar" onclick="copiarSemanaAnteriorTurnos()">📋 Copiar la semana anterior</button>
+      </div>
+      <div class="mensaje" id="mensajeTurnos"></div>
+      <div id="gridTurnosSemana" style="overflow-x:auto;"><div class="cargando">Cargando...</div></div>
+      <div id="formTurno" style="margin-top:14px;padding:12px;background:var(--rosa-suave);border-radius:9px;">
+        <div style="font-size:12.5px;font-weight:700;" id="tituloFormTurno">Programar turno</div>
+        <input type="hidden" id="turnoId">
+        <label style="margin-top:6px;">Empleado</label>
+        <select id="turnoEmpleado"></select>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px;">
+          <div><label style="margin-top:0;">Entrada</label><input type="time" id="turnoInicio" value="08:00"></div>
+          <div><label style="margin-top:0;">Salida</label><input type="time" id="turnoFin" value="17:00"></div>
+        </div>
+        <label style="margin-top:8px;">Días de esta semana</label>
+        <div id="turnoDias" style="display:flex;gap:10px;flex-wrap:wrap;font-size:12.5px;"></div>
+        <label style="margin-top:8px;">Nota <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+        <input type="text" id="turnoNota" placeholder="Ej. Feria, inventario">
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <button class="btn-mini guardar" style="flex:1;" onclick="guardarTurnoPersonal()">Guardar turno</button>
+          <button class="btn-mini desactivar" style="flex:0 0 auto;" onclick="limpiarFormTurno()">Limpiar</button>
+        </div>
+      </div>
+    </div>
+    <div class="panel" style="max-width:none;max-height:none;margin-top:16px;">
+      <h2>Resumen del mes</h2>
+      <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px;">
+        <div><label for="turnosMes" style="font-size:11px;">Mes</label><input type="month" id="turnosMes" onchange="cargarResumenMesTurnos()" style="padding:9px 10px;"></div>
+      </div>
+      <div id="resumenMesTurnos"><div class="cargando">Cargando...</div></div>
+      <div style="font-size:11px;opacity:0.65;margin-top:10px;">Llega tarde = más de 10 minutos después de la hora programada. Aquí solo se cuentan horas y días: los recargos de horas extra nocturnas, dominicales y festivas los define el contador.</div>
     </div>
   </div>
 </div>
@@ -4030,6 +4137,7 @@
   <div class="filtro-tipo" style="margin-bottom:20px;">
     <button class="chip-filtro activo" data-subtab-btn="miPerfil" onclick="mostrarSubTabGrupo('miPerfil', 'subtabPerfilDatos', this)">👤 Datos personales</button>
     <button class="chip-filtro" data-subtab-btn="miPerfil" onclick="mostrarSubTabGrupo('miPerfil', 'subtabPerfilCuenta', this)">🔐 Cuenta y seguridad</button>
+    <button class="chip-filtro" data-subtab-btn="miPerfil" onclick="mostrarSubTabGrupo('miPerfil', 'subtabPerfilAusencias', this); cargarMisAusencias();">🌴 Vacaciones y permisos</button>
   </div>
 
   <div id="subtabPerfilDatos" data-subtab-grupo="miPerfil">
@@ -4059,6 +4167,35 @@
       <input type="password" id="miPerfilPasswordNueva">
       <button class="btn-secundario" onclick="cambiarMiPassword()">Cambiar contraseña</button>
       <div class="mensaje" id="mensajeMiPassword"></div>
+    </div>
+  </div>
+
+  <div id="subtabPerfilAusencias" data-subtab-grupo="miPerfil" class="oculto">
+    <div id="saldoMisVacaciones" style="margin-bottom:16px;"></div>
+    <div class="grilla-2">
+      <div class="panel">
+        <h2>Pedir vacaciones o un permiso</h2>
+        <div class="subtitulo">Una administradora la revisa y te responde aquí mismo.</div>
+        <label for="ausTipo">¿Qué necesitas?</label>
+        <select id="ausTipo" onchange="actualizarAyudaAusencia()">
+          <option value="vacaciones">🌴 Vacaciones</option>
+          <option value="permiso">🕒 Permiso (cita, trámite, etc.)</option>
+          <option value="calamidad">🏠 Calamidad doméstica</option>
+        </select>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px;">
+          <div><label for="ausDesde" style="margin-top:0;">Desde</label><input type="date" id="ausDesde" onchange="actualizarAyudaAusencia()"></div>
+          <div><label for="ausHasta" style="margin-top:0;">Hasta</label><input type="date" id="ausHasta" onchange="actualizarAyudaAusencia()"></div>
+        </div>
+        <div id="ausDiasEstimados" style="font-size:12.5px;margin-top:8px;font-weight:600;"></div>
+        <label for="ausMotivo" style="margin-top:8px;">Motivo <span id="ausMotivoOpcional" style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+        <input type="text" id="ausMotivo" placeholder="Ej. Cita médica">
+        <button class="btn-principal" onclick="enviarSolicitudAusencia()">Enviar solicitud</button>
+        <div class="mensaje" id="mensajeAusencia"></div>
+      </div>
+      <div class="panel">
+        <h2>Mis solicitudes</h2>
+        <div id="listaMisAusencias"><div class="cargando">Cargando...</div></div>
+      </div>
     </div>
   </div>
 </div>
@@ -4459,7 +4596,8 @@
       <label for="ocNotas" style="margin-top:10px;">Notas <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
       <input type="text" id="ocNotas" placeholder="Ej: Entregar en el taller">
 
-      <button class="btn-principal" onclick="confirmarCrearOrdenCompra()">Crear orden de compra</button>
+      <button class="btn-principal" id="btnCrearOrdenCompra" onclick="confirmarCrearOrdenCompra()">Crear orden de compra</button>
+      <div id="avisoOrdenCompraSolicitud" class="oculto" style="font-size:11.5px;opacity:0.75;margin-top:8px;">Tu pedido queda <strong>por aprobar</strong>: una administradora lo revisa y lo envía al proveedor.</div>
       <div class="mensaje" id="mensajeOrdenCompra"></div>
     </div>
 
@@ -4467,6 +4605,7 @@
       <h2>Órdenes</h2>
       <div class="filtro-tipo" style="margin-bottom:12px;">
         <button class="chip-filtro activo" data-filtro-oc="" onclick="cambiarFiltroOrdenesCompra('', this)">Todas</button>
+        <button class="chip-filtro" data-filtro-oc="por_aprobar" onclick="cambiarFiltroOrdenesCompra('por_aprobar', this)">⏳ Por aprobar</button>
         <button class="chip-filtro" data-filtro-oc="enviada" onclick="cambiarFiltroOrdenesCompra('enviada', this)">Enviadas</button>
         <button class="chip-filtro" data-filtro-oc="recibida" onclick="cambiarFiltroOrdenesCompra('recibida', this)">Recibidas</button>
       </div>
@@ -5195,6 +5334,14 @@
     <textarea id="textoPoliticaCambios" rows="4" style="width:100%;font-family:inherit;font-size:13px;padding:12px;border-radius:8px;border:1px solid #e5dde2;line-height:1.5;"></textarea>
     <button class="btn-principal" onclick="guardarPoliticasLegales()" style="margin-top:10px;">💾 Guardar cambios</button>
   </div>
+
+  <div class="panel" style="max-width:700px;margin-top:20px;">
+    <h2>Anticipos y cancelación de pedidos personalizados</h2>
+    <div class="subtitulo">Este texto aparece solo en el recibo de anticipo y en el resumen del pedido que se le envía al cliente antes de pagar. No sale en los recibos de venta de la tienda.</div>
+    <textarea id="textoPoliticaAnticipos" rows="6" style="width:100%;font-family:inherit;font-size:13px;padding:12px;border-radius:8px;border:1px solid #e5dde2;line-height:1.5;"></textarea>
+    <button class="btn-principal" onclick="guardarPoliticaAnticipos()" style="margin-top:10px;">💾 Guardar política de anticipos</button>
+    <div class="mensaje" id="mensajePoliticaAnticipos"></div>
+  </div>
 </div>
 
 <div id="pantallaCopiaSeguridad" class="oculto contenido">
@@ -5801,6 +5948,10 @@
   const SUPABASE_URL = 'https://ngjoognzvehwjtpqwrqe.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5nam9vZ256dmVod2p0cHF3cnFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3MDAzMDYsImV4cCI6MjA5NzI3NjMwNn0.2BNYuaQOTh-lU8GZcYhJAnZPBiJvT5PwB9MYZwNHTUE';
   const WORKER_URL = 'https://lana-rosa-os-pos.saralmunoz1301.workers.dev';
+  // Lana Rosa OS (Sistemas de Gestión). Si cambia de dirección, se cambia solo aquí.
+  const URL_SISTEMA_OPERATIVO = 'https://lana-rosa.github.io/SO/';
+  // Roles personalizados que, además de la administradora, ven el ítem "Sistema Operativo" en el menú.
+  const ROLES_PERSONALIZADOS_SO = ['Gerencia SO', 'Taller SO'];
 
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -6001,6 +6152,7 @@
   });
   let politicaTratamientoDatosCache = null;
   let rolActual = null;
+  let nombreRolPersonalizadoActual = null; // nombre del rol personalizado asignado (ej. "Taller SO"), si tiene
   let turnoActivoActual = null;
   let centroCostoTiendaId = null;
   let centroCostoTallerId = null;
@@ -6065,6 +6217,9 @@
   });
 
   function mostrarPantalla(idPantalla) {
+    // SEGURIDAD: sin sesión solo se puede ver el inicio de sesión (o la pantalla de "cargando").
+    if (!sesionActual && idPantalla !== 'pantallaCargando') idPantalla = 'pantallaLogin';
+    document.body.classList.toggle('sin-sesion', !sesionActual);
     const pantallas = ['pantallaLogin', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaInventarioGlobal', 'pantallaGuiasUsuario', 'pantallaFacturacionElectronica', 'pantallaServiciosDian', 'pantallaCorreoEmpresa', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaIndicadores', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeEstado', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaPanelContador', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb', 'pantallaTextosWeb', 'pantallaPaypalConfig', 'pantallaMiProduccion', 'pantallaInformeCostos', 'pantallaReglasPrecios'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
@@ -6275,8 +6430,21 @@
     await despuesDeLogin();
   }
 
+  // Botón "ojo" del inicio de sesión: muestra u oculta la contraseña mientras se escribe.
+  function alternarVerClave(ocultar) {
+    const input = document.getElementById('inputClave');
+    const btn = document.getElementById('btnOjoClave');
+    if (!input || !btn) return;
+    const mostrar = ocultar === true ? false : input.type === 'password';
+    input.type = mostrar ? 'text' : 'password';
+    btn.textContent = mostrar ? '🙈' : '👁';
+    btn.setAttribute('aria-pressed', mostrar ? 'true' : 'false');
+    btn.setAttribute('aria-label', mostrar ? 'Ocultar contraseña' : 'Mostrar contraseña');
+    btn.title = mostrar ? 'Ocultar contraseña' : 'Mostrar contraseña';
+  }
+
   function traducirErrorAuth(mensaje) {
-    if (mensaje.includes('Invalid login credentials')) return 'correo o contraseña incorrectos.';
+    if (mensaje.includes('Invalid login credentials')) return 'correo o contraseña incorrectos. Revisa que el correo esté bien escrito (sin espacios ni letras de más) y usa el ojo 👁 para ver la contraseña.';
     return mensaje;
   }
 
@@ -6284,8 +6452,10 @@
     await supabaseClient.auth.signOut();
     sesionActual = null;
     rolActual = null;
+    nombreRolPersonalizadoActual = null;
     turnoActivoActual = null;
     document.getElementById('inputClave').value = '';
+    alternarVerClave(true);
     mostrarPantalla('pantallaLogin');
   }
 
@@ -6438,6 +6608,17 @@
 
   let permisosOverrideActual = {};
 
+  // ¿Quien entró es administradora? (las demás personas piden y la administradora aprueba)
+  function esAdministradoraActual() {
+    return rolActual === 'administrador' || (rolesAdicionalesActual || []).includes('administrador');
+  }
+
+  // Abre Lana Rosa OS en una pestaña nueva (la sesión del ERP no se comparte: allá se inicia sesión una vez).
+  function abrirSistemaOperativo() {
+    window.open(URL_SISTEMA_OPERATIVO, '_blank', 'noopener');
+    cerrarSidebarMovil();
+  }
+
   function configurarSidebarPorRol() {
     const rolesUsuario = [rolActual, ...rolesAdicionalesActual];
     const esAdmin = rolesUsuario.includes('administrador');
@@ -6454,6 +6635,9 @@
     };
 
     // Grupos completos (acordeón) — reorganizados según los 7 puntos estándar de un ERP
+    // Sistema Operativo (otra aplicación): administradora y roles "Gerencia SO" / "Taller SO".
+    // Cajero, Líder de Tienda y contador no lo ven (salvo permiso manual de la administradora).
+    mostrar('nav-sistema-operativo', esAdmin || ROLES_PERSONALIZADOS_SO.includes(nombreRolPersonalizadoActual));
     mostrar('deptoVentasGrupo', esAdmin || esCajero);
     mostrar('deptoComprasGrupo', esAdmin);
     mostrar('deptoInventarioGrupo', esAdmin || esCajero || esTaller || esContador);
@@ -6743,8 +6927,17 @@
   let rolesAdicionalesActual = [];
   let logoEmpresaCache = null;
   let politicaCambiosCache = null;
+  let politicaAnticiposCache = null; // vive en Supabase (configuracion_empresa.politica_anticipos), no en el Worker
+
+  async function cargarPoliticaAnticipos() {
+    try {
+      const { data } = await supabaseClient.from('configuracion_empresa').select('politica_anticipos').limit(1).maybeSingle();
+      politicaAnticiposCache = (data && data.politica_anticipos) || null;
+    } catch { /* si falla, el recibo de anticipo sale sin ese texto */ }
+  }
 
   async function cargarLogoEmpresa() {
+    cargarPoliticaAnticipos();
     try {
       const resp = await fetch(WORKER_URL + '/api/pos/config-empresa', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
       if (resp.ok) {
@@ -6760,7 +6953,7 @@
   async function obtenerRolUsuario() {
     const { data, error } = await supabaseClient
       .from('usuarios_roles')
-      .select('rol, es_jefe_departamento, centro_costo_liderado_id, centros_costo(nombre)')
+      .select('rol, es_jefe_departamento, centro_costo_liderado_id, centros_costo(nombre), roles_personalizados(nombre)')
       .eq('user_id', sesionActual.userId)
       .eq('activo', true)
       .single();
@@ -6770,6 +6963,7 @@
       return;
     }
     rolActual = data.rol;
+    nombreRolPersonalizadoActual = (data.roles_personalizados && data.roles_personalizados.nombre) || null;
     await cargarIdsDepartamentosClave();
     await cargarIdentidadPropiaEmpleado();
     await cargarRolesYPermisosPropios();
@@ -6826,6 +7020,7 @@
         <div class="mensaje" id="mensajeWidgetHoras" style="font-size:10.5px;"></div>
       `;
     }
+    agregarMiHorarioAlWidget(cont);
   }
 
   async function marcarEntradaHorasClick() {
@@ -8147,7 +8342,8 @@
     `).join('');
     const filasPago = v.pagos.length > 0
       ? v.pagos.map(p => `<div class="resumen-fila-recibo"><span>${etiquetasPago[p.metodo_pago] || p.metodo_pago}</span><span>${formatearMoneda(p.monto)}</span></div>`).join('')
-      : `<div class="resumen-fila-recibo"><span>Pendiente de pago</span><span>—</span></div>`;
+      : `<div class="resumen-fila-recibo"><span>${v.esPedido ? 'Anticipo pendiente de pago' : 'Pendiente de pago'}</span><span>—</span></div>`;
+    const etiquetaRecibo = v.esPedido ? `Recibo de anticipo — Pedido ${escaparHtml(String(v.consecutivo))}` : `Recibo de venta N.° ${escaparHtml(String(v.consecutivo))}`;
 
     return `
       <div class="encabezado-recibo">
@@ -8159,7 +8355,7 @@
       </div>
 
       <div style="font-size:12px;">
-        <strong>Recibo de venta N.° ${escaparHtml(String(v.consecutivo))}</strong><br>
+        <strong>${etiquetaRecibo}</strong><br>
         Fecha: ${fechaTexto}
       </div>
 
@@ -8189,6 +8385,7 @@
       <div style="margin-top:12px;">
         <div style="font-size:11px;font-weight:700;opacity:0.6;margin-bottom:4px;">FORMA DE PAGO</div>
         ${filasPago}
+        ${v.esPedido && v.saldoPendiente != null ? `<div class="resumen-fila-recibo" style="font-weight:700;"><span>Saldo pendiente a la entrega</span><span>${formatearMoneda(v.saldoPendiente)}</span></div>` : ''}
       </div>
 
       ${v.puntos_ganados ? `
@@ -8201,8 +8398,9 @@
         ${v.nota ? escaparHtml(v.nota) : 'Recibo de venta — Este documento es un comprobante de pago. La factura electrónica la envía la DIAN por separado.'}
       </div>
 
+      ${v.esPedido && politicaAnticiposCache ? `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed #ccc;font-size:10.5px;color:#888;text-align:left;white-space:pre-line;"><strong>Anticipos y cancelación de pedidos personalizados</strong>\n${escaparHtml(politicaAnticiposCache)}</div>` : ''}
       ${politicaCambiosCache ? `
-        <div style="margin-top:8px;padding-top:8px;border-top:1px dashed #ccc;font-size:10.5px;color:#888;text-align:center;">
+        <div style="margin-top:8px;padding-top:8px;border-top:1px dashed #ccc;font-size:10.5px;color:#888;text-align:left;white-space:pre-line;">
           🔄 ${escaparHtml(politicaCambiosCache)}
         </div>
       ` : ''}
@@ -8382,7 +8580,9 @@
 
     try {
       const blob = await generarImagenRecibo(v);
-      const mensaje = `Hola${v.cliente.nombre ? ' ' + v.cliente.nombre : ''} 👋 Aquí está tu recibo de compra en Lana Rosa Crochet — Recibo N.° ${v.consecutivo}. ¡Gracias por tu compra! 🐑💕`;
+      const mensaje = v.esPedido
+        ? `Hola${v.cliente.nombre ? ' ' + v.cliente.nombre : ''} 👋 Aquí está tu recibo de ${v.pagos.length ? 'anticipo' : 'pedido'} en Lana Rosa Crochet — Pedido ${v.consecutivo}. ¡Gracias por tu compra! 🐑💕`
+        : `Hola${v.cliente.nombre ? ' ' + v.cliente.nombre : ''} 👋 Aquí está tu recibo de compra en Lana Rosa Crochet — Recibo N.° ${v.consecutivo}. ¡Gracias por tu compra! 🐑💕`;
       await compartirImagenPorWhatsapp(blob, v.cliente.telefono, `recibo_${v.consecutivo}.png`, mensaje);
     } catch (err) {
       mostrarMensaje(idMensaje, 'No se pudo generar la imagen del recibo: ' + err.message, 'error');
@@ -9164,8 +9364,8 @@
       <button type="button" class="btn-mini editar" style="margin-top:6px;" onclick="fichaAgregarMaterial('${p}')">+ Agregar material</button>
       <label for="${p}Patron" style="margin-top:12px;">Patrón de tejido <span style="font-size:10px;opacity:.6;">(vueltas, puntos, pasos)</span></label>
       <textarea id="${p}Patron" rows="3" placeholder="Ej: Cabeza: anillo mágico, 6 pb; v2: aum x6 (12)…"></textarea>
-      <label for="${p}PatronUrl">Enlace al patrón o a un archivo <span style="font-size:10px;opacity:.6;">(opcional)</span></label>
-      <input type="url" id="${p}PatronUrl" placeholder="https://…">
+      <label for="${p}PatronUrl">Enlace(s) del patrón en Telegram <span style="font-size:10px;opacity:.6;">(opcional; si hay varios, uno por línea. Ej: t.me/c/…)</span></label>
+      <textarea id="${p}PatronUrl" rows="2" placeholder="https://t.me/c/…" style="width:100%;"></textarea>
       <label for="${p}Notas">Notas <span style="font-size:10px;opacity:.6;">(opcional)</span></label>
       <input type="text" id="${p}Notas" placeholder="Ej: coser la marquilla al lado izquierdo">`;
   }
@@ -9683,6 +9883,8 @@
   function renderizarTablaInventario() {
     const contenedor = document.getElementById('listaInventarioGestion');
     const textoBusqueda = document.getElementById('inputBuscarInventario').value.trim().toLowerCase();
+    // Al entrar se ve solo la caja: la lista aparece cuando se escribe algo.
+    if (!textoBusqueda) { contenedor.innerHTML = '<div class="cargando">🔍 Escribe el nombre o el SKU de un producto para verlo.</div>'; return; }
 
     let items = inventarioGestionCompleto.filter(i => i.centro_costo_id === inventarioDeptoActivo);
     if (filtroCategoriaInvActual && filtroCategoriaInvActual !== 'todas') {
@@ -10331,6 +10533,7 @@
     const resp = await fetch(WORKER_URL + '/api/pos/pedidos-canal?' + params.toString(), { headers: { Authorization: 'Bearer ' + sesionActual.token } });
     if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
     const { pedidos } = await resp.json();
+    historialRedesCache = pedidos || [];
 
     if (!pedidos || pedidos.length === 0) {
       contenedor.innerHTML = '<div class="cargando">No hay pedidos que coincidan con la búsqueda.</div>';
@@ -10351,10 +10554,11 @@
           return `
             <div class="tabla-lista-fila" style="grid-template-columns:170px 1fr 110px 200px;">
               <span style="font-weight:600;">${etiquetasCanalHist[p.canal] || p.canal}<br><span style="font-weight:400;font-size:11px;opacity:0.7;">${escaparHtml(p.consecutivo || '')}</span></span>
-              <span style="opacity:0.9;display:flex;align-items:center;gap:8px;">${avatarIniciales(nombreCliente)}<span>${escaparHtml(nombreCliente)}${escaparHtml(detalleContacto)}<br><span style="font-size:11px;opacity:0.75;">${escaparHtml(p.descripcion_producto || '')}</span></span></span>
+              <span style="opacity:0.9;display:flex;align-items:center;gap:8px;">${avatarIniciales(nombreCliente)}<span>${escaparHtml(nombreCliente)}${escaparHtml(detalleContacto)}<br><span style="font-size:11px;opacity:0.75;">${escaparHtml(p.descripcion_producto || '')}</span>${esRolFe('administrador') ? `<br><button class="btn-mini editar" style="flex:0 0 auto;padding:4px 10px;margin-top:4px;" onclick="abrirEditarClienteHistorialRedes('${p.id}')">✏️ Datos del cliente</button>` : ''}</span></span>
               <span style="text-align:right;font-weight:700;">${formatearMoneda(p.total_pedido)}</span>
               <span style="opacity:0.75;font-size:11px;">${new Date(p.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}<br>${etiquetasEstadoHist[p.estado] || p.estado}</span>
             </div>
+            <div id="panelEditarClienteVenta-${p.id}" class="oculto" style="padding:0 12px 12px;"></div>
           `;
         }).join('')}
       </div>
@@ -10674,11 +10878,13 @@
           ${puedeAnular ? `<button class="btn-mini desactivar" onclick="event.stopPropagation(); pedirConfirmacionBoton(this, '¿Seguro?', () => anularVenta('${venta.id}', '${venta.consecutivo}'))">❌ Anular venta</button>` : ''}
           ${venta.estado === 'completada' ? `<button class="btn-mini editar" onclick="event.stopPropagation(); abrirCambioArticulo('${venta.id}', '${venta.consecutivo}')">🔄 Cambiar artículo</button>` : ''}
           ${venta.estado === 'completada' ? `<button class="btn-mini desactivar" onclick="event.stopPropagation(); abrirDevolucionSimple('${venta.id}', '${venta.consecutivo}')">💵 Devolver dinero</button>` : ''}
+          ${venta.estado === 'completada' && esRolFe('administrador') ? `<button class="btn-mini editar" onclick="event.stopPropagation(); abrirEditarClienteHistorialTienda('${venta.id}')">✏️ Datos del cliente</button>` : ''}
           <button class="btn-mini editar" onclick="event.stopPropagation(); verReciboHistorial('${venta.id}')">🖨️ Ver / imprimir recibo</button>
           <button class="btn-mini editar" onclick="event.stopPropagation(); enviarReciboHistorialWhatsapp('${venta.id}')">📱 Enviar por WhatsApp</button>
           ${correoEmpresaActivo() ? `<button class="btn-mini editar" onclick="event.stopPropagation(); enviarReciboHistorialCorreo('${venta.id}', this)">📧 Enviar por correo</button>` : ''}
         </div>
         <div id="panelCambioArticulo-${venta.id}" class="oculto" style="margin-top:10px;"></div>
+        <div id="panelEditarClienteVenta-${venta.id}" class="oculto" onclick="event.stopPropagation()"></div>
       </div>
     `;
   }
@@ -11132,6 +11338,11 @@
     await cargarParametrosCosteo();
     const { data: fichas } = await supabaseClient.rpc('fn_op_fichas', { p_ordenes: ordenesProduccionCache.map(o => o.id) });
     fichasProduccionCache = fichas || {};
+    await cargarExtrasOrdenes(ordenesProduccionCache.map(o => o.id));
+    if (ordenAccionAbierta && ordenAccionAbierta.accion === 'entregar') {
+      const abierta = ordenesProduccionCache.find(x => x.id === ordenAccionAbierta.id);
+      if (abierta) await prellenarMaterialesOrden(abierta);
+    }
     renderizarOrdenesProduccion();
   }
 
@@ -11211,10 +11422,154 @@
           </div>
         </div>
         ${o.estado !== 'anulada' ? resumenFichaOrden(o) : ''}
+        ${o.estado !== 'anulada' ? htmlApoyoOrden(o, true) : ''}
         ${materiales}
         ${acciones ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">${acciones}</div>` : ''}
         ${abierta}
       </div>`;
+  }
+
+  // ============================================================================
+  // APOYO DE LA ORDEN: tejedora asignada, imágenes de referencia (máx. 3) y patrón (enlaces de Telegram de la ficha)
+  // ============================================================================
+  let extrasOrdenCache = {}; // { orden_id: { imagenes, patrones, materiales_ficha, tejedora_plan } }
+  const prefillMaterialesAviso = {};
+
+  async function cargarExtrasOrdenes(ids, mezclar) {
+    if (!mezclar) extrasOrdenCache = {};
+    if (!ids.length) return;
+    const { data } = await supabaseClient.rpc('fn_op_extras', { p_ordenes: ids });
+    Object.assign(extrasOrdenCache, data || {});
+    if (!fichaTejedoras.length) {
+      const { data: tej } = await supabaseClient.rpc('fn_op_tejedoras_todas');
+      fichaTejedoras = tej || [];
+    }
+  }
+
+  function htmlApoyoOrden(o, conAcciones) {
+    const ex = extrasOrdenCache[o.id] || {};
+    const imagenes = ex.imagenes || [], patrones = ex.patrones || [];
+    const enProceso = o.estado === 'en_proceso';
+    const puedeSubir = conAcciones && enProceso && (rolActual === 'administrador' || rolActual === 'taller');
+    const puedeAsignar = conAcciones && enProceso && rolActual === 'administrador';
+    const f = fichasProduccionCache[o.id] || {};
+    let bloqueTej = '';
+    if (puedeAsignar) {
+      const actual = f.tejedora_tercero_id ? 't:' + f.tejedora_tercero_id : (f.tejedora_id ? 'e:' + f.tejedora_id : '');
+      const grupo = (tipo, etq) => {
+        const lista = fichaTejedoras.filter(t => (t.tipo || 'nomina') === tipo);
+        return lista.length ? `<optgroup label="${etq}">${lista.map(t => { const v = (t.tipo === 'externa' ? 't:' : 'e:') + t.id; return `<option value="${v}" ${v === actual ? 'selected' : ''}>${escaparHtml(t.nombre)}</option>`; }).join('')}</optgroup>` : '';
+      };
+      const plan = ex.tejedora_plan;
+      const sugerida = plan && (plan.tipo + ':' + plan.id) !== actual
+        ? `<button type="button" class="fp-enlace" onclick="asignarTejedoraOrden('${o.id}', '${plan.tipo}:${plan.id}')">Usar la del plan de tejido: ${escaparHtml(plan.nombre || '')}</button>` : '';
+      bloqueTej = `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;">
+        <label for="opTej-${o.id}" style="font-size:12.5px;font-weight:600;margin:0;">🧶 Asignar a</label>
+        <select id="opTej-${o.id}" style="max-width:260px;" onchange="asignarTejedoraOrden('${o.id}', this.value)">
+          <option value="">— Sin asignar (la ve cualquier tejedora) —</option>${grupo('nomina', 'Nómina')}${grupo('externa', 'Externas (honorarios)')}
+        </select>${sugerida}</div>`;
+    }
+    const miniaturas = imagenes.map((u, i) => `
+      <span style="position:relative;display:inline-block;">
+        <a href="${escaparHtml(u)}" target="_blank" rel="noopener noreferrer"><img src="${escaparHtml(u)}" alt="Imagen de referencia ${i + 1}" style="width:72px;height:72px;object-fit:cover;border-radius:10px;border:1px solid var(--gris-borde);"></a>
+        ${puedeSubir ? `<button type="button" aria-label="Quitar imagen" title="Quitar imagen" onclick="quitarImagenReferencia('${o.id}', ${i})" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;border:none;background:var(--rojo-error);color:#fff;font-size:11px;cursor:pointer;">✕</button>` : ''}
+      </span>`).join('');
+    const subir = puedeSubir && imagenes.length < 3 ? `
+      <label class="btn-mini editar" style="cursor:pointer;display:inline-block;">📷 Agregar imagen de referencia (${imagenes.length}/3)
+        <input type="file" accept="image/*" style="display:none;" onchange="subirImagenReferencia('${o.id}', this)"></label>` : '';
+    const botonesPatron = patrones.map((u, i) => `<a class="btn-mini editar" href="${escaparHtml(u)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;">📘 Ver patrón${patrones.length > 1 ? ' ' + (i + 1) : ''}</a>`).join('');
+    if (!bloqueTej && !miniaturas && !subir && !botonesPatron) return '';
+    return `<div style="margin-top:10px;padding:10px 12px;border-radius:var(--radius-md);background:var(--gris-fondo);">
+      ${bloqueTej}
+      ${miniaturas || subir ? `<div style="margin-top:${bloqueTej ? 10 : 0}px;font-size:12px;font-weight:600;">🖼️ Imágenes de referencia</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px;">${miniaturas}${subir}</div>` : ''}
+      ${botonesPatron ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">${botonesPatron}</div>` : ''}
+    </div>`;
+  }
+
+  async function asignarTejedoraOrden(ordenId, valor) {
+    const tipo = valor ? valor.slice(0, 1) : null, id = valor ? valor.slice(2) : null;
+    const { error } = await supabaseClient.rpc('fn_op_asignar_tejedora', { p_orden_id: ordenId, p_tipo: tipo, p_tejedora_id: id });
+    if (error) { mostrarMensaje('mensajeOrdenesProd', 'No se pudo asignar: ' + error.message, 'error'); return; }
+    mostrarMensaje('mensajeOrdenesProd', valor ? '✅ Orden asignada. La tejedora la verá en "Mi producción".' : '✅ Orden sin tejedora asignada.', 'exito');
+    await cargarOrdenesProduccion();
+  }
+
+  // Reduce la foto para que pese poco (máx. 1400 px) antes de subirla
+  async function reducirImagenReferencia(archivo) {
+    try {
+      const bmp = await createImageBitmap(archivo);
+      const k = Math.min(1, 1400 / Math.max(bmp.width, bmp.height));
+      const c = document.createElement('canvas'); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+      c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+      const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.82));
+      return blob || archivo;
+    } catch (e) { return archivo; }
+  }
+
+  async function subirImagenReferencia(ordenId, input) {
+    const archivo = input.files && input.files[0]; input.value = '';
+    if (!archivo) return;
+    const actuales = (extrasOrdenCache[ordenId] || {}).imagenes || [];
+    if (actuales.length >= 3) { mostrarMensaje('mensajeOrdenesProd', 'Máximo 3 imágenes de referencia por orden.', 'error'); return; }
+    if (!(archivo.type || '').startsWith('image/')) { mostrarMensaje('mensajeOrdenesProd', 'Elige una imagen (foto o captura).', 'error'); return; }
+    mostrarMensaje('mensajeOrdenesProd', '⏳ Subiendo imagen...', 'exito');
+    const blob = await reducirImagenReferencia(archivo);
+    const ruta = `referencias/${ordenId}_${Date.now()}.jpg`;
+    const { error } = await supabaseClient.storage.from('produccion-fotos').upload(ruta, blob, { contentType: blob.type || 'image/jpeg' });
+    if (error) { mostrarMensaje('mensajeOrdenesProd', 'No se pudo subir la imagen: ' + error.message, 'error'); return; }
+    const url = supabaseClient.storage.from('produccion-fotos').getPublicUrl(ruta).data.publicUrl;
+    await guardarImagenesReferencia(ordenId, actuales.concat([url]));
+  }
+
+  async function quitarImagenReferencia(ordenId, i) {
+    const actuales = ((extrasOrdenCache[ordenId] || {}).imagenes || []).slice();
+    actuales.splice(i, 1);
+    await guardarImagenesReferencia(ordenId, actuales);
+  }
+
+  async function guardarImagenesReferencia(ordenId, lista) {
+    const { error } = await supabaseClient.rpc('fn_op_guardar_imagenes', { p_orden_id: ordenId, p_imagenes: lista });
+    if (error) { mostrarMensaje('mensajeOrdenesProd', 'No se pudieron guardar las imágenes: ' + error.message, 'error'); return; }
+    extrasOrdenCache[ordenId] = Object.assign({}, extrasOrdenCache[ordenId], { imagenes: lista });
+    ocultarMensaje('mensajeOrdenesProd');
+    renderizarOrdenesProduccion();
+  }
+
+  // Insumos automáticos: al abrir la entrega de material de una orden sin material, se cargan los de la ficha técnica
+  // del producto (por unidad × unidades); si no hay ficha, los de la última orden terminada del mismo producto.
+  // Solo se llenan las filas: nada sale del inventario hasta que se pulsa "Entregar".
+  async function prellenarMaterialesOrden(o) {
+    if (filasMaterialOrden[o.id] || (o.materiales || []).length) return;
+    const unidades = Number(o.cantidad_planeada) || 1;
+    const redondear = (n) => Math.round(n * 100) / 100;
+    let base = ((extrasOrdenCache[o.id] || {}).materiales_ficha || [])
+      .map(m => ({ item: m.inventario_item_id, nombre: m.nombre, cantidad: redondear(Number(m.cantidad) * unidades), origen: 'Taller' }));
+    let fuente = 'la ficha técnica del producto';
+    if (!base.length) {
+      const { data } = await supabaseClient.rpc('fn_op_listar', { p_estado: 'terminada' });
+      const previa = (data || []).find(x => x.id !== o.id && Number(x.cantidad_terminada) > 0
+        && ((o.producto_item_id && x.producto_item_id === o.producto_item_id) || normTextoOP(x.descripcion) === normTextoOP(o.descripcion))
+        && (x.materiales || []).some(m => Number(m.neto) > 0));
+      if (previa) {
+        base = previa.materiales.filter(m => Number(m.neto) > 0).map(m => ({
+          item: m.inventario_item_id, nombre: m.nombre, cantidad: redondear(Number(m.neto) / Number(previa.cantidad_terminada) * unidades),
+          origen: m.ubicacion === 'Tienda' ? 'Tienda' : 'Taller' }));
+        fuente = 'la última orden terminada de este producto (' + previa.orden + ')';
+      }
+    }
+    base = base.filter(m => m.item && m.cantidad > 0);
+    if (!base.length) return;
+    const filas = [], faltan = [];
+    base.forEach(m => {
+      const en = (origen) => (materialesOrdenCache[origen] || []).some(x => x.id === m.item);
+      const origen = en(m.origen) ? m.origen : (m.origen === 'Taller' && en('Tienda') ? 'Tienda' : null);
+      if (origen) filas.push({ origen, item: m.item, cantidad: String(m.cantidad) });
+      else faltan.push(m.nombre);
+    });
+    if (filas.length) filasMaterialOrden[o.id] = filas;
+    prefillMaterialesAviso[o.id] = (filas.length ? `💡 Se cargaron ${filas.length} material(es) de ${fuente}, para ${formatearCantidad(unidades)} unidad(es). Revísalos y ajústalos; no salen del inventario hasta que pulses "Entregar".` : '')
+      + (faltan.length ? `<br>⚠️ Sin existencias en el Taller${rolActual === 'administrador' ? ' ni en la Tienda' : ''}: ${faltan.map(escaparHtml).join(', ')}.` : '');
   }
 
   // ============================================================================
@@ -11289,6 +11644,7 @@
     const o = ordenesProduccionCache.find(x => x.id === ordenId);
     if (!o) return;
     detenerCronosFicha(false);
+    if (!extrasOrdenCache[ordenId]) await cargarExtrasOrdenes([ordenId], true);
     const { data, error } = await supabaseClient.from('produccion_fichas').select('*').eq('orden_id', ordenId).maybeSingle();
     if (error) { mostrarMensaje('mensajeOrdenesProd', 'No se pudo abrir el paso a paso: ' + error.message, 'error'); return; }
     if (!fichaTejedoras.length) {
@@ -11381,6 +11737,7 @@
           <select id="fpTejedora" onchange="cambiarTejedoraFicha(this.value)" ${fa.soloLectura || (miTejedora.vinculada && rolActual !== 'administrador') ? 'disabled' : ''} style="margin-top:4px;">
             <option value="">— Elige quién la teje —</option>${opcionesTej}
           </select>
+          ${htmlApoyoOrden(o, false)}
           <div class="fp-barra" style="margin-top:14px;"><div style="width:${pct}%;"></div></div>
           <div class="fp-fila">
             <span><strong>${pct}%</strong> · ${hechos} de ${pasos.length} pasos</span>
@@ -12125,6 +12482,7 @@
     // El paso a paso usa la misma lista que Órdenes de producción.
     ordenesProduccionCache = (data || []).map(o => Object.assign({ materiales: [] }, o));
     fichasProduccionCache = Object.fromEntries(ordenesProduccionCache.filter(o => o.ficha).map(o => [o.id, o.ficha]));
+    await cargarExtrasOrdenes(ordenesProduccionCache.map(o => o.id));
     const pendientes = ordenesProduccionCache.filter(o => o.estado === 'en_proceso');
     const terminadas = ordenesProduccionCache.filter(o => o.estado !== 'en_proceso');
     const tarjeta = (o) => {
@@ -12141,6 +12499,7 @@
             <div style="font-size:12px;opacity:.75;margin-top:2px;">${destino} · ${formatearCantidad(o.cantidad_planeada)} unidad(es)${f && f.tejedora ? ' · ' + escaparHtml(f.tejedora) : ' · Sin tejedora'}</div>
             <div style="font-size:12px;margin-top:4px;">${hechos} de ${pasos.length} pasos${t ? ' · ⏱️ ' + formatoHorasCorto(t) : ''}${f && f.peso_gramos ? ' · ⚖️ ' + formatearCantidad(f.peso_gramos) + ' g' : ''}</div>
             <div class="fp-mini-barra"><div style="width:${Math.round(hechos / pasos.length * 100)}%;"></div></div>
+            ${o.estado === 'en_proceso' ? htmlApoyoOrden(o, false) : ''}
           </div>
           <button class="btn-mini ${o.estado === 'en_proceso' ? 'guardar' : 'editar'}" style="flex:0 0 auto;padding:10px 16px;" onclick="abrirFichaProduccion('${o.id}')">${o.estado !== 'en_proceso' ? '👁️ Ver' : (f ? '🧵 Seguir' : '🧵 Empezar')}</button>
         </div>`;
@@ -12241,8 +12600,12 @@
     await cargarMaterialesFicha(fichaActiva.orden.id);
   }
 
-  function abrirAccionOrden(id, accion) {
+  async function abrirAccionOrden(id, accion) {
     ordenAccionAbierta = ordenAccionAbierta && ordenAccionAbierta.id === id && ordenAccionAbierta.accion === accion ? null : { id, accion };
+    if (ordenAccionAbierta && accion === 'entregar') {
+      const o = ordenesProduccionCache.find(x => x.id === id);
+      if (o) await prellenarMaterialesOrden(o);
+    }
     renderizarOrdenesProduccion();
   }
 
@@ -12253,6 +12616,7 @@
     if (accion === 'entregar') {
       const puedeTienda = rolActual === 'administrador';
       return caja(`
+        ${prefillMaterialesAviso[o.id] ? `<div style="font-size:12px;line-height:1.6;margin-bottom:10px;padding:8px 10px;border-radius:var(--radius-md);background:var(--tinte-ambar);">${prefillMaterialesAviso[o.id]}</div>` : ''}
         <div id="filasMat-${o.id}">${htmlFilasMaterial(o.id)}</div>
         <div style="margin-top:10px;max-width:420px;"><label>Nota <span style="font-size:10px;opacity:0.6;">(opcional)</span></label><input type="text" id="opEntNota-${o.id}"></div>
         ${puedeTienda ? '' : '<div style="font-size:11.5px;opacity:0.7;margin-top:6px;">¿Falta material? Se trae de la Tienda en "Trasladar entre Tienda y Taller", y allí mismo se puede entregar a esta orden.</div>'}
@@ -14268,6 +14632,30 @@
     document.getElementById('btnCompraQuedoDebiendo').style.color = modo === 'credito' ? 'white' : '';
     document.getElementById('bloqueCompraPagoCompleto').classList.toggle('oculto', modo !== 'completo');
     document.getElementById('bloqueCompraQuedoDebiendo').classList.toggle('oculto', modo !== 'credito');
+    actualizarBloquePagoFondo();
+  }
+
+  // Con recursos del Fondo Emprender y compra pagada, se piden los soportes del pago (nuevo modelo 2026).
+  function avisarValorPagadoFondo() {
+    const a = document.getElementById('avisoValorPagado'); if (!a) return;
+    const v = Number((document.getElementById('req_valor_pagado') || {}).value), m = Number(document.getElementById('gastoMonto').value);
+    a.textContent = v && m && Math.round(v) !== Math.round(m) ? `⚠️ Ojo: transferiste ${formatearMoneda(v)} y la factura es de ${formatearMoneda(m)}. El Fondo exige que el valor pagado coincida con la factura.` : '';
+  }
+
+  async function avisarProveedorPlanFondo() {
+    const a = document.getElementById('avisoProveedorPlan'); if (!a) return;
+    const fuente = (document.getElementById('gastoFuente') || {}).value || 'propios';
+    a.textContent = '';
+    if (fuente === 'propios') return;
+    if (!proveedorGastoSeleccionadoId) { a.textContent = '⚠️ Proveedor nuevo: no está aprobado en el plan operativo. Con recursos del Fondo solo se debe pagar a proveedores aprobados por la interventora.'; return; }
+    const { data } = await supabaseClient.rpc('fn_proveedor_aprobado_plan', { p_tercero: proveedorGastoSeleccionadoId });
+    if (!data) a.textContent = '⚠️ Este proveedor no está marcado como aprobado en el plan operativo. Con recursos del Fondo solo se debe pagar a proveedores aprobados por la interventora (puedes marcarlo luego en "Ver soportes de pago").';
+  }
+
+  function actualizarBloquePagoFondo() {
+    const b = document.getElementById('bloquePagoFondo'); if (!b) return;
+    const fuente = (document.getElementById('gastoFuente') || {}).value || 'propios';
+    b.classList.toggle('oculto', fuente === 'propios' || modoPagoCompraActual !== 'completo');
   }
 
   async function verComprasSinRequisitos() {
@@ -14277,6 +14665,71 @@
     if (error) { cont.innerHTML = escaparHtml(error.message); return; }
     cont.innerHTML = data.length ? `<div style="margin-bottom:6px;"><strong>${data.length}</strong> compra(s) registradas sin los documentos del instructivo (las hechas antes de que existiera este control, o desde otra pantalla):</div>` +
       data.map(g => `<div>• ${new Date(g.fecha + 'T00:00:00').toLocaleDateString('es-CO')} · ${escaparHtml(g.proveedor || 'sin proveedor')} · ${escaparHtml(g.descripcion || '')} · ${formatearMoneda(g.monto)}</div>`).join('') : '✅ Todas las compras del rango tienen sus documentos.';
+  }
+
+  // Compras pagadas con recursos del Fondo: ver los soportes guardados y subir el comprobante/extracto que falte (nuevo modelo 2026).
+  async function verSoportesPagoFondo() {
+    const cont = document.getElementById('listaSoportesPagoFondo');
+    cont.innerHTML = 'Cargando...';
+    const { data, error } = await supabaseClient.rpc('fn_soportes_pago_fondo', { p_desde: document.getElementById('comprasFechaDesde').value || '2026-01-01', p_hasta: document.getElementById('comprasFechaHasta').value || fechaLocalIso() });
+    if (error) { cont.innerHTML = escaparHtml(error.message); return; }
+    if (!data.length) { cont.innerHTML = 'No hay compras con recursos del Fondo en el rango.'; return; }
+    const etiquetas = { cotizacion: 'Cotización', contrato: 'Contrato', poliza: 'Póliza', ficha: 'Ficha técnica', comprobante_pago: 'Comprobante de pago', extracto_bancario: 'Extracto bancario', evidencia_entrega: 'Evidencia de entrega' };
+    const listas = data.filter(c => estadoLegalizarCompra(c).faltan.length === 0 && estadoLegalizarCompra(c).alertas.length === 0).length;
+    cont.innerHTML = `<div style="margin-bottom:6px;"><strong>${listas}</strong> de ${data.length} compra(s) lista(s) para legalizar.</div>` + data.map(c => {
+      const docs = c.documentos || {}, est = estadoLegalizarCompra(c);
+      const links = Object.entries(docs).map(([k, ruta]) => `<a href="#" onclick="abrirSoporteCompra('${escaparHtml(ruta)}');return false;">${escaparHtml(etiquetas[k] || k)}</a>`).join(' · ') || '<em>sin documentos</em>';
+      const subir = [['comprobante_pago', 'application/pdf'], ['extracto_bancario', 'application/pdf'], ['evidencia_entrega', 'application/pdf,image/*']].filter(([k]) => !docs[k]).map(([k, acc]) => `<label style="display:inline-block;margin-right:10px;font-size:11.5px;">Subir ${etiquetas[k].toLowerCase()} <input type="file" accept="${acc}" onchange="subirSoportePagoFondo('${c.id}','${k}',this)"></label>`).join('');
+      const valor = c.valor_pagado ? `Pagado: ${formatearMoneda(c.valor_pagado)}` : `<label style="font-size:11.5px;">Valor transferido <input type="number" min="1" step="1" style="width:120px;" onchange="guardarValorPagadoFondo('${c.id}',this.value)"></label>`;
+      const prov = c.proveedor_aprobado ? '' : ` <button class="btn-mini editar" style="padding:2px 8px;font-size:11px;" onclick="marcarProveedorPlanFondo('${c.proveedor_tercero_id || ''}')">Marcar proveedor como aprobado en el plan</button>`;
+      const estado = est.faltan.length ? `<span style="color:var(--rojo-error);">Falta: ${est.faltan.join(', ')}</span>` : (est.alertas.length ? '' : '<span style="color:var(--verde-exito,#2e7d32);">✅ Lista para legalizar</span>');
+      return `<div style="border-top:1px solid #eee;padding:6px 0;"><strong>${new Date(c.fecha_factura + 'T00:00:00').toLocaleDateString('es-CO')}</strong> · ${escaparHtml(c.proveedor || 'sin proveedor')} · Factura ${escaparHtml(c.numero_factura || '')} · ${formatearMoneda(c.monto)} · ${c.fuente === 'mixto' ? 'Mixto' : 'Fondo'}<div>${estado}</div>${est.alertas.map(a => `<div style="color:var(--rojo-error);font-size:11.5px;">⚠️ ${a}</div>`).join('')}<div>${links}</div><div style="margin-top:4px;">${valor}${prov}</div>${subir ? `<div style="margin-top:4px;">${subir}</div>` : ''}</div>`;
+    }).join('');
+  }
+
+  // Qué le falta a una compra del Fondo para legalizarla (nuevo modelo 2026) y qué alertas tiene.
+  function estadoLegalizarCompra(c) {
+    const docs = c.documentos || {}, faltan = [], alertas = [];
+    if (!c.tiene_factura) faltan.push('factura');
+    if (!docs.comprobante_pago) faltan.push('comprobante de pago');
+    if (!docs.extracto_bancario) faltan.push('extracto');
+    if (!docs.evidencia_entrega) faltan.push('evidencia de entrega');
+    if (!c.proveedor_aprobado) alertas.push('El proveedor no está aprobado en el plan operativo.');
+    if (c.valor_pagado && Math.round(Number(c.valor_pagado)) !== Math.round(Number(c.monto))) alertas.push(`El valor pagado (${formatearMoneda(c.valor_pagado)}) no coincide con la factura (${formatearMoneda(c.monto)}).`);
+    return { faltan, alertas };
+  }
+
+  async function guardarValorPagadoFondo(id, valor) {
+    const { error } = await supabaseClient.rpc('fn_compra_registrar_valor_pagado', { p_id: id, p_valor: Number(valor) });
+    if (error) { alert('No se pudo guardar: ' + error.message); return; }
+    verSoportesPagoFondo();
+  }
+
+  async function marcarProveedorPlanFondo(terceroId) {
+    if (!terceroId) { alert('Esta compra no tiene proveedor registrado en terceros; primero crea el proveedor.'); return; }
+    if (!confirm('¿La interventora ya aprobó a este proveedor en el plan operativo?')) return;
+    const { error } = await supabaseClient.rpc('fn_proveedor_plan_marcar', { p_tercero: terceroId, p_aprobado: true });
+    if (error) { alert('No se pudo marcar: ' + error.message); return; }
+    verSoportesPagoFondo();
+  }
+
+  async function abrirSoporteCompra(ruta) {
+    const { data, error } = await supabaseClient.storage.from('soportes-compras').createSignedUrl(ruta, 300);
+    if (error) { alert('No se pudo abrir el documento: ' + error.message); return; }
+    window.open(data.signedUrl, '_blank');
+  }
+
+  async function subirSoportePagoFondo(id, clave, input) {
+    const f = input.files[0]; if (!f) return;
+    const esPdf = /\.pdf$/i.test(f.name) || f.type === 'application/pdf';
+    if (!esPdf && !(clave === 'evidencia_entrega' && /^image\//.test(f.type))) { alert(clave === 'evidencia_entrega' ? 'Debe ser una foto o un PDF.' : 'Debe ser un archivo PDF.'); input.value = ''; return; }
+    const ext = esPdf ? 'pdf' : ((f.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg');
+    const ruta = `${fechaLocalIso().slice(0, 4)}/req/${Date.now()}_${id.slice(0, 8)}_${clave}.${ext}`;
+    const { error } = await supabaseClient.storage.from('soportes-compras').upload(ruta, f, { contentType: esPdf ? 'application/pdf' : f.type });
+    if (error) { alert('No se pudo subir: ' + error.message); return; }
+    const { error: e2 } = await supabaseClient.rpc('fn_compra_agregar_documento', { p_id: id, p_clave: clave, p_ruta: ruta });
+    if (e2) { alert('No se pudo guardar: ' + e2.message); return; }
+    verSoportesPagoFondo();
   }
 
   // ---- Requisitos del instructivo de pagos del Fondo Emprender (mayo de 2024, versión 2) para toda compra ----
@@ -14316,7 +14769,7 @@
           <div style="opacity:.8;">Para esta compra de ${formatearMoneda(monto)} el instructivo pide (6 salarios mínimos = ${formatearMoneda(data.umbral_6_smmlv)}):</div>
           ${filas}
           <div style="margin-top:12px;font-weight:600;">¿Con qué recursos se paga?</div>
-          <select id="gastoFuente" onchange="document.getElementById('bloqueActividadFe').classList.toggle('oculto', this.value === 'propios')">
+          <select id="gastoFuente" onchange="document.getElementById('bloqueActividadFe').classList.toggle('oculto', this.value === 'propios'); actualizarBloquePagoFondo(); avisarProveedorPlanFondo()">
             <option value="propios">Aporte del emprendedor (recursos propios)</option>
             <option value="fondo">Fondo Emprender</option>
             <option value="mixto">Mixto (Fondo Emprender y aporte del emprendedor)</option>
@@ -14324,10 +14777,19 @@
           <div id="bloqueActividadFe" class="oculto" style="margin-top:6px;">
             <label for="gastoActividadFe">Actividad del plan operativo a la que corresponde</label>
             <select id="gastoActividadFe"><option value="">Selecciona...</option>${actividades}</select>
-            <div style="font-size:10.5px;opacity:.65;">Cada pago va asociado a una actividad y a un mes del plan operativo. Con recursos del Fondo, el pago lo gira la fiducia a la cuenta bancaria del proveedor (no se paga en efectivo) y necesita el avance aprobado por la interventoría.${data.fondo_bloqueado ? ' <strong>Aún no se puede ejecutar: falta ' + escaparHtml(data.fondo_bloqueado) + '.</strong>' : ''}</div>
+            <div style="font-size:10.5px;opacity:.65;">Cada pago va asociado a una actividad y a un mes del plan operativo. Con recursos del Fondo, la fiducia gira el dinero a la cuenta bancaria exclusiva de la empresa y tú le pagas al proveedor desde esa misma cuenta (transferencia; no se paga en efectivo ni se mezcla con otros recursos). Necesita el avance aprobado por la interventoría. Los impuestos, sanciones y recargos no se pagan con recursos del Fondo.${data.fondo_bloqueado ? ' <strong>Aún no se puede ejecutar: falta ' + escaparHtml(data.fondo_bloqueado) + '.</strong>' : ''}</div>
+          </div>
+          <div id="bloquePagoFondo" class="oculto" style="margin-top:10px;padding:8px 10px;border:1px solid #e3d3df;border-radius:8px;">
+            <div style="font-weight:600;">Soportes del pago (legalización del Fondo)</div>
+            <div style="margin-top:6px;"><label for="req_comprobante_pago" style="font-weight:600;">Comprobante de la transferencia <em id="obligComprobantePago" style="font-size:10.5px;opacity:.7;">(obligatorio si ya pagaste)</em></label><input type="file" data-req="comprobante_pago" id="req_comprobante_pago" accept="application/pdf"><div style="font-size:10.5px;opacity:.65;">PDF del comprobante de la transferencia hecha desde la cuenta bancaria exclusiva.</div></div>
+            <div style="margin-top:8px;"><label for="req_extracto_bancario" style="font-weight:600;">Extracto bancario <em style="font-size:10.5px;opacity:.7;">(si lo tienes)</em></label><input type="file" data-req="extracto_bancario" id="req_extracto_bancario" accept="application/pdf"><div style="font-size:10.5px;opacity:.65;">PDF del extracto donde se vea el débito del pago y el movimiento de la cuenta exclusiva. Si todavía no lo tienes, súbelo cuando lo descargues; la compra quedará marcada como "falta extracto" hasta entonces.</div></div>
+            <div style="margin-top:8px;"><label for="req_valor_pagado" style="font-weight:600;">Valor que transferiste <em style="font-size:10.5px;opacity:.7;">(si ya lo sabes)</em></label><input type="number" data-req="valor_pagado" id="req_valor_pagado" min="1" step="1" oninput="avisarValorPagadoFondo()"><div id="avisoValorPagado" style="font-size:11px;color:var(--rojo-error);"></div></div>
+            <div style="margin-top:8px;"><label for="req_evidencia_entrega" style="font-weight:600;">Evidencia de entrega <em style="font-size:10.5px;opacity:.7;">(foto, acta o remisión; si la tienes)</em></label><input type="file" data-req="evidencia_entrega" id="req_evidencia_entrega" accept="application/pdf,image/*"><div style="font-size:10.5px;opacity:.65;">Demuestra que recibiste el producto o servicio. Si todavía no la tienes, súbela después; mientras tanto la compra queda como "falta evidencia de entrega".</div></div>
+            <div id="avisoProveedorPlan" style="font-size:11.5px;margin-top:8px;color:var(--rojo-error);"></div>
           </div>
           <div style="font-size:10.5px;opacity:.65;margin-top:10px;">Los documentos que se suben a la plataforma del Fondo Emprender deben ser PDF legibles, sin tachaduras ni enmendaduras, y fechados en el mismo mes en que se pide el pago. Las reglas valen igual aunque la empresa esté en el Régimen SIMPLE.</div>`;
         Object.entries(previo.marcas).forEach(([k, v]) => { const el = cont.querySelector(`[data-req="${k}"]`); if (el) el.checked = v; });
+        setTimeout(() => { actualizarBloquePagoFondo(); avisarProveedorPlanFondo(); avisarValorPagadoFondo(); }, 0);
         Object.entries(previo.textos).forEach(([k, v]) => { const el = cont.querySelector(`[data-req="${k}"]`); if (el) el.value = v; });
         Object.entries(previo.archivos).forEach(([k, f]) => { const el = cont.querySelector(`[data-req="${k}"]`); if (el) { const dt = new DataTransfer(); dt.items.add(f); el.files = dt.files; } });
         resolve();
@@ -14365,20 +14827,38 @@
     }
     const fuente = (document.getElementById('gastoFuente') || {}).value || 'propios';
     const actividad = (document.getElementById('gastoActividadFe') || {}).value || null;
+    ['comprobante_pago', 'extracto_bancario', 'evidencia_entrega'].forEach(k => {
+      const e = el(k); const f = e && e.files[0];
+      if (fuente !== 'propios' && modoPagoCompraActual === 'completo' && f) archivos[k] = f;
+    });
+    if (archivos.evidencia_entrega && !/\.(pdf|jpe?g|png|webp|heic)$/i.test(archivos.evidencia_entrega.name) && !/^image\//.test(archivos.evidencia_entrega.type) && archivos.evidencia_entrega.type !== 'application/pdf') return { error: 'La evidencia de entrega debe ser una foto o un PDF.' };
+    if (fuente !== 'propios' && modoPagoCompraActual === 'completo') { const vp = Number((el('valor_pagado') || {}).value); if (vp > 0) datos.valor_pagado = vp; }
+    for (const k of ['comprobante_pago', 'extracto_bancario']) {
+      const f = archivos[k];
+      if (f && !/\.pdf$/i.test(f.name) && f.type !== 'application/pdf') return { error: 'El comprobante y el extracto deben ser archivos PDF (así lo exige la plataforma del Fondo Emprender).' };
+    }
     if (fuente !== 'propios') {
       if (info.fondo_bloqueado) return { error: 'Todavía no se pueden ejecutar recursos del Fondo Emprender: falta la aprobación de la interventoría (' + info.fondo_bloqueado + '). Registra la compra como aporte del emprendedor o espera la aprobación.' };
-      if (modoPagoCompraActual === 'completo' && document.getElementById('gastoMetodoPago').value === 'efectivo') return { error: 'Con recursos del Fondo Emprender no se paga en efectivo: el pago lo gira la fiducia a la cuenta del proveedor.' };
+      if (modoPagoCompraActual === 'completo') {
+        const mp = document.getElementById('gastoMetodoPago').value;
+        if (mp === 'efectivo') return { error: 'Con recursos del Fondo Emprender no se paga en efectivo: el pago se hace por transferencia desde la cuenta bancaria exclusiva, para que quede trazabilidad.' };
+        if (mp !== 'transferencia' && mp !== 'tarjeta_debito') return { error: 'Con recursos del Fondo Emprender el pago debe salir de la cuenta bancaria exclusiva (transferencia o tarjeta débito de esa cuenta), no de Daviplata ni de tarjeta de crédito.' };
+        const comp = cont.querySelector('[data-req="comprobante_pago"]');
+        if (!comp || !comp.files[0]) return { error: 'Adjunta el comprobante de la transferencia (PDF): el Fondo lo pide para legalizar el gasto.' };
+      }
       if (!actividad) return { error: 'Elige la actividad del plan operativo a la que corresponde esta compra.' };
     }
-    return { tipo: document.getElementById('gastoTipoCompra').value, fuente, actividad, cotizacionFecha: datos.cotizacion_fecha || null, datos: { ...datos, instructivo: 'Instructivo de pagos, mayo 2024 (v2)' }, archivos };
+    return { tipo: document.getElementById('gastoTipoCompra').value, fuente, actividad, cotizacionFecha: datos.cotizacion_fecha || null, datos: { ...datos, instructivo: 'Instructivo de pagos, mayo 2024 (v2) + Nuevo modelo de desembolsos y pagos 2026' }, archivos };
   }
 
   async function guardarRequisitosCompra(req, monto, fechaFactura, numeroFactura, proveedorId) {
     const rutas = {};
     const base = `${fechaFactura.slice(0, 4)}/req/${Date.now()}_${String(numeroFactura).replace(/[^A-Za-z0-9_-]/g, '')}`;
     for (const [clave, archivo] of Object.entries(req.archivos)) {
-      const ruta = `${base}_${clave}.pdf`;
-      const { error } = await supabaseClient.storage.from('soportes-compras').upload(ruta, archivo, { contentType: 'application/pdf' });
+      const esPdf = /\.pdf$/i.test(archivo.name) || archivo.type === 'application/pdf';
+      const ext = esPdf ? 'pdf' : ((archivo.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg');
+      const ruta = `${base}_${clave}.${ext}`;
+      const { error } = await supabaseClient.storage.from('soportes-compras').upload(ruta, archivo, { contentType: esPdf ? 'application/pdf' : (archivo.type || 'image/jpeg') });
       if (error) throw error;
       rutas[clave] = ruta;
     }
@@ -14585,6 +15065,7 @@
   // USUARIOS Y PERMISOS
   // ============================================================
   const CATALOGO_MODULOS = [
+    { clave: 'nav-sistema-operativo', etiqueta: '🧭 Sistema Operativo (abre otra página)' },
     { clave: 'deptoVentasGrupo', etiqueta: '🛍️ Punto de Venta (grupo completo)' },
     { clave: 'nav-clientes-dir', etiqueta: '　　Clientes' },
     { clave: 'nav-cotizaciones', etiqueta: '　　Cotizaciones' },
@@ -14831,6 +15312,7 @@
   async function cargarRegistroHorasAdmin() {
     const contenedor = document.getElementById('listaRegistroHoras');
     contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
+    cargarEmpleadosParaTurnos();
 
     const params = new URLSearchParams();
     const desde = document.getElementById('horasFechaDesde').value;
@@ -14859,20 +15341,415 @@
 
     contenedor.innerHTML = `
       <div class="tabla-lista">
-        <div class="tabla-lista-header header-rosa" style="grid-template-columns:1fr 90px 90px 90px 90px;">
-          <span>EMPLEADO</span><span>FECHA</span><span>ENTRADA</span><span>SALIDA</span><span style="text-align:right;">HORAS</span>
+        <div class="tabla-lista-header header-rosa" style="grid-template-columns:1fr 90px 90px 90px 90px 90px;">
+          <span>EMPLEADO</span><span>FECHA</span><span>ENTRADA</span><span>SALIDA</span><span style="text-align:right;">HORAS</span><span></span>
         </div>
         ${registros.map(r => `
-          <div class="tabla-lista-fila" style="grid-template-columns:1fr 90px 90px 90px 90px;cursor:default;">
+          <div class="tabla-lista-fila" style="grid-template-columns:1fr 90px 90px 90px 90px 90px;cursor:default;">
             <span>${escaparHtml(r.empleados ? r.empleados.nombre_completo : 'Empleado')}</span>
             <span>${new Date(r.fecha + 'T00:00:00').toLocaleDateString('es-CO')}</span>
             <span>${new Date(r.hora_entrada).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}</span>
             <span>${r.hora_salida ? new Date(r.hora_salida).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) + (r.observaciones && r.observaciones.includes('automático') ? ' ⚠️' : '') : '⏳ En curso'}</span>
-            <span style="text-align:right;font-weight:700;">${r.horas_trabajadas ? r.horas_trabajadas.toFixed(1) : '—'}</span>
+            <span style="text-align:right;font-weight:700;">${r.horas_trabajadas ? Number(r.horas_trabajadas).toFixed(1) : '—'}</span>
+            <span style="text-align:right;">${r.id && r.empleado_id ? `<button class="btn-mini editar" onclick="editarMarcacion('${r.id}', '${r.empleado_id}', '${r.fecha}', '${r.hora_entrada}', '${r.hora_salida || ''}')">✏️ Corregir</button>` : ''}</span>
           </div>
         `).join('')}
       </div>
     `;
+  }
+
+  // ============================================================
+  // TURNOS Y ASISTENCIA (Talento Humano)
+  // ============================================================
+  const NOMBRES_DIA_CORTO = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+  let turnosLunes = null;
+  let turnosEmpleadosCache = [];
+  let turnosCache = [];
+  let asistenciaSemanaCache = [];
+  let festivosSemanaCache = {};
+
+  function hoyBogotaISO() { return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }); }
+  function isoLocal(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function sumarDiasISO(s, n) { const d = new Date(s + 'T00:00:00'); d.setDate(d.getDate() + n); return isoLocal(d); }
+  function lunesDeISO(s) { const d = new Date(s + 'T00:00:00'); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return isoLocal(d); }
+  function hhmm(t) { return t ? String(t).slice(0, 5) : ''; }
+  function horaBogota(iso) { return iso ? new Date(iso).toLocaleTimeString('en-GB', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit' }) : ''; }
+  function fechaCortaISO(s) { return new Date(s + 'T00:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }); }
+
+  async function cargarEmpleadosParaTurnos() {
+    const { data } = await supabaseClient.from('empleados').select('id, nombre_completo, area').eq('activo', true).order('nombre_completo');
+    turnosEmpleadosCache = data || [];
+    const opciones = turnosEmpleadosCache.map(e => `<option value="${e.id}">${escaparHtml(e.nombre_completo)}${e.area ? ' · ' + escaparHtml(e.area) : ''}</option>`).join('');
+    ['turnoEmpleado', 'marcManualEmpleado'].forEach(id => {
+      const sel = document.getElementById(id);
+      if (!sel) return;
+      const actual = sel.value;
+      sel.innerHTML = opciones;
+      if (actual) sel.value = actual;
+    });
+  }
+
+  function cambiarSemanaTurnos(dias) {
+    turnosLunes = dias === 0 ? lunesDeISO(hoyBogotaISO()) : sumarDiasISO(turnosLunes, dias);
+    cargarTurnosAsistencia();
+  }
+
+  async function cargarTurnosAsistencia() {
+    if (!turnosLunes) turnosLunes = lunesDeISO(hoyBogotaISO());
+    const campoMes = document.getElementById('turnosMes');
+    if (!campoMes.value) campoMes.value = hoyBogotaISO().slice(0, 7);
+    const fin = sumarDiasISO(turnosLunes, 6);
+    document.getElementById('etiquetaSemanaTurnos').textContent = fechaCortaISO(turnosLunes) + ' al ' + fechaCortaISO(fin);
+    const grid = document.getElementById('gridTurnosSemana');
+    grid.innerHTML = '<div class="cargando">Cargando...</div>';
+    await cargarEmpleadosParaTurnos();
+
+    const anios = [...new Set([turnosLunes.slice(0, 4), fin.slice(0, 4)])];
+    const [rt, ra, ...rf] = await Promise.all([
+      supabaseClient.from('horarios_personal').select('id, empleado_id, fecha, hora_inicio, hora_fin, nota').gte('fecha', turnosLunes).lte('fecha', fin).order('hora_inicio'),
+      supabaseClient.rpc('fn_rh_resumen_asistencia', { p_desde: turnosLunes, p_hasta: fin }),
+      ...anios.map(a => supabaseClient.rpc('fn_festivos_colombia', { p_anio: Number(a) }))
+    ]);
+    if (rt.error || ra.error) { grid.innerHTML = '<div class="cargando">No se pudo cargar: ' + escaparHtml((rt.error || ra.error).message) + '</div>'; return; }
+    turnosCache = rt.data || [];
+    asistenciaSemanaCache = ra.data || [];
+    festivosSemanaCache = {};
+    rf.forEach(r => (r.data || []).forEach(f => { festivosSemanaCache[String(f.fecha).slice(0, 10)] = f.nombre; }));
+    renderizarGridTurnos();
+    limpiarFormTurno();
+    cargarResumenMesTurnos();
+  }
+
+  function renderizarGridTurnos() {
+    const grid = document.getElementById('gridTurnosSemana');
+    if (turnosEmpleadosCache.length === 0) { grid.innerHTML = '<div class="cargando">No hay empleados activos.</div>'; return; }
+    const dias = Array.from({ length: 7 }, (_, i) => sumarDiasISO(turnosLunes, i));
+    const hoy = hoyBogotaISO();
+    const encabezados = dias.map((f, i) => {
+      const fest = festivosSemanaCache[f];
+      return `<th style="padding:6px 4px;text-align:center;font-size:12px;${f === hoy ? 'background:var(--rosa-suave);' : ''}">${NOMBRES_DIA_CORTO[i]} ${new Date(f + 'T00:00:00').getDate()}${fest ? `<div style="font-size:10px;color:#a12d2d;font-weight:600;">🎉 ${escaparHtml(fest)}</div>` : ''}</th>`;
+    }).join('');
+    const filas = turnosEmpleadosCache.map(e => {
+      const celdas = dias.map(f => {
+        const turnos = turnosCache.filter(t => t.empleado_id === e.id && t.fecha === f);
+        const a = asistenciaSemanaCache.find(x => x.empleado_id === e.id && String(x.fecha).slice(0, 10) === f);
+        let estado = '';
+        if (a) {
+          if (a.estado === 'cumplio') estado = `<div style="font-size:10.5px;color:#2e6b3a;">✅ ${Number(a.horas_trabajadas).toFixed(1)} h${a.en_curso ? ' (en curso)' : ''}</div>`;
+          else if (a.estado === 'tarde') estado = `<div style="font-size:10.5px;color:#8a5a00;">⏰ ${a.minutos_tarde} min tarde · ${Number(a.horas_trabajadas).toFixed(1)} h</div>`;
+          else if (a.estado === 'ausente') estado = '<div style="font-size:10.5px;color:#a12d2d;">❌ No marcó</div>';
+          else if (a.estado === 'con_permiso') estado = '<div style="font-size:10.5px;color:#2e6b3a;">🌴 Vacaciones o permiso aprobado</div>';
+          else if (a.estado === 'sin_programacion') estado = `<div style="font-size:10.5px;color:#5a5a8a;">➕ Trabajó ${Number(a.horas_trabajadas).toFixed(1)} h sin turno</div>`;
+        }
+        const chips = turnos.map(t => `
+          <div style="background:#fff;border:1px solid var(--rosa-medio);border-radius:8px;padding:3px 6px;margin-bottom:3px;font-size:11.5px;white-space:nowrap;">
+            ${hhmm(t.hora_inicio)}–${hhmm(t.hora_fin)}${t.nota ? ` <span title="${escaparHtml(t.nota)}">📝</span>` : ''}
+            <button class="btn-mini editar" style="padding:1px 5px;" onclick="editarTurnoPersonal('${t.id}')">✏️</button>
+            <button class="btn-mini desactivar" style="padding:1px 5px;" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => eliminarTurnoPersonal('${t.id}'))">✕</button>
+          </div>`).join('');
+        return `<td style="padding:5px 4px;vertical-align:top;border-top:1px solid #f4eef2;min-width:112px;${f === hoy ? 'background:#fff8fb;' : ''}">${chips}${estado}<button class="btn-mini editar" style="padding:1px 7px;margin-top:2px;" onclick="prepararTurno('${e.id}', '${f}')">+</button></td>`;
+      }).join('');
+      return `<tr><td style="padding:6px 8px 6px 0;border-top:1px solid #f4eef2;font-size:12.5px;font-weight:600;vertical-align:top;white-space:nowrap;">${escaparHtml(e.nombre_completo)}${e.area ? `<div style="font-size:10.5px;opacity:0.6;font-weight:400;">${escaparHtml(e.area)}</div>` : ''}</td>${celdas}</tr>`;
+    }).join('');
+    grid.innerHTML = `<table style="width:100%;border-collapse:collapse;min-width:860px;"><thead><tr><th></th>${encabezados}</tr></thead><tbody>${filas}</tbody></table>`;
+  }
+
+  function dibujarDiasFormTurno(marcados, bloquear) {
+    document.getElementById('turnoDias').innerHTML = Array.from({ length: 7 }, (_, i) => {
+      const f = sumarDiasISO(turnosLunes, i);
+      const marcado = marcados.includes(f);
+      return `<label style="display:flex;align-items:center;gap:4px;margin:0;font-weight:400;"><input type="checkbox" class="chk-dia-turno" value="${f}" style="width:auto;" ${marcado ? 'checked' : ''} ${bloquear && !marcado ? 'disabled' : ''}> ${NOMBRES_DIA_CORTO[i]} ${new Date(f + 'T00:00:00').getDate()}</label>`;
+    }).join('');
+  }
+
+  function limpiarFormTurno() {
+    document.getElementById('turnoId').value = '';
+    document.getElementById('turnoNota').value = '';
+    document.getElementById('tituloFormTurno').textContent = 'Programar turno';
+    dibujarDiasFormTurno([], false);
+  }
+
+  function prepararTurno(empleadoId, fecha) {
+    limpiarFormTurno();
+    document.getElementById('turnoEmpleado').value = empleadoId;
+    dibujarDiasFormTurno([fecha], false);
+    document.getElementById('formTurno').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function editarTurnoPersonal(id) {
+    const t = turnosCache.find(x => x.id === id);
+    if (!t) return;
+    document.getElementById('turnoId').value = t.id;
+    document.getElementById('turnoEmpleado').value = t.empleado_id;
+    document.getElementById('turnoInicio').value = hhmm(t.hora_inicio);
+    document.getElementById('turnoFin').value = hhmm(t.hora_fin);
+    document.getElementById('turnoNota').value = t.nota || '';
+    document.getElementById('tituloFormTurno').textContent = 'Cambiar turno';
+    dibujarDiasFormTurno([t.fecha], true);
+    document.getElementById('formTurno').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  async function guardarTurnoPersonal() {
+    ocultarMensaje('mensajeTurnos');
+    const id = document.getElementById('turnoId').value || null;
+    const empleado = document.getElementById('turnoEmpleado').value;
+    const inicio = document.getElementById('turnoInicio').value;
+    const fin = document.getElementById('turnoFin').value;
+    const nota = document.getElementById('turnoNota').value.trim();
+    const dias = [...document.querySelectorAll('.chk-dia-turno:checked')].map(c => c.value);
+    if (!empleado) { mostrarMensaje('mensajeTurnos', 'Escoge el empleado.', 'error'); return; }
+    if (!inicio || !fin) { mostrarMensaje('mensajeTurnos', 'Escribe la hora de entrada y de salida.', 'error'); return; }
+    if (fin <= inicio) { mostrarMensaje('mensajeTurnos', 'La salida debe ser después de la entrada.', 'error'); return; }
+    if (dias.length === 0) { mostrarMensaje('mensajeTurnos', 'Marca al menos un día.', 'error'); return; }
+    const problemas = [];
+    for (const f of dias) {
+      const { error } = await supabaseClient.rpc('fn_rh_guardar_turno', { p_id: id, p_empleado: empleado, p_fecha: f, p_inicio: inicio, p_fin: fin, p_nota: nota || null });
+      if (error) problemas.push(fechaCortaISO(f) + ': ' + error.message);
+    }
+    await cargarTurnosAsistencia();
+    if (problemas.length) mostrarMensaje('mensajeTurnos', 'No se guardó en: ' + problemas.join(' · '), 'error');
+  }
+
+  async function eliminarTurnoPersonal(id) {
+    const { error } = await supabaseClient.from('horarios_personal').delete().eq('id', id);
+    if (error) { mostrarMensaje('mensajeTurnos', 'No se pudo quitar el turno: ' + error.message, 'error'); return; }
+    await cargarTurnosAsistencia();
+  }
+
+  async function copiarSemanaAnteriorTurnos() {
+    ocultarMensaje('mensajeTurnos');
+    const { data, error } = await supabaseClient.rpc('fn_rh_copiar_semana', { p_desde: sumarDiasISO(turnosLunes, -7), p_hacia: turnosLunes });
+    if (error) { mostrarMensaje('mensajeTurnos', 'No se pudo copiar: ' + error.message, 'error'); return; }
+    await cargarTurnosAsistencia();
+    mostrarMensaje('mensajeTurnos', data > 0 ? `Se copiaron ${data} turnos de la semana anterior.` : 'No había turnos nuevos para copiar (la semana anterior está vacía o ya estaban copiados).', data > 0 ? 'exito' : 'error');
+  }
+
+  async function cargarResumenMesTurnos() {
+    const cont = document.getElementById('resumenMesTurnos');
+    const mes = document.getElementById('turnosMes').value;
+    if (!mes) { cont.innerHTML = ''; return; }
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    const [anio, m] = mes.split('-').map(Number);
+    const ultimo = new Date(anio, m, 0).getDate();
+    const { data, error } = await supabaseClient.rpc('fn_rh_resumen_asistencia', { p_desde: mes + '-01', p_hasta: mes + '-' + String(ultimo).padStart(2, '0') });
+    if (error) { cont.innerHTML = '<div class="cargando">No se pudo cargar: ' + escaparHtml(error.message) + '</div>'; return; }
+    const porEmp = {};
+    (data || []).forEach(r => {
+      const x = porEmp[r.empleado_id] = porEmp[r.empleado_id] || { nombre: r.nombre, prog: 0, trab: 0, tardes: 0, ausencias: 0, fest: 0 };
+      x.prog += Number(r.horas_programadas);
+      x.trab += Number(r.horas_trabajadas);
+      if (r.estado === 'tarde') x.tardes++;
+      if (r.estado === 'ausente') x.ausencias++;
+      if (r.es_festivo || r.es_domingo) x.fest += Number(r.horas_trabajadas);
+    });
+    const lista = Object.values(porEmp);
+    if (lista.length === 0) { cont.innerHTML = '<div class="cargando">Sin turnos ni marcaciones en este mes.</div>'; return; }
+    const f1 = n => n.toFixed(1);
+    cont.innerHTML = `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;min-width:560px;">
+      <tr style="text-align:left;border-bottom:2px solid var(--rosa-medio);"><th style="padding:6px 4px;">Empleado</th><th style="text-align:right;">Programadas</th><th style="text-align:right;">Trabajadas</th><th style="text-align:right;">Diferencia</th><th style="text-align:right;">Tardanzas</th><th style="text-align:right;">Ausencias</th><th style="text-align:right;">Horas en domingo o festivo</th></tr>
+      ${lista.map(x => `<tr style="border-bottom:1px solid #f4eef2;"><td style="padding:6px 4px;font-weight:600;">${escaparHtml(x.nombre)}</td><td style="text-align:right;">${f1(x.prog)} h</td><td style="text-align:right;">${f1(x.trab)} h</td><td style="text-align:right;color:${x.trab - x.prog < 0 ? '#a12d2d' : 'inherit'};">${x.trab - x.prog > 0 ? '+' : ''}${f1(x.trab - x.prog)} h</td><td style="text-align:right;">${x.tardes}</td><td style="text-align:right;">${x.ausencias}</td><td style="text-align:right;">${f1(x.fest)} h</td></tr>`).join('')}
+    </table></div>`;
+  }
+
+  // Corregir o agregar marcaciones de entrada/salida
+  function limpiarMarcacionManual() {
+    ['marcManualId', 'marcManualFecha', 'marcManualEntrada', 'marcManualSalida', 'marcManualMotivo'].forEach(id => { document.getElementById(id).value = ''; });
+    document.getElementById('tituloMarcacionManual').textContent = 'Agregar o corregir una marcación';
+  }
+
+  function editarMarcacion(id, empleadoId, fecha, entradaIso, salidaIso) {
+    document.getElementById('marcManualId').value = id;
+    document.getElementById('marcManualEmpleado').value = empleadoId;
+    document.getElementById('marcManualFecha').value = fecha;
+    document.getElementById('marcManualEntrada').value = horaBogota(entradaIso);
+    document.getElementById('marcManualSalida').value = horaBogota(salidaIso);
+    document.getElementById('marcManualMotivo').value = '';
+    document.getElementById('tituloMarcacionManual').textContent = 'Corregir marcación';
+    document.getElementById('panelMarcacionManual').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  async function guardarMarcacionManual() {
+    ocultarMensaje('mensajeMarcacionManual');
+    const entrada = document.getElementById('marcManualEntrada').value;
+    const salida = document.getElementById('marcManualSalida').value;
+    const fecha = document.getElementById('marcManualFecha').value;
+    if (!fecha || !entrada) { mostrarMensaje('mensajeMarcacionManual', 'Escribe la fecha y la hora de entrada.', 'error'); return; }
+    if (salida && salida <= entrada) { mostrarMensaje('mensajeMarcacionManual', 'La salida debe ser después de la entrada.', 'error'); return; }
+    const { error } = await supabaseClient.rpc('fn_rh_marcacion_manual', {
+      p_id: document.getElementById('marcManualId').value || null,
+      p_empleado: document.getElementById('marcManualEmpleado').value,
+      p_fecha: fecha, p_entrada: entrada, p_salida: salida || null,
+      p_motivo: document.getElementById('marcManualMotivo').value.trim()
+    });
+    if (error) { mostrarMensaje('mensajeMarcacionManual', error.message, 'error'); return; }
+    limpiarMarcacionManual();
+    await cargarRegistroHorasAdmin();
+    mostrarMensaje('mensajeMarcacionManual', 'Marcación guardada.', 'exito');
+  }
+
+  // Horario de la persona que entró (aparece en el menú, junto a "Marcar entrada")
+  async function agregarMiHorarioAlWidget(cont) {
+    try {
+      // Se pregunta por función porque una cajera o tejedora no puede leer la tabla de empleados.
+      const { data: miEmpleadoId } = await supabaseClient.rpc('fn_mi_empleado_id');
+      if (!miEmpleadoId) return;
+      const hoy = hoyBogotaISO();
+      const { data } = await supabaseClient.from('horarios_personal').select('fecha, hora_inicio, hora_fin')
+        .eq('empleado_id', miEmpleadoId).gte('fecha', hoy).lte('fecha', sumarDiasISO(hoy, 6)).order('fecha').order('hora_inicio').limit(4);
+      if (!data || data.length === 0) return;
+      const lineas = data.map(t => `${t.fecha === hoy ? 'Hoy' : fechaCortaISO(t.fecha)} · ${hhmm(t.hora_inicio)}–${hhmm(t.hora_fin)}`).join('<br>');
+      cont.insertAdjacentHTML('afterbegin', `<div style="font-size:11px;color:rgba(255,255,255,0.85);margin-bottom:8px;line-height:1.5;">🗓️ <strong>Mi horario</strong><br>${lineas}</div>`);
+    } catch (err) { /* el horario es solo informativo */ }
+  }
+
+  // ============================================================
+  // VACACIONES Y PERMISOS (la empleada pide, una administradora responde)
+  // ============================================================
+  const ETIQUETAS_AUSENCIA = { vacaciones: '🌴 Vacaciones', permiso: '🕒 Permiso', calamidad: '🏠 Calamidad doméstica' };
+  const ESTADOS_AUSENCIA = { pendiente: ['⏳ Pendiente', '#fff3d6', '#8a5a00'], aprobada: ['✅ Aprobada', '#e3f1e6', '#2e6b3a'], rechazada: ['❌ Rechazada', '#fde2e2', '#a12d2d'], cancelada: ['Cancelada', '#f4eef2', '#7a5a6b'] };
+
+  function chipEstadoAusencia(estado) {
+    const [texto, fondo, color] = ESTADOS_AUSENCIA[estado] || [estado, '#f4eef2', 'inherit'];
+    return `<span style="display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600;background:${fondo};color:${color};">${texto}</span>`;
+  }
+
+  function rangoFechasAusencia(a) {
+    return a.fecha_fin === a.fecha_inicio ? fechaCortaISO(a.fecha_inicio) : fechaCortaISO(a.fecha_inicio) + ' al ' + fechaCortaISO(a.fecha_fin);
+  }
+
+  async function cargarMisAusencias() {
+    const hoy = hoyBogotaISO();
+    document.getElementById('ausDesde').min = hoy;
+    document.getElementById('ausHasta').min = hoy;
+    actualizarAyudaAusencia();
+    const saldoEl = document.getElementById('saldoMisVacaciones');
+    const listaEl = document.getElementById('listaMisAusencias');
+    listaEl.innerHTML = '<div class="cargando">Cargando...</div>';
+    const { data: miId } = await supabaseClient.rpc('fn_mi_empleado_id');
+    if (!miId) {
+      saldoEl.innerHTML = '<div class="panel" style="max-height:none;font-size:13px;">Tu ficha de empleada todavía no está conectada con tu cuenta, por eso no puedes pedir vacaciones desde aquí. Pídele a una administradora que la conecte (Nómina → Empleados → Editar → Cuenta de acceso).</div>';
+      listaEl.innerHTML = '<div class="cargando">Sin solicitudes.</div>';
+      return;
+    }
+    const [rs, rl] = await Promise.all([
+      supabaseClient.rpc('fn_saldo_vacaciones_empleado'),
+      supabaseClient.from('solicitudes_ausencia').select('*').eq('empleado_id', miId).order('created_at', { ascending: false }).limit(50)
+    ]);
+    const s = rs.data && rs.data[0];
+    const f1 = n => Number(n).toFixed(1).replace('.0', '');
+    saldoEl.innerHTML = s ? `
+      <div class="grilla-3">
+        <div class="panel" style="max-height:none;text-align:center;"><div style="font-size:12px;opacity:0.7;">Días ganados</div><div style="font-size:22px;font-weight:700;color:var(--rosa-principal);">${f1(s.dias_causados)}</div></div>
+        <div class="panel" style="max-height:none;text-align:center;"><div style="font-size:12px;opacity:0.7;">Ya tomados</div><div style="font-size:22px;font-weight:700;color:var(--rosa-principal);">${f1(s.dias_tomados)}</div></div>
+        <div class="panel" style="max-height:none;text-align:center;"><div style="font-size:12px;opacity:0.7;">Aprobados por tomar</div><div style="font-size:22px;font-weight:700;color:var(--rosa-principal);">${f1(s.dias_aprobados_por_tomar)}</div></div>
+        <div class="panel" style="max-height:none;text-align:center;"><div style="font-size:12px;opacity:0.7;">Te quedan</div><div style="font-size:22px;font-weight:700;color:${Number(s.saldo_disponible) < 0 ? '#a12d2d' : 'var(--rosa-principal)'};">${f1(s.saldo_disponible)}</div></div>
+      </div>
+      <div style="font-size:11px;opacity:0.65;margin-top:6px;">Cálculo aproximado: 15 días hábiles por cada año trabajado. La administradora confirma los días reales.</div>` : '';
+    if (rl.error) { listaEl.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const lista = rl.data || [];
+    listaEl.innerHTML = lista.length === 0 ? '<div class="cargando">Todavía no has pedido nada.</div>' : lista.map(a => `
+      <div style="padding:9px 0;border-bottom:1px solid #f4eef2;font-size:12.5px;">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;"><strong>${ETIQUETAS_AUSENCIA[a.tipo] || a.tipo}</strong>${chipEstadoAusencia(a.estado)}</div>
+        <div style="opacity:0.8;">${rangoFechasAusencia(a)} · ${Number(a.dias).toFixed(1).replace('.0', '')} día${Number(a.dias) === 1 ? '' : 's'}${a.motivo ? ' · ' + escaparHtml(a.motivo) : ''}</div>
+        ${a.respuesta ? `<div style="opacity:0.8;margin-top:2px;">💬 ${escaparHtml(a.respuesta)}</div>` : ''}
+        ${a.estado === 'pendiente' ? `<button class="btn-mini desactivar" style="margin-top:4px;" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => cancelarMiAusencia('${a.id}'))">Cancelar solicitud</button>` : ''}
+      </div>`).join('');
+  }
+
+  async function actualizarAyudaAusencia() {
+    const tipo = document.getElementById('ausTipo').value;
+    document.getElementById('ausMotivoOpcional').textContent = tipo === 'vacaciones' ? '(opcional)' : '(obligatorio)';
+    const desde = document.getElementById('ausDesde').value;
+    let hasta = document.getElementById('ausHasta').value;
+    const cont = document.getElementById('ausDiasEstimados');
+    if (!desde || !hasta) { cont.textContent = ''; return; }
+    if (hasta < desde) { hasta = desde; document.getElementById('ausHasta').value = desde; }
+    const { data } = await supabaseClient.rpc('fn_aus_dias_estimados', { p_inicio: desde, p_fin: hasta });
+    cont.textContent = data === null || data === undefined ? '' : (Number(data) === 0 ? 'Esas fechas son solo domingos o festivos.' : `≈ ${Number(data)} día${Number(data) === 1 ? '' : 's'} hábil${Number(data) === 1 ? '' : 'es'} (lunes a sábado, sin festivos)`);
+  }
+
+  async function enviarSolicitudAusencia() {
+    ocultarMensaje('mensajeAusencia');
+    const tipo = document.getElementById('ausTipo').value;
+    const desde = document.getElementById('ausDesde').value;
+    const hasta = document.getElementById('ausHasta').value || desde;
+    if (!desde) { mostrarMensaje('mensajeAusencia', 'Escoge desde qué día.', 'error'); return; }
+    const { error } = await supabaseClient.rpc('fn_aus_solicitar', { p_tipo: tipo, p_inicio: desde, p_fin: hasta, p_motivo: document.getElementById('ausMotivo').value.trim() || null });
+    if (error) { mostrarMensaje('mensajeAusencia', error.message, 'error'); return; }
+    document.getElementById('ausMotivo').value = '';
+    await cargarMisAusencias();
+    mostrarMensaje('mensajeAusencia', '✅ Solicitud enviada. Una administradora la va a revisar.', 'exito');
+  }
+
+  async function cancelarMiAusencia(id) {
+    const { error } = await supabaseClient.rpc('fn_aus_cancelar', { p_id: id });
+    if (error) { mostrarMensaje('mensajeAusencia', error.message, 'error'); return; }
+    await cargarMisAusencias();
+  }
+
+  // --- Administradora ---
+  async function refrescarChipAusencias() {
+    const chip = document.getElementById('chipRhAusencias');
+    if (!chip) return;
+    try {
+      const { count } = await supabaseClient.from('solicitudes_ausencia').select('id', { count: 'exact', head: true }).eq('estado', 'pendiente');
+      chip.textContent = '🌴 Vacaciones y permisos' + (count ? ` (${count})` : '');
+    } catch (err) { /* el contador es solo un aviso */ }
+  }
+
+  async function cargarSolicitudesAusenciaAdmin() {
+    const hoy = hoyBogotaISO();
+    const { data, error } = await supabaseClient.from('solicitudes_ausencia').select('*, empleado:empleado_id(nombre_completo, area)').order('fecha_inicio', { ascending: false }).limit(200);
+    if (error) { document.getElementById('listaAusenciasPendientes').innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    const todas = data || [];
+    const pendientes = todas.filter(a => a.estado === 'pendiente').sort((a, b) => a.fecha_inicio.localeCompare(b.fecha_inicio));
+    const proximas = todas.filter(a => a.estado === 'aprobada' && a.fecha_fin >= hoy).sort((a, b) => a.fecha_inicio.localeCompare(b.fecha_inicio));
+    const historial = todas.filter(a => a.estado !== 'pendiente' && !(a.estado === 'aprobada' && a.fecha_fin >= hoy)).slice(0, 40);
+    const saldos = {};
+    await Promise.all(pendientes.filter(a => a.tipo === 'vacaciones').map(async a => {
+      const { data: s } = await supabaseClient.rpc('fn_saldo_vacaciones_empleado', { p_empleado: a.empleado_id });
+      saldos[a.id] = s && s[0] ? Number(s[0].saldo_disponible) : null;
+    }));
+    const nombre = a => escaparHtml(a.empleado ? a.empleado.nombre_completo : 'Empleado');
+    const sinDatos = (txt) => `<div class="cargando">${txt}</div>`;
+    document.getElementById('listaAusenciasPendientes').innerHTML = pendientes.length === 0 ? sinDatos('No hay solicitudes por responder.') : pendientes.map(a => `
+      <div style="padding:12px;margin-bottom:10px;background:var(--rosa-suave);border-radius:10px;font-size:13px;">
+        <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;"><strong>${nombre(a)}${a.empleado && a.empleado.area ? ` <span style="font-weight:400;opacity:0.65;">· ${escaparHtml(a.empleado.area)}</span>` : ''}</strong><span>${ETIQUETAS_AUSENCIA[a.tipo] || a.tipo}</span></div>
+        <div style="margin-top:3px;">${rangoFechasAusencia(a)}${a.motivo ? ' · ' + escaparHtml(a.motivo) : ''}</div>
+        ${a.tipo === 'vacaciones' && saldos[a.id] !== null && saldos[a.id] !== undefined ? `<div style="font-size:12px;margin-top:3px;color:${saldos[a.id] - Number(a.dias) < 0 ? '#a12d2d' : 'inherit'};">Le quedan ${saldos[a.id].toFixed(1).replace('.0', '')} días de vacaciones${saldos[a.id] - Number(a.dias) < 0 ? ' (esta solicitud los pasa)' : ''}.</div>` : ''}
+        <div style="display:grid;grid-template-columns:110px 1fr;gap:8px;margin-top:8px;align-items:end;">
+          <div><label style="margin-top:0;font-size:11px;">Días</label><input type="number" id="ausDias-${a.id}" min="0.5" step="0.5" value="${Number(a.dias)}" style="padding:7px 8px;"></div>
+          <div><label style="margin-top:0;font-size:11px;">Respuesta <span style="opacity:0.6;">(obligatoria si rechazas)</span></label><input type="text" id="ausResp-${a.id}" style="padding:7px 8px;"></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="btn-mini guardar" onclick="resolverAusencia('${a.id}', true)">✅ Aprobar</button>
+          <button class="btn-mini desactivar" onclick="resolverAusencia('${a.id}', false)">❌ Rechazar</button>
+        </div>
+      </div>`).join('');
+    document.getElementById('listaAusenciasProximas').innerHTML = proximas.length === 0 ? sinDatos('No hay ausencias aprobadas próximas.') : proximas.map(a => `
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f4eef2;font-size:12.5px;">
+        <span><strong>${nombre(a)}</strong> · ${ETIQUETAS_AUSENCIA[a.tipo] || a.tipo} · ${rangoFechasAusencia(a)} · ${Number(a.dias).toFixed(1).replace('.0', '')} d</span>
+        <button class="btn-mini desactivar" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => cancelarAusenciaAdmin('${a.id}'))">Cancelar</button>
+      </div>`).join('');
+    document.getElementById('listaAusenciasHistorial').innerHTML = historial.length === 0 ? sinDatos('Sin historial todavía.') : historial.map(a => `
+      <div style="padding:6px 0;border-bottom:1px solid #f4eef2;font-size:12px;display:flex;justify-content:space-between;gap:8px;align-items:center;">
+        <span><strong>${nombre(a)}</strong> · ${ETIQUETAS_AUSENCIA[a.tipo] || a.tipo} · ${rangoFechasAusencia(a)} · ${Number(a.dias).toFixed(1).replace('.0', '')} d${a.respuesta ? ' · 💬 ' + escaparHtml(a.respuesta) : ''}</span>${chipEstadoAusencia(a.estado)}
+      </div>`).join('');
+    refrescarChipAusencias();
+  }
+
+  async function resolverAusencia(id, aprobar) {
+    ocultarMensaje('mensajeAusenciasAdmin');
+    const dias = Number(document.getElementById(`ausDias-${id}`).value);
+    const { error } = await supabaseClient.rpc('fn_aus_resolver', { p_id: id, p_aprobar: aprobar, p_respuesta: document.getElementById(`ausResp-${id}`).value.trim() || null, p_dias: aprobar && dias > 0 ? dias : null });
+    if (error) { mostrarMensaje('mensajeAusenciasAdmin', error.message, 'error'); return; }
+    await cargarSolicitudesAusenciaAdmin();
+  }
+
+  async function cancelarAusenciaAdmin(id) {
+    const { error } = await supabaseClient.rpc('fn_aus_cancelar', { p_id: id });
+    if (error) { mostrarMensaje('mensajeAusenciasAdmin', error.message, 'error'); return; }
+    await cargarSolicitudesAusenciaAdmin();
   }
 
   // ============================================================
@@ -16964,8 +17841,10 @@
 
   async function cargarClientesDir() {
     const contenedor = document.getElementById('listaClientesDir');
-    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
     const q = document.getElementById('buscarClienteDir').value.trim();
+    // Al entrar se ve solo la caja: la lista aparece cuando se escribe algo.
+    if (!q) { clientesDirCache = []; contenedor.innerHTML = '<div class="cargando">🔍 Escribe un nombre, cédula o teléfono para ver los clientes.</div>'; return; }
+    contenedor.innerHTML = '<div class="cargando">Cargando...</div>';
     const resp = await fetch(WORKER_URL + '/api/pos/terceros?tipo=cliente' + (q ? '&q=' + encodeURIComponent(q) : ''), { headers: { Authorization: 'Bearer ' + sesionActual.token } });
     if (!resp.ok) { contenedor.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
     const { terceros } = await resp.json();
@@ -18740,6 +19619,31 @@
     return { anticipo, minimo, total, error, bajo, esMinimo: anticipo === minimo };
   }
 
+  // Resumen del pedido para el cliente ANTES de que pague el anticipo: productos, total, anticipo, saldo y política de anticipos.
+  function enviarResumenPedidoWhatsapp() {
+    ocultarMensaje('mensajePedidoCanal');
+    const telefono = document.getElementById('pedidoTelefonoCliente').value.trim();
+    if (!carritoPedidoCanal.length) { mostrarMensaje('mensajePedidoCanal', 'Agrega al menos un producto para armar el resumen.', 'error'); return; }
+    if (!telefono) { mostrarMensaje('mensajePedidoCanal', 'Escribe el teléfono del cliente para enviarle el resumen.', 'error'); return; }
+    const bruto = carritoPedidoCanal.reduce((acc, p) => acc + p.valor, 0);
+    const valorProducto = Math.max(bruto - Math.min(descuentoPedidoActual.valorDescuento || 0, bruto), 0);
+    const valorEnvio = Number(document.getElementById('pedidoValorEnvio').value) || 0;
+    const c = calcularAnticipoPedido(valorProducto, valorEnvio);
+    const nombre = document.getElementById('pedidoNombreCliente').value.trim().split(' ')[0];
+    const lineas = [
+      `Hola${nombre ? ' ' + nombre : ''} 👋 Este es el resumen de tu pedido en Lana Rosa Crochet 🐑:`,
+      '',
+      ...carritoPedidoCanal.map(p => `• ${p.cantidad}x ${p.descripcion} — ${formatearMoneda(p.valor)}`),
+      ...(valorEnvio > 0 ? [`• Envío — ${formatearMoneda(valorEnvio)}`] : []),
+      '',
+      `Total del pedido: ${formatearMoneda(valorProducto + valorEnvio)}`,
+      `Anticipo para confirmarlo: ${formatearMoneda(c.anticipo)}`,
+      `Saldo a pagar al entregar: ${formatearMoneda(c.total - c.anticipo)}`
+    ];
+    if (politicaAnticiposCache) lineas.push('', 'Anticipos y cancelación de pedidos personalizados:', politicaAnticiposCache);
+    if (!abrirWhatsAppTexto(telefono, lineas.join('\n'))) mostrarMensaje('mensajePedidoCanal', 'El número de teléfono no es válido.', 'error');
+  }
+
   function fijarAnticipoPedido(opcion) {
     const bruto = carritoPedidoCanal.reduce((acc, p) => acc + p.valor, 0);
     const valorProducto = Math.max(bruto - Math.min(descuentoPedidoActual.valorDescuento || 0, bruto), 0);
@@ -18984,10 +19888,13 @@
         consecutivo: datos.consecutivo || 'PEDIDO',
         fecha: new Date(),
         lineas: [...carritoPedidoCanal.map(p => ({ nombre: p.descripcion, cantidad: p.cantidad, precio: p.valor / p.cantidad })), ...(valorEnvio > 0 ? [{ nombre: 'Envío', cantidad: 1, precio: valorEnvio }] : [])],
-        subtotal: valorProducto + valorEnvio,
-        descuento: 0,
+        subtotal: valorProductoBruto + valorEnvio,
+        descuento: valorDescuentoPedido,
         total: valorProducto + valorEnvio,
-        pagos: [],
+        // Si el anticipo se cobró en este paso, el recibo muestra lo pagado y el saldo (antes decía «pendiente de pago»)
+        pagos: reciboAnticipoAhora ? [{ metodo_pago: document.getElementById('pedidoMetodoAnticipo').value, monto: anticipoFinal }] : [],
+        esPedido: true,
+        saldoPendiente: (valorProducto + valorEnvio) - (reciboAnticipoAhora ? anticipoFinal : 0),
         cliente: { nombre: nombreCliente, telefono: telefonoCliente, identificacion },
         cajero: miPropiaIdentidad.nombre || 'Cajero'
       };
@@ -19144,8 +20051,14 @@
               <span style="text-align:right;font-weight:700;">${formatearMoneda(p.total_pedido)}</span>
               <span><span class="badge-estado-pedido" style="background:${colorEstado.bg};color:${colorEstado.color};">${etiquetasEstado[p.estado] || p.estado}</span></span>
             </div>
-            <div class="tabla-lista-detalle" style="display:block;">${lineaMedio}${bloqueFacturaPedido(p)}${acciones}<div data-envio-pedido="${p.id}">${bloqueEnvioPedido(p)}</div>
-              <button class="btn-mini editar" style="margin-top:8px;" onclick="abrirTrazaPedido('${p.id}')">🧭 Ver trazabilidad</button></div>
+            <div class="tabla-lista-detalle" style="display:block;">${lineaMedio}${lineaFechaEntregaPedido(p)}${bloqueFacturaPedido(p)}${acciones}<div data-envio-pedido="${p.id}">${bloqueEnvioPedido(p)}</div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
+                <button class="btn-mini editar" onclick="abrirTrazaPedido('${p.id}')">🧭 Ver trazabilidad</button>
+                ${(p.tercero_id || (p.tercero && p.tercero.id)) ? `<button class="btn-mini editar" onclick="abrirEditarClientePedido('${p.id}')">✏️ Editar cliente</button>` : ''}
+                ${p.estado !== 'entregado' && !p.saldo_pagado && p.canal !== 'tienda_virtual' ? `<button class="btn-mini editar" onclick="abrirCambiarEnvioPedido('${p.id}')">🚚 Cambiar domicilio</button>` : ''}
+                ${p.estado !== 'entregado' && (rolActual === 'administrador' || rolActual === 'cajero') ? `<button class="btn-mini editar" onclick="abrirCambiarFechaEntregaPedido('${p.id}')">📅 Cambiar fecha de entrega</button>` : ''}
+              </div>
+              <div id="panelEditarPedido-${p.id}" class="oculto" style="margin-top:8px;"></div></div>
           `;
         }).join('')}
       </div>
@@ -19581,6 +20494,133 @@
     const datos = await resp.json();
     if (!resp.ok) { mostrarMensaje('mensajePedidosCanal', 'Error: ' + (datos.error || 'No se pudo actualizar'), 'error'); return; }
     await cargarPedidosCanal();
+    await avisarOrdenesEnProcesoDePedido(pedidoId);
+  }
+
+  // Al marcar un pedido listo/entregado, su solicitud sale sola de "Pedidos por elaborar" (trigger en Supabase).
+  // Una orden de producción que siga "en proceso" no se cierra sola (terminarla exige material y sobrantes): se avisa para no dejarla colgada.
+  async function avisarOrdenesEnProcesoDePedido(pedidoId) {
+    try {
+      const { data } = await supabaseClient.rpc('fn_op_listar', { p_estado: 'en_proceso' });
+      const abiertas = (data || []).filter(o => o.pedido_canal_id === pedidoId);
+      if (abiertas.length) mostrarMensaje('mensajePedidosCanal', `⚠️ Este pedido ya está listo, pero la orden de producción ${abiertas.map(o => o.orden).join(', ')} sigue "en proceso". Ve a Órdenes de producción y termínala (o anúlala si ya no hace falta).`, 'error');
+    } catch (e) { /* si este usuario no puede ver las órdenes, no se avisa */ }
+  }
+
+  // Editar un pedido ya registrado: datos del cliente y valor del domicilio (la base recalcula total y saldo)
+  async function abrirEditarClientePedido(pedidoId) {
+    const p = pedidosCanalCache.find(x => x.id === pedidoId);
+    const panel = document.getElementById(`panelEditarPedido-${pedidoId}`);
+    if (!p || !panel) return;
+    ocultarMensaje('mensajePedidosCanal');
+    const { data: t } = await supabaseClient.from('terceros').select('nombre_completo, telefono, numero_documento, direccion, ciudad, email').eq('id', p.tercero_id || (p.tercero && p.tercero.id)).maybeSingle();
+    const c = t || {};
+    panel.classList.remove('oculto');
+    panel.innerHTML = `
+      <div style="padding:10px;border-radius:10px;background:var(--rosa-suave);">
+        <strong style="font-size:12.5px;">Editar datos del cliente</strong>
+        <div style="font-size:11px;opacity:0.7;margin:2px 0 6px;">Se actualizan en el directorio de clientes. Si la factura electrónica ya se emitió, no cambia.</div>
+        <label for="epNombre-${pedidoId}">Nombre</label><input type="text" id="epNombre-${pedidoId}" value="${escaparHtml(c.nombre_completo || '')}">
+        <label for="epTel-${pedidoId}">Teléfono</label><input type="text" id="epTel-${pedidoId}" value="${escaparHtml(c.telefono || '')}">
+        <label for="epDoc-${pedidoId}">Identificación</label><input type="text" id="epDoc-${pedidoId}" value="${escaparHtml(c.numero_documento || '')}">
+        <label for="epDir-${pedidoId}">Dirección de envío</label><input type="text" id="epDir-${pedidoId}" value="${escaparHtml(c.direccion || '')}">
+        <label for="epCiudad-${pedidoId}">Ciudad / municipio</label><input type="text" id="epCiudad-${pedidoId}" value="${escaparHtml(c.ciudad || '')}">
+        <label for="epMail-${pedidoId}">Correo</label><input type="text" id="epMail-${pedidoId}" value="${escaparHtml(c.email || '')}">
+        <div style="display:flex;gap:6px;margin-top:8px;">
+          <button class="btn-mini guardar" onclick="guardarClientePedido('${pedidoId}')">💾 Guardar</button>
+          <button class="btn-mini editar" onclick="document.getElementById('panelEditarPedido-${pedidoId}').classList.add('oculto')">Cancelar</button>
+        </div>
+      </div>`;
+  }
+
+  async function guardarClientePedido(pedidoId) {
+    const v = (k) => document.getElementById(`${k}-${pedidoId}`).value.trim();
+    const { error } = await supabaseClient.rpc('fn_editar_cliente_pedido_canal', {
+      p_pedido_id: pedidoId, p_nombre: v('epNombre'), p_telefono: v('epTel'), p_identificacion: v('epDoc'),
+      p_direccion: v('epDir'), p_ciudad: v('epCiudad'), p_email: v('epMail')
+    });
+    if (error) { mostrarMensaje('mensajePedidosCanal', 'No se pudo guardar: ' + error.message, 'error'); return; }
+    mostrarMensaje('mensajePedidosCanal', '✅ Datos del cliente actualizados.', 'exito');
+    await cargarPedidosCanal();
+  }
+
+  // Fecha de entrega de un pedido: la vigente se muestra siempre; los cambios quedan con motivo en un historial
+  const MOTIVOS_FECHA_ENTREGA = { cliente: 'La clienta pidió otra fecha', material: 'Falta de material', otro: 'Otro' };
+  const fechaCortaPedido = (f) => f ? new Date(String(f).slice(0, 10) + 'T00:00:00').toLocaleDateString('es-CO') : '';
+
+  function lineaFechaEntregaPedido(p) {
+    if (!p.fecha_estimada_entrega) return '';
+    const hoy = new Date().toISOString().slice(0, 10);
+    const atrasada = p.estado !== 'entregado' && String(p.fecha_estimada_entrega).slice(0, 10) < hoy;
+    return `<div style="font-size:11.5px;margin-bottom:6px;">📅 <strong>Entrega:</strong> ${fechaCortaPedido(p.fecha_estimada_entrega)}${atrasada ? ' <span style="color:var(--rojo-error);font-weight:600;">· ⚠️ atrasado</span>' : ''}</div>`;
+  }
+
+  async function abrirCambiarFechaEntregaPedido(pedidoId) {
+    const p = pedidosCanalCache.find(x => x.id === pedidoId);
+    const panel = document.getElementById(`panelEditarPedido-${pedidoId}`);
+    if (!p || !panel) return;
+    ocultarMensaje('mensajePedidosCanal');
+    let historial = [];
+    try { const { data } = await supabaseClient.rpc('fn_historial_fecha_entrega_pedido', { p_pedido_id: pedidoId }); historial = data || []; } catch (e) { /* sin historial visible */ }
+    panel.classList.remove('oculto');
+    panel.innerHTML = `
+      <div style="padding:10px;border-radius:10px;background:var(--rosa-suave);">
+        <strong style="font-size:12.5px;">Cambiar la fecha de entrega</strong>
+        <div style="font-size:11px;opacity:0.7;margin:2px 0 6px;">Hoy: ${p.fecha_estimada_entrega ? fechaCortaPedido(p.fecha_estimada_entrega) : 'sin fecha'}. El cambio queda anotado con el motivo y quién lo hizo.</div>
+        <label for="epFecha-${pedidoId}">Nueva fecha de entrega</label>
+        <input type="date" id="epFecha-${pedidoId}" value="${p.fecha_estimada_entrega ? String(p.fecha_estimada_entrega).slice(0, 10) : ''}">
+        <label for="epMotivoFecha-${pedidoId}">Motivo</label>
+        <select id="epMotivoFecha-${pedidoId}" onchange="document.getElementById('epMotivoTexto-${pedidoId}').classList.toggle('oculto', this.value !== 'otro')">
+          <option value="">Elige el motivo...</option>
+          ${Object.entries(MOTIVOS_FECHA_ENTREGA).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}
+        </select>
+        <input type="text" id="epMotivoTexto-${pedidoId}" class="oculto" placeholder="Escribe el motivo" style="margin-top:6px;">
+        <div style="display:flex;gap:6px;margin-top:8px;">
+          <button class="btn-mini guardar" onclick="guardarFechaEntregaPedido('${pedidoId}')">💾 Guardar fecha</button>
+          <button class="btn-mini editar" onclick="document.getElementById('panelEditarPedido-${pedidoId}').classList.add('oculto')">Cancelar</button>
+        </div>
+        ${historial.length ? `<div style="font-size:11px;margin-top:10px;"><strong>Cambios anteriores</strong>${historial.map(h => `<div style="opacity:0.8;">• ${h.fecha_anterior ? fechaCortaPedido(h.fecha_anterior) : 'sin fecha'} → ${fechaCortaPedido(h.fecha_nueva)} · ${escaparHtml(MOTIVOS_FECHA_ENTREGA[h.motivo_tipo] || h.motivo_tipo)}${h.motivo ? ' (' + escaparHtml(h.motivo) + ')' : ''} · ${escaparHtml(h.quien || '')} · ${new Date(h.cuando).toLocaleDateString('es-CO')}</div>`).join('')}</div>` : ''}
+      </div>`;
+  }
+
+  async function guardarFechaEntregaPedido(pedidoId) {
+    const fecha = document.getElementById(`epFecha-${pedidoId}`).value;
+    const tipo = document.getElementById(`epMotivoFecha-${pedidoId}`).value;
+    const texto = document.getElementById(`epMotivoTexto-${pedidoId}`).value.trim();
+    if (!fecha) { mostrarMensaje('mensajePedidosCanal', 'Escribe la nueva fecha de entrega.', 'error'); return; }
+    if (!tipo) { mostrarMensaje('mensajePedidosCanal', 'Elige el motivo del cambio de fecha.', 'error'); return; }
+    const { error } = await supabaseClient.rpc('fn_cambiar_fecha_entrega_pedido', { p_pedido_id: pedidoId, p_fecha: fecha, p_motivo_tipo: tipo, p_motivo: texto || null });
+    if (error) { mostrarMensaje('mensajePedidosCanal', 'No se pudo cambiar la fecha: ' + error.message, 'error'); return; }
+    mostrarMensaje('mensajePedidosCanal', `✅ Fecha de entrega cambiada a ${fechaCortaPedido(fecha)}. Quedó anotado el motivo.`, 'exito');
+    await cargarPedidosCanal();
+  }
+
+  function abrirCambiarEnvioPedido(pedidoId) {
+    const p = pedidosCanalCache.find(x => x.id === pedidoId);
+    const panel = document.getElementById(`panelEditarPedido-${pedidoId}`);
+    if (!p || !panel) return;
+    ocultarMensaje('mensajePedidosCanal');
+    panel.classList.remove('oculto');
+    panel.innerHTML = `
+      <div style="padding:10px;border-radius:10px;background:var(--rosa-suave);">
+        <strong style="font-size:12.5px;">Cambiar el valor del domicilio</strong>
+        <div style="font-size:11px;opacity:0.7;margin:2px 0 6px;">Hoy: ${formatearMoneda(p.valor_envio || 0)} · Total: ${formatearMoneda(p.total_pedido)}${p.anticipo_pagado ? ' · El anticipo ya cobrado no cambia: cambia el saldo.' : ''}</div>
+        <label for="epEnvio-${pedidoId}">Nuevo valor del domicilio (COP)</label>
+        <input type="number" id="epEnvio-${pedidoId}" min="0" step="1" value="${Number(p.valor_envio) || 0}">
+        <div style="display:flex;gap:6px;margin-top:8px;">
+          <button class="btn-mini guardar" onclick="guardarEnvioPedido('${pedidoId}')">💾 Guardar y recalcular saldo</button>
+          <button class="btn-mini editar" onclick="document.getElementById('panelEditarPedido-${pedidoId}').classList.add('oculto')">Cancelar</button>
+        </div>
+      </div>`;
+  }
+
+  async function guardarEnvioPedido(pedidoId) {
+    const valor = Number(document.getElementById(`epEnvio-${pedidoId}`).value);
+    if (!(valor >= 0)) { mostrarMensaje('mensajePedidosCanal', 'Escribe un valor de domicilio válido (0 o más).', 'error'); return; }
+    const { data, error } = await supabaseClient.rpc('fn_cambiar_envio_pedido_canal', { p_pedido_id: pedidoId, p_valor_envio: valor });
+    if (error) { mostrarMensaje('mensajePedidosCanal', 'No se pudo cambiar el domicilio: ' + error.message, 'error'); return; }
+    mostrarMensaje('mensajePedidosCanal', `✅ Domicilio cambiado a ${formatearMoneda(data.valor_envio)}. Nuevo total: ${formatearMoneda(data.total_pedido)} · Saldo pendiente: ${formatearMoneda(data.saldo)}.`, 'exito');
+    await cargarPedidosCanal();
   }
 
   async function entregarPedidoSinSaldoUI(pedidoId) {
@@ -19593,6 +20633,7 @@
     const datos = await resp.json();
     if (!resp.ok) { mostrarMensaje('mensajePedidosCanal', 'Error: ' + (datos.error || 'No se pudo marcar como entregado'), 'error'); return; }
     await cargarPedidosCanal();
+    await avisarOrdenesEnProcesoDePedido(pedidoId);
   }
 
   // Genera el recibo (impreso o imagen para WhatsApp) del pago de un pedido
@@ -19626,7 +20667,8 @@
       <div style="margin-top:16px;font-size:10.5px;color:#888;text-align:center;">
         Este documento es un comprobante de pago. La factura electrónica la envía la DIAN por separado.
       </div>
-      ${politicaCambiosCache ? `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed #ccc;font-size:10.5px;color:#888;text-align:center;">🔄 ${escaparHtml(politicaCambiosCache)}</div>` : ''}
+      ${recibo.tipo_pago === 'anticipo' && politicaAnticiposCache ? `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed #ccc;font-size:10.5px;color:#888;text-align:left;white-space:pre-line;"><strong>Anticipos y cancelación de pedidos personalizados</strong>\n${escaparHtml(politicaAnticiposCache)}</div>` : ''}
+      ${politicaCambiosCache ? `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed #ccc;font-size:10.5px;color:#888;text-align:left;white-space:pre-line;">🔄 ${escaparHtml(politicaCambiosCache)}</div>` : ''}
     `;
   }
 
@@ -19720,6 +20762,7 @@
     const { solicitudes } = await resp.json();
     const pendientes = (solicitudes || []).filter(s => s.estado !== 'terminado');
     solicitudesElaboracionCache = pendientes;
+    await cargarLineasYOrdenesElaboracion(pendientes);
 
     if (pendientes.length === 0) {
       contenedor.innerHTML = '';
@@ -19739,6 +20782,27 @@
             terminado: { bg: '#e0f2e6', color: 'var(--verde-exito)' },
           };
           const colorElab = coloresEstadoElab[s.estado] || { bg: 'var(--rosa-suave)', color: 'var(--rosa-principal)' };
+          const lineasPedido = lineasElaboracionDe(s);
+          if (lineasPedido.length > 1) {
+            // Pedido con varios productos: una orden por cada producto (línea)
+            return `
+              <div class="tabla-lista-fila" style="grid-template-columns:130px 1fr 140px 200px;">
+                <span style="font-weight:600;">${escaparHtml(pedido.consecutivo || '—')}</span>
+                <span style="opacity:0.75;font-size:11.5px;">${etiquetasCanalPedido[pedido.canal] || pedido.canal || ''} — ${lineasPedido.length} productos (una orden por cada uno)</span>
+                <span><span class="badge-estado-pedido" style="background:${colorElab.bg};color:${colorElab.color};">${etiquetasEstadoElaboracion[s.estado]}</span></span>
+                <span></span>
+              </div>
+              ${lineasPedido.map(l => {
+                const ord = ordenDeLineaElaboracion(s, l);
+                return `<div class="tabla-lista-fila" style="grid-template-columns:130px 1fr 140px 200px;background:rgba(0,0,0,0.02);">
+                  <span></span>
+                  <span style="font-size:11.5px;">↳ ${Number(l.cantidad) || 1}x ${escaparHtml(l.descripcion || '')}</span>
+                  <span style="font-size:11.5px;">${ord ? '🏭 ' + escaparHtml(ord.orden) + ' · ' + escaparHtml(String(ord.estado).replace('_', ' ')) : '—'}</span>
+                  <span>${ord ? '' : `<button class="btn-mini editar" onclick="empezarLineaElaboracion('${s.id}', '${l.id}', this)">🧶 Empezar este producto</button>`}</span>
+                </div>`;
+              }).join('')}
+            `;
+          }
           return `
             <div class="tabla-lista-fila" style="grid-template-columns:130px 1fr 140px 200px;">
               <span style="font-weight:600;">${escaparHtml(pedido.consecutivo || '—')}</span>
@@ -19759,6 +20823,62 @@
   let solicitudesElaboracionCache = [];
 
   const pedidoCanalDeSolicitud = (s) => s.pedido_canal_id || (s.pedidos_canal_venta || {}).id || null;
+
+  // Líneas (productos) de cada pedido por elaborar y sus órdenes de producción, para abrir una orden por producto
+  let lineasElaboracionCache = {};
+  let ordenesElaboracionCache = [];
+  const normTextoOP = (t) => String(t || '').trim().toLowerCase();
+
+  async function cargarLineasYOrdenesElaboracion(solicitudes) {
+    lineasElaboracionCache = {}; ordenesElaboracionCache = [];
+    const ids = [...new Set((solicitudes || []).map(pedidoCanalDeSolicitud).filter(Boolean))];
+    if (!ids.length) return;
+    try {
+      const { data: lineas } = await supabaseClient.from('pedidos_canal_lineas').select('id, pedido_id, orden, descripcion, cantidad').in('pedido_id', ids).order('orden');
+      (lineas || []).forEach(l => { (lineasElaboracionCache[l.pedido_id] = lineasElaboracionCache[l.pedido_id] || []).push(l); });
+      const { data: ordenes } = await supabaseClient.rpc('fn_op_listar', { p_estado: 'todas' });
+      ordenesElaboracionCache = (ordenes || []).filter(o => o.estado !== 'anulada' && o.pedido_canal_id && ids.includes(o.pedido_canal_id));
+    } catch (e) { /* sin permiso o sin líneas: se usa el flujo de una sola orden por pedido */ }
+  }
+
+  const lineasElaboracionDe = (s) => lineasElaboracionCache[pedidoCanalDeSolicitud(s)] || [];
+
+  // Orden activa que cubre esa línea: la de su propio producto, o una orden antigua que juntó todo el pedido en un solo texto
+  function ordenDeLineaElaboracion(s, linea) {
+    const pid = pedidoCanalDeSolicitud(s);
+    return ordenesElaboracionCache.find(o => o.pedido_canal_id === pid && (normTextoOP(o.descripcion) === normTextoOP(linea.descripcion) || normTextoOP(o.descripcion) === normTextoOP(s.descripcion)
+      // Orden que agrupa varios productos del mismo pedido (ej. "2x Colibrí…, 1x Colibrí…"): cubre las líneas cuyo nombre aparece en su descripción
+      || (normTextoOP(linea.descripcion).length > 3 && normTextoOP(o.descripcion).includes(normTextoOP(linea.descripcion))))) || null;
+  }
+
+  async function empezarLineaElaboracion(solicitudId, lineaId, boton) {
+    const s = solicitudesElaboracionCache.find(x => x.id === solicitudId);
+    const linea = s && lineasElaboracionDe(s).find(l => l.id === lineaId);
+    if (!s || !linea) return;
+    ocultarMensaje('mensajeElaboracion');
+    if (boton) boton.disabled = true;
+    const pedido = s.pedidos_canal_venta || {};
+    const { data: ordenId, error } = await supabaseClient.rpc('fn_op_abrir', {
+      p_producto_item_id: null,
+      p_descripcion: linea.descripcion,
+      p_cantidad: Number(linea.cantidad) || 1,
+      p_pedido_canal_id: pedidoCanalDeSolicitud(s),
+      p_pedido_crm_id: null,
+      p_numero_pedido_crm: pedido.consecutivo || null,
+      p_observaciones: null,
+    });
+    if (error) {
+      if (boton) boton.disabled = false;
+      mostrarMensaje('mensajeElaboracion', 'No se pudo abrir la orden: ' + error.message, 'error');
+      return;
+    }
+    if (s.estado === 'pendiente') await actualizarEstadoElaboracion(solicitudId, 'en_proceso');
+    else await cargarSolicitudesElaboracion();
+    mostrarMensaje('mensajeOrdenesProd', '✅ Orden abierta para "' + linea.descripcion + '" del pedido ' + (pedido.consecutivo || '') + '. En la tarjeta resaltada de la orden, elige el material, escribe la cantidad y pulsa "Entregar".', 'exito');
+    ordenAccionAbierta = { id: ordenId, accion: 'entregar' };
+    ordenRecienAbiertaId = ordenId;
+    filtrarOrdenesProduccion('en_proceso', document.querySelector('[data-filtro-op="en_proceso"]'));
+  }
 
   async function empezarElaboracion(solicitudId, boton) {
     const s = solicitudesElaboracionCache.find(x => x.id === solicitudId);
@@ -19858,7 +20978,18 @@
     const s = solicitudesElaboracionCache.find(x => x.estado !== 'terminado' && (
       (orden.pedido_canal_id && pedidoCanalDeSolicitud(x) === orden.pedido_canal_id) ||
       (orden.pedido && (x.pedidos_canal_venta || {}).consecutivo === orden.pedido)));
-    if (s) await actualizarEstadoElaboracion(s.id, 'terminado');
+    if (!s) return;
+    // Pedido con varios productos: el pedido queda terminado solo cuando todas sus líneas tienen su orden terminada
+    const lineas = lineasElaboracionDe(s);
+    if (lineas.length > 1) {
+      try {
+        const { data: ordenes } = await supabaseClient.rpc('fn_op_listar', { p_estado: 'todas' });
+        const hechas = (ordenes || []).filter(o => o.pedido_canal_id === pedidoCanalDeSolicitud(s) && (o.estado === 'terminada' || o.estado === 'entregada'));
+        const cubierta = (l) => hechas.some(o => normTextoOP(o.descripcion) === normTextoOP(l.descripcion) || normTextoOP(o.descripcion) === normTextoOP(s.descripcion));
+        if (!lineas.every(cubierta)) { await cargarSolicitudesElaboracion(); return; }
+      } catch (e) { /* si no se puede comprobar, se sigue con el comportamiento de siempre */ }
+    }
+    await actualizarEstadoElaboracion(s.id, 'terminado');
   }
 
   async function actualizarEstadoElaboracion(solicitudId, estado) {
@@ -20546,7 +21677,107 @@
 
     const { empleados } = await resp.json();
     empleadosActivosCache = (empleados || []).filter(e => e.activo);
+    await cargarFichaExtraEmpleados();
     renderizarListaEmpleados();
+  }
+
+  // ============================================================
+  // FICHA DEL EMPLEADO: cargo, área, jornada, fin de contrato, caja, cuenta de acceso y documentos que faltan
+  // ============================================================
+  const DOCUMENTOS_REQUERIDOS_EMPLEADO = ['cedula', 'hoja_vida', 'contrato', 'afiliacion_eps', 'afiliacion_pension', 'afiliacion_arl', 'afiliacion_ccf'];
+  const AREAS_EMPLEADO = ['Taller', 'Tienda', 'Academy', 'Administración'];
+  const JORNADAS_EMPLEADO = { completa: 'Tiempo completo', medio_tiempo: 'Medio tiempo', por_horas: 'Por horas' };
+  const TIPOS_CONTRATO_EMPLEADO = { fijo: 'Término fijo', indefinido: 'Indefinido', obra_labor: 'Obra o labor' };
+  const ROLES_ERP_ETIQUETA = { administrador: 'Administradora', cajero: 'Tienda / caja', taller: 'Taller', contador: 'Contador' };
+  const DIAS_AVISO_FIN_CONTRATO = 60;
+  let usuariosRolesRhCache = [];
+  let tiposDocEmpleadoCache = {};
+
+  async function cargarFichaExtraEmpleados() {
+    try {
+      const [rEmp, rUsu, rDoc] = await Promise.all([
+        supabaseClient.from('empleados').select('id, cargo, area, jornada, fecha_fin_contrato, caja_compensacion, user_id, tipo_contrato'),
+        supabaseClient.from('usuarios_roles').select('user_id, nombre_completo, rol, activo'),
+        supabaseClient.from('documentos_empleado').select('empleado_id, tipo_documento')
+      ]);
+      const porId = {};
+      (rEmp.data || []).forEach(x => { porId[x.id] = x; });
+      empleadosActivosCache.forEach(e => { if (porId[e.id]) Object.assign(e, porId[e.id]); });
+      usuariosRolesRhCache = rUsu.data || [];
+      tiposDocEmpleadoCache = {};
+      (rDoc.data || []).forEach(d => { (tiposDocEmpleadoCache[d.empleado_id] = tiposDocEmpleadoCache[d.empleado_id] || []).push(d.tipo_documento); });
+    } catch (err) { /* la ficha sigue funcionando con los datos básicos */ }
+  }
+
+  function tiposDocumentoDeEmpleado(empleadoId) {
+    if (documentosPorEmpleadoCache[empleadoId]) return documentosPorEmpleadoCache[empleadoId].map(d => d.tipo_documento);
+    return tiposDocEmpleadoCache[empleadoId] || [];
+  }
+
+  function documentosFaltantesEmpleado(e) {
+    const tiene = new Set(tiposDocumentoDeEmpleado(e.id));
+    return DOCUMENTOS_REQUERIDOS_EMPLEADO.filter(t => !(e.es_propietario && t === 'contrato') && !tiene.has(t));
+  }
+
+  function diasParaFinContratoEmpleado(e) {
+    if (e.tipo_contrato !== 'fijo' || !e.fecha_fin_contrato) return null;
+    const fin = new Date(e.fecha_fin_contrato.slice(0, 10) + 'T00:00:00');
+    const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+    return Math.round((fin - hoy) / 86400000);
+  }
+
+  function usuarioRolDeEmpleado(e) {
+    return e.user_id ? usuariosRolesRhCache.find(u => u.user_id === e.user_id) : null;
+  }
+
+  function htmlFichaResumenEmpleado(e) {
+    const chip = (texto, fondo, color) => `<span style="display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600;background:${fondo};color:${color};margin:2px 4px 2px 0;">${texto}</span>`;
+    const partes = [];
+    if (e.area) partes.push(chip('📍 ' + escaparHtml(e.area), 'var(--rosa-suave)', 'inherit'));
+    if (e.tipo_contrato) partes.push(chip(escaparHtml(TIPOS_CONTRATO_EMPLEADO[e.tipo_contrato] || e.tipo_contrato), 'var(--rosa-suave)', 'inherit'));
+    if (e.jornada) partes.push(chip(escaparHtml(JORNADAS_EMPLEADO[e.jornada] || e.jornada), 'var(--rosa-suave)', 'inherit'));
+    const u = usuarioRolDeEmpleado(e);
+    partes.push(u
+      ? chip('🔑 Acceso al ERP: ' + escaparHtml(ROLES_ERP_ETIQUETA[u.rol] || u.rol), '#e3f1e6', '#2e6b3a')
+      : chip('🔑 Sin cuenta de acceso al ERP', '#f4eef2', '#7a5a6b'));
+    const dias = diasParaFinContratoEmpleado(e);
+    if (e.tipo_contrato === 'fijo' && !e.fecha_fin_contrato) partes.push(chip('⚠️ Falta la fecha de fin del contrato', '#fff3d6', '#8a5a00'));
+    else if (dias !== null && dias < 0) partes.push(chip('⛔ Contrato vencido hace ' + Math.abs(dias) + ' días', '#fde2e2', '#a12d2d'));
+    else if (dias !== null && dias <= DIAS_AVISO_FIN_CONTRATO) partes.push(chip('⏰ El contrato vence en ' + dias + ' días (' + new Date(e.fecha_fin_contrato.slice(0, 10) + 'T00:00:00').toLocaleDateString('es-CO') + ')', '#fff3d6', '#8a5a00'));
+    else if (dias !== null) partes.push(chip('Contrato hasta ' + new Date(e.fecha_fin_contrato.slice(0, 10) + 'T00:00:00').toLocaleDateString('es-CO'), 'var(--rosa-suave)', 'inherit'));
+    const faltan = documentosFaltantesEmpleado(e);
+    partes.push(faltan.length
+      ? chip('📁 Faltan ' + faltan.length + ' documento' + (faltan.length === 1 ? '' : 's'), '#fff3d6', '#8a5a00')
+      : chip('📁 Documentos completos', '#e3f1e6', '#2e6b3a'));
+    const afil = [['EPS', e.eps], ['Pensión', e.fondo_pension], ['Cesantías', e.fondo_cesantias], ['ARL', e.arl_entidad], ['Caja', e.caja_compensacion]].filter(x => !x[1]).map(x => x[0]);
+    if (afil.length) partes.push(chip('Sin dato de: ' + afil.join(', '), '#fff3d6', '#8a5a00'));
+    return `<div style="margin-top:8px;">${e.cargo ? `<div style="font-size:12.5px;font-weight:600;margin-bottom:2px;">${escaparHtml(e.cargo)}</div>` : ''}${partes.join('')}</div>`;
+  }
+
+  function htmlCamposFichaEdicion(e) {
+    const opciones = (obj, actual) => Object.entries(obj).map(([v, t]) => `<option value="${v}" ${v === actual ? 'selected' : ''}>${escaparHtml(t)}</option>`).join('');
+    const opcionesArea = '<option value="">Sin área</option>' + AREAS_EMPLEADO.map(a => `<option value="${a}" ${a === e.area ? 'selected' : ''}>${a}</option>`).join('');
+    const ocupados = new Set(empleadosActivosCache.filter(x => x.id !== e.id && x.user_id).map(x => x.user_id));
+    const opcionesCuenta = '<option value="">Sin cuenta de acceso</option>' + usuariosRolesRhCache
+      .filter(u => u.activo && !ocupados.has(u.user_id))
+      .map(u => `<option value="${u.user_id}" ${u.user_id === e.user_id ? 'selected' : ''}>${escaparHtml(u.nombre_completo || 'Sin nombre')} — ${escaparHtml(ROLES_ERP_ETIQUETA[u.rol] || u.rol)}</option>`).join('');
+    return `
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--rosa-suave);font-size:11.5px;font-weight:600;opacity:0.7;">Cargo y contrato</div>
+      <label style="margin-top:6px;">Cargo</label>
+      <input type="text" id="edit-emp-cargo-${e.id}" value="${escaparHtml(e.cargo || '')}" placeholder="Ej. Tejedora, Atención del almacén">
+      <label style="margin-top:8px;">Área</label>
+      <select id="edit-emp-area-${e.id}">${opcionesArea}</select>
+      <label style="margin-top:8px;">Tipo de contrato</label>
+      <select id="edit-emp-tipocontrato-${e.id}">${opciones(TIPOS_CONTRATO_EMPLEADO, e.tipo_contrato || 'fijo')}</select>
+      <label style="margin-top:8px;">Fecha de fin del contrato <span style="font-size:10px;opacity:0.6;">(solo término fijo)</span></label>
+      <input type="date" id="edit-emp-fincontrato-${e.id}" value="${e.fecha_fin_contrato ? e.fecha_fin_contrato.slice(0, 10) : ''}">
+      <label style="margin-top:8px;">Jornada</label>
+      <select id="edit-emp-jornada-${e.id}"><option value="">Sin definir</option>${opciones(JORNADAS_EMPLEADO, e.jornada)}</select>
+      <label style="margin-top:8px;">Cuenta de acceso al ERP (rol)</label>
+      <select id="edit-emp-cuenta-${e.id}">${opcionesCuenta}</select>
+      <div style="font-size:10.5px;opacity:0.6;margin-top:3px;">El rol lo define la cuenta. Cada persona usa su propia cuenta, nunca se comparte.</div>
+      <label style="margin-top:8px;">Caja de compensación</label>
+      <input type="text" id="edit-emp-caja-${e.id}" value="${escaparHtml(e.caja_compensacion || '')}" placeholder="Ej. Comfamiliares">`;
   }
 
   function renderizarListaEmpleados() {
@@ -20635,6 +21866,7 @@
             <input type="tel" id="edit-emp-telefono-${e.id}" value="${escaparHtml(e.telefono || '')}">
             <label style="margin-top:8px;">Correo electrónico</label>
             <input type="email" id="edit-emp-correo-${e.id}" value="${escaparHtml(e.correo_electronico || '')}">
+            ${htmlCamposFichaEdicion(e)}
             <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--rosa-suave);font-size:11.5px;font-weight:600;opacity:0.7;">Afiliaciones</div>
             <label style="margin-top:6px;">EPS</label>
             <input type="text" id="edit-emp-eps-${e.id}" value="${escaparHtml(e.eps || '')}">
@@ -20664,6 +21896,7 @@
               <span class="fila-inventario-nombre">${escaparHtml(e.nombre_completo)}</span>
               <span class="fila-inventario-tipo-tag" style="background:var(--azul-acero);color:white;">👑 Propietaria</span>
             </div>
+            ${htmlFichaResumenEmpleado(e)}
             <div style="font-size:11.5px;margin-top:6px;opacity:0.75;">No tiene nómina formal (persona natural). Se le registra un retiro + cotización como independiente, garantizando mínimo el SMMLV.</div>
             <div class="fila-inventario-acciones" style="margin-top:8px;flex-wrap:wrap;">
               <button class="btn-mini editar" onclick="activarEdicionEmpleado('${e.id}')">✏️ Editar</button>
@@ -20688,6 +21921,7 @@
             <span class="fila-inventario-nombre">${escaparHtml(e.nombre_completo)}</span>
             <span class="fila-inventario-tipo-tag">Clase ${e.clase_riesgo_arl}</span>
           </div>
+          ${htmlFichaResumenEmpleado(e)}
           <div style="font-size:12.5px;margin-top:6px;">
             Salario: <strong>${formatearMoneda(e.salario_basico)}</strong> · 🏢 ${escaparHtml(nombreDepto)}${edad !== null ? ' · ' + edad + ' años' : ''}<br>
             <span style="opacity:0.6;">Ingreso: ${new Date(e.fecha_ingreso).toLocaleDateString('es-CO')}${e.teletrabajo ? ' · Teletrabajo' : ''}${e.numero_documento ? ' · Doc: ' + escaparHtml(e.numero_documento) : ''}</span>
@@ -22400,6 +23634,9 @@
     document.getElementById('ocFechaEntrega').value = '';
     document.getElementById('ocNotas').value = '';
     ocultarMensaje('mensajeOrdenCompra');
+    const esAdminOC = esAdministradoraActual();
+    document.getElementById('btnCrearOrdenCompra').textContent = esAdminOC ? 'Crear orden de compra' : 'Enviar pedido para aprobación';
+    document.getElementById('avisoOrdenCompraSolicitud').classList.toggle('oculto', esAdminOC);
 
     const respProveedores = await fetch(WORKER_URL + '/api/pos/terceros?tipo=proveedor', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
     if (respProveedores.ok) {
@@ -22451,15 +23688,24 @@
     if (!proveedorId) { mostrarMensaje('mensajeOrdenCompra', 'Selecciona el proveedor.', 'error'); return; }
     if (carritoOrdenCompra.length === 0) { mostrarMensaje('mensajeOrdenCompra', 'Agrega al menos un ítem.', 'error'); return; }
 
-    const resp = await fetch(WORKER_URL + '/api/pos/ordenes-compra', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ proveedor_id: proveedorId, fecha_entrega_esperada: fechaEntrega || null, items: carritoOrdenCompra, notas })
-    });
-    const datos = await resp.json();
-    if (!resp.ok) { mostrarMensaje('mensajeOrdenCompra', datos.error || 'No se pudo crear.', 'error'); return; }
+    let numeroCreado;
+    if (esAdministradoraActual()) {
+      const resp = await fetch(WORKER_URL + '/api/pos/ordenes-compra', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+        body: JSON.stringify({ proveedor_id: proveedorId, fecha_entrega_esperada: fechaEntrega || null, items: carritoOrdenCompra, notas })
+      });
+      const datos = await resp.json();
+      if (!resp.ok) { mostrarMensaje('mensajeOrdenCompra', datos.error || 'No se pudo crear.', 'error'); return; }
+      numeroCreado = datos.orden.numero_orden;
+    } else {
+      // La Tienda no crea la orden directamente: queda "por aprobar" hasta que una administradora la apruebe.
+      const { data, error } = await supabaseClient.rpc('fn_oc_crear_solicitud', { p_proveedor: proveedorId, p_fecha_entrega: fechaEntrega || null, p_items: carritoOrdenCompra, p_notas: notas || null });
+      if (error) { mostrarMensaje('mensajeOrdenCompra', error.message, 'error'); return; }
+      numeroCreado = data.numero_orden;
+    }
 
-    mostrarMensaje('mensajeOrdenCompra', `✅ Orden ${datos.orden.numero_orden} creada.`, 'exito');
+    mostrarMensaje('mensajeOrdenCompra', esAdministradoraActual() ? `✅ Orden ${numeroCreado} creada.` : `✅ Pedido ${numeroCreado} enviado. Una administradora debe aprobarlo antes de pedirlo al proveedor.`, 'exito');
     carritoOrdenCompra = [];
     renderizarItemsOrdenCompra();
     document.getElementById('ocNotas').value = '';
@@ -22476,9 +23722,18 @@
   async function cargarOrdenesCompra() {
     const cont = document.getElementById('listaOrdenesCompra');
     cont.innerHTML = '<div class="cargando">Cargando...</div>';
-    const resp = await fetch(`${WORKER_URL}/api/pos/ordenes-compra${filtroOrdenesCompraActual ? '?estado=' + filtroOrdenesCompraActual : ''}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
-    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
-    const { ordenes } = await resp.json();
+    let ordenes;
+    if (esAdministradoraActual()) {
+      const resp = await fetch(`${WORKER_URL}/api/pos/ordenes-compra${filtroOrdenesCompraActual ? '?estado=' + filtroOrdenesCompraActual : ''}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+      if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+      ordenes = (await resp.json()).ordenes;
+    } else {
+      let q = supabaseClient.from('ordenes_compra').select('*, proveedor:proveedor_id(nombre_completo, telefono)').order('created_at', { ascending: false }).limit(200);
+      if (filtroOrdenesCompraActual) q = q.eq('estado', filtroOrdenesCompraActual);
+      const { data, error } = await q;
+      if (error) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+      ordenes = data;
+    }
     ordenesCompraCache = ordenes || [];
     renderizarOrdenesCompra(ordenesCompraCache);
   }
@@ -22497,7 +23752,8 @@
     const cont = document.getElementById('listaOrdenesCompra');
     if (!ordenes || ordenes.length === 0) { cont.innerHTML = '<div class="cargando">Sin órdenes que coincidan.</div>'; return; }
 
-    const etiquetasEstado = { enviada: '📤 Enviada', recibida: '✅ Recibida', cancelada: '❌ Cancelada' };
+    const etiquetasEstado = { por_aprobar: '⏳ Por aprobar', enviada: '📤 Enviada', recibida: '✅ Recibida', cancelada: '❌ Cancelada' };
+    const esAdminOC = esAdministradoraActual();
 
     cont.innerHTML = `
       <div class="tabla-lista">
@@ -22506,6 +23762,7 @@
         </div>
         ${ordenes.map(o => {
           const coloresEstadoOC = {
+            por_aprobar: { bg: '#fff3d6', color: '#8a5a00' },
             enviada: { bg: '#dce8f5', color: '#2d5a8c' },
             recibida: { bg: '#e0f2e6', color: 'var(--verde-exito)' },
             cancelada: { bg: '#fbe1de', color: 'var(--rojo-error)' },
@@ -22518,11 +23775,18 @@
             <span style="text-align:right;font-weight:700;">${formatearMoneda(o.total_estimado)}</span>
             <span style="font-size:11.5px;">${o.fecha_entrega_esperada ? new Date(o.fecha_entrega_esperada + 'T00:00:00').toLocaleDateString('es-CO') + ' ' : ''}<span class="badge-estado-pedido" style="background:${colorOC.bg};color:${colorOC.color};">${etiquetasEstado[o.estado] || o.estado}</span></span>
             <span style="display:flex;gap:5px;flex-wrap:wrap;">
-              ${o.estado === 'enviada' ? `
+              ${o.estado === 'por_aprobar' && esAdminOC ? `
+                <button class="btn-mini guardar" onclick="cambiarEstadoOrdenCompra('${o.id}', 'enviada')">✅ Aprobar y enviar</button>
+                <button class="btn-mini desactivar" onclick="cambiarEstadoOrdenCompra('${o.id}', 'cancelada')">❌ Rechazar</button>
+              ` : ''}
+              ${o.estado === 'por_aprobar' && !esAdminOC && o.registrado_por === sesionActual.userId ? `
+                <button class="btn-mini desactivar" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => cancelarSolicitudOrdenCompra('${o.id}'))">❌ Cancelar mi pedido</button>
+              ` : ''}
+              ${o.estado === 'enviada' && esAdminOC ? `
                 <button class="btn-mini guardar" onclick="cambiarEstadoOrdenCompra('${o.id}', 'recibida')">✅ Recibida</button>
                 <button class="btn-mini desactivar" onclick="cambiarEstadoOrdenCompra('${o.id}', 'cancelada')">❌ Cancelar</button>
               ` : ''}
-              <button class="btn-mini desactivar" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => eliminarOrdenCompra('${o.id}'))">🗑️</button>
+              ${esAdminOC ? `<button class="btn-mini desactivar" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => eliminarOrdenCompra('${o.id}'))">🗑️</button>` : ''}
             </span>
           </div>
         `;
@@ -22541,6 +23805,13 @@
     });
     if (!resp.ok) { mostrarMensaje('mensajeOrdenesCompra', 'No se pudo actualizar.', 'error'); return; }
     if (estado === 'recibida') mostrarMensaje('mensajeOrdenesCompra', '✅ Marcada como recibida. Recuerda registrar la compra real en "Registro de compras y gastos" para que quede contabilizada.', 'exito');
+    await cargarOrdenesCompra();
+  }
+
+  async function cancelarSolicitudOrdenCompra(id) {
+    ocultarMensaje('mensajeOrdenesCompra');
+    const { error } = await supabaseClient.rpc('fn_oc_cancelar_solicitud', { p_id: id });
+    if (error) { mostrarMensaje('mensajeOrdenesCompra', error.message, 'error'); return; }
     await cargarOrdenesCompra();
   }
 
@@ -22951,7 +24222,9 @@
             ${modoRecibo ? '' : `<button class="btn-mini editar" style="flex:0 0 auto;padding:7px 12px;" onclick="alternarAccionFe('${clave}:datos')">📋 Datos para la DIAN</button>`}
             ${modoRecibo ? '' : `<button class="btn-mini" style="flex:0 0 auto;padding:7px 12px;background:var(--verde-exito);color:#fff;" onclick="alternarAccionFe('${clave}:registrar')">✅ Registrar factura emitida</button>`}
             <button class="btn-mini editar" style="flex:0 0 auto;padding:7px 12px;" title="Comprobante de venta de Lana Rosa con la fecha de la venta (no es factura electrónica)" onclick="imprimirReciboVentaFe('${v.origen}', '${v.origen_id}')">🖨️ Recibo de venta</button>
+            ${esRolFe('administrador') ? `<button class="btn-mini editar" style="flex:0 0 auto;padding:7px 12px;" title="Completar o corregir los datos del cliente antes de emitir la factura" onclick="abrirEditarClienteFe('${v.origen}', '${v.origen_id}')">✏️ Datos del cliente</button>` : ''}
           </div>
+          <div id="feEdCli-${v.origen_id}" class="oculto"></div>
           ${abierta('datos') ? `
             <div style="margin-top:10px;padding:12px;border-radius:var(--radius-md);background:var(--gris-fondo);">
               <pre style="white-space:pre-wrap;font-family:inherit;font-size:12.5px;margin:0;">${escaparHtml(textoDatosDianVenta(v))}</pre>
@@ -23427,6 +24700,119 @@
             <span>${d.tiene_archivo ? `<button class="btn-mini editar" style="flex:0 0 auto;padding:4px 8px;margin-right:4px;" title="ZIP original de la DIAN (XML y PDF)" onclick="descargarArchivoFacturaFe('${d.id}')">📎 ZIP</button>` : ''}${d.estado === 'emitida' && puedeAnular ? `<button class="btn-mini desactivar" style="flex:0 0 auto;padding:4px 8px;" onclick="anularRegistroFe('${d.id}')">Anular registro</button>` : (d.estado === 'anulada' ? `<span style="font-size:10.5px;">${escaparHtml(d.motivo_anulacion || '')}</span>` : '')}</span>
           </div>`).join('')}
       </div>`;
+  }
+
+  // ---- Editar los datos del cliente de una venta que todavía NO tiene factura electrónica (solo administradora) ----
+  // Se usa en Por facturar y en el Historial de ventas (Tienda y WhatsApp/Redes).
+  // La base (fn_editar_cliente_venta) también bloquea si ya hay factura DIAN registrada: para cambiar el comprador
+  // de una factura emitida se necesita nota crédito y nueva factura (consultar al contador).
+  const TEXTO_FACTURA_BLOQUEA_CLIENTE = 'Esta venta ya tiene factura DIAN; para cambiar el comprador se necesita nota crédito y nueva factura. Consulta al contador.';
+  const edcAlGuardar = {};
+
+  function formularioClienteVenta(origen, origenId, cli, titulo) {
+    const sinDoc = !cli.numero_documento || /^(NA|222222222222)$/i.test(String(cli.numero_documento).trim());
+    const val = (x) => escaparHtml(x || '');
+    const tipoSel = sinDoc ? 'CC' : (cli.tipo_documento || 'CC');
+    return `
+      <div style="margin-top:10px;padding:12px;border-radius:var(--radius-md);background:var(--rosa-suave);">
+        <strong style="font-size:12.5px;">Datos del cliente de ${escaparHtml(titulo || '')}</strong>
+        <div style="font-size:11.5px;opacity:0.75;margin:2px 0 8px;">Solo cambia quién es el cliente: no toca valores, pagos ni caja. Queda registrado quién lo cambió y cuándo.</div>
+        <div class="grilla-2" style="gap:10px;">
+          <div><label>Nombre o razón social</label><input type="text" id="edcNombre-${origenId}" value="${val(cli.nombre)}"></div>
+          <div><label>Tipo de documento</label><select id="edcTipo-${origenId}">${['CC', 'NIT', 'CE', 'PASAPORTE', 'TI'].map(t => `<option value="${t}"${t === tipoSel ? ' selected' : ''}>${t}</option>`).join('')}</select></div>
+          <div><label>Número de documento / NIT</label><input type="text" id="edcDoc-${origenId}" inputmode="numeric" value="${sinDoc ? '' : val(cli.numero_documento)}"></div>
+          <div><label>Dígito de verificación <span style="font-size:10px;opacity:0.6;">(solo NIT)</span></label><input type="text" id="edcDv-${origenId}" inputmode="numeric" maxlength="1" value="${val(cli.dv)}"></div>
+          <div><label>Correo</label><input type="text" id="edcCorreo-${origenId}" value="${val(cli.correo)}"></div>
+          <div><label>Teléfono</label><input type="text" id="edcTel-${origenId}" inputmode="tel" value="${val(cli.telefono)}"></div>
+          <div><label>Dirección</label><input type="text" id="edcDir-${origenId}" value="${val(cli.direccion)}"></div>
+          <div><label>Ciudad / municipio</label><input type="text" id="edcCiudad-${origenId}" value="${val(cli.ciudad)}"></div>
+        </div>
+        <label style="display:flex;gap:6px;align-items:flex-start;margin:10px 0 0;cursor:pointer;font-size:12.5px;"><input type="checkbox" id="edcAut-${origenId}" style="margin-top:2px;"> El cliente autorizó el tratamiento de sus datos personales <span style="opacity:0.65;">(necesario si el cliente queda como nuevo; si ese documento ya existe en Clientes, se usa ese)</span></label>
+        <div class="mensaje" id="mensajeEdCli-${origenId}"></div>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="btn-principal" style="width:auto;" onclick="event.stopPropagation(); guardarClienteFe('${origen}', '${origenId}')">Guardar cliente</button>
+          <button class="btn-mini editar" style="flex:0 0 auto;padding:7px 12px;" onclick="event.stopPropagation(); cerrarPanelClienteVenta('${origenId}')">Cancelar</button>
+        </div>
+      </div>`;
+  }
+
+  function cerrarPanelClienteVenta(origenId) {
+    const panel = document.getElementById(edcAlGuardar[origenId]?.panelId || '');
+    if (panel) { panel.classList.add('oculto'); panel.innerHTML = ''; }
+  }
+
+  // ¿La venta ya tiene factura DIAN registrada? (la administradora puede leer la tabla)
+  async function ventaTieneFacturaFe(origen, origenId) {
+    try {
+      const { data } = await supabaseClient.from('documentos_electronicos').select('prefijo, numero').eq('origen', origen).eq('origen_id', origenId).eq('tipo', 'factura').eq('estado', 'emitida').limit(1);
+      return data && data.length ? `${data[0].prefijo || ''}${data[0].numero}` : null;
+    } catch (e) { return null; } // si no se puede revisar aquí, la base igual la bloquea al guardar
+  }
+
+  async function abrirPanelClienteVenta(origen, origenId, panelId, cli, titulo, alGuardar) {
+    const panel = document.getElementById(panelId);
+    if (!panel) return;
+    if (!panel.classList.contains('oculto')) { panel.classList.add('oculto'); panel.innerHTML = ''; return; }
+    panel.classList.remove('oculto');
+    const factura = await ventaTieneFacturaFe(origen, origenId);
+    if (factura) {
+      panel.innerHTML = `<div style="margin-top:10px;padding:12px;border-radius:var(--radius-md);background:var(--rosa-suave);font-size:12.5px;">🔒 <strong>Factura ${escaparHtml(factura)}.</strong> ${TEXTO_FACTURA_BLOQUEA_CLIENTE}</div>`;
+      return;
+    }
+    edcAlGuardar[origenId] = { panelId, alGuardar };
+    panel.innerHTML = formularioClienteVenta(origen, origenId, cli, titulo);
+  }
+
+  // Por facturar: los datos salen de la lista ya cargada
+  function abrirEditarClienteFe(origen, origenId) {
+    const v = cacheFePendientes.find(x => x.origen === origen && x.origen_id === origenId);
+    if (!v) return;
+    const c = v.cliente || {};
+    const cli = { nombre: c.consumidor_final ? (c.nombre_real || '') : (c.nombre || ''), tipo_documento: c.tipo_documento, numero_documento: c.consumidor_final ? '' : c.numero_documento, dv: c.dv, correo: c.correo, telefono: c.telefono, direccion: c.direccion || v.direccion_entrega, ciudad: c.ciudad };
+    return abrirPanelClienteVenta(origen, origenId, `feEdCli-${origenId}`, cli, v.consecutivo, async () => {
+      await cargarFePendientes();
+      mostrarMensaje('mensajeFePend', '✅ Datos del cliente guardados. Ya puedes copiarlos con "Datos para la DIAN".', 'exito');
+    });
+  }
+
+  async function datosTerceroParaEditar(terceroId) {
+    if (!terceroId) return {};
+    const { data: t } = await supabaseClient.from('terceros').select('nombre_completo, tipo_documento, numero_documento, digito_verificacion, email, telefono, direccion, ciudad').eq('id', terceroId).maybeSingle();
+    return t ? { nombre: t.nombre_completo, tipo_documento: t.tipo_documento, numero_documento: t.numero_documento, dv: t.digito_verificacion, correo: t.email, telefono: t.telefono, direccion: t.direccion, ciudad: t.ciudad } : {};
+  }
+
+  // Historial de ventas · Tienda (ventas del punto de venta)
+  async function abrirEditarClienteHistorialTienda(ventaId) {
+    const venta = (historialVentasDetalleCache.ventas || []).find(v => v.id === ventaId);
+    if (!venta) return;
+    return abrirPanelClienteVenta('venta_pos', ventaId, `panelEditarClienteVenta-${ventaId}`, await datosTerceroParaEditar(venta.tercero_id), venta.consecutivo, async () => {
+      await cargarHistorialVentas();
+      mostrarMensaje('mensajeHistorialVentas', `✅ Datos del cliente de ${venta.consecutivo} guardados.`, 'exito');
+    });
+  }
+
+  // Historial de ventas · WhatsApp/Redes (pedidos)
+  let historialRedesCache = [];
+  async function abrirEditarClienteHistorialRedes(pedidoId) {
+    const p = historialRedesCache.find(x => x.id === pedidoId);
+    if (!p) return;
+    return abrirPanelClienteVenta('pedido_canal', pedidoId, `panelEditarClienteVenta-${pedidoId}`, await datosTerceroParaEditar(p.tercero_id || (p.tercero && p.tercero.id)), p.consecutivo, async () => {
+      await cargarHistorialRedes();
+      mostrarMensaje('mensajeHistorialRedes', `✅ Datos del cliente de ${p.consecutivo} guardados.`, 'exito');
+    });
+  }
+
+  async function guardarClienteFe(origen, origenId) {
+    const g = (c) => (document.getElementById(`${c}-${origenId}`).value || '').trim();
+    const msg = `mensajeEdCli-${origenId}`;
+    const { error } = await supabaseClient.rpc('fn_editar_cliente_venta', {
+      p_origen: origen, p_origen_id: origenId, p_nombre: g('edcNombre'), p_tipo_documento: g('edcTipo'), p_numero_documento: g('edcDoc'),
+      p_dv: g('edcDv'), p_correo: g('edcCorreo'), p_telefono: g('edcTel'), p_direccion: g('edcDir'), p_ciudad: g('edcCiudad'),
+      p_acepta_datos: document.getElementById(`edcAut-${origenId}`).checked, p_medio_autorizacion: null,
+    });
+    if (error) { mostrarMensaje(msg, error.message, 'error'); return; }
+    const alGuardar = edcAlGuardar[origenId]?.alGuardar;
+    if (alGuardar) await alGuardar();
   }
 
   // ---- Documentos soporte (compras a proveedores no obligados a facturar) ----
@@ -28032,6 +29418,21 @@
       document.getElementById('textoAvisoPrivacidadFisico').value = d.aviso_privacidad_fisico || '';
       document.getElementById('textoPoliticaCambios').value = d.politica_cambios || '';
     }
+    ocultarMensaje('mensajePoliticaAnticipos');
+    await cargarPoliticaAnticipos();
+    document.getElementById('textoPoliticaAnticipos').value = politicaAnticiposCache || '';
+  }
+
+  // Se guarda directo en Supabase (el Worker no la conoce); solo la administradora puede escribir (RLS).
+  async function guardarPoliticaAnticipos() {
+    ocultarMensaje('mensajePoliticaAnticipos');
+    const texto = document.getElementById('textoPoliticaAnticipos').value.trim();
+    const { data: fila, error: errLeer } = await supabaseClient.from('configuracion_empresa').select('id').limit(1).maybeSingle();
+    if (errLeer || !fila) { mostrarMensaje('mensajePoliticaAnticipos', 'No se pudo guardar la política de anticipos.', 'error'); return; }
+    const { data: filas, error } = await supabaseClient.from('configuracion_empresa').update({ politica_anticipos: texto || null }).eq('id', fila.id).select('id');
+    if (error || !filas || !filas.length) { mostrarMensaje('mensajePoliticaAnticipos', 'No se pudo guardar. Solo la administradora puede cambiar este texto.', 'error'); return; }
+    politicaAnticiposCache = texto || null;
+    mostrarMensaje('mensajePoliticaAnticipos', '✅ Guardado. Ya sale en los recibos de anticipo y en el resumen del pedido.', 'exito');
   }
 
   async function guardarPoliticasLegales() {
@@ -28430,6 +29831,12 @@
           `).join('');
     }
 
+    const empDoc = empleadosActivosCache.find(x => x.id === empleadoId) || (typeof empleadosRhCache !== "undefined" ? empleadosRhCache.find(x => x.id === empleadoId) : null);
+    const faltantes = empDoc && documentos ? documentosFaltantesEmpleado(empDoc) : [];
+    const avisoFaltantes = !empDoc || !documentos ? '' : (faltantes.length
+      ? `<div style="font-size:12px;background:#fff3d6;color:#8a5a00;border-radius:8px;padding:8px 10px;margin-bottom:8px;">Faltan: ${faltantes.map(t => etiquetasTipoDocumento[t] || t).join(', ')}</div>`
+      : '<div style="font-size:12px;background:#e3f1e6;color:#2e6b3a;border-radius:8px;padding:8px 10px;margin-bottom:8px;">✓ Tiene todos los documentos requeridos</div>');
+
     const formularioSubida = soloLectura ? `
       <div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--rosa-medio);font-size:11px;opacity:0.6;">
         Para subir o eliminar documentos, ve a <strong>Talento Humano</strong>.
@@ -28457,6 +29864,7 @@
     return `
       <div style="margin-top:10px;padding:12px;background:var(--rosa-suave);border-radius:10px;">
         <div style="font-size:12.5px;font-weight:700;margin-bottom:8px;">📁 Documentos${soloLectura ? ' (solo lectura)' : ''}</div>
+        ${avisoFaltantes}
         ${filas}
         ${formularioSubida}
         <div class="mensaje" id="mensajeDocRh-${empleadoId}"></div>
@@ -28523,6 +29931,7 @@
     mostrarSubTabGrupo('talentoHumano', 'subtabRhDocumentos', document.querySelector('[data-subtab-btn="talentoHumano"]'));
     await cargarEmpleadosParaRh();
     await cargarAutorizadosCalendario();
+    refrescarChipAusencias();
   }
 
   // ============================================================
@@ -29473,17 +30882,31 @@
   // ============================================================
   let tomaInventarioActivaId = null;
 
+  // Quien no es administradora (p. ej. la líder de la Tienda) solo cuenta el inventario de la Tienda;
+  // la administradora es quien finaliza la toma y ajusta el stock.
   async function cargarTomasInventario() {
-    // Departamentos para el selector
-    const respDeptos = await fetch(WORKER_URL + '/api/pos/departamentos', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
-    if (respDeptos.ok) {
-      const { departamentos } = await respDeptos.json();
-      document.getElementById('tomaCentroCosto').innerHTML = (departamentos || []).map(d => `<option value="${d.id}">${escaparHtml(d.nombre)}</option>`).join('');
-    }
+    const esAdminToma = esAdministradoraActual();
+    document.getElementById('accionesTomaAdmin').classList.toggle('oculto', !esAdminToma);
+    document.getElementById('avisoTomaSinAdmin').classList.toggle('oculto', esAdminToma);
 
-    const resp = await fetch(WORKER_URL + '/api/pos/tomas-inventario', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
-    if (!resp.ok) return;
-    const { tomas } = await resp.json();
+    let tomas;
+    if (esAdminToma) {
+      // Departamentos para el selector
+      const respDeptos = await fetch(WORKER_URL + '/api/pos/departamentos', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+      if (respDeptos.ok) {
+        const { departamentos } = await respDeptos.json();
+        document.getElementById('tomaCentroCosto').innerHTML = (departamentos || []).map(d => `<option value="${d.id}">${escaparHtml(d.nombre)}</option>`).join('');
+      }
+      const resp = await fetch(WORKER_URL + '/api/pos/tomas-inventario', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+      if (!resp.ok) return;
+      tomas = (await resp.json()).tomas;
+    } else {
+      const { data: tienda } = await supabaseClient.from('centros_costo').select('id, nombre').eq('codigo', '01').maybeSingle();
+      document.getElementById('tomaCentroCosto').innerHTML = tienda ? `<option value="${tienda.id}">${escaparHtml(tienda.nombre)}</option>` : '';
+      const { data, error } = await supabaseClient.from('tomas_inventario').select('*, centro_costo:centro_costo_id(nombre)').order('created_at', { ascending: false }).limit(100);
+      if (error) return;
+      tomas = data;
+    }
 
     const enProceso = (tomas || []).find(t => t.estado === 'en_proceso');
     if (enProceso) {
@@ -29518,21 +30941,33 @@
     ocultarMensaje('mensajeIniciarToma');
     if (!centroCostoId) { mostrarMensaje('mensajeIniciarToma', 'Selecciona el departamento.', 'error'); return; }
 
-    const resp = await fetch(WORKER_URL + '/api/pos/tomas-inventario/abrir', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ centro_costo_id: centroCostoId, notas })
-    });
-    const datos = await resp.json();
-    if (!resp.ok) { mostrarMensaje('mensajeIniciarToma', datos.error || 'No se pudo iniciar.', 'error'); return; }
+    if (esAdministradoraActual()) {
+      const resp = await fetch(WORKER_URL + '/api/pos/tomas-inventario/abrir', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+        body: JSON.stringify({ centro_costo_id: centroCostoId, notas })
+      });
+      const datos = await resp.json();
+      if (!resp.ok) { mostrarMensaje('mensajeIniciarToma', datos.error || 'No se pudo iniciar.', 'error'); return; }
+    } else {
+      const { error } = await supabaseClient.rpc('fn_abrir_toma_inventario', { p_centro_costo_id: centroCostoId, p_registrado_por: sesionActual.userId, p_notas: notas || null });
+      if (error) { mostrarMensaje('mensajeIniciarToma', error.message || 'No se pudo iniciar.', 'error'); return; }
+    }
     await cargarTomasInventario();
   }
 
   async function cargarDetalleTomaInventario(toma) {
     document.getElementById('tituloTomaEnProceso').textContent = `📋 ${toma.consecutivo} — ${toma.centro_costo ? toma.centro_costo.nombre : ''} (en proceso)`;
-    const resp = await fetch(`${WORKER_URL}/api/pos/tomas-inventario/detalle?toma_id=${toma.id}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
-    if (!resp.ok) return;
-    const { detalle } = await resp.json();
+    let detalle;
+    if (esAdministradoraActual()) {
+      const resp = await fetch(`${WORKER_URL}/api/pos/tomas-inventario/detalle?toma_id=${toma.id}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+      if (!resp.ok) return;
+      detalle = (await resp.json()).detalle;
+    } else {
+      const { data, error } = await supabaseClient.from('tomas_inventario_detalle').select('*, item:inventario_item_id(nombre, unidad_medida)').eq('toma_id', toma.id);
+      if (error) return;
+      detalle = (data || []).sort((a, b) => ((a.item && a.item.nombre) || '').localeCompare((b.item && b.item.nombre) || '', 'es'));
+    }
 
     const cont = document.getElementById('listaConteoTomaInventario');
     cont.innerHTML = `
@@ -29557,18 +30992,25 @@
 
   async function guardarConteoItemToma(detalleId, valor) {
     if (valor === '') return;
-    await fetch(WORKER_URL + '/api/pos/tomas-inventario/contar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
-      body: JSON.stringify({ detalle_id: detalleId, stock_contado: Number(valor) })
-    });
-    // Refresca solo la lista (para actualizar la columna de diferencia), sin perder el foco de otros campos
-    const resp = await fetch(WORKER_URL + '/api/pos/tomas-inventario', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
-    if (resp.ok) {
-      const { tomas } = await resp.json();
-      const enProceso = (tomas || []).find(t => t.estado === 'en_proceso');
-      if (enProceso) await cargarDetalleTomaInventario(enProceso);
+    let tomas;
+    if (esAdministradoraActual()) {
+      await fetch(WORKER_URL + '/api/pos/tomas-inventario/contar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + sesionActual.token },
+        body: JSON.stringify({ detalle_id: detalleId, stock_contado: Number(valor) })
+      });
+      // Refresca solo la lista (para actualizar la columna de diferencia), sin perder el foco de otros campos
+      const resp = await fetch(WORKER_URL + '/api/pos/tomas-inventario', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+      if (resp.ok) tomas = (await resp.json()).tomas;
+    } else {
+      const { error } = await supabaseClient.rpc('fn_toma_guardar_conteo', { p_detalle_id: detalleId, p_stock: Number(valor) });
+      if (error) { mostrarMensaje('mensajeTomaInventario', error.message, 'error'); return; }
+      ocultarMensaje('mensajeTomaInventario');
+      const { data } = await supabaseClient.from('tomas_inventario').select('*, centro_costo:centro_costo_id(nombre)').eq('estado', 'en_proceso');
+      tomas = data;
     }
+    const enProceso = (tomas || []).find(t => t.estado === 'en_proceso');
+    if (enProceso) await cargarDetalleTomaInventario(enProceso);
   }
 
   async function confirmarFinalizarTomaInventario() {
@@ -31354,6 +32796,25 @@
     if (!resp.ok) {
       const datos = await resp.json().catch(() => ({}));
       mostrarMensaje('mensajeEmpleados', 'No se pudo guardar el cambio: ' + (datos.error || 'Error desconocido'), 'error');
+      return;
+    }
+
+    // Campos de la ficha que se guardan directo en Supabase (la administradora tiene permiso por RLS)
+    const tipoContrato = document.getElementById(`edit-emp-tipocontrato-${empleadoId}`).value;
+    const fechaFin = document.getElementById(`edit-emp-fincontrato-${empleadoId}`).value;
+    if (fechaFin && fechaFin < fechaIngreso) { mostrarMensaje('mensajeEmpleados', 'La fecha de fin del contrato no puede ser anterior a la de ingreso. (Los demás cambios ya quedaron guardados.)', 'error'); await cargarEmpleados(); return; }
+    const { error: errorFicha } = await supabaseClient.from('empleados').update({
+      cargo: document.getElementById(`edit-emp-cargo-${empleadoId}`).value.trim() || null,
+      area: document.getElementById(`edit-emp-area-${empleadoId}`).value || null,
+      jornada: document.getElementById(`edit-emp-jornada-${empleadoId}`).value || null,
+      tipo_contrato: tipoContrato,
+      fecha_fin_contrato: tipoContrato === 'fijo' && fechaFin ? fechaFin : null,
+      caja_compensacion: document.getElementById(`edit-emp-caja-${empleadoId}`).value.trim() || null,
+      user_id: document.getElementById(`edit-emp-cuenta-${empleadoId}`).value || null
+    }).eq('id', empleadoId);
+    if (errorFicha) {
+      mostrarMensaje('mensajeEmpleados', 'Se guardaron los datos básicos, pero no el cargo/contrato/cuenta: ' + errorFicha.message, 'error');
+      await cargarEmpleados();
       return;
     }
 

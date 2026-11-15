@@ -3,7 +3,7 @@
 Los chats no comparten memoria: solo comparten el repositorio (`CLAUDE.md` y `docs/`).
 
 ## Chats por tema (Sonnet 5.5)
-Un chat por tema: **Ventas** (`ventas-pos.md`), **Pedidos y anticipos** (`pedidos-anticipo.md`), **Compras SENA** (`compras-sena.md`), **Facturación DIAN** (`dian-facturacion.md`), **Impuestos** (`impuestos-prevision.md`), **Producción e inventario** (`produccion-inventario.md`), **Contabilidad** (`contabilidad-decisiones.md`), **Menú/Interfaz** (`menu-lateral.md`).
+Un chat por tema: **Ventas** (`ventas-pos.md`), **Pedidos y anticipos** (`pedidos-anticipo.md`), **Compras SENA** (`compras-sena.md`), **Facturación DIAN** (`dian-facturacion.md`), **Impuestos** (`impuestos-prevision.md`), **Producción e inventario** (`produccion-inventario.md`), **Contabilidad** (`contabilidad-decisiones.md`), **Menú/Interfaz** (`menu-lateral.md`), **Personal** (`personal.md`).
 
 Mensaje de apertura (cambiar la primera línea y el pedido):
 
@@ -19,6 +19,7 @@ Reglas:
 - Responde en español, claro y sin tecnicismos (soy Sara, no programadora).
 - Trabaja solo en este tema. Si ves algo de otro tema, anótalo en docs/PENDIENTES.md bajo "Para otro chat" y sigue.
 - Cada cambio: rama → PR → squash merge a main. Si tocas index.html, sube CACHE_NAME en sw.js.
+- Si lo probaste y funciona, haz el PR y fusiónalo sin preguntarme; solo avísame qué cambió. Pregúntame antes de fusionar solo si toca ventas/caja, dinero, DIAN/impuestos o borrar datos.
 - Antes de decir "listo", pruébalo (Playwright o SQL con rollback) y dime qué probaste.
 - Al terminar: actualiza tu archivo de docs/temas/ (qué se decidió, por qué, qué objetos de Supabase usa, qué falta) y marca en PENDIENTES.md lo cerrado.
 - Si el mapa de index.html quedó desactualizado en lo que tocaste, corrígelo.
@@ -30,6 +31,7 @@ Mi pedido de hoy: [aquí escribes lo que necesitas]
 Añadidos según el chat:
 - **Ventas:** "Primero diagnostica por qué no me deja registrar ventas; te paso el mensaje exacto: …" (pegar texto o captura del error).
 - **Compras SENA:** "Los requisitos vienen del Instructivo de pagos del Fondo Emprender; la interventora dijo que con 1 cotización basta".
+- **Personal:** "La nómina electrónica no se construye (va con un proveedor); lo laboral se consulta con el contador".
 - **Impuestos y Contabilidad:** "No decidas temas tributarios por tu cuenta: déjalos como pregunta para el contador en PENDIENTES.md".
 
 ## Orquestador (Opus 5.5)
