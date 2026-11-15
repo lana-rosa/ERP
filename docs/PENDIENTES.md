@@ -11,7 +11,7 @@ Actualizado: 2026-11-12 (Orquestador)
 
 ## Orden de trabajo (turnos)
 Dos chats no deben cambiar `index.html` en la misma zona a la vez.
-1. **Chat 1 Ventas** — bloqueado esperando el mensaje del error (Sara).
+1. **Chat 1 Ventas** — causa probable encontrada; arreglos publicados; falta que Sara pruebe turno nuevo y venta.
 2. **Chat 2 Pedidos** — en curso: textos legales en recibos → luego lote de pedidos (ver su sección).
 3. **Chat 3 Compras SENA** — en curso: ajustes del nuevo modelo de desembolsos (zona Compras, no choca con el chat 2).
 4. **Chat 6 Producción** — en cola: empieza **cuando el chat 2 publique** su lote de pedidos.
@@ -21,7 +21,7 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 ## Por chat
 
 ### Chat 1 · Ventas
-- [ ] 🔴 **No deja registrar ventas** (desde 03-nov). Falta el mensaje exacto o captura al dar "Confirmar venta". Revisar: "a nombre de quién", marketplace, feria activa, agotados, turno de caja (abierto desde 19-oct), respuesta del Worker.
+- [ ] 🔴 **No deja registrar ventas** (desde 03-nov). Mensaje: "No hay turno de caja abierto." (lo da el Worker). Causas probables: (a) el turno abierto el 19-oct lleva +24 días y el Worker ya no lo reconoce; (b) Sara tiene 2 cuentas (la del ERP `…@gmai.com`, administrador; otra `…@gmail.com` sin rol, creada 3-nov). 13/15-nov: además "Token inválido o expirado" al abrir turno. Arreglos publicados en el PR (token siempre vigente + bloqueo de cuentas sin rol). **Falta (Sara):** entrar con la cuenta del ERP, cerrar el turno del 19-oct con arqueo, abrir uno nuevo y hacer una venta de prueba; luego marcar [x]. Ver `docs/temas/ventas-pos.md`.
 
 ### Chat 2 · Pedidos y anticipos (enviado 12-nov, en este orden)
 - [x] Recibos: el texto de cambios/retracto/garantía respeta saltos de línea y va alineado a la izquierda (venta y anticipo).
