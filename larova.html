@@ -8,6 +8,7 @@
 <title>LAROVA · Lana Rosa, Valor y Avance</title>
 <link rel="icon" type="image/png" href="./icon-192.png">
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<link rel="preload" as="image" href="./rosina-feliz.png">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 <!--
   LAROVA — portada del Sistema Operativo Lana Rosa (paso 1, solo enlaces).
@@ -29,20 +30,17 @@
   .sub{font-size:15px;font-weight:500;margin-top:-2px}
   .pequena{font-size:11px;color:var(--suave);letter-spacing:.4px}
   .saludo{background:#fff;border-radius:20px;padding:14px 18px;margin:20px auto 22px;max-width:520px;box-shadow:0 2px 12px rgba(216,1,124,.12);display:flex;gap:12px;align-items:center}
-  .saludo .ovejita{font-size:30px}
+  .saludo img{width:46px;height:auto;flex-shrink:0}
   .saludo b{display:block;font-size:15px}
   .saludo span{font-size:13px;color:var(--suave)}
   .rejilla{display:grid;gap:14px;grid-template-columns:1fr 1fr}
   .tarjeta{display:flex;align-items:center;gap:16px;background:#fff;border-radius:22px;padding:20px;text-decoration:none;color:inherit;box-shadow:0 2px 12px rgba(216,1,124,.12);border:2px solid transparent;min-height:104px;transition:transform .12s ease,border-color .12s ease}
   .tarjeta:hover,.tarjeta:focus-visible{border-color:var(--c);outline:none;transform:translateY(-2px)}
-  .icono{width:62px;height:62px;border-radius:18px;background:var(--c);display:grid;place-items:center;font-size:30px;flex-shrink:0;color:#fff}
+  .icono{width:62px;height:62px;border-radius:18px;background:var(--c);display:grid;place-items:center;flex-shrink:0;color:#fff}
+  .icono svg{width:32px;height:32px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
   .tarjeta h2{font-family:'Fredoka',sans-serif;font-weight:600;font-size:20px;line-height:1.1}
   .tarjeta p{font-size:12.5px;color:var(--suave);margin-top:4px;line-height:1.35}
   .flecha{margin-left:auto;font-size:20px;color:var(--c);font-weight:600;padding-left:6px}
-  .entrada{padding:26px 22px;min-height:170px;flex-direction:column;align-items:flex-start;justify-content:center;background:linear-gradient(135deg,#fff,var(--tinte))}
-  .entrada .icono{width:54px;height:54px;font-size:26px}
-  .etiqueta{display:inline-block;font-size:11px;font-weight:600;background:var(--rosa-suave);color:var(--rosa);border-radius:999px;padding:3px 10px;margin-bottom:12px}
-  .etiqueta.azul{color:#4f6f8f;background:#e6eef6}
   .volver{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--rosa);text-decoration:none;font-weight:600;margin:0 0 14px;background:#fff;border-radius:999px;padding:8px 14px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
   .volver:focus-visible{outline:2px solid var(--rosa)}
   .nota{margin-top:20px;font-size:12px;color:var(--suave);text-align:center;line-height:1.5}
@@ -61,30 +59,30 @@
 
   <main>
     <section class="vista activa" id="v-inicio" aria-label="Entrada">
-      <div class="saludo"><div class="ovejita" aria-hidden="true">🐑</div><div><b>¡Hola! Soy Rosina.</b><span>¿Cómo vas a entrar hoy?</span></div></div>
+      <div class="saludo"><img src="./rosina-feliz.png" alt="" width="33" height="46"><div><b>¡Hola! Soy Rosina.</b><span>¿Cómo vas a entrar hoy?</span></div></div>
       <div class="rejilla">
-        <a class="tarjeta entrada" style="--c:#d8017c" href="#administracion"><span class="etiqueta">Sara y Jennifer</span><div class="icono" aria-hidden="true">🔐</div><div><h2>Acceso Administración</h2><p>Todo el negocio: ERP, CRM, Gestión y la web.</p></div></a>
-        <a class="tarjeta entrada" style="--c:#85a3c0" href="#equipo"><span class="etiqueta azul">Tienda, taller, contador</span><div class="icono" aria-hidden="true">🧶</div><div><h2>Acceso Equipo</h2><p>Solo lo que tu cargo necesita para trabajar.</p></div></a>
+        <a class="tarjeta" style="--c:#d8017c" href="#administracion"><div class="icono"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></svg></div><div><h2>Acceso Administración</h2><p>Todo el negocio: ERP, CRM, Gestión y la web.</p></div><span class="flecha" aria-hidden="true">›</span></a>
+        <a class="tarjeta" style="--c:#85a3c0" href="#equipo"><div class="icono"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.5-3 2.7-5 5.5-5s5 2 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 14.2c3 .3 4.7 2 5 4.8"/></svg></div><div><h2>Acceso Equipo</h2><p>Solo lo que tu cargo necesita para trabajar.</p></div><span class="flecha" aria-hidden="true">›</span></a>
       </div>
     </section>
 
     <section class="vista" id="v-administracion" aria-label="Acceso Administración">
       <a class="volver" href="#">← Volver</a>
-      <div class="saludo"><div class="ovejita" aria-hidden="true">🐑</div><div><b>Administración</b><span>¿A dónde vamos hoy?</span></div></div>
+      <div class="saludo"><img src="./rosina-feliz.png" alt="" width="33" height="46"><div><b>Administración</b><span>¿A dónde vamos hoy?</span></div></div>
       <div class="rejilla">
-        <a class="tarjeta" style="--c:#d8017c" href="./index.html"><div class="icono" aria-hidden="true">🧾</div><div><h2>ERP</h2><p>Ventas, pedidos, inventario, compras, contabilidad.</p></div><span class="flecha" aria-hidden="true">›</span></a>
-        <a class="tarjeta" style="--c:#e0a032" href="https://lana-rosa.github.io/CRM/"><div class="icono" aria-hidden="true">💬</div><div><h2>CRM</h2><p>Clientas, oportunidades y seguimiento.</p></div><span class="flecha" aria-hidden="true">›</span></a>
-        <a class="tarjeta" style="--c:#2e8b57" href="https://lana-rosa.github.io/SO/"><div class="icono" aria-hidden="true">🧭</div><div><h2>Gestión</h2><p>Seguridad y salud, calidad, riesgos, 5S.</p></div><span class="flecha" aria-hidden="true">›</span></a>
-        <a class="tarjeta" style="--c:#85a3c0" href="https://lanarosacrochet.com" target="_blank" rel="noopener"><div class="icono" aria-hidden="true">🌐</div><div><h2>Ver la web</h2><p>lanarosacrochet.com, como la ve la clienta.</p></div><span class="flecha" aria-hidden="true">↗</span></a>
+        <a class="tarjeta" style="--c:#d8017c" href="./index.html"><div class="icono"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l1 12H5L6 8Z"/><path d="M9 8V7a3 3 0 0 1 6 0v1"/></svg></div><div><h2>ERP</h2><p>Ventas, pedidos, inventario, compras, contabilidad.</p></div><span class="flecha" aria-hidden="true">›</span></a>
+        <a class="tarjeta" style="--c:#e0a032" href="https://lana-rosa.github.io/CRM/"><div class="icono"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a7.5 7.5 0 0 1-10.9 6.7L4 20l1.4-4.2A7.5 7.5 0 1 1 20 12Z"/><path d="M9 11.5h6M9 14.5h3.5"/></svg></div><div><h2>CRM</h2><p>Clientas, oportunidades y seguimiento.</p></div><span class="flecha" aria-hidden="true">›</span></a>
+        <a class="tarjeta" style="--c:#2e8b57" href="https://lana-rosa.github.io/SO/"><div class="icono"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5 5-2Z"/></svg></div><div><h2>Gestión</h2><p>Seguridad y salud, calidad, riesgos, 5S.</p></div><span class="flecha" aria-hidden="true">›</span></a>
+        <a class="tarjeta" style="--c:#85a3c0" href="https://lanarosacrochet.com" target="_blank" rel="noopener"><div class="icono"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z"/></svg></div><div><h2>Ver la web</h2><p>lanarosacrochet.com, como la ve la clienta.</p></div><span class="flecha" aria-hidden="true">↗</span></a>
       </div>
       <p class="nota">Cada plataforma te pide tu cuenta y revisa tu rol: entrar por aquí no da más permisos.</p>
     </section>
 
     <section class="vista" id="v-equipo" aria-label="Acceso Equipo">
       <a class="volver" href="#">← Volver</a>
-      <div class="saludo"><div class="ovejita" aria-hidden="true">🐑</div><div><b>Equipo</b><span>Entra con tu cuenta y verás solo lo de tu cargo.</span></div></div>
+      <div class="saludo"><img src="./rosina-feliz.png" alt="" width="33" height="46"><div><b>Equipo</b><span>Entra con tu cuenta y verás solo lo de tu cargo.</span></div></div>
       <div class="rejilla">
-        <a class="tarjeta" style="--c:#d8017c" href="./index.html"><div class="icono" aria-hidden="true">🧾</div><div><h2>Mi trabajo (ERP)</h2><p>Caja y ventas, inventario, producción, tu horario. El menú muestra solo lo de tu rol.</p></div><span class="flecha" aria-hidden="true">›</span></a>
+        <a class="tarjeta" style="--c:#d8017c" href="./index.html"><div class="icono"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l1 12H5L6 8Z"/><path d="M9 8V7a3 3 0 0 1 6 0v1"/></svg></div><div><h2>Mi trabajo (ERP)</h2><p>Caja y ventas, inventario, producción, tu horario. El menú muestra solo lo de tu rol.</p></div><span class="flecha" aria-hidden="true">›</span></a>
       </div>
       <p class="nota">Cada persona tiene su propia cuenta con su rol; nunca se comparte un usuario.</p>
     </section>
