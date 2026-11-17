@@ -41,14 +41,11 @@
   .tarjeta h2{font-family:'Fredoka',sans-serif;font-weight:600;font-size:20px;line-height:1.1}
   .tarjeta p{font-size:12.5px;color:var(--suave);margin-top:4px;line-height:1.35}
   .flecha{margin-left:auto;font-size:20px;color:var(--c);font-weight:600;padding-left:6px}
-  .entrada{padding:22px 20px 22px 24px;min-height:190px;justify-content:space-between;background:linear-gradient(135deg,#fff,var(--tinte))}
-  .entrada .textos{display:flex;flex-direction:column;align-items:flex-start}
-  .entrada .rosina{height:150px;width:auto;flex-shrink:0;filter:drop-shadow(0 6px 10px rgba(216,1,124,.18))}
   .volver{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--rosa);text-decoration:none;font-weight:600;margin:0 0 14px;background:#fff;border-radius:999px;padding:8px 14px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
   .volver:focus-visible{outline:2px solid var(--rosa)}
   .nota{margin-top:20px;font-size:12px;color:var(--suave);text-align:center;line-height:1.5}
   .vista{display:none}.vista.activa{display:block}
-  @media(max-width:600px){.rejilla{grid-template-columns:1fr}h1{font-size:36px}.entrada{min-height:170px}.entrada .rosina{height:128px}}
+  @media(max-width:600px){.rejilla{grid-template-columns:1fr}h1{font-size:36px}}
 </style>
 </head>
 <body>
@@ -64,8 +61,8 @@
     <section class="vista activa" id="v-inicio" aria-label="Entrada">
       <div class="saludo"><img src="./rosina-feliz.png" alt="" width="33" height="46"><div><b>¡Hola! Soy Rosina.</b><span>¿Cómo vas a entrar hoy?</span></div></div>
       <div class="rejilla">
-        <a class="tarjeta entrada" style="--c:#d8017c" href="#administracion"><div class="textos"><h2>Acceso Administración</h2><p>Todo el negocio: ERP, CRM, Gestión y la web.</p></div><img class="rosina" src="./rosina-feliz.png" alt="" width="105" height="150"></a>
-        <a class="tarjeta entrada" style="--c:#85a3c0" href="#equipo"><div class="textos"><h2>Acceso Equipo</h2><p>Solo lo que tu cargo necesita para trabajar.</p></div><img class="rosina" src="./rosina-parada.png" alt="" width="105" height="150"></a>
+        <a class="tarjeta" style="--c:#d8017c" href="#administracion"><div class="icono"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></svg></div><div><h2>Acceso Administración</h2><p>Todo el negocio: ERP, CRM, Gestión y la web.</p></div><span class="flecha" aria-hidden="true">›</span></a>
+        <a class="tarjeta" style="--c:#85a3c0" href="#equipo"><div class="icono"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.5-3 2.7-5 5.5-5s5 2 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 14.2c3 .3 4.7 2 5 4.8"/></svg></div><div><h2>Acceso Equipo</h2><p>Solo lo que tu cargo necesita para trabajar.</p></div><span class="flecha" aria-hidden="true">›</span></a>
       </div>
     </section>
 
