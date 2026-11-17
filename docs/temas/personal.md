@@ -127,3 +127,9 @@ Se usará la **solución gratuita de la DIAN** (se digita a mano cada mes en el 
 - **Probado:** prueba en seco con rollback antes de aplicar y verificación después. Manuela (cajera) es rechazada con "No autorizado" (42501) en todas las versiones con firma única; la administradora y el sistema pasan; el contador solo pasa en el saldo de vacaciones. Las versiones con varias firmas se comprobaron leyendo su código (las 20 tienen el candado nuevo y ninguna el viejo).
 - **Después de esto** el candado débil queda en 111 funciones de otras áreas (ver PENDIENTES), ninguna de nómina, retiros, honorarios ni cierre contable.
 - **Cómo revisarlo de nuevo:** `select proname from pg_proc where prosecdef and prosrc ilike '%fn_rol_actual() is null and not public.fn_es_tejedora()%'`.
+
+## Cuentas conectadas con las fichas (17-nov-2026, aprobado por Sara)
+- Se conectó `empleados.user_id` con la cuenta de cada persona: Sara (propietaria), Jennifer y Manuela. Contador (Hernando) no tiene ficha.
+- **Qué activa:** marcar entrada y salida desde el menú y "Mi horario"; pedir vacaciones y permisos; la regla de privacidad de las horas (cada quien ve las suyas); el cruce de caja con asistencia; y la identidad propia en ventas (para detectar una venta hecha a sí misma).
+- **Ajuste:** en el cruce de caja la propietaria no se marca como alerta cuando no marca horas (`estado = propietaria`, solo información).
+- **Cada persona nueva:** conectar su cuenta al crear la ficha (Editar → Cuenta de acceso). Verificado con rollback: Manuela ve solo sus horas y su turno, puede pedir vacaciones, Sara aprueba el permiso de Jennifer y la apertura de caja de Manuela dentro de sus horas sale ✅.
