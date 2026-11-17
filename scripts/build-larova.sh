@@ -17,6 +17,7 @@ cp index.html sw.js manifest.json logo-animado.html apple-touch-icon.png icon-19
 # --- Portada en la raíz ---
 cp larova.html dist/index.html
 cp apple-touch-icon.png icon-192.png rosina-feliz.png dist/
+cp -r iconos-larova dist/
 
 # Ajustar los dos enlaces que cambian de lugar (falla si el texto ya no existe, para no publicar algo roto)
 cambiar() { # archivo, texto viejo, texto nuevo
