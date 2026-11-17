@@ -3465,6 +3465,12 @@
       </div>
     </div>
     <div class="panel" style="max-width:none;max-height:none;margin-top:16px;">
+      <h2>🧾 Caja y asistencia</h2>
+      <div class="subtitulo">Cruza, en la semana que estás viendo, quién abrió o cerró la caja con las horas que esa persona marcó ese día. Solo lee: no cambia la caja ni las horas.</div>
+      <div id="avisoCajaAbierta"></div>
+      <div id="listaCajaAsistencia"><div class="cargando">Cargando...</div></div>
+    </div>
+    <div class="panel" style="max-width:none;max-height:none;margin-top:16px;">
       <h2>Resumen del mes</h2>
       <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px;">
         <div><label for="turnosMes" style="font-size:11px;">Mes</label><input type="month" id="turnosMes" onchange="cargarResumenMesTurnos()" style="padding:9px 10px;"></div>
@@ -15418,6 +15424,44 @@
     renderizarGridTurnos();
     limpiarFormTurno();
     cargarResumenMesTurnos();
+    cargarCajaVsAsistencia();
+  }
+
+  // Cruza abrir/cerrar la caja con las horas marcadas (solo lectura; no toca el turno de caja).
+  async function cargarCajaVsAsistencia() {
+    const lista = document.getElementById('listaCajaAsistencia');
+    const aviso = document.getElementById('avisoCajaAbierta');
+    lista.innerHTML = '<div class="cargando">Cargando...</div>';
+    aviso.innerHTML = '';
+    const fin = sumarDiasISO(turnosLunes, 6);
+    const [rc, ra] = await Promise.all([
+      supabaseClient.rpc('fn_rh_caja_vs_asistencia', { p_desde: turnosLunes, p_hasta: fin }),
+      supabaseClient.from('turnos_caja').select('id, fecha_apertura, cajero_user_id').eq('estado', 'abierto')
+    ]);
+    if (rc.error) { lista.innerHTML = '<div class="cargando">No se pudo cargar: ' + escaparHtml(rc.error.message) + '</div>'; return; }
+    const abiertos = (ra.data || []);
+    if (abiertos.length) {
+      const nombres = {};
+      const { data: us } = await supabaseClient.from('usuarios_roles').select('user_id, nombre_completo').in('user_id', abiertos.map(t => t.cajero_user_id));
+      (us || []).forEach(u => { nombres[u.user_id] = u.nombre_completo; });
+      aviso.innerHTML = abiertos.map(t => {
+        const horas = (Date.now() - new Date(t.fecha_apertura).getTime()) / 3600000;
+        const dias = Math.floor(horas / 24);
+        const desde = new Date(t.fecha_apertura).toLocaleString('es-CO', { timeZone: 'America/Bogota', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+        return `<div style="font-size:12.5px;background:${horas > 24 ? '#fff3d6' : 'var(--rosa-suave)'};color:${horas > 24 ? '#8a5a00' : 'inherit'};border-radius:8px;padding:8px 10px;margin-bottom:8px;">${horas > 24 ? '⚠️' : '🟢'} Caja abierta por ${escaparHtml(nombres[t.cajero_user_id] || 'alguien')} desde el ${desde}${dias >= 1 ? ` (lleva ${dias} día${dias === 1 ? '' : 's'}; conviene cerrarla cada día)` : ''}.</div>`;
+      }).join('');
+    }
+    const filas = rc.data || [];
+    if (filas.length === 0) { lista.innerHTML = '<div class="cargando">Esta semana no se abrió ni se cerró ninguna caja.</div>'; return; }
+    const iconos = { ok: '✅', fuera_de_horario: '⚠️', sin_entrada: '⚠️', sin_ficha: 'ℹ️' };
+    lista.innerHTML = filas.map(f => {
+      const cuando = new Date(f.momento).toLocaleString('es-CO', { timeZone: 'America/Bogota', weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+      const marcas = f.entrada ? `Marcó ${horaBogota(f.entrada)}–${f.salida ? horaBogota(f.salida) : 'en curso'}` : '';
+      return `<div style="padding:7px 0;border-bottom:1px solid #f4eef2;font-size:12.5px;">
+        <div>${iconos[f.estado] || ''} <strong>${escaparHtml(f.cajero_nombre)}</strong> · ${f.evento === 'apertura' ? 'abrió' : 'cerró'} la caja · ${cuando}${marcas ? ` · <span style="opacity:0.7;">${marcas}</span>` : ''}</div>
+        <div style="opacity:0.8;margin-left:22px;">${escaparHtml(f.observacion)}</div>
+      </div>`;
+    }).join('');
   }
 
   function renderizarGridTurnos() {
