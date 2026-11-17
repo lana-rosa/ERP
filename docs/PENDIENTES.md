@@ -74,6 +74,7 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [x] Resumen de pendientes contables listo para llevarle a Hernando: `docs/resumen-contador.md` (llevarlo junto con las 22 preguntas del chat 5) — 12-nov-2026
 
 ### Chat 8 · Menú/Interfaz
+- [x] Portada LAROVA paso 1 (17-nov, v60): `larova.html` con enlaces a ERP, CRM, Gestión y web; ítem «Volver a LAROVA» y «Gestión» en el menú del ERP. [ ] Paso 2 (después del 13-dic): dirección única `larova.lanarosacrochet.com`, filtro de tarjetas por rol, un solo inicio de sesión. Solo proponer, no construir antes.
 - [ ] 🕒 Futuro (desde el 14-dic, después de la apertura): verificación en dos pasos (MFA TOTP, Supabase Auth) solo para administradoras: inscribir factor con QR, pedir código al iniciar sesión y plan de recuperación (códigos de respaldo o restablece la otra administradora). No construir antes. Ver `menu-lateral.md`.
 - [x] Ítem "Sistema Operativo" en el menú (admin, Gerencia SO, Taller SO), 14-nov v55. Al mudar de dominio: cambiar `URL_SISTEMA_OPERATIVO`.
 - [x] Inicio de sesión: botón 👁 para ver la contraseña y error que sugiere revisar el correo (13-nov, v47).
