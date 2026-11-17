@@ -112,7 +112,7 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [ ] Arqueo físico de caja (última referencia $1.353.066).
 - [ ] Fecha de inauguración del almacén.
 - [ ] Personal: nombres de las 2 tejedoras y de quien atiende el almacén (¿Manuela?), con jornada y salario de cada una; decidir si las filas actuales (Sara, Jennifer, Manuela, hoy "indefinido") se quedan o se reemplazan por los 3 contratos a término fijo de 1 año. Sara y Jennifer: ver pregunta al contador.
-- [ ] Personal: en Editar de cada empleado, escoger su "Cuenta de acceso" (hoy ninguna ficha está conectada) y subir los documentos que faltan.
+- [x] Personal: cuentas conectadas con las fichas (17-nov, hecho por Claude con visto bueno de Sara): Sara, Jennifer y Manuela. Falta repetirlo con cada persona nueva (Nómina → Empleados → Editar → Cuenta de acceso).
 - [ ] Excel de gramos por orden.
 - [ ] Cambiar los 3 códigos de barras internos por GS1.
 - [ ] Asignar tejedoras y horas en el plan de tejido.

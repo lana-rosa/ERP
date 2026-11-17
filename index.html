@@ -15453,7 +15453,7 @@
     }
     const filas = rc.data || [];
     if (filas.length === 0) { lista.innerHTML = '<div class="cargando">Esta semana no se abrió ni se cerró ninguna caja.</div>'; return; }
-    const iconos = { ok: '✅', fuera_de_horario: '⚠️', sin_entrada: '⚠️', sin_ficha: 'ℹ️' };
+    const iconos = { ok: '✅', fuera_de_horario: '⚠️', sin_entrada: '⚠️', sin_ficha: 'ℹ️', propietaria: 'ℹ️' };
     lista.innerHTML = filas.map(f => {
       const cuando = new Date(f.momento).toLocaleString('es-CO', { timeZone: 'America/Bogota', weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
       const marcas = f.entrada ? `Marcó ${horaBogota(f.entrada)}–${f.salida ? horaBogota(f.salida) : 'en curso'}` : '';
