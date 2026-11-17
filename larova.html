@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#d8017c">
+<title>LAROVA · Lana Rosa, Valor y Avance</title>
+<link rel="icon" type="image/png" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<!--
+  LAROVA — portada del Sistema Operativo Lana Rosa (paso 1, solo enlaces).
+  No inicia sesión ni lee datos: cada plataforma pide su propio inicio de sesión y revisa el rol de la cuenta.
+  Direcciones (cambiar aquí cuando se mude de dominio):
+    ERP     ./index.html
+    CRM     https://lana-rosa.github.io/CRM/
+    Gestión https://lana-rosa.github.io/SO/
+    Web     https://lanarosacrochet.com
+-->
+<style>
+  :root{--rosa:#d8017c;--rosa-medio:#ff8fd4;--rosa-suave:#f9ddf4;--tinte:#fdf0f9;--hueso:#efebeb;--texto:#3a2c35;--suave:#7a6670}
+  *{box-sizing:border-box;margin:0}
+  body{font-family:'Poppins',system-ui,sans-serif;background:linear-gradient(180deg,var(--tinte),var(--hueso));background-attachment:fixed;color:var(--texto);min-height:100vh}
+  .envoltura{max-width:880px;margin:0 auto;padding:28px 16px 40px}
+  .marca{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px}
+  .marca img{width:84px;height:84px;border-radius:24px;box-shadow:0 6px 20px rgba(216,1,124,.25);margin-bottom:6px}
+  h1{font-family:'Fredoka',sans-serif;font-weight:600;font-size:40px;letter-spacing:3px;color:var(--rosa);line-height:1}
+  .sub{font-size:15px;font-weight:500;margin-top:-2px}
+  .pequena{font-size:11px;color:var(--suave);letter-spacing:.4px}
+  .saludo{background:#fff;border-radius:20px;padding:14px 18px;margin:20px auto 22px;max-width:520px;box-shadow:0 2px 12px rgba(216,1,124,.12);display:flex;gap:12px;align-items:center}
+  .saludo .ovejita{font-size:30px}
+  .saludo b{display:block;font-size:15px}
+  .saludo span{font-size:13px;color:var(--suave)}
+  .rejilla{display:grid;gap:14px;grid-template-columns:1fr 1fr}
+  .tarjeta{display:flex;align-items:center;gap:16px;background:#fff;border-radius:22px;padding:20px;text-decoration:none;color:inherit;box-shadow:0 2px 12px rgba(216,1,124,.12);border:2px solid transparent;min-height:104px;transition:transform .12s ease,border-color .12s ease}
+  .tarjeta:hover,.tarjeta:focus-visible{border-color:var(--c);outline:none;transform:translateY(-2px)}
+  .icono{width:62px;height:62px;border-radius:18px;background:var(--c);display:grid;place-items:center;font-size:30px;flex-shrink:0;color:#fff}
+  .tarjeta h2{font-family:'Fredoka',sans-serif;font-weight:600;font-size:20px;line-height:1.1}
+  .tarjeta p{font-size:12.5px;color:var(--suave);margin-top:4px;line-height:1.35}
+  .flecha{margin-left:auto;font-size:20px;color:var(--c);font-weight:600;padding-left:6px}
+  .entrada{padding:26px 22px;min-height:170px;flex-direction:column;align-items:flex-start;justify-content:center;background:linear-gradient(135deg,#fff,var(--tinte))}
+  .entrada .icono{width:54px;height:54px;font-size:26px}
+  .etiqueta{display:inline-block;font-size:11px;font-weight:600;background:var(--rosa-suave);color:var(--rosa);border-radius:999px;padding:3px 10px;margin-bottom:12px}
+  .etiqueta.azul{color:#4f6f8f;background:#e6eef6}
+  .volver{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--rosa);text-decoration:none;font-weight:600;margin:0 0 14px;background:#fff;border-radius:999px;padding:8px 14px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+  .volver:focus-visible{outline:2px solid var(--rosa)}
+  .nota{margin-top:20px;font-size:12px;color:var(--suave);text-align:center;line-height:1.5}
+  .vista{display:none}.vista.activa{display:block}
+  @media(max-width:600px){.rejilla{grid-template-columns:1fr}h1{font-size:36px}}
+</style>
+</head>
+<body>
+<div class="envoltura">
+  <header class="marca">
+    <img src="./icon-192.png" alt="Lana Rosa" width="84" height="84">
+    <h1>LAROVA</h1>
+    <div class="sub">Lana Rosa, Valor y Avance</div>
+    <div class="pequena">Sistema Operativo Lana Rosa</div>
+  </header>
+
+  <main>
+    <section class="vista activa" id="v-inicio" aria-label="Entrada">
+      <div class="saludo"><div class="ovejita" aria-hidden="true">🐑</div><div><b>¡Hola! Soy Rosina.</b><span>¿Cómo vas a entrar hoy?</span></div></div>
+      <div class="rejilla">
+        <a class="tarjeta entrada" style="--c:#d8017c" href="#administracion"><span class="etiqueta">Sara y Jennifer</span><div class="icono" aria-hidden="true">🔐</div><div><h2>Acceso Administración</h2><p>Todo el negocio: ERP, CRM, Gestión y la web.</p></div></a>
+        <a class="tarjeta entrada" style="--c:#85a3c0" href="#equipo"><span class="etiqueta azul">Tienda, taller, contador</span><div class="icono" aria-hidden="true">🧶</div><div><h2>Acceso Equipo</h2><p>Solo lo que tu cargo necesita para trabajar.</p></div></a>
+      </div>
+    </section>
+
+    <section class="vista" id="v-administracion" aria-label="Acceso Administración">
+      <a class="volver" href="#">← Volver</a>
+      <div class="saludo"><div class="ovejita" aria-hidden="true">🐑</div><div><b>Administración</b><span>¿A dónde vamos hoy?</span></div></div>
+      <div class="rejilla">
+        <a class="tarjeta" style="--c:#d8017c" href="./index.html"><div class="icono" aria-hidden="true">🧾</div><div><h2>ERP</h2><p>Ventas, pedidos, inventario, compras, contabilidad.</p></div><span class="flecha" aria-hidden="true">›</span></a>
+        <a class="tarjeta" style="--c:#e0a032" href="https://lana-rosa.github.io/CRM/"><div class="icono" aria-hidden="true">💬</div><div><h2>CRM</h2><p>Clientas, oportunidades y seguimiento.</p></div><span class="flecha" aria-hidden="true">›</span></a>
+        <a class="tarjeta" style="--c:#2e8b57" href="https://lana-rosa.github.io/SO/"><div class="icono" aria-hidden="true">🧭</div><div><h2>Gestión</h2><p>Seguridad y salud, calidad, riesgos, 5S.</p></div><span class="flecha" aria-hidden="true">›</span></a>
+        <a class="tarjeta" style="--c:#85a3c0" href="https://lanarosacrochet.com" target="_blank" rel="noopener"><div class="icono" aria-hidden="true">🌐</div><div><h2>Ver la web</h2><p>lanarosacrochet.com, como la ve la clienta.</p></div><span class="flecha" aria-hidden="true">↗</span></a>
+      </div>
+      <p class="nota">Cada plataforma te pide tu cuenta y revisa tu rol: entrar por aquí no da más permisos.</p>
+    </section>
+
+    <section class="vista" id="v-equipo" aria-label="Acceso Equipo">
+      <a class="volver" href="#">← Volver</a>
+      <div class="saludo"><div class="ovejita" aria-hidden="true">🐑</div><div><b>Equipo</b><span>Entra con tu cuenta y verás solo lo de tu cargo.</span></div></div>
+      <div class="rejilla">
+        <a class="tarjeta" style="--c:#d8017c" href="./index.html"><div class="icono" aria-hidden="true">🧾</div><div><h2>Mi trabajo (ERP)</h2><p>Caja y ventas, inventario, producción, tu horario. El menú muestra solo lo de tu rol.</p></div><span class="flecha" aria-hidden="true">›</span></a>
+      </div>
+      <p class="nota">Cada persona tiene su propia cuenta con su rol; nunca se comparte un usuario.</p>
+    </section>
+  </main>
+</div>
+<script>
+  function mostrarVista() {
+    var h = (location.hash || '').replace('#', '');
+    var id = h === 'administracion' ? 'v-administracion' : h === 'equipo' ? 'v-equipo' : 'v-inicio';
+    document.querySelectorAll('.vista').forEach(function (v) { v.classList.toggle('activa', v.id === id); });
+    window.scrollTo(0, 0);
+  }
+  addEventListener('hashchange', mostrarVista);
+  mostrarVista();
+</script>
+</body>
+</html>
