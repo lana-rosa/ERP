@@ -28,6 +28,10 @@ Preparado el 12-nov-2026 · Lana Rosa Crochet · Régimen SIMPLE · contabilidad
 ### 6. Códigos CUIF de 10 dígitos
 - El plan de cuentas se dejó como está. **Pregunta:** ¿qué necesita usted para usar CUIF (Anexo-CUIF)?
 
+### 7. Wompi y Nequi como cuenta puente (nuevo, 18-nov)
+- Wompi solo desembolsa a cuentas del grupo Bancolombia o a un Nequi. Plan: Wompi → Nequi (puente) → traslado a Davivienda.
+- **Preguntas:** ¿cómo se tratan esos desembolsos (ingreso, comisión, retención si aplica)? ¿Qué se reporta a la DIAN de los pagos por pasarelas? ¿Hay límites de Nequi que nos afecten y conviene un Nequi exclusivo del negocio?
+
 ## B. Tributario por confirmar con usted
 - UVT y tarifas SIMPLE del año, escenario de provisión y tabla de renta (sin ellos el sistema no calcula el anticipo).
 - ICA de Villamaría: se está usando 7 por mil industrial y 10 por mil comercial/servicios, con mínimo de 10 UVT ($523.740 en 2026), según lo que informó Sara. Falta verificarlo.

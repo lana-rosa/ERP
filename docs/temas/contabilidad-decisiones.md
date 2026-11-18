@@ -27,3 +27,17 @@ Llegó por el Orquestador general y reemplaza la del 14-oct («no se llevan banc
 
 **Para el contador (viernes 20-nov):** confirmar la nueva decisión de bancos y cómo tratar lo ya registrado en Caja. Se agrega a su lista en `docs/PENDIENTES.md` y en `docs/resumen-contador.md`.
 Nota: el pedido citaba «la pregunta 17 de la hoja del contador (banco/conciliación)», pero en `impuestos-preguntas-contador.md` la 17 trata de agrupar líneas para el ICA; no se tocó. El tema bancos queda como pregunta nueva.
+
+## Wompi → Nequi como cuenta puente (18-nov-2026) — PROPUESTA, sin aplicar
+Dato dado por Sara vía el Orquestador general: Wompi solo desembolsa a cuentas del grupo Bancolombia y permite cambiar el desembolso a un **Nequi**. Plan: Wompi → Nequi (puente) → traslado a Davivienda (transferencia o Bre-B). Wompi sigue encendido en la página. **No se cambia nada en el ERP** hasta que Sara confirme que Wompi ya desembolsa al Nequi.
+
+Cómo se registraría (con el sí de Sara):
+1. **Cuenta propia "Nequi–Wompi (puente)"** en Conciliación bancaria, con su subcuenta (1110xx), distinta de Davivienda (operación) y de Bancolombia (Fondo Emprender). Hoy existe un Nequi desactivado desde el 14-oct (`cuentas_bancarias`, titular Sara): se reactivaría con otro nombre/uso, o se crea uno nuevo; hay que revisar que el número sea el que Wompi usará.
+2. **Medio de pago Wompi** (tarjeta, PSE, QR, Nequi, otro) → cuenta Nequi puente en `medios_pago_cuenta`. Transferencia, tarjeta/datáfono y Bre-B directos → Davivienda.
+3. **Comisión de Wompi:** ya la calcula el ERP; el desembolso llega neto. Se sigue usando "Desembolsos de Wompi" (sube el reporte .xlsx y ajusta diferencias de comisión).
+4. **Traslado semanal** Nequi → Davivienda con la función "Traslado entre cuentas" (queda en libros, sin ingreso ni gasto).
+5. **Que no se mezclen gastos personales:** ese Nequi solo para Wompi y traslados; sin pagos personales. Si no es posible, un Nequi nuevo exclusivo.
+6. Los $13.888 de Wompi en 111005 (Bancolombia) pasarían a la cuenta puente.
+7. Si luego se migra a ePayco/Davivienda, **la cuenta puente se cierra**: se traslada el saldo a Davivienda y se desactiva.
+
+Preguntas nuevas para el contador (viernes 20-nov): ver `docs/PENDIENTES.md` (sección Contador).
