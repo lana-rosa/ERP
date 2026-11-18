@@ -39,7 +39,13 @@
   .volver:focus-visible{outline:2px solid var(--rosa)}
   .nota{margin-top:20px;font-size:12px;color:var(--suave);text-align:center;line-height:1.5}
   .vista{display:none}.vista.activa{display:block}
-  @media(max-width:600px){.rejilla{grid-template-columns:1fr}h1{font-size:36px}}
+  /* En Administración y Equipo: logo y nombre pequeños en la esquina superior izquierda */
+  body.interna .marca{flex-direction:row;align-items:center;text-align:left;justify-content:flex-start;gap:10px}
+  body.interna .marca img{width:44px;height:44px;border-radius:13px;margin:0;box-shadow:0 3px 10px rgba(216,1,124,.25)}
+  body.interna .marca h1{font-size:24px;letter-spacing:2px}
+  body.interna .marca .sub,body.interna .marca .pequena{display:none}
+  body.interna .rejilla{margin-top:18px}
+  @media(max-width:600px){.rejilla{grid-template-columns:1fr}h1{font-size:36px}body.interna .marca h1{font-size:22px}}
 </style>
 </head>
 <body>
@@ -84,6 +90,7 @@
     var h = (location.hash || '').replace('#', '');
     var id = h === 'administracion' ? 'v-administracion' : h === 'equipo' ? 'v-equipo' : 'v-inicio';
     document.querySelectorAll('.vista').forEach(function (v) { v.classList.toggle('activa', v.id === id); });
+    document.body.classList.toggle('interna', id !== 'v-inicio');
     window.scrollTo(0, 0);
   }
   addEventListener('hashchange', mostrarVista);
