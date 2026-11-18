@@ -71,6 +71,7 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 
 ### Chat 7 · Contabilidad (no creado)
 - Sin tareas de código. Ver preguntas al contador.
+- [ ] 🔴 Wompi urgente (18-nov): el desembolso de la página web no debe llegar a Bancolombia (cuenta del Fondo). Sara ya tiene Davivienda a su nombre; **Sara cambia la cuenta de desembolso en el panel de Wompi** (puede pedir documentos). Cuando Wompi apruebe, ese mismo día Claude crea Davivienda en el ERP, la deja predeterminada, asigna Wompi/transferencia/tarjeta a Davivienda y pasa los $13.888 (necesita: número y tipo de la cuenta y el sí de Sara).
 - [ ] 🔴 Bancos (18-nov): Davivienda = operación, Bancolombia = solo Fondo Emprender. Propuesta escrita en `docs/temas/contabilidad-decisiones.md`; **falta el sí de Sara** para tocar cuentas/libros. Pregunta a Sara: ¿a qué cuenta consigna Wompi? Conciliación automática por extractos: solo propuesta, para después de la apertura.
 - [x] Resumen de pendientes contables listo para llevarle a Hernando: `docs/resumen-contador.md` (llevarlo junto con las 22 preguntas del chat 5) — 12-nov-2026
 
