@@ -74,6 +74,8 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [x] Resumen de pendientes contables listo para llevarle a Hernando: `docs/resumen-contador.md` (llevarlo junto con las 22 preguntas del chat 5) — 12-nov-2026
 
 ### Chat 8 · Menú/Interfaz
+- [ ] 🔴 Pasar `lana-rosa/ERP` a privado (preparado 18-nov, NO aplicado): ver `docs/temas/privatizar-erp.md` y `docs/privatizar-erp/`. Orden: larova estable (4-dic) → repo público mínimo de redirección → privado → verificar. Falta el sí final de Jennifer.
+- [ ] 🔴 Respaldo del ERP (18-nov): causa probable = el Worker consulta 88 tablas (límite ~50 del plan gratis). Arreglo listo en la rama (función `fn_exportar_respaldo` + botón); falta el sí de Sara para aplicar la función y publicar.
 - [x] LAROVA 18-nov: Sara verificó `/erp/` y el ingreso único ERP↔Gestión (entra directo); CRM pide su propio ingreso (esperado). [ ] Falta: venta de prueba, revisar un pedido, app instalable, botón «Volver» en Gestión/CRM con cuentas reales, aviso al CRM chat 5. Plazo vie 4-dic.
 - [x] LAROVA `/gestion/` y `/CRM/` (18-nov): reenvío en Pages Functions, probado en local. Botón «Volver a LAROVA» en Gestión y CRM (inyectado por el reenvío). [ ] Sara: probar en `larova.lanarosacrochet.com` (ingreso único ERP↔Gestión, CRM). Plazo duro vie 4-dic. Ver `hosting.md`.
 - [x] LAROVA paso 2 (18-nov): dominio `larova.lanarosacrochet.com` activo; Worker acepta la dirección. [ ] Sara: borrar token «Claude ERP Worker 2»; probar en `/erp/` inicio de sesión, venta de prueba, pedidos, app instalable. [ ] Yo: `/gestion/` y `/crm/`. Plazo duro vie 4-dic. Ver `hosting.md`.
