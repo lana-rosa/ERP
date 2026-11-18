@@ -110,3 +110,6 @@
 
 ## Ícono otra vez rosado (con esquinas redondeadas)
 - Pedido de Sara: todo en LAROVA es rosado, así que el ícono vuelve a ser rosado (#e84e94) con la ovejita blanca más grande y las esquinas redondeadas (`icon-192/512` transparentes en las esquinas; maskable y apple-touch a sangre). `?v=4`, `sw.js` v74. Reinstalar la app para verlo.
+
+## Inicio en computador: nombre pequeño arriba a la izquierda
+- Pedido de Sara: el bloque grande del logo y «Lana Rosa ERP» ocupaba mucho espacio. En ≥701 px el logo (38 px) y el nombre (19 px) van dentro de la barra de arriba, a la izquierda; «Volver a LAROVA» al lado y «Marcar entrada / Cerrar sesión» a la derecha. Se quitó «Elige un módulo para empezar» en PC. En celular no cambia (logo y título compactos debajo de la barra). `.hub-marca` ahora vive dentro de `.hub-barra`. `sw.js` v75.

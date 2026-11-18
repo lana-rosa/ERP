@@ -1088,6 +1088,15 @@
   .hub-cabecera-modulo svg.ilus { width: 84px; height: 84px; flex-shrink: 0; }
   .hub-cabecera-modulo h1 { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 24px; margin: 0; }
   .hub-cabecera-modulo p { font-size: 13px; color: var(--texto-suave, #7a6670); margin: 4px 0 0; }
+  /* Computador: el nombre (logo + «Lana Rosa ERP») va pequeño en la esquina superior derecha */
+  @media (min-width: 701px) {
+    .hub-barra { flex-wrap: nowrap; }
+    .hub-barra-der { margin-left: auto; }
+    .hub-marca { flex-direction: row; order: -1; gap: 10px; margin: 0 14px 0 0; text-align: left; }
+    .hub-marca img { width: 38px; height: 38px; border-radius: 11px; box-shadow: none; }
+    .hub-marca h1 { font-size: 19px; white-space: nowrap; }
+    .hub-marca p { display: none; }
+  }
   .hub-pie { display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 28px; }
   .solo-movil { display: none !important; }
   @media (max-width: 700px) { .hub-rejilla { grid-template-columns: 1fr; } .hub-opciones { grid-template-columns: 1fr; }
@@ -1095,6 +1104,7 @@
     /* Arriba solo «Volver a LAROVA»; el logo se achica y se pone al lado del título */
     .hub-barra { margin-bottom: 4px; }
     .hub-barra-der { width: 100%; order: 3; margin: 2px 0 8px; }
+    .hub-marca { order: 4; width: 100%; box-sizing: border-box; }
     .hub-barra-der:not(:has(#widgetHorasTrabajadas)) { display: none; }
     .hub-reloj { width: 100%; }
     .hub-reloj #widgetHorasTrabajadas { width: 100%; box-sizing: border-box; }
@@ -1358,8 +1368,8 @@
         <div class="hub-reloj" id="hubRelojContenedor"></div>
         <button type="button" class="hub-enlace solo-pc" onclick="cerrarSesion()">Cerrar sesión</button>
       </div>
+      <div class="hub-marca"><img src="./icon-192.png?v=4" alt="Lana Rosa" width="72" height="72"><h1>Lana Rosa ERP</h1><p>Elige un módulo para empezar</p></div>
     </div>
-    <div class="hub-marca"><img src="./icon-192.png?v=4" alt="Lana Rosa" width="72" height="72"><h1>Lana Rosa ERP</h1><p>Elige un módulo para empezar</p></div>
     <div id="hubAvisoCaja" style="display:none;"></div>
     <div class="hub-titulo-seccion" id="hubRapidosTitulo">Accesos rápidos</div>
     <div class="hub-rapidos" id="hubRapidos"></div>
