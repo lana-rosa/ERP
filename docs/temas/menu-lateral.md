@@ -63,3 +63,6 @@
 
 ## Portada LAROVA sin la tarjeta de saludo de Rosina (18-nov, pedido de Jennifer)
 - Se quitó el recuadro «¡Hola! Soy Rosina…» (inicio), «Administración · ¿A dónde vamos hoy?» y «Equipo · …» de `larova.html`; las tarjetas de acceso suben (se agregó algo de aire bajo el título). Se borró `rosina-feliz.png` (ya no se usa) y `scripts/build-larova.sh` ya no la copia.
+
+## Arreglo: no se ve el menú de antes al entrar (18-nov, sw v64; lo reportó Sara)
+- Síntoma: justo después de iniciar sesión, por un instante se veía el menú lateral completo de antes y luego aparecía el inicio por módulos. Causa: la pantalla «Cargando» (`pantallaCargando`) no tenía ningún modo de la página activo, así que se mostraba el menú completo. Arreglo: `mostrarPantalla('pantallaCargando')` ya pone `modo-inicio` (sin menú lateral). Probado midiendo la carga: antes el menú estaba a la vista en 7 de 8 momentos; ahora en 0, en 1280 y 390 px.
