@@ -79,3 +79,9 @@
 - Pedido de Sara: en el celular la barra de arriba (Volver a LAROVA, Marcar entrada, Cerrar sesión) ocupaba mucho espacio.
 - Ahora, en ≤700 px: arriba solo «Volver a LAROVA»; el logo se achica y va al lado del título; «Marcar entrada/salida» es una franja delgada debajo (solo si es empleada); «Cerrar sesión» e «Instalar app» pasan al pie de la página (`.hub-pie`). En PC queda igual (clases `.solo-pc` / `.solo-movil`). `#btnInstalarApp` ahora vive en el pie. `sw.js` v67.
 - Falta (pedido de Sara, en curso): menú lateral de módulos solo con nombres de sección que se despliegan al tocar; pestañas internas como listas desplegables en celular; formularios lado a lado en una sola columna en celular.
+
+## Menú lateral de módulo: secciones plegables y «Salir» abajo
+- Pedido de Sara: en el menú lateral de cada módulo, ver solo los nombres de las secciones (Contabilidad: «Contabilidad e impuestos», «Reportes e indicadores», «Bancos y tesorería») y que se desplieguen al tocarlas; «Salir» abajo.
+- `agruparSeccionesSidebar()` envuelve cada `.sidebar-seccion` y sus botones en `.sidebar-seccion-grupo` (se abre una a la vez); `refrescarSeccionesSidebar(btn)` oculta secciones sin opciones para el rol y abre la de la opción activa (se llama en `abrirModulo` y `establecerModuloActivo`). Solo Contabilidad tiene secciones; los demás módulos quedan igual.
+- «Salir» pasó del encabezado a `.sidebar-pie` (abajo, fijo). `sw.js` v68.
+- Falta: pestañas/botones internos de cada página como listas desplegables en celular; formularios lado a lado en una columna en celular.

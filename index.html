@@ -1138,6 +1138,17 @@
   .sidebar-footer { padding: 0; border-top: none; }
   .sidebar-footer:not(:has(#indicadorVentasOffline:not(.oculto))) { display: none; }
   .sidebar-salir { white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; align-self: flex-start; margin-top: 6px; padding: 3px 9px; border: none; border-radius: 8px; background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.85); font-family: inherit; font-size: 11px; font-weight: 500; cursor: pointer; }
+  .sidebar-pie { border-top: 1px solid rgba(255,255,255,0.08); padding: 8px; order: 99; }
+  .sidebar-salir-abajo { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: none; border-radius: var(--radius-md, 10px); background: transparent; color: rgba(255,255,255,0.75); font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer; text-align: left; }
+  .sidebar-salir-abajo:hover { background: rgba(255,255,255,0.1); color: #fff; }
+  .sidebar-salir-abajo svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  /* Secciones plegables del menú lateral de un módulo (p. ej. Contabilidad) */
+  .sidebar-seccion.plegable { display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-size: 12px; letter-spacing: .3px; text-transform: none; font-weight: 600; color: rgba(255,255,255,0.85); padding: 11px 12px; margin-top: 2px; border-radius: var(--radius-md, 10px); background: rgba(255,255,255,0.05); user-select: none; }
+  .sidebar-seccion.plegable:hover { background: rgba(255,255,255,0.1); }
+  .sidebar-seccion.plegable .chev { transition: transform .15s; font-size: 11px; opacity: .7; }
+  .sidebar-seccion.plegable.abierta .chev { transform: rotate(90deg); }
+  .sidebar-seccion-grupo { display: none; padding: 2px 0 6px 6px; }
+  .sidebar-seccion-grupo.abierta { display: block; }
   .sidebar-salir:hover { background: rgba(255,255,255,0.2); color: #fff; }
   .sidebar-salir svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .hub-enlace.oculto { display: none !important; }
@@ -1161,7 +1172,6 @@
       <div style="display:flex;flex-direction:column;line-height:1.3;margin-top:4px;">
         <span id="sidebarNombreUsuarioTop" style="font-weight:600;color:#fff;font-size:12.5px;"></span>
         <span id="sidebarSubtitulo" style="font-size:11px;color:rgba(255,255,255,0.7);"></span>
-        <button type="button" class="sidebar-salir" onclick="cerrarSesion()" title="Cerrar sesión" aria-label="Cerrar sesión"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4M16 8l4 4-4 4M20 12H9"/></svg> Salir</button>
       </div>
     </div>
     <button id="btnSidebarModo" onclick="event.stopPropagation(); alternarSidebarModo()" title="Ocultar o fijar el menú">◀ Ocultar</button>
@@ -1285,6 +1295,8 @@
       </div>
     </div>
   </div>
+
+  <div class="sidebar-pie"><button type="button" class="sidebar-salir-abajo" onclick="cerrarSesion()" title="Cerrar sesión" aria-label="Cerrar sesión"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4M16 8l4 4-4 4M20 12H9"/></svg> Salir</button></div>
 
   <div class="sidebar-footer">
     <div id="indicadorVentasOffline" class="oculto" style="margin:0 16px 10px 16px;padding:8px 10px;background:#c0392b;color:white;border-radius:8px;font-size:11px;font-weight:600;text-align:center;cursor:pointer;" onclick="sincronizarVentasOfflinePendientes()" title="Clic para intentar sincronizar ahora"></div>
@@ -33616,6 +33628,7 @@
     limpiarModos();
     document.body.classList.add('modo-modulo');
     document.body.dataset.modulo = clave;
+    refrescarSeccionesSidebar(null);
     
     document.getElementById('hubModuloCabecera').innerHTML =
       `${ilusSvg(m.k, m.c, m.fondo)}<div><h1>${m.nombre}</h1><p>${m.desc}</p></div>`;
@@ -33635,8 +33648,39 @@
     if (b) b.click();
   }
 
+  // Secciones plegables del menú lateral (Contabilidad tiene 3): solo se ven los nombres; se abre la que se toca.
+  function agruparSeccionesSidebar() {
+    document.querySelectorAll('.sidebar-depto-submenu').forEach((sub) => {
+      sub.querySelectorAll(':scope > .sidebar-seccion:not(.plegable)').forEach((h) => {
+        const grupo = document.createElement('div');
+        grupo.className = 'sidebar-seccion-grupo';
+        let n = h.nextElementSibling;
+        while (n && !n.classList.contains('sidebar-seccion')) { const sig = n.nextElementSibling; grupo.appendChild(n); n = sig; }
+        h.after(grupo);
+        h.classList.add('plegable');
+        h.setAttribute('role', 'button'); h.setAttribute('tabindex', '0');
+        h.innerHTML = '<span>' + h.textContent + '</span><span class="chev" aria-hidden="true">▶</span>';
+        const alternar = () => { const abre = !grupo.classList.contains('abierta'); sub.querySelectorAll('.sidebar-seccion-grupo').forEach((g) => { g.classList.remove('abierta'); g.previousElementSibling.classList.remove('abierta'); }); if (abre) { grupo.classList.add('abierta'); h.classList.add('abierta'); } h.setAttribute('aria-expanded', abre ? 'true' : 'false'); };
+        h.addEventListener('click', alternar);
+        h.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); alternar(); } });
+      });
+    });
+  }
+  // Oculta las secciones sin opciones para el rol y abre la sección de la opción activa (o ninguna).
+  function refrescarSeccionesSidebar(btnActivo) {
+    document.querySelectorAll('.sidebar-seccion.plegable').forEach((h) => {
+      const g = h.nextElementSibling;
+      const hayVisibles = Array.from(g.querySelectorAll('.nav-btn')).some((b) => b.style.display !== 'none');
+      h.style.display = hayVisibles ? '' : 'none';
+      const abrir = !!(btnActivo && g.contains(btnActivo));
+      g.classList.toggle('abierta', abrir); h.classList.toggle('abierta', abrir);
+    });
+  }
+  document.addEventListener('DOMContentLoaded', agruparSeccionesSidebar);
+
   // Se llama desde mostrarPantalla cuando la pantalla corresponde a una opción del menú.
   function establecerModuloActivo(btn) {
+    refrescarSeccionesSidebar(btn);
     const g = btn.closest('.sidebar-depto');
     const m = g ? MODULOS_ERP.find((x) => x.grupo === g.id) : null;
     document.body.classList.remove('modo-inicio');
