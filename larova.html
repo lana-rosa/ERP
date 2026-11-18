@@ -8,7 +8,6 @@
 <title>LAROVA · Lana Rosa, Valor y Avance</title>
 <link rel="icon" type="image/png" href="./icon-192.png">
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
-<link rel="preload" as="image" href="./rosina-feliz.png">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 <!--
   LAROVA — portada del Sistema Operativo Lana Rosa (paso 1, solo enlaces).
@@ -29,11 +28,7 @@
   h1{font-family:'Fredoka',sans-serif;font-weight:600;font-size:40px;letter-spacing:3px;color:var(--rosa);line-height:1}
   .sub{font-size:15px;font-weight:500;margin-top:-2px}
   .pequena{font-size:11px;color:var(--suave);letter-spacing:.4px}
-  .saludo{background:#fff;border-radius:20px;padding:14px 18px;margin:20px auto 22px;max-width:520px;box-shadow:0 2px 12px rgba(216,1,124,.12);display:flex;gap:12px;align-items:center}
-  .saludo img{width:46px;height:auto;flex-shrink:0}
-  .saludo b{display:block;font-size:15px}
-  .saludo span{font-size:13px;color:var(--suave)}
-  .rejilla{display:grid;gap:14px;grid-template-columns:1fr 1fr}
+  .rejilla{display:grid;gap:14px;grid-template-columns:1fr 1fr;margin-top:26px}
   .tarjeta{display:flex;align-items:center;gap:16px;background:#fff;border-radius:22px;padding:20px;text-decoration:none;color:inherit;box-shadow:0 2px 12px rgba(216,1,124,.12);border:2px solid transparent;min-height:104px;transition:transform .12s ease,border-color .12s ease}
   .tarjeta:hover,.tarjeta:focus-visible{border-color:var(--c);outline:none;transform:translateY(-2px)}
   .ico{width:84px;height:84px;object-fit:contain;flex-shrink:0}
@@ -58,7 +53,6 @@
 
   <main>
     <section class="vista activa" id="v-inicio" aria-label="Entrada">
-      <div class="saludo"><img src="./rosina-feliz.png" alt="" width="33" height="46"><div><b>¡Hola! Soy Rosina.</b><span>¿Cómo vas a entrar hoy?</span></div></div>
       <div class="rejilla">
         <a class="tarjeta" style="--c:#d8017c" href="#administracion"><img class="ico" src="./iconos-larova/admin.webp" alt="" width="84" height="84"><div><h2>Acceso Administración</h2><p>Todo el negocio: ERP, CRM, Gestión y Marketing.</p></div><span class="flecha" aria-hidden="true">›</span></a>
         <a class="tarjeta" style="--c:#85a3c0" href="#equipo"><img class="ico" src="./iconos-larova/equipo.webp" alt="" width="84" height="84"><div><h2>Acceso Equipo</h2><p>Solo lo que tu cargo necesita para trabajar.</p></div><span class="flecha" aria-hidden="true">›</span></a>
@@ -67,7 +61,6 @@
 
     <section class="vista" id="v-administracion" aria-label="Acceso Administración">
       <a class="volver" href="#">← Volver</a>
-      <div class="saludo"><img src="./rosina-feliz.png" alt="" width="33" height="46"><div><b>Administración</b><span>¿A dónde vamos hoy?</span></div></div>
       <div class="rejilla">
         <a class="tarjeta" style="--c:#d8017c" href="./index.html"><img class="ico" src="./iconos-larova/erp.webp" alt="" width="84" height="84"><div><h2>ERP</h2><p>Ventas, pedidos, inventario, compras, contabilidad.</p></div><span class="flecha" aria-hidden="true">›</span></a>
         <a class="tarjeta" style="--c:#e0a032" href="https://lana-rosa.github.io/CRM/"><img class="ico" src="./iconos-larova/crm.webp" alt="" width="84" height="84"><div><h2>CRM</h2><p>Clientas, oportunidades y seguimiento.</p></div><span class="flecha" aria-hidden="true">›</span></a>
@@ -79,7 +72,6 @@
 
     <section class="vista" id="v-equipo" aria-label="Acceso Equipo">
       <a class="volver" href="#">← Volver</a>
-      <div class="saludo"><img src="./rosina-feliz.png" alt="" width="33" height="46"><div><b>Equipo</b><span>Entra con tu cuenta y verás solo lo de tu cargo.</span></div></div>
       <div class="rejilla">
         <a class="tarjeta" style="--c:#d8017c" href="./index.html"><img class="ico" src="./iconos-larova/erp.webp" alt="" width="84" height="84"><div><h2>Mi trabajo (ERP)</h2><p>Caja y ventas, inventario, producción, tu horario. El menú muestra solo lo de tu rol.</p></div><span class="flecha" aria-hidden="true">›</span></a>
       </div>

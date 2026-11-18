@@ -74,7 +74,7 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [x] Resumen de pendientes contables listo para llevarle a Hernando: `docs/resumen-contador.md` (llevarlo junto con las 22 preguntas del chat 5) — 12-nov-2026
 
 ### Chat 8 · Menú/Interfaz
-- [ ] Menú con íconos por módulo, sin «Gestión» y sin botón flotante de Rosina (18-nov, v62): listo en la rama, **falta el sí de Jennifer** (🟡, fotos antes/después). Rosina pasó al menú como «Asistente Rosina»; si Jennifer prefiere quitarla del todo, se borra ese ítem.
+- [ ] Menú del ERP con íconos por módulo y sin «Gestión» (18-nov, v62) + portada LAROVA sin la tarjeta de saludo de Rosina: listo en la rama, **falta el sí de Jennifer** (🟡, fotos antes/después). El botón flotante de Rosina del ERP no se toca.
 - [ ] 🔴 Pasar `lana-rosa/ERP` a privado (preparado 18-nov, NO aplicado): ver `docs/temas/privatizar-erp.md` y `docs/privatizar-erp/`. Orden: larova estable (4-dic) → repo público mínimo de redirección → privado → verificar. Falta el sí final de Jennifer.
 - [x] Respaldo del ERP (18-nov): función `fn_exportar_respaldo` aplicada (0 advertencias nuevas) y botón publicado (v61). [ ] Jennifer: descargar la primera copia y guardarla fuera del repo; probar el Excel. [ ] Restaurar (Worker) probablemente con el mismo límite: revisar. [ ] Propuesta de copia automática (no aplicada). [ ] Confirmar la causa en los registros del Worker. Ver `respaldo-copias.md`.
 - [x] LAROVA 18-nov: Sara verificó `/erp/` y el ingreso único ERP↔Gestión (entra directo); CRM pide su propio ingreso (esperado). [ ] Falta: venta de prueba, revisar un pedido, app instalable, botón «Volver» en Gestión/CRM con cuentas reales, aviso al CRM chat 5. Plazo vie 4-dic.
