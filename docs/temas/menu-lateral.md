@@ -71,3 +71,6 @@
 - El bloque fijo de abajo del menú (Instalar app, Marcar entrada/salida, nombre y rol repetidos, Cerrar sesión) ocupaba casi un tercio del menú. Ahora: **«Marcar entrada/salida» y «Instalar app» están en el inicio** (arriba, junto a «Cerrar sesión»); **«Salir»** (cierra sesión) es un botoncito junto al nombre, arriba del menú; nombre y rol se quedan solo arriba. El widget `#widgetHorasTrabajadas` ya no se mueve al menú lateral (se coloca en el inicio al iniciar sesión, también si se entra directo por #hash).
 - El pie solo vuelve a verse si hay un aviso importante: `#indicadorVentasOffline` («ventas sin sincronizar», visible solo cuando hay pendientes). `btnInstalarApp` conserva su lógica (solo se muestra cuando se puede instalar).
 - Medido con 640 px de alto: la lista de opciones gana ≥ 85 px (más cuando se ve «Instalar app» o el nombre es largo).
+
+## Ícono de la app (verde azulado)
+- Ícono cambiado de rosado a verde azulado claro (#2eaaa6) con la ovejita en blanco. `icon-192/512.png` con esquinas redondeadas y transparentes; `icon-maskable-*` y `apple-touch-icon.png` a sangre (el celular les pone su forma). `sw.js` v66. Hay que desinstalar y reinstalar la app para ver el ícono nuevo.
