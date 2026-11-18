@@ -31,6 +31,9 @@ PY
 }
 cambiar dist/index.html 'href="./index.html"' 'href="./erp/"'
 cambiar dist/erp/index.html 'href="./larova.html"' 'href="../"'
+# Gestión y CRM viven dentro de esta misma dirección (ver functions/ y proxy/)
+cambiar dist/index.html 'href="https://lana-rosa.github.io/CRM/"' 'href="./CRM/"'
+cambiar dist/index.html 'href="https://lana-rosa.github.io/SO/"' 'href="./gestion/"'
 
 # El service worker nunca se guarda en caché del navegador por mucho tiempo
 cat > dist/_headers <<'H'
