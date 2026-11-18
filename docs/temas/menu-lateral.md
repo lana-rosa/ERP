@@ -85,3 +85,9 @@
 - `agruparSeccionesSidebar()` envuelve cada `.sidebar-seccion` y sus botones en `.sidebar-seccion-grupo` (se abre una a la vez); `refrescarSeccionesSidebar(btn)` oculta secciones sin opciones para el rol y abre la de la opción activa (se llama en `abrirModulo` y `establecerModuloActivo`). Solo Contabilidad tiene secciones; los demás módulos quedan igual.
 - «Salir» pasó del encabezado a `.sidebar-pie` (abajo, fijo). `sw.js` v68.
 - Falta: pestañas/botones internos de cada página como listas desplegables en celular; formularios lado a lado en una columna en celular.
+
+## Celular: botones-pestaña como lista desplegable y formularios apilados
+- Pedido de Sara: en celular los botones de arriba de cada página ocupaban media pantalla, y dos formularios lado a lado (Plan de cuentas) salían delgados y largos.
+- `convertirChipsEnDesplegables()` crea, para cada `.filtro-tipo` con 4 o más `button.chip-filtro`, una lista desplegable (`.chip-desplegable`) que se ve solo en ≤700 px y oculta el grupo de chips (`.con-desplegable`). Al elegir una opción hace `click()` en el botón original, así que no cambia ninguna lógica; la etiqueta sigue al botón `.activo` (MutationObserver). Un observador con retraso convierte también los grupos que se arman después con JavaScript. En PC no cambia.
+- `.grilla-2/3/4` con `grid-template-columns` escrito en el propio elemento (Plan de cuentas: `1.6fr 1fr` y `200px 1fr`) ahora también se apilan en ≤900 px (regla con `!important`).
+- `sw.js` v69. Falta revisar otras pantallas con filas de formulario en columnas fijas (`flex`/`grid` en línea) si Sara reporta alguna.
