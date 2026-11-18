@@ -74,3 +74,4 @@ Estructura: HTML de pantallas (líneas ~1000–5800), luego un bloque grande `<s
 
 | Pedidos por elaborar: una orden por producto | `cargarSolicitudesElaboracion`, `empezarLineaElaboracion`, `terminarSolicitudDeOrden` (~19880-20050) |
 | Cambiar fecha de entrega del pedido | `lineaFechaEntregaPedido`, `abrirCambiarFechaEntregaPedido`, `guardarFechaEntregaPedido` (junto a `abrirCambiarEnvioPedido`, ~20520) |
+| Pago manual de pedidos web (Nequi/Bre-B/transferencia) | `cargarMediosManualesCuenta`, `opcionesMediosManualesHtml` (~6720), `cargarPagosWebPendientes`, `confirmarPagoManualWeb` (antes de `cargarPedidosCanal`), panel `#panelPagosWebPendientes` |

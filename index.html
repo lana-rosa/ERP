@@ -2550,6 +2550,12 @@
         <button class="chip-filtro" data-filtro-pedido="en_preparacion" onclick="cambiarFiltroPedidos('en_preparacion', this)">En preparación</button>
         <button class="chip-filtro" data-filtro-pedido="listo_despacho" onclick="cambiarFiltroPedidos('listo_despacho', this)">Listo despacho</button>
       </div>
+      <details id="panelPagosWebPendientes" class="panel oculto" style="margin-bottom:14px;padding:10px 14px;">
+        <summary style="cursor:pointer;font-weight:700;font-size:13.5px;">💳 Pedidos de la web esperando pago manual <span id="contadorPagosWeb" style="font-weight:400;opacity:.7;"></span></summary>
+        <div style="font-size:11.5px;opacity:.75;margin:6px 0 8px;">La clienta pagó por Nequi, Bre-B o transferencia y envió el comprobante por WhatsApp: elige el medio, escribe el número de referencia del comprobante y confirma. No es un pago de Wompi (sin comisión).</div>
+        <div id="listaPagosWebPendientes"></div>
+        <div class="mensaje" id="mensajePagosWeb"></div>
+      </details>
       <div id="listaPedidosCanal"><div class="cargando">Cargando pedidos...</div></div>
     </div>
   </div>
@@ -7008,7 +7014,42 @@
     } catch { /* si falla, el recibo de anticipo sale sin ese texto */ }
   }
 
+  // Nequi y Bre-B manuales: solo se pueden usar cuando Contabilidad ya les asignó una cuenta (si no, el dinero caería en la cuenta equivocada)
+  let mediosManualesConCuenta = { nequi: false, breb: false };
+  const ETIQUETAS_MEDIOS_MANUALES = { nequi: 'Nequi', breb: 'Bre-B' };
+
+  function opcionesMediosManualesHtml(seleccionado) {
+    return Object.keys(ETIQUETAS_MEDIOS_MANUALES).map(m => mediosManualesConCuenta[m]
+      ? `<option value="${m}" ${seleccionado === m ? 'selected' : ''}>${ETIQUETAS_MEDIOS_MANUALES[m]}</option>`
+      : `<option value="${m}" disabled>${ETIQUETAS_MEDIOS_MANUALES[m]} (falta la cuenta contable)</option>`).join('');
+  }
+
+  function completarSelectorMedioAnticipo() {
+    const sel = document.getElementById('pedidoMetodoAnticipo');
+    if (!sel) return;
+    const actual = sel.value;
+    sel.querySelectorAll('option[data-manual]').forEach(o => o.remove());
+    const ref = sel.querySelector('option[value="transferencia"]');
+    const html = opcionesMediosManualesHtml('').replace(/<option /g, '<option data-manual="1" ');
+    if (ref) ref.insertAdjacentHTML('afterend', html);
+    sel.value = actual;
+  }
+
+  async function cargarMediosManualesCuenta() {
+    try {
+      const [{ data: medios }, { data: cuentas }] = await Promise.all([
+        supabaseClient.from('medios_pago_cuenta').select('medio, cuenta_bancaria_id'),
+        supabaseClient.from('cuentas_bancarias').select('id, activa'),
+      ]);
+      const activas = new Set((cuentas || []).filter(c => c.activa).map(c => c.id));
+      mediosManualesConCuenta = { nequi: false, breb: false };
+      (medios || []).forEach(m => { if (m.medio in mediosManualesConCuenta && activas.has(m.cuenta_bancaria_id)) mediosManualesConCuenta[m.medio] = true; });
+    } catch (e) { mediosManualesConCuenta = { nequi: false, breb: false }; }
+    completarSelectorMedioAnticipo();
+  }
+
   async function cargarLogoEmpresa() {
+    cargarMediosManualesCuenta();
     cargarPoliticaAnticipos();
     try {
       const resp = await fetch(WORKER_URL + '/api/pos/config-empresa', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
@@ -20053,7 +20094,57 @@
     return false;
   }
 
+  // Pedidos hechos en la web que la clienta pagó por fuera de Wompi (Nequi, Bre-B, transferencia)
+  async function cargarPagosWebPendientes() {
+    const panel = document.getElementById('panelPagosWebPendientes');
+    if (!panel) return;
+    if (rolActual !== 'administrador' && rolActual !== 'cajero') { panel.classList.add('oculto'); return; }
+    const { data, error } = await supabaseClient.rpc('fn_pedidos_web_pendientes_pago');
+    if (error || !data) { panel.classList.add('oculto'); return; }
+    const pendientes = data.pendientes || [];
+    const confirmados = data.confirmados || [];
+    panel.classList.toggle('oculto', !pendientes.length && !confirmados.length);
+    document.getElementById('contadorPagosWeb').textContent = pendientes.length ? `(${pendientes.length} pendiente${pendientes.length > 1 ? 's' : ''})` : '(ninguno pendiente)';
+    const cuando = (f) => new Date(f).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
+    document.getElementById('listaPagosWebPendientes').innerHTML = `
+      ${pendientes.map(w => `
+        <div style="border:1px solid #eadfe5;border-radius:10px;padding:10px;margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;"><strong>${escaparHtml(w.referencia)}</strong><strong>${formatearMoneda(w.total)}</strong></div>
+          <div style="font-size:12px;opacity:.8;">${escaparHtml(w.nombre)} · ${escaparHtml(w.telefono || '')} · ${escaparHtml(w.ciudad || '')}</div>
+          <div style="font-size:11.5px;opacity:.7;margin-bottom:6px;">${escaparHtml(w.productos || (w.membresia_plan ? 'Membresía ' + w.membresia_plan : ''))} · pedido ${cuando(w.created_at)}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+            <select id="pmMedio-${w.id}" style="flex:1;min-width:130px;">
+              <option value="">¿Cómo pagó?</option>
+              <option value="transferencia">Transferencia</option>
+              ${opcionesMediosManualesHtml('')}
+            </select>
+            <input type="text" id="pmRef-${w.id}" placeholder="N.° de referencia del comprobante" style="flex:2;min-width:180px;">
+            <button class="btn-mini guardar" onclick="confirmarPagoManualWeb('${w.id}', this)">✅ Confirmar pago</button>
+          </div>
+        </div>`).join('') || '<div class="cargando">No hay pedidos web esperando pago.</div>'}
+      ${confirmados.length ? `<div style="font-size:11.5px;margin-top:10px;"><strong>Confirmados a mano (últimos)</strong>${confirmados.map(c => `<div style="opacity:.8;">• ${escaparHtml(c.referencia)} · ${formatearMoneda(c.total)} · ${escaparHtml(ETIQUETAS_MEDIOS_MANUALES[c.pago_manual_medio] || c.pago_manual_medio)} ref. ${escaparHtml(c.pago_manual_referencia || '')} · ${escaparHtml(c.quien || '')} · ${cuando(c.pago_manual_at)}</div>`).join('')}</div>` : ''}`;
+  }
+
+  async function confirmarPagoManualWeb(id, boton) {
+    ocultarMensaje('mensajePagosWeb');
+    const medio = document.getElementById(`pmMedio-${id}`).value;
+    const referencia = document.getElementById(`pmRef-${id}`).value.trim();
+    if (!medio) { mostrarMensaje('mensajePagosWeb', 'Elige cómo pagó la clienta.', 'error'); return; }
+    if (referencia.length < 4) { mostrarMensaje('mensajePagosWeb', 'Escribe el número de referencia del comprobante (mínimo 4 caracteres).', 'error'); return; }
+    const ok = await pedirConfirmacionModal(`¿Confirmas que ya llegó este pago por ${ETIQUETAS_MEDIOS_MANUALES[medio] || 'transferencia'} (referencia ${referencia})?\n\nEl pedido pasará a preparación y quedará anotado quién lo confirmó.`, 'Sí, ya llegó el pago');
+    if (!ok) return;
+    boton.disabled = true;
+    const { data, error } = await supabaseClient.rpc('fn_confirmar_pago_manual_pedido_web', { p_id: id, p_medio: medio, p_referencia: referencia });
+    if (error) { boton.disabled = false; mostrarMensaje('mensajePagosWeb', 'No se pudo confirmar: ' + error.message, 'error'); return; }
+    mostrarMensaje('mensajePagosWeb', data && data.registrado_en_erp
+      ? `✅ Pago de ${data.referencia} confirmado. El pedido ya está en preparación.`
+      : `⚠️ Pago de ${data && data.referencia} confirmado, pero el pedido no quedó registrado en el ERP${data && data.error_erp ? ' (' + data.error_erp + ')' : ''}. Avísale a la administradora.`, data && data.registrado_en_erp ? 'exito' : 'error');
+    await cargarPagosWebPendientes();
+    await cargarPedidosCanal();
+  }
+
   async function cargarPedidosCanal() {
+    cargarPagosWebPendientes();
     const contenedor = document.getElementById('listaPedidosCanal');
     contenedor.innerHTML = '<div class="cargando">Cargando pedidos...</div>';
 
@@ -20495,6 +20586,7 @@
             <option value="efectivo" ${pago.metodo_pago === 'efectivo' ? 'selected' : ''}>Efectivo</option>
             <option value="daviplata" ${pago.metodo_pago === 'daviplata' ? 'selected' : ''}>Daviplata</option>
             <option value="transferencia" ${pago.metodo_pago === 'transferencia' ? 'selected' : ''}>Transferencia</option>
+            ${opcionesMediosManualesHtml(pago.metodo_pago)}
             <option value="tarjeta_debito" ${pago.metodo_pago === 'tarjeta_debito' ? 'selected' : ''}>Tarjeta débito</option>
             <option value="tarjeta_credito" ${pago.metodo_pago === 'tarjeta_credito' ? 'selected' : ''}>Tarjeta crédito</option>
             <option value="credito_financiera" ${pago.metodo_pago === 'credito_financiera' ? 'selected' : ''}>🏦 Crédito (CrediLondon)</option>
