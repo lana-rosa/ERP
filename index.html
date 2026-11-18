@@ -29576,6 +29576,17 @@
     document.getElementById('resultadoRestauracion').innerHTML = '';
   }
 
+  // Trae todas las tablas del respaldo en UNA sola consulta a la base (función fn_exportar_respaldo, solo administradora).
+  // Antes se pedía al Worker, que consultaba 88 tablas una por una y pasaba el límite de consultas del plan gratuito de Cloudflare.
+  async function obtenerDatosRespaldo() {
+    const { data, error } = await supabaseClient.rpc('fn_exportar_respaldo');
+    if (error || !data) {
+      const soloAdmin = error && /administradora/i.test(error.message || '');
+      throw new Error(soloAdmin ? error.message : 'No se pudo generar el respaldo.');
+    }
+    return data;
+  }
+
   async function confirmarExportarDatosJson() {
     const btn = document.getElementById('btnExportarDatosJson');
     btn.disabled = true;
@@ -29583,9 +29594,7 @@
     ocultarMensaje('mensajeExportarDatos');
 
     try {
-      const resp = await fetch(WORKER_URL + '/api/pos/admin/exportar-datos', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
-      if (!resp.ok) throw new Error('No se pudo generar el respaldo.');
-      const datos = await resp.json();
+      const datos = await obtenerDatosRespaldo();
 
       const blob = new Blob([JSON.stringify(datos)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -29614,9 +29623,7 @@
     ocultarMensaje('mensajeExportarDatos');
 
     try {
-      const resp = await fetch(WORKER_URL + '/api/pos/admin/exportar-datos', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
-      if (!resp.ok) throw new Error('No se pudo generar la copia.');
-      const respuesta = await resp.json();
+      const respuesta = await obtenerDatosRespaldo();
       const datos = respuesta.datos || {};
 
       const libro = XLSX.utils.book_new();

@@ -41,5 +41,6 @@ Playwright ya instalado: `NODE_PATH=/opt/node22/lib/node_modules`, chromium `/op
 | Decisiones contables y políticas (retiros, aportes, honorarios, CUIF) | `contabilidad-decisiones.md` |
 | Personal: empleados, contratos, turnos, asistencia, vacaciones, tejedoras | `personal.md` |
 | Lana Rosa OS (sistemas de gestión: SG-SST, calidad, 5S, riesgos) y su relación con el ERP | `sistema-operativo.md` |
+| Respaldo y copias de seguridad del ERP (falla del Worker, función en la base, copia automática pendiente) | `respaldo-copias.md` |
 
 Mapa del código: `docs/mapa-index-html.md`. Pendientes: `docs/PENDIENTES.md`. Indicaciones para abrir chats por tema y el Orquestador: `docs/chats-iniciales.md`.
