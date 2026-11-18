@@ -35,6 +35,11 @@ cambiar dist/erp/index.html 'href="./larova.html"' 'href="../"'
 cambiar dist/index.html 'href="https://lana-rosa.github.io/CRM/"' 'href="./CRM/"'
 cambiar dist/index.html 'href="https://lana-rosa.github.io/SO/"' 'href="./gestion/"'
 
+# --- Marketing y comunicación (pantalla aparte; usa la sesión del ERP, mismo dominio) ---
+cp marketing.html dist/marketing.html
+cambiar dist/marketing.html 'href="./larova.html#administracion"' 'href="./#administracion"'
+cambiar dist/marketing.html 'href="./index.html"' 'href="./erp/"'
+
 # El service worker nunca se guarda en caché del navegador por mucho tiempo
 cat > dist/_headers <<'H'
 /erp/sw.js
