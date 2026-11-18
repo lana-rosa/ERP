@@ -6334,7 +6334,8 @@
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
     const esLogin = idPantalla === 'pantallaLogin';
-    if (idPantalla === 'pantallaInicio') { limpiarModos(); document.body.classList.add('modo-inicio'); }
+    // Mientras carga (justo después de iniciar sesión) ya se está en «modo inicio»: así no se alcanza a ver el menú completo de antes.
+    if (idPantalla === 'pantallaInicio' || idPantalla === 'pantallaCargando') { limpiarModos(); document.body.classList.add('modo-inicio'); }
     const sidebar = document.getElementById('sidebar');
     const main = document.getElementById('main');
     if (sidebar) sidebar.classList.toggle('visible', !esLogin);
