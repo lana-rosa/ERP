@@ -71,6 +71,7 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 
 ### Chat 7 · Contabilidad (no creado)
 - Sin tareas de código. Ver preguntas al contador.
+- [ ] 🔴 Bancos (18-nov): Davivienda = operación, Bancolombia = solo Fondo Emprender. Propuesta escrita en `docs/temas/contabilidad-decisiones.md`; **falta el sí de Sara** para tocar cuentas/libros. Pregunta a Sara: ¿a qué cuenta consigna Wompi? Conciliación automática por extractos: solo propuesta, para después de la apertura.
 - [x] Resumen de pendientes contables listo para llevarle a Hernando: `docs/resumen-contador.md` (llevarlo junto con las 22 preguntas del chat 5) — 12-nov-2026
 
 ### Chat 8 · Menú/Interfaz
@@ -148,6 +149,7 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [ ] Aplicabilidad del documento soporte.
 - [ ] Ventas desde el 14-oct-2026 (ya facturadora electrónica) que quedaron solo con recibo del ERP, sin factura electrónica: 6 del punto de venta (POS-2026-00016 a 00021, $2.205.000) y 1 pedido (PED-2026-00559, $15.200, parece prueba). Además 7 pedidos con "facturar" definido a consumidor final ($601.000). Pregunta: ¿se emite factura electrónica extemporánea a consumidor final por cada una, o cómo se regulariza? (12-nov-2026)
 - [ ] Retenciones, libros y declaraciones como sociedad.
+- [ ] Bancos (18-nov, contador nuevo el viernes 20-nov): confirmar la decisión Davivienda (operación) / Bancolombia (Fondo) y qué hacer con lo ya registrado en Caja por cobros hechos en Nequi; reemplaza la decisión del 14-oct.
 - [ ] Viejos: retiros 3805 vs honorarios, aportes vs deuda, arriendo mayo/junio, confirmación escrita de 27 recibos, medio de pago de 17 ventas antiguas.
 
 ## Opcionales (Claude, si se pide)

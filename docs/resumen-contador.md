@@ -36,7 +36,7 @@ Preparado el 12-nov-2026 · Lana Rosa Crochet · Régimen SIMPLE · contabilidad
 - Fechas de la DIAN según el RUT (anticipos bimestrales, declaración anual, exógena).
 
 ## C. Decisiones ya tomadas (para que las conozca)
-- No se llevan movimientos de bancos ni conciliación: la cuenta Nequi/Bancolombia no es exclusiva del negocio (decisión del 14-oct-2026). Solo queda en banco lo de Wompi ($13.888).
+- Bancos: el 14-oct se decidió no llevar bancos porque la cuenta no era exclusiva; **el 18-nov cambió**: Davivienda para todo lo de Lana Rosa y Bancolombia solo para el Fondo Emprender (propuesta, falta confirmarla con usted el 20-nov). Hoy en libros solo hay en banco lo de Wompi ($13.888).
 - Tejido pagado en efectivo; cierre de costos de septiembre hecho (costo de producción: solo arriendo del Taller, $600.000).
 - Septiembre: ingresos $1.415.500, costos $1.065.291, gastos $1.200.000, **utilidad -$851.103** (esa cifra se calculó antes de pasar los honorarios a retiros; conviene revisarla con el Balance actual).
 - Honorarios del contador: $600.000 al mes, primeros 5 días (propuesta del 30-sep-2026; confirmar que la aceptación escrita esté firmada).
