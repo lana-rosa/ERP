@@ -1048,6 +1048,77 @@
   .tz-det { font-size: 12.5px; color: var(--texto-suave); margin-top: 2px; word-break: break-word; }
   .tz-caja { padding: 12px 14px; border-radius: var(--radius-md); background: var(--gris-fondo); font-size: 12.5px; margin-bottom: 10px; }
   @media (max-width: 600px) { .tz-etapas { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; } .tz-etapa { font-size: 10px; padding: 8px 2px; } }
+
+  /* ============================================================
+     INICIO POR MÓDULOS (como la portada LAROVA) — tarjetas grandes por módulo.
+     El menú lateral solo aparece dentro de un módulo y muestra únicamente sus opciones.
+     ============================================================ */
+  .hub { max-width: 980px; margin: 0 auto; padding: 4px 4px 48px; }
+  .hub-barra { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+  .hub-enlace { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--rosa-principal); text-decoration: none; background: #fff; border: none; border-radius: 999px; padding: 8px 14px; box-shadow: 0 2px 8px rgba(0,0,0,.06); cursor: pointer; font-family: inherit; }
+  .hub-enlace svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .hub-marca { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; margin: 4px 0 20px; }
+  .hub-marca img { width: 72px; height: 72px; border-radius: 20px; box-shadow: 0 6px 20px rgba(216,1,124,.25); }
+  .hub-marca h1 { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 30px; color: var(--rosa-principal); line-height: 1.1; }
+  .hub-marca p { font-size: 13px; color: var(--texto-suave, #7a6670); }
+  .hub-titulo-seccion { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--texto-suave, #7a6670); margin: 24px 4px 10px; }
+  .hub-aviso { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: #fff6e0; border: 1.5px solid #f3d99a; color: #8a5a00; border-radius: 16px; padding: 12px 16px; font-size: 13px; font-weight: 500; margin-bottom: 14px; }
+  .hub-aviso button { background: var(--rosa-principal); color: #fff; border: none; border-radius: 10px; padding: 8px 14px; font-weight: 600; font-family: inherit; font-size: 12.5px; cursor: pointer; }
+  .hub-aviso.ok { background: #e8f6ee; border-color: #b9e2c9; color: #1f6b43; }
+  .hub-reloj #widgetHorasTrabajadas { background: var(--sidebar-bg); border-radius: 14px; padding: 6px 12px !important; border: none !important; }
+  .hub-rapidos { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .hub-rapido { display: flex; flex-direction: column; align-items: center; gap: 4px; background: #fff; border: 2px solid transparent; border-radius: 20px; padding: 12px 8px 14px; box-shadow: 0 2px 12px rgba(216,1,124,.10); cursor: pointer; font: inherit; color: var(--texto-oscuro); }
+  .hub-rapido:hover, .hub-rapido:focus-visible, .hub-tarjeta:hover, .hub-tarjeta:focus-visible, .hub-opcion:hover, .hub-opcion:focus-visible { border-color: var(--c, var(--rosa-principal)); outline: none; transform: translateY(-2px); }
+  .hub-rapido svg.ilus { width: 64px; height: 64px; }
+  .hub-rapido span { font-size: 13px; font-weight: 600; text-align: center; line-height: 1.2; }
+  .hub-rejilla { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .hub-tarjeta { display: flex; align-items: center; gap: 16px; background: #fff; border: 2px solid transparent; border-radius: 22px; padding: 16px 20px 16px 14px; min-height: 116px; box-shadow: 0 2px 12px rgba(216,1,124,.12); cursor: pointer; text-align: left; font: inherit; color: var(--texto-oscuro); width: 100%; transition: transform .12s ease, border-color .12s ease; }
+  .hub-tarjeta svg.ilus { width: 88px; height: 88px; flex-shrink: 0; }
+  .hub-tarjeta h2 { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 20px; line-height: 1.1; margin: 0; }
+  .hub-tarjeta p { font-size: 12.5px; color: var(--texto-suave, #7a6670); margin: 4px 0 0; line-height: 1.35; }
+  .hub-tarjeta .flecha { margin-left: auto; font-size: 20px; font-weight: 600; color: var(--c); padding-left: 6px; }
+  .hub-opciones { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+  .hub-opcion { display: flex; align-items: center; gap: 12px; background: #fff; border: 2px solid transparent; border-radius: 18px; padding: 12px 14px; box-shadow: 0 2px 10px rgba(216,1,124,.10); cursor: pointer; text-align: left; font: inherit; color: var(--texto-oscuro); width: 100%; transition: transform .12s ease, border-color .12s ease; }
+  .hub-opcion .ico { width: 40px; height: 40px; border-radius: 12px; background: var(--fondo); color: var(--c); display: grid; place-items: center; flex-shrink: 0; }
+  .hub-opcion .ico svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .hub-opcion b { font-size: 13.5px; font-weight: 600; line-height: 1.25; }
+  .hub-cabecera-modulo { display: flex; align-items: center; gap: 16px; background: #fff; border-radius: 22px; padding: 14px 20px 14px 14px; box-shadow: 0 2px 12px rgba(216,1,124,.12); margin-bottom: 18px; }
+  .hub-cabecera-modulo svg.ilus { width: 84px; height: 84px; flex-shrink: 0; }
+  .hub-cabecera-modulo h1 { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 24px; margin: 0; }
+  .hub-cabecera-modulo p { font-size: 13px; color: var(--texto-suave, #7a6670); margin: 4px 0 0; }
+  @media (max-width: 700px) { .hub-rejilla { grid-template-columns: 1fr; } .hub-marca h1 { font-size: 26px; } .hub-opciones { grid-template-columns: 1fr; } }
+  @media (max-width: 700px) {
+    .hub-rapidos { display: flex; overflow-x: auto; gap: 10px; padding: 2px 2px 10px; scroll-snap-type: x proximity; }
+    .hub-rapido { flex: 0 0 112px; padding: 8px 6px 10px; scroll-snap-align: start; }
+    .hub-rapido svg.ilus { width: 52px; height: 52px; }
+    .hub-rapido span { font-size: 12px; }
+  }
+
+  /* Barra para volver cuando se está en un acceso rápido (sin menú lateral) */
+  #barraRapido { display: none; padding: 10px 24px 0; }
+  body.modo-rapido #barraRapido { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+
+  /* Inicio y accesos rápidos: pantalla completa, sin menú lateral */
+  body.modo-inicio #sidebar, body.modo-inicio .topbar-movil, body.modo-inicio #overlaySidebarMovil, body.modo-inicio #btnMostrarSidebar, body.modo-inicio #btnSidebarModo,
+  body.modo-rapido #sidebar, body.modo-rapido .topbar-movil, body.modo-rapido #overlaySidebarMovil, body.modo-rapido #btnMostrarSidebar { display: none !important; }
+  body.modo-inicio #main, body.modo-inicio #main.con-sidebar, body.modo-rapido #main, body.modo-rapido #main.con-sidebar { margin-left: 0 !important; padding-top: 0 !important; }
+  body.modo-inicio #btnCrearRapido, body.modo-rapido #btnCrearRapido { left: 22px !important; }
+  body.modo-inicio .page-header, body.modo-rapido .page-header { padding-left: var(--space-6); }
+  body.modo-inicio #barraBusquedaGlobal, body.modo-rapido #barraBusquedaGlobal { padding-left: 24px !important; }
+
+  /* Dentro de un módulo: el menú lateral muestra SOLO las opciones de ese módulo */
+  #nav-todos-modulos { display: none; }
+  body.modo-modulo #nav-todos-modulos { display: flex !important; margin-bottom: 6px; }
+  body.modo-modulo .sidebar-nav > .nav-btn:not(#nav-todos-modulos) { display: none !important; }
+  body.modo-modulo .sidebar-depto { display: none !important; }
+  body.modo-modulo[data-modulo="ventas"] #deptoVentasGrupo, body.modo-modulo[data-modulo="compras"] #deptoComprasGrupo,
+  body.modo-modulo[data-modulo="inventario"] #deptoInventarioGrupo, body.modo-modulo[data-modulo="contabilidad"] #deptoContabilidadGrupo,
+  body.modo-modulo[data-modulo="talento"] #deptoTalentoGrupo, body.modo-modulo[data-modulo="fe"] #deptoFondoEmprenderGrupo,
+  body.modo-modulo[data-modulo="config"] #deptoConfiguracionGrupo { display: block !important; }
+  body.modo-modulo .sidebar-depto-header { pointer-events: none; background: transparent; padding: 6px 4px 12px; margin-top: 0; }
+  body.modo-modulo .sidebar-depto-header .chevron { display: none; }
+  body.modo-modulo .sidebar-depto-submenu { max-height: none !important; overflow: visible; padding-left: 0; }
+  body.modo-modulo .sidebar-depto-submenu .nav-btn { font-size: 13px; padding: 9px 12px; }
 </style>
 </head>
 <body class="sin-sesion">
@@ -1074,6 +1145,7 @@
   </div>
 
   <div class="sidebar-nav">
+    <button class="nav-btn" id="nav-todos-modulos" onclick="mostrarInicioModulos()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></span> Todos los módulos</button>
     <a class="nav-btn" id="nav-larova" href="./larova.html" style="text-decoration:none;" title="Volver a la portada LAROVA"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></span> Volver a LAROVA</a>
     <button class="nav-btn" id="nav-dashboard" onclick="mostrarPantallaDashboard()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></span> Dashboard</button>
     <button class="nav-btn" id="nav-calendario" onclick="mostrarPantallaCalendario()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg></span> Calendario del equipo</button>
@@ -1214,6 +1286,8 @@
 
 
 <!-- ===== PANTALLA: LOGIN ===== -->
+<div id="barraRapido"><button type="button" class="hub-enlace" onclick="mostrarInicioModulos()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> Todos los módulos</button><button type="button" class="hub-enlace" onclick="cerrarSesion()">Cerrar sesión</button></div>
+
 <div id="pantallaLogin">
   <div class="login-card">
     <div class="login-logo">
@@ -1234,6 +1308,32 @@
 </div>
 
 <!-- ===== PANTALLA: CARGANDO ===== -->
+<div id="pantallaInicio" class="oculto contenido">
+  <div class="hub">
+    <div class="hub-barra">
+      <a class="hub-enlace" href="./larova.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> Volver a LAROVA</a>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <div class="hub-reloj" id="hubRelojContenedor"></div>
+        <button type="button" class="hub-enlace" onclick="cerrarSesion()">Cerrar sesión</button>
+      </div>
+    </div>
+    <div class="hub-marca"><img src="./icon-192.png" alt="Lana Rosa" width="72" height="72"><h1>Lana Rosa ERP</h1><p>Elige un módulo para empezar</p></div>
+    <div id="hubAvisoCaja" style="display:none;"></div>
+    <div class="hub-titulo-seccion" id="hubRapidosTitulo">Accesos rápidos</div>
+    <div class="hub-rapidos" id="hubRapidos"></div>
+    <div class="hub-titulo-seccion" id="hubModulosTitulo">Módulos</div>
+    <div class="hub-rejilla" id="hubModulos"></div>
+  </div>
+</div>
+
+<div id="pantallaModulo" class="oculto contenido">
+  <div class="hub">
+    <div id="hubModuloCabecera" class="hub-cabecera-modulo"></div>
+    <div class="hub-titulo-seccion">Opciones</div>
+    <div class="hub-opciones" id="hubOpciones"></div>
+  </div>
+</div>
+
 <div id="pantallaCargando" class="oculto" style="display:flex;align-items:center;justify-content:center;height:100vh;">
   <div class="cargando">Consultando estado de tu turno...</div>
 </div>
@@ -6184,7 +6284,7 @@
     if (tipo === 'pantalla' && datos.id === ultimaPantallaHistorial) return; // evita apilar la misma pantalla dos veces seguidas
     if (tipo === 'pantalla') ultimaPantallaHistorial = datos.id;
     try {
-      history.pushState(Object.assign({ tipo: tipo }, datos), '', location.pathname + location.search);
+      history.pushState(Object.assign({ tipo: tipo }, datos), '', location.pathname + location.search + location.hash);
     } catch (e) { /* si falla el historial, la app sigue funcionando igual */ }
   }
 
@@ -6229,11 +6329,12 @@
     // SEGURIDAD: sin sesión solo se puede ver el inicio de sesión (o la pantalla de "cargando").
     if (!sesionActual && idPantalla !== 'pantallaCargando') idPantalla = 'pantallaLogin';
     document.body.classList.toggle('sin-sesion', !sesionActual);
-    const pantallas = ['pantallaLogin', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaInventarioGlobal', 'pantallaGuiasUsuario', 'pantallaFacturacionElectronica', 'pantallaServiciosDian', 'pantallaCorreoEmpresa', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaIndicadores', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeEstado', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaPanelContador', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb', 'pantallaTextosWeb', 'pantallaPaypalConfig', 'pantallaMiProduccion', 'pantallaInformeCostos', 'pantallaReglasPrecios'];
+    const pantallas = ['pantallaLogin', 'pantallaInicio', 'pantallaModulo', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaInventarioGlobal', 'pantallaGuiasUsuario', 'pantallaFacturacionElectronica', 'pantallaServiciosDian', 'pantallaCorreoEmpresa', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaIndicadores', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeEstado', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaPanelContador', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb', 'pantallaTextosWeb', 'pantallaPaypalConfig', 'pantallaMiProduccion', 'pantallaInformeCostos', 'pantallaReglasPrecios'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
     const esLogin = idPantalla === 'pantallaLogin';
+    if (idPantalla === 'pantallaInicio') { limpiarModos(); document.body.classList.add('modo-inicio'); }
     const sidebar = document.getElementById('sidebar');
     const main = document.getElementById('main');
     if (sidebar) sidebar.classList.toggle('visible', !esLogin);
@@ -6284,7 +6385,12 @@
         btn.classList.add('activo');
         const submenuPadre = btn.closest('.sidebar-depto-submenu');
         if (submenuPadre) abrirSidebarDepto(submenuPadre.id, submenuPadre.previousElementSibling.id);
+        establecerModuloActivo(btn);
       }
+    }
+    if (destinoDesdeInicio && idPantalla !== 'pantallaInicio' && !esLogin) {
+      if (document.body.classList.contains('modo-inicio')) aplicarModoPendiente();
+      else { if (destinoDesdeInicio.nav) fijarHashUrl(destinoDesdeInicio.nav); destinoDesdeInicio = null; }
     }
     if (idPantalla !== 'pantallaLogin' && idPantalla !== 'pantallaCargando') {
       pushHistorialNavegacion('pantalla', { id: idPantalla });
@@ -6463,6 +6569,8 @@
     rolActual = null;
     nombreRolPersonalizadoActual = null;
     turnoActivoActual = null;
+    limpiarModos();
+    window.__hashEntrada = '';
     document.getElementById('inputClave').value = '';
     alternarVerClave(true);
     mostrarPantalla('pantallaLogin');
@@ -6497,57 +6605,16 @@
       return;
     }
 
-    // El rol Taller no maneja caja ni turnos: va directo a sus órdenes de producción.
-    if (rolActual === 'taller') {
-      await mostrarPantallaOrdenesProduccion();
-      return;
-    }
-
-    // La administradora entra directo al Dashboard — tiene acceso a todo el
-    // sistema, no solo a la caja. Si necesita abrir/cerrar turno, lo hace
-    // desde el menú cuando quiera.
-    if (rolActual === 'administrador') {
+    // Inicio tipo portada LAROVA (tarjetas por módulo). Quien maneja caja sigue consultando su turno
+    // para que «Registrar venta» y la caja funcionen igual que antes; si no hay turno, el inicio lo avisa.
+    const manejaCaja = ['administrador', 'cajero'].includes(rolActual) || (rolesAdicionalesActual || []).includes('cajero');
+    if (manejaCaja) {
       try {
         const resp = await fetch(WORKER_URL + '/api/pos/turnos/activo', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
-        if (resp.ok) {
-          const datos = await resp.json();
-          turnoActivoActual = datos.turno_activo || null;
-        }
-      } catch { /* si falla, sigue igual al Dashboard */ }
-      await mostrarPantallaDashboard();
-      return;
+        if (resp.ok) { const datos = await resp.json(); turnoActivoActual = datos.turno_activo || null; }
+      } catch { /* si falla, el inicio igual abre */ }
     }
-
-    // El contador no maneja caja ni ventas — entra directo a Estados
-    // financieros, que es lo único que necesita ver.
-    if (rolActual === 'contador') {
-      await mostrarPantallaEstadosFinancieros();
-      return;
-    }
-
-    try {
-      const resp = await fetch(WORKER_URL + '/api/pos/turnos/activo', {
-        headers: { Authorization: 'Bearer ' + sesionActual.token }
-      });
-
-      if (!resp.ok) {
-        const cuerpoError = await resp.json().catch(() => ({}));
-        throw new Error(cuerpoError.error || 'No se pudo consultar el turno');
-      }
-
-      const datos = await resp.json();
-      turnoActivoActual = datos.turno_activo;
-
-      if (turnoActivoActual) {
-        mostrarTurnoActivo();
-      } else {
-        mostrarPantallaAbrirTurno();
-      }
-    } catch (err) {
-      // Si el error es por rol no asignado, es importante que se vea claro
-      mostrarPantallaAbrirTurno();
-      mostrarMensaje('mensajeAbrirTurno', 'Aviso: ' + err.message, 'error');
-    }
+    irAEntradaInicial();
   }
 
   function mostrarPantallaAbrirTurno() {
@@ -33386,6 +33453,208 @@
     if (nombreEl) nombreEl.textContent = miPropiaIdentidad.nombre || sesionActual.email.split('@')[0];
     if (rolEl) rolEl.textContent = etiquetaRol(rolActual || '');
   }
+
+  // ============================================================================
+  // INICIO POR MÓDULOS (como la portada LAROVA)
+  // Al entrar se ve una tarjeta por módulo. El menú lateral solo aparece dentro de un módulo
+  // y muestra únicamente sus opciones. Los permisos NO cambian: las tarjetas y opciones salen de
+  // lo que ya decide configurarSidebarPorRol() (un módulo sin opciones permitidas no sale).
+  // Entrada directa por dirección: #nav-ventas, #m-ventas, #inicio.
+  // ============================================================================
+  const MODULOS_ERP = [
+    { k: 'ventas',       grupo: 'deptoVentasGrupo',        nombre: 'Punto de Venta',          desc: 'Caja, ventas, pedidos, clientes y facturación.',   c: '#d8017c', fondo: '#fde4f1' },
+    { k: 'compras',      grupo: 'deptoComprasGrupo',       nombre: 'Compras y Gastos',        desc: 'Compras, proveedores, cotizaciones y órdenes.',    c: '#e0a032', fondo: '#fdeccd' },
+    { k: 'inventario',   grupo: 'deptoInventarioGrupo',    nombre: 'Inventarios y Productos', desc: 'Stock, precios, traslados y producción.',          c: '#5b8db8', fondo: '#dfeafc' },
+    { k: 'contabilidad', grupo: 'deptoContabilidadGrupo',  nombre: 'Contabilidad',            desc: 'Libros, impuestos, informes y presupuesto.',       c: '#2e8b57', fondo: '#dff3e6' },
+    { k: 'talento',      grupo: 'deptoTalentoGrupo',       nombre: 'Talento Humano',          desc: 'Nómina y carpetas del equipo.',                    c: '#8b6fc4', fondo: '#ece4fa' },
+    { k: 'fe',           grupo: 'deptoFondoEmprenderGrupo', nombre: 'Fondo Emprender',        desc: 'Seguimiento y entregables del proyecto.',          c: '#1f9d9d', fondo: '#d9f1ef' },
+    { k: 'config',       grupo: 'deptoConfiguracionGrupo', nombre: 'Configuración',           desc: 'Usuarios, empresa, respaldo y guías.',             c: '#7a6fa8', fondo: '#e9e7f3' },
+  ];
+  const ACCESOS_RAPIDOS = [
+    { id: 'nav-dashboard',      ilus: 'dashboard',  nombre: 'Dashboard',          c: '#d8017c', fondo: '#fde4f1' },
+    { id: 'nav-calendario',     ilus: 'calendario', nombre: 'Calendario del equipo', c: '#e0a032', fondo: '#fdeccd' },
+    { id: 'nav-mi-produccion',  ilus: 'produccion', nombre: 'Mi producción',      c: '#8b6fc4', fondo: '#ece4fa' },
+    { id: 'nav-enviar-correo',  ilus: 'correo',     nombre: 'Enviar correo',      c: '#5b8db8', fondo: '#dfeafc' },
+    { id: 'asistente',          ilus: 'asistente',  nombre: 'Asistente Rosina',   c: '#d8017c', fondo: '#fde4f1' },
+  ];
+
+  // Ilustraciones en el estilo de la hoja de íconos de LAROVA: manchita pastel + línea azul oscura + un detalle de color.
+  function ilusSvg(tipo, c, fondo) {
+    const N = '#2c3a63';
+    const blob = `<path d="M18 36c3-14 20-21 37-16 15 4 24 17 20 33-4 15-17 25-33 23C22 74 13 57 18 36Z" fill="${fondo}"/>`;
+    const g = (inner) => `<g fill="none" stroke="${N}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">${inner}</g>`;
+    const formas = {
+      ventas: g(`<path d="M24 32h7l6 27h30l5-20H34" fill="#fff"/><circle cx="41" cy="68" r="3.4" fill="${c}"/><circle cx="64" cy="68" r="3.4" fill="${c}"/><path d="M42 47h22" stroke="${c}"/>`) + `<path d="M67 22l6 3-3 8-6-3z" fill="${c}"/>`,
+      compras: g(`<path d="M28 38h38l3 32H25l3-32Z" fill="#fff"/><path d="M38 38v-6a9 9 0 0 1 18 0v6"/><path d="M36 50h22" stroke="${c}"/>`) + `<circle cx="70" cy="30" r="6" fill="${c}"/>`,
+      inventario: g(`<path d="M48 26l24 12v24L48 74 24 62V38l24-12Z" fill="#fff"/><path d="M24 38l24 12 24-12M48 50v24"/><path d="M36 32l24 12" stroke="${c}"/>`),
+      contabilidad: g(`<rect x="29" y="22" width="38" height="52" rx="6" fill="#fff"/><rect x="35" y="29" width="26" height="11" rx="2" fill="${c}" stroke="${c}"/><path d="M36 50h.01M48 50h.01M60 50h.01M36 58h.01M48 58h.01M60 58h.01M36 66h.01M48 66h.01M60 66h.01"/>`),
+      talento: g(`<circle cx="48" cy="38" r="9" fill="#fff"/><path d="M30 70c0-10 8-17 18-17s18 7 18 17" fill="${c}" stroke="${N}"/><circle cx="29" cy="45" r="7" fill="#fff"/><path d="M16 68c0-8 6-13 13-13" /><circle cx="67" cy="45" r="7" fill="#fff"/><path d="M80 68c0-8-6-13-13-13"/>`),
+      fe: g(`<path d="M22 38 48 24l26 14" fill="#fff"/><path d="M28 42v22M42 42v22M54 42v22M68 42v22M22 70h52"/>`) + `<circle cx="48" cy="33" r="3.6" fill="${c}"/>`,
+      config: g(`<circle cx="48" cy="48" r="22" stroke-width="9" stroke-dasharray="7 7.5" stroke="${c}"/><circle cx="48" cy="48" r="16" fill="#fff"/><circle cx="48" cy="48" r="6"/>`),
+      dashboard: g(`<rect x="26" y="26" width="19" height="19" rx="4" fill="#fff"/><rect x="51" y="26" width="19" height="19" rx="4" fill="${c}" stroke="${c}"/><rect x="26" y="51" width="19" height="19" rx="4" fill="${c}" stroke="${c}"/><rect x="51" y="51" width="19" height="19" rx="4" fill="#fff"/>`),
+      calendario: g(`<rect x="24" y="28" width="48" height="42" rx="6" fill="#fff"/><path d="M24 42h48M36 22v10M60 22v10"/>`) + `<circle cx="38" cy="54" r="3.4" fill="${c}"/><circle cx="50" cy="54" r="3.4" fill="${c}"/><circle cx="62" cy="54" r="3.4" fill="${c}"/>`,
+      produccion: g(`<circle cx="48" cy="48" r="22" fill="#fff"/><path d="M28 40c12 6 28 6 40 0M28 56c12-6 28-6 40 0M40 28c-6 14-6 26 0 40" stroke="${c}"/>`),
+      correo: g(`<rect x="22" y="32" width="52" height="36" rx="6" fill="#fff"/><path d="m24 36 24 18 24-18" stroke="${c}"/>`),
+      asistente: g(`<path d="M72 46a24 20 0 0 1-36 17l-12 4 4-11a24 20 0 1 1 44-10Z" fill="#fff"/>`) + `<circle cx="38" cy="46" r="3.4" fill="${c}"/><circle cx="48" cy="46" r="3.4" fill="${c}"/><circle cx="58" cy="46" r="3.4" fill="${c}"/>`,
+    };
+    return `<svg class="ilus" viewBox="0 0 96 96" aria-hidden="true">${blob}${formas[tipo] || ''}</svg>`;
+  }
+
+  // Una opción está oculta si el rol la apagó (la lógica de permisos usa style.display del elemento o de su grupo).
+  function ocultoPorRol(el) {
+    const barra = document.getElementById('sidebar');
+    for (let n = el; n && n !== barra; n = n.parentElement) {
+      if (n.style && n.style.display === 'none') return true;
+    }
+    return false;
+  }
+  function opcionesDeModulo(m) {
+    const g = document.getElementById(m.grupo);
+    if (!g || ocultoPorRol(g)) return [];
+    return [...g.querySelectorAll('.sidebar-depto-submenu .nav-btn')].filter((b) => !ocultoPorRol(b));
+  }
+  function textoDeOpcion(btn) {
+    const c = btn.cloneNode(true);
+    c.querySelectorAll('.nav-icon, [id^="badge"]').forEach((x) => x.remove());
+    return c.textContent.replace(/\s+/g, ' ').trim();
+  }
+  function fijarHashUrl(h) {
+    try { history.replaceState(history.state, '', location.pathname + location.search + '#' + h); } catch (e) { /* sin historial */ }
+  }
+  // El widget «Marcar entrada / salida» vive en el menú lateral; en el inicio (sin menú) se muestra arriba.
+  function moverWidgetHoras(donde) {
+    const w = document.getElementById('widgetHorasTrabajadas');
+    if (!w) return;
+    if (donde === 'inicio') {
+      const dest = document.getElementById('hubRelojContenedor');
+      if (dest) { dest.appendChild(w); w.style.display = ''; }
+    } else {
+      const pie = document.querySelector('.sidebar-footer');
+      const antes = document.querySelector('.sidebar-usuario');
+      if (pie && antes && w.parentElement !== pie) pie.insertBefore(w, antes);
+    }
+  }
+  // Al salir del inicio recordamos de qué módulo viene la persona (algunas pantallas no están ligadas a una opción del menú).
+  let destinoDesdeInicio = null;
+  let temporizadorDestino = null;
+  function recordarDestino(d) { destinoDesdeInicio = d; clearTimeout(temporizadorDestino); temporizadorDestino = setTimeout(() => { destinoDesdeInicio = null; }, 4000); }
+  function moduloDeBoton(btn) {
+    const g = btn && btn.closest('.sidebar-depto');
+    const m = g ? MODULOS_ERP.find((x) => x.grupo === g.id) : null;
+    return m ? m.k : null;
+  }
+  function aplicarModoPendiente() {
+    const d = destinoDesdeInicio || { modulo: null, nav: '' };
+    destinoDesdeInicio = null;
+    document.body.classList.remove('modo-inicio');
+    if (d.modulo) {
+      document.body.classList.add('modo-modulo'); document.body.classList.remove('modo-rapido');
+      document.body.dataset.modulo = d.modulo; moverWidgetHoras('sidebar');
+    } else {
+      document.body.classList.add('modo-rapido'); document.body.classList.remove('modo-modulo');
+      document.body.removeAttribute('data-modulo');
+    }
+    if (d.nav) fijarHashUrl(d.nav);
+  }
+  function limpiarModos() {
+    document.body.classList.remove('modo-inicio', 'modo-modulo', 'modo-rapido');
+    document.body.removeAttribute('data-modulo');
+  }
+
+  function renderInicioModulos() {
+    const rap = document.getElementById('hubRapidos');
+    rap.innerHTML = ACCESOS_RAPIDOS.filter((a) => a.id === 'asistente' || (document.getElementById(a.id) && !ocultoPorRol(document.getElementById(a.id)))).map((a) =>
+      `<button type="button" class="hub-rapido" style="--c:${a.c}" onclick="abrirAccesoRapido('${a.id}')">${ilusSvg(a.ilus, a.c, a.fondo)}<span>${a.nombre}</span></button>`).join('');
+    document.getElementById('hubRapidosTitulo').style.display = rap.children.length ? '' : 'none';
+    const mods = MODULOS_ERP.filter((m) => opcionesDeModulo(m).length > 0);
+    document.getElementById('hubModulos').innerHTML = mods.map((m) =>
+      `<button type="button" class="hub-tarjeta" style="--c:${m.c}" onclick="abrirModulo('${m.k}')">${ilusSvg(m.k, m.c, m.fondo)}<div><h2>${m.nombre}</h2><p>${m.desc}</p></div><span class="flecha" aria-hidden="true">›</span></button>`).join('');
+    document.getElementById('hubModulosTitulo').style.display = mods.length ? '' : 'none';
+    // Aviso de caja para quien maneja turnos (antes el ERP lo llevaba directo a «Abrir turno»)
+    const avisoCaja = document.getElementById('hubAvisoCaja');
+    const manejaCaja = [rolActual, ...(rolesAdicionalesActual || [])].includes('cajero');
+    if (manejaCaja && document.getElementById('nav-turno') && !ocultoPorRol(document.getElementById('nav-turno'))) {
+      avisoCaja.className = 'hub-aviso' + (turnoActivoActual ? ' ok' : '');
+      avisoCaja.innerHTML = turnoActivoActual
+        ? '<span>Tienes un turno de caja abierto.</span><button type="button" onclick="recordarDestino({modulo:\'ventas\',nav:\'nav-turno\'});irATurnoActivo()">Ir al turno</button>'
+        : '<span>Todavía no has abierto tu turno de caja.</span><button type="button" onclick="recordarDestino({modulo:\'ventas\',nav:\'nav-turno\'});irATurnoActivo()">Abrir turno de caja</button>';
+      avisoCaja.style.display = '';
+    } else { avisoCaja.style.display = 'none'; }
+  }
+
+  function mostrarInicioModulos() {
+    limpiarModos();
+    document.body.classList.add('modo-inicio');
+    renderInicioModulos();
+    moverWidgetHoras('inicio');
+    fijarHashUrl('inicio');
+    mostrarPantalla('pantallaInicio');
+  }
+
+  function abrirModulo(clave) {
+    const m = MODULOS_ERP.find((x) => x.k === clave);
+    const opciones = m ? opcionesDeModulo(m) : [];
+    if (!m || opciones.length === 0) { mostrarInicioModulos(); return; }
+    limpiarModos();
+    document.body.classList.add('modo-modulo');
+    document.body.dataset.modulo = clave;
+    moverWidgetHoras('sidebar');
+    document.getElementById('hubModuloCabecera').innerHTML =
+      `${ilusSvg(m.k, m.c, m.fondo)}<div><h1>${m.nombre}</h1><p>${m.desc}</p></div>`;
+    document.getElementById('hubOpciones').innerHTML = opciones.map((b) => {
+      const svg = b.querySelector('.nav-icon') ? b.querySelector('.nav-icon').innerHTML : '';
+      return `<button type="button" class="hub-opcion" style="--c:${m.c};--fondo:${m.fondo}" data-nav="${b.id || ''}"><span class="ico">${svg}</span><b>${textoDeOpcion(b)}</b></button>`;
+    }).join('');
+    document.querySelectorAll('#hubOpciones .hub-opcion').forEach((el, i) => { el.addEventListener('click', () => { recordarDestino({ modulo: clave, nav: opciones[i].id || '' }); opciones[i].click(); }); });
+    fijarHashUrl('m-' + clave);
+    mostrarPantalla('pantallaModulo');
+  }
+
+  function abrirAccesoRapido(id) {
+    if (id === 'asistente') { toggleChatAsistenteIA(); return; }
+    const b = document.getElementById(id);
+    recordarDestino({ modulo: null, nav: id });
+    if (b) b.click();
+  }
+
+  // Se llama desde mostrarPantalla cuando la pantalla corresponde a una opción del menú.
+  function establecerModuloActivo(btn) {
+    const g = btn.closest('.sidebar-depto');
+    const m = g ? MODULOS_ERP.find((x) => x.grupo === g.id) : null;
+    document.body.classList.remove('modo-inicio');
+    if (m) {
+      document.body.classList.add('modo-modulo');
+      document.body.classList.remove('modo-rapido');
+      document.body.dataset.modulo = m.k;
+      moverWidgetHoras('sidebar');
+    } else {
+      document.body.classList.add('modo-rapido');
+      document.body.classList.remove('modo-modulo');
+      document.body.removeAttribute('data-modulo');
+    }
+    if (btn.id) fijarHashUrl(btn.id);
+  }
+
+  // Después de iniciar sesión: entrada directa por dirección (#nav-xxx, #m-xxx) o, si no, el inicio.
+  window.__hashEntrada = location.hash || '';
+  function irAEntradaInicial() {
+    const h = (window.__hashEntrada || '').replace('#', '');
+    window.__hashEntrada = '';
+    if (h.indexOf('nav-') === 0) {
+      const el = document.getElementById(h);
+      if (el && !ocultoPorRol(el)) {
+        limpiarModos(); document.body.classList.add('modo-inicio');
+        recordarDestino({ modulo: moduloDeBoton(el), nav: h });
+        el.click(); return;
+      }
+    }
+    if (h.indexOf('m-') === 0) {
+      const m = MODULOS_ERP.find((x) => 'm-' + x.k === h);
+      if (m && opcionesDeModulo(m).length) { abrirModulo(m.k); return; }
+    }
+    mostrarInicioModulos();
+  }
+
 </script>
 
 </body>
