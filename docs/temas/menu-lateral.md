@@ -107,3 +107,6 @@
 
 ## Pantalla de entrada: solo el logo rosado
 - Al entrar al ERP se veía primero el ícono verde (imagen de fondo) y luego el logo animado rosado encima. La imagen de fondo de `.login-logo-animado` ahora es `logo-login.png` (el ícono rosado anterior), igual que el color de la animación; el ícono verde queda solo para la app instalada y el inicio. `build-larova.sh` copia `logo-login.png` a `/erp/`. `sw.js` v73.
+
+## Ícono otra vez rosado (con esquinas redondeadas)
+- Pedido de Sara: todo en LAROVA es rosado, así que el ícono vuelve a ser rosado (#e84e94) con la ovejita blanca más grande y las esquinas redondeadas (`icon-192/512` transparentes en las esquinas; maskable y apple-touch a sangre). `?v=4`, `sw.js` v74. Reinstalar la app para verlo.
