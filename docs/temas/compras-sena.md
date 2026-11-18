@@ -21,3 +21,12 @@ Falta: respuesta de la interventora sobre el Formato de Solicitud de Desembolso.
 - **Valor pagado vs factura**: campo "Valor que transferiste" (`datos.valor_pagado`), se puede registrar después. Si no coincide con la factura: alerta (no bloquea).
 - Objetos de Supabase (SQL en `docs/migraciones/2026-11-12-soportes-fondo-legalizar.sql`): `proveedores_plan_operativo`, `fn_proveedor_plan_marcar`, `fn_proveedor_aprobado_plan`, `fn_compra_registrar_valor_pagado`, `fn_soportes_pago_fondo`, y `fn_compra_agregar_documento` ampliada.
 - **Propuesto, NO hecho (punto 5)**: control por desembolso del Fondo (recibido, legalizado, saldo pendiente) reutilizando la pantalla de ingresos/desembolsos del Fondo (index.html ~l. 5638–5670, ingresos y desembolsos por concepto) y la cuenta bancaria de uso `fondo_emprender`. Idea: asociar cada compra Fondo/Mixto a un desembolso recibido; legalizado = suma de compras "listas para legalizar"; saldo = recibido − legalizado. Espera la respuesta de la interventora sobre el Formato de Solicitud de Desembolso.
+
+## Cuentas bancarias: Bancolombia = solo Fondo Emprender, Davivienda = lo demás (18-nov-2026)
+Aviso del Orquestador general (decisión reportada; falta que Sara la confirme en este chat). Revisión de qué ajustaría en este tema (nada hecho todavía):
+- **Hoy** el ERP no registra desde qué cuenta se pagó una compra; solo el método (transferencia/tarjeta débito) y el comprobante.
+- **Ajuste propuesto 1:** en compras Fondo/Mixto, campo "cuenta desde la que pagaste" que por defecto sea la cuenta de uso `fondo_emprender` (Bancolombia), y bloquear/avisar si se elige otra. En compras con recursos propios, avisar si se paga desde Bancolombia.
+- **Ajuste propuesto 2 (compras Mixto):** como el Fondo no permite mezclar recursos, una compra Mixto se paga con **dos transferencias**, una por cuenta. Hoy hay un solo comprobante y un solo "valor transferido"; habría que pedir uno por cuenta (la parte del Fondo y la parte propia) o dejar de usar "Mixto".
+- **Ajuste propuesto 3:** el extracto que pide la interventora sería siempre el de Bancolombia; la pantalla de soportes podría mostrar a qué cuenta corresponde cada extracto (uno por mes).
+- **Control de desembolsos (punto 5):** con una sola cuenta, el saldo del Fondo se puede cruzar contra el saldo real de Bancolombia (recibido − pagado = saldo de la cuenta).
+- Choque posible con Contabilidad (chat 7): el plan de cuentas debe permitir separar movimientos Fondo/no Fondo por cuenta; los impuestos, sanciones y recargos no se pagan desde Bancolombia.
