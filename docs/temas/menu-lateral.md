@@ -66,3 +66,8 @@
 
 ## Arreglo: no se ve el menú de antes al entrar (18-nov, sw v64; lo reportó Sara)
 - Síntoma: justo después de iniciar sesión, por un instante se veía el menú lateral completo de antes y luego aparecía el inicio por módulos. Causa: la pantalla «Cargando» (`pantallaCargando`) no tenía ningún modo de la página activo, así que se mostraba el menú completo. Arreglo: `mostrarPantalla('pantallaCargando')` ya pone `modo-inicio` (sin menú lateral). Probado midiendo la carga: antes el menú estaba a la vista en 7 de 8 momentos; ahora en 0, en 1280 y 390 px.
+
+## Pie del menú lateral eliminado (18-nov, sw v65; pedido de Jennifer)
+- El bloque fijo de abajo del menú (Instalar app, Marcar entrada/salida, nombre y rol repetidos, Cerrar sesión) ocupaba casi un tercio del menú. Ahora: **«Marcar entrada/salida» y «Instalar app» están en el inicio** (arriba, junto a «Cerrar sesión»); **«Salir»** (cierra sesión) es un botoncito junto al nombre, arriba del menú; nombre y rol se quedan solo arriba. El widget `#widgetHorasTrabajadas` ya no se mueve al menú lateral (se coloca en el inicio al iniciar sesión, también si se entra directo por #hash).
+- El pie solo vuelve a verse si hay un aviso importante: `#indicadorVentasOffline` («ventas sin sincronizar», visible solo cuando hay pendientes). `btnInstalarApp` conserva su lógica (solo se muestra cuando se puede instalar).
+- Medido con 640 px de alto: la lista de opciones gana ≥ 85 px (más cuando se ve «Instalar app» o el nombre es largo).
