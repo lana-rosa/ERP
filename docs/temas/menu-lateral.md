@@ -95,3 +95,6 @@
 ## Ícono que no se actualizaba al instalar
 - Los archivos del ícono ya estaban publicados (verde azulado), pero el navegador/Cloudflare guardaba el viejo. Se agregó `?v=2` a los íconos en `manifest.json`, `index.html` y `larova.html`, y `_headers` (en `build-larova.sh`) pide `no-cache` para el manifiesto y los PNG. `sw.js` v70. La próxima vez que se cambie el ícono, subir `?v=`.
 - Para ver el ícono nuevo en un celular que ya tiene la app: desinstalar la app, borrar los datos del sitio en el navegador y volver a instalar desde `larova.lanarosacrochet.com/erp/`.
+
+## Nombre de la app instalada: LAROVA
+- Pedido de Sara: al instalar, el nombre debía decir LAROVA y no «Lana Rosa ERP». `manifest.json` (`name`/`short_name`) y `apple-mobile-web-app-title` (iPhone) ahora dicen «LAROVA». La pantalla de entrada sigue diciendo «Lana Rosa ERP». `sw.js` v71. Quien ya la tenga instalada debe desinstalar y reinstalar para ver el nombre nuevo.
