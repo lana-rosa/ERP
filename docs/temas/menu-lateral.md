@@ -101,3 +101,6 @@
 
 ## Ícono: ovejita más grande
 - Pedido de Sara: ovejita más grande. En los íconos «any» (con esquinas redondeadas) la ovejita ocupa ~80 % del cuadro; en maskable ~68 % y apple-touch ~74 % (Android recorta los bordes). Parámetro `?v=3` en manifest/index/larova. `sw.js` v72.
+
+## Pantalla de arranque de la app en blanco
+- Pedido de Sara: al abrir LAROVA se veía el ícono verde sobre fondo rosado. `manifest.json` `background_color` pasó de `#e84e94` a `#ffffff` (blanco, como la web). `theme_color` (barra de estado) sigue en `#d8017c`. No requiere subir `sw.js` (no cambia `index.html`).
