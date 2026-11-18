@@ -31,3 +31,8 @@ El repositorio público tiene cifras reales del negocio (ver `docs/resumen-conta
 4. Verificar: `lana-rosa.github.io/ERP/` lleva a larova; un cambio pequeño en `main` despliega en Cloudflare; larova/erp, /gestion y /CRM abren.
 5. Avisar al orquestador para dar acceso a los chats.
 Si algo sale mal: volver a público (un clic) o revertir el despliegue en Cloudflare.
+
+## Actualización 18-nov (Jennifer adelanta la fecha)
+- Jennifer aprobó el orden (redirección → privado → verificar) y pidió **no esperar al 4-dic** (esa fecha era del plazo de la mudanza, no una razón técnica): idealmente esta semana. Nunca el 12 ni el 13-dic.
+- Condiciones para pedir el sí final: (a) `larova.lanarosacrochet.com/erp/` probado con la cuenta de Jennifer en ventas, caja, pedidos y respaldo; (b) repositorio público mínimo `lana-rosa/lana-rosa.github.io` creado y probado (carpeta `prueba-redireccion/`).
+- Después de hacerlo privado: comprobar que Cloudflare Pages sigue desplegando (un cambio mínimo en `main`), que `lana-rosa.github.io/ERP/` redirige y que el ERP abre. Reversible: volver a público en un clic.
