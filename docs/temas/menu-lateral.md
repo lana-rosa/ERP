@@ -91,3 +91,7 @@
 - `convertirChipsEnDesplegables()` crea, para cada `.filtro-tipo` con 4 o más `button.chip-filtro`, una lista desplegable (`.chip-desplegable`) que se ve solo en ≤700 px y oculta el grupo de chips (`.con-desplegable`). Al elegir una opción hace `click()` en el botón original, así que no cambia ninguna lógica; la etiqueta sigue al botón `.activo` (MutationObserver). Un observador con retraso convierte también los grupos que se arman después con JavaScript. En PC no cambia.
 - `.grilla-2/3/4` con `grid-template-columns` escrito en el propio elemento (Plan de cuentas: `1.6fr 1fr` y `200px 1fr`) ahora también se apilan en ≤900 px (regla con `!important`).
 - `sw.js` v69. Falta revisar otras pantallas con filas de formulario en columnas fijas (`flex`/`grid` en línea) si Sara reporta alguna.
+
+## Ícono que no se actualizaba al instalar
+- Los archivos del ícono ya estaban publicados (verde azulado), pero el navegador/Cloudflare guardaba el viejo. Se agregó `?v=2` a los íconos en `manifest.json`, `index.html` y `larova.html`, y `_headers` (en `build-larova.sh`) pide `no-cache` para el manifiesto y los PNG. `sw.js` v70. La próxima vez que se cambie el ícono, subir `?v=`.
+- Para ver el ícono nuevo en un celular que ya tiene la app: desinstalar la app, borrar los datos del sitio en el navegador y volver a instalar desde `larova.lanarosacrochet.com/erp/`.

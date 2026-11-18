@@ -44,6 +44,12 @@ cambiar dist/marketing.html 'href="./index.html"' 'href="./erp/"'
 cat > dist/_headers <<'H'
 /erp/sw.js
   Cache-Control: no-cache
+/erp/manifest.json
+  Cache-Control: no-cache
+/*.png
+  Cache-Control: no-cache
+/erp/*.png
+  Cache-Control: no-cache
 H
 
 echo "OK: dist/ listo ($(find dist -type f | wc -l) archivos)"
