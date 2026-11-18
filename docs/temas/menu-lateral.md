@@ -104,3 +104,6 @@
 
 ## Pantalla de arranque de la app en blanco
 - Pedido de Sara: al abrir LAROVA se veía el ícono verde sobre fondo rosado. `manifest.json` `background_color` pasó de `#e84e94` a `#ffffff` (blanco, como la web). `theme_color` (barra de estado) sigue en `#d8017c`. No requiere subir `sw.js` (no cambia `index.html`).
+
+## Pantalla de entrada: solo el logo rosado
+- Al entrar al ERP se veía primero el ícono verde (imagen de fondo) y luego el logo animado rosado encima. La imagen de fondo de `.login-logo-animado` ahora es `logo-login.png` (el ícono rosado anterior), igual que el color de la animación; el ícono verde queda solo para la app instalada y el inicio. `build-larova.sh` copia `logo-login.png` a `/erp/`. `sw.js` v73.

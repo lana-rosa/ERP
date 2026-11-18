@@ -12,7 +12,7 @@ rm -rf dist
 mkdir -p dist/erp
 
 # --- ERP en /erp/ ---
-cp index.html sw.js manifest.json logo-animado.html apple-touch-icon.png icon-192.png icon-512.png icon-maskable-192.png icon-maskable-512.png dist/erp/
+cp index.html sw.js manifest.json logo-animado.html logo-login.png apple-touch-icon.png icon-192.png icon-512.png icon-maskable-192.png icon-maskable-512.png dist/erp/
 
 # --- Portada en la raíz ---
 cp larova.html dist/index.html
