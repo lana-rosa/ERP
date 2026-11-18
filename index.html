@@ -1347,6 +1347,7 @@
       <div class="login-logo-nombre">Lana Rosa ERP</div>
     </div>
 
+    <div id="bloqueLoginNormal">
     <label for="inputCorreo">Correo</label>
     <input type="email" id="inputCorreo" placeholder="tucorreo@gmail.com" autocomplete="email">
     <label for="inputClave">Contraseña</label>
@@ -1355,6 +1356,30 @@
       <button type="button" class="btn-ojo-clave" id="btnOjoClave" onclick="alternarVerClave()" aria-label="Mostrar contraseña" aria-pressed="false" title="Mostrar contraseña">👁</button>
     </div>
     <button class="btn-principal" id="btnLogin" onclick="iniciarSesion()">Entrar</button>
+    <div style="text-align:center;margin-top:12px;"><button type="button" id="btnOlvideClave" onclick="mostrarRecuperarClave()" style="background:none;border:none;padding:4px;font-size:13px;color:var(--rosa-principal, #d6007a);text-decoration:underline;cursor:pointer;">¿Se te olvidó la contraseña?</button></div>
+    </div>
+
+    <div id="bloqueRecuperarClave" class="oculto">
+      <div style="font-size:15px;font-weight:700;margin-bottom:6px;">Recuperar mi contraseña</div>
+      <div style="font-size:12.5px;opacity:0.75;margin-bottom:10px;">Escribe el correo con el que entras. Te enviamos un enlace para elegir una contraseña nueva.</div>
+      <label for="inputCorreoRecuperar">Correo</label>
+      <input type="email" id="inputCorreoRecuperar" placeholder="tucorreo@gmail.com" autocomplete="email">
+      <button class="btn-principal" id="btnEnviarRecuperar" onclick="enviarEnlaceRecuperacion()">Enviarme el enlace</button>
+      <div style="text-align:center;margin-top:12px;"><button type="button" onclick="volverAlLogin()" style="background:none;border:none;padding:4px;font-size:13px;text-decoration:underline;cursor:pointer;color:inherit;">← Volver a entrar</button></div>
+      <div class="mensaje" id="mensajeRecuperarClave"></div>
+    </div>
+
+    <div id="bloqueNuevaClave" class="oculto">
+      <div style="font-size:15px;font-weight:700;margin-bottom:6px;">Elige tu nueva contraseña</div>
+      <div style="font-size:12.5px;opacity:0.75;margin-bottom:10px;">Mínimo 6 caracteres. Después podrás entrar con ella.</div>
+      <label for="inputNuevaClave">Nueva contraseña</label>
+      <input type="password" id="inputNuevaClave" autocomplete="new-password">
+      <label for="inputNuevaClave2">Repite la contraseña</label>
+      <input type="password" id="inputNuevaClave2" autocomplete="new-password">
+      <button class="btn-principal" id="btnGuardarNuevaClave" onclick="guardarNuevaClave()">Guardar contraseña</button>
+      <div class="mensaje" id="mensajeNuevaClave"></div>
+    </div>
+
     <div class="mensaje" id="mensajeLogin"></div>
   </div>
 </div>
@@ -6124,6 +6149,10 @@
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5nam9vZ256dmVod2p0cHF3cnFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3MDAzMDYsImV4cCI6MjA5NzI3NjMwNn0.2BNYuaQOTh-lU8GZcYhJAnZPBiJvT5PwB9MYZwNHTUE';
   const WORKER_URL = 'https://lana-rosa-os-pos.saralmunoz1301.workers.dev';
 
+  // ¿Se llegó desde el enlace del correo de "olvidé mi contraseña"? Se lee ANTES de crear el
+  // cliente, porque Supabase limpia el enlace al leerlo y después ya no se sabría.
+  const ENTRADA_RECUPERACION = /type=recovery/.test(location.hash + '&' + location.search);
+  const ENTRADA_ENLACE_VENCIDO = /error_code=otp_expired|error_description=[^&]*(expired|invalid)/i.test(location.hash + '&' + location.search);
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // ============================================================================
@@ -6606,6 +6635,72 @@
     sesionActual = { token: data.session.access_token, userId: data.user.id, email: data.user.email };
     await obtenerRolUsuario();
     await despuesDeLogin();
+  }
+
+  // ============================================================
+  // RECUPERAR CONTRASEÑA POR CORREO
+  // ============================================================
+  function mostrarBloquesLogin(cual) {
+    ['bloqueLoginNormal', 'bloqueRecuperarClave', 'bloqueNuevaClave'].forEach(id => document.getElementById(id).classList.toggle('oculto', id !== cual));
+  }
+
+  function mostrarRecuperarClave() {
+    ocultarMensaje('mensajeLogin'); ocultarMensaje('mensajeRecuperarClave');
+    document.getElementById('inputCorreoRecuperar').value = document.getElementById('inputCorreo').value.trim();
+    mostrarBloquesLogin('bloqueRecuperarClave');
+  }
+
+  function volverAlLogin() {
+    ocultarMensaje('mensajeRecuperarClave'); ocultarMensaje('mensajeNuevaClave');
+    mostrarBloquesLogin('bloqueLoginNormal');
+  }
+
+  async function enviarEnlaceRecuperacion() {
+    const correo = document.getElementById('inputCorreoRecuperar').value.trim();
+    ocultarMensaje('mensajeRecuperarClave');
+    if (!correo || !correo.includes('@')) { mostrarMensaje('mensajeRecuperarClave', 'Escribe tu correo completo.', 'error'); return; }
+    const btn = document.getElementById('btnEnviarRecuperar');
+    btn.disabled = true; btn.textContent = 'Enviando...';
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(correo, { redirectTo: location.origin + location.pathname });
+    btn.disabled = false; btn.textContent = 'Enviarme el enlace';
+    if (error) {
+      const muchos = error.status === 429 || /rate limit|too many/i.test(error.message || '');
+      mostrarMensaje('mensajeRecuperarClave', muchos ? 'Se pidieron muchos correos seguidos. Espera unos minutos y vuelve a intentar.' : 'No pudimos enviar el correo: ' + error.message, 'error');
+      return;
+    }
+    // Por seguridad el mensaje es el mismo exista o no el correo.
+    mostrarMensaje('mensajeRecuperarClave', '✅ Listo. Si ese correo está registrado, en unos minutos te llega un enlace para elegir una contraseña nueva. Revisa también la carpeta de spam.', 'exito');
+  }
+
+  function mostrarNuevaClave() {
+    ocultarMensaje('mensajeNuevaClave');
+    mostrarBloquesLogin('bloqueNuevaClave');
+  }
+
+  async function guardarNuevaClave() {
+    const nueva = document.getElementById('inputNuevaClave').value;
+    const repite = document.getElementById('inputNuevaClave2').value;
+    ocultarMensaje('mensajeNuevaClave');
+    if (nueva.length < 6) { mostrarMensaje('mensajeNuevaClave', 'La contraseña debe tener al menos 6 caracteres.', 'error'); return; }
+    if (nueva !== repite) { mostrarMensaje('mensajeNuevaClave', 'Las dos contraseñas no son iguales.', 'error'); return; }
+    const { data } = await supabaseClient.auth.getSession();
+    if (!data || !data.session) { mostrarMensaje('mensajeNuevaClave', 'El enlace ya venció o ya se usó. Vuelve a entrar y pide uno nuevo con "¿Se te olvidó la contraseña?".', 'error'); return; }
+    const btn = document.getElementById('btnGuardarNuevaClave');
+    btn.disabled = true; btn.textContent = 'Guardando...';
+    const { error } = await supabaseClient.auth.updateUser({ password: nueva });
+    btn.disabled = false; btn.textContent = 'Guardar contraseña';
+    if (error) {
+      const igual = /different from the old password/i.test(error.message || '');
+      mostrarMensaje('mensajeNuevaClave', igual ? 'Escoge una contraseña distinta a la anterior.' : 'No se pudo guardar: ' + error.message, 'error');
+      return;
+    }
+    await supabaseClient.auth.signOut();
+    sesionActual = null;
+    try { history.replaceState(null, '', location.pathname); } catch (e) { /* no pasa nada */ }
+    document.getElementById('inputNuevaClave').value = ''; document.getElementById('inputNuevaClave2').value = '';
+    document.getElementById('inputClave').value = '';
+    mostrarBloquesLogin('bloqueLoginNormal');
+    mostrarMensaje('mensajeLogin', '✅ Tu contraseña quedó cambiada. Ya puedes entrar con la nueva.', 'exito');
   }
 
   // Botón "ojo" del inicio de sesión: muestra u oculta la contraseña mientras se escribe.
@@ -7274,6 +7369,12 @@
   // AL CARGAR LA PÁGINA: revisar si ya hay una sesión guardada por Supabase
   // ============================================================================
   window.addEventListener('DOMContentLoaded', async () => {
+    // Llegó desde el enlace de recuperar contraseña: se pide la contraseña nueva y NO se entra al sistema.
+    if (ENTRADA_RECUPERACION) { mostrarNuevaClave(); return; }
+    if (ENTRADA_ENLACE_VENCIDO) {
+      try { history.replaceState(null, '', location.pathname); } catch (e) { /* no pasa nada */ }
+      mostrarMensaje('mensajeLogin', 'Ese enlace ya venció o ya se usó. Pide uno nuevo con "¿Se te olvidó la contraseña?".', 'error');
+    }
     const { data } = await supabaseClient.auth.getSession();
     if (data.session) {
       sesionActual = { token: data.session.access_token, userId: data.session.user.id, email: data.session.user.email };
