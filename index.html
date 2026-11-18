@@ -6661,7 +6661,7 @@
     if (!correo || !correo.includes('@')) { mostrarMensaje('mensajeRecuperarClave', 'Escribe tu correo completo.', 'error'); return; }
     const btn = document.getElementById('btnEnviarRecuperar');
     btn.disabled = true; btn.textContent = 'Enviando...';
-    const { error } = await supabaseClient.auth.resetPasswordForEmail(correo, { redirectTo: location.origin + location.pathname });
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(correo, { redirectTo: location.origin + location.pathname.replace(/index\.html$/, '') });
     const textoBoton = 'Enviar enlace de recuperación';
     btn.disabled = false; btn.textContent = textoBoton;
     if (error) {
