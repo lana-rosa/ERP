@@ -74,3 +74,8 @@
 
 ## Ícono de la app (verde azulado)
 - Ícono cambiado de rosado a verde azulado claro (#2eaaa6) con la ovejita en blanco. `icon-192/512.png` con esquinas redondeadas y transparentes; `icon-maskable-*` y `apple-touch-icon.png` a sangre (el celular les pone su forma). `sw.js` v66. Hay que desinstalar y reinstalar la app para ver el ícono nuevo.
+
+## Barra de arriba del inicio en celular (compacta)
+- Pedido de Sara: en el celular la barra de arriba (Volver a LAROVA, Marcar entrada, Cerrar sesión) ocupaba mucho espacio.
+- Ahora, en ≤700 px: arriba solo «Volver a LAROVA»; el logo se achica y va al lado del título; «Marcar entrada/salida» es una franja delgada debajo (solo si es empleada); «Cerrar sesión» e «Instalar app» pasan al pie de la página (`.hub-pie`). En PC queda igual (clases `.solo-pc` / `.solo-movil`). `#btnInstalarApp` ahora vive en el pie. `sw.js` v67.
+- Falta (pedido de Sara, en curso): menú lateral de módulos solo con nombres de sección que se despliegan al tocar; pestañas internas como listas desplegables en celular; formularios lado a lado en una sola columna en celular.

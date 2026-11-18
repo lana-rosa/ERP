@@ -1086,7 +1086,21 @@
   .hub-cabecera-modulo svg.ilus { width: 84px; height: 84px; flex-shrink: 0; }
   .hub-cabecera-modulo h1 { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 24px; margin: 0; }
   .hub-cabecera-modulo p { font-size: 13px; color: var(--texto-suave, #7a6670); margin: 4px 0 0; }
-  @media (max-width: 700px) { .hub-rejilla { grid-template-columns: 1fr; } .hub-marca h1 { font-size: 26px; } .hub-opciones { grid-template-columns: 1fr; } }
+  .hub-pie { display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 28px; }
+  .solo-movil { display: none !important; }
+  @media (max-width: 700px) { .hub-rejilla { grid-template-columns: 1fr; } .hub-opciones { grid-template-columns: 1fr; }
+    .solo-pc { display: none !important; } .solo-movil { display: inline-flex !important; }
+    /* Arriba solo «Volver a LAROVA»; el logo se achica y se pone al lado del título */
+    .hub-barra { margin-bottom: 4px; }
+    .hub-barra-der { width: 100%; order: 3; margin: 2px 0 8px; }
+    .hub-barra-der:not(:has(#widgetHorasTrabajadas)) { display: none; }
+    .hub-reloj { width: 100%; }
+    .hub-reloj #widgetHorasTrabajadas { width: 100%; box-sizing: border-box; }
+    .hub-marca { display: grid; grid-template-columns: 48px 1fr; column-gap: 12px; row-gap: 0; align-items: center; text-align: left; margin: 6px 4px 8px; }
+    .hub-marca img { width: 48px; height: 48px; border-radius: 14px; grid-row: 1 / span 2; }
+    .hub-marca h1 { font-size: 22px; } .hub-marca p { font-size: 12.5px; }
+    .hub-titulo-seccion { margin-top: 16px; }
+  }
   @media (max-width: 700px) {
     .hub-rapidos { display: flex; overflow-x: auto; gap: 10px; padding: 2px 2px 10px; scroll-snap-type: x proximity; }
     .hub-rapido { flex: 0 0 112px; padding: 8px 6px 10px; scroll-snap-align: start; }
@@ -1289,7 +1303,7 @@
 
 
 <!-- ===== PANTALLA: LOGIN ===== -->
-<div id="barraRapido"><button type="button" class="hub-enlace" onclick="mostrarInicioModulos()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> Todos los módulos</button><button type="button" class="hub-enlace" onclick="cerrarSesion()">Cerrar sesión</button></div>
+<div id="barraRapido"><button type="button" class="hub-enlace" onclick="mostrarInicioModulos()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> Todos los módulos</button><button type="button" class="hub-enlace solo-pc" onclick="cerrarSesion()">Cerrar sesión</button></div>
 
 <div id="pantallaLogin">
   <div class="login-card">
@@ -1315,10 +1329,9 @@
   <div class="hub">
     <div class="hub-barra">
       <a class="hub-enlace" href="./larova.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> Volver a LAROVA</a>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <button type="button" id="btnInstalarApp" class="hub-enlace oculto" onclick="instalarAppPWA()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11M8 10l4 4 4-4"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg> Instalar app</button>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;" class="hub-barra-der">
         <div class="hub-reloj" id="hubRelojContenedor"></div>
-        <button type="button" class="hub-enlace" onclick="cerrarSesion()">Cerrar sesión</button>
+        <button type="button" class="hub-enlace solo-pc" onclick="cerrarSesion()">Cerrar sesión</button>
       </div>
     </div>
     <div class="hub-marca"><img src="./icon-192.png" alt="Lana Rosa" width="72" height="72"><h1>Lana Rosa ERP</h1><p>Elige un módulo para empezar</p></div>
@@ -1327,6 +1340,10 @@
     <div class="hub-rapidos" id="hubRapidos"></div>
     <div class="hub-titulo-seccion" id="hubModulosTitulo">Módulos</div>
     <div class="hub-rejilla" id="hubModulos"></div>
+    <div class="hub-pie">
+      <button type="button" id="btnInstalarApp" class="hub-enlace oculto" onclick="instalarAppPWA()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11M8 10l4 4 4-4"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg> Instalar app</button>
+      <button type="button" class="hub-enlace solo-movil" onclick="cerrarSesion()">Cerrar sesión</button>
+    </div>
   </div>
 </div>
 
