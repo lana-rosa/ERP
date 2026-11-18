@@ -306,6 +306,7 @@
     border-radius: var(--radius-sm); background: rgba(255,255,255,0.06);
   }
   .nav-btn.activo .nav-icon { background: rgba(255,255,255,0.2); }
+  .nav-btn .nav-icon svg, .depto-ico svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
   .sidebar-footer {
     padding: var(--space-3) var(--space-2);
@@ -908,6 +909,11 @@
     cursor: pointer; text-align: left; margin-top: 6px;
   }
   .sidebar-depto-header:hover { background: rgba(255,255,255,0.1); }
+  .sidebar-depto-header { gap: 10px; padding: 7px 10px; margin-top: 4px; }
+  .sidebar-nav > .nav-btn { padding: 7px 12px; }
+  .sidebar-depto-header .depto-ico { width: 28px; height: 28px; flex-shrink: 0; border-radius: 9px; background: var(--c, #7a6670); color: #fff; display: grid; place-items: center; }
+  .sidebar-depto-header .depto-ico svg { width: 16px; height: 16px; }
+  .sidebar-depto-header .depto-nombre { flex: 1; font-size: 13px; }
   .sidebar-depto-header .chevron { font-size: 10px; transition: transform 0.15s ease; opacity: 0.6; }
   .sidebar-depto-header.abierto .chevron { transform: rotate(180deg); }
   .sidebar-depto-submenu { padding-left: 6px; overflow: hidden; max-height: 0; transition: max-height 0.2s ease; }
@@ -1068,133 +1074,133 @@
   </div>
 
   <div class="sidebar-nav">
-    <a class="nav-btn" id="nav-larova" href="./larova.html" style="text-decoration:none;" title="Volver a la portada LAROVA"><span class="nav-icon">🏡</span> Volver a LAROVA</a>
-    <button class="nav-btn" id="nav-dashboard" onclick="mostrarPantallaDashboard()"><span class="nav-icon">🏠</span> Dashboard</button>
-    <button class="nav-btn" id="nav-calendario" onclick="mostrarPantallaCalendario()"><span class="nav-icon">📅</span> Calendario del equipo</button>
-    <button class="nav-btn" id="nav-sistema-operativo" onclick="abrirSistemaOperativo()" style="display:none;" title="Se abre en otra pestaña"><span class="nav-icon">🧭</span> Gestión <span style="margin-left:auto;opacity:0.6;">↗</span></button>
-    <button class="nav-btn" id="nav-mi-produccion" onclick="mostrarPantallaMiProduccion()" style="display:none;"><span class="nav-icon">🧵</span> Mi producción</button>
-    <button class="nav-btn" id="nav-enviar-correo" onclick="abrirRedactarCorreo()" style="display:none;"><span class="nav-icon">✉️</span> Enviar correo</button>
+    <a class="nav-btn" id="nav-larova" href="./larova.html" style="text-decoration:none;" title="Volver a la portada LAROVA"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></span> Volver a LAROVA</a>
+    <button class="nav-btn" id="nav-dashboard" onclick="mostrarPantallaDashboard()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></span> Dashboard</button>
+    <button class="nav-btn" id="nav-calendario" onclick="mostrarPantallaCalendario()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg></span> Calendario del equipo</button>
+    <button class="nav-btn" id="nav-mi-produccion" onclick="mostrarPantallaMiProduccion()" style="display:none;"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M5 9c4 2 10 2 14 0M5 15c4-2 10-2 14 0M9 4.5c-2 5-2 10 0 15"/></svg></span> Mi producción</button>
+    <button class="nav-btn" id="nav-enviar-correo" onclick="abrirRedactarCorreo()" style="display:none;"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span> Enviar correo</button>
+    <button class="nav-btn" id="nav-asistente-ia" onclick="toggleChatAsistenteIA(); cerrarSidebarMovil();" title="Preguntarle a Rosina"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1.4-4.4A8 8 0 1 1 21 12Z"/><path d="M9 11h6M9 14h3.5"/></svg></span> Asistente Rosina</button>
 
     <!-- 1. VENTAS Y CLIENTES -->
     <div class="sidebar-depto" id="deptoVentasGrupo" style="display:none;">
-      <button class="sidebar-depto-header" id="headerDeptoVentas" onclick="toggleSidebarDepto('deptoVentasSubmenu', 'headerDeptoVentas')">🛍️ Punto de Venta <span class="chevron">▾</span></button>
+      <button class="sidebar-depto-header" id="headerDeptoVentas" onclick="toggleSidebarDepto('deptoVentasSubmenu', 'headerDeptoVentas')"><span class="depto-ico" style="--c:#d8017c"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M3 4h2.5l2.4 11h10.2l2-8H7"/></svg></span><span class="depto-nombre">Punto de Venta</span> <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoVentasSubmenu">
-        <button class="nav-btn" id="nav-turno" onclick="irATurnoActivo()"><span class="nav-icon">💵</span> Turno de caja</button>
-        <button class="nav-btn" id="nav-ventas" onclick="mostrarPantallaVentas()"><span class="nav-icon">🛒</span> Registrar venta</button>
-        <button class="nav-btn" id="nav-historial" onclick="mostrarPantallaHistorial('01')"><span class="nav-icon">📋</span> Historial ventas</button>
-        <button class="nav-btn" id="nav-clientes-dir" onclick="mostrarPantallaClientes()"><span class="nav-icon">👤</span> Clientes</button>
-        <button class="nav-btn" id="nav-oportunidades" onclick="mostrarPantallaOportunidades()"><span class="nav-icon">🎯</span> Oportunidades</button>
-        <button class="nav-btn" id="nav-resenas-web" onclick="mostrarPantallaResenasWeb()" style="display:none;"><span class="nav-icon">⭐</span> Reseñas web <span id="badgeResenasPendientes" style="display:none;margin-left:auto;background:#d8017c;color:#fff;border-radius:999px;font-size:10.5px;font-weight:700;padding:1px 8px;"></span></button>
-        <button class="nav-btn" id="nav-pedidos-canal" onclick="mostrarPantallaPedidosCanal()"><span class="nav-icon">📱</span> Pedidos Web/Redes</button>
-        <button class="nav-btn" id="nav-notas-cd" onclick="mostrarPantallaNotasCD()"><span class="nav-icon">📄</span> Notas crédito/débito</button>
-        <button class="nav-btn" id="nav-facturacion-electronica" onclick="mostrarPantallaFacturacionElectronica()"><span class="nav-icon">🧾</span> Facturación electrónica DIAN</button>
-        <button class="nav-btn" id="nav-cuentas-pendientes" onclick="mostrarPantallaCuentasPendientes()"><span class="nav-icon">📋</span> Cartera</button>
+        <button class="nav-btn" id="nav-turno" onclick="irATurnoActivo()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9v.01M18 15v.01"/></svg></span> Turno de caja</button>
+        <button class="nav-btn" id="nav-ventas" onclick="mostrarPantallaVentas()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M3 4h2.5l2.4 11h10.2l2-8H7"/></svg></span> Registrar venta</button>
+        <button class="nav-btn" id="nav-historial" onclick="mostrarPantallaHistorial('01')"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h3"/></svg></span> Historial ventas</button>
+        <button class="nav-btn" id="nav-clientes-dir" onclick="mostrarPantallaClientes()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/></svg></span> Clientes</button>
+        <button class="nav-btn" id="nav-oportunidades" onclick="mostrarPantallaOportunidades()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg></span> Oportunidades</button>
+        <button class="nav-btn" id="nav-resenas-web" onclick="mostrarPantallaResenasWeb()" style="display:none;"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z"/></svg></span> Reseñas web <span id="badgeResenasPendientes" style="display:none;margin-left:auto;background:#d8017c;color:#fff;border-radius:999px;font-size:10.5px;font-weight:700;padding:1px 8px;"></span></button>
+        <button class="nav-btn" id="nav-pedidos-canal" onclick="mostrarPantallaPedidosCanal()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg></span> Pedidos Web/Redes</button>
+        <button class="nav-btn" id="nav-notas-cd" onclick="mostrarPantallaNotasCD()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v13H7V3Z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></svg></span> Notas crédito/débito</button>
+        <button class="nav-btn" id="nav-facturacion-electronica" onclick="mostrarPantallaFacturacionElectronica()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6M9 12h6"/></svg></span> Facturación electrónica DIAN</button>
+        <button class="nav-btn" id="nav-cuentas-pendientes" onclick="mostrarPantallaCuentasPendientes()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a1 1 0 0 1-1-1V7Z"/><path d="M4 7l2-3h10l1 3M15 14h3"/></svg></span> Cartera</button>
       </div>
     </div>
 
     <!-- 2. COMPRAS Y GASTOS -->
     <div class="sidebar-depto" id="deptoComprasGrupo" style="display:none;">
-      <button class="sidebar-depto-header" id="headerDeptoCompras" onclick="toggleSidebarDepto('deptoComprasSubmenu', 'headerDeptoCompras')">🛒 Compras y Gastos <span class="chevron">▾</span></button>
+      <button class="sidebar-depto-header" id="headerDeptoCompras" onclick="toggleSidebarDepto('deptoComprasSubmenu', 'headerDeptoCompras')"><span class="depto-ico" style="--c:#e0a032"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l1 12H5L6 8Z"/><path d="M9 8V7a3 3 0 0 1 6 0v1"/></svg></span><span class="depto-nombre">Compras y Gastos</span> <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoComprasSubmenu">
-        <button class="nav-btn" id="nav-compras-gastos" onclick="mostrarPantallaPagosPendientes('01')"><span class="nav-icon">📈</span> Registro de compras y gastos</button>
-        <button class="nav-btn" id="nav-proveedores-dir" onclick="mostrarPantallaProveedores()"><span class="nav-icon">🏭</span> Proveedores</button>
-        <button class="nav-btn" id="nav-cotizaciones" onclick="mostrarPantallaCotizaciones()"><span class="nav-icon">📝</span> Cotizaciones</button>
-        <button class="nav-btn" id="nav-ordenes-compra" onclick="mostrarPantallaOrdenesCompra()"><span class="nav-icon">📦</span> Órdenes de compra</button>
+        <button class="nav-btn" id="nav-compras-gastos" onclick="mostrarPantallaPagosPendientes('01')"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span> Registro de compras y gastos</button>
+        <button class="nav-btn" id="nav-proveedores-dir" onclick="mostrarPantallaProveedores()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21V10l6 4v-4l6 4V6h3v15H3Z"/></svg></span> Proveedores</button>
+        <button class="nav-btn" id="nav-cotizaciones" onclick="mostrarPantallaCotizaciones()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h10l4 4v14H5V3Z"/><path d="M9 15l4-4 2 2-4 4H9v-2Z"/></svg></span> Cotizaciones</button>
+        <button class="nav-btn" id="nav-ordenes-compra" onclick="mostrarPantallaOrdenesCompra()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8l9-5 9 5v8l-9 5-9-5V8Z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></span> Órdenes de compra</button>
       </div>
     </div>
 
     <!-- 3. INVENTARIOS Y PRODUCTOS -->
     <div class="sidebar-depto" id="deptoInventarioGrupo" style="display:none;">
-      <button class="sidebar-depto-header" id="headerDeptoInventario" onclick="toggleSidebarDepto('deptoInventarioSubmenu', 'headerDeptoInventario')">📦 Inventarios y Productos <span class="chevron">▾</span></button>
+      <button class="sidebar-depto-header" id="headerDeptoInventario" onclick="toggleSidebarDepto('deptoInventarioSubmenu', 'headerDeptoInventario')"><span class="depto-ico" style="--c:#5b8db8"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8l9-5 9 5v8l-9 5-9-5V8Z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></span><span class="depto-nombre">Inventarios y Productos</span> <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoInventarioSubmenu">
-        <button class="nav-btn" id="nav-inventario-tienda" onclick="mostrarPantallaInventario('01')"><span class="nav-icon">📊</span> Inventario Tienda</button>
-        <button class="nav-btn" id="nav-inventario-taller" onclick="mostrarPantallaInventario('03')"><span class="nav-icon">📊</span> Inventario Taller</button>
-        <button class="nav-btn" id="nav-listas-precios" onclick="mostrarPantallaListasPrecios()"><span class="nav-icon">💲</span> Listas de precios</button>
-        <button class="nav-btn" id="nav-ajustestock" onclick="mostrarPantallaAjusteStock()"><span class="nav-icon">📥</span> Entrada mercancía</button>
-        <button class="nav-btn" id="nav-etiquetas" onclick="mostrarPantallaEtiquetas()"><span class="nav-icon">🏷️</span> Imprimir etiquetas</button>
-        <button class="nav-btn" id="nav-transferir-stock" onclick="mostrarPantallaTransferirStock()"><span class="nav-icon">🔄</span> Trasladar Tienda ↔ Taller</button>
-        <button class="nav-btn" id="nav-transferir-stock-taller" onclick="mostrarPantallaTransferirStock()"><span class="nav-icon">🔄</span> Trasladar Tienda ↔ Taller</button>
-        <button class="nav-btn" id="nav-solicitudes-tienda" onclick="mostrarPantallaSolicitudes()"><span class="nav-icon">📦</span> Solicitud de insumos del Taller</button>
-        <button class="nav-btn" id="nav-consumotaller" onclick="mostrarPantallaPedidosCrm()"><span class="nav-icon">🧶</span> Consumo de material (Taller)</button>
-        <button class="nav-btn" id="nav-ordenes-produccion" onclick="mostrarPantallaOrdenesProduccion()"><span class="nav-icon">🏭</span> Órdenes de producción</button>
-        <button class="nav-btn" id="nav-kardex-etapas" onclick="mostrarPantallaKardexEtapas()"><span class="nav-icon">📒</span> Kardex por etapas</button>
-        <button class="nav-btn" id="nav-inventario-global" onclick="mostrarPantallaInventarioGlobal()"><span class="nav-icon">🗺️</span> Inventario global</button>
+        <button class="nav-btn" id="nav-inventario-tienda" onclick="mostrarPantallaInventario('01')"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9l1.5-5h13L20 9"/><path d="M4 9a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0A2.7 2.7 0 0 0 20 9"/><path d="M5 12v8h14v-8M10 20v-5h4v5"/></svg></span> Inventario Tienda</button>
+        <button class="nav-btn" id="nav-inventario-taller" onclick="mostrarPantallaInventario('03')"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M5 9c4 2 10 2 14 0M5 15c4-2 10-2 14 0M9 4.5c-2 5-2 10 0 15"/></svg></span> Inventario Taller</button>
+        <button class="nav-btn" id="nav-listas-precios" onclick="mostrarPantallaListasPrecios()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12V4h8l10 10-8 8L3 12Z"/><circle cx="7.5" cy="8.5" r="1.3"/></svg></span> Listas de precios</button>
+        <button class="nav-btn" id="nav-ajustestock" onclick="mostrarPantallaAjusteStock()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11M8 10l4 4 4-4"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg></span> Entrada mercancía</button>
+        <button class="nav-btn" id="nav-etiquetas" onclick="mostrarPantallaEtiquetas()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V3h10v6"/><rect x="4" y="9" width="16" height="8" rx="2"/><path d="M7 14h10v7H7v-7Z"/></svg></span> Imprimir etiquetas</button>
+        <button class="nav-btn" id="nav-transferir-stock" onclick="mostrarPantallaTransferirStock()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h12l-3-3M17 17H5l3 3"/></svg></span> Trasladar Tienda ↔ Taller</button>
+        <button class="nav-btn" id="nav-transferir-stock-taller" onclick="mostrarPantallaTransferirStock()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h12l-3-3M17 17H5l3 3"/></svg></span> Trasladar Tienda ↔ Taller</button>
+        <button class="nav-btn" id="nav-solicitudes-tienda" onclick="mostrarPantallaSolicitudes()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8l9-5 9 5v8l-9 5-9-5V8Z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></span> Solicitud de insumos del Taller</button>
+        <button class="nav-btn" id="nav-consumotaller" onclick="mostrarPantallaPedidosCrm()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M5 9c4 2 10 2 14 0M5 15c4-2 10-2 14 0M9 4.5c-2 5-2 10 0 15"/></svg></span> Consumo de material (Taller)</button>
+        <button class="nav-btn" id="nav-ordenes-produccion" onclick="mostrarPantallaOrdenesProduccion()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg></span> Órdenes de producción</button>
+        <button class="nav-btn" id="nav-kardex-etapas" onclick="mostrarPantallaKardexEtapas()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4Z"/><path d="M5 17a3 3 0 0 1 3-3h11"/></svg></span> Kardex por etapas</button>
+        <button class="nav-btn" id="nav-inventario-global" onclick="mostrarPantallaInventarioGlobal()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z"/></svg></span> Inventario global</button>
       </div>
     </div>
 
     <!-- 4. CONTABILIDAD (fusión de Contabilidad e Impuestos + Reportes e Indicadores + lo administrativo de Bancos y Tesorería) -->
     <div class="sidebar-depto" id="deptoContabilidadGrupo" style="display:none;">
-      <button class="sidebar-depto-header" id="headerDeptoContabilidad" onclick="toggleSidebarDepto('deptoContabilidadSubmenu', 'headerDeptoContabilidad')">📊 Contabilidad <span class="chevron">▾</span></button>
+      <button class="sidebar-depto-header" id="headerDeptoContabilidad" onclick="toggleSidebarDepto('deptoContabilidadSubmenu', 'headerDeptoContabilidad')"><span class="depto-ico" style="--c:#2e8b57"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01"/></svg></span><span class="depto-nombre">Contabilidad</span> <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoContabilidadSubmenu">
         <div class="sidebar-seccion">Contabilidad e impuestos</div>
-        <button class="nav-btn" id="nav-panel-contador" onclick="mostrarPantallaPanelContador()"><span class="nav-icon">🧑‍💼</span> Panel del contador</button>
-        <button class="nav-btn" id="nav-dashboard-contable" onclick="mostrarPantallaDashboardContable()"><span class="nav-icon">💹</span> Dashboard Contable</button>
-        <button class="nav-btn" id="nav-honorarios-tejedoras" onclick="mostrarPantallaHonorariosTejedoras()"><span class="nav-icon">🧵</span> Honorarios Tejedoras</button>
-        <button class="nav-btn" id="nav-estados-financieros" onclick="mostrarPantallaEstadosFinancieros()"><span class="nav-icon">📑</span> Estados financieros y libros</button>
-        <button class="nav-btn" id="nav-contabilidad-impuestos" onclick="mostrarPantallaContabilidadImpuestos()"><span class="nav-icon">🧾</span> Impuestos, PUC y ajustes</button>
-        <button class="nav-btn" id="nav-fe-contabilidad" onclick="mostrarPantallaFacturacionElectronica()"><span class="nav-icon">📨</span> Facturación y nómina electrónica</button>
-        <button class="nav-btn" id="nav-servicios-dian" onclick="mostrarPantallaServiciosDian()"><span class="nav-icon">🏛️</span> Servicios digitales DIAN</button>
-        <button class="nav-btn" id="nav-activos-fijos" onclick="mostrarPantallaActivosFijos()"><span class="nav-icon">🪑</span> Activos fijos</button>
+        <button class="nav-btn" id="nav-panel-contador" onclick="mostrarPantallaPanelContador()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M3 13h18"/></svg></span> Panel del contador</button>
+        <button class="nav-btn" id="nav-dashboard-contable" onclick="mostrarPantallaDashboardContable()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span> Dashboard Contable</button>
+        <button class="nav-btn" id="nav-honorarios-tejedoras" onclick="mostrarPantallaHonorariosTejedoras()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5h4a1.5 1.5 0 0 1 0 3h-3a1.5 1.5 0 0 0 0 3H15"/></svg></span> Honorarios Tejedoras</button>
+        <button class="nav-btn" id="nav-estados-financieros" onclick="mostrarPantallaEstadosFinancieros()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4Z"/><path d="M5 17a3 3 0 0 1 3-3h11"/></svg></span> Estados financieros y libros</button>
+        <button class="nav-btn" id="nav-contabilidad-impuestos" onclick="mostrarPantallaContabilidadImpuestos()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01"/></svg></span> Impuestos, PUC y ajustes</button>
+        <button class="nav-btn" id="nav-fe-contabilidad" onclick="mostrarPantallaFacturacionElectronica()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11 21 3l-6 18-3-7-9-3Z"/></svg></span> Facturación y nómina electrónica</button>
+        <button class="nav-btn" id="nav-servicios-dian" onclick="mostrarPantallaServiciosDian()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10 12 4l9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/></svg></span> Servicios digitales DIAN</button>
+        <button class="nav-btn" id="nav-activos-fijos" onclick="mostrarPantallaActivosFijos()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M10 21v-4h4v4"/></svg></span> Activos fijos</button>
         <div class="sidebar-seccion">Reportes e indicadores</div>
-        <button class="nav-btn" id="nav-reportes-financieros" onclick="mostrarPantallaReportesFinancieros()"><span class="nav-icon">📊</span> Informes de Ventas</button>
-        <button class="nav-btn" id="nav-indicadores" onclick="mostrarPantallaIndicadores()"><span class="nav-icon">📈</span> Indicadores</button>
-        <button class="nav-btn" id="nav-costeo-real" onclick="mostrarPantallaCosteoReal()"><span class="nav-icon">🧮</span> Costeo Real</button>
-        <button class="nav-btn" id="nav-informe-costos" onclick="mostrarPantallaInformeCostos()"><span class="nav-icon">🏷️</span> Informe de costos por área</button>
-        <button class="nav-btn" id="nav-reglas-precios" onclick="mostrarPantallaReglasPrecios()"><span class="nav-icon">💲</span> Reglas de precios</button>
-        <button class="nav-btn" id="nav-presupuesto-empresa" onclick="mostrarPantallaPresupuestoEmpresa()"><span class="nav-icon">💰</span> Presupuesto</button>
+        <button class="nav-btn" id="nav-reportes-financieros" onclick="mostrarPantallaReportesFinancieros()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v9h9a9 9 0 1 1-9-9Z"/><path d="M15 3a9 9 0 0 1 6 6h-6V3Z"/></svg></span> Informes de Ventas</button>
+        <button class="nav-btn" id="nav-indicadores" onclick="mostrarPantallaIndicadores()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18a8 8 0 1 1 16 0"/><path d="M12 18l4-6"/></svg></span> Indicadores</button>
+        <button class="nav-btn" id="nav-costeo-real" onclick="mostrarPantallaCosteoReal()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01"/></svg></span> Costeo Real</button>
+        <button class="nav-btn" id="nav-informe-costos" onclick="mostrarPantallaInformeCostos()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v9h9a9 9 0 1 1-9-9Z"/><path d="M15 3a9 9 0 0 1 6 6h-6V3Z"/></svg></span> Informe de costos por área</button>
+        <button class="nav-btn" id="nav-reglas-precios" onclick="mostrarPantallaReglasPrecios()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12V4h8l10 10-8 8L3 12Z"/><circle cx="7.5" cy="8.5" r="1.3"/></svg></span> Reglas de precios</button>
+        <button class="nav-btn" id="nav-presupuesto-empresa" onclick="mostrarPantallaPresupuestoEmpresa()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a1 1 0 0 1-1-1V7Z"/><path d="M4 7l2-3h10l1 3M15 14h3"/></svg></span> Presupuesto</button>
         <div class="sidebar-seccion">Bancos y tesorería</div>
-        <button class="nav-btn" id="nav-reportes" onclick="mostrarPantallaReportes()"><span class="nav-icon">📈</span> Reportes de turno</button>
-        <button class="nav-btn" id="nav-conciliacion" onclick="mostrarPantallaConciliacion()"><span class="nav-icon">🏦</span> Conciliación bancaria</button>
-        <button class="nav-btn" id="nav-transferencias-internas" onclick="mostrarPantallaTransferenciasInternas()"><span class="nav-icon">🔄</span> Transferencias caja/banco</button>
+        <button class="nav-btn" id="nav-reportes" onclick="mostrarPantallaReportes()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h3"/></svg></span> Reportes de turno</button>
+        <button class="nav-btn" id="nav-conciliacion" onclick="mostrarPantallaConciliacion()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10 12 4l9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/></svg></span> Conciliación bancaria</button>
+        <button class="nav-btn" id="nav-transferencias-internas" onclick="mostrarPantallaTransferenciasInternas()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h12l-3-3M17 17H5l3 3"/></svg></span> Transferencias caja/banco</button>
       </div>
     </div>
 
     <!-- 5. TALENTO HUMANO (nómina) -->
     <div class="sidebar-depto" id="deptoTalentoGrupo" style="display:none;">
-      <button class="sidebar-depto-header" id="headerDeptoTalento" onclick="toggleSidebarDepto('deptoTalentoSubmenu', 'headerDeptoTalento')">🗂️ Talento Humano <span class="chevron">▾</span></button>
+      <button class="sidebar-depto-header" id="headerDeptoTalento" onclick="toggleSidebarDepto('deptoTalentoSubmenu', 'headerDeptoTalento')"><span class="depto-ico" style="--c:#8b6fc4"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.5-3 2.7-5 5.5-5s5 2 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 14.2c3 .3 4.7 2 5 4.8"/></svg></span><span class="depto-nombre">Talento Humano</span> <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoTalentoSubmenu">
-        <button class="nav-btn" id="nav-nomina" onclick="mostrarPantallaNomina()"><span class="nav-icon">👥</span> Nómina</button>
-        <button class="nav-btn" id="nav-nomina-electronica" onclick="mostrarPantallaFacturacionElectronica('nomina')"><span class="nav-icon">📨</span> Nómina electrónica DIAN</button>
-        <button class="nav-btn" id="nav-talento-humano" onclick="mostrarPantallaTalentoHumano()"><span class="nav-icon">📁</span> Carpetas por empleado</button>
+        <button class="nav-btn" id="nav-nomina" onclick="mostrarPantallaNomina()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.5-3 2.7-5 5.5-5s5 2 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 14.2c3 .3 4.7 2 5 4.8"/></svg></span> Nómina</button>
+        <button class="nav-btn" id="nav-nomina-electronica" onclick="mostrarPantallaFacturacionElectronica('nomina')"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11 21 3l-6 18-3-7-9-3Z"/></svg></span> Nómina electrónica DIAN</button>
+        <button class="nav-btn" id="nav-talento-humano" onclick="mostrarPantallaTalentoHumano()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h6l2 2h10v11H3V6Z"/></svg></span> Carpetas por empleado</button>
       </div>
     </div>
 
     <!-- FONDO EMPRENDER (específico del negocio, fuera de los 7 puntos estándar) -->
     <div class="sidebar-depto" id="deptoFondoEmprenderGrupo" style="display:none;">
-      <button class="sidebar-depto-header" id="headerDeptoFE" onclick="toggleSidebarDepto('deptoFESubmenu', 'headerDeptoFE')">🏦 Fondo Emprender <span class="chevron">▾</span></button>
+      <button class="sidebar-depto-header" id="headerDeptoFE" onclick="toggleSidebarDepto('deptoFESubmenu', 'headerDeptoFE')"><span class="depto-ico" style="--c:#1f9d9d"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10 12 4l9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/></svg></span><span class="depto-nombre">Fondo Emprender</span> <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoFESubmenu">
-        <button class="nav-btn" onclick="mostrarPantallaFeEstado()"><span class="nav-icon">🚦</span> Estado del proyecto</button>
-        <button class="nav-btn" onclick="mostrarPantallaFeCalendario()"><span class="nav-icon">📅</span> Calendario de entregables</button>
-        <button class="nav-btn" onclick="mostrarPantallaFeDocumentos()"><span class="nav-icon">📄</span> Validar documentos</button>
-        <button class="nav-btn" onclick="mostrarPantallaFePresupuesto()"><span class="nav-icon">💰</span> Ejecución presupuestal</button>
-        <button class="nav-btn" onclick="mostrarPantallaFeIndicadores()"><span class="nav-icon">📊</span> Indicadores de cumplimiento</button>
-        <button class="nav-btn" onclick="mostrarPantallaFeConfig()"><span class="nav-icon">⚙️</span> Configuración del proyecto</button>
+        <button class="nav-btn" onclick="mostrarPantallaFeEstado()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="2.5" width="8" height="19" rx="3"/><circle cx="12" cy="7" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="12" cy="17" r="1.2"/></svg></span> Estado del proyecto</button>
+        <button class="nav-btn" onclick="mostrarPantallaFeCalendario()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg></span> Calendario de entregables</button>
+        <button class="nav-btn" onclick="mostrarPantallaFeDocumentos()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v13H7V3Z"/><path d="M14 3v5h5M10 15l2 2 4-4"/></svg></span> Validar documentos</button>
+        <button class="nav-btn" onclick="mostrarPantallaFePresupuesto()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5h4a1.5 1.5 0 0 1 0 3h-3a1.5 1.5 0 0 0 0 3H15"/></svg></span> Ejecución presupuestal</button>
+        <button class="nav-btn" onclick="mostrarPantallaFeIndicadores()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18a8 8 0 1 1 16 0"/><path d="M12 18l4-6"/></svg></span> Indicadores de cumplimiento</button>
+        <button class="nav-btn" onclick="mostrarPantallaFeConfig()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg></span> Configuración del proyecto</button>
       </div>
     </div>
 
     <div class="sidebar-depto" id="deptoConfiguracionGrupo" style="display:none;">
-      <button class="sidebar-depto-header" id="headerDeptoConfig" onclick="toggleSidebarDepto('deptoConfigSubmenu', 'headerDeptoConfig')">⚙️ Configuración <span class="chevron">▾</span></button>
+      <button class="sidebar-depto-header" id="headerDeptoConfig" onclick="toggleSidebarDepto('deptoConfigSubmenu', 'headerDeptoConfig')"><span class="depto-ico" style="--c:#7a6670"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg></span><span class="depto-nombre">Configuración</span> <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoConfigSubmenu">
-        <button class="nav-btn" id="nav-gestion-usuarios" onclick="mostrarPantallaUsuarios()"><span class="nav-icon">👥</span> Usuarios y permisos</button>
-        <button class="nav-btn" onclick="mostrarPantallaMiPerfil()"><span class="nav-icon">👤</span> Mi perfil</button>
-        <button class="nav-btn" id="nav-config-empresa" onclick="mostrarPantallaLogoEmpresa()"><span class="nav-icon">🏢</span> Configuración empresa</button>
-        <button class="nav-btn" id="nav-correo-empresa" onclick="mostrarPantallaCorreoEmpresa()"><span class="nav-icon">📧</span> Correo de la empresa</button>
-        <button class="nav-btn" id="nav-copia-seguridad" onclick="mostrarPantallaCopiaSeguridad()"><span class="nav-icon">🛡️</span> Respaldo y auditoría</button>
-        <button class="nav-btn" onclick="mostrarPantallaApariencia()"><span class="nav-icon">🎨</span> Apariencia</button>
-        <button class="nav-btn" id="nav-guias-usuario" onclick="mostrarPantallaGuiasUsuario()"><span class="nav-icon">📖</span> Guías de usuario</button>
+        <button class="nav-btn" id="nav-gestion-usuarios" onclick="mostrarPantallaUsuarios()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.5-3 2.7-5 5.5-5s5 2 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 14.2c3 .3 4.7 2 5 4.8"/></svg></span> Usuarios y permisos</button>
+        <button class="nav-btn" onclick="mostrarPantallaMiPerfil()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/></svg></span> Mi perfil</button>
+        <button class="nav-btn" id="nav-config-empresa" onclick="mostrarPantallaLogoEmpresa()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M10 21v-4h4v4"/></svg></span> Configuración empresa</button>
+        <button class="nav-btn" id="nav-correo-empresa" onclick="mostrarPantallaCorreoEmpresa()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span> Correo de la empresa</button>
+        <button class="nav-btn" id="nav-copia-seguridad" onclick="mostrarPantallaCopiaSeguridad()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></svg></span> Respaldo y auditoría</button>
+        <button class="nav-btn" onclick="mostrarPantallaApariencia()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 1.5-2.2-.6-1.3.2-2.8 1.7-2.8H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3Z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="14.5" cy="7" r="1"/></svg></span> Apariencia</button>
+        <button class="nav-btn" id="nav-guias-usuario" onclick="mostrarPantallaGuiasUsuario()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h7a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H3V5Z"/><path d="M21 5h-7a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h7V5Z"/></svg></span> Guías de usuario</button>
       </div>
     </div>
   </div>
 
   <div class="sidebar-footer">
     <div id="indicadorVentasOffline" class="oculto" style="margin:0 16px 10px 16px;padding:8px 10px;background:#c0392b;color:white;border-radius:8px;font-size:11px;font-weight:600;text-align:center;cursor:pointer;" onclick="sincronizarVentasOfflinePendientes()" title="Clic para intentar sincronizar ahora"></div>
-    <button id="btnInstalarApp" class="nav-btn oculto" style="background:rgba(255,255,255,0.08);margin:0 16px 8px 16px;width:calc(100% - 32px);" onclick="instalarAppPWA()"><span class="nav-icon">📲</span> Instalar app en el celular</button>
+    <button id="btnInstalarApp" class="nav-btn oculto" style="background:rgba(255,255,255,0.08);margin:0 16px 8px 16px;width:calc(100% - 32px);" onclick="instalarAppPWA()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M12 8v6M9.5 11.5 12 14l2.5-2.5"/></svg></span> Instalar app en el celular</button>
     <div id="widgetHorasTrabajadas" class="oculto" style="padding:10px 16px;border-top:1px solid rgba(255,255,255,0.08);"></div>
     <div class="sidebar-usuario">
       <div id="nombreUsuarioSidebar">—</div>
       <div id="badgeRolSidebar"></div>
     </div>
-    <button class="nav-btn" id="btnSalir" style="opacity:0.7;" onclick="cerrarSesion()"><span class="nav-icon">🚪</span> Cerrar sesión</button>
+    <button class="nav-btn" id="btnSalir" style="opacity:0.7;" onclick="cerrarSesion()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4M16 8l4 4-4 4M20 12H9"/></svg></span> Cerrar sesión</button>
   </div>
 </nav>
 
@@ -5902,9 +5908,6 @@
 <button id="btnCrearRapido" onclick="toggleMenuCrearRapido()" style="position:fixed;bottom:22px;left:22px;width:58px;height:58px;border-radius:50%;background:var(--rosa-principal);border:none;box-shadow:0 4px 14px rgba(0,0,0,0.25);cursor:pointer;z-index:400;display:none;align-items:center;justify-content:center;color:white;font-size:28px;font-weight:300;">+</button>
 <div id="menuCrearRapido" class="oculto" style="position:fixed;bottom:90px;left:22px;background:white;border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,0.22);z-index:401;overflow:hidden;min-width:230px;"></div>
 
-<button id="btnAbrirAsistenteIA" onclick="toggleChatAsistenteIA()" style="position:fixed;bottom:22px;right:22px;width:58px;height:58px;border-radius:50%;background:var(--rosa-principal);border:none;box-shadow:0 4px 14px rgba(0,0,0,0.25);cursor:pointer;z-index:400;display:none;align-items:center;justify-content:center;padding:0;overflow:hidden;">
-  <img src="data:image/jpeg;base64,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" class="rosina-imagen-principal" alt="Rosina" style="width:100%;height:100%;object-fit:cover;object-position:top center;">
-</button>
 
 <div id="panelChatAsistenteIA" class="oculto" style="position:fixed;bottom:22px;right:22px;width:380px;max-width:92vw;height:520px;max-height:80vh;background:var(--fondo-panel);border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,0.3);z-index:401;display:flex;flex-direction:column;overflow:hidden;">
   <div style="background:var(--rosa-principal);color:white;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;">
@@ -5955,10 +5958,6 @@
   const SUPABASE_URL = 'https://ngjoognzvehwjtpqwrqe.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5nam9vZ256dmVod2p0cHF3cnFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3MDAzMDYsImV4cCI6MjA5NzI3NjMwNn0.2BNYuaQOTh-lU8GZcYhJAnZPBiJvT5PwB9MYZwNHTUE';
   const WORKER_URL = 'https://lana-rosa-os-pos.saralmunoz1301.workers.dev';
-  // Lana Rosa OS (Sistemas de Gestión). Si cambia de dirección, se cambia solo aquí.
-  const URL_SISTEMA_OPERATIVO = 'https://lana-rosa.github.io/SO/';
-  // Roles personalizados que, además de la administradora, ven el ítem "Sistema Operativo" en el menú.
-  const ROLES_PERSONALIZADOS_SO = ['Gerencia SO', 'Taller SO'];
 
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -6620,12 +6619,6 @@
     return rolActual === 'administrador' || (rolesAdicionalesActual || []).includes('administrador');
   }
 
-  // Abre Lana Rosa OS en una pestaña nueva (la sesión del ERP no se comparte: allá se inicia sesión una vez).
-  function abrirSistemaOperativo() {
-    window.open(URL_SISTEMA_OPERATIVO, '_blank', 'noopener');
-    cerrarSidebarMovil();
-  }
-
   function configurarSidebarPorRol() {
     const rolesUsuario = [rolActual, ...rolesAdicionalesActual];
     const esAdmin = rolesUsuario.includes('administrador');
@@ -6642,9 +6635,6 @@
     };
 
     // Grupos completos (acordeón) — reorganizados según los 7 puntos estándar de un ERP
-    // Sistema Operativo (otra aplicación): administradora y roles "Gerencia SO" / "Taller SO".
-    // Cajero, Líder de Tienda y contador no lo ven (salvo permiso manual de la administradora).
-    mostrar('nav-sistema-operativo', esAdmin || ROLES_PERSONALIZADOS_SO.includes(nombreRolPersonalizadoActual));
     mostrar('deptoVentasGrupo', esAdmin || esCajero);
     mostrar('deptoComprasGrupo', esAdmin);
     mostrar('deptoInventarioGrupo', esAdmin || esCajero || esTaller || esContador);
@@ -6714,7 +6704,6 @@
     mostrar('nav-conciliacion', esAdmin || esContador);
     mostrar('nav-transferencias-internas', esAdmin);
     mostrar('nav-dashboard', esAdmin);
-    document.getElementById('btnAbrirAsistenteIA').style.display = 'flex';
     document.getElementById('btnCrearRapido').style.display = esAdmin ? 'flex' : 'none';
     document.getElementById('barraBusquedaGlobal').classList.remove('oculto');
     mostrar('nav-calendario', true);
@@ -15072,7 +15061,6 @@
   // USUARIOS Y PERMISOS
   // ============================================================
   const CATALOGO_MODULOS = [
-    { clave: 'nav-sistema-operativo', etiqueta: '🧭 Gestión (abre otra página)' },
     { clave: 'deptoVentasGrupo', etiqueta: '🛍️ Punto de Venta (grupo completo)' },
     { clave: 'nav-clientes-dir', etiqueta: '　　Clientes' },
     { clave: 'nav-cotizaciones', etiqueta: '　　Cotizaciones' },
