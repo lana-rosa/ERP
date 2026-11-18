@@ -1360,17 +1360,17 @@
     </div>
 
     <div id="bloqueRecuperarClave" class="oculto">
-      <div style="font-size:15px;font-weight:700;margin-bottom:6px;">Recuperar mi contraseña</div>
-      <div style="font-size:12.5px;opacity:0.75;margin-bottom:10px;">Escribe el correo con el que entras. Te enviamos un enlace para elegir una contraseña nueva.</div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:6px;">Recupera tu contraseña</div>
+      <div style="font-size:12.5px;opacity:0.75;margin-bottom:10px;">Escribe tu correo y te enviamos un enlace para crear una nueva.</div>
       <label for="inputCorreoRecuperar">Correo</label>
       <input type="email" id="inputCorreoRecuperar" placeholder="tucorreo@gmail.com" autocomplete="email">
-      <button class="btn-principal" id="btnEnviarRecuperar" onclick="enviarEnlaceRecuperacion()">Enviarme el enlace</button>
-      <div style="text-align:center;margin-top:12px;"><button type="button" onclick="volverAlLogin()" style="background:none;border:none;padding:4px;font-size:13px;text-decoration:underline;cursor:pointer;color:inherit;">← Volver a entrar</button></div>
+      <button class="btn-principal" id="btnEnviarRecuperar" onclick="enviarEnlaceRecuperacion()">Enviar enlace de recuperación</button>
+      <div style="text-align:center;margin-top:12px;"><button type="button" onclick="volverAlLogin()" style="background:none;border:none;padding:4px;font-size:13px;text-decoration:underline;cursor:pointer;color:inherit;">Volver a ingresar</button></div>
       <div class="mensaje" id="mensajeRecuperarClave"></div>
     </div>
 
     <div id="bloqueNuevaClave" class="oculto">
-      <div style="font-size:15px;font-weight:700;margin-bottom:6px;">Elige tu nueva contraseña</div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:6px;">Crea tu nueva contraseña</div>
       <div style="font-size:12.5px;opacity:0.75;margin-bottom:10px;">Mínimo 6 caracteres. Después podrás entrar con ella.</div>
       <label for="inputNuevaClave">Nueva contraseña</label>
       <input type="password" id="inputNuevaClave" autocomplete="new-password">
@@ -6662,14 +6662,18 @@
     const btn = document.getElementById('btnEnviarRecuperar');
     btn.disabled = true; btn.textContent = 'Enviando...';
     const { error } = await supabaseClient.auth.resetPasswordForEmail(correo, { redirectTo: location.origin + location.pathname });
-    btn.disabled = false; btn.textContent = 'Enviarme el enlace';
+    const textoBoton = 'Enviar enlace de recuperación';
+    btn.disabled = false; btn.textContent = textoBoton;
     if (error) {
       const muchos = error.status === 429 || /rate limit|too many/i.test(error.message || '');
       mostrarMensaje('mensajeRecuperarClave', muchos ? 'Se pidieron muchos correos seguidos. Espera unos minutos y vuelve a intentar.' : 'No pudimos enviar el correo: ' + error.message, 'error');
       return;
     }
     // Por seguridad el mensaje es el mismo exista o no el correo.
-    mostrarMensaje('mensajeRecuperarClave', '✅ Listo. Si ese correo está registrado, en unos minutos te llega un enlace para elegir una contraseña nueva. Revisa también la carpeta de spam.', 'exito');
+    mostrarMensaje('mensajeRecuperarClave', '✅ Si el correo existe, te llegó un enlace. Revisa también la carpeta de spam.', 'exito');
+    // Se deshabilita unos segundos para que no se pidan varios correos seguidos.
+    let faltan = 10; btn.disabled = true; btn.textContent = 'Enviado (' + faltan + ')';
+    const reloj = setInterval(() => { faltan--; if (faltan <= 0) { clearInterval(reloj); btn.disabled = false; btn.textContent = textoBoton; } else { btn.textContent = 'Enviado (' + faltan + ')'; } }, 1000);
   }
 
   function mostrarNuevaClave() {

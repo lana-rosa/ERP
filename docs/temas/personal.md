@@ -152,3 +152,7 @@ Se usará la **solución gratuita de la DIAN** (se digita a mano cada mes en el 
 - **Verificado:** misma huella de contraseña (no cambió), rol administradora activo, ficha de empleada conectada, historial intacto (95 asientos, 8 ventas POS, 4 turnos de caja, igual que antes), cuenta web `a6f3b2c9…` intacta. Sara entra con **el correo nuevo y la misma contraseña**; la recuperación de clave le llega a su bandeja normal de Gmail.
 - **Asesor de seguridad (Supabase):** sin hallazgos nuevos por este cambio. Pendiente de activar en el panel: protección contra contraseñas filtradas. Quedan 33 tablas con seguridad activa y sin reglas (solo las usa el Worker) y 24 funciones públicas de la tienda web (esperado).
 - **Pendiente de probar con correo real:** que Sara pida "¿Se te olvidó la contraseña?" con el correo nuevo y verifique que le llega.
+
+## Recuperar contraseña: textos ajustados (pedido de Jennifer, 18-nov)
+- Vista de recuperación con solo: «Recupera tu contraseña», una línea de ayuda, correo, botón «Enviar enlace de recuperación» y «Volver a ingresar». Al enviar: «Si el correo existe, te llegó un enlace» y el botón queda deshabilitado 10 s. La pantalla del enlace del correo se titula «Crea tu nueva contraseña». `sw.js` v77.
+- Pendiente (panel de Supabase, no se puede ver desde aquí): *Redirect URLs* con `https://larova.lanarosacrochet.com/erp/` (y `https://lana-rosa.github.io/ERP/` por la dirección vieja) y plantilla «Reset password» en español.
