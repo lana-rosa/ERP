@@ -55,3 +55,8 @@ Reglas: si el 4-dic no está estable se deja como está y se retoma después de 
 - **Ingreso único ERP ↔ Gestión confirmado:** con la sesión del ERP abierta, `/gestion/` entró directo sin pedir contraseña.
 - `/CRM/` carga y pide su propio usuario y contraseña (esperado: base y cuentas propias hasta el corte de enero).
 - **Falta probar:** venta de prueba en `/erp/` (sin confirmar cobro si no hay turno), revisar un pedido existente, app instalable desde la dirección nueva (las sesiones y la app instalada de la dirección vieja no pasan: volver a ingresar y reinstalar), botón «Volver a LAROVA» dentro de Gestión y CRM con cuentas reales. Luego: aviso al CRM chat 5 para su enlace `avisarPedidoEnERP`, y anunciar la dirección al equipo. Plazo duro vie 4-dic.
+
+## Marketing y comunicación (pantalla `marketing.html`)
+- 18-nov-2026: `marketing.html` (hecha por el chat de Marketing, aprobada por Jennifer) vive en la raíz del repo, junto a `larova.html`. Usa la tabla `public.mkt_piezas` (solo administradoras, RLS con `fn_rol_actual()`) y la sesión del ERP (mismo dominio). La tarjeta «Marketing y comunicación» de LAROVA (vista Administración) abre `./marketing.html`.
+- `scripts/build-larova.sh` copia `marketing.html` a `dist/` y ajusta sus enlaces («← LAROVA» → `./#administracion`, «Ir al ERP» → `./erp/`).
+- No toca `index.html` ni `sw.js`. Probado con la base simulada (administradora ve lista y calendario sin desplazamiento horizontal a 390 y 1280 px; cajero ve el aviso «solo para administradoras»). Falta probar con una cuenta de administradora real.

@@ -71,3 +71,17 @@
 - El bloque fijo de abajo del menú (Instalar app, Marcar entrada/salida, nombre y rol repetidos, Cerrar sesión) ocupaba casi un tercio del menú. Ahora: **«Marcar entrada/salida» y «Instalar app» están en el inicio** (arriba, junto a «Cerrar sesión»); **«Salir»** (cierra sesión) es un botoncito junto al nombre, arriba del menú; nombre y rol se quedan solo arriba. El widget `#widgetHorasTrabajadas` ya no se mueve al menú lateral (se coloca en el inicio al iniciar sesión, también si se entra directo por #hash).
 - El pie solo vuelve a verse si hay un aviso importante: `#indicadorVentasOffline` («ventas sin sincronizar», visible solo cuando hay pendientes). `btnInstalarApp` conserva su lógica (solo se muestra cuando se puede instalar).
 - Medido con 640 px de alto: la lista de opciones gana ≥ 85 px (más cuando se ve «Instalar app» o el nombre es largo).
+
+## Ícono de la app (verde azulado)
+- Ícono cambiado de rosado a verde azulado claro (#2eaaa6) con la ovejita en blanco. `icon-192/512.png` con esquinas redondeadas y transparentes; `icon-maskable-*` y `apple-touch-icon.png` a sangre (el celular les pone su forma). `sw.js` v66. Hay que desinstalar y reinstalar la app para ver el ícono nuevo.
+
+## Barra de arriba del inicio en celular (compacta)
+- Pedido de Sara: en el celular la barra de arriba (Volver a LAROVA, Marcar entrada, Cerrar sesión) ocupaba mucho espacio.
+- Ahora, en ≤700 px: arriba solo «Volver a LAROVA»; el logo se achica y va al lado del título; «Marcar entrada/salida» es una franja delgada debajo (solo si es empleada); «Cerrar sesión» e «Instalar app» pasan al pie de la página (`.hub-pie`). En PC queda igual (clases `.solo-pc` / `.solo-movil`). `#btnInstalarApp` ahora vive en el pie. `sw.js` v67.
+- Falta (pedido de Sara, en curso): menú lateral de módulos solo con nombres de sección que se despliegan al tocar; pestañas internas como listas desplegables en celular; formularios lado a lado en una sola columna en celular.
+
+## Menú lateral de módulo: secciones plegables y «Salir» abajo
+- Pedido de Sara: en el menú lateral de cada módulo, ver solo los nombres de las secciones (Contabilidad: «Contabilidad e impuestos», «Reportes e indicadores», «Bancos y tesorería») y que se desplieguen al tocarlas; «Salir» abajo.
+- `agruparSeccionesSidebar()` envuelve cada `.sidebar-seccion` y sus botones en `.sidebar-seccion-grupo` (se abre una a la vez); `refrescarSeccionesSidebar(btn)` oculta secciones sin opciones para el rol y abre la de la opción activa (se llama en `abrirModulo` y `establecerModuloActivo`). Solo Contabilidad tiene secciones; los demás módulos quedan igual.
+- «Salir» pasó del encabezado a `.sidebar-pie` (abajo, fijo). `sw.js` v68.
+- Falta: pestañas/botones internos de cada página como listas desplegables en celular; formularios lado a lado en una columna en celular.
