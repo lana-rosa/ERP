@@ -113,3 +113,6 @@
 
 ## Inicio en computador: nombre pequeño arriba a la izquierda
 - Pedido de Sara: el bloque grande del logo y «Lana Rosa ERP» ocupaba mucho espacio. En ≥701 px el logo (38 px) y el nombre (19 px) van dentro de la barra de arriba, a la izquierda; «Volver a LAROVA» al lado y «Marcar entrada / Cerrar sesión» a la derecha. Se quitó «Elige un módulo para empezar» en PC. En celular no cambia (logo y título compactos debajo de la barra). `.hub-marca` ahora vive dentro de `.hub-barra`. `sw.js` v75.
+
+## LAROVA: encabezado pequeño en Administración y Equipo
+- Pedido de Sara (18-nov): en las pantallas «Acceso Administración» y «Acceso Equipo» de `larova.html`, el ícono y el título LAROVA van pequeños arriba a la izquierda, con «Sistema Operativo Lana Rosa» debajo (se quitó «Lana Rosa, Valor y Avance» ahí). La entrada de LAROVA (logo grande) no cambia. Implementado con la clase `interna` en `body` (se activa según el `#hash`).
