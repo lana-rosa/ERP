@@ -146,3 +146,9 @@ Se usará la **solución gratuita de la DIAN** (se digita a mano cada mes en el 
 - **Opción A (correo exacto):** primero cambiar el correo interno de (b) a `saralmunoz1301+tienda@gmail.com` y luego poner el correcto en (a). Probada con rollback, pero toca la cuenta con el pedido pagado y no se sabe si la tienda web depende de ese correo: conviene que el chat Web lo confirme antes.
 - **Descartado:** mover el rol a la cuenta web (obligaría a reescribir todo el historial). Nunca borrar una cuenta sin el sí de Sara.
 - Cómo se aplica: se cambian `auth.users.email` y `auth.identities.identity_data` (las dos tablas deben quedar iguales); la contraseña se conserva; Sara tendrá que volver a entrar. Después, asesor de seguridad y probar la recuperación con el correo nuevo.
+
+### Aplicado el 18-nov-2026 (miércoles 3:27 p. m., hora de Colombia), opción B, escogida por Sara
+- Se cambió el correo de la cuenta del ERP (`5d148bc8…`) de `saralmunoz1301@gmai.com` a `saralmunoz1301+erp@gmail.com` en `auth.users` y en `auth.identities` (las dos quedaron iguales), en un solo paso que se cancelaba si algo no cuadraba.
+- **Verificado:** misma huella de contraseña (no cambió), rol administradora activo, ficha de empleada conectada, historial intacto (95 asientos, 8 ventas POS, 4 turnos de caja, igual que antes), cuenta web `a6f3b2c9…` intacta. Sara entra con **el correo nuevo y la misma contraseña**; la recuperación de clave le llega a su bandeja normal de Gmail.
+- **Asesor de seguridad (Supabase):** sin hallazgos nuevos por este cambio. Pendiente de activar en el panel: protección contra contraseñas filtradas. Quedan 33 tablas con seguridad activa y sin reglas (solo las usa el Worker) y 24 funciones públicas de la tienda web (esperado).
+- **Pendiente de probar con correo real:** que Sara pida "¿Se te olvidó la contraseña?" con el correo nuevo y verifique que le llega.
