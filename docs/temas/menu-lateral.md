@@ -98,3 +98,6 @@
 
 ## Nombre de la app instalada: LAROVA
 - Pedido de Sara: al instalar, el nombre debía decir LAROVA y no «Lana Rosa ERP». `manifest.json` (`name`/`short_name`) y `apple-mobile-web-app-title` (iPhone) ahora dicen «LAROVA». La pantalla de entrada sigue diciendo «Lana Rosa ERP». `sw.js` v71. Quien ya la tenga instalada debe desinstalar y reinstalar para ver el nombre nuevo.
+
+## Ícono: ovejita más grande
+- Pedido de Sara: ovejita más grande. En los íconos «any» (con esquinas redondeadas) la ovejita ocupa ~80 % del cuadro; en maskable ~68 % y apple-touch ~74 % (Android recorta los bordes). Parámetro `?v=3` en manifest/index/larova. `sw.js` v72.
