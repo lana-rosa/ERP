@@ -7,7 +7,15 @@
 
 const SIN_CACHE = /(^|\/)(sw\.js|index\.html|manifest\.json)$|\/$/;
 
-export async function reenviar(contexto, { prefijo, destinoBase }) {
+// Botón «Volver a LAROVA»: se agrega como primer ítem del menú lateral de la aplicación (sin tocar su repositorio).
+function botonVolver(margen) {
+  return '<a href="/" id="volver-larova" title="Volver a la portada LAROVA" style="display:flex;align-items:center;gap:8px;'
+    + 'margin:' + margen + ';padding:9px 12px;border-radius:10px;background:#fdf0f9;border:1.5px solid #f4c9e4;color:#d8017c;'
+    + 'font:600 13px/1.2 system-ui,-apple-system,\'Segoe UI\',Roboto,sans-serif;text-decoration:none;">'
+    + '<span aria-hidden="true" style="font-size:16px;line-height:1;">&larr;</span> Volver a LAROVA</a>';
+}
+
+export async function reenviar(contexto, { prefijo, destinoBase, volver }) {
   const { request, params } = contexto;
 
   if (request.method !== 'GET' && request.method !== 'HEAD') {
@@ -58,6 +66,17 @@ export async function reenviar(contexto, { prefijo, destinoBase }) {
     cabeceras.set('Cache-Control', 'no-cache');
   }
   cabeceras.set('X-Reenviado-Desde', 'larova');
+
+  // Solo en la página principal de la aplicación (no en los iframes ni en otros HTML)
+  const esPaginaPrincipal = ruta === '' || ruta === 'index.html';
+  const esHtml = /text\/html/i.test(cabeceras.get('content-type') || '');
+  if (volver && request.method === 'GET' && respuesta.status === 200 && esPaginaPrincipal && esHtml && typeof HTMLRewriter !== 'undefined') {
+    const transformada = new HTMLRewriter()
+      .on(volver.selector, { element(el) { el.prepend(botonVolver(volver.margen), { html: true }); } })
+      .transform(respuesta);
+    cabeceras.delete('content-length');
+    return new Response(transformada.body, { status: respuesta.status, statusText: respuesta.statusText, headers: cabeceras });
+  }
 
   return new Response(request.method === 'HEAD' ? null : respuesta.body, {
     status: respuesta.status,
