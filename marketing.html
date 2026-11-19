@@ -16,7 +16,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <style>
   :root{--rosa:#d8017c;--rosa-suave:#f9ddf4;--tinte:#fdf0f9;--hueso:#efebeb;--texto:#3a2c35;--suave:#6f5c66;--borde:#ead7e3;
-    --idea:#9aa0a6;--aprobado:#2f7de1;--grabado:#7a3fd6;--editado:#e0a032;--publicado:#2e8b57}
+    --crochet:#E74E96;--crochet-fondo:#FBE4EF;--academy:#1F6FDB;--academy-fondo:#E8F1FF;
+    --idea:#9aa0a6;--aprobado:#0f8b8d;--grabado:#7a3fd6;--editado:#e0a032;--publicado:#2e8b57}
   *{box-sizing:border-box;margin:0}
   body{font-family:'Poppins',system-ui,sans-serif;background:linear-gradient(180deg,var(--tinte),var(--hueso));background-attachment:fixed;color:var(--texto);min-height:100vh;font-size:14px}
   .env{max-width:1100px;margin:0 auto;padding:18px 16px 48px}
@@ -33,11 +34,15 @@
   .esp{flex:1}
   .aviso{background:#fff;border-radius:16px;padding:18px;margin-top:20px;text-align:center}
   .lista{display:grid;gap:10px}
-  .pieza{background:#fff;border-radius:16px;padding:14px;border-left:6px solid var(--c,var(--idea));cursor:pointer;display:grid;gap:4px}
+  .pieza{background:#fff;border-radius:16px;padding:14px;border-left:6px solid var(--m,var(--idea));cursor:pointer;display:grid;gap:4px}
   .pieza h3{font-size:15px}
   .meta{display:flex;flex-wrap:wrap;gap:6px;font-size:12px;color:var(--suave)}
   .chip{border-radius:999px;padding:2px 9px;background:var(--rosa-suave);color:var(--texto);font-size:12px;white-space:nowrap}
   .chip.est{background:var(--c);color:#fff}
+  .chip.marca{background:var(--mf);color:var(--texto);font-weight:600}
+  .leyenda{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--suave);margin:-6px 0 12px}
+  .leyenda span.sin::before{display:none}
+  .leyenda span::before{content:'';display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--m);margin-right:5px;vertical-align:-2px}
   .dia-grupo{font-weight:700;margin:10px 0 0;color:var(--suave);font-size:13px}
   .cal-cab{display:flex;align-items:center;gap:8px;margin-bottom:8px}
   .cal-cab h2{font-size:17px;flex:1;text-align:center;text-transform:capitalize}
@@ -47,7 +52,8 @@
   .celda.fuera{opacity:.45}
   .celda.hoy{outline:2px solid var(--rosa)}
   .celda .n{font-size:11px;font-weight:700}
-  .mini{font-size:11px;line-height:1.2;border-radius:6px;padding:2px 4px;background:var(--c);color:#fff;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:0;text-align:left;font-weight:500}
+  .mini{font-size:11px;line-height:1.2;border-radius:6px;padding:2px 4px 2px 5px;background:var(--mf);color:var(--texto);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:0;border-left:4px solid var(--m);text-align:left;font-weight:500}
+  .mini::before{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--c);margin-right:4px;vertical-align:1px}
   .sin-fecha{margin-top:14px}
   dialog{margin:auto;border:0;border-radius:18px;padding:0;width:min(720px,calc(100vw - 24px));max-height:calc(100vh - 24px)}
   dialog::backdrop{background:rgba(58,44,53,.45)}
@@ -64,7 +70,8 @@
   @media(max-width:640px){
     .fila{grid-template-columns:1fr}
     .celda{min-height:60px}
-    .mini{font-size:0;height:8px;padding:0}
+    .mini{font-size:0;height:9px;padding:0;background:var(--m);border-left:0}
+    .mini::before{display:none}
     h1{font-size:19px}
   }
 </style>
@@ -91,6 +98,7 @@
       <span class="esp"></span>
       <button type="button" class="prim" id="nueva">+ Nueva pieza</button>
     </div>
+    <p class="leyenda" aria-hidden="true"><span style="--m:var(--crochet)">Lana Rosa Crochet</span><span style="--m:var(--academy)">Lana Rosa Academy</span><span class="sin">· la etiqueta y el punto de color = estado</span></p>
     <div id="v-lista"></div>
     <div id="v-calendario" hidden></div>
   </div>
@@ -148,6 +156,10 @@
     Object.keys(mapa).forEach(function (k) { var o = document.createElement('option'); o.value = k; o.textContent = mapa[k]; sel.appendChild(o); });
   }
   function colorEstado(e) { return 'var(--' + (ESTADOS[e] ? e : 'idea') + ')'; }
+  function colores(x) {
+    var m = MARCAS[x.marca] ? x.marca : 'crochet';
+    return '--c:' + colorEstado(x.estado) + ';--m:var(--' + m + ');--mf:var(--' + m + '-fondo)';
+  }
   function aFecha(d) { var p = String(d).split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
   function fechaLarga(d) {
     if (!d) return 'Sin fecha';
@@ -166,11 +178,11 @@
   function tarjeta(x) {
     var plats = (x.plataformas || []).map(function (p) { return '<span class="chip">' + esc(PLATS[p] || p) + '</span>'; }).join('');
     var objs = (x.objetivos || []).map(function (o) { return OBJS[o] || o; }).join(' · ');
-    return '<article class="pieza" tabindex="0" data-id="' + esc(x.id) + '" style="--c:' + colorEstado(x.estado) + '">' +
+    return '<article class="pieza" tabindex="0" data-id="' + esc(x.id) + '" style="' + colores(x) + '">' +
       '<h3>' + esc(x.angulo) + '</h3>' +
       '<div class="meta"><span class="chip est">' + esc(ESTADOS[x.estado] || x.estado) + '</span>' +
       '<span class="chip">' + esc(TIPOS[x.tipo_publicacion] || x.tipo_publicacion) + '</span>' + plats +
-      '<span>' + esc(MARCAS[x.marca] || x.marca) + '</span><span>· ' + esc(fechaLarga(x.fecha)) + '</span>' +
+      '<span class="chip marca">' + esc(MARCAS[x.marca] || x.marca) + '</span><span>' + esc(fechaLarga(x.fecha)) + '</span>' +
       (objs ? '<span>· ' + esc(objs) + '</span>' : '') + '</div>' +
       '</article>';
   }
@@ -204,7 +216,7 @@
       var k = claveDia(d);
       html += '<div class="celda' + (d.getMonth() !== mes.getMonth() ? ' fuera' : '') + (k === hoy ? ' hoy' : '') + '"><span class="n">' + d.getDate() + '</span>';
       (porDia[k] || []).forEach(function (x) {
-        html += '<button type="button" class="mini" data-id="' + esc(x.id) + '" style="--c:' + colorEstado(x.estado) + '" title="' + esc(x.angulo) + '">' + esc((TIPOS[x.tipo_publicacion] || '').charAt(0) + ' · ' + x.angulo) + '</button>';
+        html += '<button type="button" class="mini" data-id="' + esc(x.id) + '" style="' + colores(x) + '" title="' + esc((MARCAS[x.marca] || '') + ' · ' + (ESTADOS[x.estado] || '') + ' · ' + x.angulo) + '">' + esc((TIPOS[x.tipo_publicacion] || '').charAt(0) + ' · ' + x.angulo) + '</button>';
       });
       html += '</div>';
       if (i === 34 && d.getMonth() !== mes.getMonth()) break;
