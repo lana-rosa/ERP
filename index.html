@@ -14977,7 +14977,7 @@
       const valor = c.valor_pagado ? `Pagado: ${formatearMoneda(c.valor_pagado)}` : `<label style="font-size:11.5px;">Valor transferido <input type="number" min="1" step="1" style="width:120px;" onchange="guardarValorPagadoFondo('${c.id}',this.value)"></label>`;
       const prov = c.proveedor_aprobado ? '' : ` <button class="btn-mini editar" style="padding:2px 8px;font-size:11px;" onclick="marcarProveedorPlanFondo('${c.proveedor_tercero_id || ''}')">Marcar proveedor como aprobado en el plan</button>`;
       const estado = est.faltan.length ? `<span style="color:var(--rojo-error);">Falta: ${est.faltan.join(', ')}</span>` : (est.alertas.length ? '' : '<span style="color:var(--verde-exito,#2e7d32);">✅ Lista para legalizar</span>');
-      return `<div style="border-top:1px solid #eee;padding:6px 0;"><strong>${new Date(c.fecha_factura + 'T00:00:00').toLocaleDateString('es-CO')}</strong> · ${escaparHtml(c.proveedor || 'sin proveedor')} · Factura ${escaparHtml(c.numero_factura || '')} · ${formatearMoneda(c.monto)} · ${c.fuente === 'mixto' ? 'Mixto' : 'Fondo'}<div>${estado}</div>${est.alertas.map(a => `<div style="color:var(--rojo-error);font-size:11.5px;">⚠️ ${a}</div>`).join('')}<div>${links}</div><div style="margin-top:4px;">${valor}${prov}</div>${subir ? `<div style="margin-top:4px;">${subir}</div>` : ''}</div>`;
+      return `<div style="border-top:1px solid #eee;padding:6px 0;"><strong>${new Date(c.fecha_factura + 'T00:00:00').toLocaleDateString('es-CO')}</strong> · ${escaparHtml(c.proveedor || 'sin proveedor')} · Factura ${escaparHtml(c.numero_factura || '')} · ${formatearMoneda(c.monto)} · ${c.fuente === 'mixto' ? 'Mixto' : 'Fondo'}<div>${estado}</div>${est.alertas.map(a => `<div style="color:var(--rojo-error);font-size:11.5px;">⚠️ ${a}</div>`).join('')}<div>${links}</div><div style="margin-top:4px;">${valor}${c.cuenta_pago ? ` · Cuenta: ${escaparHtml(c.cuenta_pago)}` : ' · <em>sin cuenta registrada</em>'}${prov}</div>${subir ? `<div style="margin-top:4px;">${subir}</div>` : ''}</div>`;
     }).join('');
   }
 
@@ -15028,7 +15028,7 @@
 
   // ---- Requisitos del instructivo de pagos del Fondo Emprender (mayo de 2024, versión 2) para toda compra ----
   // Aplican igual aunque la empresa esté en el Régimen SIMPLE: el Fondo Emprender exige cumplir como si fuera una sociedad.
-  let requisitosCompraInfo = null, requisitosCompraTimer = null;
+  let requisitosCompraInfo = null, requisitosCompraTimer = null, cuentasPagoCache = null;
   function actualizarRequisitosCompra(inmediato) {
     clearTimeout(requisitosCompraTimer);
     return new Promise((resolve) => {
@@ -15044,6 +15044,7 @@
           else if (el.type === 'checkbox') previo.marcas[k] = el.checked;
           else previo.textos[k] = el.value;
         });
+        if (!cuentasPagoCache) { const { data: cb } = await supabaseClient.from('cuentas_bancarias').select('id, nombre, uso, activa').eq('activa', true); cuentasPagoCache = cb || []; }
         const { data, error } = await supabaseClient.rpc('fn_compra_requisitos_info', {
           p_proveedor_tercero: proveedorGastoSeleccionadoId || null, p_proveedor_nit: document.getElementById('gastoProveedorNit').value.trim() || null, p_monto: monto, p_tipo: tipo,
         });
@@ -15077,6 +15078,7 @@
             <div style="font-weight:600;">Soportes del pago (legalización del Fondo)</div>
             <div style="margin-top:6px;"><label for="req_comprobante_pago" style="font-weight:600;">Comprobante de la transferencia <em id="obligComprobantePago" style="font-size:10.5px;opacity:.7;">(obligatorio si ya pagaste)</em></label><input type="file" data-req="comprobante_pago" id="req_comprobante_pago" accept="application/pdf"><div style="font-size:10.5px;opacity:.65;">PDF del comprobante de la transferencia hecha desde la cuenta bancaria exclusiva.</div></div>
             <div style="margin-top:8px;"><label for="req_extracto_bancario" style="font-weight:600;">Extracto bancario <em style="font-size:10.5px;opacity:.7;">(si lo tienes)</em></label><input type="file" data-req="extracto_bancario" id="req_extracto_bancario" accept="application/pdf"><div style="font-size:10.5px;opacity:.65;">PDF del extracto donde se vea el débito del pago y el movimiento de la cuenta exclusiva. Si todavía no lo tienes, súbelo cuando lo descargues; la compra quedará marcada como "falta extracto" hasta entonces.</div></div>
+            <div style="margin-top:8px;"><label for="req_cuenta_pago" style="font-weight:600;">Cuenta desde la que pagaste <em style="font-size:10.5px;opacity:.7;">(obligatorio si ya pagaste)</em></label><select data-req="cuenta_pago" id="req_cuenta_pago"><option value="">Selecciona...</option>${(cuentasPagoCache || []).map(c => `<option value="${c.id}">${escaparHtml(c.nombre)}${c.uso === 'fondo_emprender' ? ' (cuenta exclusiva del Fondo)' : ''}</option>`).join('')}</select><div style="font-size:10.5px;opacity:.65;">Los pagos con recursos del Fondo salen solo de la cuenta exclusiva del Fondo (Bancolombia); lo demás de Lana Rosa, de Davivienda.</div><div id="avisoCuentaFondo" style="font-size:11px;color:var(--rojo-error);">${(cuentasPagoCache || []).some(c => c.uso === 'fondo_emprender') ? '' : '⚠️ Ninguna cuenta está marcada con uso "Fondo Emprender" en Bancos; márcala allá para que el sistema pueda verificar la cuenta.'}</div></div>
             <div style="margin-top:8px;"><label for="req_valor_pagado" style="font-weight:600;">Valor que transferiste <em style="font-size:10.5px;opacity:.7;">(si ya lo sabes)</em></label><input type="number" data-req="valor_pagado" id="req_valor_pagado" min="1" step="1" oninput="avisarValorPagadoFondo()"><div id="avisoValorPagado" style="font-size:11px;color:var(--rojo-error);"></div></div>
             <div style="margin-top:8px;"><label for="req_evidencia_entrega" style="font-weight:600;">Evidencia de entrega <em style="font-size:10.5px;opacity:.7;">(foto, acta o remisión; si la tienes)</em></label><input type="file" data-req="evidencia_entrega" id="req_evidencia_entrega" accept="application/pdf,image/*"><div style="font-size:10.5px;opacity:.65;">Demuestra que recibiste el producto o servicio. Si todavía no la tienes, súbela después; mientras tanto la compra queda como "falta evidencia de entrega".</div></div>
             <div id="avisoProveedorPlan" style="font-size:11.5px;margin-top:8px;color:var(--rojo-error);"></div>
@@ -15137,6 +15139,12 @@
         const mp = document.getElementById('gastoMetodoPago').value;
         if (mp === 'efectivo') return { error: 'Con recursos del Fondo Emprender no se paga en efectivo: el pago se hace por transferencia desde la cuenta bancaria exclusiva, para que quede trazabilidad.' };
         if (mp !== 'transferencia' && mp !== 'tarjeta_debito') return { error: 'Con recursos del Fondo Emprender el pago debe salir de la cuenta bancaria exclusiva (transferencia o tarjeta débito de esa cuenta), no de Daviplata ni de tarjeta de crédito.' };
+        const cuentaSel = (cont.querySelector('[data-req="cuenta_pago"]') || {}).value;
+        if (!cuentaSel) return { error: 'Elige la cuenta desde la que pagaste.' };
+        const cuentaFondo = (cuentasPagoCache || []).filter(c => c.uso === 'fondo_emprender');
+        const cuentaElegida = (cuentasPagoCache || []).find(c => c.id === cuentaSel);
+        if (cuentaFondo.length && !cuentaFondo.some(c => c.id === cuentaSel)) return { error: 'Con recursos del Fondo Emprender solo se paga desde la cuenta exclusiva del Fondo (' + cuentaFondo.map(c => c.nombre).join(', ') + '). No mezcles estos recursos con otras cuentas.' };
+        datos.cuenta_bancaria_id = cuentaSel; datos.cuenta_pago = cuentaElegida ? cuentaElegida.nombre : null;
         const comp = cont.querySelector('[data-req="comprobante_pago"]');
         if (!comp || !comp.files[0]) return { error: 'Adjunta el comprobante de la transferencia (PDF): el Fondo lo pide para legalizar el gasto.' };
       }
