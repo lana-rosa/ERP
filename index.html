@@ -6686,7 +6686,7 @@
     if (errorVerif) {
       btn.disabled = false; btn.textContent = textoBoton;
       const limite = /demasiados_intentos/.test(errorVerif.message || '');
-      mostrarMensaje('mensajeRecuperarClave', limite ? 'Llegaste al máximo de 3 intentos por hora. Inténtalo más tarde.' : 'No pudimos revisar el correo. Intenta de nuevo en un momento.', 'error');
+      mostrarMensaje('mensajeRecuperarClave', limite ? 'Llegaste al máximo de intentos.' : 'No pudimos revisar el correo. Intenta de nuevo en un momento.', 'error');
       return;
     }
     if (esColaborador !== true) { avisarEnviado(); return; }
