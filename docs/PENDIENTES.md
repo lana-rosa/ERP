@@ -160,3 +160,5 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [ ] Ingesta de facturas por correo (solo borrador)
 - [ ] Probar sincronización CRM↔ERP y pedidos de la tienda virtual
 - [ ] Borrar edge functions sin uso y columnas/función antiguas en Supabase
+
+- [x] Correo de Sara (19-nov): cuenta del ERP ahora `saralmunoz1301@gmail.com` (exacto); cuenta de clienta de prueba y su pedido borrados con el sí de Sara. Falta que Sara pruebe la recuperación de contraseña con ese correo.

@@ -164,3 +164,10 @@ Se usará la **solución gratuita de la DIAN** (se digita a mano cada mes en el 
 - **Pantalla:** primero llama a `fn_correo_es_colaborador`; solo si da sí llama a `resetPasswordForEmail`. Mensajes: «Ese usuario no existe en el sistema.», «Hiciste muchos intentos. Espera 10 minutos y vuelve a intentar.» `sw.js` v79.
 - **Riesgos anotados (Jennifer decidió mostrar el aviso explícito):** (1) permite saber qué correos son de colaboradores (hoy 3 roles activos); el límite de 3 intentos lo reduce. (2) La revisión del servidor no impide que alguien llame a Supabase directo y pida el enlace para cualquier cuenta (p. ej. clienta): Supabase no permite bloquear ese envío sin cambiar el envío de correos a un servicio propio (Send Email Hook). Daño bajo: el enlace solo le llega al dueño del correo. Si se quiere bloqueo total, hay que hacer ese cambio.
 - El CRM (chat 5) usa otra base (`wcqdkccvtywiutzknskr`): ahí hay que crear la misma función; mismos textos.
+
+### Correo de Sara corregido al exacto (19-nov-2026, decisión de Sara; reemplaza la opción B)
+- Sara dijo que el pedido web de la cuenta de la tienda era de prueba y que se podía borrar, y pidió dejar el ERP con `saralmunoz1301@gmail.com`.
+- Aplicado en un solo paso que se cancelaba si algo no cuadraba (probado antes con rollback): se borraron el pedido web de prueba (15.200, pagado el 11-nov) con su aviso y productos, y la cuenta de clienta de la tienda `a6f3b2c9…` (con su carrito, 3 mensajes y cuenta de cliente; se borraron en cascada). La cuenta del ERP `5d148bc8…` pasó de `saralmunoz1301+erp@gmail.com` a `saralmunoz1301@gmail.com` en `auth.users` y `auth.identities`.
+- **Verificado:** misma huella de contraseña, rol administradora activo, 95 asientos intactos, un solo usuario con ese correo, `fn_correo_es_colaborador('saralmunoz1301@gmail.com')` = true. Sara entra con el correo exacto y la misma contraseña.
+- Ya no hay cuenta de clienta de Sara en la tienda web; si algún día quiere comprar como clienta, debe crearla de nuevo (idealmente con otro correo, p. ej. `+tienda`, para no mezclarla con el ERP).
+- Pendiente: Sara prueba «¿Se te olvidó la contraseña?» con `saralmunoz1301@gmail.com`.
