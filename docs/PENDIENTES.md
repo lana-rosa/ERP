@@ -72,6 +72,10 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 
 ### Chat 7 · Contabilidad (no creado)
 - Sin tareas de código. Ver preguntas al contador.
+- [ ] 🔴 Mapeo de medios (19-nov, Sara): Bre-B → Davivienda; Nequi manual → Nequi; Wompi → Nequi (pedido a Wompi el 18-nov, falta aprobación). Aplicar con el sí de Sara cuando exista la cuenta Davivienda en el ERP (necesito tipo y número) y se confirme si es el mismo Nequi.
+- [ ] 🔴 Wompi → Nequi puente (18-nov): Wompi solo desembolsa a Bancolombia/Nequi; plan Wompi → Nequi (puente) → Davivienda. Propuesta en `docs/temas/contabilidad-decisiones.md`; en el ERP NO se cambian medios de pago hasta que Sara confirme que Wompi ya desembolsa al Nequi (y dé el sí). Si luego se migra a ePayco/Davivienda, esa cuenta puente se cierra.
+- [ ] 🔴 Wompi urgente (18-nov) — sustituido por la línea de arriba: el desembolso de la página web no debe llegar a Bancolombia (cuenta del Fondo). Sara ya tiene Davivienda a su nombre; **Sara cambia la cuenta de desembolso en el panel de Wompi** (puede pedir documentos). Cuando Wompi apruebe, ese mismo día Claude crea Davivienda en el ERP, la deja predeterminada, asigna Wompi/transferencia/tarjeta a Davivienda y pasa los $13.888 (necesita: número y tipo de la cuenta y el sí de Sara).
+- [ ] 🔴 Bancos (18-nov): Davivienda = operación, Bancolombia = solo Fondo Emprender. Propuesta escrita en `docs/temas/contabilidad-decisiones.md`; **falta el sí de Sara** para tocar cuentas/libros. Pregunta a Sara: ¿a qué cuenta consigna Wompi? Conciliación automática por extractos: solo propuesta, para después de la apertura.
 - [x] Resumen de pendientes contables listo para llevarle a Hernando: `docs/resumen-contador.md` (llevarlo junto con las 22 preguntas del chat 5) — 12-nov-2026
 
 ### Chat 8 · Menú/Interfaz
@@ -157,6 +161,8 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [ ] Aplicabilidad del documento soporte.
 - [ ] Ventas desde el 14-oct-2026 (ya facturadora electrónica) que quedaron solo con recibo del ERP, sin factura electrónica: 6 del punto de venta (POS-2026-00016 a 00021, $2.205.000) y 1 pedido (PED-2026-00559, $15.200, parece prueba). Además 7 pedidos con "facturar" definido a consumidor final ($601.000). Pregunta: ¿se emite factura electrónica extemporánea a consumidor final por cada una, o cómo se regulariza? (12-nov-2026)
 - [ ] Retenciones, libros y declaraciones como sociedad.
+- [ ] Bancos (18-nov, contador nuevo el viernes 20-nov): confirmar la decisión Davivienda (operación) / Bancolombia (Fondo) y qué hacer con lo ya registrado en Caja por cobros hechos en Nequi; reemplaza la decisión del 14-oct.
+- [ ] Wompi en Nequi (18-nov, viernes 20-nov): ¿cómo se tratan los desembolsos de Wompi que llegan a un Nequi (ingreso por venta, comisión, retención si aplica)? ¿Qué reporta la DIAN de los pagos por pasarelas y a nombre de quién? ¿Límites de Nequi (monto por mes) y riesgo de que se mezcle con lo personal, o conviene un Nequi exclusivo? ¿Cómo se registra el traslado semanal a Davivienda?
 - [ ] Viejos: retiros 3805 vs honorarios, aportes vs deuda, arriendo mayo/junio, confirmación escrita de 27 recibos, medio de pago de 17 ventas antiguas.
 
 ## Opcionales (Claude, si se pide)

@@ -28,6 +28,10 @@ Preparado el 12-nov-2026 · Lana Rosa Crochet · Régimen SIMPLE · contabilidad
 ### 6. Códigos CUIF de 10 dígitos
 - El plan de cuentas se dejó como está. **Pregunta:** ¿qué necesita usted para usar CUIF (Anexo-CUIF)?
 
+### 7. Wompi y Nequi como cuenta puente (nuevo, 18-nov)
+- Wompi solo desembolsa a cuentas del grupo Bancolombia o a un Nequi. Plan: Wompi → Nequi (puente) → traslado a Davivienda.
+- **Preguntas:** ¿cómo se tratan esos desembolsos (ingreso, comisión, retención si aplica)? ¿Qué se reporta a la DIAN de los pagos por pasarelas? ¿Hay límites de Nequi que nos afecten y conviene un Nequi exclusivo del negocio?
+
 ## B. Tributario por confirmar con usted
 - UVT y tarifas SIMPLE del año, escenario de provisión y tabla de renta (sin ellos el sistema no calcula el anticipo).
 - ICA de Villamaría: se está usando 7 por mil industrial y 10 por mil comercial/servicios, con mínimo de 10 UVT ($523.740 en 2026), según lo que informó Sara. Falta verificarlo.
@@ -36,7 +40,7 @@ Preparado el 12-nov-2026 · Lana Rosa Crochet · Régimen SIMPLE · contabilidad
 - Fechas de la DIAN según el RUT (anticipos bimestrales, declaración anual, exógena).
 
 ## C. Decisiones ya tomadas (para que las conozca)
-- No se llevan movimientos de bancos ni conciliación: la cuenta Nequi/Bancolombia no es exclusiva del negocio (decisión del 14-oct-2026). Solo queda en banco lo de Wompi ($13.888).
+- Bancos: el 14-oct se decidió no llevar bancos porque la cuenta no era exclusiva; **el 18-nov cambió**: Davivienda para todo lo de Lana Rosa y Bancolombia solo para el Fondo Emprender (propuesta, falta confirmarla con usted el 20-nov). Hoy en libros solo hay en banco lo de Wompi ($13.888).
 - Tejido pagado en efectivo; cierre de costos de septiembre hecho (costo de producción: solo arriendo del Taller, $600.000).
 - Septiembre: ingresos $1.415.500, costos $1.065.291, gastos $1.200.000, **utilidad -$851.103** (esa cifra se calculó antes de pasar los honorarios a retiros; conviene revisarla con el Balance actual).
 - Honorarios del contador: $600.000 al mes, primeros 5 días (propuesta del 30-sep-2026; confirmar que la aceptación escrita esté firmada).
