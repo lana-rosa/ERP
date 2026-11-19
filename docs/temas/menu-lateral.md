@@ -71,3 +71,48 @@
 - El bloque fijo de abajo del menú (Instalar app, Marcar entrada/salida, nombre y rol repetidos, Cerrar sesión) ocupaba casi un tercio del menú. Ahora: **«Marcar entrada/salida» y «Instalar app» están en el inicio** (arriba, junto a «Cerrar sesión»); **«Salir»** (cierra sesión) es un botoncito junto al nombre, arriba del menú; nombre y rol se quedan solo arriba. El widget `#widgetHorasTrabajadas` ya no se mueve al menú lateral (se coloca en el inicio al iniciar sesión, también si se entra directo por #hash).
 - El pie solo vuelve a verse si hay un aviso importante: `#indicadorVentasOffline` («ventas sin sincronizar», visible solo cuando hay pendientes). `btnInstalarApp` conserva su lógica (solo se muestra cuando se puede instalar).
 - Medido con 640 px de alto: la lista de opciones gana ≥ 85 px (más cuando se ve «Instalar app» o el nombre es largo).
+
+## Ícono de la app (verde azulado)
+- Ícono cambiado de rosado a verde azulado claro (#2eaaa6) con la ovejita en blanco. `icon-192/512.png` con esquinas redondeadas y transparentes; `icon-maskable-*` y `apple-touch-icon.png` a sangre (el celular les pone su forma). `sw.js` v66. Hay que desinstalar y reinstalar la app para ver el ícono nuevo.
+
+## Barra de arriba del inicio en celular (compacta)
+- Pedido de Sara: en el celular la barra de arriba (Volver a LAROVA, Marcar entrada, Cerrar sesión) ocupaba mucho espacio.
+- Ahora, en ≤700 px: arriba solo «Volver a LAROVA»; el logo se achica y va al lado del título; «Marcar entrada/salida» es una franja delgada debajo (solo si es empleada); «Cerrar sesión» e «Instalar app» pasan al pie de la página (`.hub-pie`). En PC queda igual (clases `.solo-pc` / `.solo-movil`). `#btnInstalarApp` ahora vive en el pie. `sw.js` v67.
+- Falta (pedido de Sara, en curso): menú lateral de módulos solo con nombres de sección que se despliegan al tocar; pestañas internas como listas desplegables en celular; formularios lado a lado en una sola columna en celular.
+
+## Menú lateral de módulo: secciones plegables y «Salir» abajo
+- Pedido de Sara: en el menú lateral de cada módulo, ver solo los nombres de las secciones (Contabilidad: «Contabilidad e impuestos», «Reportes e indicadores», «Bancos y tesorería») y que se desplieguen al tocarlas; «Salir» abajo.
+- `agruparSeccionesSidebar()` envuelve cada `.sidebar-seccion` y sus botones en `.sidebar-seccion-grupo` (se abre una a la vez); `refrescarSeccionesSidebar(btn)` oculta secciones sin opciones para el rol y abre la de la opción activa (se llama en `abrirModulo` y `establecerModuloActivo`). Solo Contabilidad tiene secciones; los demás módulos quedan igual.
+- «Salir» pasó del encabezado a `.sidebar-pie` (abajo, fijo). `sw.js` v68.
+- Falta: pestañas/botones internos de cada página como listas desplegables en celular; formularios lado a lado en una columna en celular.
+
+## Celular: botones-pestaña como lista desplegable y formularios apilados
+- Pedido de Sara: en celular los botones de arriba de cada página ocupaban media pantalla, y dos formularios lado a lado (Plan de cuentas) salían delgados y largos.
+- `convertirChipsEnDesplegables()` crea, para cada `.filtro-tipo` con 4 o más `button.chip-filtro`, una lista desplegable (`.chip-desplegable`) que se ve solo en ≤700 px y oculta el grupo de chips (`.con-desplegable`). Al elegir una opción hace `click()` en el botón original, así que no cambia ninguna lógica; la etiqueta sigue al botón `.activo` (MutationObserver). Un observador con retraso convierte también los grupos que se arman después con JavaScript. En PC no cambia.
+- `.grilla-2/3/4` con `grid-template-columns` escrito en el propio elemento (Plan de cuentas: `1.6fr 1fr` y `200px 1fr`) ahora también se apilan en ≤900 px (regla con `!important`).
+- `sw.js` v69. Falta revisar otras pantallas con filas de formulario en columnas fijas (`flex`/`grid` en línea) si Sara reporta alguna.
+
+## Ícono que no se actualizaba al instalar
+- Los archivos del ícono ya estaban publicados (verde azulado), pero el navegador/Cloudflare guardaba el viejo. Se agregó `?v=2` a los íconos en `manifest.json`, `index.html` y `larova.html`, y `_headers` (en `build-larova.sh`) pide `no-cache` para el manifiesto y los PNG. `sw.js` v70. La próxima vez que se cambie el ícono, subir `?v=`.
+- Para ver el ícono nuevo en un celular que ya tiene la app: desinstalar la app, borrar los datos del sitio en el navegador y volver a instalar desde `larova.lanarosacrochet.com/erp/`.
+
+## Nombre de la app instalada: LAROVA
+- Pedido de Sara: al instalar, el nombre debía decir LAROVA y no «Lana Rosa ERP». `manifest.json` (`name`/`short_name`) y `apple-mobile-web-app-title` (iPhone) ahora dicen «LAROVA». La pantalla de entrada sigue diciendo «Lana Rosa ERP». `sw.js` v71. Quien ya la tenga instalada debe desinstalar y reinstalar para ver el nombre nuevo.
+
+## Ícono: ovejita más grande
+- Pedido de Sara: ovejita más grande. En los íconos «any» (con esquinas redondeadas) la ovejita ocupa ~80 % del cuadro; en maskable ~68 % y apple-touch ~74 % (Android recorta los bordes). Parámetro `?v=3` en manifest/index/larova. `sw.js` v72.
+
+## Pantalla de arranque de la app en blanco
+- Pedido de Sara: al abrir LAROVA se veía el ícono verde sobre fondo rosado. `manifest.json` `background_color` pasó de `#e84e94` a `#ffffff` (blanco, como la web). `theme_color` (barra de estado) sigue en `#d8017c`. No requiere subir `sw.js` (no cambia `index.html`).
+
+## Pantalla de entrada: solo el logo rosado
+- Al entrar al ERP se veía primero el ícono verde (imagen de fondo) y luego el logo animado rosado encima. La imagen de fondo de `.login-logo-animado` ahora es `logo-login.png` (el ícono rosado anterior), igual que el color de la animación; el ícono verde queda solo para la app instalada y el inicio. `build-larova.sh` copia `logo-login.png` a `/erp/`. `sw.js` v73.
+
+## Ícono otra vez rosado (con esquinas redondeadas)
+- Pedido de Sara: todo en LAROVA es rosado, así que el ícono vuelve a ser rosado (#e84e94) con la ovejita blanca más grande y las esquinas redondeadas (`icon-192/512` transparentes en las esquinas; maskable y apple-touch a sangre). `?v=4`, `sw.js` v74. Reinstalar la app para verlo.
+
+## Inicio en computador: nombre pequeño arriba a la izquierda
+- Pedido de Sara: el bloque grande del logo y «Lana Rosa ERP» ocupaba mucho espacio. En ≥701 px el logo (38 px) y el nombre (19 px) van dentro de la barra de arriba, a la izquierda; «Volver a LAROVA» al lado y «Marcar entrada / Cerrar sesión» a la derecha. Se quitó «Elige un módulo para empezar» en PC. En celular no cambia (logo y título compactos debajo de la barra). `.hub-marca` ahora vive dentro de `.hub-barra`. `sw.js` v75.
+
+## LAROVA: encabezado pequeño en Administración y Equipo
+- Pedido de Sara (18-nov): en las pantallas «Acceso Administración» y «Acceso Equipo» de `larova.html`, el ícono y el título LAROVA van pequeños arriba a la izquierda, con «Sistema Operativo Lana Rosa» debajo (se quitó «Lana Rosa, Valor y Avance» ahí). La entrada de LAROVA (logo grande) no cambia. Implementado con la clase `interna` en `body` (se activa según el `#hash`).

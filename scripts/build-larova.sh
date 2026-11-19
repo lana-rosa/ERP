@@ -12,7 +12,7 @@ rm -rf dist
 mkdir -p dist/erp
 
 # --- ERP en /erp/ ---
-cp index.html sw.js manifest.json logo-animado.html apple-touch-icon.png icon-192.png icon-512.png icon-maskable-192.png icon-maskable-512.png dist/erp/
+cp index.html sw.js manifest.json logo-animado.html logo-login.png apple-touch-icon.png icon-192.png icon-512.png icon-maskable-192.png icon-maskable-512.png dist/erp/
 
 # --- Portada en la raíz ---
 cp larova.html dist/index.html
@@ -35,9 +35,20 @@ cambiar dist/erp/index.html 'href="./larova.html"' 'href="../"'
 cambiar dist/index.html 'href="https://lana-rosa.github.io/CRM/"' 'href="./CRM/"'
 cambiar dist/index.html 'href="https://lana-rosa.github.io/SO/"' 'href="./gestion/"'
 
+# --- Marketing y comunicación (pantalla aparte; usa la sesión del ERP, mismo dominio) ---
+cp marketing.html dist/marketing.html
+cambiar dist/marketing.html 'href="./larova.html#administracion"' 'href="./#administracion"'
+cambiar dist/marketing.html 'href="./index.html"' 'href="./erp/"'
+
 # El service worker nunca se guarda en caché del navegador por mucho tiempo
 cat > dist/_headers <<'H'
 /erp/sw.js
+  Cache-Control: no-cache
+/erp/manifest.json
+  Cache-Control: no-cache
+/*.png
+  Cache-Control: no-cache
+/erp/*.png
   Cache-Control: no-cache
 H
 

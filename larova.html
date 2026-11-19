@@ -6,8 +6,8 @@
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#d8017c">
 <title>LAROVA · Lana Rosa, Valor y Avance</title>
-<link rel="icon" type="image/png" href="./icon-192.png">
-<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<link rel="icon" type="image/png" href="./icon-192.png?v=4">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png?v=4">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 <!--
   LAROVA — portada del Sistema Operativo Lana Rosa (paso 1, solo enlaces).
@@ -39,7 +39,14 @@
   .volver:focus-visible{outline:2px solid var(--rosa)}
   .nota{margin-top:20px;font-size:12px;color:var(--suave);text-align:center;line-height:1.5}
   .vista{display:none}.vista.activa{display:block}
-  @media(max-width:600px){.rejilla{grid-template-columns:1fr}h1{font-size:36px}}
+  /* En Administración y Equipo: logo y nombre pequeños en la esquina superior izquierda */
+  body.interna .marca{display:grid;grid-template-columns:44px auto;justify-content:start;align-items:center;text-align:left;column-gap:10px;row-gap:0}
+  body.interna .marca img{width:44px;height:44px;border-radius:13px;margin:0;box-shadow:0 3px 10px rgba(216,1,124,.25);grid-row:1 / span 2}
+  body.interna .marca h1{font-size:24px;letter-spacing:2px}
+  body.interna .marca .sub{display:none}
+  body.interna .marca .pequena{font-size:11px;margin-top:2px}
+  body.interna .rejilla{margin-top:18px}
+  @media(max-width:600px){.rejilla{grid-template-columns:1fr}h1{font-size:36px}body.interna .marca h1{font-size:22px}}
 </style>
 </head>
 <body>
@@ -65,7 +72,7 @@
         <a class="tarjeta" style="--c:#d8017c" href="./index.html"><img class="ico" src="./iconos-larova/erp.webp" alt="" width="84" height="84"><div><h2>ERP</h2><p>Ventas, pedidos, inventario, compras, contabilidad.</p></div><span class="flecha" aria-hidden="true">›</span></a>
         <a class="tarjeta" style="--c:#e0a032" href="https://lana-rosa.github.io/CRM/"><img class="ico" src="./iconos-larova/crm.webp" alt="" width="84" height="84"><div><h2>CRM</h2><p>Clientas, oportunidades y seguimiento.</p></div><span class="flecha" aria-hidden="true">›</span></a>
         <a class="tarjeta" style="--c:#2e8b57" href="https://lana-rosa.github.io/SO/"><img class="ico" src="./iconos-larova/gestion.webp" alt="" width="84" height="84"><div><h2>Gestión</h2><p>Seguridad y salud, calidad, riesgos, 5S.</p></div><span class="flecha" aria-hidden="true">›</span></a>
-        <a class="tarjeta" style="--c:#85a3c0" href="https://lanarosacrochet.com" target="_blank" rel="noopener"><img class="ico" src="./iconos-larova/marketing.webp" alt="" width="84" height="84"><div><h2>Marketing y comunicación</h2><p>La web y la comunicación con las clientas.</p></div><span class="flecha" aria-hidden="true">↗</span></a>
+        <a class="tarjeta" style="--c:#85a3c0" href="./marketing.html"><img class="ico" src="./iconos-larova/marketing.webp" alt="" width="84" height="84"><div><h2>Marketing y comunicación</h2><p>Calendario de publicaciones, guiones y textos.</p></div><span class="flecha" aria-hidden="true">›</span></a>
       </div>
       <p class="nota">Cada plataforma te pide tu cuenta y revisa tu rol: entrar por aquí no da más permisos.</p>
     </section>
@@ -84,6 +91,7 @@
     var h = (location.hash || '').replace('#', '');
     var id = h === 'administracion' ? 'v-administracion' : h === 'equipo' ? 'v-equipo' : 'v-inicio';
     document.querySelectorAll('.vista').forEach(function (v) { v.classList.toggle('activa', v.id === id); });
+    document.body.classList.toggle('interna', id !== 'v-inicio');
     window.scrollTo(0, 0);
   }
   addEventListener('hashchange', mostrarVista);

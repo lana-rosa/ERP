@@ -8,11 +8,11 @@
 <!-- PWA: permite instalar la app en el celular, con ícono propio -->
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#d8017c">
-<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
-<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=4">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png?v=4">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Lana Rosa ERP">
+<meta name="apple-mobile-web-app-title" content="LAROVA">
 <meta name="mobile-web-app-capable" content="yes">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -491,6 +491,8 @@
 
   @media (max-width: 900px) {
     .grilla-2, .grilla-3, .grilla-4 { grid-template-columns: 1fr; }
+    /* Las que traen columnas escritas en el propio elemento (p. ej. Plan de cuentas) también se apilan: una sola a pantalla completa */
+    .grilla-2[style*="grid-template-columns"], .grilla-3[style*="grid-template-columns"], .grilla-4[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
 
     /* El layout de "Registrar venta" (datos del cliente + carrito) pasa de
        2 columnas fijas a apilado — en celular no hay espacio para 340px
@@ -1086,7 +1088,31 @@
   .hub-cabecera-modulo svg.ilus { width: 84px; height: 84px; flex-shrink: 0; }
   .hub-cabecera-modulo h1 { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 24px; margin: 0; }
   .hub-cabecera-modulo p { font-size: 13px; color: var(--texto-suave, #7a6670); margin: 4px 0 0; }
-  @media (max-width: 700px) { .hub-rejilla { grid-template-columns: 1fr; } .hub-marca h1 { font-size: 26px; } .hub-opciones { grid-template-columns: 1fr; } }
+  /* Computador: el nombre (logo + «Lana Rosa ERP») va pequeño en la esquina superior derecha */
+  @media (min-width: 701px) {
+    .hub-barra { flex-wrap: nowrap; }
+    .hub-barra-der { margin-left: auto; }
+    .hub-marca { flex-direction: row; order: -1; gap: 10px; margin: 0 14px 0 0; text-align: left; }
+    .hub-marca img { width: 38px; height: 38px; border-radius: 11px; box-shadow: none; }
+    .hub-marca h1 { font-size: 19px; white-space: nowrap; }
+    .hub-marca p { display: none; }
+  }
+  .hub-pie { display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 28px; }
+  .solo-movil { display: none !important; }
+  @media (max-width: 700px) { .hub-rejilla { grid-template-columns: 1fr; } .hub-opciones { grid-template-columns: 1fr; }
+    .solo-pc { display: none !important; } .solo-movil { display: inline-flex !important; }
+    /* Arriba solo «Volver a LAROVA»; el logo se achica y se pone al lado del título */
+    .hub-barra { margin-bottom: 4px; }
+    .hub-barra-der { width: 100%; order: 3; margin: 2px 0 8px; }
+    .hub-marca { order: 4; width: 100%; box-sizing: border-box; }
+    .hub-barra-der:not(:has(#widgetHorasTrabajadas)) { display: none; }
+    .hub-reloj { width: 100%; }
+    .hub-reloj #widgetHorasTrabajadas { width: 100%; box-sizing: border-box; }
+    .hub-marca { display: grid; grid-template-columns: 48px 1fr; column-gap: 12px; row-gap: 0; align-items: center; text-align: left; margin: 6px 4px 8px; }
+    .hub-marca img { width: 48px; height: 48px; border-radius: 14px; grid-row: 1 / span 2; }
+    .hub-marca h1 { font-size: 22px; } .hub-marca p { font-size: 12.5px; }
+    .hub-titulo-seccion { margin-top: 16px; }
+  }
   @media (max-width: 700px) {
     .hub-rapidos { display: flex; overflow-x: auto; gap: 10px; padding: 2px 2px 10px; scroll-snap-type: x proximity; }
     .hub-rapido { flex: 0 0 112px; padding: 8px 6px 10px; scroll-snap-align: start; }
@@ -1124,6 +1150,28 @@
   .sidebar-footer { padding: 0; border-top: none; }
   .sidebar-footer:not(:has(#indicadorVentasOffline:not(.oculto))) { display: none; }
   .sidebar-salir { white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; align-self: flex-start; margin-top: 6px; padding: 3px 9px; border: none; border-radius: 8px; background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.85); font-family: inherit; font-size: 11px; font-weight: 500; cursor: pointer; }
+  .sidebar-pie { border-top: 1px solid rgba(255,255,255,0.08); padding: 8px; order: 99; }
+  .sidebar-salir-abajo { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: none; border-radius: var(--radius-md, 10px); background: transparent; color: rgba(255,255,255,0.75); font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer; text-align: left; }
+  .sidebar-salir-abajo:hover { background: rgba(255,255,255,0.1); color: #fff; }
+  .sidebar-salir-abajo svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  /* Secciones plegables del menú lateral de un módulo (p. ej. Contabilidad) */
+  .sidebar-seccion.plegable { display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-size: 12px; letter-spacing: .3px; text-transform: none; font-weight: 600; color: rgba(255,255,255,0.85); padding: 11px 12px; margin-top: 2px; border-radius: var(--radius-md, 10px); background: rgba(255,255,255,0.05); user-select: none; }
+  .sidebar-seccion.plegable:hover { background: rgba(255,255,255,0.1); }
+  .sidebar-seccion.plegable .chev { transition: transform .15s; font-size: 11px; opacity: .7; }
+  .sidebar-seccion.plegable.abierta .chev { transform: rotate(90deg); }
+  .sidebar-seccion-grupo { display: none; padding: 2px 0 6px 6px; }
+  .sidebar-seccion-grupo.abierta { display: block; }
+  /* Botones de pestañas (chips) → lista desplegable en celular, para que no ocupen media pantalla */
+  .chip-desplegable { display: none; position: relative; margin-bottom: 14px; }
+  .chip-desplegable-btn { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; padding: 11px 14px; border: 1.5px solid var(--rosa-principal); border-radius: 14px; background: #fff; color: var(--rosa-principal); font-family: inherit; font-size: 14px; font-weight: 600; text-align: left; cursor: pointer; }
+  .chip-desplegable-btn .flecha-d { transition: transform .15s; font-size: 12px; }
+  .chip-desplegable.abierto .flecha-d { transform: rotate(180deg); }
+  .chip-desplegable-lista { display: none; margin-top: 6px; background: #fff; border: 1px solid var(--gris-borde, #e6dde2); border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,.12); overflow: hidden; }
+  .chip-desplegable.abierto .chip-desplegable-lista { display: block; }
+  .chip-desplegable-lista button { display: block; width: 100%; padding: 12px 14px; border: none; border-bottom: 1px solid var(--gris-borde, #f0e8ec); background: transparent; font-family: inherit; font-size: 14px; text-align: left; cursor: pointer; color: inherit; }
+  .chip-desplegable-lista button:last-child { border-bottom: none; }
+  .chip-desplegable-lista button.activo { background: var(--tinte-rosa, #fdeaf4); color: var(--rosa-principal); font-weight: 600; }
+  @media (max-width: 700px) { .chip-desplegable { display: block; } .filtro-tipo.con-desplegable { display: none !important; } }
   .sidebar-salir:hover { background: rgba(255,255,255,0.2); color: #fff; }
   .sidebar-salir svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .hub-enlace.oculto { display: none !important; }
@@ -1147,7 +1195,6 @@
       <div style="display:flex;flex-direction:column;line-height:1.3;margin-top:4px;">
         <span id="sidebarNombreUsuarioTop" style="font-weight:600;color:#fff;font-size:12.5px;"></span>
         <span id="sidebarSubtitulo" style="font-size:11px;color:rgba(255,255,255,0.7);"></span>
-        <button type="button" class="sidebar-salir" onclick="cerrarSesion()" title="Cerrar sesión" aria-label="Cerrar sesión"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4M16 8l4 4-4 4M20 12H9"/></svg> Salir</button>
       </div>
     </div>
     <button id="btnSidebarModo" onclick="event.stopPropagation(); alternarSidebarModo()" title="Ocultar o fijar el menú">◀ Ocultar</button>
@@ -1272,6 +1319,8 @@
     </div>
   </div>
 
+  <div class="sidebar-pie"><button type="button" class="sidebar-salir-abajo" onclick="cerrarSesion()" title="Cerrar sesión" aria-label="Cerrar sesión"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4M16 8l4 4-4 4M20 12H9"/></svg> Salir</button></div>
+
   <div class="sidebar-footer">
     <div id="indicadorVentasOffline" class="oculto" style="margin:0 16px 10px 16px;padding:8px 10px;background:#c0392b;color:white;border-radius:8px;font-size:11px;font-weight:600;text-align:center;cursor:pointer;" onclick="sincronizarVentasOfflinePendientes()" title="Clic para intentar sincronizar ahora"></div>
     <div id="widgetHorasTrabajadas" class="oculto" style="padding:10px 16px;border-top:1px solid rgba(255,255,255,0.08);"></div>
@@ -1289,15 +1338,16 @@
 
 
 <!-- ===== PANTALLA: LOGIN ===== -->
-<div id="barraRapido"><button type="button" class="hub-enlace" onclick="mostrarInicioModulos()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> Todos los módulos</button><button type="button" class="hub-enlace" onclick="cerrarSesion()">Cerrar sesión</button></div>
+<div id="barraRapido"><button type="button" class="hub-enlace" onclick="mostrarInicioModulos()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> Todos los módulos</button><button type="button" class="hub-enlace solo-pc" onclick="cerrarSesion()">Cerrar sesión</button></div>
 
 <div id="pantallaLogin">
   <div class="login-card">
     <div class="login-logo">
-      <div class="login-logo-animado"><img src="./icon-192.png" alt="Lana Rosa" width="200" height="200"><iframe src="./logo-animado.html" title="Lana Rosa Crochet" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe></div>
+      <div class="login-logo-animado"><img src="./logo-login.png" alt="Lana Rosa" width="200" height="200"><iframe src="./logo-animado.html" title="Lana Rosa Crochet" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe></div>
       <div class="login-logo-nombre">Lana Rosa ERP</div>
     </div>
 
+    <div id="bloqueLoginNormal">
     <label for="inputCorreo">Correo</label>
     <input type="email" id="inputCorreo" placeholder="tucorreo@gmail.com" autocomplete="email">
     <label for="inputClave">Contraseña</label>
@@ -1306,6 +1356,29 @@
       <button type="button" class="btn-ojo-clave" id="btnOjoClave" onclick="alternarVerClave()" aria-label="Mostrar contraseña" aria-pressed="false" title="Mostrar contraseña">👁</button>
     </div>
     <button class="btn-principal" id="btnLogin" onclick="iniciarSesion()">Entrar</button>
+    <div style="text-align:center;margin-top:12px;"><button type="button" id="btnOlvideClave" onclick="mostrarRecuperarClave()" style="background:none;border:none;padding:4px;font-size:13px;color:var(--rosa-principal, #d6007a);text-decoration:underline;cursor:pointer;">¿Se te olvidó la contraseña?</button></div>
+    </div>
+
+    <div id="bloqueRecuperarClave" class="oculto">
+      <div style="font-size:16px;font-weight:700;margin-bottom:10px;">Recupera tu contraseña</div>
+      <label for="inputCorreoRecuperar">Correo</label>
+      <input type="email" id="inputCorreoRecuperar" placeholder="tucorreo@gmail.com" autocomplete="email">
+      <button class="btn-principal" id="btnEnviarRecuperar" onclick="enviarEnlaceRecuperacion()">Enviar enlace de recuperación</button>
+      <div style="text-align:center;margin-top:12px;"><button type="button" onclick="volverAlLogin()" style="background:none;border:none;padding:4px;font-size:13px;text-decoration:underline;cursor:pointer;color:inherit;">Volver a ingresar</button></div>
+      <div class="mensaje" id="mensajeRecuperarClave"></div>
+    </div>
+
+    <div id="bloqueNuevaClave" class="oculto">
+      <div style="font-size:16px;font-weight:700;margin-bottom:6px;">Crea tu nueva contraseña</div>
+      <div style="font-size:12.5px;opacity:0.75;margin-bottom:10px;">Mínimo 6 caracteres. Después podrás entrar con ella.</div>
+      <label for="inputNuevaClave">Nueva contraseña</label>
+      <input type="password" id="inputNuevaClave" autocomplete="new-password">
+      <label for="inputNuevaClave2">Repite la contraseña</label>
+      <input type="password" id="inputNuevaClave2" autocomplete="new-password">
+      <button class="btn-principal" id="btnGuardarNuevaClave" onclick="guardarNuevaClave()">Guardar contraseña</button>
+      <div class="mensaje" id="mensajeNuevaClave"></div>
+    </div>
+
     <div class="mensaje" id="mensajeLogin"></div>
   </div>
 </div>
@@ -1315,18 +1388,21 @@
   <div class="hub">
     <div class="hub-barra">
       <a class="hub-enlace" href="./larova.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> Volver a LAROVA</a>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <button type="button" id="btnInstalarApp" class="hub-enlace oculto" onclick="instalarAppPWA()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11M8 10l4 4 4-4"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg> Instalar app</button>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;" class="hub-barra-der">
         <div class="hub-reloj" id="hubRelojContenedor"></div>
-        <button type="button" class="hub-enlace" onclick="cerrarSesion()">Cerrar sesión</button>
+        <button type="button" class="hub-enlace solo-pc" onclick="cerrarSesion()">Cerrar sesión</button>
       </div>
+      <div class="hub-marca"><img src="./icon-192.png?v=4" alt="Lana Rosa" width="72" height="72"><h1>Lana Rosa ERP</h1><p>Elige un módulo para empezar</p></div>
     </div>
-    <div class="hub-marca"><img src="./icon-192.png" alt="Lana Rosa" width="72" height="72"><h1>Lana Rosa ERP</h1><p>Elige un módulo para empezar</p></div>
     <div id="hubAvisoCaja" style="display:none;"></div>
     <div class="hub-titulo-seccion" id="hubRapidosTitulo">Accesos rápidos</div>
     <div class="hub-rapidos" id="hubRapidos"></div>
     <div class="hub-titulo-seccion" id="hubModulosTitulo">Módulos</div>
     <div class="hub-rejilla" id="hubModulos"></div>
+    <div class="hub-pie">
+      <button type="button" id="btnInstalarApp" class="hub-enlace oculto" onclick="instalarAppPWA()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11M8 10l4 4 4-4"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg> Instalar app</button>
+      <button type="button" class="hub-enlace solo-movil" onclick="cerrarSesion()">Cerrar sesión</button>
+    </div>
   </div>
 </div>
 
@@ -2550,6 +2626,12 @@
         <button class="chip-filtro" data-filtro-pedido="en_preparacion" onclick="cambiarFiltroPedidos('en_preparacion', this)">En preparación</button>
         <button class="chip-filtro" data-filtro-pedido="listo_despacho" onclick="cambiarFiltroPedidos('listo_despacho', this)">Listo despacho</button>
       </div>
+      <details id="panelPagosWebPendientes" class="panel oculto" style="margin-bottom:14px;padding:10px 14px;">
+        <summary style="cursor:pointer;font-weight:700;font-size:13.5px;">💳 Pedidos de la web esperando pago manual <span id="contadorPagosWeb" style="font-weight:400;opacity:.7;"></span></summary>
+        <div style="font-size:11.5px;opacity:.75;margin:6px 0 8px;">La clienta pagó por Nequi, Bre-B o transferencia y envió el comprobante por WhatsApp: elige el medio, escribe el número de referencia del comprobante y confirma. No es un pago de Wompi (sin comisión).</div>
+        <div id="listaPagosWebPendientes"></div>
+        <div class="mensaje" id="mensajePagosWeb"></div>
+      </details>
       <div id="listaPedidosCanal"><div class="cargando">Cargando pedidos...</div></div>
     </div>
   </div>
@@ -3264,8 +3346,8 @@
           <option value="IV">Clase IV — Riesgo alto</option>
           <option value="V">Clase V — Riesgo máximo</option>
         </select>
-        <label for="empHorasSemana">Horas de trabajo por semana <span style="font-size:10px;opacity:0.6;">(para calcular sus horas extras)</span></label>
-        <input type="number" id="empHorasSemana" min="1" max="48" step="1" value="46" placeholder="46">
+        <label for="empHorasSemana">Horas de trabajo por semana <span style="font-size:10px;opacity:0.6;">(máximo 42 por ley; sirve para calcular sus horas extras)</span></label>
+        <input type="number" id="empHorasSemana" min="1" max="42" step="0.5" value="42" placeholder="42">
 
         <label style="display:flex;align-items:center;gap:8px;margin-top:12px;">
           <input type="checkbox" id="empAplicaRetencion" style="width:auto;" onchange="document.getElementById('bloqueDeduccionesUvt').classList.toggle('oculto', !this.checked)">
@@ -3552,9 +3634,22 @@
         <button class="btn-mini editar" onclick="cambiarSemanaTurnos(7)">Semana siguiente ▶</button>
         <button class="btn-mini editar" onclick="cambiarSemanaTurnos(0)">Esta semana</button>
         <button class="btn-mini guardar" onclick="copiarSemanaAnteriorTurnos()">📋 Copiar la semana anterior</button>
+        <button class="btn-mini guardar" onclick="abrirPanelHorarioTienda()">🏪 Cargar el horario de la tienda</button>
+      </div>
+      <div id="panelHorarioTienda" class="oculto" style="margin-bottom:12px;padding:12px;background:var(--rosa-suave);border-radius:9px;font-size:12.5px;">
+        <div style="font-weight:700;margin-bottom:4px;">🏪 Horario de la tienda</div>
+        <div id="resumenHorarioTienda" style="margin-bottom:8px;"></div>
+        <div style="margin-bottom:6px;">¿A quién se le programa en la semana que estás viendo?</div>
+        <div id="listaEmpleadosHorarioTienda" style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px;"></div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-mini guardar" onclick="aplicarHorarioTienda()">Programar la semana</button>
+          <button class="btn-mini desactivar" onclick="document.getElementById('panelHorarioTienda').classList.add('oculto')">Cerrar</button>
+        </div>
+        <div style="font-size:11px;opacity:0.7;margin-top:8px;">No programa domingos ni festivos, y respeta los turnos que ya existan. Después puedes ajustar cualquier turno a mano.</div>
       </div>
       <div class="mensaje" id="mensajeTurnos"></div>
       <div id="gridTurnosSemana" style="overflow-x:auto;"><div class="cargando">Cargando...</div></div>
+      <div style="font-size:11px;opacity:0.65;margin-top:6px;">Debajo de cada nombre ves las horas programadas de la semana. El límite legal es de 42 horas por semana (Ley 2101 de 2021, desde el 15 de julio de 2026): si se pasa, sale en rojo.</div>
       <div id="formTurno" style="margin-top:14px;padding:12px;background:var(--rosa-suave);border-radius:9px;">
         <div style="font-size:12.5px;font-weight:700;" id="tituloFormTurno">Programar turno</div>
         <input type="hidden" id="turnoId">
@@ -6066,6 +6161,10 @@
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5nam9vZ256dmVod2p0cHF3cnFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3MDAzMDYsImV4cCI6MjA5NzI3NjMwNn0.2BNYuaQOTh-lU8GZcYhJAnZPBiJvT5PwB9MYZwNHTUE';
   const WORKER_URL = 'https://lana-rosa-os-pos.saralmunoz1301.workers.dev';
 
+  // ¿Se llegó desde el enlace del correo de "olvidé mi contraseña"? Se lee ANTES de crear el
+  // cliente, porque Supabase limpia el enlace al leerlo y después ya no se sabría.
+  const ENTRADA_RECUPERACION = /type=recovery/.test(location.hash + '&' + location.search);
+  const ENTRADA_ENLACE_VENCIDO = /error_code=otp_expired|error_description=[^&]*(expired|invalid)/i.test(location.hash + '&' + location.search);
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // ============================================================================
@@ -6550,6 +6649,88 @@
     await despuesDeLogin();
   }
 
+  // ============================================================
+  // RECUPERAR CONTRASEÑA POR CORREO
+  // ============================================================
+  function mostrarBloquesLogin(cual) {
+    ['bloqueLoginNormal', 'bloqueRecuperarClave', 'bloqueNuevaClave'].forEach(id => document.getElementById(id).classList.toggle('oculto', id !== cual));
+  }
+
+  function mostrarRecuperarClave() {
+    ocultarMensaje('mensajeLogin'); ocultarMensaje('mensajeRecuperarClave');
+    document.getElementById('inputCorreoRecuperar').value = document.getElementById('inputCorreo').value.trim();
+    mostrarBloquesLogin('bloqueRecuperarClave');
+  }
+
+  function volverAlLogin() {
+    ocultarMensaje('mensajeRecuperarClave'); ocultarMensaje('mensajeNuevaClave');
+    mostrarBloquesLogin('bloqueLoginNormal');
+  }
+
+  async function enviarEnlaceRecuperacion() {
+    const correo = document.getElementById('inputCorreoRecuperar').value.trim();
+    ocultarMensaje('mensajeRecuperarClave');
+    if (!correo || !correo.includes('@')) { mostrarMensaje('mensajeRecuperarClave', 'Escribe tu correo completo.', 'error'); return; }
+    const btn = document.getElementById('btnEnviarRecuperar');
+    btn.disabled = true; btn.textContent = 'Revisando...';
+    // Solo se envía el enlace si el correo es de un colaborador del ERP (la base responde sí/no, con máximo 3 intentos por hora).
+    const { data: esColaborador, error: errorVerif } = await supabaseClient.rpc('fn_correo_es_colaborador', { p_correo: correo });
+    const textoBoton = 'Enviar enlace de recuperación';
+    // Mensaje igual exista o no el correo (así no se puede averiguar qué correos son de colaboradores); el botón también se pausa igual.
+    const avisarEnviado = () => {
+      mostrarMensaje('mensajeRecuperarClave', '✅ Si el correo está registrado, te enviamos un enlace.', 'exito');
+      let faltan = 10; btn.disabled = true; btn.textContent = 'Enviado (' + faltan + ')';
+      const reloj = setInterval(() => { faltan--; if (faltan <= 0) { clearInterval(reloj); btn.disabled = false; btn.textContent = textoBoton; } else { btn.textContent = 'Enviado (' + faltan + ')'; } }, 1000);
+    };
+    if (errorVerif) {
+      btn.disabled = false; btn.textContent = textoBoton;
+      const limite = /demasiados_intentos/.test(errorVerif.message || '');
+      mostrarMensaje('mensajeRecuperarClave', limite ? 'Llegaste al máximo de intentos.' : 'No pudimos revisar el correo. Intenta de nuevo en un momento.', 'error');
+      return;
+    }
+    if (esColaborador !== true) { avisarEnviado(); return; }
+    btn.textContent = 'Enviando...';
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(correo, { redirectTo: location.origin + location.pathname.replace(/index\.html$/, '') });
+    if (error) {
+      btn.disabled = false; btn.textContent = textoBoton;
+      const muchos = error.status === 429 || /rate limit|too many/i.test(error.message || '');
+      mostrarMensaje('mensajeRecuperarClave', muchos ? 'Se pidieron muchos correos seguidos. Espera unos minutos y vuelve a intentar.' : 'No pudimos enviar el correo: ' + error.message, 'error');
+      return;
+    }
+    avisarEnviado();
+  }
+
+  function mostrarNuevaClave() {
+    ocultarMensaje('mensajeNuevaClave');
+    mostrarBloquesLogin('bloqueNuevaClave');
+  }
+
+  async function guardarNuevaClave() {
+    const nueva = document.getElementById('inputNuevaClave').value;
+    const repite = document.getElementById('inputNuevaClave2').value;
+    ocultarMensaje('mensajeNuevaClave');
+    if (nueva.length < 6) { mostrarMensaje('mensajeNuevaClave', 'La contraseña debe tener al menos 6 caracteres.', 'error'); return; }
+    if (nueva !== repite) { mostrarMensaje('mensajeNuevaClave', 'Las dos contraseñas no son iguales.', 'error'); return; }
+    const { data } = await supabaseClient.auth.getSession();
+    if (!data || !data.session) { mostrarMensaje('mensajeNuevaClave', 'El enlace ya venció o ya se usó. Vuelve a entrar y pide uno nuevo con "¿Se te olvidó la contraseña?".', 'error'); return; }
+    const btn = document.getElementById('btnGuardarNuevaClave');
+    btn.disabled = true; btn.textContent = 'Guardando...';
+    const { error } = await supabaseClient.auth.updateUser({ password: nueva });
+    btn.disabled = false; btn.textContent = 'Guardar contraseña';
+    if (error) {
+      const igual = /different from the old password/i.test(error.message || '');
+      mostrarMensaje('mensajeNuevaClave', igual ? 'Escoge una contraseña distinta a la anterior.' : 'No se pudo guardar: ' + error.message, 'error');
+      return;
+    }
+    await supabaseClient.auth.signOut();
+    sesionActual = null;
+    try { history.replaceState(null, '', location.pathname); } catch (e) { /* no pasa nada */ }
+    document.getElementById('inputNuevaClave').value = ''; document.getElementById('inputNuevaClave2').value = '';
+    document.getElementById('inputClave').value = '';
+    mostrarBloquesLogin('bloqueLoginNormal');
+    mostrarMensaje('mensajeLogin', '✅ Tu contraseña quedó cambiada. Ya puedes entrar con la nueva.', 'exito');
+  }
+
   // Botón "ojo" del inicio de sesión: muestra u oculta la contraseña mientras se escribe.
   function alternarVerClave(ocultar) {
     const input = document.getElementById('inputClave');
@@ -7008,7 +7189,42 @@
     } catch { /* si falla, el recibo de anticipo sale sin ese texto */ }
   }
 
+  // Nequi y Bre-B manuales: solo se pueden usar cuando Contabilidad ya les asignó una cuenta (si no, el dinero caería en la cuenta equivocada)
+  let mediosManualesConCuenta = { nequi: false, breb: false };
+  const ETIQUETAS_MEDIOS_MANUALES = { nequi: 'Nequi', breb: 'Bre-B' };
+
+  function opcionesMediosManualesHtml(seleccionado) {
+    return Object.keys(ETIQUETAS_MEDIOS_MANUALES).map(m => mediosManualesConCuenta[m]
+      ? `<option value="${m}" ${seleccionado === m ? 'selected' : ''}>${ETIQUETAS_MEDIOS_MANUALES[m]}</option>`
+      : `<option value="${m}" disabled>${ETIQUETAS_MEDIOS_MANUALES[m]} (falta la cuenta contable)</option>`).join('');
+  }
+
+  function completarSelectorMedioAnticipo() {
+    const sel = document.getElementById('pedidoMetodoAnticipo');
+    if (!sel) return;
+    const actual = sel.value;
+    sel.querySelectorAll('option[data-manual]').forEach(o => o.remove());
+    const ref = sel.querySelector('option[value="transferencia"]');
+    const html = opcionesMediosManualesHtml('').replace(/<option /g, '<option data-manual="1" ');
+    if (ref) ref.insertAdjacentHTML('afterend', html);
+    sel.value = actual;
+  }
+
+  async function cargarMediosManualesCuenta() {
+    try {
+      const [{ data: medios }, { data: cuentas }] = await Promise.all([
+        supabaseClient.from('medios_pago_cuenta').select('medio, cuenta_bancaria_id'),
+        supabaseClient.from('cuentas_bancarias').select('id, activa'),
+      ]);
+      const activas = new Set((cuentas || []).filter(c => c.activa).map(c => c.id));
+      mediosManualesConCuenta = { nequi: false, breb: false };
+      (medios || []).forEach(m => { if (m.medio in mediosManualesConCuenta && activas.has(m.cuenta_bancaria_id)) mediosManualesConCuenta[m.medio] = true; });
+    } catch (e) { mediosManualesConCuenta = { nequi: false, breb: false }; }
+    completarSelectorMedioAnticipo();
+  }
+
   async function cargarLogoEmpresa() {
+    cargarMediosManualesCuenta();
     cargarPoliticaAnticipos();
     try {
       const resp = await fetch(WORKER_URL + '/api/pos/config-empresa', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
@@ -7181,6 +7397,12 @@
   // AL CARGAR LA PÁGINA: revisar si ya hay una sesión guardada por Supabase
   // ============================================================================
   window.addEventListener('DOMContentLoaded', async () => {
+    // Llegó desde el enlace de recuperar contraseña: se pide la contraseña nueva y NO se entra al sistema.
+    if (ENTRADA_RECUPERACION) { mostrarNuevaClave(); return; }
+    if (ENTRADA_ENLACE_VENCIDO) {
+      try { history.replaceState(null, '', location.pathname); } catch (e) { /* no pasa nada */ }
+      mostrarMensaje('mensajeLogin', 'Ese enlace ya venció o ya se usó. Pide uno nuevo con "¿Se te olvidó la contraseña?".', 'error');
+    }
     const { data } = await supabaseClient.auth.getSession();
     if (data.session) {
       sesionActual = { token: data.session.access_token, userId: data.session.user.id, email: data.session.user.email };
@@ -15433,6 +15655,52 @@
   // TURNOS Y ASISTENCIA (Talento Humano)
   // ============================================================
   const NOMBRES_DIA_CORTO = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+  // Límite legal de horas ordinarias por semana: Ley 2101 de 2021 (42 h desde el 15-jul-2026). Confirmar con el contador.
+  const HORAS_MAX_SEMANA_LEY = 42;
+  // Horario de la tienda (entrada de las empleadas a las 8:30; la tienda abre a las 9:00). Índice 0 = lunes.
+  const HORARIO_TIENDA = {
+    0: [['08:30', '12:30'], ['14:30', '18:00']], 1: [['08:30', '12:30'], ['14:30', '18:00']], 2: [['08:30', '12:30'], ['14:30', '18:00']],
+    3: [['08:30', '12:30'], ['14:30', '18:00']], 4: [['08:30', '12:30'], ['14:30', '18:00']], 5: [['08:30', '13:00']]
+  };
+  function minutosDeHora(h) { const [a, b] = String(h).split(':'); return Number(a) * 60 + Number(b); }
+  function horasDeTurno(t) { return (minutosDeHora(t.hora_fin) - minutosDeHora(t.hora_inicio)) / 60; }
+  function formatearHoras(h) { return (Math.round(h * 10) / 10).toString().replace('.', ',') + ' h'; }
+  function horasSemanaHorarioTienda() {
+    return Object.values(HORARIO_TIENDA).reduce((a, tramos) => a + tramos.reduce((b, [i, f]) => b + (minutosDeHora(f) - minutosDeHora(i)) / 60, 0), 0);
+  }
+
+  function abrirPanelHorarioTienda() {
+    const total = horasSemanaHorarioTienda();
+    document.getElementById('resumenHorarioTienda').innerHTML = `Lunes a viernes <strong>8:30 a 12:30 y 2:30 a 6:00 p. m.</strong> (7,5 h por día) · sábado <strong>8:30 a 1:00 p. m.</strong> (4,5 h) · domingos y festivos cerrado.<br><strong>${formatearHoras(total)} por semana</strong> ${total <= HORAS_MAX_SEMANA_LEY ? `✅ (justo en el límite legal de ${HORAS_MAX_SEMANA_LEY} h: cualquier minuto de más ya es hora extra)` : `⚠️ se pasa del límite legal de ${HORAS_MAX_SEMANA_LEY} h`}`;
+    document.getElementById('listaEmpleadosHorarioTienda').innerHTML = turnosEmpleadosCache.map(e => `<label style="display:flex;align-items:center;gap:5px;margin:0;font-weight:400;"><input type="checkbox" class="chk-emp-horario-tienda" value="${e.id}" style="width:auto;" checked> ${escaparHtml(e.nombre_completo)}</label>`).join('');
+    document.getElementById('panelHorarioTienda').classList.remove('oculto');
+  }
+
+  async function aplicarHorarioTienda() {
+    ocultarMensaje('mensajeTurnos');
+    const ids = [...document.querySelectorAll('.chk-emp-horario-tienda:checked')].map(c => c.value);
+    if (ids.length === 0) { mostrarMensaje('mensajeTurnos', 'Marca al menos a una persona.', 'error'); return; }
+    if (horasSemanaHorarioTienda() > HORAS_MAX_SEMANA_LEY) { mostrarMensaje('mensajeTurnos', `El horario se pasa del límite legal de ${HORAS_MAX_SEMANA_LEY} horas por semana. No se programó.`, 'error'); return; }
+    let creados = 0, yaEstaban = 0; const otros = [];
+    for (const id of ids) {
+      for (let i = 0; i < 7; i++) {
+        const fecha = sumarDiasISO(turnosLunes, i);
+        const tramos = HORARIO_TIENDA[i];
+        if (!tramos || festivosSemanaCache[fecha]) continue; // domingo o festivo: cerrado
+        for (const [ini, fin] of tramos) {
+          const { error } = await supabaseClient.rpc('fn_rh_guardar_turno', { p_id: null, p_empleado: id, p_fecha: fecha, p_inicio: ini, p_fin: fin, p_nota: null });
+          if (!error) creados++;
+          else if (/se cruza/i.test(error.message)) yaEstaban++;
+          else otros.push(error.message);
+        }
+      }
+    }
+    await cargarTurnosAsistencia();
+    document.getElementById('panelHorarioTienda').classList.add('oculto');
+    const partes = [`Se programaron ${creados} turno${creados === 1 ? '' : 's'}`];
+    if (yaEstaban) partes.push(`${yaEstaban} ya estaban o se cruzaban con otro`);
+    mostrarMensaje('mensajeTurnos', partes.join(' · ') + '.' + (otros.length ? ' Hubo errores: ' + [...new Set(otros)].join(' · ') : ''), otros.length ? 'error' : 'exito');
+  }
   let turnosLunes = null;
   let turnosEmpleadosCache = [];
   let turnosCache = [];
@@ -15558,7 +15826,10 @@
           </div>`).join('');
         return `<td style="padding:5px 4px;vertical-align:top;border-top:1px solid #f4eef2;min-width:112px;${f === hoy ? 'background:#fff8fb;' : ''}">${chips}${estado}<button class="btn-mini editar" style="padding:1px 7px;margin-top:2px;" onclick="prepararTurno('${e.id}', '${f}')">+</button></td>`;
       }).join('');
-      return `<tr><td style="padding:6px 8px 6px 0;border-top:1px solid #f4eef2;font-size:12.5px;font-weight:600;vertical-align:top;white-space:nowrap;">${escaparHtml(e.nombre_completo)}${e.area ? `<div style="font-size:10.5px;opacity:0.6;font-weight:400;">${escaparHtml(e.area)}</div>` : ''}</td>${celdas}</tr>`;
+      const horasSemanaProg = turnosCache.filter(t => t.empleado_id === e.id).reduce((a, t) => a + horasDeTurno(t), 0);
+      const pasaLimite = horasSemanaProg > HORAS_MAX_SEMANA_LEY;
+      const lineaHoras = horasSemanaProg > 0 ? `<div style="font-size:10.5px;font-weight:600;color:${pasaLimite ? '#a12d2d' : '#2e6b3a'};">${pasaLimite ? '⚠️ ' : ''}${formatearHoras(horasSemanaProg)} de ${HORAS_MAX_SEMANA_LEY} h${pasaLimite ? ' (se pasa del límite)' : ''}</div>` : '';
+      return `<tr><td style="padding:6px 8px 6px 0;border-top:1px solid #f4eef2;font-size:12.5px;font-weight:600;vertical-align:top;white-space:nowrap;">${escaparHtml(e.nombre_completo)}${e.area ? `<div style="font-size:10.5px;opacity:0.6;font-weight:400;">${escaparHtml(e.area)}</div>` : ''}${lineaHoras}</td>${celdas}</tr>`;
     }).join('');
     grid.innerHTML = `<table style="width:100%;border-collapse:collapse;min-width:860px;"><thead><tr><th></th>${encabezados}</tr></thead><tbody>${filas}</tbody></table>`;
   }
@@ -20053,7 +20324,57 @@
     return false;
   }
 
+  // Pedidos hechos en la web que la clienta pagó por fuera de Wompi (Nequi, Bre-B, transferencia)
+  async function cargarPagosWebPendientes() {
+    const panel = document.getElementById('panelPagosWebPendientes');
+    if (!panel) return;
+    if (rolActual !== 'administrador' && rolActual !== 'cajero') { panel.classList.add('oculto'); return; }
+    const { data, error } = await supabaseClient.rpc('fn_pedidos_web_pendientes_pago');
+    if (error || !data) { panel.classList.add('oculto'); return; }
+    const pendientes = data.pendientes || [];
+    const confirmados = data.confirmados || [];
+    panel.classList.toggle('oculto', !pendientes.length && !confirmados.length);
+    document.getElementById('contadorPagosWeb').textContent = pendientes.length ? `(${pendientes.length} pendiente${pendientes.length > 1 ? 's' : ''})` : '(ninguno pendiente)';
+    const cuando = (f) => new Date(f).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
+    document.getElementById('listaPagosWebPendientes').innerHTML = `
+      ${pendientes.map(w => `
+        <div style="border:1px solid #eadfe5;border-radius:10px;padding:10px;margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;"><strong>${escaparHtml(w.referencia)}</strong><strong>${formatearMoneda(w.total)}</strong></div>
+          <div style="font-size:12px;opacity:.8;">${escaparHtml(w.nombre)} · ${escaparHtml(w.telefono || '')} · ${escaparHtml(w.ciudad || '')}</div>
+          <div style="font-size:11.5px;opacity:.7;margin-bottom:6px;">${escaparHtml(w.productos || (w.membresia_plan ? 'Membresía ' + w.membresia_plan : ''))} · pedido ${cuando(w.created_at)}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+            <select id="pmMedio-${w.id}" style="flex:1;min-width:130px;">
+              <option value="">¿Cómo pagó?</option>
+              <option value="transferencia">Transferencia</option>
+              ${opcionesMediosManualesHtml('')}
+            </select>
+            <input type="text" id="pmRef-${w.id}" placeholder="N.° de referencia del comprobante" style="flex:2;min-width:180px;">
+            <button class="btn-mini guardar" onclick="confirmarPagoManualWeb('${w.id}', this)">✅ Confirmar pago</button>
+          </div>
+        </div>`).join('') || '<div class="cargando">No hay pedidos web esperando pago.</div>'}
+      ${confirmados.length ? `<div style="font-size:11.5px;margin-top:10px;"><strong>Confirmados a mano (últimos)</strong>${confirmados.map(c => `<div style="opacity:.8;">• ${escaparHtml(c.referencia)} · ${formatearMoneda(c.total)} · ${escaparHtml(ETIQUETAS_MEDIOS_MANUALES[c.pago_manual_medio] || c.pago_manual_medio)} ref. ${escaparHtml(c.pago_manual_referencia || '')} · ${escaparHtml(c.quien || '')} · ${cuando(c.pago_manual_at)}</div>`).join('')}</div>` : ''}`;
+  }
+
+  async function confirmarPagoManualWeb(id, boton) {
+    ocultarMensaje('mensajePagosWeb');
+    const medio = document.getElementById(`pmMedio-${id}`).value;
+    const referencia = document.getElementById(`pmRef-${id}`).value.trim();
+    if (!medio) { mostrarMensaje('mensajePagosWeb', 'Elige cómo pagó la clienta.', 'error'); return; }
+    if (referencia.length < 4) { mostrarMensaje('mensajePagosWeb', 'Escribe el número de referencia del comprobante (mínimo 4 caracteres).', 'error'); return; }
+    const ok = await pedirConfirmacionModal(`¿Confirmas que ya llegó este pago por ${ETIQUETAS_MEDIOS_MANUALES[medio] || 'transferencia'} (referencia ${referencia})?\n\nEl pedido pasará a preparación y quedará anotado quién lo confirmó.`, 'Sí, ya llegó el pago');
+    if (!ok) return;
+    boton.disabled = true;
+    const { data, error } = await supabaseClient.rpc('fn_confirmar_pago_manual_pedido_web', { p_id: id, p_medio: medio, p_referencia: referencia });
+    if (error) { boton.disabled = false; mostrarMensaje('mensajePagosWeb', 'No se pudo confirmar: ' + error.message, 'error'); return; }
+    mostrarMensaje('mensajePagosWeb', data && data.registrado_en_erp
+      ? `✅ Pago de ${data.referencia} confirmado. El pedido ya está en preparación.`
+      : `⚠️ Pago de ${data && data.referencia} confirmado, pero el pedido no quedó registrado en el ERP${data && data.error_erp ? ' (' + data.error_erp + ')' : ''}. Avísale a la administradora.`, data && data.registrado_en_erp ? 'exito' : 'error');
+    await cargarPagosWebPendientes();
+    await cargarPedidosCanal();
+  }
+
   async function cargarPedidosCanal() {
+    cargarPagosWebPendientes();
     const contenedor = document.getElementById('listaPedidosCanal');
     contenedor.innerHTML = '<div class="cargando">Cargando pedidos...</div>';
 
@@ -20495,6 +20816,7 @@
             <option value="efectivo" ${pago.metodo_pago === 'efectivo' ? 'selected' : ''}>Efectivo</option>
             <option value="daviplata" ${pago.metodo_pago === 'daviplata' ? 'selected' : ''}>Daviplata</option>
             <option value="transferencia" ${pago.metodo_pago === 'transferencia' ? 'selected' : ''}>Transferencia</option>
+            ${opcionesMediosManualesHtml(pago.metodo_pago)}
             <option value="tarjeta_debito" ${pago.metodo_pago === 'tarjeta_debito' ? 'selected' : ''}>Tarjeta débito</option>
             <option value="tarjeta_credito" ${pago.metodo_pago === 'tarjeta_credito' ? 'selected' : ''}>Tarjeta crédito</option>
             <option value="credito_financiera" ${pago.metodo_pago === 'credito_financiera' ? 'selected' : ''}>🏦 Crédito (CrediLondon)</option>
@@ -21553,7 +21875,7 @@
     document.getElementById('empFechaIngreso').value = '';
     document.getElementById('empTeletrabajo').checked = false;
     document.getElementById('empEsPropietario').checked = false;
-    document.getElementById('empHorasSemana').value = '46';
+    document.getElementById('empHorasSemana').value = '42';
     document.getElementById('empAplicaRetencion').checked = false;
     document.getElementById('empDeduccionesUvt').value = '0';
     document.getElementById('bloqueDeduccionesUvt').classList.add('oculto');
@@ -21705,13 +22027,14 @@
     const fondoPension = document.getElementById('empFondoPension').value.trim();
     const fondoCesantias = document.getElementById('empFondoCesantias').value.trim();
     const arlEntidad = document.getElementById('empArlEntidad').value.trim();
-    const horasSemana = Number(document.getElementById('empHorasSemana').value) || 46;
+    const horasSemana = Number(document.getElementById('empHorasSemana').value) || 42;
     const aplicaRetencion = document.getElementById('empAplicaRetencion').checked;
     const deduccionesUvt = Number(document.getElementById('empDeduccionesUvt').value) || 0;
     ocultarMensaje('mensajeEmpleado');
 
     if (!nombre) { mostrarMensaje('mensajeEmpleado', 'Escribe el nombre del empleado.', 'error'); return; }
     if (!salario || salario <= 0) { mostrarMensaje('mensajeEmpleado', 'Escribe un salario válido.', 'error'); return; }
+    if (horasSemana > HORAS_MAX_SEMANA_LEY) { mostrarMensaje('mensajeEmpleado', `La ley permite máximo ${HORAS_MAX_SEMANA_LEY} horas por semana.`, 'error'); return; }
     if (!fechaIngreso) { mostrarMensaje('mensajeEmpleado', 'Escribe la fecha de ingreso.', 'error'); return; }
 
     const btn = document.getElementById('btnCrearEmpleado');
@@ -21759,7 +22082,7 @@
     document.getElementById('empFechaIngreso').value = '';
     document.getElementById('empTeletrabajo').checked = false;
     document.getElementById('empEsPropietario').checked = false;
-    document.getElementById('empHorasSemana').value = '46';
+    document.getElementById('empHorasSemana').value = '42';
     document.getElementById('empAplicaRetencion').checked = false;
     document.getElementById('empDeduccionesUvt').value = '0';
     document.getElementById('bloqueDeduccionesUvt').classList.add('oculto');
@@ -21958,7 +22281,8 @@
             <label style="margin-top:8px;">Clase de riesgo ARL</label>
             <select id="edit-emp-arl-${e.id}">${opcionesArl}</select>
             <label style="margin-top:8px;">Horas de trabajo por semana</label>
-            <input type="number" id="edit-emp-horassemana-${e.id}" min="1" max="48" step="1" value="${e.horas_semana || 46}">
+            <input type="number" id="edit-emp-horassemana-${e.id}" min="1" max="42" step="0.5" value="${e.horas_semana || 42}">
+            <div style="font-size:10.5px;opacity:0.6;margin-top:3px;">La ley permite máximo 42 horas por semana (Ley 2101 de 2021).</div>
             <label style="display:flex;align-items:center;gap:8px;margin-top:10px;">
               <input type="checkbox" id="edit-emp-retencion-${e.id}" style="width:auto;" ${e.aplica_retencion_fuente ? 'checked' : ''}>
               <span style="font-size:13px;">Se le practica retención en la fuente por salarios</span>
@@ -32873,13 +33197,14 @@
     const fondoPension = document.getElementById(`edit-emp-fondopension-${empleadoId}`).value.trim();
     const fondoCesantias = document.getElementById(`edit-emp-fondocesantias-${empleadoId}`).value.trim();
     const arlEntidad = document.getElementById(`edit-emp-arlentidad-${empleadoId}`).value.trim();
-    const horasSemana = Number(document.getElementById(`edit-emp-horassemana-${empleadoId}`).value) || 46;
+    const horasSemana = Number(document.getElementById(`edit-emp-horassemana-${empleadoId}`).value) || 42;
     const aplicaRetencion = document.getElementById(`edit-emp-retencion-${empleadoId}`).checked;
     const deduccionesUvt = Number(document.getElementById(`edit-emp-deduccionesuvt-${empleadoId}`).value) || 0;
 
     ocultarMensaje('mensajeEmpleados');
     if (!nombre) { mostrarMensaje('mensajeEmpleados', 'El nombre no puede quedar vacío.', 'error'); return; }
     if (!salario || salario <= 0) { mostrarMensaje('mensajeEmpleados', 'Escribe un salario válido.', 'error'); return; }
+    if (horasSemana > HORAS_MAX_SEMANA_LEY) { mostrarMensaje('mensajeEmpleados', `La ley permite máximo ${HORAS_MAX_SEMANA_LEY} horas por semana.`, 'error'); return; }
     if (!fechaIngreso) { mostrarMensaje('mensajeEmpleados', 'Escribe la fecha de ingreso.', 'error'); return; }
 
     const resp = await fetch(WORKER_URL + '/api/pos/nomina/empleados/actualizar', {
@@ -33599,6 +33924,7 @@
     limpiarModos();
     document.body.classList.add('modo-modulo');
     document.body.dataset.modulo = clave;
+    refrescarSeccionesSidebar(null);
     
     document.getElementById('hubModuloCabecera').innerHTML =
       `${ilusSvg(m.k, m.c, m.fondo)}<div><h1>${m.nombre}</h1><p>${m.desc}</p></div>`;
@@ -33618,8 +33944,71 @@
     if (b) b.click();
   }
 
+  // Secciones plegables del menú lateral (Contabilidad tiene 3): solo se ven los nombres; se abre la que se toca.
+  function agruparSeccionesSidebar() {
+    document.querySelectorAll('.sidebar-depto-submenu').forEach((sub) => {
+      sub.querySelectorAll(':scope > .sidebar-seccion:not(.plegable)').forEach((h) => {
+        const grupo = document.createElement('div');
+        grupo.className = 'sidebar-seccion-grupo';
+        let n = h.nextElementSibling;
+        while (n && !n.classList.contains('sidebar-seccion')) { const sig = n.nextElementSibling; grupo.appendChild(n); n = sig; }
+        h.after(grupo);
+        h.classList.add('plegable');
+        h.setAttribute('role', 'button'); h.setAttribute('tabindex', '0');
+        h.innerHTML = '<span>' + h.textContent + '</span><span class="chev" aria-hidden="true">▶</span>';
+        const alternar = () => { const abre = !grupo.classList.contains('abierta'); sub.querySelectorAll('.sidebar-seccion-grupo').forEach((g) => { g.classList.remove('abierta'); g.previousElementSibling.classList.remove('abierta'); }); if (abre) { grupo.classList.add('abierta'); h.classList.add('abierta'); } h.setAttribute('aria-expanded', abre ? 'true' : 'false'); };
+        h.addEventListener('click', alternar);
+        h.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); alternar(); } });
+      });
+    });
+  }
+  // Oculta las secciones sin opciones para el rol y abre la sección de la opción activa (o ninguna).
+  function refrescarSeccionesSidebar(btnActivo) {
+    document.querySelectorAll('.sidebar-seccion.plegable').forEach((h) => {
+      const g = h.nextElementSibling;
+      const hayVisibles = Array.from(g.querySelectorAll('.nav-btn')).some((b) => b.style.display !== 'none');
+      h.style.display = hayVisibles ? '' : 'none';
+      const abrir = !!(btnActivo && g.contains(btnActivo));
+      g.classList.toggle('abierta', abrir); h.classList.toggle('abierta', abrir);
+    });
+  }
+  document.addEventListener('DOMContentLoaded', agruparSeccionesSidebar);
+
+  // Grupos de 4 o más botones-pestaña (.filtro-tipo) se ofrecen también como lista desplegable (se ve solo en celular).
+  function convertirChipsEnDesplegables(raiz) {
+    (raiz || document).querySelectorAll('.filtro-tipo:not(.con-desplegable)').forEach((grupo) => {
+      const chips = Array.from(grupo.querySelectorAll(':scope > button.chip-filtro'));
+      if (chips.length < 4) return;
+      grupo.classList.add('con-desplegable');
+      const caja = document.createElement('div');
+      caja.className = 'chip-desplegable';
+      caja.innerHTML = '<button type="button" class="chip-desplegable-btn" aria-expanded="false"><span class="et"></span><span class="flecha-d" aria-hidden="true">▼</span></button><div class="chip-desplegable-lista" role="listbox"></div>';
+      const btn = caja.querySelector('.chip-desplegable-btn'), lista = caja.querySelector('.chip-desplegable-lista'), et = caja.querySelector('.et');
+      const sincronizar = () => {
+        const act = chips.find((c) => c.classList.contains('activo'));
+        et.textContent = act ? act.textContent.trim() : 'Elegir una opción';
+        Array.from(lista.children).forEach((b, i) => b.classList.toggle('activo', chips[i] === act));
+      };
+      chips.forEach((c) => {
+        const o = document.createElement('button'); o.type = 'button'; o.textContent = c.textContent.trim();
+        o.addEventListener('click', () => { caja.classList.remove('abierto'); btn.setAttribute('aria-expanded', 'false'); c.click(); sincronizar(); });
+        lista.appendChild(o);
+      });
+      btn.addEventListener('click', () => { const ab = caja.classList.toggle('abierto'); btn.setAttribute('aria-expanded', ab ? 'true' : 'false'); });
+      grupo.before(caja);
+      sincronizar();
+      new MutationObserver(sincronizar).observe(grupo, { attributes: true, attributeFilter: ['class'], subtree: true });
+    });
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    convertirChipsEnDesplegables();
+    let t = null; // también para los grupos que se arman después con JavaScript
+    new MutationObserver(() => { clearTimeout(t); t = setTimeout(() => convertirChipsEnDesplegables(), 250); }).observe(document.getElementById('main') || document.body, { childList: true, subtree: true });
+  });
+
   // Se llama desde mostrarPantalla cuando la pantalla corresponde a una opción del menú.
   function establecerModuloActivo(btn) {
+    refrescarSeccionesSidebar(btn);
     const g = btn.closest('.sidebar-depto');
     const m = g ? MODULOS_ERP.find((x) => x.grupo === g.id) : null;
     document.body.classList.remove('modo-inicio');
