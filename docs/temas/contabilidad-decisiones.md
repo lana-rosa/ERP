@@ -41,3 +41,10 @@ Cómo se registraría (con el sí de Sara):
 7. Si luego se migra a ePayco/Davivienda, **la cuenta puente se cierra**: se traslada el saldo a Davivienda y se desactiva.
 
 Preguntas nuevas para el contador (viernes 20-nov): ver `docs/PENDIENTES.md` (sección Contador).
+
+## Mapeo de medios de pago → cuenta (respuesta de Sara, 19-nov-2026) — pendiente de aplicar
+- **Bre-B** (QR de Davivienda en la tienda física, y Bre-B/llave en pedidos) → **Davivienda**.
+- **Nequi manual** (el cliente paga por Nequi) → cuenta **Nequi** (no Davivienda).
+- **Wompi** → Sara pidió el 18-nov a Wompi cambiar el desembolso a su Nequi (falta la aprobación de Wompi); mientras tanto sigue llegando a Bancolombia.
+- Traslados Nequi → Davivienda: movimiento aparte, lo registra Contabilidad.
+- **Falta para aplicarlo** (con el sí de Sara): crear la cuenta Davivienda en el ERP (necesita tipo y número), definir si el Nequi de ventas manuales y el Nequi-puente de Wompi son el mismo número, y reasignar `medios_pago_cuenta` (hoy solo existe `nequi` → Nequi inactiva 111010). Chat 2 (Pedidos) solo guarda el nombre del medio (`nequi`, `breb`); el mapeo contable lo aplica este chat.
