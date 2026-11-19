@@ -94,6 +94,7 @@
       </div>
       <select id="f-marca" aria-label="Marca"><option value="">Todas las marcas</option></select>
       <select id="f-plat" aria-label="Plataforma"><option value="">Todas las plataformas</option></select>
+      <select id="f-tipo" aria-label="Tipo de publicación"><option value="">Todos los tipos</option></select>
       <select id="f-estado" aria-label="Estado"><option value="">Todos los estados</option></select>
       <span class="esp"></span>
       <button type="button" class="prim" id="nueva">+ Nueva pieza</button>
@@ -169,9 +170,9 @@
   function bloquear(html) { $('#app').hidden = true; var b = $('#bloqueo'); b.hidden = false; b.innerHTML = html; }
 
   function filtradas() {
-    var m = $('#f-marca').value, p = $('#f-plat').value, e = $('#f-estado').value;
+    var m = $('#f-marca').value, p = $('#f-plat').value, e = $('#f-estado').value, t = $('#f-tipo').value;
     return piezas.filter(function (x) {
-      return (!m || x.marca === m) && (!e || x.estado === e) && (!p || (x.plataformas || []).indexOf(p) >= 0);
+      return (!m || x.marca === m) && (!e || x.estado === e) && (!t || x.tipo_publicacion === t) && (!p || (x.plataformas || []).indexOf(p) >= 0);
     });
   }
 
@@ -250,7 +251,10 @@
     document.querySelectorAll('#plats input').forEach(function (c) { c.checked = (x.plataformas || []).indexOf(c.value) >= 0; });
     document.querySelectorAll('#objs input').forEach(function (c) { c.checked = (x.objetivos || []).indexOf(c.value) >= 0; });
     $('#dlg').showModal();
+    crecer(f.guion); crecer(f.copy);
   }
+  // Guion y copy crecen con el texto, para leerlos completos sin barra interna.
+  function crecer(t) { t.style.height = 'auto'; t.style.height = Math.max(110, t.scrollHeight + 2) + 'px'; }
 
   async function guardar(ev) {
     ev.preventDefault();
@@ -291,7 +295,7 @@
   }
 
   async function iniciar() {
-    opciones($('#f-marca'), MARCAS); opciones($('#f-plat'), PLATS); opciones($('#f-estado'), ESTADOS);
+    opciones($('#f-marca'), MARCAS); opciones($('#f-plat'), PLATS); opciones($('#f-tipo'), TIPOS); opciones($('#f-estado'), ESTADOS);
     var f = $('#form');
     opciones(f.marca, MARCAS); opciones(f.tipo, TIPOS); opciones(f.estado, ESTADOS);
     function casillas(mapa) { return Object.keys(mapa).map(function (k) { return '<label><input type="checkbox" value="' + k + '"> ' + mapa[k] + '</label>'; }).join(''); }
@@ -316,11 +320,12 @@
         pintar();
       };
     });
-    ['#f-marca', '#f-plat', '#f-estado'].forEach(function (s) { $(s).onchange = pintar; });
+    ['#f-marca', '#f-plat', '#f-tipo', '#f-estado'].forEach(function (s) { $(s).onchange = pintar; });
     $('#nueva').onclick = function () { abrir(null); };
     $('#cancelar').onclick = function () { $('#dlg').close(); };
     $('#borrar').onclick = borrar;
     f.addEventListener('submit', guardar);
+    [f.guion, f.copy].forEach(function (t) { t.addEventListener('input', function () { crecer(t); }); });
     document.addEventListener('click', function (e) {
       var el = e.target.closest('[data-id]');
       if (el && !$('#dlg').open) abrir(piezas.find(function (x) { return x.id === el.dataset.id; }));
