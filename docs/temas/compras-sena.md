@@ -30,3 +30,9 @@ Aviso del Orquestador general (decisión reportada; falta que Sara la confirme e
 - **Ajuste propuesto 3:** el extracto que pide la interventora sería siempre el de Bancolombia; la pantalla de soportes podría mostrar a qué cuenta corresponde cada extracto (uno por mes).
 - **Control de desembolsos (punto 5):** con una sola cuenta, el saldo del Fondo se puede cruzar contra el saldo real de Bancolombia (recibido − pagado = saldo de la cuenta).
 - Choque posible con Contabilidad (chat 7): el plan de cuentas debe permitir separar movimientos Fondo/no Fondo por cuenta; los impuestos, sanciones y recargos no se pagan desde Bancolombia.
+
+### Ajuste 1 hecho (19-nov-2026, sw.js v82): cuenta desde la que se pagó
+- En compras Fondo/Mixto pagadas completo: lista "Cuenta desde la que pagaste" (cuentas activas de la tabla `cuentas_bancarias`), obligatoria. Si hay una cuenta con uso `fondo_emprender`, solo se acepta esa; si ninguna está marcada, solo avisa (no puede verificar).
+- Se guarda en `compras_requisitos_sena.datos` (`cuenta_bancaria_id`, `cuenta_pago`) y se ve en "Ver soportes de pago" (`fn_soportes_pago_fondo` ampliada; SQL en `docs/migraciones/2026-11-19-soportes-fondo-cuenta-pago.sql`).
+- **Ojo (dato real, 19-nov):** en `cuentas_bancarias` solo existe Bancolombia, con uso `general` y `predeterminada = true`; Davivienda aún no está creada. Para que la verificación funcione, Bancolombia debe pasar a uso "Fondo Emprender" en Bancos. No se tocó ese dato: afecta contabilidad (chat 7) y los pagos que hoy se asignan a la cuenta predeterminada.
+- Falta: pago Mixto en dos transferencias (ajuste 2) y extracto por cuenta/mes (ajuste 3); aviso si una compra con recursos propios se paga desde la cuenta del Fondo.
