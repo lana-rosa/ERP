@@ -6674,28 +6674,31 @@
     if (!correo || !correo.includes('@')) { mostrarMensaje('mensajeRecuperarClave', 'Escribe tu correo completo.', 'error'); return; }
     const btn = document.getElementById('btnEnviarRecuperar');
     btn.disabled = true; btn.textContent = 'Revisando...';
-    // Solo se envía el enlace si el correo es de un colaborador del ERP (la base responde sí/no, con máximo 3 intentos cada 10 minutos).
+    // Solo se envía el enlace si el correo es de un colaborador del ERP (la base responde sí/no, con máximo 3 intentos por hora).
     const { data: esColaborador, error: errorVerif } = await supabaseClient.rpc('fn_correo_es_colaborador', { p_correo: correo });
-    if (errorVerif || esColaborador !== true) {
-      btn.disabled = false; btn.textContent = 'Enviar enlace de recuperación';
-      const limite = errorVerif && /demasiados_intentos/.test(errorVerif.message || '');
-      mostrarMensaje('mensajeRecuperarClave', errorVerif ? (limite ? 'Hiciste muchos intentos. Espera 10 minutos y vuelve a intentar.' : 'No pudimos revisar el correo. Intenta de nuevo en un momento.') : 'Ese usuario no existe en el sistema.', 'error');
+    const textoBoton = 'Enviar enlace de recuperación';
+    // Mensaje igual exista o no el correo (así no se puede averiguar qué correos son de colaboradores); el botón también se pausa igual.
+    const avisarEnviado = () => {
+      mostrarMensaje('mensajeRecuperarClave', '✅ Si el correo está registrado, te enviamos un enlace.', 'exito');
+      let faltan = 10; btn.disabled = true; btn.textContent = 'Enviado (' + faltan + ')';
+      const reloj = setInterval(() => { faltan--; if (faltan <= 0) { clearInterval(reloj); btn.disabled = false; btn.textContent = textoBoton; } else { btn.textContent = 'Enviado (' + faltan + ')'; } }, 1000);
+    };
+    if (errorVerif) {
+      btn.disabled = false; btn.textContent = textoBoton;
+      const limite = /demasiados_intentos/.test(errorVerif.message || '');
+      mostrarMensaje('mensajeRecuperarClave', limite ? 'Llegaste al máximo de 3 intentos por hora. Inténtalo más tarde.' : 'No pudimos revisar el correo. Intenta de nuevo en un momento.', 'error');
       return;
     }
+    if (esColaborador !== true) { avisarEnviado(); return; }
     btn.textContent = 'Enviando...';
     const { error } = await supabaseClient.auth.resetPasswordForEmail(correo, { redirectTo: location.origin + location.pathname.replace(/index\.html$/, '') });
-    const textoBoton = 'Enviar enlace de recuperación';
-    btn.disabled = false; btn.textContent = textoBoton;
     if (error) {
+      btn.disabled = false; btn.textContent = textoBoton;
       const muchos = error.status === 429 || /rate limit|too many/i.test(error.message || '');
       mostrarMensaje('mensajeRecuperarClave', muchos ? 'Se pidieron muchos correos seguidos. Espera unos minutos y vuelve a intentar.' : 'No pudimos enviar el correo: ' + error.message, 'error');
       return;
     }
-    // Por seguridad el mensaje es el mismo exista o no el correo.
-    mostrarMensaje('mensajeRecuperarClave', '✅ Te enviamos un enlace de recuperación al correo. Revisa también la carpeta de spam.', 'exito');
-    // Se deshabilita unos segundos para que no se pidan varios correos seguidos.
-    let faltan = 10; btn.disabled = true; btn.textContent = 'Enviado (' + faltan + ')';
-    const reloj = setInterval(() => { faltan--; if (faltan <= 0) { clearInterval(reloj); btn.disabled = false; btn.textContent = textoBoton; } else { btn.textContent = 'Enviado (' + faltan + ')'; } }, 1000);
+    avisarEnviado();
   }
 
   function mostrarNuevaClave() {
