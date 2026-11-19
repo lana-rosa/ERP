@@ -3347,8 +3347,8 @@
           <option value="IV">Clase IV — Riesgo alto</option>
           <option value="V">Clase V — Riesgo máximo</option>
         </select>
-        <label for="empHorasSemana">Horas de trabajo por semana <span style="font-size:10px;opacity:0.6;">(para calcular sus horas extras)</span></label>
-        <input type="number" id="empHorasSemana" min="1" max="48" step="1" value="46" placeholder="46">
+        <label for="empHorasSemana">Horas de trabajo por semana <span style="font-size:10px;opacity:0.6;">(máximo 42 por ley; sirve para calcular sus horas extras)</span></label>
+        <input type="number" id="empHorasSemana" min="1" max="42" step="0.5" value="42" placeholder="42">
 
         <label style="display:flex;align-items:center;gap:8px;margin-top:12px;">
           <input type="checkbox" id="empAplicaRetencion" style="width:auto;" onchange="document.getElementById('bloqueDeduccionesUvt').classList.toggle('oculto', !this.checked)">
@@ -3635,9 +3635,22 @@
         <button class="btn-mini editar" onclick="cambiarSemanaTurnos(7)">Semana siguiente ▶</button>
         <button class="btn-mini editar" onclick="cambiarSemanaTurnos(0)">Esta semana</button>
         <button class="btn-mini guardar" onclick="copiarSemanaAnteriorTurnos()">📋 Copiar la semana anterior</button>
+        <button class="btn-mini guardar" onclick="abrirPanelHorarioTienda()">🏪 Cargar el horario de la tienda</button>
+      </div>
+      <div id="panelHorarioTienda" class="oculto" style="margin-bottom:12px;padding:12px;background:var(--rosa-suave);border-radius:9px;font-size:12.5px;">
+        <div style="font-weight:700;margin-bottom:4px;">🏪 Horario de la tienda</div>
+        <div id="resumenHorarioTienda" style="margin-bottom:8px;"></div>
+        <div style="margin-bottom:6px;">¿A quién se le programa en la semana que estás viendo?</div>
+        <div id="listaEmpleadosHorarioTienda" style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px;"></div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-mini guardar" onclick="aplicarHorarioTienda()">Programar la semana</button>
+          <button class="btn-mini desactivar" onclick="document.getElementById('panelHorarioTienda').classList.add('oculto')">Cerrar</button>
+        </div>
+        <div style="font-size:11px;opacity:0.7;margin-top:8px;">No programa domingos ni festivos, y respeta los turnos que ya existan. Después puedes ajustar cualquier turno a mano.</div>
       </div>
       <div class="mensaje" id="mensajeTurnos"></div>
       <div id="gridTurnosSemana" style="overflow-x:auto;"><div class="cargando">Cargando...</div></div>
+      <div style="font-size:11px;opacity:0.65;margin-top:6px;">Debajo de cada nombre ves las horas programadas de la semana. El límite legal es de 42 horas por semana (Ley 2101 de 2021, desde el 15 de julio de 2026): si se pasa, sale en rojo.</div>
       <div id="formTurno" style="margin-top:14px;padding:12px;background:var(--rosa-suave);border-radius:9px;">
         <div style="font-size:12.5px;font-weight:700;" id="tituloFormTurno">Programar turno</div>
         <input type="hidden" id="turnoId">
@@ -15640,6 +15653,52 @@
   // TURNOS Y ASISTENCIA (Talento Humano)
   // ============================================================
   const NOMBRES_DIA_CORTO = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+  // Límite legal de horas ordinarias por semana: Ley 2101 de 2021 (42 h desde el 15-jul-2026). Confirmar con el contador.
+  const HORAS_MAX_SEMANA_LEY = 42;
+  // Horario de la tienda (entrada de las empleadas a las 8:30; la tienda abre a las 9:00). Índice 0 = lunes.
+  const HORARIO_TIENDA = {
+    0: [['08:30', '12:30'], ['14:30', '18:00']], 1: [['08:30', '12:30'], ['14:30', '18:00']], 2: [['08:30', '12:30'], ['14:30', '18:00']],
+    3: [['08:30', '12:30'], ['14:30', '18:00']], 4: [['08:30', '12:30'], ['14:30', '18:00']], 5: [['08:30', '13:00']]
+  };
+  function minutosDeHora(h) { const [a, b] = String(h).split(':'); return Number(a) * 60 + Number(b); }
+  function horasDeTurno(t) { return (minutosDeHora(t.hora_fin) - minutosDeHora(t.hora_inicio)) / 60; }
+  function formatearHoras(h) { return (Math.round(h * 10) / 10).toString().replace('.', ',') + ' h'; }
+  function horasSemanaHorarioTienda() {
+    return Object.values(HORARIO_TIENDA).reduce((a, tramos) => a + tramos.reduce((b, [i, f]) => b + (minutosDeHora(f) - minutosDeHora(i)) / 60, 0), 0);
+  }
+
+  function abrirPanelHorarioTienda() {
+    const total = horasSemanaHorarioTienda();
+    document.getElementById('resumenHorarioTienda').innerHTML = `Lunes a viernes <strong>8:30 a 12:30 y 2:30 a 6:00 p. m.</strong> (7,5 h por día) · sábado <strong>8:30 a 1:00 p. m.</strong> (4,5 h) · domingos y festivos cerrado.<br><strong>${formatearHoras(total)} por semana</strong> ${total <= HORAS_MAX_SEMANA_LEY ? `✅ (justo en el límite legal de ${HORAS_MAX_SEMANA_LEY} h: cualquier minuto de más ya es hora extra)` : `⚠️ se pasa del límite legal de ${HORAS_MAX_SEMANA_LEY} h`}`;
+    document.getElementById('listaEmpleadosHorarioTienda').innerHTML = turnosEmpleadosCache.map(e => `<label style="display:flex;align-items:center;gap:5px;margin:0;font-weight:400;"><input type="checkbox" class="chk-emp-horario-tienda" value="${e.id}" style="width:auto;" checked> ${escaparHtml(e.nombre_completo)}</label>`).join('');
+    document.getElementById('panelHorarioTienda').classList.remove('oculto');
+  }
+
+  async function aplicarHorarioTienda() {
+    ocultarMensaje('mensajeTurnos');
+    const ids = [...document.querySelectorAll('.chk-emp-horario-tienda:checked')].map(c => c.value);
+    if (ids.length === 0) { mostrarMensaje('mensajeTurnos', 'Marca al menos a una persona.', 'error'); return; }
+    if (horasSemanaHorarioTienda() > HORAS_MAX_SEMANA_LEY) { mostrarMensaje('mensajeTurnos', `El horario se pasa del límite legal de ${HORAS_MAX_SEMANA_LEY} horas por semana. No se programó.`, 'error'); return; }
+    let creados = 0, yaEstaban = 0; const otros = [];
+    for (const id of ids) {
+      for (let i = 0; i < 7; i++) {
+        const fecha = sumarDiasISO(turnosLunes, i);
+        const tramos = HORARIO_TIENDA[i];
+        if (!tramos || festivosSemanaCache[fecha]) continue; // domingo o festivo: cerrado
+        for (const [ini, fin] of tramos) {
+          const { error } = await supabaseClient.rpc('fn_rh_guardar_turno', { p_id: null, p_empleado: id, p_fecha: fecha, p_inicio: ini, p_fin: fin, p_nota: null });
+          if (!error) creados++;
+          else if (/se cruza/i.test(error.message)) yaEstaban++;
+          else otros.push(error.message);
+        }
+      }
+    }
+    await cargarTurnosAsistencia();
+    document.getElementById('panelHorarioTienda').classList.add('oculto');
+    const partes = [`Se programaron ${creados} turno${creados === 1 ? '' : 's'}`];
+    if (yaEstaban) partes.push(`${yaEstaban} ya estaban o se cruzaban con otro`);
+    mostrarMensaje('mensajeTurnos', partes.join(' · ') + '.' + (otros.length ? ' Hubo errores: ' + [...new Set(otros)].join(' · ') : ''), otros.length ? 'error' : 'exito');
+  }
   let turnosLunes = null;
   let turnosEmpleadosCache = [];
   let turnosCache = [];
@@ -15765,7 +15824,10 @@
           </div>`).join('');
         return `<td style="padding:5px 4px;vertical-align:top;border-top:1px solid #f4eef2;min-width:112px;${f === hoy ? 'background:#fff8fb;' : ''}">${chips}${estado}<button class="btn-mini editar" style="padding:1px 7px;margin-top:2px;" onclick="prepararTurno('${e.id}', '${f}')">+</button></td>`;
       }).join('');
-      return `<tr><td style="padding:6px 8px 6px 0;border-top:1px solid #f4eef2;font-size:12.5px;font-weight:600;vertical-align:top;white-space:nowrap;">${escaparHtml(e.nombre_completo)}${e.area ? `<div style="font-size:10.5px;opacity:0.6;font-weight:400;">${escaparHtml(e.area)}</div>` : ''}</td>${celdas}</tr>`;
+      const horasSemanaProg = turnosCache.filter(t => t.empleado_id === e.id).reduce((a, t) => a + horasDeTurno(t), 0);
+      const pasaLimite = horasSemanaProg > HORAS_MAX_SEMANA_LEY;
+      const lineaHoras = horasSemanaProg > 0 ? `<div style="font-size:10.5px;font-weight:600;color:${pasaLimite ? '#a12d2d' : '#2e6b3a'};">${pasaLimite ? '⚠️ ' : ''}${formatearHoras(horasSemanaProg)} de ${HORAS_MAX_SEMANA_LEY} h${pasaLimite ? ' (se pasa del límite)' : ''}</div>` : '';
+      return `<tr><td style="padding:6px 8px 6px 0;border-top:1px solid #f4eef2;font-size:12.5px;font-weight:600;vertical-align:top;white-space:nowrap;">${escaparHtml(e.nombre_completo)}${e.area ? `<div style="font-size:10.5px;opacity:0.6;font-weight:400;">${escaparHtml(e.area)}</div>` : ''}${lineaHoras}</td>${celdas}</tr>`;
     }).join('');
     grid.innerHTML = `<table style="width:100%;border-collapse:collapse;min-width:860px;"><thead><tr><th></th>${encabezados}</tr></thead><tbody>${filas}</tbody></table>`;
   }
@@ -21811,7 +21873,7 @@
     document.getElementById('empFechaIngreso').value = '';
     document.getElementById('empTeletrabajo').checked = false;
     document.getElementById('empEsPropietario').checked = false;
-    document.getElementById('empHorasSemana').value = '46';
+    document.getElementById('empHorasSemana').value = '42';
     document.getElementById('empAplicaRetencion').checked = false;
     document.getElementById('empDeduccionesUvt').value = '0';
     document.getElementById('bloqueDeduccionesUvt').classList.add('oculto');
@@ -21963,13 +22025,14 @@
     const fondoPension = document.getElementById('empFondoPension').value.trim();
     const fondoCesantias = document.getElementById('empFondoCesantias').value.trim();
     const arlEntidad = document.getElementById('empArlEntidad').value.trim();
-    const horasSemana = Number(document.getElementById('empHorasSemana').value) || 46;
+    const horasSemana = Number(document.getElementById('empHorasSemana').value) || 42;
     const aplicaRetencion = document.getElementById('empAplicaRetencion').checked;
     const deduccionesUvt = Number(document.getElementById('empDeduccionesUvt').value) || 0;
     ocultarMensaje('mensajeEmpleado');
 
     if (!nombre) { mostrarMensaje('mensajeEmpleado', 'Escribe el nombre del empleado.', 'error'); return; }
     if (!salario || salario <= 0) { mostrarMensaje('mensajeEmpleado', 'Escribe un salario válido.', 'error'); return; }
+    if (horasSemana > HORAS_MAX_SEMANA_LEY) { mostrarMensaje('mensajeEmpleado', `La ley permite máximo ${HORAS_MAX_SEMANA_LEY} horas por semana.`, 'error'); return; }
     if (!fechaIngreso) { mostrarMensaje('mensajeEmpleado', 'Escribe la fecha de ingreso.', 'error'); return; }
 
     const btn = document.getElementById('btnCrearEmpleado');
@@ -22017,7 +22080,7 @@
     document.getElementById('empFechaIngreso').value = '';
     document.getElementById('empTeletrabajo').checked = false;
     document.getElementById('empEsPropietario').checked = false;
-    document.getElementById('empHorasSemana').value = '46';
+    document.getElementById('empHorasSemana').value = '42';
     document.getElementById('empAplicaRetencion').checked = false;
     document.getElementById('empDeduccionesUvt').value = '0';
     document.getElementById('bloqueDeduccionesUvt').classList.add('oculto');
@@ -22216,7 +22279,8 @@
             <label style="margin-top:8px;">Clase de riesgo ARL</label>
             <select id="edit-emp-arl-${e.id}">${opcionesArl}</select>
             <label style="margin-top:8px;">Horas de trabajo por semana</label>
-            <input type="number" id="edit-emp-horassemana-${e.id}" min="1" max="48" step="1" value="${e.horas_semana || 46}">
+            <input type="number" id="edit-emp-horassemana-${e.id}" min="1" max="42" step="0.5" value="${e.horas_semana || 42}">
+            <div style="font-size:10.5px;opacity:0.6;margin-top:3px;">La ley permite máximo 42 horas por semana (Ley 2101 de 2021).</div>
             <label style="display:flex;align-items:center;gap:8px;margin-top:10px;">
               <input type="checkbox" id="edit-emp-retencion-${e.id}" style="width:auto;" ${e.aplica_retencion_fuente ? 'checked' : ''}>
               <span style="font-size:13px;">Se le practica retención en la fuente por salarios</span>
@@ -33131,13 +33195,14 @@
     const fondoPension = document.getElementById(`edit-emp-fondopension-${empleadoId}`).value.trim();
     const fondoCesantias = document.getElementById(`edit-emp-fondocesantias-${empleadoId}`).value.trim();
     const arlEntidad = document.getElementById(`edit-emp-arlentidad-${empleadoId}`).value.trim();
-    const horasSemana = Number(document.getElementById(`edit-emp-horassemana-${empleadoId}`).value) || 46;
+    const horasSemana = Number(document.getElementById(`edit-emp-horassemana-${empleadoId}`).value) || 42;
     const aplicaRetencion = document.getElementById(`edit-emp-retencion-${empleadoId}`).checked;
     const deduccionesUvt = Number(document.getElementById(`edit-emp-deduccionesuvt-${empleadoId}`).value) || 0;
 
     ocultarMensaje('mensajeEmpleados');
     if (!nombre) { mostrarMensaje('mensajeEmpleados', 'El nombre no puede quedar vacío.', 'error'); return; }
     if (!salario || salario <= 0) { mostrarMensaje('mensajeEmpleados', 'Escribe un salario válido.', 'error'); return; }
+    if (horasSemana > HORAS_MAX_SEMANA_LEY) { mostrarMensaje('mensajeEmpleados', `La ley permite máximo ${HORAS_MAX_SEMANA_LEY} horas por semana.`, 'error'); return; }
     if (!fechaIngreso) { mostrarMensaje('mensajeEmpleados', 'Escribe la fecha de ingreso.', 'error'); return; }
 
     const resp = await fetch(WORKER_URL + '/api/pos/nomina/empleados/actualizar', {
