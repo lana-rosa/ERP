@@ -67,6 +67,24 @@
   .acciones{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
   .acciones .borrar{background:#fde8e8;color:#a32020;margin-right:auto}
   .error{color:#a32020;font-size:13px}
+  .medir{background:#fff7e0;border:1px solid #f0d58a;border-radius:14px;padding:10px 14px;margin:0 0 12px;font-size:13px}
+  .medir summary{cursor:pointer;font-weight:700}
+  .medir ul{margin:8px 0 0;padding-left:18px;display:grid;gap:4px}
+  .medir button{background:none;padding:0;color:var(--rosa);text-align:left;font-weight:600}
+  .tabla-env{overflow-x:auto;background:#fff;border-radius:14px;margin-bottom:14px}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{padding:7px 8px;border-bottom:1px solid var(--borde);text-align:left;white-space:nowrap}
+  th{font-size:12px;color:var(--suave)}
+  td.num,th.num{text-align:right}
+  tr.mejor td{background:#e9f7ef;font-weight:600}
+  .res h3{font-size:15px;margin:16px 0 8px}
+  .res p.ayuda{font-size:12px;color:var(--suave);margin:-4px 0 8px}
+  #est{border-top:1px dashed var(--borde);padding-top:10px;display:grid;gap:8px}
+  #est h3{font-size:15px;color:var(--rosa)}
+  .numeros{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+  .numeros input,.prev input{width:100%}
+  .prev input{min-width:70px;padding:5px 6px}
+  .prev select{max-width:220px;padding:5px 6px}
   @media(max-width:640px){
     .fila{grid-template-columns:1fr}
     .celda{min-height:60px}
@@ -91,6 +109,7 @@
       <div class="vistas" role="group" aria-label="Vista">
         <button type="button" data-vista="lista" aria-pressed="true">Lista</button>
         <button type="button" data-vista="calendario" aria-pressed="false">Calendario</button>
+        <button type="button" data-vista="resultados" aria-pressed="false">Resultados</button>
       </div>
       <select id="f-marca" aria-label="Marca"><option value="">Todas las marcas</option></select>
       <select id="f-plat" aria-label="Plataforma"><option value="">Todas las plataformas</option></select>
@@ -100,8 +119,10 @@
       <button type="button" class="prim" id="nueva">+ Nueva pieza</button>
     </div>
     <p class="leyenda" aria-hidden="true"><span style="--m:var(--crochet)">Lana Rosa Crochet</span><span style="--m:var(--academy)">Lana Rosa Academy</span><span class="sin">· la etiqueta y el punto de color = estado</span></p>
+    <details class="medir" id="aviso-medir" hidden><summary id="aviso-medir-t"></summary><ul id="aviso-medir-l"></ul></details>
     <div id="v-lista"></div>
     <div id="v-calendario" hidden></div>
+    <div id="v-resultados" class="res" hidden></div>
   </div>
 </div>
 
@@ -123,6 +144,16 @@
     <label>Copy (texto de la publicación) <textarea name="copy" placeholder="Texto, llamado a la acción y hashtags"></textarea></label>
     <label>Sábado de grabación en bloque <input type="date" name="bloque"></label>
     <label>Notas (datos pendientes: fotos, permisos) <textarea name="notas" style="min-height:60px"></textarea></label>
+    <section id="est" hidden>
+      <h3>Estadísticas de esta publicación</h3>
+      <div class="tabla-env" id="est-tabla"></div>
+      <div class="fila">
+        <label>Plataforma <select id="est-plat"></select></label>
+        <label>Fecha en que miraste los números <input type="date" id="est-fecha"></label>
+      </div>
+      <div class="numeros" id="est-numeros"></div>
+      <div class="acciones"><button type="button" class="prim" id="est-guardar">Guardar números</button></div>
+    </section>
     <p class="error" id="dlg-error" hidden></p>
     <div class="acciones">
       <button type="button" class="borrar" id="borrar" hidden>Borrar</button>
@@ -130,6 +161,28 @@
       <button type="submit" class="prim" id="guardar">Guardar</button>
     </div>
   </form>
+</dialog>
+
+<dialog id="dlg-arch">
+  <div class="dlg">
+    <h2>Subir estadísticas desde un archivo</h2>
+    <p style="font-size:13px;color:var(--suave)">Descarga el archivo de estadísticas de Instagram, Facebook, TikTok, Pinterest o YouTube (CSV o Excel) y súbelo aquí. Revisa las columnas y los números antes de guardar.</p>
+    <div class="fila">
+      <label>Plataforma <select id="arch-plat"></select></label>
+      <label>Marca <select id="arch-marca"></select></label>
+    </div>
+    <div class="fila">
+      <label>Fecha en que descargaste el archivo <input type="date" id="arch-fecha"></label>
+      <label>Archivo <input type="file" id="arch-file" accept=".csv,.txt,.xlsx,.xls"></label>
+    </div>
+    <div id="arch-mapa" class="numeros"></div>
+    <div id="arch-prev" class="tabla-env prev"></div>
+    <p class="error" id="arch-error" hidden></p>
+    <div class="acciones">
+      <button type="button" id="arch-cerrar">Cerrar</button>
+      <button type="button" class="prim" id="arch-guardar" disabled>Guardar estadísticas</button>
+    </div>
+  </div>
 </dialog>
 
 <script>
@@ -233,7 +286,9 @@
     var lista = filtradas();
     $('#v-lista').hidden = vista !== 'lista';
     $('#v-calendario').hidden = vista !== 'calendario';
-    if (vista === 'lista') pintarLista(lista); else pintarCalendario(lista);
+    $('#v-resultados').hidden = vista !== 'resultados';
+    if (vista === 'lista') pintarLista(lista); else if (vista === 'calendario') pintarCalendario(lista); else pintarResultados();
+    pintarAviso();
   }
 
   function abrir(x) {
@@ -250,6 +305,7 @@
     f.guion.value = x.guion || ''; f.copy.value = x.copy || ''; f.notas.value = x.notas || '';
     document.querySelectorAll('#plats input').forEach(function (c) { c.checked = (x.plataformas || []).indexOf(c.value) >= 0; });
     document.querySelectorAll('#objs input').forEach(function (c) { c.checked = (x.objetivos || []).indexOf(c.value) >= 0; });
+    prepararEst(editando);
     $('#dlg').showModal();
     crecer(f.guion); crecer(f.copy);
   }
@@ -291,7 +347,293 @@
     var r = await sb.from(TABLA).select('*').order('fecha', { ascending: true, nullsFirst: false }).order('creado_en');
     if (r.error) { bloquear('No se pudieron cargar las piezas: ' + esc(r.error.message)); return; }
     piezas = r.data || [];
+    await cargarMetricas();
     pintar();
+  }
+
+
+  // ===================== ESTADÍSTICAS (tablas mkt_metricas y mkt_frecuencia_metricas) =====================
+  var metricas = [], frec = {}, conMetricas = false, archFilas = [], archCab = [];
+  var CAMPOS = [['alcance', 'Alcance'], ['impresiones', 'Impresiones'], ['vistas', 'Vistas'], ['interacciones', 'Interacciones'],
+    ['me_gusta', 'Me gusta'], ['comentarios', 'Comentarios'], ['guardados', 'Guardados'], ['compartidos', 'Compartidos'],
+    ['clics', 'Clics'], ['visitas_perfil', 'Visitas al perfil'], ['respuestas', 'Respuestas (stories)'], ['seguidores_ganados', 'Seguidores ganados'], ['retencion_pct', 'Retención %'], ['tiempo_visto_seg', 'Tiempo visto (s)']];
+  var DECIMALES = { retencion_pct: 1, tiempo_visto_seg: 1 };
+  var PISTAS = {
+    fecha: ['fecha de publicacion', 'hora de publicacion', 'publish time', 'publication date', 'fecha', 'date', 'published'],
+    alcance: ['alcance', 'reach', 'cuentas alcanzadas'], impresiones: ['impresion', 'impression'],
+    vistas: ['visualizaciones', 'reproducciones', 'vistas', 'views', 'plays'], interacciones: ['interacciones', 'interactions', 'engagement'],
+    me_gusta: ['me gusta', 'likes', 'reacciones', 'reactions'], comentarios: ['comentarios', 'comments'],
+    guardados: ['guardados', 'guardado', 'saves', 'saved'], compartidos: ['compart', 'shares'], clics: ['clic', 'click'],
+    visitas_perfil: ['visitas al perfil', 'profile visits', 'profile views'], respuestas: ['respuestas', 'replies', 'votos'],
+    seguidores_ganados: ['seguidores', 'follows', 'followers', 'suscriptores', 'subscribers'],
+    retencion_pct: ['retencion', 'retention', 'porcentaje medio'], tiempo_visto_seg: ['duracion media', 'average view duration', 'tiempo medio', 'watch time']
+  };
+  function dias(tipo, plat) {
+    var d = frec[tipo + '|' + plat];
+    if (d && d.length) return d;
+    // Valores del chat 8 (marketing-estadisticas.md); los de la base mandan.
+    if (tipo === 'stories') return [1];
+    if (plat === 'pinterest') return [30];
+    if (plat === 'youtube') return [7, 28];
+    if (tipo === 'foto') return [1, 7];
+    if (tipo === 'carrusel' && (plat === 'instagram' || plat === 'facebook')) return [7];
+    return [2, 7];
+  }
+  function sumarDias(iso, n) { var d = aFecha(iso); d.setDate(d.getDate() + n); return claveDia(d); }
+  function sinTilde(t) { return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim(); }
+  function fmt(n, dec) { return n == null || isNaN(n) ? '—' : Number(n).toLocaleString('es-CO', { maximumFractionDigits: dec || 0 }); }
+  function tasa(m) {
+    var i = m.interacciones != null ? m.interacciones : (m.me_gusta || 0) + (m.comentarios || 0) + (m.guardados || 0) + (m.compartidos || 0);
+    return m.alcance > 0 ? 100 * i / m.alcance : null;
+  }
+
+  async function cargarMetricas() {
+    var a = await sb.from('mkt_metricas').select('*').order('fecha_medicion');
+    var b = await sb.from('mkt_frecuencia_metricas').select('*');
+    conMetricas = !a.error && !b.error;
+    metricas = conMetricas ? (a.data || []) : [];
+    frec = {};
+    if (conMetricas) (b.data || []).forEach(function (f) { frec[f.tipo_publicacion + '|' + f.plataforma] = f.dias_despues; });
+    document.querySelector('[data-vista=resultados]').hidden = !conMetricas;
+  }
+
+  // Lo que toca medir hoy: por pieza publicada y plataforma, el último día de medición ya cumplido sin números.
+  function pendientes() {
+    var hoy = claveDia(new Date()), out = [];
+    piezas.forEach(function (p) {
+      if (p.estado !== 'publicado' || !p.fecha) return;
+      (p.plataformas || []).forEach(function (pl) {
+        var hechas = metricas.filter(function (m) { return m.pieza_id === p.id && m.plataforma === pl; }).map(function (m) { return m.fecha_medicion; });
+        var debe = null;
+        dias(p.tipo_publicacion, pl).forEach(function (d) { var v = sumarDias(p.fecha, d); if (v <= hoy) debe = { d: d, v: v }; });
+        if (debe && !hechas.some(function (f) { return f >= debe.v; })) out.push({ p: p, pl: pl, d: debe.d });
+      });
+    });
+    return out;
+  }
+  function pintarAviso() {
+    var box = $('#aviso-medir');
+    if (!conMetricas) { box.hidden = true; return; }
+    var pend = pendientes();
+    box.hidden = !pend.length;
+    if (!pend.length) return;
+    var n = new Set(pend.map(function (x) { return x.p.id; })).size;
+    $('#aviso-medir-t').textContent = '📊 Toca subir estadísticas de ' + n + (n === 1 ? ' publicación' : ' publicaciones');
+    $('#aviso-medir-l').innerHTML = pend.map(function (x) {
+      return '<li><button type="button" data-pid="' + esc(x.p.id) + '">' + esc(x.p.angulo) + '</button> · ' + esc(PLATS[x.pl]) + ' · día ' + x.d + '</li>';
+    }).join('');
+  }
+
+  // Última medición de cada pieza y plataforma (para comparar sin contar dos veces).
+  function ultimas() {
+    var u = {};
+    metricas.forEach(function (m) { var k = m.pieza_id + '|' + m.plataforma; if (!u[k] || m.fecha_medicion > u[k].fecha_medicion) u[k] = m; });
+    return Object.keys(u).map(function (k) { return u[k]; });
+  }
+  function prom(arr, f) { var v = arr.map(f).filter(function (x) { return x != null && !isNaN(x); }); return v.length ? v.reduce(function (a, b) { return a + b; }, 0) / v.length : null; }
+
+  function pintarResultados() {
+    var fm = $('#f-marca').value, fp = $('#f-plat').value, ft = $('#f-tipo').value;
+    var porId = {}; piezas.forEach(function (p) { porId[p.id] = p; });
+    var filas = ultimas().filter(function (m) {
+      var p = porId[m.pieza_id]; return p && (!fm || p.marca === fm) && (!fp || m.plataforma === fp) && (!ft || p.tipo_publicacion === ft);
+    });
+    var html = '<div class="barra" style="margin-top:0"><span class="esp"></span><button type="button" class="prim" id="abrir-arch">Subir archivo de estadísticas</button></div>';
+    if (!filas.length) {
+      html += '<p class="aviso">Todavía no hay estadísticas con estos filtros. Ábre una pieza publicada y guarda sus números, o sube un archivo.</p>';
+    } else {
+      var grupos = {};
+      filas.forEach(function (m) { var p = porId[m.pieza_id]; var k = p.marca + '|' + m.plataforma + '|' + p.tipo_publicacion; (grupos[k] = grupos[k] || []).push(m); });
+      var g = Object.keys(grupos).map(function (k) {
+        var a = grupos[k], c = k.split('|');
+        return { marca: c[0], plat: c[1], tipo: c[2], n: a.length, alc: prom(a, function (m) { return m.alcance; }), vis: prom(a, function (m) { return m.vistas; }),
+          gua: prom(a, function (m) { return m.guardados; }), com: prom(a, function (m) { return m.compartidos; }), tasa: prom(a, tasa) };
+      }).sort(function (a, b) { return (b.tasa || -1) - (a.tasa || -1); });
+      html += '<h3>¿Qué rindió mejor?</h3><p class="ayuda">Promedio de la última medición de cada publicación. Interacción % = interacciones ÷ alcance. La fila verde es la que mejor rindió. Para decidir, miren primero guardados y compartidos (no los «me gusta» solos).</p>' +
+        '<div class="tabla-env"><table><thead><tr><th>Marca</th><th>Plataforma</th><th>Tipo</th><th class="num">Publicaciones</th><th class="num">Alcance</th><th class="num">Vistas</th><th class="num">Guardados</th><th class="num">Compartidos</th><th class="num">Interacción %</th></tr></thead><tbody>' +
+        g.map(function (x, i) {
+          return '<tr' + (i === 0 && x.tasa != null ? ' class="mejor"' : '') + '><td>' + esc(MARCAS[x.marca]) + '</td><td>' + esc(PLATS[x.plat]) + '</td><td>' + esc(TIPOS[x.tipo]) +
+            '</td><td class="num">' + x.n + '</td><td class="num">' + fmt(x.alc) + '</td><td class="num">' + fmt(x.vis) + '</td><td class="num">' + fmt(x.gua) + '</td><td class="num">' + fmt(x.com) + '</td><td class="num">' + fmt(x.tasa, 1) + '</td></tr>';
+        }).join('') + '</tbody></table></div>';
+      var top = filas.filter(function (m) { return tasa(m) != null; }).sort(function (a, b) { return tasa(b) - tasa(a); }).slice(0, 5);
+      if (top.length) html += '<h3>Las 5 publicaciones con más interacción</h3><div class="tabla-env"><table><thead><tr><th>Publicación</th><th>Plataforma</th><th class="num">Alcance</th><th class="num">Interacción %</th></tr></thead><tbody>' +
+        top.map(function (m) { var p = porId[m.pieza_id]; return '<tr><td><button type="button" class="mini-enlace" data-pid="' + esc(p.id) + '" style="background:none;padding:0;color:var(--rosa)">' + esc(p.angulo) + '</button></td><td>' + esc(PLATS[m.plataforma]) + '</td><td class="num">' + fmt(m.alcance) + '</td><td class="num">' + fmt(tasa(m), 1) + '</td></tr>'; }).join('') + '</tbody></table></div>';
+    }
+    html += '<h3>Cada cuántos días se miden</h3><p class="ayuda">Días después de publicar en que toca subir los números (separados por coma). Con esto sale el aviso «Toca subir estadísticas».</p>' +
+      '<div class="tabla-env"><table><thead><tr><th>Tipo</th>' + Object.keys(PLATS).map(function (p) { return '<th>' + esc(PLATS[p]) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      Object.keys(TIPOS).map(function (t) {
+        return '<tr><td>' + esc(TIPOS[t]) + '</td>' + Object.keys(PLATS).map(function (p) {
+          return '<td><input class="frec" data-t="' + t + '" data-p="' + p + '" value="' + dias(t, p).join(', ') + '" style="width:90px;padding:5px 6px" aria-label="' + esc(TIPOS[t] + ' en ' + PLATS[p]) + '"></td>';
+        }).join('') + '</tr>';
+      }).join('') + '</tbody></table></div><div class="acciones"><span class="error" id="frec-error" hidden></span><button type="button" id="frec-guardar">Guardar días</button></div>';
+    $('#v-resultados').innerHTML = html;
+    $('#abrir-arch').onclick = abrirArchivo;
+    $('#frec-guardar').onclick = guardarFrecuencia;
+  }
+
+  async function guardarFrecuencia() {
+    var filas = [], malo = false;
+    document.querySelectorAll('input.frec').forEach(function (i) {
+      var d = i.value.split(/[ ,;]+/).filter(Boolean).map(Number);
+      if (!d.length || d.length > 6 || d.some(function (n) { return !Number.isInteger(n) || n < 0 || n > 365; })) { malo = true; i.style.borderColor = '#a32020'; return; }
+      i.style.borderColor = '';
+      filas.push({ tipo_publicacion: i.dataset.t, plataforma: i.dataset.p, dias_despues: d.sort(function (a, b) { return a - b; }), actualizado_en: new Date().toISOString() });
+    });
+    var e = $('#frec-error');
+    if (malo) { e.textContent = 'Revisa los recuadros en rojo: números enteros de 0 a 365, máximo 6.'; e.hidden = false; return; }
+    var r = await sb.from('mkt_frecuencia_metricas').upsert(filas, { onConflict: 'tipo_publicacion,plataforma' });
+    if (r.error) { e.textContent = 'No se pudo guardar: ' + r.error.message; e.hidden = false; return; }
+    await cargarMetricas(); pintar();
+  }
+
+  // ---- Números de una pieza (dentro de su ficha) ----
+  function inputsNumeros(cont, prefijo) {
+    cont.innerHTML = CAMPOS.map(function (c) {
+      return '<label>' + esc(c[1]) + ' <input type="number" min="0" step="' + (DECIMALES[c[0]] ? '0.1' : '1') + '" inputmode="decimal" id="' + prefijo + c[0] + '"></label>';
+    }).join('');
+  }
+  function prepararEst(p) {
+    var sec = $('#est');
+    sec.hidden = !(conMetricas && p && p.estado === 'publicado');
+    if (sec.hidden) return;
+    var sel = $('#est-plat'); sel.innerHTML = '';
+    (p.plataformas || []).forEach(function (k) { var o = document.createElement('option'); o.value = k; o.textContent = PLATS[k]; sel.appendChild(o); });
+    $('#est-fecha').value = claveDia(new Date());
+    CAMPOS.forEach(function (c) { $('#est-' + c[0]).value = ''; });
+    var mias = metricas.filter(function (m) { return m.pieza_id === p.id; });
+    $('#est-tabla').innerHTML = mias.length ? '<table><thead><tr><th>Medido</th><th>Plataforma</th><th class="num">Día</th><th class="num">Alcance</th><th class="num">Vistas</th><th class="num">Guardados</th><th class="num">Interacción %</th></tr></thead><tbody>' +
+      mias.map(function (m) {
+        return '<tr><td>' + esc(fechaLarga(m.fecha_medicion)) + '</td><td>' + esc(PLATS[m.plataforma]) + '</td><td class="num">' + Math.round((aFecha(m.fecha_medicion) - aFecha(p.fecha)) / 864e5) +
+          '</td><td class="num">' + fmt(m.alcance) + '</td><td class="num">' + fmt(m.vistas) + '</td><td class="num">' + fmt(m.guardados) + '</td><td class="num">' + fmt(tasa(m), 1) + '</td></tr>';
+      }).join('') + '</tbody></table>' : '<p style="padding:10px;font-size:13px;color:var(--suave)">Todavía no hay números. Toca medir los días ' + (p.plataformas || []).map(function (pl) { return PLATS[pl] + ': ' + dias(p.tipo_publicacion, pl).join(', '); }).join(' · ') + '.</p>';
+  }
+  function numero(v, dec) {
+    var t = String(v == null ? '' : v).trim(); if (!t || t === '-' || t === '—') return null;
+    if (dec) { t = t.replace('%', '').replace(',', '.'); var f = parseFloat(t); return isNaN(f) ? null : f; }
+    var n = parseInt(t.replace(/[^\d-]/g, ''), 10); return isNaN(n) ? null : n;
+  }
+  async function guardarEst() {
+    var fila = { pieza_id: editando.id, plataforma: $('#est-plat').value, fecha_medicion: $('#est-fecha').value || claveDia(new Date()), fuente: 'manual' }, alguno = false;
+    CAMPOS.forEach(function (c) { var v = numero($('#est-' + c[0]).value, DECIMALES[c[0]]); fila[c[0]] = v; if (v != null) alguno = true; });
+    if (!alguno) { mostrarError('Escribe al menos un número.'); return; }
+    var r = await sb.from('mkt_metricas').upsert(fila, { onConflict: 'pieza_id,plataforma,fecha_medicion' });
+    if (r.error) { mostrarError('No se pudieron guardar los números: ' + r.error.message); return; }
+    $('#dlg-error').hidden = true;
+    await cargarMetricas(); prepararEst(editando); pintar();
+  }
+
+  // ---- Subir archivo (CSV o Excel) ----
+  function abrirArchivo() {
+    $('#arch-plat').value = $('#f-plat').value || 'instagram';
+    $('#arch-marca').value = $('#f-marca').value || 'crochet';
+    $('#arch-fecha').value = claveDia(new Date());
+    $('#arch-file').value = ''; $('#arch-mapa').innerHTML = ''; $('#arch-prev').innerHTML = ''; $('#arch-error').hidden = true;
+    $('#arch-guardar').disabled = true; archFilas = []; archCab = [];
+    $('#dlg-arch').showModal();
+  }
+  function leerCSV(texto) {
+    texto = texto.replace(/^﻿/, '');
+    var primera = texto.split(/\r?\n/)[0] || '';
+    var sep = (primera.match(/;/g) || []).length > (primera.match(/,/g) || []).length ? ';' : (primera.indexOf('\t') >= 0 ? '\t' : ',');
+    var filas = [], fila = [], campo = '', comillas = false;
+    for (var i = 0; i < texto.length; i++) {
+      var c = texto[i];
+      if (comillas) { if (c === '"' && texto[i + 1] === '"') { campo += '"'; i++; } else if (c === '"') comillas = false; else campo += c; }
+      else if (c === '"') comillas = true;
+      else if (c === sep) { fila.push(campo); campo = ''; }
+      else if (c === '\n' || c === '\r') { if (c === '\r' && texto[i + 1] === '\n') i++; fila.push(campo); filas.push(fila); fila = []; campo = ''; }
+      else campo += c;
+    }
+    if (campo || fila.length) { fila.push(campo); filas.push(fila); }
+    return filas.filter(function (f) { return f.some(function (x) { return String(x).trim(); }); });
+  }
+  function cargarScript(src) {
+    return new Promise(function (ok, mal) { var s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = mal; document.head.appendChild(s); });
+  }
+  async function leerArchivo(file) {
+    if (/\.xlsx?$/i.test(file.name)) {
+      if (!window.XLSX) await cargarScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+      var wb = window.XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: true });
+      return window.XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: false, dateNF: 'yyyy-mm-dd' });
+    }
+    return leerCSV(await file.text());
+  }
+  function adivinar(campo) {
+    var pistas = PISTAS[campo], cab = archCab.map(sinTilde);
+    for (var i = 0; i < pistas.length; i++) for (var j = 0; j < cab.length; j++) if (cab[j].indexOf(pistas[i]) >= 0) return String(j);
+    return '';
+  }
+  function fechaDe(v) {
+    var t = String(v || '').trim(), m;
+    if ((m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return m[1] + '-' + m[2].padStart(2, '0') + '-' + m[3].padStart(2, '0');
+    if ((m = t.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/))) {
+      var a = +m[1], b = +m[2], mes = a > 12 ? b : a, dia = a > 12 ? a : b;   // Meta exporta mes/día/año
+      return m[3] + '-' + String(mes).padStart(2, '0') + '-' + String(dia).padStart(2, '0');
+    }
+    return '';
+  }
+  function pintarMapa() {
+    var ops = '<option value="">— no usar —</option>' + archCab.map(function (h, i) { return '<option value="' + i + '">' + esc(h) + '</option>'; }).join('');
+    $('#arch-mapa').innerHTML = [['fecha', 'Fecha de publicación (para encontrar la pieza)']].concat(CAMPOS).map(function (c) {
+      return '<label>' + esc(c[1]) + ' <select class="mapa" data-c="' + c[0] + '">' + ops + '</select></label>';
+    }).join('');
+    document.querySelectorAll('select.mapa').forEach(function (s) { s.value = adivinar(s.dataset.c); s.onchange = pintarPrev; });
+  }
+  function mapa() { var m = {}; document.querySelectorAll('select.mapa').forEach(function (s) { if (s.value !== '') m[s.dataset.c] = +s.value; }); return m; }
+  function pintarPrev() {
+    var m = mapa(), plat = $('#arch-plat').value, marca = $('#arch-marca').value;
+    var candidatas = piezas.filter(function (p) { return p.marca === marca && (p.plataformas || []).indexOf(plat) >= 0 && p.fecha; });
+    var opsP = '<option value="">— sin pieza (no se guarda) —</option>' + candidatas.map(function (p) { return '<option value="' + esc(p.id) + '">' + esc(fechaLarga(p.fecha) + ' · ' + p.angulo) + '</option>'; }).join('');
+    var usados = CAMPOS.filter(function (c) { return m[c[0]] != null; });
+    var filas = archFilas.slice(0, 150);
+    $('#arch-prev').innerHTML = '<table><thead><tr><th>Pieza de LAROVA</th><th>Fecha en el archivo</th>' + usados.map(function (c) { return '<th>' + esc(c[1]) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      filas.map(function (f, i) {
+        var fecha = m.fecha != null ? fechaDe(f[m.fecha]) : '';
+        var auto = candidatas.filter(function (p) { return p.fecha === fecha; });
+        return '<tr data-i="' + i + '"><td><select class="arch-pieza" data-auto="' + (auto.length === 1 ? esc(auto[0].id) : '') + '">' + opsP + '</select></td><td>' + esc(fecha || (m.fecha != null ? f[m.fecha] : '')) + '</td>' +
+          usados.map(function (c) { var v = numero(f[m[c[0]]], DECIMALES[c[0]]); return '<td><input type="number" step="any" data-c="' + c[0] + '" value="' + (v == null ? '' : v) + '"></td>'; }).join('') + '</tr>';
+      }).join('') + '</tbody></table>';
+    document.querySelectorAll('select.arch-pieza').forEach(function (s) { s.value = s.dataset.auto; });
+    $('#arch-guardar').disabled = !filas.length;
+  }
+  async function guardarArchivo() {
+    var plat = $('#arch-plat').value, fecha = $('#arch-fecha').value || claveDia(new Date()), filas = [], vistos = {};
+    document.querySelectorAll('#arch-prev tbody tr').forEach(function (tr) {
+      var pid = tr.querySelector('select.arch-pieza').value; if (!pid || vistos[pid]) return; vistos[pid] = 1;
+      var fila = { pieza_id: pid, plataforma: plat, fecha_medicion: fecha, fuente: 'archivo' };
+      CAMPOS.forEach(function (c) { fila[c[0]] = null; });
+      tr.querySelectorAll('input[data-c]').forEach(function (i) { fila[i.dataset.c] = numero(i.value, DECIMALES[i.dataset.c]); });
+      filas.push(fila);
+    });
+    var e = $('#arch-error');
+    if (!filas.length) { e.textContent = 'Elige la pieza de LAROVA en al menos una fila.'; e.hidden = false; return; }
+    var r = await sb.from('mkt_metricas').upsert(filas, { onConflict: 'pieza_id,plataforma,fecha_medicion' });
+    if (r.error) { e.textContent = 'No se pudo guardar: ' + r.error.message; e.hidden = false; return; }
+    $('#dlg-arch').close();
+    await cargarMetricas(); pintar();
+  }
+
+  function iniciarEstadisticas() {
+    inputsNumeros($('#est-numeros'), 'est-');
+    opciones($('#arch-plat'), PLATS); opciones($('#arch-marca'), MARCAS);
+    $('#est-guardar').onclick = guardarEst;
+    $('#arch-cerrar').onclick = function () { $('#dlg-arch').close(); };
+    $('#arch-guardar').onclick = guardarArchivo;
+    $('#arch-plat').onchange = pintarPrev; $('#arch-marca').onchange = pintarPrev;
+    $('#arch-file').onchange = async function () {
+      var file = this.files[0]; if (!file) return;
+      $('#arch-error').hidden = true;
+      try {
+        var t = await leerArchivo(file);
+        archCab = (t[0] || []).map(String); archFilas = t.slice(1);
+        if (!archCab.length || !archFilas.length) throw new Error('el archivo está vacío');
+        pintarMapa(); pintarPrev();
+      } catch (err) { $('#arch-error').textContent = 'No pude leer el archivo: ' + err.message; $('#arch-error').hidden = false; }
+    };
+    document.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-pid]');
+      if (b && !$('#dlg').open) abrir(piezas.find(function (x) { return x.id === b.dataset.pid; }));
+    });
   }
 
   async function iniciar() {
@@ -324,6 +666,7 @@
     $('#nueva').onclick = function () { abrir(null); };
     $('#cancelar').onclick = function () { $('#dlg').close(); };
     $('#borrar').onclick = borrar;
+    iniciarEstadisticas();
     f.addEventListener('submit', guardar);
     [f.guion, f.copy].forEach(function (t) { t.addEventListener('input', function () { crecer(t); }); });
     document.addEventListener('click', function (e) {
