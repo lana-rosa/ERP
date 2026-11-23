@@ -1,6 +1,6 @@
-# Preguntas laborales para Hernando — apertura del 13-dic-2026
+# Preguntas laborales para Oscar — apertura del 13-dic-2026
 
-> Para: Hernando (contador). De: Lana Rosa Crochet. Fecha: 23-nov-2026. Son preguntas de **nómina y contratación** del equipo de la apertura. Cada una trae **lo que hoy hace el sistema** y **nuestra propuesta**: basta con confirmar o corregir. Las marcadas 🔴 las necesitamos **antes de firmar contratos**.
+> Para: Oscar (contador). De: Lana Rosa Crochet. Fecha: 23-nov-2026. Son preguntas de **nómina y contratación** del equipo de la apertura. Cada una trae **lo que hoy hace el sistema** y **nuestra propuesta**: basta con confirmar o corregir. Las marcadas 🔴 las necesitamos **antes de firmar contratos**.
 
 **Equipo:** Sara Loaiza Muñoz (propietaria), Jennifer Muñoz Bedoya y Laura Manuela Hoyos Correa. Contador por prestación de servicios aparte. **Horario:** lunes a viernes 8:30–12:30 y 2:30–6:00 p. m., sábado 8:30–1:00 p. m. = **42,0 horas por semana**; domingos y festivos cerrado.
 
@@ -29,4 +29,4 @@
 16. **Pago y planilla.** ¿Pago mensual o quincenal? ¿Quién opera la planilla de seguridad social (PILA)? ¿Dotación: cuántas veces al año y a quiénes?
 
 ## Cómo usaremos tus respuestas
-Se registran en el sistema (parámetros de nómina, fichas, cálculo de extras y de vacaciones) y quedan escritas en `docs/temas/personal.md`. **No se paga ni se liquida nada** con estas reglas hasta que las confirmes.
+Tus respuestas se registran en nuestro sistema (parámetros de nómina, fichas, cálculo de horas extra y de vacaciones) y quedan por escrito. **No se paga ni se liquida nada** con estas reglas hasta que las confirmes. ¡Gracias, Oscar!
