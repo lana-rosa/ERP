@@ -37,3 +37,16 @@ Tejedoras: ven Mi espacio reducido (sus horas y honorarios ya salen en «Mi prod
 
 ## 6. Para la abogada (Ley 1581 de 2012)
 Firma electrónica (Ley 527 de 1999) y qué prueba se guarda · fotos y datos en el muro · encuestas realmente anónimas · tiempo de conservación · aviso de privacidad a colaboradores y a tejedoras. Salud, denuncias y acoso laboral (Ley 1010 de 2006) **se quedan en el SO**, con acceso mínimo.
+
+## 7. Cómo encaja con LAROVA (revisado el 23-nov-2026, solo lectura del código)
+- **LAROVA hoy es solo una portada** (`larova.html`, sin ingreso propio): tarjetas hacia el ERP, el CRM, Gestión (SO) y Marketing, en dos vistas (**Acceso Administración** y **Acceso Equipo**). «Cada plataforma te pide tu cuenta y revisa tu rol».
+- **Marketing ya es el modelo a seguir:** una página aparte del mismo repositorio (`marketing.html`) que usa **el mismo Supabase y el mismo ingreso que el ERP** (misma sesión, porque están en la misma dirección web) y revisa el rol con `fn_rol_actual`.
+- **Propuesta:** crear `colaboradores.html` igual que Marketing (ligera, pensada para el celular), agregar la tarjeta **«Gestión Colaboradores»** en las dos vistas de LAROVA (en Acceso Equipo es lo principal para tejedoras, Tienda y contador) y un enlace «Mi espacio» dentro del menú del ERP. **Así el ingreso es uno solo** entre ERP, Marketing y Gestión Colaboradores. **Límite:** el CRM y el SO están en otras direcciones web y seguirán pidiendo su propia sesión; no se promete ingreso único con ellos.
+- **No se agranda `index.html`** (ya tiene más de 34.000 líneas). Cada cambio en el ERP sube `CACHE_NAME`; la página nueva se agrega a la lista de archivos que guarda el `sw.js` o se deja fuera del modo sin conexión.
+- **Para saber si alguien es colaborador** (tejedoras no tienen rol en `usuarios_roles`): una función `gestion_colab_es_colaborador()` = fila activa en `usuarios_roles` **o** cuenta en `tejedoras_usuarios`. El rol «líder» sale de `es_jefe_departamento`.
+
+## 8. Qué falta para empezar a construir (todo de Jennifer)
+1. **La fecha de construcción** (sin ella no se toca código ni base).
+2. **El texto de su especificación** (para ajustar los dominios; mientras tanto se usaron los típicos).
+3. **Su sí al diseño** (una pregunta de sí o no: «¿este diseño es el final?»).
+Mientras tanto no se crea ninguna tabla ni pantalla.
