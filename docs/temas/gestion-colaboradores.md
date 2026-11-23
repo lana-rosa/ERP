@@ -1,4 +1,6 @@
-# «Gestión Colaboradores» — diseño (listo 23-nov-2026)
+# «Gestión Colaboradores» — diseño FINAL (aprobado por Jennifer el 23-nov-2026)
+
+> **Estado:** Jennifer dijo «sí, apruebo el diseño» (23-nov-2026, por el orquestador general): este diseño queda como **final**. **No se construye ni se toca la base hasta que ella fije la fecha de construcción.** Pendiente de ella: la fecha y, si quiere cruzarlo, el texto de su especificación original.
 
 > Decisiones de Jennifer (21-nov): nombre **Gestión Colaboradores** (antes «Talento»/«Lana Rosa Talent»); **solo diseño: no se construye ni se toca la base hasta que ella fije la fecha**; entran **todos los colaboradores** (administradoras, Tienda, Taller, tejedoras, contador) con **un solo ingreso** y cada uno con sus permisos. Es un módulo **dentro de LAROVA**, misma base de Supabase, mismas cuentas y ficha. Falta el texto de su especificación (se usaron los dominios típicos tipo Buk; si difieren, se ajusta).
 
@@ -48,5 +50,5 @@ Firma electrónica (Ley 527 de 1999) y qué prueba se guarda · fotos y datos en
 ## 8. Qué falta para empezar a construir (todo de Jennifer)
 1. **La fecha de construcción** (sin ella no se toca código ni base).
 2. **El texto de su especificación** (para ajustar los dominios; mientras tanto se usaron los típicos).
-3. **Su sí al diseño** (una pregunta de sí o no: «¿este diseño es el final?»).
+3. ~~Su sí al diseño~~ **Hecho: aprobado el 23-nov-2026.**
 Mientras tanto no se crea ninguna tabla ni pantalla.
