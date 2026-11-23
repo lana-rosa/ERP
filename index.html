@@ -4831,7 +4831,7 @@
 <div id="pantallaAutorizacionesCompra" class="oculto contenido">
   <div class="page-header">
     <h1>✅ Autorizar compras</h1>
-    <div class="subtitulo">Antes de comprar o pagar algo de la Tienda, se pide permiso aquí y una administradora lo aprueba. Con la autorización aprobada ya se puede registrar la compra o el gasto con su factura.</div>
+    <div class="subtitulo">Las compras o gastos de la Tienda de <strong>$1.000.000 o más</strong> necesitan permiso antes de hacerse: se pide aquí y una administradora lo aprueba. Con la autorización aprobada ya se puede registrar la compra o el gasto con su factura. Lo que cueste menos se registra como siempre.</div>
   </div>
   <div class="mensaje" id="mensajeAutCompra"></div>
 
@@ -14823,10 +14823,7 @@
       : '<option value="">No hay líderes configurados</option>';
     document.getElementById('gastoAprobadoPor').innerHTML = html;
     document.getElementById('pagoAdminAprobadoPor').innerHTML = html;
-    if (usaAutorizacionDeCompra()) {
-      // La cajera no escoge quién aprobó: el sistema pone a la administradora que dio la autorización.
-      ['gastoAprobadoPor', 'pagoAdminAprobadoPor'].forEach(id => { const sel = document.getElementById(id); sel.innerHTML = '<option value="autorizacion">La administradora que autorizó (se pone sola)</option>'; sel.disabled = true; });
-    }
+    cargarUmbralAutorizacionCompra();
   }
 
   function renderizarCategoriasPresupuesto(categorias) {
@@ -14923,14 +14920,15 @@
 
     if (!detalle) { mostrarMensaje('mensajePagoAdmin', 'Escribe el detalle del pago (por ejemplo, el mes de la factura).', 'error'); return; }
     if (!monto || monto <= 0) { mostrarMensaje('mensajePagoAdmin', 'Escribe un monto válido.', 'error'); return; }
-    if (!aprobadoPor) { mostrarMensaje('mensajePagoAdmin', 'Selecciona quién aprobó este pago.', 'error'); return; }
+    const necesitaAut = necesitaAutorizacionDeCompra(monto);
+    if (!aprobadoPor && !necesitaAut) { mostrarMensaje('mensajePagoAdmin', 'Selecciona quién aprobó este pago.', 'error'); return; }
     { const sinAut = await falloDeAutorizacionDeCompra(monto); if (sinAut) { mostrarMensaje('mensajePagoAdmin', sinAut, 'error'); return; } }
 
     const btn = document.getElementById('btnRegistrarPagoAdmin');
     btn.disabled = true;
     btn.textContent = 'Registrando...';
     const { error } = await supabaseClient.rpc('fn_registrar_gasto_local', {
-      p_concepto: concepto, p_detalle: detalle, p_monto: monto, p_metodo_pago: metodoPago, p_aprobado_por: aprobadoPor,
+      p_concepto: concepto, p_detalle: detalle, p_monto: monto, p_metodo_pago: metodoPago, p_aprobado_por: necesitaAut ? 'autorización de una administradora' : aprobadoPor,
       p_turno_id: turnoActivoActual ? turnoActivoActual.id : null, p_reparto: document.getElementById('pagoAdminReparto').value,
       p_caja: document.getElementById('pagoAdminCaja').value, p_fecha: fecha,
     });
@@ -15233,7 +15231,8 @@
     if (!fechaFactura) { mostrarMensaje('mensajeGasto', 'Escribe la fecha de la factura.', 'error'); return; }
     const archivoSoporte = document.getElementById('gastoArchivoSoporte').files[0] || null;
     if (!archivoSoporte && !document.getElementById('gastoEsDocumentoSoporte').checked) { mostrarMensaje('mensajeGasto', 'Adjunta la foto o el PDF de la factura. Si el proveedor no está obligado a facturar, marca "Este proveedor no está obligado a facturar" (documento soporte).', 'error'); return; }
-    if (modoPagoCompraActual === 'completo' && !aprobadoPor) { mostrarMensaje('mensajeGasto', 'Selecciona quién aprobó esta compra.', 'error'); return; }
+    const necesitaAut = necesitaAutorizacionDeCompra(monto);
+    if (modoPagoCompraActual === 'completo' && !aprobadoPor && !necesitaAut) { mostrarMensaje('mensajeGasto', 'Selecciona quién aprobó esta compra.', 'error'); return; }
     { const sinAut = await falloDeAutorizacionDeCompra(monto); if (sinAut) { mostrarMensaje('mensajeGasto', sinAut, 'error'); return; } }
     await actualizarRequisitosCompra(true);
     const reqSena = validarRequisitosCompra();
@@ -15283,7 +15282,7 @@
       const cuerpo = {
         centro_costo_id: centroCostoId, categoria, descripcion, monto, metodo_pago: metodoPago,
         turno_id: turnoActivoActual ? turnoActivoActual.id : null,
-        numero_factura: numeroFactura, fecha_factura: fechaFactura, aprobado_por_nombre: aprobadoPor,
+        numero_factura: numeroFactura, fecha_factura: fechaFactura, aprobado_por_nombre: necesitaAut ? 'autorización de una administradora' : aprobadoPor,
         es_documento_soporte: document.getElementById('gastoEsDocumentoSoporte').checked,
       };
       if (proveedorId) {
@@ -24314,16 +24313,20 @@
   // ============================================================
   const ESTADOS_AUT_COMPRA = { pendiente: ['⏳ Por aprobar', '#fff3d6', '#8a5a00'], aprobada: ['✅ Aprobada', '#e3f1e6', '#2e6b3a'], rechazada: ['❌ Rechazada', '#fde2e2', '#a12d2d'], cancelada: ['Cancelada', '#f4eef2', '#7a5a6b'], usada: ['🧾 Usada', '#dce8f5', '#2d5a8c'] };
   function chipAutCompra(estado) { const [t, f, c] = ESTADOS_AUT_COMPRA[estado] || [estado, '#f4eef2', 'inherit']; return `<span style="display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600;background:${f};color:${c};">${t}</span>`; }
+  let umbralAutorizacionCompra = 1000000; // se confirma con la base (fn_umbral_autorizacion_compra)
+  async function cargarUmbralAutorizacionCompra() { try { const { data } = await supabaseClient.rpc('fn_umbral_autorizacion_compra'); if (Number(data) > 0) umbralAutorizacionCompra = Number(data); } catch (e) { /* se usa el valor por defecto */ } }
   function usaAutorizacionDeCompra() { return rolActual === 'cajero' && !esAdministradoraActual(); }
+  // ¿Esta compra o gasto necesita autorización previa? (cajera y desde el umbral)
+  function necesitaAutorizacionDeCompra(monto) { return usaAutorizacionDeCompra() && Number(monto) >= umbralAutorizacionCompra; }
   function fechaAutCompra(iso) { return iso ? new Date(String(iso).slice(0, 10) + 'T00:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }) : ''; }
 
   // Devuelve un mensaje si la persona necesita una autorización y no tiene una que cubra el valor; si no, null.
   async function falloDeAutorizacionDeCompra(monto) {
-    if (!usaAutorizacionDeCompra()) return null;
+    if (!necesitaAutorizacionDeCompra(monto)) return null;
     const hoy = hoyBogotaISO();
     const { data } = await supabaseClient.from('autorizaciones_compra').select('id').eq('solicitante', sesionActual.userId).eq('estado', 'aprobada').gte('vence_en', hoy).gte('monto_aprobado', monto).limit(1);
     if (data && data.length) return null;
-    return 'Primero necesitas la autorización de una administradora para este valor. Pídela en Compras → Autorizar compras (debe cubrir ' + formatearMoneda(monto) + ' y no estar vencida).';
+    return 'Las compras o gastos de ' + formatearMoneda(umbralAutorizacionCompra) + ' o más necesitan la autorización previa de una administradora. Pídela en Compras → Autorizar compras (debe cubrir ' + formatearMoneda(monto) + ' y no estar vencida).';
   }
 
   async function mostrarPantallaAutorizacionesCompra() {
