@@ -1230,6 +1230,7 @@
       <button class="sidebar-depto-header" id="headerDeptoCompras" onclick="toggleSidebarDepto('deptoComprasSubmenu', 'headerDeptoCompras')"><span class="depto-ico" style="--c:#e0a032"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l1 12H5L6 8Z"/><path d="M9 8V7a3 3 0 0 1 6 0v1"/></svg></span><span class="depto-nombre">Compras y Gastos</span> <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoComprasSubmenu">
         <button class="nav-btn" id="nav-compras-gastos" onclick="mostrarPantallaPagosPendientes('01')"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span> Registro de compras y gastos</button>
+        <button class="nav-btn" id="nav-autorizaciones-compra" onclick="mostrarPantallaAutorizacionesCompra()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l4 4 10-10"/><path d="M4 20h16"/></svg></span> Autorizar compras</button>
         <button class="nav-btn" id="nav-proveedores-dir" onclick="mostrarPantallaProveedores()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21V10l6 4v-4l6 4V6h3v15H3Z"/></svg></span> Proveedores</button>
         <button class="nav-btn" id="nav-cotizaciones" onclick="mostrarPantallaCotizaciones()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h10l4 4v14H5V3Z"/><path d="M9 15l4-4 2 2-4 4H9v-2Z"/></svg></span> Cotizaciones</button>
         <button class="nav-btn" id="nav-ordenes-compra" onclick="mostrarPantallaOrdenesCompra()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8l9-5 9 5v8l-9 5-9-5V8Z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></span> Órdenes de compra</button>
@@ -4826,6 +4827,48 @@
   </div>
 </div>
 
+<!-- ===== PANTALLA: AUTORIZAR COMPRAS ===== -->
+<div id="pantallaAutorizacionesCompra" class="oculto contenido">
+  <div class="page-header">
+    <h1>✅ Autorizar compras</h1>
+    <div class="subtitulo">Las compras o gastos de la Tienda de <strong>$1.000.000 o más</strong> necesitan permiso antes de hacerse: se pide aquí y una administradora lo aprueba. Con la autorización aprobada ya se puede registrar la compra o el gasto con su factura. Lo que cueste menos se registra como siempre.</div>
+  </div>
+  <div class="mensaje" id="mensajeAutCompra"></div>
+
+  <div id="bloqueAutCompraSolicitar" class="grilla-2">
+    <div class="panel">
+      <h2>Pedir autorización</h2>
+      <label for="autCompraDesc">¿Qué vas a comprar o pagar?</label>
+      <input type="text" id="autCompraDesc" placeholder="Ej. Hilo rosa y ojos de seguridad">
+      <label for="autCompraProveedor">¿Dónde? <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+      <input type="text" id="autCompraProveedor" placeholder="Ej. Mega Import">
+      <label for="autCompraMonto">¿Cuánto crees que va a costar? (COP)</label>
+      <input type="number" id="autCompraMonto" min="1" step="1" placeholder="50000">
+      <button class="btn-principal" onclick="solicitarAutorizacionCompra()">Pedir autorización</button>
+    </div>
+    <div class="panel">
+      <h2>Mis autorizaciones</h2>
+      <div id="listaMisAutorizacionesCompra"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+
+  <div id="bloqueAutCompraAdmin" class="oculto">
+    <div class="panel" style="max-width:none;max-height:none;">
+      <h2>⏳ Por responder</h2>
+      <div class="subtitulo">Puedes cambiar el valor y los días que dura la autorización. No puedes responder las tuyas.</div>
+      <div id="listaAutorizacionesPendientes"><div class="cargando">Cargando...</div></div>
+    </div>
+    <div class="panel" style="max-width:none;max-height:none;margin-top:16px;">
+      <h2>Aprobadas y sin usar</h2>
+      <div id="listaAutorizacionesVigentes"><div class="cargando">Cargando...</div></div>
+    </div>
+    <div class="panel" style="max-width:none;max-height:none;margin-top:16px;">
+      <h2>Historial</h2>
+      <div id="listaAutorizacionesHistorial"><div class="cargando">Cargando...</div></div>
+    </div>
+  </div>
+</div>
+
 <!-- ===== PANTALLA: LISTAS DE PRECIOS ===== -->
 <div id="pantallaListasPrecios" class="oculto contenido">
   <div class="page-header">
@@ -6432,7 +6475,7 @@
     // SEGURIDAD: sin sesión solo se puede ver el inicio de sesión (o la pantalla de "cargando").
     if (!sesionActual && idPantalla !== 'pantallaCargando') idPantalla = 'pantallaLogin';
     document.body.classList.toggle('sin-sesion', !sesionActual);
-    const pantallas = ['pantallaLogin', 'pantallaInicio', 'pantallaModulo', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaInventarioGlobal', 'pantallaGuiasUsuario', 'pantallaFacturacionElectronica', 'pantallaServiciosDian', 'pantallaCorreoEmpresa', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaIndicadores', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeEstado', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaPanelContador', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb', 'pantallaTextosWeb', 'pantallaPaypalConfig', 'pantallaMiProduccion', 'pantallaInformeCostos', 'pantallaReglasPrecios'];
+    const pantallas = ['pantallaLogin', 'pantallaInicio', 'pantallaModulo', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaInventarioGlobal', 'pantallaGuiasUsuario', 'pantallaFacturacionElectronica', 'pantallaServiciosDian', 'pantallaCorreoEmpresa', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaIndicadores', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeEstado', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaPanelContador', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaAutorizacionesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb', 'pantallaTextosWeb', 'pantallaPaypalConfig', 'pantallaMiProduccion', 'pantallaInformeCostos', 'pantallaReglasPrecios'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -6469,6 +6512,7 @@
       pantallaServiciosDian: 'nav-servicios-dian',
       pantallaCorreoEmpresa: 'nav-correo-empresa',
       pantallaTurnoActivo: 'nav-turno',
+      pantallaAutorizacionesCompra: 'nav-autorizaciones-compra',
       pantallaReportes: 'nav-reportes',
       pantallaReportesFinancieros: 'nav-reportes-financieros',
       pantallaCosteoReal: 'nav-costeo-real',
@@ -6925,6 +6969,7 @@
     if (esAdmin) actualizarBadgeResenasWeb();
     mostrar('nav-proveedores-dir', esAdmin);
     mostrar('nav-ordenes-compra', esAdmin);
+    mostrar('nav-autorizaciones-compra', esAdmin || esCajero);
     mostrar('nav-compras-gastos', esAdmin || esCajero);
     mostrar('nav-listas-precios', esAdmin);
     mostrar('nav-ajustestock', esAdmin || esCajero);
@@ -14778,6 +14823,7 @@
       : '<option value="">No hay líderes configurados</option>';
     document.getElementById('gastoAprobadoPor').innerHTML = html;
     document.getElementById('pagoAdminAprobadoPor').innerHTML = html;
+    cargarUmbralAutorizacionCompra();
   }
 
   function renderizarCategoriasPresupuesto(categorias) {
@@ -14874,13 +14920,15 @@
 
     if (!detalle) { mostrarMensaje('mensajePagoAdmin', 'Escribe el detalle del pago (por ejemplo, el mes de la factura).', 'error'); return; }
     if (!monto || monto <= 0) { mostrarMensaje('mensajePagoAdmin', 'Escribe un monto válido.', 'error'); return; }
-    if (!aprobadoPor) { mostrarMensaje('mensajePagoAdmin', 'Selecciona quién aprobó este pago.', 'error'); return; }
+    const necesitaAut = necesitaAutorizacionDeCompra(monto);
+    if (!aprobadoPor && !necesitaAut) { mostrarMensaje('mensajePagoAdmin', 'Selecciona quién aprobó este pago.', 'error'); return; }
+    { const sinAut = await falloDeAutorizacionDeCompra(monto); if (sinAut) { mostrarMensaje('mensajePagoAdmin', sinAut, 'error'); return; } }
 
     const btn = document.getElementById('btnRegistrarPagoAdmin');
     btn.disabled = true;
     btn.textContent = 'Registrando...';
     const { error } = await supabaseClient.rpc('fn_registrar_gasto_local', {
-      p_concepto: concepto, p_detalle: detalle, p_monto: monto, p_metodo_pago: metodoPago, p_aprobado_por: aprobadoPor,
+      p_concepto: concepto, p_detalle: detalle, p_monto: monto, p_metodo_pago: metodoPago, p_aprobado_por: necesitaAut ? 'autorización de una administradora' : aprobadoPor,
       p_turno_id: turnoActivoActual ? turnoActivoActual.id : null, p_reparto: document.getElementById('pagoAdminReparto').value,
       p_caja: document.getElementById('pagoAdminCaja').value, p_fecha: fecha,
     });
@@ -15183,7 +15231,9 @@
     if (!fechaFactura) { mostrarMensaje('mensajeGasto', 'Escribe la fecha de la factura.', 'error'); return; }
     const archivoSoporte = document.getElementById('gastoArchivoSoporte').files[0] || null;
     if (!archivoSoporte && !document.getElementById('gastoEsDocumentoSoporte').checked) { mostrarMensaje('mensajeGasto', 'Adjunta la foto o el PDF de la factura. Si el proveedor no está obligado a facturar, marca "Este proveedor no está obligado a facturar" (documento soporte).', 'error'); return; }
-    if (modoPagoCompraActual === 'completo' && !aprobadoPor) { mostrarMensaje('mensajeGasto', 'Selecciona quién aprobó esta compra.', 'error'); return; }
+    const necesitaAut = necesitaAutorizacionDeCompra(monto);
+    if (modoPagoCompraActual === 'completo' && !aprobadoPor && !necesitaAut) { mostrarMensaje('mensajeGasto', 'Selecciona quién aprobó esta compra.', 'error'); return; }
+    { const sinAut = await falloDeAutorizacionDeCompra(monto); if (sinAut) { mostrarMensaje('mensajeGasto', sinAut, 'error'); return; } }
     await actualizarRequisitosCompra(true);
     const reqSena = validarRequisitosCompra();
     if (reqSena.error) { mostrarMensaje('mensajeGasto', reqSena.error, 'error'); return; }
@@ -15232,7 +15282,7 @@
       const cuerpo = {
         centro_costo_id: centroCostoId, categoria, descripcion, monto, metodo_pago: metodoPago,
         turno_id: turnoActivoActual ? turnoActivoActual.id : null,
-        numero_factura: numeroFactura, fecha_factura: fechaFactura, aprobado_por_nombre: aprobadoPor,
+        numero_factura: numeroFactura, fecha_factura: fechaFactura, aprobado_por_nombre: necesitaAut ? 'autorización de una administradora' : aprobadoPor,
         es_documento_soporte: document.getElementById('gastoEsDocumentoSoporte').checked,
       };
       if (proveedorId) {
@@ -24256,6 +24306,118 @@
     });
     if (!resp.ok) { mostrarMensaje('mensajeOrdenesCompra', 'No se pudo eliminar.', 'error'); return; }
     await cargarOrdenesCompra();
+  }
+
+  // ============================================================
+  // AUTORIZAR COMPRAS (la cajera pide permiso antes de comprar; una administradora aprueba)
+  // ============================================================
+  const ESTADOS_AUT_COMPRA = { pendiente: ['⏳ Por aprobar', '#fff3d6', '#8a5a00'], aprobada: ['✅ Aprobada', '#e3f1e6', '#2e6b3a'], rechazada: ['❌ Rechazada', '#fde2e2', '#a12d2d'], cancelada: ['Cancelada', '#f4eef2', '#7a5a6b'], usada: ['🧾 Usada', '#dce8f5', '#2d5a8c'] };
+  function chipAutCompra(estado) { const [t, f, c] = ESTADOS_AUT_COMPRA[estado] || [estado, '#f4eef2', 'inherit']; return `<span style="display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600;background:${f};color:${c};">${t}</span>`; }
+  let umbralAutorizacionCompra = 1000000; // se confirma con la base (fn_umbral_autorizacion_compra)
+  async function cargarUmbralAutorizacionCompra() { try { const { data } = await supabaseClient.rpc('fn_umbral_autorizacion_compra'); if (Number(data) > 0) umbralAutorizacionCompra = Number(data); } catch (e) { /* se usa el valor por defecto */ } }
+  function usaAutorizacionDeCompra() { return rolActual === 'cajero' && !esAdministradoraActual(); }
+  // ¿Esta compra o gasto necesita autorización previa? (cajera y desde el umbral)
+  function necesitaAutorizacionDeCompra(monto) { return usaAutorizacionDeCompra() && Number(monto) >= umbralAutorizacionCompra; }
+  function fechaAutCompra(iso) { return iso ? new Date(String(iso).slice(0, 10) + 'T00:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }) : ''; }
+
+  // Devuelve un mensaje si la persona necesita una autorización y no tiene una que cubra el valor; si no, null.
+  async function falloDeAutorizacionDeCompra(monto) {
+    if (!necesitaAutorizacionDeCompra(monto)) return null;
+    const hoy = hoyBogotaISO();
+    const { data } = await supabaseClient.from('autorizaciones_compra').select('id').eq('solicitante', sesionActual.userId).eq('estado', 'aprobada').gte('vence_en', hoy).gte('monto_aprobado', monto).limit(1);
+    if (data && data.length) return null;
+    return 'Las compras o gastos de ' + formatearMoneda(umbralAutorizacionCompra) + ' o más necesitan la autorización previa de una administradora. Pídela en Compras → Autorizar compras (debe cubrir ' + formatearMoneda(monto) + ' y no estar vencida).';
+  }
+
+  async function mostrarPantallaAutorizacionesCompra() {
+    mostrarPantalla('pantallaAutorizacionesCompra');
+    const adm = esAdministradoraActual();
+    document.getElementById('bloqueAutCompraSolicitar').classList.toggle('oculto', adm);
+    document.getElementById('bloqueAutCompraAdmin').classList.toggle('oculto', !adm);
+    ocultarMensaje('mensajeAutCompra');
+    await cargarAutorizacionesCompra();
+  }
+
+  async function cargarAutorizacionesCompra() {
+    const adm = esAdministradoraActual();
+    let q = supabaseClient.from('autorizaciones_compra').select('*').order('created_at', { ascending: false }).limit(150);
+    if (!adm) q = q.eq('solicitante', sesionActual.userId);
+    const { data, error } = await q;
+    if (error) { mostrarMensaje('mensajeAutCompra', 'No se pudo cargar: ' + error.message, 'error'); return; }
+    const lista = data || [];
+    const hoy = hoyBogotaISO();
+    if (!adm) {
+      document.getElementById('listaMisAutorizacionesCompra').innerHTML = lista.length === 0 ? '<div class="cargando">Todavía no has pedido ninguna.</div>' : lista.map(a => `
+        <div style="padding:9px 0;border-bottom:1px solid #f4eef2;font-size:12.5px;">
+          <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;"><strong>${escaparHtml(a.descripcion)}</strong>${chipAutCompra(a.estado)}</div>
+          <div style="opacity:0.8;">${formatearMoneda(a.monto_estimado)}${a.proveedor_texto ? ' · ' + escaparHtml(a.proveedor_texto) : ''}</div>
+          ${a.estado === 'aprobada' ? `<div style="color:#2e6b3a;margin-top:2px;">Aprobada por ${escaparHtml(a.resuelto_nombre || 'una administradora')} hasta por ${formatearMoneda(a.monto_aprobado)}${a.vence_en < hoy ? ' · <strong style="color:#a12d2d;">vencida el ' + fechaAutCompra(a.vence_en) + '</strong>' : ' · vale hasta el ' + fechaAutCompra(a.vence_en)}. Ya puedes comprar y registrar la compra con su factura.</div>` : ''}
+          ${a.estado === 'usada' ? `<div style="opacity:0.75;margin-top:2px;">Usada el ${fechaAutCompra(a.usada_en)} por ${formatearMoneda(a.monto_usado)}.</div>` : ''}
+          ${a.respuesta ? `<div style="opacity:0.85;margin-top:2px;">💬 ${escaparHtml(a.respuesta)}</div>` : ''}
+          ${(a.estado === 'pendiente' || a.estado === 'aprobada') ? `<button class="btn-mini desactivar" style="margin-top:4px;" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => cancelarAutorizacionCompra('${a.id}'))">Cancelar</button>` : ''}
+        </div>`).join('');
+      return;
+    }
+    const ids = [...new Set(lista.map(a => a.solicitante))];
+    const nombres = {};
+    if (ids.length) { const { data: us } = await supabaseClient.from('usuarios_roles').select('user_id, nombre_completo').in('user_id', ids); (us || []).forEach(u => { nombres[u.user_id] = u.nombre_completo; }); }
+    const quien = a => escaparHtml(nombres[a.solicitante] || 'Alguien');
+    const pendientes = lista.filter(a => a.estado === 'pendiente');
+    const vigentes = lista.filter(a => a.estado === 'aprobada');
+    const historial = lista.filter(a => !['pendiente', 'aprobada'].includes(a.estado)).slice(0, 40);
+    document.getElementById('listaAutorizacionesPendientes').innerHTML = pendientes.length === 0 ? '<div class="cargando">No hay solicitudes por responder.</div>' : pendientes.map(a => `
+      <div style="padding:12px;margin-bottom:10px;background:var(--rosa-suave);border-radius:10px;font-size:13px;">
+        <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;"><strong>${quien(a)}</strong><span>${formatearMoneda(a.monto_estimado)}</span></div>
+        <div style="margin-top:3px;">${escaparHtml(a.descripcion)}${a.proveedor_texto ? ' · ' + escaparHtml(a.proveedor_texto) : ''}</div>
+        <div style="display:grid;grid-template-columns:130px 90px 1fr;gap:8px;margin-top:8px;align-items:end;">
+          <div><label style="margin-top:0;font-size:11px;">Valor que autorizas</label><input type="number" id="autMonto-${a.id}" min="1" step="1" value="${Number(a.monto_estimado)}" style="padding:7px 8px;"></div>
+          <div><label style="margin-top:0;font-size:11px;">Días que vale</label><input type="number" id="autDias-${a.id}" min="1" max="30" step="1" value="7" style="padding:7px 8px;"></div>
+          <div><label style="margin-top:0;font-size:11px;">Respuesta <span style="opacity:0.6;">(obligatoria si rechazas)</span></label><input type="text" id="autResp-${a.id}" style="padding:7px 8px;"></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="btn-mini guardar" onclick="resolverAutorizacionCompra('${a.id}', true)">✅ Aprobar</button>
+          <button class="btn-mini desactivar" onclick="resolverAutorizacionCompra('${a.id}', false)">❌ Rechazar</button>
+        </div>
+      </div>`).join('');
+    document.getElementById('listaAutorizacionesVigentes').innerHTML = vigentes.length === 0 ? '<div class="cargando">No hay autorizaciones aprobadas sin usar.</div>' : vigentes.map(a => `
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f4eef2;font-size:12.5px;">
+        <span><strong>${quien(a)}</strong> · ${escaparHtml(a.descripcion)} · hasta ${formatearMoneda(a.monto_aprobado)} · ${a.vence_en < hoy ? '<strong style="color:#a12d2d;">vencida</strong>' : 'vale hasta el ' + fechaAutCompra(a.vence_en)}</span>
+        <button class="btn-mini desactivar" onclick="pedirConfirmacionBoton(this, '¿Seguro?', () => cancelarAutorizacionCompra('${a.id}'))">Cancelar</button>
+      </div>`).join('');
+    document.getElementById('listaAutorizacionesHistorial').innerHTML = historial.length === 0 ? '<div class="cargando">Sin historial todavía.</div>' : historial.map(a => `
+      <div style="padding:6px 0;border-bottom:1px solid #f4eef2;font-size:12px;display:flex;justify-content:space-between;gap:8px;align-items:center;">
+        <span><strong>${quien(a)}</strong> · ${escaparHtml(a.descripcion)} · ${formatearMoneda(a.estado === 'usada' ? a.monto_usado : a.monto_estimado)}${a.respuesta ? ' · 💬 ' + escaparHtml(a.respuesta) : ''}</span>${chipAutCompra(a.estado)}
+      </div>`).join('');
+  }
+
+  async function solicitarAutorizacionCompra() {
+    ocultarMensaje('mensajeAutCompra');
+    const { error } = await supabaseClient.rpc('fn_compra_solicitar', {
+      p_descripcion: document.getElementById('autCompraDesc').value.trim(),
+      p_monto: Number(document.getElementById('autCompraMonto').value),
+      p_proveedor: document.getElementById('autCompraProveedor').value.trim() || null
+    });
+    if (error) { mostrarMensaje('mensajeAutCompra', error.message, 'error'); return; }
+    ['autCompraDesc', 'autCompraProveedor', 'autCompraMonto'].forEach(id => { document.getElementById(id).value = ''; });
+    await cargarAutorizacionesCompra();
+    mostrarMensaje('mensajeAutCompra', '✅ Pedido enviado. Una administradora lo va a revisar; aquí ves su respuesta.', 'exito');
+  }
+
+  async function resolverAutorizacionCompra(id, aprobar) {
+    ocultarMensaje('mensajeAutCompra');
+    const monto = Number(document.getElementById(`autMonto-${id}`).value);
+    const { error } = await supabaseClient.rpc('fn_compra_resolver', {
+      p_id: id, p_aprobar: aprobar, p_respuesta: document.getElementById(`autResp-${id}`).value.trim() || null,
+      p_monto_aprobado: aprobar && monto > 0 ? monto : null, p_dias_validez: Number(document.getElementById(`autDias-${id}`).value) || 7
+    });
+    if (error) { mostrarMensaje('mensajeAutCompra', error.message, 'error'); return; }
+    await cargarAutorizacionesCompra();
+  }
+
+  async function cancelarAutorizacionCompra(id) {
+    const { error } = await supabaseClient.rpc('fn_compra_cancelar', { p_id: id });
+    if (error) { mostrarMensaje('mensajeAutCompra', error.message, 'error'); return; }
+    await cargarAutorizacionesCompra();
   }
 
   // ============================================================
