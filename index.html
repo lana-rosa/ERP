@@ -25052,8 +25052,15 @@
       for (const a of archivos) {
         if (/\.zip$/i.test(a.name)) {
           const zip = await JSZip.loadAsync(await a.arrayBuffer());
-          for (const nombre of Object.keys(zip.files)) if (/\.xml$/i.test(nombre) && !zip.files[nombre].dir) xmls.push({ origen: a.name + ' › ' + nombre, texto: await zip.files[nombre].async('string') });
-        } else xmls.push({ origen: a.name, texto: await a.text() });
+          const nombresZip = Object.keys(zip.files).filter(n => !zip.files[n].dir);
+          const pdfs = nombresZip.filter(n => /\.pdf$/i.test(n));
+          for (const nombre of nombresZip) if (/\.xml$/i.test(nombre)) {
+            const base = nombre.replace(/\.xml$/i, '').toLowerCase();
+            const nPdf = pdfs.find(n => n.replace(/\.pdf$/i, '').toLowerCase() === base) || (pdfs.length === 1 ? pdfs[0] : null);
+            const soporte = nPdf ? new File([await zip.files[nPdf].async('blob')], nPdf.split('/').pop(), { type: 'application/pdf' }) : null;
+            xmls.push({ origen: a.name + ' › ' + nombre, texto: await zip.files[nombre].async('string'), soporte });
+          }
+        } else xmls.push({ origen: a.name, texto: await a.text(), soporte: null });
       }
     } catch (e) { cont.innerHTML = `<div class="cargando">No se pudo abrir el archivo: ${escaparHtml(e.message)}</div>`; return; }
     let nitEmpresa = '', registradas = [];
@@ -25061,7 +25068,7 @@
     try { const { data } = await supabaseClient.from('compras_requisitos_sena').select('numero_factura, proveedor_nit'); registradas = data || []; } catch (e) { /* sin lista: no se detectan registradas */ }
     const vistos = new Set();
     feBorradoresCompras = xmls.map(x => {
-      const f = { origen: x.origen, ...leerFacturaXmlDian(x.texto) };
+      const f = { origen: x.origen, soporte: x.soporte, ...leerFacturaXmlDian(x.texto) };
       if (f.error) return { ...f, estado: 'error', detalle: f.error };
       if (f.esPrueba) return { ...f, estado: 'error', detalle: 'Factura de PRUEBA (habilitación de la DIAN): se ignora.' };
       if (nitEmpresa && mismoNit(f.documentoProveedor, nitEmpresa) && !mismoNit(f.documentoCliente, nitEmpresa)) return { ...f, estado: 'venta', detalle: 'Es una factura de VENTA de Lana Rosa, no de compra.' };
@@ -25084,14 +25091,45 @@
     cont.innerHTML = `
       <div style="font-size:12.5px;margin-bottom:8px;"><strong>${lista.length}</strong> archivo(s) leído(s): <strong>${nuevas.length}</strong> nueva(s) · total de las nuevas <strong>${formatearMoneda(nuevas.reduce((a, f) => a + f.total, 0))}</strong>. No se registró nada en los libros.</div>
       ${sinNit ? '<div class="mensaje error" style="display:block;">No encontré el NIT de Lana Rosa en Datos de la empresa: no puedo distinguir facturas de venta de facturas de compra. Complétalo y vuelve a subir.</div>' : ''}
-      <table class="tk"><thead><tr><th>Estado</th><th>Proveedor</th><th>Factura</th><th>Fecha</th><th class="n">Subtotal</th><th class="n">IVA</th><th class="n">Total</th><th>CUFE</th></tr></thead><tbody>
+      <table class="tk"><thead><tr><th>Estado</th><th>Proveedor</th><th>Factura</th><th>Fecha</th><th class="n">Subtotal</th><th class="n">IVA</th><th class="n">Total</th><th>CUFE</th><th></th></tr></thead><tbody>
         ${lista.map(f => { const e = etiquetas[f.estado]; return `<tr>
           <td><span class="badge-estado-pedido" style="background:${e[1]};color:${e[2]};">${e[0]}</span><div style="font-size:11px;opacity:.75;max-width:230px;">${escaparHtml(f.detalle)}</div></td>
           <td>${f.error ? escaparHtml(f.origen) : `<strong>${escaparHtml(f.nombreProveedor || '—')}</strong><div style="font-size:11px;opacity:.7;">NIT ${escaparHtml(f.documentoProveedor || '—')}</div>`}</td>
           <td>${escaparHtml(f.idCompleto || '')}</td><td>${escaparHtml(f.fecha || '')}</td>
           <td class="n">${f.error ? '' : formatearMoneda(f.subtotal)}</td><td class="n">${f.error ? '' : formatearMoneda(f.iva)}</td><td class="n">${f.error ? '' : formatearMoneda(f.total)}</td>
-          <td style="font-size:10.5px;">${escaparHtml((f.cufe || '').slice(0, 12))}${f.cufe ? '…' : ''}</td></tr>`; }).join('')}
+          <td style="font-size:10.5px;">${escaparHtml((f.cufe || '').slice(0, 12))}${f.cufe ? '…' : ''}</td>
+          <td>${f.estado === 'nuevo' ? `<button class="btn-mini editar" style="flex:0 0 auto;" onclick="registrarCompraDesdeBorrador(${lista.indexOf(f)})">Registrar compra →</button>` : ''}</td></tr>`; }).join('')}
       </tbody></table>`;
+  }
+
+  // Etapa 2: no registra por su cuenta. Abre el formulario normal de «Registrar compra» con los datos de la factura ya puestos;
+  // el resto (cómo se pagó, quién aprobó, categoría, documentos del SENA) lo completa la persona y las validaciones de siempre aplican.
+  async function registrarCompraDesdeBorrador(i) {
+    const f = feBorradoresCompras[i];
+    if (!f || f.estado !== 'nuevo') return;
+    await mostrarPantallaPagosPendientes();
+    document.getElementById('gastoNumeroFactura').value = f.idCompleto || '';
+    document.getElementById('gastoFechaFactura').value = f.fecha || '';
+    document.getElementById('gastoMonto').value = f.total || '';
+    const desc = f.lineas.map(l => l.descripcion).filter(Boolean).join(', ');
+    document.getElementById('gastoDescripcion').value = desc.slice(0, 150);
+    document.getElementById('gastoProveedorNombre').value = f.nombreProveedor || '';
+    document.getElementById('gastoProveedorNit').value = f.documentoProveedor || '';
+    // Si el proveedor ya está en el directorio (mismo NIT), se selecciona.
+    try {
+      const resp = await fetch(WORKER_URL + '/api/pos/terceros?tipo=proveedor&q=' + encodeURIComponent(f.documentoProveedor || f.nombreProveedor || ''), { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+      if (resp.ok) {
+        const { terceros } = await resp.json();
+        const t = (terceros || []).find(x => mismoNit(x.numero_documento, f.documentoProveedor));
+        if (t) seleccionarProveedorGasto(t.id, t.nombre_completo);
+      }
+    } catch (e) { /* queda como proveedor nuevo con los datos de la factura */ }
+    let adjunto = 'Adjunta a mano el PDF de la factura (el ZIP no traía PDF).';
+    if (f.soporte) {
+      try { const dt = new DataTransfer(); dt.items.add(f.soporte); document.getElementById('gastoArchivoSoporte').files = dt.files; adjunto = 'Se adjuntó el PDF de la factura.'; } catch (e) { /* se adjunta a mano */ }
+    }
+    actualizarRequisitosCompra();
+    mostrarMensaje('mensajeGasto', `Datos tomados de la factura ${f.idCompleto} (${f.nombreProveedor || 'proveedor'}). ${adjunto} Revisa y completa: categoría, cómo se pagó, quién aprobó y los documentos que pide el instructivo del SENA. No se registra nada hasta que toques «Registrar compra».`, 'exito');
   }
 
   function exportarBorradoresComprasExcel() {
