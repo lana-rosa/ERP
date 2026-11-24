@@ -37,6 +37,7 @@ Estructura: HTML de pantallas (líneas ~1000–5800), luego un bloque grande `<s
 | Cotizaciones / Notas crédito-débito / Órdenes de compra / Listas de precios | 4253 / 4365 / 4434 / 4479 |
 | Transferencias internas / Panel del contador / Dashboard contable | 4508 / 4666 / 4680 |
 | Facturas electrónicas de compras (etapa 1): pestaña en Facturación electrónica; JS `importarFacturasCompras` | 25044 |
+| Asistente financiero (pantalla + JS `mostrarPantallaAsistenteFinanciero`) | 19231 |
 | Panel del contador: JS `cargarPanelContador` y sección de soportes del mes (`agregarSoporteMes`) | 19206–19400 |
 | Honorarios tejedoras | 4720 |
 | **Impuestos, plan de cuentas y ajustes (previsión de impuestos aquí)** | 4757 |
