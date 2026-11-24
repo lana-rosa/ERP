@@ -42,6 +42,11 @@
   .tarea input{margin-top:4px;width:18px;height:18px;accent-color:var(--rosa)}
   .tarea.hecha .tt{text-decoration:line-through;color:var(--suave)}
   .tarea .de{font-size:12px;color:var(--suave)}
+  .chip{border-radius:999px;padding:3px 11px;font-size:12px;font-weight:600}
+  .a-critica{background:#fde2e2;color:#a12d2d}.a-preventiva{background:#fff3d6;color:#8a5a00}.a-informativa{background:#dce8f5;color:#2d5a8c}.a-cumplida{background:#e3f1e6;color:#2e6b3a}
+  .cumP{margin:12px 0 4px;font-weight:700}
+  .req{background:var(--fondo-tarjeta);border-radius:14px;padding:10px 13px;margin-bottom:8px}
+  .req .fila{margin-top:6px}.req input[type=date]{border:1px solid var(--borde);border-radius:10px;padding:6px 8px}
   [hidden]{display:none!important}
 </style>
 </head>
@@ -60,6 +65,12 @@
       <div class="fila"><select id="onbPersona"></select><button id="onbAsignar">Asignar tareas</button></div>
       <p id="onbMsg" class="sub"></p>
       <div id="onbResumen"></div>
+    </section>
+    <section id="cump" hidden>
+      <h2 class="h2">✅ Centro de cumplimiento</h2>
+      <div id="cumResumen" class="fila"></div>
+      <label class="de" style="font-size:13px;color:var(--suave)"><input type="checkbox" id="cumTodo"> Mostrar también lo que está al día</label>
+      <div id="cumLista"></div>
     </section>
     <h2 class="h2">📣 Muro</h2>
     <div class="nuevo" id="nuevo" hidden>
@@ -120,6 +131,27 @@
     }
   }
 
+  var ESTADOS = { pendiente: 'Pendiente', en_preparacion: 'En preparación', pendiente_firma: 'Pendiente de firma', pendiente_revision: 'Pendiente de revisión', vigente: 'Vigente', vencido: 'Vencido', no_aplica: 'No aplica', archivado: 'Archivado' };
+  var ALERTAS = { critica: 'Crítica', preventiva: 'Preventiva', informativa: 'Informativa', cumplida: 'Cumplida' };
+  var filasCump = [];
+  function pintarCumplimiento() {
+    var todo = $('#cumTodo').checked, cuenta = { critica: 0, preventiva: 0, informativa: 0, cumplida: 0 };
+    filasCump.forEach(function (f) { cuenta[f.alerta]++; });
+    $('#cumResumen').innerHTML = Object.keys(ALERTAS).map(function (k) { return '<span class="chip a-' + k + '">' + ALERTAS[k] + ': ' + cuenta[k] + '</span>'; }).join('');
+    var ver = filasCump.filter(function (f) { return todo || f.alerta !== 'cumplida'; }), html = '', ultima = '';
+    ver.forEach(function (f) {
+      if (f.empleado !== ultima) { html += '<div class="cumP">' + esc(f.empleado) + '</div>'; ultima = f.empleado; }
+      html += '<div class="req" data-req="' + f.requisito_id + '" data-emp="' + f.empleado_id + '"><div><strong>' + esc(f.requisito) + '</strong> <span class="chip a-' + f.alerta + '">' + ALERTAS[f.alerta] + '</span></div><div class="sub" style="margin:2px 0 0">' + esc(f.categoria) + ' · ' + esc(f.mensaje) + '</div>' +
+        (esAdmin ? '<div class="fila"><select data-e>' + Object.keys(ESTADOS).map(function (k) { return '<option value="' + k + '"' + (k === f.estado ? ' selected' : '') + '>' + ESTADOS[k] + '</option>'; }).join('') + '</select><input type="date" data-v value="' + (f.vence_en || '') + '"><button class="suave" data-guardar="1">Guardar</button></div>' : '') + '</div>';
+    });
+    $('#cumLista').innerHTML = html || '<div class="msg">Todo está al día 🌸</div>';
+  }
+  async function cargarCumplimiento() {
+    var r = await sb.rpc('gestion_colab_cumplimiento');
+    if (r.error) { $('#cumLista').innerHTML = '<div class="msg">No se pudo cargar el cumplimiento.</div>'; return; }
+    filasCump = r.data || []; pintarCumplimiento();
+  }
+
   async function iniciar() {
     var s = await sb.auth.getSession();
     if (!s.data || !s.data.session) { aviso('Para ver el muro, entra primero al ERP con tu cuenta.<br><br><a class="volver" href="./index.html">Ir al ERP</a>'); return; }
@@ -154,6 +186,18 @@
       $('#onbMsg').textContent = r.error ? r.error.message : (r.data > 0 ? 'Listo: ' + r.data + ' tareas asignadas.' : 'Esa persona ya tenía sus tareas.');
       cargarOnboarding();
     };
+    var verCump = esAdmin || rol.data === 'contador';
+    $('#cump').hidden = !verCump;
+    if (verCump) {
+      $('#cumTodo').onchange = pintarCumplimiento;
+      $('#cumLista').onclick = async function (e) {
+        if (!e.target.dataset.guardar) return;
+        var d = e.target.closest('[data-req]');
+        var r = await sb.rpc('gestion_colab_requisito_set', { p_requisito: d.dataset.req, p_empleado: d.dataset.emp, p_estado: d.querySelector('[data-e]').value, p_vence: d.querySelector('[data-v]').value || null });
+        if (r.error) alert(r.error.message); else cargarCumplimiento();
+      };
+      cargarCumplimiento();
+    }
     cargarOnboarding();
     cargar();
   }
