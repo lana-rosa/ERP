@@ -30,3 +30,10 @@ Mediano: 1) función de lectura de cifras (SQL, con prueba con rollback); 2) fun
 - **Probado** (SQL con rollback): como administradora devuelve las cifras (p. ej. caja ≈ $5.163.000, anticipos ≈ $789.000, ingresos del mes ≈ $1.237.000); con otro usuario queda bloqueada.
 - **Ojo para la entrega 2 (IA):** «efectivo menos compromisos» es solo una referencia; el prompt debe decir que anticipos, pedidos sin entregar y Fondo no son dinero libre y que faltan fondo de emergencia y obligaciones sin monto. Hoy no hay cuenta Davivienda separada en los libros (los bancos salen juntos como «operación»).
 - **Falta:** entrega 2 (función de la IA con límites y llave en secretos; necesita el prompt completo de Sara) y entrega 3 (pantalla). Revisión de la abogada y el contador (🔴) antes de usarlo con datos reales.
+
+## Entrega 2 preparada (24-nov-2026), NO activada
+- El prompt completo de Jennifer quedó guardado en `docs/asistente-financiero/prompt.md` (interno). Se corrigió «S&amp;P» a «S&P».
+- Borradores sin aplicar ni desplegar: `docs/asistente-financiero/limites-borrador.sql` (tabla y función que cuentan consultas: 20 al día por persona y 400 al mes) y `docs/asistente-financiero/funcion-borrador.ts` (función de Supabase: valida rol, aplica límites, lee las cifras y llama a Anthropic; la llave solo en secretos).
+- **No se usa con IA ni con datos reales hasta** la revisión de la abogada y del contador (🔴) y el sí de Jennifer.
+- **Dudas para esa revisión:** el prompt pide revisar fondo de emergencia, gastos esenciales y flujo de caja, pero la función de cifras no los entrega (el asistente debe decirlo y pedirlos); el prompt menciona «retiros del propietario» y «persona natural»: el contador debe confirmar ese lenguaje; la abogada: aviso «no soy asesor» y qué cifras salen hacia Anthropic.
+- **Falta:** pantalla (entrega 3).
