@@ -223,7 +223,8 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 ## Compras SENA — desembolsos y legalización (24-nov-2026)
 - [x] Fase 1 completa: plan y columnas exactas en `docs/temas/sena-desembolsos-legalizacion.md`; originales en `docs/fondo-emprender/`
 - [x] Fase 2: desembolsos y formato de Legalización en Excel/PDF (24-nov; tablas `fondo_desembolsos` y `fondo_desembolso_lineas`)
-- [ ] Fase 3 (Formato 1 Solicitud de desembolso) y Fase 4 (tablero del ciclo con estados y alertas)
+- [x] Fase 3: Formato 1 «Solicitud de desembolso» en Excel/PDF con validaciones (24-nov)
+- [ ] Fase 4: tablero del ciclo con estados y alertas 2 días antes
 - [ ] Contabilidad (chat 7): definir qué retenciones (retefuente, reteIVA, reteICA) aplican a cada compra del Fondo
 - [ ] Sara: registrar el desembolso de diciembre cuando llegue y probar el Excel con datos reales
 
