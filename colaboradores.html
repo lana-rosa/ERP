@@ -37,6 +37,11 @@
   .acciones{display:flex;gap:6px;margin-top:10px}
   .msg{padding:30px 16px;text-align:center;color:var(--suave)}
   .etiqueta{background:var(--tinte);border-radius:999px;padding:1px 9px;color:var(--rosa);font-weight:600}
+  .h2{font-size:16px;color:var(--rosa);margin:14px 0 8px}
+  .tarea{display:flex;gap:10px;align-items:flex-start;background:var(--fondo-tarjeta);border-radius:14px;padding:11px 13px;margin-bottom:8px}
+  .tarea input{margin-top:4px;width:18px;height:18px;accent-color:var(--rosa)}
+  .tarea.hecha .tt{text-decoration:line-through;color:var(--suave)}
+  .tarea .de{font-size:12px;color:var(--suave)}
   [hidden]{display:none!important}
 </style>
 </head>
@@ -46,6 +51,17 @@
   <p class="sub">Muro del equipo: avisos de Lana Rosa para todas.</p>
   <div id="aviso" class="msg">Cargando…</div>
   <div id="app" hidden>
+    <section id="onb" hidden>
+      <h2 class="h2">🌸 Mis tareas de bienvenida</h2>
+      <div id="onbLista"></div>
+    </section>
+    <section id="onbAdmin" class="nuevo" hidden>
+      <h2 class="h2">Bienvenida de una persona nueva</h2>
+      <div class="fila"><select id="onbPersona"></select><button id="onbAsignar">Asignar tareas</button></div>
+      <p id="onbMsg" class="sub"></p>
+      <div id="onbResumen"></div>
+    </section>
+    <h2 class="h2">📣 Muro</h2>
     <div class="nuevo" id="nuevo" hidden>
       <textarea id="texto" maxlength="2000" placeholder="Escribe un aviso para el equipo…"></textarea>
       <div class="fila">
@@ -86,6 +102,24 @@
     datos.filter(function (p) { return !leidas[p.id]; }).forEach(function (p) { sb.rpc('gestion_colab_marcar_leida', { p_id: p.id }); });
   }
 
+  async function cargarOnboarding() {
+    var uid = (await sb.auth.getSession()).data.session.user.id;
+    var r = await sb.from('gestion_colab_onboarding_tareas').select('*').order('vence_en');
+    var todas = r.data || [], mias = todas.filter(function (t) { return t.user_id === uid; });
+    $('#onb').hidden = !mias.length;
+    $('#onbLista').innerHTML = mias.map(function (t) {
+      var propia = t.responsable === 'colaboradora';
+      return '<div class="tarea' + (t.estado === 'hecha' ? ' hecha' : '') + '"><input type="checkbox" data-tarea="' + t.id + '"' + (t.estado === 'hecha' ? ' checked' : '') + (propia ? '' : ' disabled') + '><div><div class="tt">' + esc(t.titulo) + '</div><div class="de">' + (propia ? 'Te toca a ti' : 'Lo hace la administración') + (t.vence_en ? ' · para el ' + fecha(t.vence_en + 'T12:00:00').split(',')[0] : '') + '</div></div></div>';
+    }).join('');
+    if (esAdmin) {
+      var n = {}; todas.forEach(function (t) { n[t.user_id] = n[t.user_id] || { p: 0, h: 0 }; n[t.user_id][t.estado === 'hecha' ? 'h' : 'p']++; });
+      var us = await sb.from('usuarios_roles').select('user_id,nombre_completo').eq('activo', true).order('nombre_completo');
+      var nombres = {}; (us.data || []).forEach(function (u) { nombres[u.user_id] = u.nombre_completo; });
+      $('#onbPersona').innerHTML = (us.data || []).map(function (u) { return '<option value="' + u.user_id + '">' + esc(u.nombre_completo || 'Sin nombre') + '</option>'; }).join('');
+      $('#onbResumen').innerHTML = Object.keys(n).map(function (k) { return '<div class="tarea"><div><div class="tt">' + esc(nombres[k] || 'Persona') + '</div><div class="de">' + n[k].h + ' hechas · ' + n[k].p + ' por hacer</div></div></div>'; }).join('');
+    }
+  }
+
   async function iniciar() {
     var s = await sb.auth.getSession();
     if (!s.data || !s.data.session) { aviso('Para ver el muro, entra primero al ERP con tu cuenta.<br><br><a class="volver" href="./index.html">Ir al ERP</a>'); return; }
@@ -107,6 +141,20 @@
       if (e.target.dataset.borrar && confirm('¿Borrar este aviso del muro?')) { await sb.rpc('gestion_colab_borrar', { p_id: id }); cargar(); }
       else if (e.target.dataset.fijar) { await sb.rpc('gestion_colab_fijar', { p_id: id, p_fijada: e.target.dataset.fijar === 'true' }); cargar(); }
     };
+    $('#onbAdmin').hidden = !esAdmin;
+    $('#onbLista').onchange = async function (e) {
+      var id = e.target.dataset.tarea; if (!id) return;
+      var r = await sb.rpc('gestion_colab_onboarding_marcar', { p_tarea: id, p_hecha: e.target.checked });
+      if (r.error) alert(r.error.message);
+      cargarOnboarding();
+    };
+    $('#onbAsignar').onclick = async function () {
+      var u = $('#onbPersona').value; if (!u) return;
+      var r = await sb.rpc('gestion_colab_onboarding_asignar', { p_user: u });
+      $('#onbMsg').textContent = r.error ? r.error.message : (r.data > 0 ? 'Listo: ' + r.data + ' tareas asignadas.' : 'Esa persona ya tenía sus tareas.');
+      cargarOnboarding();
+    };
+    cargarOnboarding();
     cargar();
   }
   iniciar();
