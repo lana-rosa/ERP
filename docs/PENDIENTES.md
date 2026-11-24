@@ -165,6 +165,7 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [ ] Códigos CUIF de 10 dígitos.
 - [ ] Aplicabilidad del documento soporte.
 - [ ] Ventas desde el 14-oct-2026 (ya facturadora electrónica) que quedaron solo con recibo del ERP, sin factura electrónica: 6 del punto de venta (POS-2026-00016 a 00021, $2.205.000) y 1 pedido (PED-2026-00559, $15.200, parece prueba). Además 7 pedidos con "facturar" definido a consumidor final ($601.000). Pregunta: ¿se emite factura electrónica extemporánea a consumidor final por cada una, o cómo se regulariza? (12-nov-2026)
+- [ ] Libro fiscal y contabilidad de microempresa (punto 6, 24-nov): qué libros exige, qué marco contable aplica, si se pueden llevar solo desde el ERP, qué le falta al ERP. Preguntas en `docs/resumen-contador.md` (punto 8). De esto depende el punto 6 del plan.
 - [ ] Retenciones, libros y declaraciones como sociedad.
 - [ ] Bancos (18-nov, contador nuevo el viernes 20-nov): confirmar la decisión Davivienda (operación) / Bancolombia (Fondo) y qué hacer con lo ya registrado en Caja por cobros hechos en Nequi; reemplaza la decisión del 14-oct.
 - [ ] Wompi en Nequi (18-nov, viernes 20-nov): ¿cómo se tratan los desembolsos de Wompi que llegan a un Nequi (ingreso por venta, comisión, retención si aplica)? ¿Qué reporta la DIAN de los pagos por pasarelas y a nombre de quién? ¿Límites de Nequi (monto por mes) y riesgo de que se mezcle con lo personal, o conviene un Nequi exclusivo? ¿Cómo se registra el traslado semanal a Davivienda?

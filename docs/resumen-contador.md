@@ -32,6 +32,16 @@ Preparado el 12-nov-2026 · Lana Rosa Crochet · Régimen SIMPLE · contabilidad
 - Wompi solo desembolsa a cuentas del grupo Bancolombia o a un Nequi. Plan: Wompi → Nequi (puente) → traslado a Davivienda.
 - **Preguntas:** ¿cómo se tratan esos desembolsos (ingreso, comisión, retención si aplica)? ¿Qué se reporta a la DIAN de los pagos por pasarelas? ¿Hay límites de Nequi que nos afecten y conviene un Nequi exclusivo del negocio?
 
+### 8. Libro fiscal y contabilidad de microempresa (pregunta nueva, 24-nov)
+Contexto: Sara es persona natural con establecimiento de comercio, Régimen SIMPLE, no responsable de IVA, ingresos del año cerca de $20 millones y proyección de $150 millones el próximo año. El ERP ya tiene Libro Diario, Libro Mayor, Libro Auxiliar, Balance de prueba, Balance General, Estado de resultados, Flujo de caja y Kardex, todos con Excel y PDF.
+**Preguntas:**
+1. ¿Qué libros debe llevar Lana Rosa y cuáles son obligatorios para la DIAN, la Cámara de Comercio y el Fondo Emprender? ¿Qué es exactamente el «libro fiscal» que usted mencionó?
+2. ¿Qué marco contable aplica a una microempresa como la nuestra (el simplificado o el del Grupo 3)? ¿Hay algo que el plan de cuentas actual no cumpla?
+3. ¿Los libros se pueden llevar solo desde el ERP (en PDF o Excel) o hay que inscribirlos o foliarlos en la Cámara de Comercio? ¿Cada cuánto hay que imprimirlos o firmarlos?
+4. ¿Qué le falta al ERP para que usted los acepte sin rehacerlos? (Dígame columnas, formato o cortes y lo preparo.)
+5. ¿Hay que llevar inventarios y balance de apertura o de cierre formales (31 de diciembre)? ¿Hace falta el inventario físico?
+6. Si el año que viene superamos los topes y hay que cambiar de régimen o de tipo de persona, ¿cambia qué libros llevamos?
+
 ## B. Tributario por confirmar con usted
 - UVT y tarifas SIMPLE del año, escenario de provisión y tabla de renta (sin ellos el sistema no calcula el anticipo).
 - ICA de Villamaría: se está usando 7 por mil industrial y 10 por mil comercial/servicios, con mínimo de 10 UVT ($523.740 en 2026), según lo que informó Sara. Falta verificarlo.
