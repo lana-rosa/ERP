@@ -38,7 +38,7 @@ Compras del Fondo con cuenta de pago, comprobante, extracto, evidencia de entreg
 - **Fase 1 (hecha):** documentos guardados y estructura exacta de los formatos copiada.
 - **Fase 2 (hecha, sw.js v95; pendiente de fusionar con el sí de Sara):** Formato 2 «Legalización» por desembolso, en Excel y PDF. Ver sección «Fase 2» abajo.
 - **Fase 3 (hecha, sw.js v96; pendiente de fusionar con el sí de Sara):** Formato 1 «Solicitud de desembolso» en Excel y PDF. Ver sección «Fase 3» abajo.
-- **Fase 4:** tablero del ciclo con estados y alertas 2 días antes (reutiliza el calendario de entregas).
+- **Fase 4 (hecha, sw.js v97; pendiente de fusionar con el sí de Sara):** tablero del ciclo con estados y alertas. Ver sección «Fase 4» abajo.
 - Validaciones de los 10 errores frecuentes: ya cubiertas efectivo, cuenta, proveedor aprobado, valor distinto y faltantes de soporte; pendiente nómina sin PILA.
 
 ## Lo manual en la plataforma SENA (no se automatiza)
@@ -60,3 +60,11 @@ Chat 7: retenciones, extracto, informe mensual del Fondo, **Bancolombia en ceros
 - **Validaciones antes de exportar** (`validarSolicitudFondo`): mínimo 1 fila, **máximo 10**, rubro obligatorio (lista de 18 rubros del Anexo 2: `RUBROS_FONDO`), si queda saldo por solicitar las **Observaciones** son obligatorias (valor total comprometido y condiciones de pago en pagos parciales), y no se puede solicitar más que el valor total.
 - **Supabase** (SQL en `docs/migraciones/2026-11-24-fondo-solicitud-desembolso.sql`): columnas nuevas `rubro`, `valor_total_contrato`, `observaciones` en `fondo_desembolso_lineas`; funciones `fn_fondo_desembolso_agregar_fila` y `fn_fondo_desembolso_fecha_solicitud`; `fn_fondo_desembolso_actualizar_linea` ampliada.
 - **Falta:** Fase 4 (tablero del ciclo con estados y alertas 2 días antes), confirmar con la interventora si el formato ya aplica a nuestro proyecto, pagos parciales de una misma compra, probar con datos reales.
+
+## Fase 4 hecha (25-nov-2026): tablero del ciclo
+- **Dónde:** la lista de «Desembolsos y legalización del Fondo» ahora es el tablero (`verDesembolsosFondo`, función `fn_fondo_tablero`): por cada desembolso muestra las etapas (Solicitado → Aprobado → Desembolsado → Pagado → Legalizado, más la marca roja «Con observaciones»), fechas (solicitud, llegada, límite de legalización), conteos (filas, con compra, con todos los soportes, legalizado, saldo por legalizar), **alertas** y el **siguiente paso**. El estado se cambia desde la misma tarjeta (manual: el ERP no sabe cuándo aprueba el SENA).
+- **Alertas calculadas:** observaciones del interventor; no se puede pedir un desembolso hasta legalizar el anterior; falta fecha de solicitud; falta fecha límite de legalización; legalización vence en ≤2 días / hoy / vencida; desembolso sin compras o con filas sin compra; lo asignado a compras ≠ monto recibido; compras sin todos los soportes (factura, comprobante, extracto, evidencia de entrega); recordatorio de nómina (comprobante por trabajador + PILA) cuando hay filas de rubro Nomina/Jornales (no verifica que la PILA exista).
+- **Alerta 2 días antes:** al definir la «Fecha límite para legalizar» (en los formatos del desembolso) se crea un evento «🏦 Entrega Fondo Emprender — Legalización del desembolso No. N» en el calendario con recordatorio de 2 días; por eso sale en LAROVA (portada) y en el correo diario de las 8 a. m. Al marcar el desembolso como Legalizado, esa alerta se marca como entregada (✅).
+- **Supabase** (SQL en `docs/migraciones/2026-11-25-fondo-tablero-ciclo.sql`): columna `fecha_limite_legalizacion` en `fondo_desembolsos`; funciones `fn_fondo_tablero`, `fn_fondo_desembolso_limite` y `fn_fondo_desembolso_actualizar` ampliada.
+- **No hay plazo oficial** de legalización en los lineamientos («en los tiempos establecidos»): la fecha límite la escribe Sara según lo que diga la interventora.
+- **Falta:** probar con el desembolso real de diciembre, pagos parciales de una misma compra, confirmar con la interventora que el formato aplica, y que Contabilidad defina retenciones.
