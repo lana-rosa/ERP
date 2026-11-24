@@ -2431,6 +2431,7 @@
   <div class="filtro-tipo" style="margin-bottom:16px;">
     <button class="chip-filtro activo" data-subtab-btn="fe" onclick="mostrarSubTabGrupo('fe', 'subtabFePendientes', this); cargarFePendientes();">🧾 Por facturar</button>
     <button class="chip-filtro" data-subtab-btn="fe" onclick="mostrarSubTabGrupo('fe', 'subtabFeEmitidas', this); cargarFeEmitidas();">✅ Facturas emitidas</button>
+    <button class="chip-filtro" data-subtab-btn="fe" id="chipFeCompras" onclick="mostrarSubTabGrupo('fe', 'subtabFeCompras', this);">🛒 Facturas de compras</button>
     <button class="chip-filtro" data-subtab-btn="fe" id="chipFeDs" onclick="mostrarSubTabGrupo('fe', 'subtabFeDs', this); cargarFeDs();">📑 Documentos soporte</button>
     <button class="chip-filtro" data-subtab-btn="fe" id="chipFeRespaldo" onclick="mostrarSubTabGrupo('fe', 'subtabFeRespaldo', this); cargarFeRespaldo();">💾 Respaldo</button>
     <button class="chip-filtro" data-subtab-btn="fe" id="chipFeNomina" onclick="mostrarSubTabGrupo('fe', 'subtabFeNomina', this); cargarNominaElectronica();">👥 Nómina electrónica</button>
@@ -2471,6 +2472,19 @@
 <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirSeccion('subtabFeEmitidas', 'Facturas electrónicas')">🖨️ PDF</button>
     </div>
     <div id="feListaEmitidas"><div class="cargando">Cargando...</div></div>
+  </div>
+
+  <div id="subtabFeCompras" data-subtab-grupo="fe" class="oculto">
+    <div style="background:var(--tinte-azul);border-radius:var(--radius-md);padding:10px 14px;margin-bottom:14px;font-size:12.5px;line-height:1.5;">
+      ℹ️ Aquí subes los ZIP o XML de las facturas electrónicas que te hacen tus proveedores. El ERP los lee y te muestra un <strong>borrador</strong> de cada una (proveedor, número, fecha, valores). <strong>En esta etapa no se registra nada en los libros</strong>: solo sirve para revisar y detectar repetidas o facturas que no son de compra.
+    </div>
+    <div class="panel" style="max-width:none;max-height:none;margin-bottom:14px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <label class="btn-principal" style="width:auto;margin:0;cursor:pointer;">📤 Subir facturas de compras (ZIP o XML)<input type="file" accept=".zip,.xml" multiple style="display:none;" onchange="importarFacturasCompras(this)"></label>
+        <button class="btn-secundario" style="width:auto;margin:0;" onclick="exportarBorradoresComprasExcel()">📥 Excel</button>
+      </div>
+      <div id="feComprasResultado" style="margin-top:12px;"></div>
+    </div>
   </div>
 
   <div id="subtabFeDs" data-subtab-grupo="fe" class="oculto">
@@ -24821,7 +24835,7 @@
   async function mostrarPantallaFacturacionElectronica(p_subtab) {
     mostrarPantalla('pantallaFacturacionElectronica');
     ocultarMensaje('mensajeFe');
-    ['chipFeNomina', 'chipFeDs', 'chipFeRespaldo'].forEach(id => { document.getElementById(id).style.display = esRolFe('administrador', 'contador') ? '' : 'none'; });
+    ['chipFeNomina', 'chipFeDs', 'chipFeRespaldo', 'chipFeCompras'].forEach(id => { document.getElementById(id).style.display = esRolFe('administrador', 'contador') ? '' : 'none'; });
     const hoy = new Date();
     if (!document.getElementById('feDesde').value) {
       document.getElementById('feDesde').value = fechaLocalIso(new Date(hoy.getFullYear(), 0, 1));
@@ -24988,6 +25002,7 @@
     const idCompleto = [...raiz.children].find(h => h.localName === 'ID')?.textContent.trim() || '';
     const m = idCompleto.match(/^([A-Za-z]*)(\d+)$/);
     const cliente = hijoLocal(raiz, 'AccountingCustomerParty')[0];
+    const proveedor = hijoLocal(raiz, 'AccountingSupplierParty')[0];
     const total = primero(hijoLocal(raiz, 'LegalMonetaryTotal')[0] || raiz, 'PayableAmount');
     const cufe = [...raiz.children].find(h => h.localName === 'UUID')?.textContent.trim() || '';
     // ProfileExecutionID: 1 = producción, 2 = pruebas/habilitación de la DIAN.
@@ -25008,10 +25023,88 @@
       total: Math.round(Number(total) || 0),
       documentoCliente: cliente ? primero(cliente, 'CompanyID') : '',
       nombreCliente: cliente ? (primero(cliente, 'RegistrationName') || primero(cliente, 'Name')) : '',
+      documentoProveedor: proveedor ? primero(proveedor, 'CompanyID') : '',
+      nombreProveedor: proveedor ? (primero(proveedor, 'RegistrationName') || primero(proveedor, 'Name')) : '',
+      subtotal: Math.round(Number(primero(hijoLocal(raiz, 'LegalMonetaryTotal')[0] || raiz, 'LineExtensionAmount')) || 0),
+      iva: Math.round([...raiz.children].filter(h => h.localName === 'TaxTotal').reduce((a, t) => a + (Number(primero(t, 'TaxAmount')) || 0), 0)),
     };
   }
 
   let feImportadas = [];
+
+  // ---------- Facturas electrónicas de COMPRAS (etapa 1: solo lectura, borradores) ----------
+  let feBorradoresCompras = [];
+  const soloDigitosNit = (v) => String(v || '').replace(/\D/g, '');
+  function mismoNit(a, b) {
+    a = soloDigitosNit(a); b = soloDigitosNit(b);
+    if (!a || !b) return false;
+    return a === b || (a.length === b.length + 1 && a.startsWith(b)) || (b.length === a.length + 1 && b.startsWith(a));
+  }
+
+  async function importarFacturasCompras(input) {
+    const archivos = [...(input.files || [])];
+    input.value = '';
+    if (!archivos.length) return;
+    const cont = document.getElementById('feComprasResultado');
+    cont.innerHTML = '<div class="cargando">Leyendo...</div>';
+    const xmls = [];
+    try {
+      for (const a of archivos) {
+        if (/\.zip$/i.test(a.name)) {
+          const zip = await JSZip.loadAsync(await a.arrayBuffer());
+          for (const nombre of Object.keys(zip.files)) if (/\.xml$/i.test(nombre) && !zip.files[nombre].dir) xmls.push({ origen: a.name + ' › ' + nombre, texto: await zip.files[nombre].async('string') });
+        } else xmls.push({ origen: a.name, texto: await a.text() });
+      }
+    } catch (e) { cont.innerHTML = `<div class="cargando">No se pudo abrir el archivo: ${escaparHtml(e.message)}</div>`; return; }
+    let nitEmpresa = '', registradas = [];
+    try { const { data } = await supabaseClient.from('configuracion_empresa').select('nit').limit(1).maybeSingle(); nitEmpresa = (data && data.nit) || ''; } catch (e) { /* sin NIT: no se puede distinguir ventas */ }
+    try { const { data } = await supabaseClient.from('compras_requisitos_sena').select('numero_factura, proveedor_nit'); registradas = data || []; } catch (e) { /* sin lista: no se detectan registradas */ }
+    const vistos = new Set();
+    feBorradoresCompras = xmls.map(x => {
+      const f = { origen: x.origen, ...leerFacturaXmlDian(x.texto) };
+      if (f.error) return { ...f, estado: 'error', detalle: f.error };
+      if (f.esPrueba) return { ...f, estado: 'error', detalle: 'Factura de PRUEBA (habilitación de la DIAN): se ignora.' };
+      if (nitEmpresa && mismoNit(f.documentoProveedor, nitEmpresa) && !mismoNit(f.documentoCliente, nitEmpresa)) return { ...f, estado: 'venta', detalle: 'Es una factura de VENTA de Lana Rosa, no de compra.' };
+      if (nitEmpresa && !mismoNit(f.documentoCliente, nitEmpresa)) return { ...f, estado: 'otro', detalle: 'La factura no está a nombre de Lana Rosa (NIT ' + (f.documentoCliente || 'sin dato') + '). Revísala.' };
+      if (f.cufe && vistos.has(f.cufe)) return { ...f, estado: 'repetida', detalle: 'Repetida en este lote (mismo CUFE).' };
+      if (f.cufe) vistos.add(f.cufe);
+      const yaRegistrada = registradas.some(r => mismoNit(r.proveedor_nit, f.documentoProveedor) && [f.idCompleto, f.numero].includes(String(r.numero_factura || '').trim()));
+      if (yaRegistrada) return { ...f, estado: 'registrada', detalle: 'Ya hay una compra registrada con este proveedor y número de factura.' };
+      return { ...f, estado: 'nuevo', detalle: 'Borrador listo para revisar.' };
+    });
+    renderizarBorradoresCompras(!nitEmpresa);
+  }
+
+  function renderizarBorradoresCompras(sinNit) {
+    const cont = document.getElementById('feComprasResultado');
+    const lista = feBorradoresCompras;
+    if (!lista.length) { cont.innerHTML = '<div class="cargando">No encontré facturas en los archivos.</div>'; return; }
+    const etiquetas = { nuevo: ['✅ Nueva', 'var(--tinte-verde)', 'var(--verde-exito)'], repetida: ['⚠️ Repetida', 'var(--tinte-ambar, #fff4e0)', 'var(--ambar)'], registrada: ['⚠️ Ya registrada', 'var(--tinte-ambar, #fff4e0)', 'var(--ambar)'], venta: ['↩️ Es una venta', 'var(--tinte-azul)', 'var(--azul-acero)'], otro: ['⚠️ Otro cliente', 'var(--tinte-ambar, #fff4e0)', 'var(--ambar)'], error: ['❌ No se pudo', 'var(--tinte-rojo)', 'var(--rojo-error)'] };
+    const nuevas = lista.filter(f => f.estado === 'nuevo');
+    cont.innerHTML = `
+      <div style="font-size:12.5px;margin-bottom:8px;"><strong>${lista.length}</strong> archivo(s) leído(s): <strong>${nuevas.length}</strong> nueva(s) · total de las nuevas <strong>${formatearMoneda(nuevas.reduce((a, f) => a + f.total, 0))}</strong>. No se registró nada en los libros.</div>
+      ${sinNit ? '<div class="mensaje error" style="display:block;">No encontré el NIT de Lana Rosa en Datos de la empresa: no puedo distinguir facturas de venta de facturas de compra. Complétalo y vuelve a subir.</div>' : ''}
+      <table class="tk"><thead><tr><th>Estado</th><th>Proveedor</th><th>Factura</th><th>Fecha</th><th class="n">Subtotal</th><th class="n">IVA</th><th class="n">Total</th><th>CUFE</th></tr></thead><tbody>
+        ${lista.map(f => { const e = etiquetas[f.estado]; return `<tr>
+          <td><span class="badge-estado-pedido" style="background:${e[1]};color:${e[2]};">${e[0]}</span><div style="font-size:11px;opacity:.75;max-width:230px;">${escaparHtml(f.detalle)}</div></td>
+          <td>${f.error ? escaparHtml(f.origen) : `<strong>${escaparHtml(f.nombreProveedor || '—')}</strong><div style="font-size:11px;opacity:.7;">NIT ${escaparHtml(f.documentoProveedor || '—')}</div>`}</td>
+          <td>${escaparHtml(f.idCompleto || '')}</td><td>${escaparHtml(f.fecha || '')}</td>
+          <td class="n">${f.error ? '' : formatearMoneda(f.subtotal)}</td><td class="n">${f.error ? '' : formatearMoneda(f.iva)}</td><td class="n">${f.error ? '' : formatearMoneda(f.total)}</td>
+          <td style="font-size:10.5px;">${escaparHtml((f.cufe || '').slice(0, 12))}${f.cufe ? '…' : ''}</td></tr>`; }).join('')}
+      </tbody></table>`;
+  }
+
+  function exportarBorradoresComprasExcel() {
+    const l = feBorradoresCompras;
+    if (!l.length) { mostrarMensaje('mensajeFe', 'Primero sube las facturas de compras.', 'error'); return; }
+    const nombres = { nuevo: 'Nueva', repetida: 'Repetida', registrada: 'Ya registrada', venta: 'Es una venta', otro: 'Otro cliente', error: 'No se pudo' };
+    const filas = [['Lana Rosa Crochet — Borradores de facturas de compras'], [`Generado: ${new Date().toLocaleString('es-CO')}`], [],
+      ['Estado', 'Nota', 'Proveedor', 'NIT proveedor', 'Factura', 'Fecha', 'Subtotal', 'IVA', 'Total', 'CUFE', 'Archivo'],
+      ...l.map(f => [nombres[f.estado], f.detalle, f.nombreProveedor || '', f.documentoProveedor || '', f.idCompleto || '', f.fecha || '', f.subtotal || 0, f.iva || 0, f.total || 0, f.cufe || '', f.origen])];
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, XLSX.utils.aoa_to_sheet(filas), 'Borradores compras');
+    XLSX.writeFile(libro, nombreArchivoInforme('Borradores facturas de compras', 'xlsx'));
+  }
 
   async function importarFacturasDian(input) {
     const archivos = [...(input.files || [])];

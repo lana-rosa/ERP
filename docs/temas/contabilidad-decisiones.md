@@ -76,3 +76,9 @@ Alerta: la reunión dice honorarios del contador $350.000 al mes; la propuesta d
 - **Base de datos:** tabla nueva `soportes_mensuales_contables` (mes, tipo, descripcion, enlace, valor; el enlace debe empezar por https y el mes por día 1), con RLS solo para administrador y contador. SQL en `docs/migraciones/2026-11-24-soportes-mensuales-contables.sql`.
 - **Probado:** SQL con rollback (insert como administrador; enlace `javascript:` y mes que no es día 1 rechazados) y Playwright (lista, enlaces seguros, alta con prompts, rechazo de http). Los soportes de pagos de compras/gastos siguen en la foto del comprobante de cada gasto.
 - **Falta:** que el informe mensual del Fondo muestre estos enlaces; guardar archivos dentro del ERP (hoy solo enlaces al Drive).
+
+### Punto 3, etapa 1 hecha (24-nov-2026): facturas electrónicas de compras, solo lectura (sw v89)
+- **Dónde:** Facturación y nómina electrónica → pestaña «🛒 Facturas de compras» (visible para administrador y contador). Botón «Subir facturas de compras (ZIP o XML)».
+- **Qué hace:** abre el ZIP de la DIAN, lee el XML (misma función  de ventas, ampliada con proveedor, NIT, subtotal e IVA) y muestra un borrador por factura. Clasifica: Nueva · Repetida en el lote (mismo CUFE) · Ya registrada (proveedor+número en ) · Es una venta de Lana Rosa · A nombre de otro NIT · Prueba/error. Excel de los borradores. **No escribe nada en la base de datos ni en los libros.**
+- **Probado** (Playwright, 7 XML simulados en un ZIP): las 7 clasificaciones salieron bien y no hubo errores. Sin probar con ZIP reales de proveedores.
+- **Etapa 2 (pendiente, necesita el sí de Sara):** confirmar cada borrador con categoría y centro de costo y registrarlo como gasto/compra con su asiento (toca contabilidad; hay que mirar cómo se registra hoy una compra en el Worker). **Etapa 3:** carpeta vigilada para compras (separar por NIT comprador).
