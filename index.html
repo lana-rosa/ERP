@@ -3353,9 +3353,24 @@
         <label for="empSalario">Salario básico mensual (COP)</label>
         <input type="number" id="empSalario" placeholder="0" min="1" step="1">
         <label for="empFechaIngreso">Fecha de ingreso</label>
-        <input type="date" id="empFechaIngreso">
+        <input type="date" id="empFechaIngreso" onchange="sugerirFinContratoNuevo()">
         <label for="empDepartamento">Departamento</label>
         <select id="empDepartamento"><option value="">Selecciona...</option></select>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--rosa-suave);font-size:11.5px;font-weight:600;opacity:0.7;">Cargo y contrato</div>
+        <label for="empCargo" style="margin-top:6px;">Cargo</label>
+        <input type="text" id="empCargo" placeholder="Ej. Atención del almacén, Tejedora">
+        <label for="empArea">Área</label>
+        <select id="empArea"><option value="">Sin área</option><option value="Taller">Taller</option><option value="Tienda">Tienda</option><option value="Academy">Academy</option><option value="Administración">Administración</option></select>
+        <label for="empTipoContrato">Tipo de contrato</label>
+        <select id="empTipoContrato" onchange="sugerirFinContratoNuevo()"><option value="fijo" selected>Término fijo</option><option value="indefinido">Indefinido</option><option value="obra_labor">Obra o labor</option></select>
+        <label for="empFinContrato">Fecha de fin del contrato <span style="font-size:10px;opacity:0.6;">(solo término fijo; se sugiere 1 año desde el ingreso)</span></label>
+        <input type="date" id="empFinContrato">
+        <label for="empJornada">Jornada</label>
+        <select id="empJornada"><option value="completa" selected>Tiempo completo</option><option value="medio_tiempo">Medio tiempo</option><option value="por_horas">Por horas</option></select>
+        <label for="empCaja">Caja de compensación <span style="font-size:10px;opacity:0.6;">(opcional)</span></label>
+        <input type="text" id="empCaja" placeholder="Ej. Comfamiliares">
+        <label for="empCuenta">Cuenta de acceso al ERP <span style="font-size:10px;opacity:0.6;">(opcional: si ya tiene su usuario, conéctalo aquí)</span></label>
+        <select id="empCuenta"><option value="">Sin cuenta de acceso</option></select>
         <label for="empRiesgoArl">Clase de riesgo ARL</label>
         <select id="empRiesgoArl">
           <option value="I">Clase I — Riesgo mínimo (taller/oficina)</option>
@@ -7031,6 +7046,7 @@
     mostrar('nav-resenas-web', esAdmin);
     if (esAdmin) actualizarBadgeResenasWeb();
     if (esAdmin) actualizarBadgesPendientes();
+    actualizarAvisosPersonales();
     mostrar('nav-proveedores-dir', esAdmin);
     mostrar('nav-ordenes-compra', esAdmin);
     mostrar('nav-autorizaciones-compra', esAdmin || esCajero);
@@ -16123,6 +16139,7 @@
   }
 
   async function cargarMisAusencias() {
+    marcarVistas('aus'); avisosPersonales.ausRespondidas = 0; renderAvisoPendientesInicio();
     const hoy = hoyBogotaISO();
     document.getElementById('ausDesde').min = hoy;
     document.getElementById('ausHasta').min = hoy;
@@ -22258,6 +22275,10 @@
     if (!salario || salario <= 0) { mostrarMensaje('mensajeEmpleado', 'Escribe un salario válido.', 'error'); return; }
     if (horasSemana > HORAS_MAX_SEMANA_LEY) { mostrarMensaje('mensajeEmpleado', `La ley permite máximo ${HORAS_MAX_SEMANA_LEY} horas por semana.`, 'error'); return; }
     if (!fechaIngreso) { mostrarMensaje('mensajeEmpleado', 'Escribe la fecha de ingreso.', 'error'); return; }
+    const tipoContratoNuevo = document.getElementById('empTipoContrato').value;
+    const finContratoNuevo = tipoContratoNuevo === 'fijo' ? document.getElementById('empFinContrato').value : '';
+    if (tipoContratoNuevo === 'fijo' && !finContratoNuevo) { mostrarMensaje('mensajeEmpleado', 'Un contrato a término fijo necesita la fecha de fin (se sugiere 1 año desde el ingreso).', 'error'); return; }
+    if (finContratoNuevo && finContratoNuevo < fechaIngreso) { mostrarMensaje('mensajeEmpleado', 'La fecha de fin del contrato no puede ser anterior a la de ingreso.', 'error'); return; }
 
     const btn = document.getElementById('btnCrearEmpleado');
     btn.disabled = true;
@@ -22277,6 +22298,7 @@
         clase_riesgo_arl: riesgoArl,
         teletrabajo,
         es_propietario: esPropietario,
+        tipo_contrato: tipoContratoNuevo,
         horas_semana: horasSemana,
         aplica_retencion_fuente: aplicaRetencion,
         deducciones_adicionales_uvt: deduccionesUvt,
@@ -22296,7 +22318,22 @@
     const datos = await resp.json();
     if (!resp.ok) { mostrarMensaje('mensajeEmpleado', datos.error || 'No se pudo crear el empleado.', 'error'); return; }
 
-    mostrarMensaje('mensajeEmpleado', '✅ Empleado agregado correctamente.', 'exito');
+    // Los datos nuevos de la ficha se guardan aparte (el Worker aún no los recibe); si falla, queda el aviso para completarlos en Editar.
+    let avisoExtraEmpleado = '';
+    if (datos.empleado_id) {
+      const { error: errorExtra } = await supabaseClient.from('empleados').update({
+        cargo: document.getElementById('empCargo').value.trim() || null,
+        area: document.getElementById('empArea').value || null,
+        jornada: document.getElementById('empJornada').value || null,
+        fecha_fin_contrato: finContratoNuevo || null,
+        caja_compensacion: document.getElementById('empCaja').value.trim() || null,
+        user_id: document.getElementById('empCuenta').value || null
+      }).eq('id', datos.empleado_id);
+      if (errorExtra) avisoExtraEmpleado = ' Pero no se guardaron el cargo, el área, la jornada, la caja o la cuenta (' + errorExtra.message + '): complétalos con «Editar».';
+    }
+    mostrarMensaje('mensajeEmpleado', avisoExtraEmpleado ? '⚠️ Empleado agregado.' + avisoExtraEmpleado : '✅ Empleado agregado correctamente.', avisoExtraEmpleado ? 'error' : 'exito');
+    ['empCargo', 'empCaja', 'empFinContrato'].forEach(id => { document.getElementById(id).value = ''; });
+    document.getElementById('empArea').value = ''; document.getElementById('empTipoContrato').value = 'fijo'; document.getElementById('empJornada').value = 'completa'; document.getElementById('empCuenta').value = '';
     document.getElementById('empNombre').value = '';
     document.getElementById('empNumeroDocumento').value = '';
     document.getElementById('empFechaNacimiento').value = '';
@@ -22317,6 +22354,27 @@
     document.getElementById('empArlEntidad').value = '';
     await cargarEmpleados();
     setTimeout(() => mostrarSubTabGrupo('empNomina', 'subtabEmpListado', document.querySelector('[data-subtab-btn="empNomina"]')), 1200);
+  }
+
+  // Un contrato a término fijo dura 1 año desde el ingreso (se puede cambiar a mano).
+  function sugerirFinContratoNuevo() {
+    const ingreso = document.getElementById('empFechaIngreso').value;
+    const campo = document.getElementById('empFinContrato');
+    if (document.getElementById('empTipoContrato').value !== 'fijo') { campo.value = ''; return; }
+    if (!ingreso) return;
+    const d = new Date(ingreso + 'T00:00:00'); d.setFullYear(d.getFullYear() + 1); d.setDate(d.getDate() - 1);
+    campo.value = isoLocal(d);
+  }
+
+  // Cuentas de acceso que todavía no están conectadas con ninguna ficha.
+  function rellenarCuentasNuevoEmpleado() {
+    const sel = document.getElementById('empCuenta');
+    if (!sel) return;
+    const ocupados = new Set((empleadosActivosCache || []).filter(x => x.user_id).map(x => x.user_id));
+    const actual = sel.value;
+    sel.innerHTML = '<option value="">Sin cuenta de acceso</option>' + (usuariosRolesRhCache || []).filter(u => u.activo && !ocupados.has(u.user_id))
+      .map(u => `<option value="${u.user_id}">${escaparHtml(u.nombre_completo || 'Sin nombre')} — ${escaparHtml(ROLES_ERP_ETIQUETA[u.rol] || u.rol)}</option>`).join('');
+    if (actual) sel.value = actual;
   }
 
   async function cargarEmpleados() {
@@ -22361,6 +22419,7 @@
       tiposDocEmpleadoCache = {};
       (rDoc.data || []).forEach(d => { (tiposDocEmpleadoCache[d.empleado_id] = tiposDocEmpleadoCache[d.empleado_id] || []).push(d.tipo_documento); });
     } catch (err) { /* la ficha sigue funcionando con los datos básicos */ }
+    rellenarCuentasNuevoEmpleado();
   }
 
   function tiposDocumentoDeEmpleado(empleadoId) {
@@ -24485,6 +24544,7 @@
   // PENDIENTES POR RESPONDER (administradoras): autorizaciones de compra, pedidos a proveedores y vacaciones/permisos
   // ============================================================
   let pendientesAdmin = { autorizaciones: 0, ordenes: 0, ausencias: 0 };
+  setInterval(() => { if (sesionActual) { actualizarBadgesPendientes(); actualizarAvisosPersonales(); } }, 300000);
   function pintarBadgePendiente(id, n) {
     const b = document.getElementById(id);
     if (!b) return;
@@ -24503,6 +24563,39 @@
       renderAvisoPendientesInicio();
     } catch (e) { /* los avisos son opcionales */ }
   }
+  // --- Avisos para cada persona: respuestas a lo que pidió ---
+  let avisosPersonales = { autAprobadas: 0, autRechazadas: 0, ausRespondidas: 0 };
+  function claveVistas(tipo) { return 'lr_' + tipo + '_vistas_' + (sesionActual ? sesionActual.userId : ''); }
+  function leerVistas(tipo) { const porDefecto = new Date(Date.now() - 7 * 86400000).toISOString(); try { return localStorage.getItem(claveVistas(tipo)) || porDefecto; } catch (e) { return porDefecto; } }
+  function marcarVistas(tipo) { try { localStorage.setItem(claveVistas(tipo), new Date().toISOString()); } catch (e) { /* se volverá a avisar */ } }
+  async function actualizarAvisosPersonales() {
+    if (!sesionActual) return;
+    try {
+      const hoy = hoyBogotaISO();
+      const contar = (t) => supabaseClient.from(t).select('id', { count: 'exact', head: true });
+      const [apr, rech] = await Promise.all([
+        contar('autorizaciones_compra').eq('solicitante', sesionActual.userId).eq('estado', 'aprobada').gte('vence_en', hoy),
+        contar('autorizaciones_compra').eq('solicitante', sesionActual.userId).eq('estado', 'rechazada').gt('resuelto_en', leerVistas('aut'))
+      ]);
+      let aus = 0;
+      const { data: miEmpleadoId } = await supabaseClient.rpc('fn_mi_empleado_id');
+      if (miEmpleadoId) {
+        const r = await contar('solicitudes_ausencia').eq('empleado_id', miEmpleadoId).in('estado', ['aprobada', 'rechazada']).gt('resuelto_en', leerVistas('aus'));
+        aus = r.count || 0;
+      }
+      avisosPersonales = { autAprobadas: apr.count || 0, autRechazadas: rech.count || 0, ausRespondidas: aus };
+      if (!esAdministradoraActual()) pintarBadgePendiente('badgeAutorizacionesPendientes', avisosPersonales.autAprobadas + avisosPersonales.autRechazadas);
+      renderAvisoPendientesInicio();
+    } catch (e) { /* los avisos son opcionales */ }
+  }
+  async function abrirMisVacaciones() {
+    recordarDestino({ modulo: null, nav: '' });
+    await mostrarPantallaMiPerfil();
+    const btn = [...document.querySelectorAll('[data-subtab-btn="miPerfil"]')].find(b => /Vacaciones/.test(b.textContent));
+    mostrarSubTabGrupo('miPerfil', 'subtabPerfilAusencias', btn || null);
+    cargarMisAusencias();
+  }
+
   function renderAvisoPendientesInicio() {
     const el = document.getElementById('hubAvisoPendientes');
     if (!el) return;
@@ -24513,8 +24606,16 @@
       if (p.ordenes > 0) items.push(['nav-ordenes-compra', `${p.ordenes} pedido${p.ordenes === 1 ? '' : 's'} a proveedor`]);
       if (p.ausencias > 0) items.push(['nav-talento-humano', `${p.ausencias} solicitud${p.ausencias === 1 ? '' : 'es'} de vacaciones o permiso`]);
     }
-    if (items.length === 0) { el.style.display = 'none'; return; }
-    el.innerHTML = '<span>⏳ Por responder:</span> ' + items.map(([id, texto]) => `<button type="button" onclick="abrirAccesoRapido('${id}')">${texto}</button>`).join(' ');
+    const a = avisosPersonales;
+    const personales = [];
+    const plural = (n, uno, varios) => n === 1 ? uno : varios;
+    if (a.autAprobadas > 0) personales.push(["abrirAccesoRapido('nav-autorizaciones-compra')", `✅ ${a.autAprobadas} ${plural(a.autAprobadas, 'autorización de compra aprobada', 'autorizaciones de compra aprobadas')} para usar`]);
+    if (a.autRechazadas > 0) personales.push(["abrirAccesoRapido('nav-autorizaciones-compra')", `❌ ${a.autRechazadas} ${plural(a.autRechazadas, 'pedido de autorización rechazado', 'pedidos de autorización rechazados')}`]);
+    if (a.ausRespondidas > 0) personales.push(['abrirMisVacaciones()', `🌴 ${plural(a.ausRespondidas, 'Respondieron una solicitud tuya', 'Respondieron ' + a.ausRespondidas + ' solicitudes tuyas')} de vacaciones o permiso`]);
+    if (items.length === 0 && personales.length === 0) { el.style.display = 'none'; return; }
+    el.innerHTML = (items.length ? '<span>⏳ Por responder:</span> ' + items.map(([id, texto]) => `<button type="button" onclick="abrirAccesoRapido('${id}')">${texto}</button>`).join(' ') : '')
+      + (items.length && personales.length ? ' &nbsp; ' : '')
+      + (personales.length ? '<span>🔔 Para ti:</span> ' + personales.map(([accion, texto]) => `<button type="button" onclick="${accion}">${texto}</button>`).join(' ') : '');
     el.style.display = '';
   }
 
@@ -24541,6 +24642,7 @@
 
   async function mostrarPantallaAutorizacionesCompra() {
     mostrarPantalla('pantallaAutorizacionesCompra');
+    marcarVistas('aut'); avisosPersonales.autRechazadas = 0; if (!esAdministradoraActual()) pintarBadgePendiente('badgeAutorizacionesPendientes', avisosPersonales.autAprobadas);
     const adm = esAdministradoraActual();
     document.getElementById('bloqueAutCompraSolicitar').classList.toggle('oculto', adm);
     document.getElementById('bloqueAutCompraAdmin').classList.toggle('oculto', !adm);
@@ -34596,6 +34698,7 @@
     document.body.classList.add('modo-inicio');
     renderInicioModulos();
     actualizarBadgesPendientes();
+    actualizarAvisosPersonales();
     cargarAvisoEntregasFondo();
     moverWidgetHoras('inicio');
     fijarHashUrl('inicio');
