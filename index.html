@@ -1230,10 +1230,10 @@
       <button class="sidebar-depto-header" id="headerDeptoCompras" onclick="toggleSidebarDepto('deptoComprasSubmenu', 'headerDeptoCompras')"><span class="depto-ico" style="--c:#e0a032"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l1 12H5L6 8Z"/><path d="M9 8V7a3 3 0 0 1 6 0v1"/></svg></span><span class="depto-nombre">Compras y Gastos</span> <span class="chevron">▾</span></button>
       <div class="sidebar-depto-submenu" id="deptoComprasSubmenu">
         <button class="nav-btn" id="nav-compras-gastos" onclick="mostrarPantallaPagosPendientes('01')"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span> Registro de compras y gastos</button>
-        <button class="nav-btn" id="nav-autorizaciones-compra" onclick="mostrarPantallaAutorizacionesCompra()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l4 4 10-10"/><path d="M4 20h16"/></svg></span> Autorizar compras</button>
+        <button class="nav-btn" id="nav-autorizaciones-compra" onclick="mostrarPantallaAutorizacionesCompra()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l4 4 10-10"/><path d="M4 20h16"/></svg></span> Autorizar compras <span id="badgeAutorizacionesPendientes" style="display:none;margin-left:auto;background:#d8017c;color:#fff;border-radius:999px;font-size:10.5px;font-weight:700;padding:1px 8px;"></span></button>
         <button class="nav-btn" id="nav-proveedores-dir" onclick="mostrarPantallaProveedores()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21V10l6 4v-4l6 4V6h3v15H3Z"/></svg></span> Proveedores</button>
         <button class="nav-btn" id="nav-cotizaciones" onclick="mostrarPantallaCotizaciones()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h10l4 4v14H5V3Z"/><path d="M9 15l4-4 2 2-4 4H9v-2Z"/></svg></span> Cotizaciones</button>
-        <button class="nav-btn" id="nav-ordenes-compra" onclick="mostrarPantallaOrdenesCompra()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8l9-5 9 5v8l-9 5-9-5V8Z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></span> Órdenes de compra</button>
+        <button class="nav-btn" id="nav-ordenes-compra" onclick="mostrarPantallaOrdenesCompra()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8l9-5 9 5v8l-9 5-9-5V8Z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></span> Órdenes de compra <span id="badgeOrdenesPorAprobar" style="display:none;margin-left:auto;background:#d8017c;color:#fff;border-radius:999px;font-size:10.5px;font-weight:700;padding:1px 8px;"></span></button>
       </div>
     </div>
 
@@ -1289,7 +1289,7 @@
       <div class="sidebar-depto-submenu" id="deptoTalentoSubmenu">
         <button class="nav-btn" id="nav-nomina" onclick="mostrarPantallaNomina()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.5-3 2.7-5 5.5-5s5 2 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 14.2c3 .3 4.7 2 5 4.8"/></svg></span> Nómina</button>
         <button class="nav-btn" id="nav-nomina-electronica" onclick="mostrarPantallaFacturacionElectronica('nomina')"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11 21 3l-6 18-3-7-9-3Z"/></svg></span> Nómina electrónica DIAN</button>
-        <button class="nav-btn" id="nav-talento-humano" onclick="mostrarPantallaTalentoHumano()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h6l2 2h10v11H3V6Z"/></svg></span> Carpetas por empleado</button>
+        <button class="nav-btn" id="nav-talento-humano" onclick="mostrarPantallaTalentoHumano()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h6l2 2h10v11H3V6Z"/></svg></span> Carpetas por empleado <span id="badgeAusenciasPendientes" style="display:none;margin-left:auto;background:#d8017c;color:#fff;border-radius:999px;font-size:10.5px;font-weight:700;padding:1px 8px;"></span></button>
       </div>
     </div>
 
@@ -1396,6 +1396,7 @@
       <div class="hub-marca"><img src="./icon-192.png?v=4" alt="Lana Rosa" width="72" height="72"><h1>Lana Rosa ERP</h1><p>Elige un módulo para empezar</p></div>
     </div>
     <div id="hubAvisoCaja" style="display:none;"></div>
+    <div id="hubAvisoPendientes" class="hub-aviso" style="display:none;"></div>
     <div class="hub-titulo-seccion" id="hubRapidosTitulo">Accesos rápidos</div>
     <div class="hub-rapidos" id="hubRapidos"></div>
     <div class="hub-titulo-seccion" id="hubModulosTitulo">Módulos</div>
@@ -6967,6 +6968,7 @@
     mostrar('nav-notas-cd', esAdmin);
     mostrar('nav-resenas-web', esAdmin);
     if (esAdmin) actualizarBadgeResenasWeb();
+    if (esAdmin) actualizarBadgesPendientes();
     mostrar('nav-proveedores-dir', esAdmin);
     mostrar('nav-ordenes-compra', esAdmin);
     mostrar('nav-autorizaciones-compra', esAdmin || esCajero);
@@ -16174,6 +16176,7 @@
     const { error } = await supabaseClient.rpc('fn_aus_resolver', { p_id: id, p_aprobar: aprobar, p_respuesta: document.getElementById(`ausResp-${id}`).value.trim() || null, p_dias: aprobar && dias > 0 ? dias : null });
     if (error) { mostrarMensaje('mensajeAusenciasAdmin', error.message, 'error'); return; }
     await cargarSolicitudesAusenciaAdmin();
+    actualizarBadgesPendientes();
   }
 
   async function cancelarAusenciaAdmin(id) {
@@ -24289,6 +24292,7 @@
     if (!resp.ok) { mostrarMensaje('mensajeOrdenesCompra', 'No se pudo actualizar.', 'error'); return; }
     if (estado === 'recibida') mostrarMensaje('mensajeOrdenesCompra', '✅ Marcada como recibida. Recuerda registrar la compra real en "Registro de compras y gastos" para que quede contabilizada.', 'exito');
     await cargarOrdenesCompra();
+    actualizarBadgesPendientes();
   }
 
   async function cancelarSolicitudOrdenCompra(id) {
@@ -24306,6 +24310,43 @@
     });
     if (!resp.ok) { mostrarMensaje('mensajeOrdenesCompra', 'No se pudo eliminar.', 'error'); return; }
     await cargarOrdenesCompra();
+  }
+
+  // ============================================================
+  // PENDIENTES POR RESPONDER (administradoras): autorizaciones de compra, pedidos a proveedores y vacaciones/permisos
+  // ============================================================
+  let pendientesAdmin = { autorizaciones: 0, ordenes: 0, ausencias: 0 };
+  function pintarBadgePendiente(id, n) {
+    const b = document.getElementById(id);
+    if (!b) return;
+    b.textContent = n;
+    b.style.display = n > 0 ? '' : 'none';
+  }
+  async function actualizarBadgesPendientes() {
+    if (!esAdministradoraActual()) { renderAvisoPendientesInicio(); return; }
+    try {
+      const contar = (tabla, estado) => supabaseClient.from(tabla).select('id', { count: 'exact', head: true }).eq('estado', estado);
+      const [a, o, v] = await Promise.all([contar('autorizaciones_compra', 'pendiente'), contar('ordenes_compra', 'por_aprobar'), contar('solicitudes_ausencia', 'pendiente')]);
+      pendientesAdmin = { autorizaciones: a.count || 0, ordenes: o.count || 0, ausencias: v.count || 0 };
+      pintarBadgePendiente('badgeAutorizacionesPendientes', pendientesAdmin.autorizaciones);
+      pintarBadgePendiente('badgeOrdenesPorAprobar', pendientesAdmin.ordenes);
+      pintarBadgePendiente('badgeAusenciasPendientes', pendientesAdmin.ausencias);
+      renderAvisoPendientesInicio();
+    } catch (e) { /* los avisos son opcionales */ }
+  }
+  function renderAvisoPendientesInicio() {
+    const el = document.getElementById('hubAvisoPendientes');
+    if (!el) return;
+    const p = pendientesAdmin;
+    const items = [];
+    if (esAdministradoraActual()) {
+      if (p.autorizaciones > 0) items.push(['nav-autorizaciones-compra', `${p.autorizaciones} ${p.autorizaciones === 1 ? 'autorización' : 'autorizaciones'} de compra`]);
+      if (p.ordenes > 0) items.push(['nav-ordenes-compra', `${p.ordenes} pedido${p.ordenes === 1 ? '' : 's'} a proveedor`]);
+      if (p.ausencias > 0) items.push(['nav-talento-humano', `${p.ausencias} solicitud${p.ausencias === 1 ? '' : 'es'} de vacaciones o permiso`]);
+    }
+    if (items.length === 0) { el.style.display = 'none'; return; }
+    el.innerHTML = '<span>⏳ Por responder:</span> ' + items.map(([id, texto]) => `<button type="button" onclick="abrirAccesoRapido('${id}')">${texto}</button>`).join(' ');
+    el.style.display = '';
   }
 
   // ============================================================
@@ -24412,6 +24453,7 @@
     });
     if (error) { mostrarMensaje('mensajeAutCompra', error.message, 'error'); return; }
     await cargarAutorizacionesCompra();
+    actualizarBadgesPendientes();
   }
 
   async function cancelarAutorizacionCompra(id) {
@@ -34068,12 +34110,14 @@
         : '<span>Todavía no has abierto tu turno de caja.</span><button type="button" onclick="recordarDestino({modulo:\'ventas\',nav:\'nav-turno\'});irATurnoActivo()">Abrir turno de caja</button>';
       avisoCaja.style.display = '';
     } else { avisoCaja.style.display = 'none'; }
+    renderAvisoPendientesInicio();
   }
 
   function mostrarInicioModulos() {
     limpiarModos();
     document.body.classList.add('modo-inicio');
     renderInicioModulos();
+    actualizarBadgesPendientes();
     moverWidgetHoras('inicio');
     fijarHashUrl('inicio');
     mostrarPantalla('pantallaInicio');
