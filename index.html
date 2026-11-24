@@ -5264,6 +5264,7 @@
             <input type="checkbox" id="ciPucInactivas" style="width:auto;" onchange="renderizarPlanCuentas()"> Ver inactivas
           </label>
         </div>
+        <div style="margin-bottom:10px;"><button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarCatalogoCuentasExcel()">📥 Catálogo para el contador (Excel)</button></div>
         <div id="ciPucLista"><div class="cargando">Cargando...</div></div>
       </div>
       <div class="panel no-exportar" style="max-height:none;">
@@ -5387,6 +5388,8 @@
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabLibroMayor', this); cargarLibroMayor();">📚 Libro Mayor</button>
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabBalancePrueba', this); cargarBalancePrueba();">🧮 Balance de prueba</button>
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabLibroAuxiliar', this); prepararLibroAuxiliar();">🔍 Libro Auxiliar</button>
+    <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabGastosCategoria', this); cargarGastosCategoria();">🗂️ Gastos y compras por categoría</button>
+    <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabInformeFondo', this);">📤 Informe mensual del Fondo</button>
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabCierreContable', this); cargarPantallaCierreContable();">🔒 Cierre contable</button>
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabBloqueoFecha', this); cargarPantallaBloqueoFecha();">🔐 Bloqueo de período</button>
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabRevisionContador', this); cargarRevisionesContables();">✅ Revisión del contador</button>
@@ -5401,6 +5404,28 @@
       <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirEstadoFinanciero('contenidoEstadoResultados', 'Estado de Resultados')">🖨️ Imprimir / PDF</button>
     </div>
     <div id="contenidoEstadoResultados"><div class="cargando">Cargando...</div></div>
+  </div>
+
+  <div id="subtabGastosCategoria" data-subtab-grupo="estadosFin" class="oculto">
+    <div class="subtitulo" style="margin-bottom:10px;">Gastos (grupos 51, 52 y 53) y compras de inventario y activos (cuentas 14 y 15) tomados del Libro Diario, agrupados por cuenta (categoría). Las reversiones restan. Se excluyen las salidas de inventario por ventas del punto de venta.</div>
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+      <div><label for="gcDesde" style="font-size:11px;">Fecha inicio</label><input type="date" id="gcDesde" onchange="cargarGastosCategoria()" style="padding:9px 10px;"></div>
+      <div><label for="gcHasta" style="font-size:11px;">Fecha fin</label><input type="date" id="gcHasta" onchange="cargarGastosCategoria()" style="padding:9px 10px;"></div>
+      <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarGastosCategoriaExcel()">📥 Excel</button>
+      <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirEstadoFinanciero('contenidoGastosCategoria', 'Gastos y compras por categoria', 'LanaRosa_Gastos_y_compras_por_categoria')">🖨️ Imprimir / PDF</button>
+    </div>
+    <div id="contenidoGastosCategoria"><div class="cargando">Cargando...</div></div>
+  </div>
+
+  <div id="subtabInformeFondo" data-subtab-grupo="estadosFin" class="oculto">
+    <div class="subtitulo" style="margin-bottom:10px;">Informe mensual para el Fondo Emprender (actividad 98): Estado de situación financiera (Balance General) y Estado de resultados del mes elegido, en un solo PDF o Excel, con nombre de archivo sin caracteres especiales.</div>
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+      <div><label for="ifMes" style="font-size:11px;">Mes del informe</label><input type="month" id="ifMes" style="padding:9px 10px;"></div>
+      <button class="btn-principal" style="width:auto;margin-top:0;" onclick="generarInformeMensualFondo()">Generar informe</button>
+      <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarInformeFondoExcel()">📥 Excel</button>
+      <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirInformeFondo()">🖨️ Imprimir / PDF</button>
+    </div>
+    <div id="contenidoInformeFondo"><div class="cargando">Elige el mes y toca «Generar informe».</div></div>
   </div>
 
   <div id="subtabEstadoCostos" data-subtab-grupo="estadosFin" class="oculto">
@@ -27645,6 +27670,9 @@
     document.getElementById('fcFechaDesde').value = primerDiaMes;
     document.getElementById('fcFechaHasta').value = hoy;
     document.getElementById('ecFechaDesde').value = new Date(new Date().getFullYear(), 0, 1).toISOString().slice(0, 10);
+    document.getElementById('gcDesde').value = primerDiaMes;
+    document.getElementById('gcHasta').value = hoy;
+    document.getElementById('ifMes').value = hoy.slice(0, 7);
     document.getElementById('ecFechaHasta').value = hoy;
     mostrarSubTabGrupo('estadosFin', 'subtabEstadoResultados', document.querySelector('[data-subtab-btn="estadosFin"]'));
     await cargarEstadoResultados();
@@ -29818,13 +29846,13 @@
   }
   agregarBotonesCorreoInformes();
 
-  function imprimirEstadoFinanciero(idContenido, titulo) {
+  function imprimirEstadoFinanciero(idContenido, titulo, tituloArchivo) {
     const contenidoHtml = document.getElementById(idContenido).innerHTML;
     const ventana = window.open('', '_blank');
     ventana.document.write(`
       <html>
       <head>
-        <title>${titulo} — Lana Rosa Crochet</title>
+        <title>${escaparHtml(tituloArchivo || (titulo + ' — Lana Rosa Crochet'))}</title>
         <meta charset="utf-8">
         <style>
           body { font-family: Arial, Helvetica, sans-serif; padding: 30px; color: #2d2d2d; }
@@ -30012,6 +30040,154 @@
     const libro = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(libro, hoja, 'Balance General');
     XLSX.writeFile(libro, `LanaRosa_BalanceGeneral_${d.fecha_corte}.xlsx`);
+  }
+
+  // ---------- Catálogo de cuentas para el contador (Excel limpio) ----------
+  async function exportarCatalogoCuentasExcel() {
+    if (!cachePlanCuentas.length) await cargarPlanCuentas();
+    if (!cachePlanCuentas.length) { mostrarMensaje('mensajeContaImp', 'No hay cuentas para exportar.', 'error'); return; }
+    const nivel = ['', 'Clase', 'Grupo', 'Cuenta', 'Subcuenta', 'Auxiliar'];
+    const filas = [
+      ['Lana Rosa Crochet — Catálogo de cuentas (PUC)'],
+      [`Generado: ${new Date().toLocaleString('es-CO')}`],
+      [],
+      ['Código', 'Nombre', 'Nivel', 'Naturaleza', 'Recibe movimientos', 'Activa', 'La usa el sistema', 'Nota'],
+      ...cachePlanCuentas.map(c => [c.codigo, c.nombre, nivel[c.nivel] || c.nivel, c.naturaleza === 'debito' ? 'Débito' : 'Crédito',
+        c.acepta_movimientos ? 'Sí' : 'No', c.activa ? 'Sí' : 'No', c.usada_por_sistema ? 'Sí' : 'No', c.nota_validacion || ''])
+    ];
+    const hoja = XLSX.utils.aoa_to_sheet(filas);
+    hoja['!cols'] = [{ wch: 12 }, { wch: 55 }, { wch: 12 }, { wch: 12 }, { wch: 18 }, { wch: 8 }, { wch: 16 }, { wch: 40 }];
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Catalogo de cuentas');
+    XLSX.writeFile(libro, nombreArchivoInforme('Catalogo de cuentas', 'xlsx'));
+  }
+
+  // ---------- Gastos y compras por categoría (con fecha inicio y fin) ----------
+  let cacheGastosCategoria = null;
+
+  function clasificarMovimientoGastoCompra(m) {
+    const c = String(m.cuenta_codigo || '');
+    if (/^5[123]/.test(c)) return 'Gastos';
+    if (/^1[45]/.test(c) && m.origen !== 'pos') return 'Compras de inventario y activos';
+    return null;
+  }
+
+  async function cargarGastosCategoria() {
+    const cont = document.getElementById('contenidoGastosCategoria');
+    const desde = document.getElementById('gcDesde').value;
+    const hasta = document.getElementById('gcHasta').value;
+    if (!desde || !hasta) { cont.innerHTML = '<div class="cargando">Elige la fecha de inicio y la fecha fin.</div>'; return; }
+    if (desde > hasta) { cont.innerHTML = '<div class="cargando">La fecha de inicio no puede ser posterior a la fecha fin.</div>'; return; }
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    let d;
+    try { d = await llamarReporteContable('fn_libro_diario', { p_desde: desde, p_hasta: hasta }); }
+    catch (e) { cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(e.message)}</div>`; return; }
+    const lineas = [];
+    (d.movimientos || []).forEach(m => {
+      const tipo = clasificarMovimientoGastoCompra(m);
+      if (!tipo) return;
+      const valor = Number(m.debito || 0) - Number(m.credito || 0);
+      if (!valor) return;
+      lineas.push({ tipo, fecha: String(m.fecha).slice(0, 10), numero: m.numero, cuenta: `${m.cuenta_codigo} — ${m.cuenta_nombre}`, codigo: m.cuenta_codigo,
+        concepto: m.concepto || m.asiento_descripcion || '', tercero: m.tercero || '', origen: m.origen || '', valor });
+    });
+    const resumen = {};
+    lineas.forEach(l => {
+      const k = l.tipo + '|' + l.cuenta;
+      resumen[k] = resumen[k] || { tipo: l.tipo, cuenta: l.cuenta, codigo: l.codigo, total: 0, n: 0 };
+      resumen[k].total += l.valor; resumen[k].n += 1;
+    });
+    const cats = Object.values(resumen).sort((a, b) => a.tipo.localeCompare(b.tipo) || a.codigo.localeCompare(b.codigo));
+    const totalTipo = t => cats.filter(c => c.tipo === t).reduce((a, c) => a + c.total, 0);
+    cacheGastosCategoria = { desde, hasta, lineas, cats, truncado: (d.movimientos || []).length >= 3000 };
+    const bloque = tipo => {
+      const filas = cats.filter(c => c.tipo === tipo);
+      return `<h2 style="margin-top:18px;">${escaparHtml(tipo)}</h2>
+        ${filas.map(c => `<div class="resumen-fila"><span>${escaparHtml(c.cuenta)} <span style="opacity:.6;font-size:11.5px;">(${c.n} mov.)</span></span><strong>${formatearMoneda(c.total)}</strong></div>`).join('') || '<div class="cargando">Sin movimientos en el período.</div>'}
+        ${filaEstadoFin('Total ' + tipo.toLowerCase(), totalTipo(tipo), true)}`;
+    };
+    cont.innerHTML = `
+      <div class="panel" style="max-width:760px;max-height:none;">
+        <div class="subtitulo" style="margin-bottom:4px;">Del ${escaparHtml(desde)} al ${escaparHtml(hasta)}.</div>
+        ${cacheGastosCategoria.truncado ? '<div class="mensaje error" style="display:block;">El período tiene más de 3.000 movimientos y el reporte se recortó: usa un rango de fechas más corto.</div>' : ''}
+        ${bloque('Gastos')}
+        ${bloque('Compras de inventario y activos')}
+        <h2 style="margin-top:22px;">Detalle por movimiento</h2>
+        <table style="width:100%;font-size:12px;border-collapse:collapse;">
+          <tr style="text-align:left;opacity:.7;"><th>Fecha</th><th>Asiento</th><th>Categoría (cuenta)</th><th>Concepto</th><th>Tercero</th><th style="text-align:right;">Valor</th></tr>
+          ${lineas.map(l => `<tr><td>${escaparHtml(l.fecha)}</td><td>${escaparHtml(String(l.numero ?? ''))}</td><td>${escaparHtml(l.cuenta)}</td><td>${escaparHtml(String(l.concepto).slice(0, 80))}</td><td>${escaparHtml(l.tercero)}</td><td style="text-align:right;">${formatearMoneda(l.valor)}</td></tr>`).join('') || '<tr><td colspan="6" class="cargando">Sin movimientos.</td></tr>'}
+        </table>
+      </div>`;
+  }
+
+  function exportarGastosCategoriaExcel() {
+    const g = cacheGastosCategoria;
+    if (!g) { mostrarMensaje('mensajeEstadosFinancieros', 'Espera a que cargue el reporte primero.', 'error'); return; }
+    const resumen = [['Lana Rosa Crochet — Gastos y compras por categoría'], [`Del ${g.desde} al ${g.hasta}`], [],
+      ['Tipo', 'Categoría (cuenta)', 'Movimientos', 'Total'], ...g.cats.map(c => [c.tipo, c.cuenta, c.n, c.total])];
+    const detalle = [['Fecha', 'Asiento', 'Tipo', 'Categoría (cuenta)', 'Concepto', 'Tercero', 'Origen', 'Valor'],
+      ...g.lineas.map(l => [l.fecha, l.numero, l.tipo, l.cuenta, l.concepto, l.tercero, l.origen, l.valor])];
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, XLSX.utils.aoa_to_sheet(resumen), 'Resumen por categoria');
+    XLSX.utils.book_append_sheet(libro, XLSX.utils.aoa_to_sheet(detalle), 'Detalle');
+    XLSX.writeFile(libro, `LanaRosa_Gastos_y_compras_${g.desde}_a_${g.hasta}.xlsx`);
+  }
+
+  // ---------- Informe mensual para el Fondo Emprender ----------
+  let cacheInformeFondo = null;
+
+  async function generarInformeMensualFondo() {
+    const cont = document.getElementById('contenidoInformeFondo');
+    const mes = document.getElementById('ifMes').value;
+    if (!/^\d{4}-\d{2}$/.test(mes)) { cont.innerHTML = '<div class="cargando">Elige el mes del informe.</div>'; return; }
+    const [anio, m] = mes.split('-').map(Number);
+    const desde = `${mes}-01`;
+    const hasta = fechaLocalIso(new Date(anio, m, 0));
+    cont.innerHTML = '<div class="cargando">Generando...</div>';
+    document.getElementById('erFechaDesde').value = desde;
+    document.getElementById('erFechaHasta').value = hasta;
+    document.getElementById('bgFechaCorte').value = hasta;
+    await cargarBalanceGeneral();
+    await cargarEstadoResultados();
+    const bg = document.getElementById('contenidoBalanceGeneral').innerHTML;
+    const er = document.getElementById('contenidoEstadoResultados').innerHTML;
+    if (!cacheBalanceGeneral || !cacheEstadoResultados || bg.includes('No se pudo cargar') || er.includes('No se pudo cargar')) {
+      cont.innerHTML = '<div class="cargando">No se pudo generar alguno de los estados. Revisa tu conexión e inténtalo de nuevo.</div>';
+      return;
+    }
+    cacheInformeFondo = { mes, desde, hasta, bg: cacheBalanceGeneral, er: cacheEstadoResultados };
+    cont.innerHTML = `
+      <h2 style="margin-top:6px;">Estado de situación financiera al ${escaparHtml(hasta)}</h2>${bg}
+      <h2 style="margin-top:26px;">Estado de resultados del ${escaparHtml(desde)} al ${escaparHtml(hasta)}</h2>${er}
+      <div class="no-exportar" style="margin-top:22px;padding:12px 14px;border-radius:10px;border:1px dashed var(--borde, #d9c9d2);font-size:12.5px;">
+        <strong>Falta adjuntar a mano:</strong> el extracto bancario del mes y la conciliación de la cuenta del Fondo (solo movimientos de Bancolombia/Fondo). Se hacen en Contabilidad → Conciliación bancaria; este informe todavía no los incluye.
+      </div>`;
+  }
+
+  function imprimirInformeFondo() {
+    if (!cacheInformeFondo) { mostrarMensaje('mensajeEstadosFinancieros', 'Primero genera el informe del mes.', 'error'); return; }
+    imprimirEstadoFinanciero('contenidoInformeFondo', 'Informe mensual Fondo Emprender ' + cacheInformeFondo.mes, 'LanaRosa_Informe_mensual_Fondo_' + cacheInformeFondo.mes);
+  }
+
+  function exportarInformeFondoExcel() {
+    const f = cacheInformeFondo;
+    if (!f) { mostrarMensaje('mensajeEstadosFinancieros', 'Primero genera el informe del mes.', 'error'); return; }
+    const b = f.bg, e = f.er;
+    const sit = [['Lana Rosa Crochet — Estado de situación financiera'], [`Fecha de corte: ${f.hasta}`], [],
+      ['ACTIVOS', ''], ...b.activos.map(a => [a.nombre, a.valor]), ['TOTAL ACTIVOS', b.total_activos], [],
+      ['PASIVOS', ''], ...b.pasivos.map(a => [a.nombre, a.valor]), ['TOTAL PASIVOS', b.total_pasivos], [],
+      ['PATRIMONIO', ''], ...b.patrimonio.map(a => [a.nombre, a.valor]), ['Resultado del ejercicio (sin cerrar)', b.utilidad_acumulada],
+      ['TOTAL PATRIMONIO', b.total_patrimonio], ['TOTAL PASIVO + PATRIMONIO', Number(b.total_pasivos) + Number(b.total_patrimonio)]];
+    const res = [['Lana Rosa Crochet — Estado de resultados'], [`Del ${f.desde} al ${f.hasta}`], [],
+      ['INGRESOS OPERACIONALES', ''], ...e.ingresos.map(a => [a.nombre, a.valor]), ['Total ingresos', e.total_ingresos], [],
+      ['COSTO DE VENTAS', ''], ...e.costos.map(a => [a.nombre, a.valor]), ['Total costo de ventas', e.total_costos], ['Utilidad bruta', e.utilidad_bruta], [],
+      ['GASTOS OPERACIONALES', ''], ...e.gastos.map(a => [a.nombre, a.valor]), ['Utilidad operacional', e.utilidad_operacional], [],
+      ['Otros ingresos', e.total_otros_ingresos], ['Otros gastos', e.total_otros_gastos], ['Utilidad antes de impuestos', e.utilidad_antes_impuestos],
+      ['Impuestos', e.total_impuestos], ['UTILIDAD NETA DEL PERÍODO', e.utilidad_neta]];
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, XLSX.utils.aoa_to_sheet(sit), 'Estado de situacion');
+    XLSX.utils.book_append_sheet(libro, XLSX.utils.aoa_to_sheet(res), 'Estado de resultados');
+    XLSX.writeFile(libro, `LanaRosa_Informe_mensual_Fondo_${f.mes}.xlsx`);
   }
 
   function exportarFlujoCajaExcel() {
