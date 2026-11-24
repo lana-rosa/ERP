@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#d8017c">
+<title>LAROVA · Gestión Colaboradores</title>
+<link rel="icon" type="image/png" href="./icon-192.png">
+<!-- Gestión Colaboradores · Fase 1 · MURO. Página aparte (como marketing.html): misma sesión del ERP, no cambia index.html.
+     Lee y escribe solo con las funciones gestion_colab_* y las tablas gestion_colab_publicaciones / _lecturas. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+  :root{--rosa:#d8017c;--tinte:#fdf0f9;--hueso:#efebeb;--texto:#3a2c35;--suave:#6f5c66;--borde:#ead7e3;--fondo-tarjeta:#fff}
+  *{box-sizing:border-box;margin:0}
+  body{font-family:'Poppins',system-ui,sans-serif;background:linear-gradient(180deg,var(--tinte),var(--hueso));background-attachment:fixed;color:var(--texto);min-height:100vh;font-size:15px}
+  .env{max-width:720px;margin:0 auto;padding:18px 16px 48px}
+  header{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  header img{width:44px;height:44px;border-radius:12px}
+  h1{font-size:21px;color:var(--rosa);font-weight:700}
+  .volver{margin-left:auto;color:var(--rosa);font-weight:600;text-decoration:none;background:#fff;border-radius:999px;padding:7px 14px}
+  .sub{color:var(--suave);margin:6px 0 16px;font-size:13px}
+  textarea,select,button{font:inherit;color:inherit}
+  textarea,select{width:100%;border:1px solid var(--borde);border-radius:12px;padding:10px 12px;background:#fff}
+  textarea{min-height:84px;resize:vertical}
+  button{cursor:pointer;border:0;border-radius:999px;background:var(--rosa);color:#fff;font-weight:600;padding:9px 18px}
+  button.suave{background:#fff;color:var(--rosa);border:1px solid var(--borde);padding:5px 12px;font-size:12px}
+  .nuevo{background:var(--fondo-tarjeta);border-radius:16px;padding:14px;margin-bottom:18px;box-shadow:0 1px 6px #d8017c14}
+  .fila{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
+  .fila label{font-size:13px;color:var(--suave)}
+  .fila select{width:auto}
+  .pub{background:var(--fondo-tarjeta);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 1px 6px #d8017c14}
+  .pub.fijada{border:2px solid var(--rosa)}
+  .pub.nueva{border-left:5px solid var(--rosa)}
+  .meta{font-size:12px;color:var(--suave);margin-bottom:6px;display:flex;gap:8px;flex-wrap:wrap}
+  .texto{white-space:pre-wrap;word-wrap:break-word}
+  .acciones{display:flex;gap:6px;margin-top:10px}
+  .msg{padding:30px 16px;text-align:center;color:var(--suave)}
+  .etiqueta{background:var(--tinte);border-radius:999px;padding:1px 9px;color:var(--rosa);font-weight:600}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="env">
+  <header><img src="./icon-192.png" alt=""><h1>Gestión Colaboradores</h1><a class="volver" href="./larova.html#equipo">‹ Volver</a></header>
+  <p class="sub">Muro del equipo: avisos de Lana Rosa para todas.</p>
+  <div id="aviso" class="msg">Cargando…</div>
+  <div id="app" hidden>
+    <div class="nuevo" id="nuevo" hidden>
+      <textarea id="texto" maxlength="2000" placeholder="Escribe un aviso para el equipo…"></textarea>
+      <div class="fila">
+        <label><input type="checkbox" id="fijar"> 📌 Fijar arriba</label>
+        <span style="flex:1"></span><button id="publicar">Publicar</button>
+      </div>
+      <p id="error" class="sub" style="color:#a12d2d" hidden></p>
+    </div>
+    <div id="lista"></div>
+  </div>
+</div>
+<script>
+(function () {
+  var sb = window.supabase.createClient('https://ngjoognzvehwjtpqwrqe.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5nam9vZ256dmVod2p0cHF3cnFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3MDAzMDYsImV4cCI6MjA5NzI3NjMwNn0.2BNYuaQOTh-lU8GZcYhJAnZPBiJvT5PwB9MYZwNHTUE');
+  var $ = function (s) { return document.querySelector(s); };
+  var esAdmin = false, leidas = {};
+  function esc(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function fecha(iso) { return new Date(iso).toLocaleString('es-CO', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }); }
+  function destino(d) { return d === 'lideres' ? 'Solo líderes' : d === 'area' ? 'Mi área' : ''; }
+  function aviso(t) { $('#aviso').hidden = false; $('#aviso').innerHTML = t; $('#app').hidden = true; }
+
+  async function cargar() {
+    var r = await sb.from('gestion_colab_publicaciones').select('*').order('fijada', { ascending: false }).order('creada_en', { ascending: false }).limit(50);
+    var l = await sb.from('gestion_colab_lecturas').select('publicacion_id');
+    leidas = {}; (l.data || []).forEach(function (x) { leidas[x.publicacion_id] = true; });
+    if (r.error) { $('#lista').innerHTML = '<div class="msg">No se pudo cargar el muro. Intenta de nuevo.</div>'; return; }
+    var datos = r.data || [];
+    if (!datos.length) { $('#lista').innerHTML = '<div class="msg">Todavía no hay avisos.</div>'; return; }
+    $('#lista').innerHTML = datos.map(function (p) {
+      var nueva = !leidas[p.id];
+      return '<article class="pub' + (p.fijada ? ' fijada' : '') + (nueva ? ' nueva' : '') + '" data-id="' + p.id + '">' +
+        '<div class="meta">' + (p.fijada ? '<span>📌 Fijado</span>' : '') + '<strong>' + esc(p.autor_nombre || 'Lana Rosa') + '</strong><span>' + fecha(p.creada_en) + '</span>' +
+        (destino(p.destino) ? '<span class="etiqueta">' + destino(p.destino) + '</span>' : '') + (nueva ? '<span class="etiqueta">Nuevo</span>' : '') + '</div>' +
+        '<div class="texto">' + esc(p.texto) + '</div>' +
+        (esAdmin ? '<div class="acciones"><button class="suave" data-fijar="' + (!p.fijada) + '">' + (p.fijada ? 'Quitar fijado' : '📌 Fijar') + '</button><button class="suave" data-borrar="1">Borrar</button></div>' : '') +
+        '</article>';
+    }).join('');
+    datos.filter(function (p) { return !leidas[p.id]; }).forEach(function (p) { sb.rpc('gestion_colab_marcar_leida', { p_id: p.id }); });
+  }
+
+  async function iniciar() {
+    var s = await sb.auth.getSession();
+    if (!s.data || !s.data.session) { aviso('Para ver el muro, entra primero al ERP con tu cuenta.<br><br><a class="volver" href="./index.html">Ir al ERP</a>'); return; }
+    var ok = await sb.rpc('gestion_colab_es_colaborador');
+    if (ok.error || ok.data !== true) { aviso('Esta pantalla es solo para el equipo de Lana Rosa.'); return; }
+    var rol = await sb.rpc('fn_rol_actual'); esAdmin = !rol.error && rol.data === 'administrador';
+    $('#aviso').hidden = true; $('#app').hidden = false; $('#nuevo').hidden = !esAdmin;
+    $('#publicar').onclick = async function () {
+      var t = $('#texto').value.trim(); if (!t) return;
+      $('#publicar').disabled = true; $('#error').hidden = true;
+      var r = await sb.rpc('gestion_colab_publicar', { p_texto: t, p_destino: 'todos', p_fijada: $('#fijar').checked });
+      $('#publicar').disabled = false;
+      if (r.error) { $('#error').textContent = r.error.message; $('#error').hidden = false; return; }
+      $('#texto').value = ''; $('#fijar').checked = false; cargar();
+    };
+    $('#lista').onclick = async function (e) {
+      var art = e.target.closest('[data-id]'); if (!art) return;
+      var id = art.dataset.id;
+      if (e.target.dataset.borrar && confirm('¿Borrar este aviso del muro?')) { await sb.rpc('gestion_colab_borrar', { p_id: id }); cargar(); }
+      else if (e.target.dataset.fijar) { await sb.rpc('gestion_colab_fijar', { p_id: id, p_fijada: e.target.dataset.fijar === 'true' }); cargar(); }
+    };
+    cargar();
+  }
+  iniciar();
+})();
+</script>
+</body>
+</html>

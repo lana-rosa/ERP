@@ -40,6 +40,11 @@ cp marketing.html dist/marketing.html
 cambiar dist/marketing.html 'href="./larova.html#administracion"' 'href="./#administracion"'
 cambiar dist/marketing.html 'href="./index.html"' 'href="./erp/"'
 
+# --- Gestión Colaboradores (pantalla aparte, igual que Marketing) ---
+cp colaboradores.html dist/colaboradores.html
+cambiar dist/colaboradores.html 'href="./larova.html#equipo"' 'href="./#equipo"'
+cambiar dist/colaboradores.html 'href="./index.html"' 'href="./erp/"'
+
 # El service worker nunca se guarda en caché del navegador por mucho tiempo
 cat > dist/_headers <<'H'
 /erp/sw.js
