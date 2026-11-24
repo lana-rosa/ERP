@@ -36,7 +36,7 @@ Compras del Fondo con cuenta de pago, comprobante, extracto, evidencia de entreg
 
 ## Plan por fases (cada fase que toque la base se confirma con Sara antes)
 - **Fase 1 (hecha):** documentos guardados y estructura exacta de los formatos copiada.
-- **Fase 2:** Formato 2 «Legalización»: por desembolso, con las compras listas, en Excel y PDF.
+- **Fase 2 (hecha, sw.js v95; pendiente de fusionar con el sí de Sara):** Formato 2 «Legalización» por desembolso, en Excel y PDF. Ver sección «Fase 2» abajo.
 - **Fase 3:** Formato 1 «Solicitud» (hasta 10 filas, saldo por solicitar, total).
 - **Fase 4:** tablero del ciclo con estados y alertas 2 días antes (reutiliza el calendario de entregas).
 - Validaciones de los 10 errores frecuentes: ya cubiertas efectivo, cuenta, proveedor aprobado, valor distinto y faltantes de soporte; pendiente nómina sin PILA.
@@ -46,3 +46,10 @@ Subir formatos y soportes en AVANCE/PAGOS, firmas del beneficiario e interventor
 
 ## Coordinación
 Chat 7: retenciones, extracto, informe mensual del Fondo, **Bancolombia en ceros antes del desembolso de diciembre**. Chat 4: facturas y documento soporte.
+
+## Fase 2 hecha (24-nov-2026): desembolsos y formato «Legalización desembolso No.»
+- **Dónde:** Compras → botón «📑 Desembolsos y legalización del Fondo (formato del SENA)» (`verDesembolsosFondo`, `abrirDesembolsoFondo`). Se registra cada desembolso recibido (número consecutivo, monto, fecha, descripción, estado, fecha de legalización), se le agregan las compras del Fondo/Mixto (se precargan proveedor, factura, actividad del plan operativo, monto) y se editan las columnas del formato.
+- **Descargas:** `descargarExcelLegalizacionFondo` (misma estructura y celdas combinadas del Excel oficial, con fórmulas en Reintegro, Valor pagado y totales; archivo `Legalizacion_desembolso_No_N.xlsx`) e `imprimirLegalizacionFondo` (ventana para guardar como PDF). Usa la librería SheetJS que ya cargaba la app.
+- **Supabase (SQL en `docs/migraciones/2026-11-24-fondo-desembolsos-legalizacion.sql`):** tablas `fondo_desembolsos` y `fondo_desembolso_lineas` (RLS: ven administrador y contador; se escribe solo por funciones); funciones `fn_fondo_permiso`, `fn_fondo_desembolsos_listar`, `fn_fondo_desembolso_crear`, `fn_fondo_desembolso_actualizar`, `fn_fondo_desembolso_detalle`, `fn_fondo_desembolso_agregar_compra`, `fn_fondo_desembolso_actualizar_linea`, `fn_fondo_desembolso_quitar_linea`. Reutiliza `compras_requisitos_sena`, `fe_plan_operativo_conceptos`, `fondo_emprender_proyecto`.
+- **Decisiones:** Valor pagado = base − ReteFuente − ReteIVA − ReteICA − otros descuentos (el Excel de ejemplo no resta «otros»). Retenciones empiezan en 0 y se llenan a mano hasta que Contabilidad (chat 7) defina cuáles aplican. Una compra solo puede estar en una línea (pagos parciales de una misma compra: pendiente). Estado del desembolso es manual (Fase 4 lo automatiza).
+- **Falta:** Fase 3 (Formato 1 «Solicitud», hasta 10 filas), Fase 4 (tablero y alertas por estado), validación de nómina sin PILA al legalizar, pagos parciales de una misma compra, probar con datos reales.
