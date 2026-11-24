@@ -19199,6 +19199,9 @@
   }
 
   let obligacionesContadorCache = [];
+  let soportesMesCache = [];
+  let soportesMesDesde = '';
+  const TIPOS_SOPORTE_MES = { pago_nomina: 'Pago de nómina', pago_honorarios: 'Pago de honorarios', seguridad_social: 'Seguridad social (PILA)', otro: 'Otro soporte' };
 
   async function cargarPanelContador() {
     const cont = document.getElementById('contenidoPanelContador');
@@ -19209,15 +19212,18 @@
     try { d = await llamarReporteContable('fn_panel_contador', { p_anio: anio, p_mes: mes }); }
     catch (e) { cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(e.message)}</div>`; return; }
     const desde = d.periodo.desde, hasta = d.periodo.hasta;
-    const [obl, gas] = await Promise.all([
+    const [obl, gas, sop] = await Promise.all([
       supabaseClient.from('obligaciones_contador').select('*').order('orden').order('fecha_vencimiento', { nullsFirst: false }),
       supabaseClient.from('gastos_departamentales').select('id, created_at, fecha_factura, categoria, descripcion, monto, tipo_documento, es_documento_soporte, foto_comprobante, centro_costo_id').gte('created_at', desde + 'T00:00:00-05:00').lte('created_at', hasta + 'T23:59:59-05:00').order('created_at'),
+      supabaseClient.from('soportes_mensuales_contables').select('*').eq('mes', desde).order('created_at'),
     ]);
     obligacionesContadorCache = obl.data || [];
-    cont.innerHTML = htmlPanelContador(d, gas.data || []);
+    soportesMesCache = sop.data || [];
+    soportesMesDesde = desde;
+    cont.innerHTML = htmlPanelContador(d, gas.data || [], sop.error ? null : soportesMesCache);
   }
 
-  function htmlPanelContador(d, gastos) {
+  function htmlPanelContador(d, gastos, soportes) {
     const m = formatearMoneda, c = d.controles, r = d.resultado;
     const mesFin = new Date(d.periodo.hasta + 'T23:59:59');
     const mesTerminado = mesFin < new Date();
@@ -19265,6 +19271,14 @@
     const tablaGastos = gastos.length === 0 ? '<div class="cargando">No hay gastos o compras registrados en este mes.</div>' : `<table class="tk"><thead><tr><th>Fecha</th><th>Categoría</th><th>Descripción</th><th>Documento</th><th class="n">Valor</th><th class="n">Soporte</th></tr></thead><tbody>
       ${gastos.map(g => `<tr><td>${fechaCortaPanel((g.fecha_factura || g.created_at).slice(0, 10))}</td><td>${escaparHtml(g.categoria || '')}</td><td>${escaparHtml((g.descripcion || '').slice(0, 70))}</td><td>${escaparHtml(g.tipo_documento || '')}${g.es_documento_soporte ? ' (doc. soporte)' : ''}</td><td class="n">${m(g.monto)}</td><td class="n">${g.foto_comprobante || g.es_documento_soporte ? '📎' : '—'}</td></tr>`).join('')}</tbody></table>`;
 
+    const enlaceSeguro = u => /^https:\/\//i.test(String(u || '')) ? escaparHtml(u) : '';
+    const requeridos = [['pago_nomina', 'Pagos de nómina u honorarios del mes'], ['seguridad_social', 'Seguridad social (PILA) del mes']];
+    const hayTipo = t => (soportes || []).some(x => x.tipo === t || (t === 'pago_nomina' && x.tipo === 'pago_honorarios'));
+    const seccionSoportes = soportes === null
+      ? '<div class="cargando">No se pudo cargar los soportes del mes.</div>'
+      : `<table class="tk"><tbody>${requeridos.map(([t, n]) => `<tr><td style="width:28px;">${hayTipo(t) ? '✅' : (mesTerminado ? '⚠️' : 'ℹ️')}</td><td><strong>${n}</strong><div style="font-size:11.5px;opacity:0.75;">${hayTipo(t) ? 'Soporte adjunto.' : 'Falta adjuntar el enlace del soporte.'}</div></td></tr>`).join('')}</tbody></table>
+        ${soportes.length ? `<table class="tk" style="margin-top:8px;"><thead><tr><th>Tipo</th><th>Descripción</th><th class="n">Valor</th><th class="n">Soporte</th></tr></thead><tbody>${soportes.map(x => `<tr><td>${escaparHtml(TIPOS_SOPORTE_MES[x.tipo] || x.tipo)}</td><td>${escaparHtml(x.descripcion || '')}</td><td class="n">${x.valor != null ? m(x.valor) : '—'}</td><td class="n"><a href="${enlaceSeguro(x.enlace)}" target="_blank" rel="noopener">Abrir 📎</a> <button class="btn-mini editar" onclick="cambiarEnlaceSoporte('${x.id}')">Cambiar enlace</button></td></tr>`).join('')}</tbody></table>` : ''}
+        <button class="btn-secundario" style="width:auto;margin-top:8px;" onclick="agregarSoporteMes()">+ Adjuntar soporte (enlace al Drive)</button>`;
     const ir = (txt, fn) => `<button class="btn-mini editar" onclick="${fn}">${txt}</button>`;
     const propuesta = [
       ['3.1 Revisión mensual de la información contable', 'Este panel (controles) · Libro diario · Libro mayor · Libro auxiliar', ir('Estados y libros', 'mostrarPantallaEstadosFinancieros()')],
@@ -19294,6 +19308,8 @@
       <button class="btn-secundario" style="width:auto;margin-top:8px;" onclick="agregarObligacion()">+ Agregar obligación</button>
       <h2 style="margin:22px 0 6px;font-size:16px;">🧾 Gastos y compras del mes (soportes)</h2>
       <div style="font-size:12px;opacity:0.7;margin-bottom:6px;">${tiposGasto} registro(s)${sinSoporte ? ` · <strong style="color:var(--ambar);">${sinSoporte} sin foto del comprobante</strong>` : ''}. Solo lectura.</div>${tablaGastos}
+      <h2 style="margin:22px 0 6px;font-size:16px;">📎 Soportes de pagos y seguridad social del mes</h2>
+      <div style="font-size:12px;opacity:0.7;margin-bottom:6px;">Pega el enlace (https) del soporte guardado en el Drive de Lana Rosa. Se guarda con el mes que estás viendo.</div>${seccionSoportes}
       <h2 style="margin:22px 0 6px;font-size:16px;">🗺️ Propuesta de servicios: dónde está cada cosa</h2>
       <table class="tk"><thead><tr><th>Punto de la propuesta</th><th>Dónde verlo en el sistema</th><th></th></tr></thead><tbody>${propuesta}</tbody></table>`;
   }
@@ -19304,6 +19320,34 @@
     const { error } = await supabaseClient.from('obligaciones_contador').update({ ...cambios, updated_at: new Date().toISOString() }).eq('id', id);
     if (error) { mostrarMensaje('mensajePanelContador', 'No se pudo guardar: ' + error.message, 'error'); return; }
     mostrarMensaje('mensajePanelContador', 'Guardado.', 'exito');
+    cargarPanelContador();
+  }
+
+  async function agregarSoporteMes() {
+    const claves = Object.keys(TIPOS_SOPORTE_MES);
+    const tipoTxt = prompt('Tipo de soporte:\n' + claves.map((k, i) => `${i + 1} = ${TIPOS_SOPORTE_MES[k]}`).join('\n'), '1');
+    if (tipoTxt === null) return;
+    const tipo = claves[Number(tipoTxt) - 1];
+    if (!tipo) { mostrarMensaje('mensajePanelContador', 'Escribe un número del 1 al ' + claves.length + '.', 'error'); return; }
+    const enlace = (prompt('Enlace al soporte en el Drive (debe empezar por https://)') || '').trim();
+    if (!enlace) return;
+    if (!/^https:\/\//i.test(enlace)) { mostrarMensaje('mensajePanelContador', 'El enlace debe empezar por https://', 'error'); return; }
+    const descripcion = (prompt('Descripción corta (ej: PILA de noviembre), opcional') || '').trim();
+    const valorTxt = (prompt('Valor pagado en pesos (opcional, solo números)') || '').replace(/[^\d]/g, '');
+    const { error } = await supabaseClient.from('soportes_mensuales_contables').insert({ mes: soportesMesDesde, tipo, enlace, descripcion: descripcion || null, valor: valorTxt ? Number(valorTxt) : null });
+    if (error) { mostrarMensaje('mensajePanelContador', 'No se pudo guardar: ' + error.message, 'error'); return; }
+    mostrarMensaje('mensajePanelContador', 'Soporte guardado.', 'exito');
+    cargarPanelContador();
+  }
+
+  async function cambiarEnlaceSoporte(id) {
+    const actual = soportesMesCache.find(x => x.id === id);
+    const enlace = (prompt('Nuevo enlace al soporte (https://)', actual ? actual.enlace : '') || '').trim();
+    if (!enlace) return;
+    if (!/^https:\/\//i.test(enlace)) { mostrarMensaje('mensajePanelContador', 'El enlace debe empezar por https://', 'error'); return; }
+    const { error } = await supabaseClient.from('soportes_mensuales_contables').update({ enlace, updated_at: new Date().toISOString() }).eq('id', id);
+    if (error) { mostrarMensaje('mensajePanelContador', 'No se pudo guardar: ' + error.message, 'error'); return; }
+    mostrarMensaje('mensajePanelContador', 'Enlace actualizado.', 'exito');
     cargarPanelContador();
   }
 
