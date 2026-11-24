@@ -18,3 +18,5 @@ El nuevo modelo **complementa** el instructivo de 2024 (el propio documento dice
 | Anexo 2: formatos Excel «Solicitud de desembolso» y «Legalización desembolso» | `2026-anexo-2-formatos-solicitud-y-legalizacion.xlsx` |
 | Anexo 3: guía/matriz de documentos por rubro para solicitar y legalizar | `2026-anexo-3-guia-solicitud-desembolsos-y-legalizacion.pdf` |
 Resumen y plan del ERP: `docs/temas/sena-desembolsos-legalizacion.md`.
+
+**Correo del SENA con el paquete (24-nov-2026):** envía Anexo 1 (acciones), Anexo 2 (formatos), Anexo 3 (guía), la presentación (= «Nuevo modelo de desembolsos y pagos») y el documento de lineamientos. Aclara: (1) la herramienta de identificación de documentos (Anexo 3) es **orientadora y facilitadora, no reemplaza el Instructivo de Pagos 2024**, que sigue siendo el documento oficial para validar requisitos, soportes y procedimientos; (2) el lineamiento será cargado en la plataforma de Fondo Emprender. Pide aplicarlo en lo que ya se esté gestionando para reducir observaciones y devoluciones.

@@ -22,7 +22,7 @@ C `Actividades plan operativo` · D `ID Solicitud de pago` · E `Descripción so
 - Reintegro de saldos no ejecutados o no demostrados **incluye el GMF**.
 - Legalización: actividad «Legalización desembolso X» con valor $0 por cada desembolso; aprobada la legalización se puede pedir el siguiente desembolso. Los soportes de periodos distintos no se reutilizan (facturas, comprobantes, extractos); los documentos del beneficiario vigentes no se vuelven a pedir.
 - Persona natural no obligada a contabilidad: debe llevar libro fiscal y conservar soportes y comprobantes de la cuenta exclusiva.
-- Los requisitos documentales por rubro están en la **matriz del Anexo 3** (solicitar vs legalizar), que complementa el instructivo de 2024.
+- Los requisitos documentales por rubro están en la **matriz del Anexo 3** (solicitar vs legalizar). Ojo: el SENA aclaró por correo (24-nov) que el Anexo 3 es solo orientador y **no reemplaza el Instructivo de Pagos 2024**, que sigue siendo el documento oficial para validar requisitos y soportes; si hay diferencia, manda el Instructivo (y se confirma con la interventora). El lineamiento será cargado en la plataforma de Fondo Emprender.
 
 ## Qué ya existe en el ERP
 Compras del Fondo con cuenta de pago, comprobante, extracto, evidencia de entrega, valor transferido, proveedor aprobado y estado «lista para legalizar» (`fn_soportes_pago_fondo`); calendario de entregas con alertas en LAROVA y correo; pantalla del Fondo con consignaciones recibidas y gasto por concepto; reporte de PILA; Bancolombia = solo Fondo (decisión de Contabilidad).
