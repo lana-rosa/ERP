@@ -52,3 +52,7 @@ Firma electrónica (Ley 527 de 1999) y qué prueba se guarda · fotos y datos en
 2. **El texto de su especificación** (para ajustar los dominios; mientras tanto se usaron los típicos).
 3. ~~Su sí al diseño~~ **Hecho: aprobado el 23-nov-2026.**
 Mientras tanto no se crea ninguna tabla ni pantalla.
+
+## 9. Autorización permanente acotada de Jennifer (24-nov-2026)
+Jennifer autorizó aplicar **sin preguntar cada vez** las migraciones de este módulo que cumplan **todo**: solo agregan (tablas, columnas, funciones cerradas), no cambian ni borran nada existente, probadas antes con rollback, asesor de seguridad sin avisos nuevos, aplicadas fuera de sábados 9 a. m.–7 p. m. y del 12–13-dic, y con aviso de una línea a Jennifer en el chat después de aplicar. **Siguen pidiendo su sí:** pantallas visibles (captura y «¿Lo pongo?»), textos legales, dinero, firma electrónica y datos de salud (abogada), cualquier cambio o borrado de datos existentes y la gestión disciplinaria.
+**Aplicado:** muro (24-nov), Fase 1 de cumplimiento (24-nov), onboarding (24-nov, ya bajo esta autorización).
