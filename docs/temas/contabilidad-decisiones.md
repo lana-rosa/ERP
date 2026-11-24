@@ -48,3 +48,43 @@ Preguntas nuevas para el contador (viernes 20-nov): ver `docs/PENDIENTES.md` (se
 - **Wompi** → Sara pidió el 18-nov a Wompi cambiar el desembolso a su Nequi (falta la aprobación de Wompi); mientras tanto sigue llegando a Bancolombia.
 - Traslados Nequi → Davivienda: movimiento aparte, lo registra Contabilidad.
 - **Falta para aplicarlo** (con el sí de Sara): crear la cuenta Davivienda en el ERP (necesita tipo y número), definir si el Nequi de ventas manuales y el Nequi-puente de Wompi son el mismo número, y reasignar `medios_pago_cuenta` (hoy solo existe `nequi` → Nequi inactiva 111010). Chat 2 (Pedidos) solo guarda el nombre del medio (`nequi`, `breb`); el mapeo contable lo aplica este chat.
+
+## Plan tras la reunión con el contador y la interventora (24-nov-2026) — PROPUESTA
+Orden y esfuerzo (P=pequeño, M=mediano, G=grande). Todo lo que toque libros o base de datos es 🔴 y necesita el sí de Sara.
+1. Catálogo de cuentas visible para el contador (el PUC ya está en Impuestos, PUC y ajustes → Plan de cuentas; falta vista de solo lectura + Excel/PDF si no lo tiene): **P**.
+2. Informe de gastos y compras por categoría con fecha inicio y fin (Excel/PDF): **P–M**.
+3. Cargar facturas electrónicas de compras y gastos (XML/PDF de la DIAN; borrador para revisar, como las ventas): **G**.
+4. Documento soporte electrónico DIAN: depende del Chat 4 (DIAN) y de los datos de la resolución: **M**.
+5. Conciliación con extracto en PDF: hoy el ERP importa Excel/CSV; PDF es más frágil: **G**, después de la apertura; Fondo solo pide Bancolombia.
+6. Libro fiscal y contabilidad de microempresa: preguntar al contador qué libros exige: **M**.
+7. Informes mensuales para el Fondo (Estado de situación financiera + Estado de resultados + extracto + conciliación solo del Fondo, PDF con nombre sin caracteres especiales): ya existen los estados con PDF; falta paquete mensual por cuenta del Fondo: **M**.
+8. Salario de Sara como empleada (no anticipo ni retiro 3805): cambia la decisión del 14-oct; 🔴 requiere confirmación escrita del contador (prestaciones, seguridad social, nómina) y avisar al Chat 9: **M**.
+9. Nómina electrónica obligatoria: ya hay módulo; revisar que cubra a Sara una vez decidido el punto 8: **P–M**.
+10. Soportes de pagos y seguridad social con lugar para adjuntar (enlace al Drive): **P–M**.
+Fechas: 1.er informe a la plataforma SENA (actividad 98) del 1 al 8 de cada mes; arranque domingo 6-dic → propuse lunes 7-dic, pero el Chat 3 informa (24-nov, aprobado por Sara en su chat) que el informe de noviembre se sube el **viernes 4-dic-2026** (ya en el calendario del ERP con alerta 2 días antes) y los siguientes el **día 5 de cada mes o el siguiente hábil**: queda esa fecha. Bimestral nov+dic: 2-ene-2027 es sábado y el 1-ene festivo → **jueves 31-dic** (o lunes 4-ene si la interventora lo permite).
+Alerta: la reunión dice honorarios del contador $350.000 al mes; la propuesta del 30-sep decía $600.000. Confirmar cuál quedó.
+
+### Hecho el 24-nov-2026 (puntos 1, 2 y 7 del plan; solo lectura, sin cambios en libros ni base de datos; sw v87)
+- **1. Catálogo para el contador:** Impuestos, PUC y ajustes → Plan de cuentas → botón «Catálogo para el contador (Excel)»: código, nombre, nivel, naturaleza, recibe movimientos, activa, la usa el sistema, nota.
+- **2. Gastos y compras por categoría:** Estados financieros → «Gastos y compras por categoría», con fecha inicio y fin. Sale del Libro Diario (`fn_libro_diario`): gastos = cuentas 51, 52 y 53; compras = cuentas 14 y 15, sin las salidas de inventario del POS; las reversiones restan. Resumen por cuenta + detalle, Excel (2 hojas) y PDF. Límite de 3.000 movimientos (avisa). La «categoría» es la cuenta del PUC; el campo `categoria` de `gastos_departamentales` solo tiene 2 valores hoy.
+- **7. Informe mensual del Fondo:** Estados financieros → «Informe mensual del Fondo»: elige el mes y junta el Estado de situación financiera (Balance General al último día) y el Estado de resultados del mes. Excel (2 hojas) y PDF con nombre `LanaRosa_Informe_mensual_Fondo_AAAA-MM` (sin caracteres especiales). **Falta:** el extracto bancario y la conciliación solo del Fondo (Bancolombia) no entran todavía; se hacen en Conciliación bancaria cuando la cuenta del Fondo esté configurada.
+- Probado con Playwright (datos simulados): cálculo de gastos/compras con reversión, informe del mes, nombres de archivo y títulos de PDF. Sin probar contra datos reales del contador.
+
+### Punto 10 hecho (24-nov-2026): soportes de pagos y seguridad social del mes (sw v88)
+- **Dónde:** Contabilidad → Panel del contador → sección «📎 Soportes de pagos y seguridad social del mes» (sigue el mes elegido arriba).
+- **Cómo:** botón «+ Adjuntar soporte (enlace al Drive)»: tipo (pago de nómina, pago de honorarios, seguridad social/PILA, otro), enlace https, descripción y valor opcionales. Lista de verificación: ✅ si hay soporte de nómina/honorarios y de seguridad social del mes; ⚠️ si el mes terminó y falta. «Cambiar enlace» corrige un enlace; no hay botón de borrar (nada se borra).
+- **Base de datos:** tabla nueva `soportes_mensuales_contables` (mes, tipo, descripcion, enlace, valor; el enlace debe empezar por https y el mes por día 1), con RLS solo para administrador y contador. SQL en `docs/migraciones/2026-11-24-soportes-mensuales-contables.sql`.
+- **Probado:** SQL con rollback (insert como administrador; enlace `javascript:` y mes que no es día 1 rechazados) y Playwright (lista, enlaces seguros, alta con prompts, rechazo de http). Los soportes de pagos de compras/gastos siguen en la foto del comprobante de cada gasto.
+- **Falta:** que el informe mensual del Fondo muestre estos enlaces; guardar archivos dentro del ERP (hoy solo enlaces al Drive).
+
+### Punto 3, etapa 1 hecha (24-nov-2026): facturas electrónicas de compras, solo lectura (sw v89)
+- **Dónde:** Facturación y nómina electrónica → pestaña «🛒 Facturas de compras» (visible para administrador y contador). Botón «Subir facturas de compras (ZIP o XML)».
+- **Qué hace:** abre el ZIP de la DIAN, lee el XML (misma función `leerFacturaXmlDian` de ventas, ampliada con proveedor, NIT, subtotal e IVA) y muestra un borrador por factura. Clasifica: Nueva · Repetida en el lote (mismo CUFE) · Ya registrada (proveedor+número en la tabla de compras de requisitos SENA) · Es una venta de Lana Rosa · A nombre de otro NIT · Prueba/error. Excel de los borradores. **No escribe nada en la base de datos ni en los libros.**
+- **Probado** (Playwright, 7 XML simulados en un ZIP): las 7 clasificaciones salieron bien y no hubo errores. Sin probar con ZIP reales de proveedores.
+- **Etapa 2 (pendiente, necesita el sí de Sara):** confirmar cada borrador con categoría y centro de costo y registrarlo como gasto/compra con su asiento (toca contabilidad; hay que mirar cómo se registra hoy una compra en el Worker). **Etapa 3:** carpeta vigilada para compras (separar por NIT comprador).
+
+### Punto 3, etapa 2 hecha (24-nov-2026): del borrador al formulario de «Registrar compra» (sw v90)
+- **Decisión de diseño:** la etapa 2 NO registra por su cuenta. Registrar una compra hoy pasa por el Worker (`/api/pos/compras`, que no se puede editar desde aquí) y por reglas de dinero y del SENA/Fondo (autorización por monto, quién aprobó, cómo se pagó y de qué caja o cuenta sale, fuente propios/Fondo, cotización, comprobante, extracto, evidencia de entrega). Duplicar eso en el cliente sería peligroso. Por eso cada borrador «Nueva» tiene el botón «Registrar compra →» que abre el formulario normal con los datos de la factura ya puestos (proveedor y NIT, número, fecha, monto, descripción, PDF de la factura si el ZIP lo traía; selecciona al proveedor si ya está en el directorio por NIT). La persona completa lo demás y toca «Registrar compra»; todas las validaciones de siempre aplican.
+- **Sin cambios en base de datos.** Después de registrar, la factura sale como «Ya registrada» (se detecta por proveedor+número en la tabla de requisitos del SENA). No se guarda el CUFE de la factura de compra (si se quiere, sería una columna nueva; pendiente de decidir).
+- **Probado** (Playwright, datos simulados): el formulario se llena con los datos de la factura, selecciona al proveedor existente por NIT y adjunta el PDF del ZIP. **Sin probar** contra el Worker real ni con ZIP reales.
+- **Etapa 3 (pendiente):** carpeta vigilada para compras (separar por NIT comprador); guardar el CUFE; notas crédito de compras.

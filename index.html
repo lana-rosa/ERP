@@ -1262,6 +1262,7 @@
       <div class="sidebar-depto-submenu" id="deptoContabilidadSubmenu">
         <div class="sidebar-seccion">Contabilidad e impuestos</div>
         <button class="nav-btn" id="nav-panel-contador" onclick="mostrarPantallaPanelContador()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M3 13h18"/></svg></span> Panel del contador</button>
+        <button class="nav-btn" id="nav-asistente-financiero" onclick="mostrarPantallaAsistenteFinanciero()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg></span> Asistente financiero</button>
         <button class="nav-btn" id="nav-dashboard-contable" onclick="mostrarPantallaDashboardContable()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span> Dashboard Contable</button>
         <button class="nav-btn" id="nav-honorarios-tejedoras" onclick="mostrarPantallaHonorariosTejedoras()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5h4a1.5 1.5 0 0 1 0 3h-3a1.5 1.5 0 0 0 0 3H15"/></svg></span> Honorarios Tejedoras</button>
         <button class="nav-btn" id="nav-estados-financieros" onclick="mostrarPantallaEstadosFinancieros()"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4Z"/><path d="M5 17a3 3 0 0 1 3-3h11"/></svg></span> Estados financieros y libros</button>
@@ -1397,6 +1398,7 @@
     </div>
     <div id="hubAvisoCaja" style="display:none;"></div>
     <div id="hubAvisoPendientes" class="hub-aviso" style="display:none;"></div>
+    <div id="hubAvisoEntregasFondo" style="display:none;"></div>
     <div class="hub-titulo-seccion" id="hubRapidosTitulo">Accesos rápidos</div>
     <div class="hub-rapidos" id="hubRapidos"></div>
     <div class="hub-titulo-seccion" id="hubModulosTitulo">Módulos</div>
@@ -2430,6 +2432,7 @@
   <div class="filtro-tipo" style="margin-bottom:16px;">
     <button class="chip-filtro activo" data-subtab-btn="fe" onclick="mostrarSubTabGrupo('fe', 'subtabFePendientes', this); cargarFePendientes();">🧾 Por facturar</button>
     <button class="chip-filtro" data-subtab-btn="fe" onclick="mostrarSubTabGrupo('fe', 'subtabFeEmitidas', this); cargarFeEmitidas();">✅ Facturas emitidas</button>
+    <button class="chip-filtro" data-subtab-btn="fe" id="chipFeCompras" onclick="mostrarSubTabGrupo('fe', 'subtabFeCompras', this);">🛒 Facturas de compras</button>
     <button class="chip-filtro" data-subtab-btn="fe" id="chipFeDs" onclick="mostrarSubTabGrupo('fe', 'subtabFeDs', this); cargarFeDs();">📑 Documentos soporte</button>
     <button class="chip-filtro" data-subtab-btn="fe" id="chipFeRespaldo" onclick="mostrarSubTabGrupo('fe', 'subtabFeRespaldo', this); cargarFeRespaldo();">💾 Respaldo</button>
     <button class="chip-filtro" data-subtab-btn="fe" id="chipFeNomina" onclick="mostrarSubTabGrupo('fe', 'subtabFeNomina', this); cargarNominaElectronica();">👥 Nómina electrónica</button>
@@ -2470,6 +2473,19 @@
 <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirSeccion('subtabFeEmitidas', 'Facturas electrónicas')">🖨️ PDF</button>
     </div>
     <div id="feListaEmitidas"><div class="cargando">Cargando...</div></div>
+  </div>
+
+  <div id="subtabFeCompras" data-subtab-grupo="fe" class="oculto">
+    <div style="background:var(--tinte-azul);border-radius:var(--radius-md);padding:10px 14px;margin-bottom:14px;font-size:12.5px;line-height:1.5;">
+      ℹ️ Aquí subes los ZIP o XML de las facturas electrónicas que te hacen tus proveedores. El ERP los lee y te muestra un <strong>borrador</strong> de cada una (proveedor, número, fecha, valores). <strong>En esta etapa no se registra nada en los libros</strong>: solo sirve para revisar y detectar repetidas o facturas que no son de compra.
+    </div>
+    <div class="panel" style="max-width:none;max-height:none;margin-bottom:14px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <label class="btn-principal" style="width:auto;margin:0;cursor:pointer;">📤 Subir facturas de compras (ZIP o XML)<input type="file" accept=".zip,.xml" multiple style="display:none;" onchange="importarFacturasCompras(this)"></label>
+        <button class="btn-secundario" style="width:auto;margin:0;" onclick="exportarBorradoresComprasExcel()">📥 Excel</button>
+      </div>
+      <div id="feComprasResultado" style="margin-top:12px;"></div>
+    </div>
   </div>
 
   <div id="subtabFeDs" data-subtab-grupo="fe" class="oculto">
@@ -5073,6 +5089,26 @@
 
 <!-- ===== PANTALLA: DASHBOARD CONTABLE ===== -->
 <!-- ===== PANTALLA: PANEL DEL CONTADOR ===== -->
+<div id="pantallaAsistenteFinanciero" class="oculto contenido">
+  <div class="page-header">
+    <h1>💬 Asistente financiero</h1>
+    <div class="subtitulo">Te ayuda a entender las finanzas de Lana Rosa y a comparar alternativas de ahorro e inversión, con palabras sencillas.</div>
+  </div>
+  <div style="background:var(--tinte-azul);border-radius:var(--radius-md);padding:10px 14px;margin-bottom:14px;font-size:12.5px;line-height:1.5;">
+    ℹ️ <strong>Es un asistente educativo.</strong> No es asesor financiero certificado ni contador, no promete rentabilidades y no ejecuta operaciones ni te pide claves. Para responder usa las cifras de tu contabilidad (agregadas y redondeadas, sin datos de clientas, cuentas ni documentos). Antes de invertir, valida siempre con tu contador o un asesor certificado.
+  </div>
+  <div class="mensaje" id="mensajeAsistenteFin"></div>
+  <div class="panel" style="max-width:820px;max-height:none;">
+    <div id="asistenteFinChat" style="min-height:160px;max-height:55vh;overflow-y:auto;margin-bottom:12px;"><div class="cargando">Escribe tu pregunta, por ejemplo: «¿Qué es un CDT?» o «¿Tengo dinero libre para invertir?».</div></div>
+    <textarea id="asistenteFinPregunta" rows="3" maxlength="1500" placeholder="Escribe tu pregunta..." style="width:100%;" onkeydown="if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) enviarAsistenteFinanciero()"></textarea>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px;">
+      <button class="btn-principal" id="btnAsistenteFin" style="width:auto;margin:0;" onclick="enviarAsistenteFinanciero()">Preguntar</button>
+      <button class="btn-secundario" style="width:auto;margin:0;" onclick="nuevaConversacionAsistenteFin()">Nueva conversación</button>
+      <span style="font-size:11.5px;opacity:.7;">Límite: 20 preguntas al día. Ctrl + Enter para enviar.</span>
+    </div>
+  </div>
+</div>
+
 <div id="pantallaPanelContador" class="oculto contenido">
   <div class="page-header">
     <h1>🧑‍💼 Panel del contador</h1>
@@ -5278,6 +5314,7 @@
             <input type="checkbox" id="ciPucInactivas" style="width:auto;" onchange="renderizarPlanCuentas()"> Ver inactivas
           </label>
         </div>
+        <div style="margin-bottom:10px;"><button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarCatalogoCuentasExcel()">📥 Catálogo para el contador (Excel)</button></div>
         <div id="ciPucLista"><div class="cargando">Cargando...</div></div>
       </div>
       <div class="panel no-exportar" style="max-height:none;">
@@ -5401,6 +5438,8 @@
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabLibroMayor', this); cargarLibroMayor();">📚 Libro Mayor</button>
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabBalancePrueba', this); cargarBalancePrueba();">🧮 Balance de prueba</button>
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabLibroAuxiliar', this); prepararLibroAuxiliar();">🔍 Libro Auxiliar</button>
+    <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabGastosCategoria', this); cargarGastosCategoria();">🗂️ Gastos y compras por categoría</button>
+    <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabInformeFondo', this);">📤 Informe mensual del Fondo</button>
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabCierreContable', this); cargarPantallaCierreContable();">🔒 Cierre contable</button>
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabBloqueoFecha', this); cargarPantallaBloqueoFecha();">🔐 Bloqueo de período</button>
     <button class="chip-filtro" data-subtab-btn="estadosFin" onclick="mostrarSubTabGrupo('estadosFin', 'subtabRevisionContador', this); cargarRevisionesContables();">✅ Revisión del contador</button>
@@ -5415,6 +5454,28 @@
       <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirEstadoFinanciero('contenidoEstadoResultados', 'Estado de Resultados')">🖨️ Imprimir / PDF</button>
     </div>
     <div id="contenidoEstadoResultados"><div class="cargando">Cargando...</div></div>
+  </div>
+
+  <div id="subtabGastosCategoria" data-subtab-grupo="estadosFin" class="oculto">
+    <div class="subtitulo" style="margin-bottom:10px;">Gastos (grupos 51, 52 y 53) y compras de inventario y activos (cuentas 14 y 15) tomados del Libro Diario, agrupados por cuenta (categoría). Las reversiones restan. Se excluyen las salidas de inventario por ventas del punto de venta.</div>
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+      <div><label for="gcDesde" style="font-size:11px;">Fecha inicio</label><input type="date" id="gcDesde" onchange="cargarGastosCategoria()" style="padding:9px 10px;"></div>
+      <div><label for="gcHasta" style="font-size:11px;">Fecha fin</label><input type="date" id="gcHasta" onchange="cargarGastosCategoria()" style="padding:9px 10px;"></div>
+      <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarGastosCategoriaExcel()">📥 Excel</button>
+      <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirEstadoFinanciero('contenidoGastosCategoria', 'Gastos y compras por categoria', 'LanaRosa_Gastos_y_compras_por_categoria')">🖨️ Imprimir / PDF</button>
+    </div>
+    <div id="contenidoGastosCategoria"><div class="cargando">Cargando...</div></div>
+  </div>
+
+  <div id="subtabInformeFondo" data-subtab-grupo="estadosFin" class="oculto">
+    <div class="subtitulo" style="margin-bottom:10px;">Informe mensual para el Fondo Emprender (actividad 98): Estado de situación financiera (Balance General) y Estado de resultados del mes elegido, en un solo PDF o Excel, con nombre de archivo sin caracteres especiales.</div>
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+      <div><label for="ifMes" style="font-size:11px;">Mes del informe</label><input type="month" id="ifMes" style="padding:9px 10px;"></div>
+      <button class="btn-principal" style="width:auto;margin-top:0;" onclick="generarInformeMensualFondo()">Generar informe</button>
+      <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="exportarInformeFondoExcel()">📥 Excel</button>
+      <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirInformeFondo()">🖨️ Imprimir / PDF</button>
+    </div>
+    <div id="contenidoInformeFondo"><div class="cargando">Elige el mes y toca «Generar informe».</div></div>
   </div>
 
   <div id="subtabEstadoCostos" data-subtab-grupo="estadosFin" class="oculto">
@@ -6491,7 +6552,7 @@
     // SEGURIDAD: sin sesión solo se puede ver el inicio de sesión (o la pantalla de "cargando").
     if (!sesionActual && idPantalla !== 'pantallaCargando') idPantalla = 'pantallaLogin';
     document.body.classList.toggle('sin-sesion', !sesionActual);
-    const pantallas = ['pantallaLogin', 'pantallaInicio', 'pantallaModulo', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaInventarioGlobal', 'pantallaGuiasUsuario', 'pantallaFacturacionElectronica', 'pantallaServiciosDian', 'pantallaCorreoEmpresa', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaIndicadores', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeEstado', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaPanelContador', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaAutorizacionesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb', 'pantallaTextosWeb', 'pantallaPaypalConfig', 'pantallaMiProduccion', 'pantallaInformeCostos', 'pantallaReglasPrecios'];
+    const pantallas = ['pantallaLogin', 'pantallaInicio', 'pantallaModulo', 'pantallaContabilidadImpuestos', 'pantallaCargando', 'pantallaAbrirTurno', 'pantallaTurnoActivo', 'pantallaVentas', 'pantallaInventario', 'pantallaConsumoTaller', 'pantallaOrdenesProduccion', 'pantallaKardexEtapas', 'pantallaInventarioGlobal', 'pantallaGuiasUsuario', 'pantallaFacturacionElectronica', 'pantallaServiciosDian', 'pantallaCorreoEmpresa', 'pantallaSolicitudes', 'pantallaAjusteStock', 'pantallaHistorial', 'pantallaReportes', 'pantallaPagosPendientes', 'pantallaReportesFinancieros', 'pantallaCosteoReal', 'pantallaIndicadores', 'pantallaPresupuestoEmpresa', 'pantallaPedidosCanal', 'pantallaPedidosCrm', 'pantallaNomina', 'pantallaTalentoHumano', 'pantallaCalendario', 'pantallaFeEstado', 'pantallaFeConfig', 'pantallaFeCalendario', 'pantallaFeDocumentos', 'pantallaFePresupuesto', 'pantallaFeIndicadores', 'pantallaUsuarios', 'pantallaApariencia', 'pantallaMiPerfil', 'pantallaCederPermisos', 'pantallaTrazabilidad', 'pantallaClientes', 'pantallaOportunidades', 'pantallaProveedores', 'pantallaCodigosDescuento', 'pantallaTarifasEnvio', 'pantallaEtiquetas', 'pantallaReinicioProduccion', 'pantallaFidelizacion', 'pantallaTransferirStock', 'pantallaCopiaSeguridad', 'pantallaDashboardContable', 'pantallaPanelContador', 'pantallaAsistenteFinanciero', 'pantallaHonorariosTejedoras', 'pantallaEstadosFinancieros', 'pantallaDashboard', 'pantallaCuentasPendientes', 'pantallaActivosFijos', 'pantallaConciliacion', 'pantallaTransferenciasInternas', 'pantallaCotizaciones', 'pantallaNotasCD', 'pantallaOrdenesCompra', 'pantallaAutorizacionesCompra', 'pantallaListasPrecios', 'pantallaConfigAlertas', 'pantallaDocumentosEmpresa', 'pantallaCerrarTurno', 'pantallaDatosEmpresa', 'pantallaPoliticasLegales', 'pantallaLogoEmpresa', 'pantallaRosinaImagenes', 'pantallaResenasWeb', 'pantallaTextosWeb', 'pantallaPaypalConfig', 'pantallaMiProduccion', 'pantallaInformeCostos', 'pantallaReglasPrecios'];
     pantallas.forEach(id => document.getElementById(id).classList.add('oculto'));
     document.getElementById(idPantalla).classList.remove('oculto');
     // Sidebar y margen según pantalla
@@ -6536,6 +6597,7 @@
       pantallaPresupuestoEmpresa: 'nav-presupuesto-empresa',
       pantallaDashboardContable: 'nav-dashboard-contable',
       pantallaPanelContador: 'nav-panel-contador',
+      pantallaAsistenteFinanciero: 'nav-asistente-financiero',
       pantallaContabilidadImpuestos: 'nav-contabilidad-impuestos',
       pantallaHonorariosTejedoras: 'nav-honorarios-tejedoras',
       pantallaNomina: 'nav-nomina',
@@ -7014,6 +7076,7 @@
     mostrar('nav-reglas-precios', esAdmin || esContador);
     mostrar('nav-presupuesto-empresa', esAdmin || esContador);
     mostrar('nav-panel-contador', esAdmin || esContador);
+    mostrar('nav-asistente-financiero', esAdmin);
     mostrar('nav-dashboard-contable', esAdmin || esContador);
     mostrar('nav-honorarios-tejedoras', esAdmin || esContador);
     mostrar('nav-estados-financieros', esAdmin || esContador);
@@ -7193,7 +7256,7 @@
 
   function mostrarResumenCierre(datos) {
     const etiquetaNovedad = { cuadrado: '✅ Caja cuadrada', sobrante: '🔺 Sobrante en caja', faltante: '🔻 Faltante en caja' };
-    const etiquetasPago = { nequi: 'Nequi', daviplata: 'Daviplata', tarjeta_debito: 'Tarjeta débito', tarjeta_credito: 'Tarjeta crédito' };
+    const etiquetasPago = { nequi: 'Nequi / Bre-B', daviplata: 'Daviplata', tarjeta_debito: 'Tarjeta débito', tarjeta_credito: 'Tarjeta crédito' };
 
     const resumen = document.getElementById('resumenCierre');
 
@@ -7254,7 +7317,7 @@
 
   // Nequi y Bre-B manuales: solo se pueden usar cuando Contabilidad ya les asignó una cuenta (si no, el dinero caería en la cuenta equivocada)
   let mediosManualesConCuenta = { nequi: false, breb: false };
-  const ETIQUETAS_MEDIOS_MANUALES = { nequi: 'Nequi', breb: 'Bre-B' };
+  const ETIQUETAS_MEDIOS_MANUALES = { nequi: 'Nequi / Bre-B', breb: 'Bre-B' };
 
   function opcionesMediosManualesHtml(seleccionado) {
     return Object.keys(ETIQUETAS_MEDIOS_MANUALES).map(m => mediosManualesConCuenta[m]
@@ -8311,6 +8374,7 @@
         <div style="display:flex;gap:8px;">
           <select onchange="actualizarFilaPago(${indice}, 'metodo_pago', this.value)" style="flex:1.2;">
             <option value="efectivo" ${pago.metodo_pago === 'efectivo' ? 'selected' : ''}>Efectivo</option>
+            <option value="nequi" ${pago.metodo_pago === 'nequi' ? 'selected' : ''}>Nequi / Bre-B</option>
             <option value="daviplata" ${pago.metodo_pago === 'daviplata' ? 'selected' : ''}>Daviplata</option>
             <option value="tarjeta_debito" ${pago.metodo_pago === 'tarjeta_debito' ? 'selected' : ''}>Tarjeta débito</option>
             <option value="tarjeta_credito" ${pago.metodo_pago === 'tarjeta_credito' ? 'selected' : ''}>Tarjeta crédito</option>
@@ -8688,7 +8752,7 @@
 
   function generarContenidoReciboVenta(v) {
     const fechaTexto = v.soloFecha ? v.fecha.toLocaleDateString('es-CO', { dateStyle: 'medium' }) : v.fecha.toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
-    const etiquetasPago = { efectivo: 'Efectivo', nequi: 'Nequi', daviplata: 'Daviplata', tarjeta_debito: 'Tarjeta débito', tarjeta_credito: 'Tarjeta crédito' };
+    const etiquetasPago = { efectivo: 'Efectivo', nequi: 'Nequi / Bre-B', daviplata: 'Daviplata', tarjeta_debito: 'Tarjeta débito', tarjeta_credito: 'Tarjeta crédito' };
     const filasProductos = v.lineas.map(l => `
       <tr>
         <td style="padding:5px 0;">${escaparHtml(l.nombre)}</td>
@@ -11184,7 +11248,7 @@
 
     historialVentasDetalleCache = { ventas, detalles: detalles || [], pagos: pagos || [], tercerosPorId, cajerosPorId };
 
-    const etiquetasPago = { efectivo: 'Efectivo', nequi: 'Nequi', daviplata: 'Daviplata', tarjeta_debito: 'Tarjeta débito', tarjeta_credito: 'Tarjeta crédito' };
+    const etiquetasPago = { efectivo: 'Efectivo', nequi: 'Nequi / Bre-B', daviplata: 'Daviplata', tarjeta_debito: 'Tarjeta débito', tarjeta_credito: 'Tarjeta crédito' };
 
     if (vistaHistorialActual === 'dia') {
       renderizarHistorialAgrupado(ventas, detalles, pagos, tercerosPorId, etiquetasPago, v => new Date(v.fecha).toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }), v => new Date(v.fecha).toISOString().slice(0, 10));
@@ -14521,7 +14585,7 @@
 
   let reportesTurnoCache = [];
   let reporteTurnoAbiertoId = null;
-  const etiquetasPagoTurno = { efectivo: 'Efectivo', nequi: 'Nequi', daviplata: 'Daviplata', tarjeta_debito: 'T. débito', tarjeta_credito: 'T. crédito' };
+  const etiquetasPagoTurno = { efectivo: 'Efectivo', nequi: 'Nequi / Bre-B', daviplata: 'Daviplata', tarjeta_debito: 'T. débito', tarjeta_credito: 'T. crédito' };
   const etiquetaNovedadTurno = { cuadrado: '✅ Cuadrada', sobrante: '🔺 Sobrante', faltante: '🔻 Faltante' };
 
   async function cargarReportesTurno() {
@@ -15043,7 +15107,7 @@
       const valor = c.valor_pagado ? `Pagado: ${formatearMoneda(c.valor_pagado)}` : `<label style="font-size:11.5px;">Valor transferido <input type="number" min="1" step="1" style="width:120px;" onchange="guardarValorPagadoFondo('${c.id}',this.value)"></label>`;
       const prov = c.proveedor_aprobado ? '' : ` <button class="btn-mini editar" style="padding:2px 8px;font-size:11px;" onclick="marcarProveedorPlanFondo('${c.proveedor_tercero_id || ''}')">Marcar proveedor como aprobado en el plan</button>`;
       const estado = est.faltan.length ? `<span style="color:var(--rojo-error);">Falta: ${est.faltan.join(', ')}</span>` : (est.alertas.length ? '' : '<span style="color:var(--verde-exito,#2e7d32);">✅ Lista para legalizar</span>');
-      return `<div style="border-top:1px solid #eee;padding:6px 0;"><strong>${new Date(c.fecha_factura + 'T00:00:00').toLocaleDateString('es-CO')}</strong> · ${escaparHtml(c.proveedor || 'sin proveedor')} · Factura ${escaparHtml(c.numero_factura || '')} · ${formatearMoneda(c.monto)} · ${c.fuente === 'mixto' ? 'Mixto' : 'Fondo'}<div>${estado}</div>${est.alertas.map(a => `<div style="color:var(--rojo-error);font-size:11.5px;">⚠️ ${a}</div>`).join('')}<div>${links}</div><div style="margin-top:4px;">${valor}${prov}</div>${subir ? `<div style="margin-top:4px;">${subir}</div>` : ''}</div>`;
+      return `<div style="border-top:1px solid #eee;padding:6px 0;"><strong>${new Date(c.fecha_factura + 'T00:00:00').toLocaleDateString('es-CO')}</strong> · ${escaparHtml(c.proveedor || 'sin proveedor')} · Factura ${escaparHtml(c.numero_factura || '')} · ${formatearMoneda(c.monto)} · ${c.fuente === 'mixto' ? 'Mixto' : 'Fondo'}<div>${estado}</div>${est.alertas.map(a => `<div style="color:var(--rojo-error);font-size:11.5px;">⚠️ ${a}</div>`).join('')}<div>${links}</div><div style="margin-top:4px;">${valor}${c.cuenta_pago ? ` · Cuenta: ${escaparHtml(c.cuenta_pago)}` : ' · <em>sin cuenta registrada</em>'}${prov}</div>${subir ? `<div style="margin-top:4px;">${subir}</div>` : ''}</div>`;
     }).join('');
   }
 
@@ -15094,7 +15158,7 @@
 
   // ---- Requisitos del instructivo de pagos del Fondo Emprender (mayo de 2024, versión 2) para toda compra ----
   // Aplican igual aunque la empresa esté en el Régimen SIMPLE: el Fondo Emprender exige cumplir como si fuera una sociedad.
-  let requisitosCompraInfo = null, requisitosCompraTimer = null;
+  let requisitosCompraInfo = null, requisitosCompraTimer = null, cuentasPagoCache = null;
   function actualizarRequisitosCompra(inmediato) {
     clearTimeout(requisitosCompraTimer);
     return new Promise((resolve) => {
@@ -15110,6 +15174,7 @@
           else if (el.type === 'checkbox') previo.marcas[k] = el.checked;
           else previo.textos[k] = el.value;
         });
+        if (!cuentasPagoCache) { const { data: cb } = await supabaseClient.from('cuentas_bancarias').select('id, nombre, uso, activa').eq('activa', true); cuentasPagoCache = cb || []; }
         const { data, error } = await supabaseClient.rpc('fn_compra_requisitos_info', {
           p_proveedor_tercero: proveedorGastoSeleccionadoId || null, p_proveedor_nit: document.getElementById('gastoProveedorNit').value.trim() || null, p_monto: monto, p_tipo: tipo,
         });
@@ -15143,6 +15208,7 @@
             <div style="font-weight:600;">Soportes del pago (legalización del Fondo)</div>
             <div style="margin-top:6px;"><label for="req_comprobante_pago" style="font-weight:600;">Comprobante de la transferencia <em id="obligComprobantePago" style="font-size:10.5px;opacity:.7;">(obligatorio si ya pagaste)</em></label><input type="file" data-req="comprobante_pago" id="req_comprobante_pago" accept="application/pdf"><div style="font-size:10.5px;opacity:.65;">PDF del comprobante de la transferencia hecha desde la cuenta bancaria exclusiva.</div></div>
             <div style="margin-top:8px;"><label for="req_extracto_bancario" style="font-weight:600;">Extracto bancario <em style="font-size:10.5px;opacity:.7;">(si lo tienes)</em></label><input type="file" data-req="extracto_bancario" id="req_extracto_bancario" accept="application/pdf"><div style="font-size:10.5px;opacity:.65;">PDF del extracto donde se vea el débito del pago y el movimiento de la cuenta exclusiva. Si todavía no lo tienes, súbelo cuando lo descargues; la compra quedará marcada como "falta extracto" hasta entonces.</div></div>
+            <div style="margin-top:8px;"><label for="req_cuenta_pago" style="font-weight:600;">Cuenta desde la que pagaste <em style="font-size:10.5px;opacity:.7;">(obligatorio si ya pagaste)</em></label><select data-req="cuenta_pago" id="req_cuenta_pago"><option value="">Selecciona...</option>${(cuentasPagoCache || []).map(c => `<option value="${c.id}">${escaparHtml(c.nombre)}${c.uso === 'fondo_emprender' ? ' (cuenta exclusiva del Fondo)' : ''}</option>`).join('')}</select><div style="font-size:10.5px;opacity:.65;">Los pagos con recursos del Fondo salen solo de la cuenta exclusiva del Fondo (Bancolombia); lo demás de Lana Rosa, de Davivienda.</div><div id="avisoCuentaFondo" style="font-size:11px;color:var(--rojo-error);">${(cuentasPagoCache || []).some(c => c.uso === 'fondo_emprender') ? '' : '⚠️ Ninguna cuenta está marcada con uso "Fondo Emprender" en Bancos; márcala allá para que el sistema pueda verificar la cuenta.'}</div></div>
             <div style="margin-top:8px;"><label for="req_valor_pagado" style="font-weight:600;">Valor que transferiste <em style="font-size:10.5px;opacity:.7;">(si ya lo sabes)</em></label><input type="number" data-req="valor_pagado" id="req_valor_pagado" min="1" step="1" oninput="avisarValorPagadoFondo()"><div id="avisoValorPagado" style="font-size:11px;color:var(--rojo-error);"></div></div>
             <div style="margin-top:8px;"><label for="req_evidencia_entrega" style="font-weight:600;">Evidencia de entrega <em style="font-size:10.5px;opacity:.7;">(foto, acta o remisión; si la tienes)</em></label><input type="file" data-req="evidencia_entrega" id="req_evidencia_entrega" accept="application/pdf,image/*"><div style="font-size:10.5px;opacity:.65;">Demuestra que recibiste el producto o servicio. Si todavía no la tienes, súbela después; mientras tanto la compra queda como "falta evidencia de entrega".</div></div>
             <div id="avisoProveedorPlan" style="font-size:11.5px;margin-top:8px;color:var(--rojo-error);"></div>
@@ -15203,6 +15269,12 @@
         const mp = document.getElementById('gastoMetodoPago').value;
         if (mp === 'efectivo') return { error: 'Con recursos del Fondo Emprender no se paga en efectivo: el pago se hace por transferencia desde la cuenta bancaria exclusiva, para que quede trazabilidad.' };
         if (mp !== 'transferencia' && mp !== 'tarjeta_debito') return { error: 'Con recursos del Fondo Emprender el pago debe salir de la cuenta bancaria exclusiva (transferencia o tarjeta débito de esa cuenta), no de Daviplata ni de tarjeta de crédito.' };
+        const cuentaSel = (cont.querySelector('[data-req="cuenta_pago"]') || {}).value;
+        if (!cuentaSel) return { error: 'Elige la cuenta desde la que pagaste.' };
+        const cuentaFondo = (cuentasPagoCache || []).filter(c => c.uso === 'fondo_emprender');
+        const cuentaElegida = (cuentasPagoCache || []).find(c => c.id === cuentaSel);
+        if (cuentaFondo.length && !cuentaFondo.some(c => c.id === cuentaSel)) return { error: 'Con recursos del Fondo Emprender solo se paga desde la cuenta exclusiva del Fondo (' + cuentaFondo.map(c => c.nombre).join(', ') + '). No mezcles estos recursos con otras cuentas.' };
+        datos.cuenta_bancaria_id = cuentaSel; datos.cuenta_pago = cuentaElegida ? cuentaElegida.nombre : null;
         const comp = cont.querySelector('[data-req="comprobante_pago"]');
         if (!comp || !comp.files[0]) return { error: 'Adjunta el comprobante de la transferencia (PDF): el Fondo lo pide para legalizar el gasto.' };
       }
@@ -15458,6 +15530,7 @@
     { clave: 'nav-servicios-dian', etiqueta: '　　Servicios digitales DIAN' },
     { clave: 'deptoContabilidadGrupo', etiqueta: '📊 Contabilidad (grupo completo)' },
     { clave: 'nav-panel-contador', etiqueta: '　　Panel del contador' },
+    { clave: 'nav-asistente-financiero', etiqueta: '　　Asistente financiero' },
     { clave: 'nav-dashboard-contable', etiqueta: '　　Dashboard Contable' },
     { clave: 'nav-honorarios-tejedoras', etiqueta: '　　Honorarios Tejedoras' },
     { clave: 'nav-estados-financieros', etiqueta: '　　Estados financieros y libros' },
@@ -19169,6 +19242,58 @@
   // ============================================================================
   // PANEL DEL CONTADOR (propuesta de servicios contables, 30-sep-2026)
   // ============================================================================
+  // ---------- Asistente financiero educativo (solo administradoras) ----------
+  let asistenteFinMensajes = [];
+
+  function mostrarPantallaAsistenteFinanciero() {
+    mostrarPantalla('pantallaAsistenteFinanciero');
+    ocultarMensaje('mensajeAsistenteFin');
+    renderizarAsistenteFin();
+  }
+
+  function nuevaConversacionAsistenteFin() { asistenteFinMensajes = []; ocultarMensaje('mensajeAsistenteFin'); renderizarAsistenteFin(); }
+
+  function renderizarAsistenteFin(pensando) {
+    const cont = document.getElementById('asistenteFinChat');
+    if (!asistenteFinMensajes.length && !pensando) { cont.innerHTML = '<div class="cargando">Escribe tu pregunta, por ejemplo: «¿Qué es un CDT?» o «¿Tengo dinero libre para invertir?».</div>'; return; }
+    const html = t => escaparHtml(t).replace(/\n/g, '<br>');
+    cont.innerHTML = asistenteFinMensajes.map(m => m.role === 'user'
+      ? `<div style="text-align:right;margin:8px 0;"><span style="display:inline-block;max-width:85%;background:var(--tinte-rosa);border-radius:12px;padding:8px 12px;text-align:left;font-size:13.5px;">${html(m.content)}</span></div>`
+      : `<div style="margin:8px 0;"><span style="display:inline-block;max-width:92%;background:var(--gris-fondo);border-radius:12px;padding:8px 12px;font-size:13.5px;line-height:1.55;">${html(m.content)}</span></div>`).join('')
+      + (pensando ? '<div class="cargando">Pensando...</div>' : '');
+    cont.scrollTop = cont.scrollHeight;
+  }
+
+  async function enviarAsistenteFinanciero() {
+    const caja = document.getElementById('asistenteFinPregunta');
+    const pregunta = caja.value.trim();
+    if (!pregunta) return;
+    const btn = document.getElementById('btnAsistenteFin');
+    ocultarMensaje('mensajeAsistenteFin');
+    asistenteFinMensajes.push({ role: 'user', content: pregunta });
+    caja.value = '';
+    btn.disabled = true;
+    renderizarAsistenteFin(true);
+    try {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      const resp = await fetch(SUPABASE_URL + '/functions/v1/asistente-financiero', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + (session ? session.access_token : '') },
+        body: JSON.stringify({ mensajes: asistenteFinMensajes }),
+      });
+      let datos = {};
+      try { datos = await resp.json(); } catch (e) { /* sin JSON */ }
+      if (!resp.ok || !datos.respuesta) throw new Error(datos.error || ('No se pudo consultar (error ' + resp.status + ').'));
+      asistenteFinMensajes.push({ role: 'assistant', content: datos.respuesta });
+    } catch (e) {
+      asistenteFinMensajes.pop();
+      caja.value = pregunta;
+      mostrarMensaje('mensajeAsistenteFin', e.message || 'No se pudo consultar al asistente.', 'error');
+    }
+    btn.disabled = false;
+    renderizarAsistenteFin();
+  }
+
   async function mostrarPantallaPanelContador() {
     mostrarPantalla('pantallaPanelContador');
     asegurarEstiloTablaKardex();
@@ -19182,6 +19307,9 @@
   }
 
   let obligacionesContadorCache = [];
+  let soportesMesCache = [];
+  let soportesMesDesde = '';
+  const TIPOS_SOPORTE_MES = { pago_nomina: 'Pago de nómina', pago_honorarios: 'Pago de honorarios', seguridad_social: 'Seguridad social (PILA)', otro: 'Otro soporte' };
 
   async function cargarPanelContador() {
     const cont = document.getElementById('contenidoPanelContador');
@@ -19192,15 +19320,18 @@
     try { d = await llamarReporteContable('fn_panel_contador', { p_anio: anio, p_mes: mes }); }
     catch (e) { cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(e.message)}</div>`; return; }
     const desde = d.periodo.desde, hasta = d.periodo.hasta;
-    const [obl, gas] = await Promise.all([
+    const [obl, gas, sop] = await Promise.all([
       supabaseClient.from('obligaciones_contador').select('*').order('orden').order('fecha_vencimiento', { nullsFirst: false }),
       supabaseClient.from('gastos_departamentales').select('id, created_at, fecha_factura, categoria, descripcion, monto, tipo_documento, es_documento_soporte, foto_comprobante, centro_costo_id').gte('created_at', desde + 'T00:00:00-05:00').lte('created_at', hasta + 'T23:59:59-05:00').order('created_at'),
+      supabaseClient.from('soportes_mensuales_contables').select('*').eq('mes', desde).order('created_at'),
     ]);
     obligacionesContadorCache = obl.data || [];
-    cont.innerHTML = htmlPanelContador(d, gas.data || []);
+    soportesMesCache = sop.data || [];
+    soportesMesDesde = desde;
+    cont.innerHTML = htmlPanelContador(d, gas.data || [], sop.error ? null : soportesMesCache);
   }
 
-  function htmlPanelContador(d, gastos) {
+  function htmlPanelContador(d, gastos, soportes) {
     const m = formatearMoneda, c = d.controles, r = d.resultado;
     const mesFin = new Date(d.periodo.hasta + 'T23:59:59');
     const mesTerminado = mesFin < new Date();
@@ -19248,6 +19379,14 @@
     const tablaGastos = gastos.length === 0 ? '<div class="cargando">No hay gastos o compras registrados en este mes.</div>' : `<table class="tk"><thead><tr><th>Fecha</th><th>Categoría</th><th>Descripción</th><th>Documento</th><th class="n">Valor</th><th class="n">Soporte</th></tr></thead><tbody>
       ${gastos.map(g => `<tr><td>${fechaCortaPanel((g.fecha_factura || g.created_at).slice(0, 10))}</td><td>${escaparHtml(g.categoria || '')}</td><td>${escaparHtml((g.descripcion || '').slice(0, 70))}</td><td>${escaparHtml(g.tipo_documento || '')}${g.es_documento_soporte ? ' (doc. soporte)' : ''}</td><td class="n">${m(g.monto)}</td><td class="n">${g.foto_comprobante || g.es_documento_soporte ? '📎' : '—'}</td></tr>`).join('')}</tbody></table>`;
 
+    const enlaceSeguro = u => /^https:\/\//i.test(String(u || '')) ? escaparHtml(u) : '';
+    const requeridos = [['pago_nomina', 'Pagos de nómina u honorarios del mes'], ['seguridad_social', 'Seguridad social (PILA) del mes']];
+    const hayTipo = t => (soportes || []).some(x => x.tipo === t || (t === 'pago_nomina' && x.tipo === 'pago_honorarios'));
+    const seccionSoportes = soportes === null
+      ? '<div class="cargando">No se pudo cargar los soportes del mes.</div>'
+      : `<table class="tk"><tbody>${requeridos.map(([t, n]) => `<tr><td style="width:28px;">${hayTipo(t) ? '✅' : (mesTerminado ? '⚠️' : 'ℹ️')}</td><td><strong>${n}</strong><div style="font-size:11.5px;opacity:0.75;">${hayTipo(t) ? 'Soporte adjunto.' : 'Falta adjuntar el enlace del soporte.'}</div></td></tr>`).join('')}</tbody></table>
+        ${soportes.length ? `<table class="tk" style="margin-top:8px;"><thead><tr><th>Tipo</th><th>Descripción</th><th class="n">Valor</th><th class="n">Soporte</th></tr></thead><tbody>${soportes.map(x => `<tr><td>${escaparHtml(TIPOS_SOPORTE_MES[x.tipo] || x.tipo)}</td><td>${escaparHtml(x.descripcion || '')}</td><td class="n">${x.valor != null ? m(x.valor) : '—'}</td><td class="n"><a href="${enlaceSeguro(x.enlace)}" target="_blank" rel="noopener">Abrir 📎</a> <button class="btn-mini editar" onclick="cambiarEnlaceSoporte('${x.id}')">Cambiar enlace</button></td></tr>`).join('')}</tbody></table>` : ''}
+        <button class="btn-secundario" style="width:auto;margin-top:8px;" onclick="agregarSoporteMes()">+ Adjuntar soporte (enlace al Drive)</button>`;
     const ir = (txt, fn) => `<button class="btn-mini editar" onclick="${fn}">${txt}</button>`;
     const propuesta = [
       ['3.1 Revisión mensual de la información contable', 'Este panel (controles) · Libro diario · Libro mayor · Libro auxiliar', ir('Estados y libros', 'mostrarPantallaEstadosFinancieros()')],
@@ -19277,6 +19416,8 @@
       <button class="btn-secundario" style="width:auto;margin-top:8px;" onclick="agregarObligacion()">+ Agregar obligación</button>
       <h2 style="margin:22px 0 6px;font-size:16px;">🧾 Gastos y compras del mes (soportes)</h2>
       <div style="font-size:12px;opacity:0.7;margin-bottom:6px;">${tiposGasto} registro(s)${sinSoporte ? ` · <strong style="color:var(--ambar);">${sinSoporte} sin foto del comprobante</strong>` : ''}. Solo lectura.</div>${tablaGastos}
+      <h2 style="margin:22px 0 6px;font-size:16px;">📎 Soportes de pagos y seguridad social del mes</h2>
+      <div style="font-size:12px;opacity:0.7;margin-bottom:6px;">Pega el enlace (https) del soporte guardado en el Drive de Lana Rosa. Se guarda con el mes que estás viendo.</div>${seccionSoportes}
       <h2 style="margin:22px 0 6px;font-size:16px;">🗺️ Propuesta de servicios: dónde está cada cosa</h2>
       <table class="tk"><thead><tr><th>Punto de la propuesta</th><th>Dónde verlo en el sistema</th><th></th></tr></thead><tbody>${propuesta}</tbody></table>`;
   }
@@ -19287,6 +19428,34 @@
     const { error } = await supabaseClient.from('obligaciones_contador').update({ ...cambios, updated_at: new Date().toISOString() }).eq('id', id);
     if (error) { mostrarMensaje('mensajePanelContador', 'No se pudo guardar: ' + error.message, 'error'); return; }
     mostrarMensaje('mensajePanelContador', 'Guardado.', 'exito');
+    cargarPanelContador();
+  }
+
+  async function agregarSoporteMes() {
+    const claves = Object.keys(TIPOS_SOPORTE_MES);
+    const tipoTxt = prompt('Tipo de soporte:\n' + claves.map((k, i) => `${i + 1} = ${TIPOS_SOPORTE_MES[k]}`).join('\n'), '1');
+    if (tipoTxt === null) return;
+    const tipo = claves[Number(tipoTxt) - 1];
+    if (!tipo) { mostrarMensaje('mensajePanelContador', 'Escribe un número del 1 al ' + claves.length + '.', 'error'); return; }
+    const enlace = (prompt('Enlace al soporte en el Drive (debe empezar por https://)') || '').trim();
+    if (!enlace) return;
+    if (!/^https:\/\//i.test(enlace)) { mostrarMensaje('mensajePanelContador', 'El enlace debe empezar por https://', 'error'); return; }
+    const descripcion = (prompt('Descripción corta (ej: PILA de noviembre), opcional') || '').trim();
+    const valorTxt = (prompt('Valor pagado en pesos (opcional, solo números)') || '').replace(/[^\d]/g, '');
+    const { error } = await supabaseClient.from('soportes_mensuales_contables').insert({ mes: soportesMesDesde, tipo, enlace, descripcion: descripcion || null, valor: valorTxt ? Number(valorTxt) : null });
+    if (error) { mostrarMensaje('mensajePanelContador', 'No se pudo guardar: ' + error.message, 'error'); return; }
+    mostrarMensaje('mensajePanelContador', 'Soporte guardado.', 'exito');
+    cargarPanelContador();
+  }
+
+  async function cambiarEnlaceSoporte(id) {
+    const actual = soportesMesCache.find(x => x.id === id);
+    const enlace = (prompt('Nuevo enlace al soporte (https://)', actual ? actual.enlace : '') || '').trim();
+    if (!enlace) return;
+    if (!/^https:\/\//i.test(enlace)) { mostrarMensaje('mensajePanelContador', 'El enlace debe empezar por https://', 'error'); return; }
+    const { error } = await supabaseClient.from('soportes_mensuales_contables').update({ enlace, updated_at: new Date().toISOString() }).eq('id', id);
+    if (error) { mostrarMensaje('mensajePanelContador', 'No se pudo guardar: ' + error.message, 'error'); return; }
+    mostrarMensaje('mensajePanelContador', 'Enlace actualizado.', 'exito');
     cargarPanelContador();
   }
 
@@ -20480,7 +20649,7 @@
     const etiquetasCanal = { whatsapp: '💬 WhatsApp', instagram: '📷 Instagram', facebook: '👍 Facebook', tienda_virtual: '🛍️ Tienda virtual' };
     const etiquetasEstado = { esperando_pago: '⏳ Esperando pago', en_preparacion: '🧶 En preparación', listo_despacho: '📦 Listo', entregado: '✅ Entregado' };
     const etiquetasMedio = {
-      efectivo: 'Efectivo', nequi: 'Nequi', daviplata: 'Daviplata', transferencia: 'Transferencia', tarjeta_debito: 'Tarjeta débito', tarjeta_credito: 'Tarjeta crédito',
+      efectivo: 'Efectivo', nequi: 'Nequi / Bre-B', daviplata: 'Daviplata', transferencia: 'Transferencia', tarjeta_debito: 'Tarjeta débito', tarjeta_credito: 'Tarjeta crédito',
       wompi_tarjeta: 'Wompi · Tarjeta', wompi_bancolombia: 'Wompi · Bancolombia', wompi_qr: 'Wompi · QR Bancolombia', wompi_pse: 'Wompi · PSE', wompi_nequi: 'Wompi · Nequi', wompi_otro: 'Wompi',
     };
     const nombreMedio = m => etiquetasMedio[m] || (m ? String(m).replace(/_/g, ' ') : '');
@@ -24845,7 +25014,7 @@
   async function mostrarPantallaFacturacionElectronica(p_subtab) {
     mostrarPantalla('pantallaFacturacionElectronica');
     ocultarMensaje('mensajeFe');
-    ['chipFeNomina', 'chipFeDs', 'chipFeRespaldo'].forEach(id => { document.getElementById(id).style.display = esRolFe('administrador', 'contador') ? '' : 'none'; });
+    ['chipFeNomina', 'chipFeDs', 'chipFeRespaldo', 'chipFeCompras'].forEach(id => { document.getElementById(id).style.display = esRolFe('administrador', 'contador') ? '' : 'none'; });
     const hoy = new Date();
     if (!document.getElementById('feDesde').value) {
       document.getElementById('feDesde').value = fechaLocalIso(new Date(hoy.getFullYear(), 0, 1));
@@ -25012,6 +25181,7 @@
     const idCompleto = [...raiz.children].find(h => h.localName === 'ID')?.textContent.trim() || '';
     const m = idCompleto.match(/^([A-Za-z]*)(\d+)$/);
     const cliente = hijoLocal(raiz, 'AccountingCustomerParty')[0];
+    const proveedor = hijoLocal(raiz, 'AccountingSupplierParty')[0];
     const total = primero(hijoLocal(raiz, 'LegalMonetaryTotal')[0] || raiz, 'PayableAmount');
     const cufe = [...raiz.children].find(h => h.localName === 'UUID')?.textContent.trim() || '';
     // ProfileExecutionID: 1 = producción, 2 = pruebas/habilitación de la DIAN.
@@ -25032,10 +25202,126 @@
       total: Math.round(Number(total) || 0),
       documentoCliente: cliente ? primero(cliente, 'CompanyID') : '',
       nombreCliente: cliente ? (primero(cliente, 'RegistrationName') || primero(cliente, 'Name')) : '',
+      documentoProveedor: proveedor ? primero(proveedor, 'CompanyID') : '',
+      nombreProveedor: proveedor ? (primero(proveedor, 'RegistrationName') || primero(proveedor, 'Name')) : '',
+      subtotal: Math.round(Number(primero(hijoLocal(raiz, 'LegalMonetaryTotal')[0] || raiz, 'LineExtensionAmount')) || 0),
+      iva: Math.round([...raiz.children].filter(h => h.localName === 'TaxTotal').reduce((a, t) => a + (Number(primero(t, 'TaxAmount')) || 0), 0)),
     };
   }
 
   let feImportadas = [];
+
+  // ---------- Facturas electrónicas de COMPRAS (etapa 1: solo lectura, borradores) ----------
+  let feBorradoresCompras = [];
+  const soloDigitosNit = (v) => String(v || '').replace(/\D/g, '');
+  function mismoNit(a, b) {
+    a = soloDigitosNit(a); b = soloDigitosNit(b);
+    if (!a || !b) return false;
+    return a === b || (a.length === b.length + 1 && a.startsWith(b)) || (b.length === a.length + 1 && b.startsWith(a));
+  }
+
+  async function importarFacturasCompras(input) {
+    const archivos = [...(input.files || [])];
+    input.value = '';
+    if (!archivos.length) return;
+    const cont = document.getElementById('feComprasResultado');
+    cont.innerHTML = '<div class="cargando">Leyendo...</div>';
+    const xmls = [];
+    try {
+      for (const a of archivos) {
+        if (/\.zip$/i.test(a.name)) {
+          const zip = await JSZip.loadAsync(await a.arrayBuffer());
+          const nombresZip = Object.keys(zip.files).filter(n => !zip.files[n].dir);
+          const pdfs = nombresZip.filter(n => /\.pdf$/i.test(n));
+          for (const nombre of nombresZip) if (/\.xml$/i.test(nombre)) {
+            const base = nombre.replace(/\.xml$/i, '').toLowerCase();
+            const nPdf = pdfs.find(n => n.replace(/\.pdf$/i, '').toLowerCase() === base) || (pdfs.length === 1 ? pdfs[0] : null);
+            const soporte = nPdf ? new File([await zip.files[nPdf].async('blob')], nPdf.split('/').pop(), { type: 'application/pdf' }) : null;
+            xmls.push({ origen: a.name + ' › ' + nombre, texto: await zip.files[nombre].async('string'), soporte });
+          }
+        } else xmls.push({ origen: a.name, texto: await a.text(), soporte: null });
+      }
+    } catch (e) { cont.innerHTML = `<div class="cargando">No se pudo abrir el archivo: ${escaparHtml(e.message)}</div>`; return; }
+    let nitEmpresa = '', registradas = [];
+    try { const { data } = await supabaseClient.from('configuracion_empresa').select('nit').limit(1).maybeSingle(); nitEmpresa = (data && data.nit) || ''; } catch (e) { /* sin NIT: no se puede distinguir ventas */ }
+    try { const { data } = await supabaseClient.from('compras_requisitos_sena').select('numero_factura, proveedor_nit'); registradas = data || []; } catch (e) { /* sin lista: no se detectan registradas */ }
+    const vistos = new Set();
+    feBorradoresCompras = xmls.map(x => {
+      const f = { origen: x.origen, soporte: x.soporte, ...leerFacturaXmlDian(x.texto) };
+      if (f.error) return { ...f, estado: 'error', detalle: f.error };
+      if (f.esPrueba) return { ...f, estado: 'error', detalle: 'Factura de PRUEBA (habilitación de la DIAN): se ignora.' };
+      if (nitEmpresa && mismoNit(f.documentoProveedor, nitEmpresa) && !mismoNit(f.documentoCliente, nitEmpresa)) return { ...f, estado: 'venta', detalle: 'Es una factura de VENTA de Lana Rosa, no de compra.' };
+      if (nitEmpresa && !mismoNit(f.documentoCliente, nitEmpresa)) return { ...f, estado: 'otro', detalle: 'La factura no está a nombre de Lana Rosa (NIT ' + (f.documentoCliente || 'sin dato') + '). Revísala.' };
+      if (f.cufe && vistos.has(f.cufe)) return { ...f, estado: 'repetida', detalle: 'Repetida en este lote (mismo CUFE).' };
+      if (f.cufe) vistos.add(f.cufe);
+      const yaRegistrada = registradas.some(r => mismoNit(r.proveedor_nit, f.documentoProveedor) && [f.idCompleto, f.numero].includes(String(r.numero_factura || '').trim()));
+      if (yaRegistrada) return { ...f, estado: 'registrada', detalle: 'Ya hay una compra registrada con este proveedor y número de factura.' };
+      return { ...f, estado: 'nuevo', detalle: 'Borrador listo para revisar.' };
+    });
+    renderizarBorradoresCompras(!nitEmpresa);
+  }
+
+  function renderizarBorradoresCompras(sinNit) {
+    const cont = document.getElementById('feComprasResultado');
+    const lista = feBorradoresCompras;
+    if (!lista.length) { cont.innerHTML = '<div class="cargando">No encontré facturas en los archivos.</div>'; return; }
+    const etiquetas = { nuevo: ['✅ Nueva', 'var(--tinte-verde)', 'var(--verde-exito)'], repetida: ['⚠️ Repetida', 'var(--tinte-ambar, #fff4e0)', 'var(--ambar)'], registrada: ['⚠️ Ya registrada', 'var(--tinte-ambar, #fff4e0)', 'var(--ambar)'], venta: ['↩️ Es una venta', 'var(--tinte-azul)', 'var(--azul-acero)'], otro: ['⚠️ Otro cliente', 'var(--tinte-ambar, #fff4e0)', 'var(--ambar)'], error: ['❌ No se pudo', 'var(--tinte-rojo)', 'var(--rojo-error)'] };
+    const nuevas = lista.filter(f => f.estado === 'nuevo');
+    cont.innerHTML = `
+      <div style="font-size:12.5px;margin-bottom:8px;"><strong>${lista.length}</strong> archivo(s) leído(s): <strong>${nuevas.length}</strong> nueva(s) · total de las nuevas <strong>${formatearMoneda(nuevas.reduce((a, f) => a + f.total, 0))}</strong>. No se registró nada en los libros.</div>
+      ${sinNit ? '<div class="mensaje error" style="display:block;">No encontré el NIT de Lana Rosa en Datos de la empresa: no puedo distinguir facturas de venta de facturas de compra. Complétalo y vuelve a subir.</div>' : ''}
+      <table class="tk"><thead><tr><th>Estado</th><th>Proveedor</th><th>Factura</th><th>Fecha</th><th class="n">Subtotal</th><th class="n">IVA</th><th class="n">Total</th><th>CUFE</th><th></th></tr></thead><tbody>
+        ${lista.map(f => { const e = etiquetas[f.estado]; return `<tr>
+          <td><span class="badge-estado-pedido" style="background:${e[1]};color:${e[2]};">${e[0]}</span><div style="font-size:11px;opacity:.75;max-width:230px;">${escaparHtml(f.detalle)}</div></td>
+          <td>${f.error ? escaparHtml(f.origen) : `<strong>${escaparHtml(f.nombreProveedor || '—')}</strong><div style="font-size:11px;opacity:.7;">NIT ${escaparHtml(f.documentoProveedor || '—')}</div>`}</td>
+          <td>${escaparHtml(f.idCompleto || '')}</td><td>${escaparHtml(f.fecha || '')}</td>
+          <td class="n">${f.error ? '' : formatearMoneda(f.subtotal)}</td><td class="n">${f.error ? '' : formatearMoneda(f.iva)}</td><td class="n">${f.error ? '' : formatearMoneda(f.total)}</td>
+          <td style="font-size:10.5px;">${escaparHtml((f.cufe || '').slice(0, 12))}${f.cufe ? '…' : ''}</td>
+          <td>${f.estado === 'nuevo' ? `<button class="btn-mini editar" style="flex:0 0 auto;" onclick="registrarCompraDesdeBorrador(${lista.indexOf(f)})">Registrar compra →</button>` : ''}</td></tr>`; }).join('')}
+      </tbody></table>`;
+  }
+
+  // Etapa 2: no registra por su cuenta. Abre el formulario normal de «Registrar compra» con los datos de la factura ya puestos;
+  // el resto (cómo se pagó, quién aprobó, categoría, documentos del SENA) lo completa la persona y las validaciones de siempre aplican.
+  async function registrarCompraDesdeBorrador(i) {
+    const f = feBorradoresCompras[i];
+    if (!f || f.estado !== 'nuevo') return;
+    await mostrarPantallaPagosPendientes();
+    document.getElementById('gastoNumeroFactura').value = f.idCompleto || '';
+    document.getElementById('gastoFechaFactura').value = f.fecha || '';
+    document.getElementById('gastoMonto').value = f.total || '';
+    const desc = f.lineas.map(l => l.descripcion).filter(Boolean).join(', ');
+    document.getElementById('gastoDescripcion').value = desc.slice(0, 150);
+    document.getElementById('gastoProveedorNombre').value = f.nombreProveedor || '';
+    document.getElementById('gastoProveedorNit').value = f.documentoProveedor || '';
+    // Si el proveedor ya está en el directorio (mismo NIT), se selecciona.
+    try {
+      const resp = await fetch(WORKER_URL + '/api/pos/terceros?tipo=proveedor&q=' + encodeURIComponent(f.documentoProveedor || f.nombreProveedor || ''), { headers: { Authorization: 'Bearer ' + sesionActual.token } });
+      if (resp.ok) {
+        const { terceros } = await resp.json();
+        const t = (terceros || []).find(x => mismoNit(x.numero_documento, f.documentoProveedor));
+        if (t) seleccionarProveedorGasto(t.id, t.nombre_completo);
+      }
+    } catch (e) { /* queda como proveedor nuevo con los datos de la factura */ }
+    let adjunto = 'Adjunta a mano el PDF de la factura (el ZIP no traía PDF).';
+    if (f.soporte) {
+      try { const dt = new DataTransfer(); dt.items.add(f.soporte); document.getElementById('gastoArchivoSoporte').files = dt.files; adjunto = 'Se adjuntó el PDF de la factura.'; } catch (e) { /* se adjunta a mano */ }
+    }
+    actualizarRequisitosCompra();
+    mostrarMensaje('mensajeGasto', `Datos tomados de la factura ${f.idCompleto} (${f.nombreProveedor || 'proveedor'}). ${adjunto} Revisa y completa: categoría, cómo se pagó, quién aprobó y los documentos que pide el instructivo del SENA. No se registra nada hasta que toques «Registrar compra».`, 'exito');
+  }
+
+  function exportarBorradoresComprasExcel() {
+    const l = feBorradoresCompras;
+    if (!l.length) { mostrarMensaje('mensajeFe', 'Primero sube las facturas de compras.', 'error'); return; }
+    const nombres = { nuevo: 'Nueva', repetida: 'Repetida', registrada: 'Ya registrada', venta: 'Es una venta', otro: 'Otro cliente', error: 'No se pudo' };
+    const filas = [['Lana Rosa Crochet — Borradores de facturas de compras'], [`Generado: ${new Date().toLocaleString('es-CO')}`], [],
+      ['Estado', 'Nota', 'Proveedor', 'NIT proveedor', 'Factura', 'Fecha', 'Subtotal', 'IVA', 'Total', 'CUFE', 'Archivo'],
+      ...l.map(f => [nombres[f.estado], f.detalle, f.nombreProveedor || '', f.documentoProveedor || '', f.idCompleto || '', f.fecha || '', f.subtotal || 0, f.iva || 0, f.total || 0, f.cufe || '', f.origen])];
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, XLSX.utils.aoa_to_sheet(filas), 'Borradores compras');
+    XLSX.writeFile(libro, nombreArchivoInforme('Borradores facturas de compras', 'xlsx'));
+  }
 
   async function importarFacturasDian(input) {
     const archivos = [...(input.files || [])];
@@ -27625,7 +27911,7 @@
     renderizarHonorariosTejedoras();
   }
 
-  const MEDIOS_PAGO_HONORARIOS = { efectivo: 'Efectivo (Caja)', transferencia: 'Transferencia (Bancos)', nequi: 'Nequi', daviplata: 'Daviplata' };
+  const MEDIOS_PAGO_HONORARIOS = { efectivo: 'Efectivo (Caja)', transferencia: 'Transferencia (Bancos)', nequi: 'Nequi / Bre-B', daviplata: 'Daviplata' };
 
   function renderizarHonorariosTejedoras() {
     const texto = document.getElementById('buscarHonorariosTejedoras').value.trim().toLowerCase();
@@ -27738,6 +28024,9 @@
     document.getElementById('fcFechaDesde').value = primerDiaMes;
     document.getElementById('fcFechaHasta').value = hoy;
     document.getElementById('ecFechaDesde').value = new Date(new Date().getFullYear(), 0, 1).toISOString().slice(0, 10);
+    document.getElementById('gcDesde').value = primerDiaMes;
+    document.getElementById('gcHasta').value = hoy;
+    document.getElementById('ifMes').value = hoy.slice(0, 7);
     document.getElementById('ecFechaHasta').value = hoy;
     mostrarSubTabGrupo('estadosFin', 'subtabEstadoResultados', document.querySelector('[data-subtab-btn="estadosFin"]'));
     await cargarEstadoResultados();
@@ -29911,13 +30200,13 @@
   }
   agregarBotonesCorreoInformes();
 
-  function imprimirEstadoFinanciero(idContenido, titulo) {
+  function imprimirEstadoFinanciero(idContenido, titulo, tituloArchivo) {
     const contenidoHtml = document.getElementById(idContenido).innerHTML;
     const ventana = window.open('', '_blank');
     ventana.document.write(`
       <html>
       <head>
-        <title>${titulo} — Lana Rosa Crochet</title>
+        <title>${escaparHtml(tituloArchivo || (titulo + ' — Lana Rosa Crochet'))}</title>
         <meta charset="utf-8">
         <style>
           body { font-family: Arial, Helvetica, sans-serif; padding: 30px; color: #2d2d2d; }
@@ -30105,6 +30394,154 @@
     const libro = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(libro, hoja, 'Balance General');
     XLSX.writeFile(libro, `LanaRosa_BalanceGeneral_${d.fecha_corte}.xlsx`);
+  }
+
+  // ---------- Catálogo de cuentas para el contador (Excel limpio) ----------
+  async function exportarCatalogoCuentasExcel() {
+    if (!cachePlanCuentas.length) await cargarPlanCuentas();
+    if (!cachePlanCuentas.length) { mostrarMensaje('mensajeContaImp', 'No hay cuentas para exportar.', 'error'); return; }
+    const nivel = ['', 'Clase', 'Grupo', 'Cuenta', 'Subcuenta', 'Auxiliar'];
+    const filas = [
+      ['Lana Rosa Crochet — Catálogo de cuentas (PUC)'],
+      [`Generado: ${new Date().toLocaleString('es-CO')}`],
+      [],
+      ['Código', 'Nombre', 'Nivel', 'Naturaleza', 'Recibe movimientos', 'Activa', 'La usa el sistema', 'Nota'],
+      ...cachePlanCuentas.map(c => [c.codigo, c.nombre, nivel[c.nivel] || c.nivel, c.naturaleza === 'debito' ? 'Débito' : 'Crédito',
+        c.acepta_movimientos ? 'Sí' : 'No', c.activa ? 'Sí' : 'No', c.usada_por_sistema ? 'Sí' : 'No', c.nota_validacion || ''])
+    ];
+    const hoja = XLSX.utils.aoa_to_sheet(filas);
+    hoja['!cols'] = [{ wch: 12 }, { wch: 55 }, { wch: 12 }, { wch: 12 }, { wch: 18 }, { wch: 8 }, { wch: 16 }, { wch: 40 }];
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Catalogo de cuentas');
+    XLSX.writeFile(libro, nombreArchivoInforme('Catalogo de cuentas', 'xlsx'));
+  }
+
+  // ---------- Gastos y compras por categoría (con fecha inicio y fin) ----------
+  let cacheGastosCategoria = null;
+
+  function clasificarMovimientoGastoCompra(m) {
+    const c = String(m.cuenta_codigo || '');
+    if (/^5[123]/.test(c)) return 'Gastos';
+    if (/^1[45]/.test(c) && m.origen !== 'pos') return 'Compras de inventario y activos';
+    return null;
+  }
+
+  async function cargarGastosCategoria() {
+    const cont = document.getElementById('contenidoGastosCategoria');
+    const desde = document.getElementById('gcDesde').value;
+    const hasta = document.getElementById('gcHasta').value;
+    if (!desde || !hasta) { cont.innerHTML = '<div class="cargando">Elige la fecha de inicio y la fecha fin.</div>'; return; }
+    if (desde > hasta) { cont.innerHTML = '<div class="cargando">La fecha de inicio no puede ser posterior a la fecha fin.</div>'; return; }
+    cont.innerHTML = '<div class="cargando">Cargando...</div>';
+    let d;
+    try { d = await llamarReporteContable('fn_libro_diario', { p_desde: desde, p_hasta: hasta }); }
+    catch (e) { cont.innerHTML = `<div class="cargando">No se pudo cargar: ${escaparHtml(e.message)}</div>`; return; }
+    const lineas = [];
+    (d.movimientos || []).forEach(m => {
+      const tipo = clasificarMovimientoGastoCompra(m);
+      if (!tipo) return;
+      const valor = Number(m.debito || 0) - Number(m.credito || 0);
+      if (!valor) return;
+      lineas.push({ tipo, fecha: String(m.fecha).slice(0, 10), numero: m.numero, cuenta: `${m.cuenta_codigo} — ${m.cuenta_nombre}`, codigo: m.cuenta_codigo,
+        concepto: m.concepto || m.asiento_descripcion || '', tercero: m.tercero || '', origen: m.origen || '', valor });
+    });
+    const resumen = {};
+    lineas.forEach(l => {
+      const k = l.tipo + '|' + l.cuenta;
+      resumen[k] = resumen[k] || { tipo: l.tipo, cuenta: l.cuenta, codigo: l.codigo, total: 0, n: 0 };
+      resumen[k].total += l.valor; resumen[k].n += 1;
+    });
+    const cats = Object.values(resumen).sort((a, b) => a.tipo.localeCompare(b.tipo) || a.codigo.localeCompare(b.codigo));
+    const totalTipo = t => cats.filter(c => c.tipo === t).reduce((a, c) => a + c.total, 0);
+    cacheGastosCategoria = { desde, hasta, lineas, cats, truncado: (d.movimientos || []).length >= 3000 };
+    const bloque = tipo => {
+      const filas = cats.filter(c => c.tipo === tipo);
+      return `<h2 style="margin-top:18px;">${escaparHtml(tipo)}</h2>
+        ${filas.map(c => `<div class="resumen-fila"><span>${escaparHtml(c.cuenta)} <span style="opacity:.6;font-size:11.5px;">(${c.n} mov.)</span></span><strong>${formatearMoneda(c.total)}</strong></div>`).join('') || '<div class="cargando">Sin movimientos en el período.</div>'}
+        ${filaEstadoFin('Total ' + tipo.toLowerCase(), totalTipo(tipo), true)}`;
+    };
+    cont.innerHTML = `
+      <div class="panel" style="max-width:760px;max-height:none;">
+        <div class="subtitulo" style="margin-bottom:4px;">Del ${escaparHtml(desde)} al ${escaparHtml(hasta)}.</div>
+        ${cacheGastosCategoria.truncado ? '<div class="mensaje error" style="display:block;">El período tiene más de 3.000 movimientos y el reporte se recortó: usa un rango de fechas más corto.</div>' : ''}
+        ${bloque('Gastos')}
+        ${bloque('Compras de inventario y activos')}
+        <h2 style="margin-top:22px;">Detalle por movimiento</h2>
+        <table style="width:100%;font-size:12px;border-collapse:collapse;">
+          <tr style="text-align:left;opacity:.7;"><th>Fecha</th><th>Asiento</th><th>Categoría (cuenta)</th><th>Concepto</th><th>Tercero</th><th style="text-align:right;">Valor</th></tr>
+          ${lineas.map(l => `<tr><td>${escaparHtml(l.fecha)}</td><td>${escaparHtml(String(l.numero ?? ''))}</td><td>${escaparHtml(l.cuenta)}</td><td>${escaparHtml(String(l.concepto).slice(0, 80))}</td><td>${escaparHtml(l.tercero)}</td><td style="text-align:right;">${formatearMoneda(l.valor)}</td></tr>`).join('') || '<tr><td colspan="6" class="cargando">Sin movimientos.</td></tr>'}
+        </table>
+      </div>`;
+  }
+
+  function exportarGastosCategoriaExcel() {
+    const g = cacheGastosCategoria;
+    if (!g) { mostrarMensaje('mensajeEstadosFinancieros', 'Espera a que cargue el reporte primero.', 'error'); return; }
+    const resumen = [['Lana Rosa Crochet — Gastos y compras por categoría'], [`Del ${g.desde} al ${g.hasta}`], [],
+      ['Tipo', 'Categoría (cuenta)', 'Movimientos', 'Total'], ...g.cats.map(c => [c.tipo, c.cuenta, c.n, c.total])];
+    const detalle = [['Fecha', 'Asiento', 'Tipo', 'Categoría (cuenta)', 'Concepto', 'Tercero', 'Origen', 'Valor'],
+      ...g.lineas.map(l => [l.fecha, l.numero, l.tipo, l.cuenta, l.concepto, l.tercero, l.origen, l.valor])];
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, XLSX.utils.aoa_to_sheet(resumen), 'Resumen por categoria');
+    XLSX.utils.book_append_sheet(libro, XLSX.utils.aoa_to_sheet(detalle), 'Detalle');
+    XLSX.writeFile(libro, `LanaRosa_Gastos_y_compras_${g.desde}_a_${g.hasta}.xlsx`);
+  }
+
+  // ---------- Informe mensual para el Fondo Emprender ----------
+  let cacheInformeFondo = null;
+
+  async function generarInformeMensualFondo() {
+    const cont = document.getElementById('contenidoInformeFondo');
+    const mes = document.getElementById('ifMes').value;
+    if (!/^\d{4}-\d{2}$/.test(mes)) { cont.innerHTML = '<div class="cargando">Elige el mes del informe.</div>'; return; }
+    const [anio, m] = mes.split('-').map(Number);
+    const desde = `${mes}-01`;
+    const hasta = fechaLocalIso(new Date(anio, m, 0));
+    cont.innerHTML = '<div class="cargando">Generando...</div>';
+    document.getElementById('erFechaDesde').value = desde;
+    document.getElementById('erFechaHasta').value = hasta;
+    document.getElementById('bgFechaCorte').value = hasta;
+    await cargarBalanceGeneral();
+    await cargarEstadoResultados();
+    const bg = document.getElementById('contenidoBalanceGeneral').innerHTML;
+    const er = document.getElementById('contenidoEstadoResultados').innerHTML;
+    if (!cacheBalanceGeneral || !cacheEstadoResultados || bg.includes('No se pudo cargar') || er.includes('No se pudo cargar')) {
+      cont.innerHTML = '<div class="cargando">No se pudo generar alguno de los estados. Revisa tu conexión e inténtalo de nuevo.</div>';
+      return;
+    }
+    cacheInformeFondo = { mes, desde, hasta, bg: cacheBalanceGeneral, er: cacheEstadoResultados };
+    cont.innerHTML = `
+      <h2 style="margin-top:6px;">Estado de situación financiera al ${escaparHtml(hasta)}</h2>${bg}
+      <h2 style="margin-top:26px;">Estado de resultados del ${escaparHtml(desde)} al ${escaparHtml(hasta)}</h2>${er}
+      <div class="no-exportar" style="margin-top:22px;padding:12px 14px;border-radius:10px;border:1px dashed var(--borde, #d9c9d2);font-size:12.5px;">
+        <strong>Falta adjuntar a mano:</strong> el extracto bancario del mes y la conciliación de la cuenta del Fondo (solo movimientos de Bancolombia/Fondo). Se hacen en Contabilidad → Conciliación bancaria; este informe todavía no los incluye.
+      </div>`;
+  }
+
+  function imprimirInformeFondo() {
+    if (!cacheInformeFondo) { mostrarMensaje('mensajeEstadosFinancieros', 'Primero genera el informe del mes.', 'error'); return; }
+    imprimirEstadoFinanciero('contenidoInformeFondo', 'Informe mensual Fondo Emprender ' + cacheInformeFondo.mes, 'LanaRosa_Informe_mensual_Fondo_' + cacheInformeFondo.mes);
+  }
+
+  function exportarInformeFondoExcel() {
+    const f = cacheInformeFondo;
+    if (!f) { mostrarMensaje('mensajeEstadosFinancieros', 'Primero genera el informe del mes.', 'error'); return; }
+    const b = f.bg, e = f.er;
+    const sit = [['Lana Rosa Crochet — Estado de situación financiera'], [`Fecha de corte: ${f.hasta}`], [],
+      ['ACTIVOS', ''], ...b.activos.map(a => [a.nombre, a.valor]), ['TOTAL ACTIVOS', b.total_activos], [],
+      ['PASIVOS', ''], ...b.pasivos.map(a => [a.nombre, a.valor]), ['TOTAL PASIVOS', b.total_pasivos], [],
+      ['PATRIMONIO', ''], ...b.patrimonio.map(a => [a.nombre, a.valor]), ['Resultado del ejercicio (sin cerrar)', b.utilidad_acumulada],
+      ['TOTAL PATRIMONIO', b.total_patrimonio], ['TOTAL PASIVO + PATRIMONIO', Number(b.total_pasivos) + Number(b.total_patrimonio)]];
+    const res = [['Lana Rosa Crochet — Estado de resultados'], [`Del ${f.desde} al ${f.hasta}`], [],
+      ['INGRESOS OPERACIONALES', ''], ...e.ingresos.map(a => [a.nombre, a.valor]), ['Total ingresos', e.total_ingresos], [],
+      ['COSTO DE VENTAS', ''], ...e.costos.map(a => [a.nombre, a.valor]), ['Total costo de ventas', e.total_costos], ['Utilidad bruta', e.utilidad_bruta], [],
+      ['GASTOS OPERACIONALES', ''], ...e.gastos.map(a => [a.nombre, a.valor]), ['Utilidad operacional', e.utilidad_operacional], [],
+      ['Otros ingresos', e.total_otros_ingresos], ['Otros gastos', e.total_otros_gastos], ['Utilidad antes de impuestos', e.utilidad_antes_impuestos],
+      ['Impuestos', e.total_impuestos], ['UTILIDAD NETA DEL PERÍODO', e.utilidad_neta]];
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, XLSX.utils.aoa_to_sheet(sit), 'Estado de situacion');
+    XLSX.utils.book_append_sheet(libro, XLSX.utils.aoa_to_sheet(res), 'Estado de resultados');
+    XLSX.writeFile(libro, `LanaRosa_Informe_mensual_Fondo_${f.mes}.xlsx`);
   }
 
   function exportarFlujoCajaExcel() {
@@ -34215,12 +34652,54 @@
     renderAvisoPendientesInicio();
   }
 
+  // Alertas de entregas del Fondo Emprender (informes, actas, bimestral): se ven 7 días antes y en rojo desde 2 días antes.
+  // Las fechas viven en el calendario del equipo (eventos_calendario, títulos "🏦 Entrega Fondo Emprender …").
+  async function cargarAvisoEntregasFondo() {
+    const cont = document.getElementById('hubAvisoEntregasFondo'); if (!cont) return;
+    cont.style.display = 'none';
+    const { data, error } = await supabaseClient.rpc('fn_entregas_fondo_proximas', { p_dias: 7 });
+    if (error || !data || !data.length) return;
+    cont.innerHTML = `<div style="background:#fff3cd;border:1.5px solid #f0d98c;border-radius:12px;padding:12px 16px;margin:10px 0;">
+      <div style="font-weight:700;font-size:13px;color:#856404;margin-bottom:6px;">🏦 Entregas del Fondo Emprender</div>
+      ${data.map(e => {
+        const urgente = e.dias <= 2;
+        const cuando = e.dias < 0 ? `venció hace ${Math.abs(e.dias)} día(s)` : e.dias === 0 ? 'es hoy' : e.dias === 1 ? 'es mañana' : `en ${e.dias} días`;
+        const fecha = new Date(e.fecha_inicio).toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'America/Bogota' });
+        return `<div style="font-size:12.5px;padding:4px 0;color:${urgente ? 'var(--rojo-error)' : '#856404'};"><strong>${escaparHtml(e.titulo.replace('🏦 Entrega Fondo Emprender — ', ''))}</strong> — ${fecha} (${cuando}) <button class="btn-mini editar" style="padding:2px 8px;font-size:11px;" onclick="marcarEntregaFondo('${e.id}')">Marcar entregada</button></div>`;
+      }).join('')}
+      <button class="btn-mini editar" style="margin-top:6px;" onclick="descargarCalendarioFondoIcs()">📅 Descargar para Google Calendar (.ics)</button>
+    </div>`;
+    cont.style.display = 'block';
+  }
+
+  async function marcarEntregaFondo(id) {
+    const { error } = await supabaseClient.rpc('fn_entrega_fondo_marcar', { p_id: id });
+    if (error) { alert('No se pudo marcar: ' + error.message); return; }
+    cargarAvisoEntregasFondo();
+  }
+
+  // Archivo .ics (se importa en Google Calendar: Configuración > Importar). Cada entrega trae aviso 2 días antes.
+  async function descargarCalendarioFondoIcs() {
+    const { data, error } = await supabaseClient.rpc('fn_entregas_fondo_proximas', { p_dias: 400 });
+    if (error || !data || !data.length) { alert('No hay entregas pendientes para exportar.'); return; }
+    const esc = (t) => String(t || '').replace(/\\/g, '\\\\').replace(/[,;]/g, (m) => '\\' + m).replace(/\r?\n/g, '\\n');
+    const ts = (f) => new Date(f).toISOString().replace(/[-:]|\.\d{3}/g, '');
+    const lineas = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Lana Rosa ERP//Entregas Fondo Emprender//ES', 'CALSCALE:GREGORIAN'];
+    data.forEach(e => lineas.push('BEGIN:VEVENT', `UID:entrega-fondo-${e.id}@lanarosa`, `DTSTAMP:${ts(new Date())}`, `DTSTART:${ts(e.fecha_inicio)}`, `DTEND:${ts(e.fecha_fin || e.fecha_inicio)}`,
+      `SUMMARY:${esc(e.titulo)}`, `DESCRIPTION:${esc(e.descripcion)}`, 'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:Entrega del Fondo Emprender en 2 dias', 'TRIGGER:-P2D', 'END:VALARM', 'END:VEVENT'));
+    lineas.push('END:VCALENDAR');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([lineas.join('\r\n')], { type: 'text/calendar;charset=utf-8' }));
+    a.download = 'entregas-fondo-emprender.ics'; document.body.appendChild(a); a.click(); a.remove();
+  }
+
   function mostrarInicioModulos() {
     limpiarModos();
     document.body.classList.add('modo-inicio');
     renderInicioModulos();
     actualizarBadgesPendientes();
     actualizarAvisosPersonales();
+    cargarAvisoEntregasFondo();
     moverWidgetHoras('inicio');
     fijarHashUrl('inicio');
     mostrarPantalla('pantallaInicio');

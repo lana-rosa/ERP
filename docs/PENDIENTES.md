@@ -11,7 +11,7 @@ Actualizado: 2026-11-12 (Orquestador)
 
 ## Orden de trabajo (turnos)
 Dos chats no deben cambiar `index.html` en la misma zona a la vez.
-1. **Chat 1 Ventas** — causa probable encontrada; arreglos publicados; falta que Sara pruebe turno nuevo y venta.
+1. **Chat 1 Ventas** — venta de prueba verificada (24-nov); quedan: arreglo de caja al anular (necesita "sí" de Sara) y probar Nequi/Bre-B.
 2. **Chat 2 Pedidos** — en curso: textos legales en recibos → luego lote de pedidos (ver su sección).
 3. **Chat 3 Compras SENA** — en curso: ajustes del nuevo modelo de desembolsos (zona Compras, no choca con el chat 2).
 4. **Chat 6 Producción** — en cola: empieza **cuando el chat 2 publique** su lote de pedidos.
@@ -21,7 +21,14 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 ## Por chat
 
 ### Chat 1 · Ventas
-- [ ] 🔴 **No deja registrar ventas** (desde 03-nov). Mensaje: "No hay turno de caja abierto." (lo da el Worker). Causas probables: (a) el turno abierto el 19-oct lleva +24 días y el Worker ya no lo reconoce; (b) Sara tiene 2 cuentas (la del ERP `…@gmai.com`, administrador; otra `…@gmail.com` sin rol, creada 3-nov). 13/15-nov: además "Token inválido o expirado" al abrir turno. Arreglos publicados en el PR (token siempre vigente + bloqueo de cuentas sin rol). **Falta (Sara):** entrar con la cuenta del ERP, cerrar el turno del 19-oct con arqueo, abrir uno nuevo y hacer una venta de prueba; luego marcar [x]. Ver `docs/temas/ventas-pos.md`.
+- [x] **No deja registrar ventas** — CERRADO 24-nov: venta de prueba real verificada (efectivo + débito, inventario, caja, asiento, sin factura DIAN automática; anuladas después). Causas: token vencido sin refrescar + cuenta sin rol + turno viejo (arreglos en PR #143 y siguientes). Detalle abajo y en `docs/temas/ventas-pos.md`.
+- [x] 24-nov: **Anular una venta ahora devuelve el dinero a la caja departamental** (`fn_anular_venta_pos` + `fn_revertir_caja_venta_pos`) y se ajustaron los $16.000 de las ventas de prueba (saldo caja Tienda $3.995.733). Migración en `docs/migraciones/2026-11-24-anular-venta-revierte-caja.sql`.
+- [ ] 🔴 Sara decide: POS-2026-00014 (7-ago, $95.000, anulada) no revirtió su ingreso en la caja departamental. ¿Ajustar con la misma función (resta $95.000 al saldo)? Solo con su "sí".
+- [x] 24-nov: Nequi / Bre-B va a la cuenta Nequi (111010), decidido por Sara; cuenta Nequi activada en Supabase. [ ] Falta probar una venta real con el Worker y botón en modo feria.
+- [ ] Daviplata y tarjetas (débito/crédito) hoy se contabilizan en Bancolombia 111005 (predeterminada), pero Bancolombia no recibe pagos (solo recursos Fondo Emprender). Sara debe decir a qué cuenta van; luego se liga en `medios_pago_cuenta` y/o se quita la marca "predeterminada" de Bancolombia.
+- [ ] Turno de Sara del 13-nov (`ba4aa95b…`) sigue abierto sin ventas (solo un pedido por transferencia de $60.500): cerrarlo con efectivo contado $0. Regla nueva de Sara (24-nov): cerrar turno todos los días al cierre del local.
+- [x] 24-nov: turno de Jennifer cerrado por error con $0 (faltante −$100.000) → corregido a $100.000, diferencia $0 (con "sí" de Sara).
+- (histórico) Mensaje: "No hay turno de caja abierto." (lo da el Worker). Causas probables: (a) el turno abierto el 19-oct lleva +24 días y el Worker ya no lo reconoce; (b) Sara tiene 2 cuentas (la del ERP `…@gmai.com`, administrador; otra `…@gmail.com` sin rol, creada 3-nov). 13/15-nov: además "Token inválido o expirado" al abrir turno. Arreglos publicados en el PR (token siempre vigente + bloqueo de cuentas sin rol). **Falta (Sara):** entrar con la cuenta del ERP, cerrar el turno del 19-oct con arqueo, abrir uno nuevo y hacer una venta de prueba; luego marcar [x]. Ver `docs/temas/ventas-pos.md`.
 
 ### Chat 2 · Pedidos y anticipos (enviado 12-nov, en este orden)
 - [x] Recibos: el texto de cambios/retracto/garantía respeta saltos de línea y va alineado a la izquierda (venta y anticipo).
@@ -54,6 +61,13 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [ ] Emitir en la DIAN las 7 facturas marcadas "facturar" ($601.000: PED-2026-00541, 545, 549, 553, 554, 555, 550) y registrarlas en Por facturar.
 - [x] **Editar datos del cliente de una venta/pedido** (pedido de Sara 13-nov, regla: solo si NO tiene factura DIAN registrada). Publicado 13-nov (PR #124, función `fn_editar_cliente_venta` aplicada en Supabase). Botón "✏️ Datos del cliente" en Por facturar. 13-nov: también en Historial de ventas (Tienda y WhatsApp/Redes), publicado (PR #126).
 - **Para otro chat (Chat 2 Pedidos):** el panel "Editar datos del cliente" del pedido usa `fn_editar_cliente_pedido_canal`, que sí deja a un cajero editar, modifica el cliente compartido y no revisa si ya hay factura. Conviene que ese panel llame a `fn_editar_cliente_venta('pedido_canal', ...)` o que se bloquee si hay factura.
+- [x] **Auditoría y plan DIAN con software propio, etapas A–F** (24-nov-2026, solo lectura; encargo de Jennifer): `docs/auditoria-dian-software-propio.md`. Lo de la DIAN quedó «pendiente de confirmar» (sitio bloqueado desde la sesión).
+- [ ] Descargar los documentos DIAN de la etapa B (anexos v1.9 FEV, DEE v1.0 y documento soporte v1.1; título de facturación de la Res. 227/2025; instructivo y set de pruebas vigente; anexos de exógena y prevalidador 2025/2026) — Jennifer/Sara, o habilitar `dian.gov.co` en la red de la sesión.
+- [ ] Protecciones que no dependen de la DIAN (propuestas, sin construir; cada una con visto bueno de Sara): bloquear anular/devolver venta con factura y exigir nota crédito (C2); control de numeración con alertas (C3); revisar las 69 funciones abiertas sin sesión (C6); bloqueo de modificación de documentos (C8).
+- [ ] Elegir la ruta para el 13-dic (recomendada: solución gratuita + protecciones, software propio en paralelo con `DIAN_ENABLED` apagada). No se ha hablado con el Chat 7 para repartir informes y exógena.
+- **Preguntas nuevas para el contador (ver sección Contador):** software propio desde cuándo y si puede seguir con la gratuita; si LRCT sirve con otro software; numeración de contingencia; número de pruebas del set; documento equivalente POS; exógena obligada y formatos; IVA de compras y agente retenedor; anticipos.
+- [x] **Facturas de las 9 ventas con «facturar» preparadas (24-nov):** 7 de antes + PED-2026-00565 ($120.500) y PED-2026-00563 ($110.000); total $831.500; todas a consumidor final y **en efectivo** por decisión de Sara (la 00565 como una sola línea «4 productos: llavero de frailejón y colibríes» $107.000 + envío $13.500). Falta emitirlas en la DIAN y registrarlas (Sara).
+- [x] **Medio de pago corregido a efectivo (24-nov, decisión de Sara):** PED-2026-00565 (anticipo $60.000 y saldo $60.500) y PED-2026-00563 (saldo $55.000) estaban como transferencia y asentados en Bancolombia ****7905, pero esa plata nunca entró ahí (la cuenta está en ceros para el Fondo). Se revirtieron los 3 asientos (#161, #163, #168) y se rehicieron en Caja 1105 con las mismas fechas; se actualizaron `pedidos_canal_pagos` y el medio en los pedidos; valores del pedido sin cambios; queda en `bitacora_contable` (acción `corregir_medio_pago_pedido`). **Efecto:** Caja 1105 tiene $175.500 más de efectivo del que hay físicamente (se verá en el arqueo). Pregunta al contador abajo.
 - Revisión 12-nov de ventas sin factura desde el 14-oct: 14 ventas, $2.821.200 (7 con "facturar" definido, $601.000; 6 del punto de venta POS-2026-00016 a 00021, $2.205.000, y PED-2026-00559, $15.200, sin definir).
 
 ### Chat 5 · Impuestos
@@ -71,11 +85,17 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - Revisión 12-nov: 8 agotados sin mínimo, 3 bajo mínimo, 32 productos sin horas por unidad, llaveros de pollo sin tejedora.
 
 ### Chat 7 · Contabilidad (no creado)
+- **Para el Chat 7 (24-nov, dato de Sara):** la cuenta Bancolombia ****7905 está **exonerada del 4x1000** y marcada **inembargable** por solicitud del Fondo Emprender; solo debe recibir giros y pagos del Fondo, en ceros hoy. Mientras no exista Davivienda en el ERP, las transferencias nuevas se siguen asentando por defecto en Bancolombia (`fn_cuenta_medio_pago('transferencia')` = 111005): resolverlo antes de las conciliaciones de diciembre.
 - Sin tareas de código. Ver preguntas al contador.
 - [ ] 🔴 Mapeo de medios (19-nov, Sara): Bre-B → Davivienda; Nequi manual → Nequi; Wompi → Nequi (pedido a Wompi el 18-nov, falta aprobación). Aplicar con el sí de Sara cuando exista la cuenta Davivienda en el ERP (necesito tipo y número) y se confirme si es el mismo Nequi.
 - [ ] 🔴 Wompi → Nequi puente (18-nov): Wompi solo desembolsa a Bancolombia/Nequi; plan Wompi → Nequi (puente) → Davivienda. Propuesta en `docs/temas/contabilidad-decisiones.md`; en el ERP NO se cambian medios de pago hasta que Sara confirme que Wompi ya desembolsa al Nequi (y dé el sí). Si luego se migra a ePayco/Davivienda, esa cuenta puente se cierra.
 - [ ] 🔴 Wompi urgente (18-nov) — sustituido por la línea de arriba: el desembolso de la página web no debe llegar a Bancolombia (cuenta del Fondo). Sara ya tiene Davivienda a su nombre; **Sara cambia la cuenta de desembolso en el panel de Wompi** (puede pedir documentos). Cuando Wompi apruebe, ese mismo día Claude crea Davivienda en el ERP, la deja predeterminada, asigna Wompi/transferencia/tarjeta a Davivienda y pasa los $13.888 (necesita: número y tipo de la cuenta y el sí de Sara).
 - [ ] 🔴 Bancos (18-nov): Davivienda = operación, Bancolombia = solo Fondo Emprender. Propuesta escrita en `docs/temas/contabilidad-decisiones.md`; **falta el sí de Sara** para tocar cuentas/libros. Pregunta a Sara: ¿a qué cuenta consigna Wompi? Conciliación automática por extractos: solo propuesta, para después de la apertura.
+- [x] 24-nov: Asistente financiero activo (función + pantalla, v92): en rama; falta el sí de Sara para fusionar. Probar con una pregunta real. Pendiente: revisión formal de abogada y contador, costo real por consulta.
+- [x] 24-nov: punto 3 etapa 2 (botón «Registrar compra →» en cada borrador: abre el formulario normal de compra con los datos de la factura; v90): en rama; falta el sí de Sara para fusionar. Sin registrar solo, a propósito (reglas de dinero/SENA en el Worker).
+- [x] 24-nov: punto 3 etapa 1 (leer ZIP/XML de facturas de compras y mostrar borradores, sin registrar; v89): en rama; falta el sí de Sara para fusionar y para la etapa 2.
+- [x] 24-nov: punto 10 (soportes de pagos y seguridad social con enlace al Drive, Panel del contador, tabla `soportes_mensuales_contables`, v88): listo en rama, falta el sí de Sara para fusionar.
+- [x] 24-nov: informes de solo lectura listos en rama (catálogo de cuentas, gastos y compras por categoría, informe mensual del Fondo); falta el sí de Sara para fusionar a `main`. Faltan del plan: extracto+conciliación del Fondo en el informe mensual, y los puntos 3 a 6 y 8 a 10.
 - [x] Resumen de pendientes contables listo para llevarle a Hernando: `docs/resumen-contador.md` (llevarlo junto con las 22 preguntas del chat 5) — 12-nov-2026
 
 ### Chat 8 · Menú/Interfaz
@@ -165,11 +185,22 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [ ] Verificar ICA Villamaría (preguntas 15–19 del mismo archivo).
 - [ ] Códigos CUIF de 10 dígitos.
 - [ ] Aplicabilidad del documento soporte.
+- [ ] Pagos corregidos a efectivo (24-nov): $175.500 de PED-2026-00565 y PED-2026-00563 se registraron como efectivo en Caja aunque los clientes pagaron por transferencia a una cuenta que no es la de Bancolombia/Fondo; ¿cómo se refleja correctamente ese dinero (cuenta donde realmente entró, aporte o retiro del propietario) y cómo queda el arqueo? Las facturas de esos pedidos salen en efectivo.
+- [ ] DIAN software propio (24-nov, `docs/auditoria-dian-software-propio.md`): ¿desde cuándo debe operar con software propio y puede seguir con la solución gratuita mientras tanto? ¿La numeración LRCT se puede usar con otro software? ¿Tiene numeración de contingencia autorizada? ¿Cuántas pruebas pide hoy el set de habilitación? ¿Está obligada al documento equivalente electrónico POS? ¿Cuándo se factura un pedido con anticipo? ¿Obligada a exógena y con qué formatos? ¿IVA de las compras y agente retenedor? ¿Qué informe mensual de ventas y facturación necesita?
 - [ ] Ventas desde el 14-oct-2026 (ya facturadora electrónica) que quedaron solo con recibo del ERP, sin factura electrónica: 6 del punto de venta (POS-2026-00016 a 00021, $2.205.000) y 1 pedido (PED-2026-00559, $15.200, parece prueba). Además 7 pedidos con "facturar" definido a consumidor final ($601.000). Pregunta: ¿se emite factura electrónica extemporánea a consumidor final por cada una, o cómo se regulariza? (12-nov-2026)
+- [ ] Libro fiscal y contabilidad de microempresa (punto 6, 24-nov): qué libros exige, qué marco contable aplica, si se pueden llevar solo desde el ERP, qué le falta al ERP. Preguntas en `docs/resumen-contador.md` (punto 8). De esto depende el punto 6 del plan.
 - [ ] Retenciones, libros y declaraciones como sociedad.
 - [ ] Bancos (18-nov, contador nuevo el viernes 20-nov): confirmar la decisión Davivienda (operación) / Bancolombia (Fondo) y qué hacer con lo ya registrado en Caja por cobros hechos en Nequi; reemplaza la decisión del 14-oct.
 - [ ] Wompi en Nequi (18-nov, viernes 20-nov): ¿cómo se tratan los desembolsos de Wompi que llegan a un Nequi (ingreso por venta, comisión, retención si aplica)? ¿Qué reporta la DIAN de los pagos por pasarelas y a nombre de quién? ¿Límites de Nequi (monto por mes) y riesgo de que se mezcle con lo personal, o conviene un Nequi exclusivo? ¿Cómo se registra el traslado semanal a Davivienda?
 - [ ] Viejos: retiros 3805 vs honorarios, aportes vs deuda, arriendo mayo/junio, confirmación escrita de 27 recibos, medio de pago de 17 ventas antiguas.
+
+## Compras SENA — entregas del Fondo (24-nov-2026)
+- [x] Calendario de entregas sembrado + alerta en LAROVA + descarga .ics (sw.js v86)
+- [x] Campo "cuenta desde la que pagaste" fusionado (PR #188)
+- [ ] Sara: subir el informe contable de noviembre a la plataforma SENA el vie 4-dic (lo prepara Contabilidad, chat 7)
+- [ ] Sembrar las entregas de enero en adelante (informes mensuales, bimestral de marzo) y las de mercadeo/contrapartidas cuando haya fecha
+- [x] Alerta por correo diaria 8 a. m. (24-nov): tarea `avisos-entregas-fondo`
+- [x] Correo de prueba de la alerta recibido por Sara (24-nov); funciona de punta a punta
 
 ## Opcionales (Claude, si se pide)
 - [ ] Enlazar soporte de compras a crédito

@@ -32,9 +32,13 @@ Estructura: HTML de pantallas (líneas ~1000–5800), luego un bloque grande `<s
 | Documentos legales de la empresa | 3703 |
 | Apariencia / Mi perfil / Ceder permisos | 3900 / 3977 / 4066 |
 | Estados financieros / Dashboard ejecutivo | 4107 / 4108 |
+| Estados financieros → pestañas «Gastos y compras por categoría» (HTML 5409, JS 30075) e «Informe mensual del Fondo» (HTML 5420, JS 30139); Plan de cuentas → botón «Catálogo para el contador» (JS 30046) | 5409 / 5420 / 30046–30200 |
 | Cuentas por cobrar y pagar / Activos fijos / Conciliación | 4165 / 4166 / 4252 |
 | Cotizaciones / Notas crédito-débito / Órdenes de compra / Listas de precios | 4253 / 4365 / 4434 / 4479 |
 | Transferencias internas / Panel del contador / Dashboard contable | 4508 / 4666 / 4680 |
+| Facturas electrónicas de compras (etapa 1): pestaña en Facturación electrónica; JS `importarFacturasCompras` | 25044 |
+| Asistente financiero (pantalla + JS `mostrarPantallaAsistenteFinanciero`) | 19231 |
+| Panel del contador: JS `cargarPanelContador` y sección de soportes del mes (`agregarSoporteMes`) | 19206–19400 |
 | Honorarios tejedoras | 4720 |
 | **Impuestos, plan de cuentas y ajustes (previsión de impuestos aquí)** | 4757 |
 | Calendario del equipo / Academy | 5318 / 5423 |
