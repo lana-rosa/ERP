@@ -219,6 +219,11 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [x] Alerta por correo diaria 8 a. m. (24-nov): tarea `avisos-entregas-fondo`
 - [x] Correo de prueba de la alerta recibido por Sara (24-nov); funciona de punta a punta
 
+## Compras SENA — desembolsos y legalización (24-nov-2026)
+- [x] Fase 1 parcial: plan guardado en `docs/temas/sena-desembolsos-legalizacion.md`
+- [ ] Sara: adjuntar en el chat de Compras SENA los Excel del Anexo 2 (Formato 1 Solicitud y Formato 2 Legalización) para copiar las columnas exactas
+- [ ] Fases 2 a 4 (formatos en Excel/PDF, tablero del ciclo): piden tablas nuevas, confirmar con Sara antes
+
 ## Opcionales (Claude, si se pide)
 - [ ] Enlazar soporte de compras a crédito
 - [ ] Soporte para facturas manuales antiguas

@@ -34,6 +34,7 @@ Playwright ya instalado: `NODE_PATH=/opt/node22/lib/node_modules`, chromium `/op
 | Vender, factura "a nombre de quién", feria, turno | `ventas-pos.md` |
 | Pedidos por redes/WhatsApp, anticipo, anticipo <50 % | `pedidos-anticipo.md` |
 | Compras: requisitos SENA/Fondo Emprender, Validar documentos | `compras-sena.md` |
+| SENA: solicitud de desembolso, pago y legalización (formatos, plan por fases) | `sena-desembolsos-legalizacion.md` |
 | Facturación electrónica, documento soporte, respaldo mensual (DIAN Res. 165/2023) | `dian-facturacion.md` |
 | Previsión de impuestos, ICA, SIMPLE, topes, provisión | `impuestos-prevision.md` |
 | Plan de tejido, códigos de barras GS1, ficha técnica de productos e insumos | `produccion-inventario.md` |
