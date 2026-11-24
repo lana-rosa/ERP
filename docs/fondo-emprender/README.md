@@ -20,3 +20,9 @@ El nuevo modelo **complementa** el instructivo de 2024 (el propio documento dice
 Resumen y plan del ERP: `docs/temas/sena-desembolsos-legalizacion.md`.
 
 **Correo del SENA con el paquete (24-nov-2026):** envía Anexo 1 (acciones), Anexo 2 (formatos), Anexo 3 (guía), la presentación (= «Nuevo modelo de desembolsos y pagos») y el documento de lineamientos. Aclara: (1) la herramienta de identificación de documentos (Anexo 3) es **orientadora y facilitadora, no reemplaza el Instructivo de Pagos 2024**, que sigue siendo el documento oficial para validar requisitos, soportes y procedimientos; (2) el lineamiento será cargado en la plataforma de Fondo Emprender. Pide aplicarlo en lo que ya se esté gestionando para reducir observaciones y devoluciones.
+
+## Contrato y acta de inicio
+| Documento | Archivo |
+|---|---|
+| Acta de inicio del contrato de cooperación empresarial FE-0392-2026 (firmada el 6-nov-2026) | `2026-acta-de-inicio-contrato-FE-0392-2026.pdf` |
+Datos: contrato **FE-0392-2026** suscrito el 21-ago-2026; ID plan de negocios **113463** («CREAR ESP – LANA ROSA CROCHET»), aprobado por el Consejo Directivo Nacional del SENA en la sesión 1634 del 12-dic-2025; valor **$78.182.642**; CDP 1125 del 16-jul-2025; beneficiaria Sara Loaiza Muñoz; interventora designada Liliana Marcela Garcés Nieto; **plazo de 12 meses desde la firma del acta (6-nov-2026 → 6-nov-2027)**; lugar de ejecución: Carrera 18 Nro. 3-10 Apto 3, Villamaría (Caldas). El acta deja constancia de pagaré y carta de instrucciones firmados, modelo de contrapartidas firmado y póliza de cumplimiento No. 55-47-101015655 de Seguros del Estado S.A. (aprobada el 3-nov-2026) con el recibo de la prima.
