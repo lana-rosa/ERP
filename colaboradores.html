@@ -47,6 +47,11 @@
   .cumP{margin:12px 0 4px;font-weight:700}
   .req{background:var(--fondo-tarjeta);border-radius:14px;padding:10px 13px;margin-bottom:8px}
   .req .fila{margin-top:6px}.req input[type=date]{border:1px solid var(--borde);border-radius:10px;padding:6px 8px}
+  details.bloque{background:var(--fondo-tarjeta);border-radius:16px;padding:12px 14px;margin:10px 0;box-shadow:0 1px 6px #d8017c14}
+  details.bloque summary{cursor:pointer;font-weight:700;color:var(--rosa)}
+  .cont{margin-top:10px}.cont h3{font-size:14px;margin-bottom:2px}.cont p{white-space:pre-wrap;margin-bottom:10px}
+  .orgA{font-weight:700;margin:12px 0 4px;color:var(--rosa)}.orgP{padding:6px 0;border-bottom:1px solid var(--borde)}.vac{color:var(--suave);font-style:italic}
+  .rec{padding:8px 0;border-bottom:1px solid var(--borde)}
   [hidden]{display:none!important}
 </style>
 </head>
@@ -72,6 +77,14 @@
       <label class="de" style="font-size:13px;color:var(--suave)"><input type="checkbox" id="cumTodo"> Mostrar también lo que está al día</label>
       <div id="cumLista"></div>
     </section>
+    <details class="bloque" id="dInduccion"><summary>🌸 Conoce Lana Rosa</summary><div id="induccion"></div></details>
+    <details class="bloque" id="dOrg"><summary>🧭 Organigrama</summary><div id="org"></div>
+      <div class="fila" id="orgAdmin" hidden><input id="vacCargo" placeholder="Cargo vacante" style="flex:1;border:1px solid var(--borde);border-radius:10px;padding:8px 10px"><input id="vacArea" placeholder="Área" style="width:120px;border:1px solid var(--borde);border-radius:10px;padding:8px 10px"><button id="vacAgregar" class="suave">Agregar vacante</button></div></details>
+    <details class="bloque" id="dRec"><summary>⭐ Reconocimientos</summary>
+      <div class="nuevo" style="margin-top:10px"><div class="fila"><select id="recPara"></select><select id="recValor"></select></div>
+        <textarea id="recMsg" maxlength="500" placeholder="Cuéntale por qué (gracias por…)" style="min-height:60px;margin-top:8px"></textarea>
+        <div class="fila"><span style="flex:1"></span><button id="recEnviar">Reconocer</button></div><p id="recErr" class="sub" style="color:#a12d2d" hidden></p></div>
+      <div id="recLista"></div></details>
     <h2 class="h2">📣 Muro</h2>
     <div class="nuevo" id="nuevo" hidden>
       <textarea id="texto" maxlength="2000" placeholder="Escribe un aviso para el equipo…"></textarea>
@@ -152,6 +165,30 @@
     filasCump = r.data || []; pintarCumplimiento();
   }
 
+  async function cargarInduccion() {
+    var r = await sb.from('gestion_colab_contenidos').select('*').order('orden');
+    $('#induccion').innerHTML = (r.data || []).map(function (c) { return '<div class="cont"><h3>' + esc(c.titulo) + (c.borrador ? ' <span class="etiqueta">Borrador</span>' : '') + '</h3><p>' + esc(c.texto) + '</p>' + (esAdmin ? '<button class="suave" data-edit="' + c.slug + '">Editar</button>' : '') + '</div>'; }).join('');
+    window.__cont = r.data || [];
+  }
+  async function cargarOrg() {
+    var r = await sb.rpc('gestion_colab_organigrama'), d = r.data || [], html = '', area = null;
+    d.forEach(function (p) {
+      if (p.area !== area) { area = p.area; html += '<div class="orgA">' + esc(area || 'Sin área') + '</div>'; }
+      html += '<div class="orgP">' + (p.vacante ? '<span class="vac">Vacante: ' + esc(p.cargo) + '</span>' + (esAdmin ? ' <button class="suave" data-cerrar="' + p.vacante_id + '">Cerrar</button>' : '') : '<strong>' + esc(p.nombre) + '</strong>' + (p.es_lider ? ' ⭐' : '') + '<div class="sub" style="margin:0">' + esc(p.cargo || 'Sin cargo') + '</div>') + '</div>';
+    });
+    $('#org').innerHTML = html || '<div class="msg">Aún no hay fichas.</div>';
+  }
+  async function cargarRec() {
+    var l = await sb.rpc('gestion_colab_reconocimientos_lista');
+    $('#recLista').innerHTML = (l.data || []).map(function (x) { return '<div class="rec">' + esc(x.emoji) + ' <strong>' + esc(x.para_nombre || 'Alguien') + '</strong> · ' + esc(x.valor) + '<div class="sub" style="margin:2px 0">«' + esc(x.mensaje) + '» — ' + esc(x.de_nombre || 'Una compañera') + ', ' + fecha(x.creada_en) + '</div></div>'; }).join('') || '<div class="msg">Sé la primera en reconocer a una compañera 🌸</div>';
+  }
+  async function prepararRec() {
+    var c = await sb.rpc('gestion_colab_companeras'), v = await sb.from('gestion_colab_valores').select('*').order('orden');
+    $('#recPara').innerHTML = (c.data || []).map(function (u) { return '<option value="' + u.user_id + '">' + esc(u.nombre) + '</option>'; }).join('');
+    $('#recValor').innerHTML = (v.data || []).map(function (x) { return '<option value="' + x.id + '">' + esc(x.emoji + ' ' + x.nombre) + '</option>'; }).join('');
+    cargarRec();
+  }
+
   async function iniciar() {
     var s = await sb.auth.getSession();
     if (!s.data || !s.data.session) { aviso('Para ver el muro, entra primero al ERP con tu cuenta.<br><br><a class="volver" href="./index.html">Ir al ERP</a>'); return; }
@@ -198,6 +235,23 @@
       };
       cargarCumplimiento();
     }
+    $('#orgAdmin').hidden = !esAdmin;
+    $('#induccion').onclick = async function (e) {
+      var slug = e.target.dataset.edit; if (!slug) return;
+      var c = window.__cont.find(function (x) { return x.slug === slug; });
+      var t = prompt(c.titulo + ' — escribe el texto:', c.texto); if (t === null) return;
+      var r = await sb.rpc('gestion_colab_contenido_guardar', { p_slug: slug, p_titulo: c.titulo, p_texto: t, p_borrador: false });
+      if (r.error) alert(r.error.message); else cargarInduccion();
+    };
+    $('#org').onclick = async function (e) { if (e.target.dataset.cerrar) { await sb.rpc('gestion_colab_vacante_cerrar', { p_id: e.target.dataset.cerrar }); cargarOrg(); } };
+    $('#vacAgregar').onclick = async function () { var c = $('#vacCargo').value.trim(); if (!c) return; var r = await sb.rpc('gestion_colab_vacante_set', { p_cargo: c, p_area: $('#vacArea').value.trim() || null }); if (r.error) alert(r.error.message); else { $('#vacCargo').value = ''; cargarOrg(); } };
+    $('#recEnviar').onclick = async function () {
+      var m = $('#recMsg').value.trim(); if (!m || !$('#recPara').value) return; $('#recErr').hidden = true;
+      var r = await sb.rpc('gestion_colab_reconocer', { p_para: $('#recPara').value, p_valor: $('#recValor').value, p_mensaje: m });
+      if (r.error) { $('#recErr').textContent = r.error.message; $('#recErr').hidden = false; return; }
+      $('#recMsg').value = ''; cargarRec();
+    };
+    cargarInduccion(); cargarOrg(); prepararRec();
     cargarOnboarding();
     cargar();
   }
