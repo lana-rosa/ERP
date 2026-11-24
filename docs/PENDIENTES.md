@@ -173,7 +173,8 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [x] Campo "cuenta desde la que pagaste" fusionado (PR #188)
 - [ ] Sara: subir el informe contable de noviembre a la plataforma SENA el vie 4-dic (lo prepara Contabilidad, chat 7)
 - [ ] Sembrar las entregas de enero en adelante (informes mensuales, bimestral de marzo) y las de mercadeo/contrapartidas cuando haya fecha
-- [ ] Alerta por correo automática (necesita tarea programada)
+- [x] Alerta por correo diaria 8 a. m. (24-nov): tarea `avisos-entregas-fondo`
+- [ ] Sara: confirmar que llegó el correo de prueba "[PRUEBA] Fondo Emprender…" a su bandeja (revisar spam)
 
 ## Opcionales (Claude, si se pide)
 - [ ] Enlazar soporte de compras a crédito
