@@ -229,6 +229,11 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [ ] Contabilidad (chat 7): definir qué retenciones (retefuente, reteIVA, reteICA) aplican a cada compra del Fondo
 - [ ] Sara: registrar el desembolso de diciembre cuando llegue y probar el Excel con datos reales
 
+## Compras SENA — acta de inicio (25-nov-2026)
+- [x] Fecha del acta de inicio corregida a 6-nov-2026 (era 24-sep) en la configuración y en el hito; plazo hasta 6-nov-2027
+- [ ] Sara: confirmar la fecha real de la primera visita de interventoría (el ERP dice 24-sep-2026)
+- [ ] Sembrar en el calendario las entregas de feb-2027 en adelante (informes contables y actas mensuales, bimestrales cada 2 meses)
+
 ## Opcionales (Claude, si se pide)
 - [ ] Enlazar soporte de compras a crédito
 - [ ] Soporte para facturas manuales antiguas
