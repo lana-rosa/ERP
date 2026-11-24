@@ -6,7 +6,7 @@ Detalle por tema en `docs/temas/`; pendientes en `docs/PENDIENTES.md`. Equipo: S
 - **2 Pedidos:** anticipos, recibos, OP por línea, editar cliente/domicilio, cambiar fecha de entrega con historial (#107–#142). Pendiente: probar cobro de anticipo con el Worker real; tablero de cumplimiento (después de la apertura).
 - **3 Compras SENA:** nuevo modelo de desembolsos, soportes de legalización (#103–#116). Pendiente: marcar proveedores aprobados; respuesta de la interventora sobre el Formato de Solicitud de Desembolso.
 - **4 DIAN:** resolución registrada; 7 facturas listas ($601.000); editar cliente solo sin factura DIAN (#124/#126).
-- **5 Impuestos / 7 Contabilidad:** 22 preguntas y resumen para el contador publicados.
+- **5 Impuestos / 7 Contabilidad:** 22 preguntas y resumen para el contador publicados. Chat 7 (24-nov): puntos 1, 2, 3, 7 y 10 de la reunión hechos; Asistente financiero activo (falta revisión de abogada/contador); Davivienda creada en el ERP; pendientes en `docs/PENDIENTES.md` (Chat 7).
 - **6 Producción:** tejedora en la orden, imágenes, insumos automáticos, enlace de patrones Telegram (#111). Espera Excel de patrones (exportación de Telegram en curso, ordenar con Cowork).
 - **8 Menú:** sin sesión no se ve nada (#119), ojo de contraseña, ítem "Sistema Operativo" (#140). Mudanza a Cloudflare Pages a medias (Cloudflare falló; Worker ya acepta pages.dev). 2FA administradoras desde el 14-dic.
 - **9 Personal:** ficha, turnos/asistencia, permisos de Manuela, privacidad de horas, vacaciones (#133–#139). En revisión: cruce asistencia ↔ turno de caja.
