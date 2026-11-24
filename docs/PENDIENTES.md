@@ -22,7 +22,8 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 
 ### Chat 1 · Ventas
 - [x] **No deja registrar ventas** — CERRADO 24-nov: venta de prueba real verificada (efectivo + débito, inventario, caja, asiento, sin factura DIAN automática; anuladas después). Causas: token vencido sin refrescar + cuenta sin rol + turno viejo (arreglos en PR #143 y siguientes). Detalle abajo y en `docs/temas/ventas-pos.md`.
-- [ ] 🔴 **Anular una venta no devuelve el dinero a la caja departamental** (`fn_anular_venta_pos`): la prueba dejó +$16.000 de más en la caja de Tienda; falta arreglar la función y ajustar. Necesita el "sí" de Sara (dinero). Revisar también una venta anulada anterior de $95.000.
+- [x] 24-nov: **Anular una venta ahora devuelve el dinero a la caja departamental** (`fn_anular_venta_pos` + `fn_revertir_caja_venta_pos`) y se ajustaron los $16.000 de las ventas de prueba (saldo caja Tienda $3.995.733). Migración en `docs/migraciones/2026-11-24-anular-venta-revierte-caja.sql`.
+- [ ] 🔴 Sara decide: POS-2026-00014 (7-ago, $95.000, anulada) no revirtió su ingreso en la caja departamental. ¿Ajustar con la misma función (resta $95.000 al saldo)? Solo con su "sí".
 - [ ] Nequi / Bre-B: opción nueva en la venta (24-nov). Falta probar una venta real con el Worker y decidir a qué cuenta contable va (hoy cae en Bancolombia 111005; la cuenta Nequi 111010 está inactiva). Falta botón en modo feria.
 - [ ] Turno de Sara del 13-nov (`ba4aa95b…`) sigue abierto sin ventas (solo un pedido por transferencia de $60.500): cerrarlo con efectivo contado $0. Regla nueva de Sara (24-nov): cerrar turno todos los días al cierre del local.
 - [x] 24-nov: turno de Jennifer cerrado por error con $0 (faltante −$100.000) → corregido a $100.000, diferencia $0 (con "sí" de Sara).
