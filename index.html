@@ -7217,7 +7217,7 @@
 
   function mostrarResumenCierre(datos) {
     const etiquetaNovedad = { cuadrado: '✅ Caja cuadrada', sobrante: '🔺 Sobrante en caja', faltante: '🔻 Faltante en caja' };
-    const etiquetasPago = { nequi: 'Nequi', daviplata: 'Daviplata', tarjeta_debito: 'Tarjeta débito', tarjeta_credito: 'Tarjeta crédito' };
+    const etiquetasPago = { nequi: 'Nequi / Bre-B', daviplata: 'Daviplata', tarjeta_debito: 'Tarjeta débito', tarjeta_credito: 'Tarjeta crédito' };
 
     const resumen = document.getElementById('resumenCierre');
 
@@ -7278,7 +7278,7 @@
 
   // Nequi y Bre-B manuales: solo se pueden usar cuando Contabilidad ya les asignó una cuenta (si no, el dinero caería en la cuenta equivocada)
   let mediosManualesConCuenta = { nequi: false, breb: false };
-  const ETIQUETAS_MEDIOS_MANUALES = { nequi: 'Nequi', breb: 'Bre-B' };
+  const ETIQUETAS_MEDIOS_MANUALES = { nequi: 'Nequi / Bre-B', breb: 'Bre-B' };
 
   function opcionesMediosManualesHtml(seleccionado) {
     return Object.keys(ETIQUETAS_MEDIOS_MANUALES).map(m => mediosManualesConCuenta[m]
@@ -8335,6 +8335,7 @@
         <div style="display:flex;gap:8px;">
           <select onchange="actualizarFilaPago(${indice}, 'metodo_pago', this.value)" style="flex:1.2;">
             <option value="efectivo" ${pago.metodo_pago === 'efectivo' ? 'selected' : ''}>Efectivo</option>
+            <option value="nequi" ${pago.metodo_pago === 'nequi' ? 'selected' : ''}>Nequi / Bre-B</option>
             <option value="daviplata" ${pago.metodo_pago === 'daviplata' ? 'selected' : ''}>Daviplata</option>
             <option value="tarjeta_debito" ${pago.metodo_pago === 'tarjeta_debito' ? 'selected' : ''}>Tarjeta débito</option>
             <option value="tarjeta_credito" ${pago.metodo_pago === 'tarjeta_credito' ? 'selected' : ''}>Tarjeta crédito</option>
@@ -8712,7 +8713,7 @@
 
   function generarContenidoReciboVenta(v) {
     const fechaTexto = v.soloFecha ? v.fecha.toLocaleDateString('es-CO', { dateStyle: 'medium' }) : v.fecha.toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
-    const etiquetasPago = { efectivo: 'Efectivo', nequi: 'Nequi', daviplata: 'Daviplata', tarjeta_debito: 'Tarjeta débito', tarjeta_credito: 'Tarjeta crédito' };
+    const etiquetasPago = { efectivo: 'Efectivo', nequi: 'Nequi / Bre-B', daviplata: 'Daviplata', tarjeta_debito: 'Tarjeta débito', tarjeta_credito: 'Tarjeta crédito' };
     const filasProductos = v.lineas.map(l => `
       <tr>
         <td style="padding:5px 0;">${escaparHtml(l.nombre)}</td>
@@ -11208,7 +11209,7 @@
 
     historialVentasDetalleCache = { ventas, detalles: detalles || [], pagos: pagos || [], tercerosPorId, cajerosPorId };
 
-    const etiquetasPago = { efectivo: 'Efectivo', nequi: 'Nequi', daviplata: 'Daviplata', tarjeta_debito: 'Tarjeta débito', tarjeta_credito: 'Tarjeta crédito' };
+    const etiquetasPago = { efectivo: 'Efectivo', nequi: 'Nequi / Bre-B', daviplata: 'Daviplata', tarjeta_debito: 'Tarjeta débito', tarjeta_credito: 'Tarjeta crédito' };
 
     if (vistaHistorialActual === 'dia') {
       renderizarHistorialAgrupado(ventas, detalles, pagos, tercerosPorId, etiquetasPago, v => new Date(v.fecha).toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }), v => new Date(v.fecha).toISOString().slice(0, 10));
@@ -14545,7 +14546,7 @@
 
   let reportesTurnoCache = [];
   let reporteTurnoAbiertoId = null;
-  const etiquetasPagoTurno = { efectivo: 'Efectivo', nequi: 'Nequi', daviplata: 'Daviplata', tarjeta_debito: 'T. débito', tarjeta_credito: 'T. crédito' };
+  const etiquetasPagoTurno = { efectivo: 'Efectivo', nequi: 'Nequi / Bre-B', daviplata: 'Daviplata', tarjeta_debito: 'T. débito', tarjeta_credito: 'T. crédito' };
   const etiquetaNovedadTurno = { cuadrado: '✅ Cuadrada', sobrante: '🔺 Sobrante', faltante: '🔻 Faltante' };
 
   async function cargarReportesTurno() {
@@ -20555,7 +20556,7 @@
     const etiquetasCanal = { whatsapp: '💬 WhatsApp', instagram: '📷 Instagram', facebook: '👍 Facebook', tienda_virtual: '🛍️ Tienda virtual' };
     const etiquetasEstado = { esperando_pago: '⏳ Esperando pago', en_preparacion: '🧶 En preparación', listo_despacho: '📦 Listo', entregado: '✅ Entregado' };
     const etiquetasMedio = {
-      efectivo: 'Efectivo', nequi: 'Nequi', daviplata: 'Daviplata', transferencia: 'Transferencia', tarjeta_debito: 'Tarjeta débito', tarjeta_credito: 'Tarjeta crédito',
+      efectivo: 'Efectivo', nequi: 'Nequi / Bre-B', daviplata: 'Daviplata', transferencia: 'Transferencia', tarjeta_debito: 'Tarjeta débito', tarjeta_credito: 'Tarjeta crédito',
       wompi_tarjeta: 'Wompi · Tarjeta', wompi_bancolombia: 'Wompi · Bancolombia', wompi_qr: 'Wompi · QR Bancolombia', wompi_pse: 'Wompi · PSE', wompi_nequi: 'Wompi · Nequi', wompi_otro: 'Wompi',
     };
     const nombreMedio = m => etiquetasMedio[m] || (m ? String(m).replace(/_/g, ' ') : '');
@@ -27732,7 +27733,7 @@
     renderizarHonorariosTejedoras();
   }
 
-  const MEDIOS_PAGO_HONORARIOS = { efectivo: 'Efectivo (Caja)', transferencia: 'Transferencia (Bancos)', nequi: 'Nequi', daviplata: 'Daviplata' };
+  const MEDIOS_PAGO_HONORARIOS = { efectivo: 'Efectivo (Caja)', transferencia: 'Transferencia (Bancos)', nequi: 'Nequi / Bre-B', daviplata: 'Daviplata' };
 
   function renderizarHonorariosTejedoras() {
     const texto = document.getElementById('buscarHonorariosTejedoras').value.trim().toLowerCase();
