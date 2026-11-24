@@ -224,7 +224,8 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [x] Fase 1 completa: plan y columnas exactas en `docs/temas/sena-desembolsos-legalizacion.md`; originales en `docs/fondo-emprender/`
 - [x] Fase 2: desembolsos y formato de Legalización en Excel/PDF (24-nov; tablas `fondo_desembolsos` y `fondo_desembolso_lineas`)
 - [x] Fase 3: Formato 1 «Solicitud de desembolso» en Excel/PDF con validaciones (24-nov)
-- [ ] Fase 4: tablero del ciclo con estados y alertas 2 días antes
+- [x] Fase 4: tablero del ciclo con estados, alertas y siguiente paso; fecha límite de legalización con alerta 2 días antes (25-nov)
+- [ ] Sara: preguntar a la interventora cuántos días hay para legalizar cada desembolso y escribir la fecha límite en el ERP
 - [ ] Contabilidad (chat 7): definir qué retenciones (retefuente, reteIVA, reteICA) aplican a cada compra del Fondo
 - [ ] Sara: registrar el desembolso de diciembre cuando llegue y probar el Excel con datos reales
 
