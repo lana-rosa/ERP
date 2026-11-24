@@ -1397,6 +1397,7 @@
     </div>
     <div id="hubAvisoCaja" style="display:none;"></div>
     <div id="hubAvisoPendientes" class="hub-aviso" style="display:none;"></div>
+    <div id="hubAvisoEntregasFondo" style="display:none;"></div>
     <div class="hub-titulo-seccion" id="hubRapidosTitulo">Accesos rápidos</div>
     <div class="hub-rapidos" id="hubRapidos"></div>
     <div class="hub-titulo-seccion" id="hubModulosTitulo">Módulos</div>
@@ -34121,11 +34122,53 @@
     renderAvisoPendientesInicio();
   }
 
+  // Alertas de entregas del Fondo Emprender (informes, actas, bimestral): se ven 7 días antes y en rojo desde 2 días antes.
+  // Las fechas viven en el calendario del equipo (eventos_calendario, títulos "🏦 Entrega Fondo Emprender …").
+  async function cargarAvisoEntregasFondo() {
+    const cont = document.getElementById('hubAvisoEntregasFondo'); if (!cont) return;
+    cont.style.display = 'none';
+    const { data, error } = await supabaseClient.rpc('fn_entregas_fondo_proximas', { p_dias: 7 });
+    if (error || !data || !data.length) return;
+    cont.innerHTML = `<div style="background:#fff3cd;border:1.5px solid #f0d98c;border-radius:12px;padding:12px 16px;margin:10px 0;">
+      <div style="font-weight:700;font-size:13px;color:#856404;margin-bottom:6px;">🏦 Entregas del Fondo Emprender</div>
+      ${data.map(e => {
+        const urgente = e.dias <= 2;
+        const cuando = e.dias < 0 ? `venció hace ${Math.abs(e.dias)} día(s)` : e.dias === 0 ? 'es hoy' : e.dias === 1 ? 'es mañana' : `en ${e.dias} días`;
+        const fecha = new Date(e.fecha_inicio).toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'America/Bogota' });
+        return `<div style="font-size:12.5px;padding:4px 0;color:${urgente ? 'var(--rojo-error)' : '#856404'};"><strong>${escaparHtml(e.titulo.replace('🏦 Entrega Fondo Emprender — ', ''))}</strong> — ${fecha} (${cuando}) <button class="btn-mini editar" style="padding:2px 8px;font-size:11px;" onclick="marcarEntregaFondo('${e.id}')">Marcar entregada</button></div>`;
+      }).join('')}
+      <button class="btn-mini editar" style="margin-top:6px;" onclick="descargarCalendarioFondoIcs()">📅 Descargar para Google Calendar (.ics)</button>
+    </div>`;
+    cont.style.display = 'block';
+  }
+
+  async function marcarEntregaFondo(id) {
+    const { error } = await supabaseClient.rpc('fn_entrega_fondo_marcar', { p_id: id });
+    if (error) { alert('No se pudo marcar: ' + error.message); return; }
+    cargarAvisoEntregasFondo();
+  }
+
+  // Archivo .ics (se importa en Google Calendar: Configuración > Importar). Cada entrega trae aviso 2 días antes.
+  async function descargarCalendarioFondoIcs() {
+    const { data, error } = await supabaseClient.rpc('fn_entregas_fondo_proximas', { p_dias: 400 });
+    if (error || !data || !data.length) { alert('No hay entregas pendientes para exportar.'); return; }
+    const esc = (t) => String(t || '').replace(/\\/g, '\\\\').replace(/[,;]/g, (m) => '\\' + m).replace(/\r?\n/g, '\\n');
+    const ts = (f) => new Date(f).toISOString().replace(/[-:]|\.\d{3}/g, '');
+    const lineas = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Lana Rosa ERP//Entregas Fondo Emprender//ES', 'CALSCALE:GREGORIAN'];
+    data.forEach(e => lineas.push('BEGIN:VEVENT', `UID:entrega-fondo-${e.id}@lanarosa`, `DTSTAMP:${ts(new Date())}`, `DTSTART:${ts(e.fecha_inicio)}`, `DTEND:${ts(e.fecha_fin || e.fecha_inicio)}`,
+      `SUMMARY:${esc(e.titulo)}`, `DESCRIPTION:${esc(e.descripcion)}`, 'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:Entrega del Fondo Emprender en 2 dias', 'TRIGGER:-P2D', 'END:VALARM', 'END:VEVENT'));
+    lineas.push('END:VCALENDAR');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([lineas.join('\r\n')], { type: 'text/calendar;charset=utf-8' }));
+    a.download = 'entregas-fondo-emprender.ics'; document.body.appendChild(a); a.click(); a.remove();
+  }
+
   function mostrarInicioModulos() {
     limpiarModos();
     document.body.classList.add('modo-inicio');
     renderInicioModulos();
     actualizarBadgesPendientes();
+    cargarAvisoEntregasFondo();
     moverWidgetHoras('inicio');
     fijarHashUrl('inicio');
     mostrarPantalla('pantallaInicio');
