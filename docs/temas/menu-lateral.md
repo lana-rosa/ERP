@@ -132,3 +132,7 @@
 - Probado: función SQL con rollback (colaborador sí, inexistente no, 4.º intento no, anon sin permiso). **Falta probar de punta a punta con correo real** (tarea 3; desde la nube no se alcanza Supabase por HTTP).
 - **Rosina:** cargadas `casas_lana_rosa` (horario nuevo, inauguración dom 13-dic 2:00–6:00 p. m.), `recuperar_contrasena_erp` y `marketing_erp` (solo administradora). Si Rosina sigue con el horario viejo, es el prompt del Worker (solo Sara).
 - Límite que sigue: alguien que llame directo a Supabase Auth aún puede pedir el enlace (solo le llega al dueño del correo).
+
+## 24-nov-2026 — Dashboard del ERP ya no queda en blanco (sí de Jennifer)
+- Causa probable: si el Worker no responde o rechaza la dirección, `fetch` fallaba y la primera carga (alertas) cancelaba todo; las demás partes borraban lo mostrado. Pantalla: cada parte carga por separado (`seguro`), se conserva lo mostrado y sale «No se pudo actualizar» + botón Reintentar. `sw.js` v95.
+- Causa de fondo (Sara, Worker): revisar logs al abrir el Dashboard, lista de orígenes permitidos (`https://larova.lanarosacrochet.com`) y sesión.
