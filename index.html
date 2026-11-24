@@ -4502,6 +4502,10 @@
     </div>
   </div>
 
+  <div id="avisoFalloDashboard" class="oculto" style="background:#fff6e0;border:1px solid #f0d58a;border-radius:9px;padding:10px 14px;margin-bottom:16px;font-size:13px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+    <span style="flex:1;min-width:200px;">⚠️ No se pudo actualizar. Lo que ves puede estar desactualizado.</span>
+    <button class="btn-secundario" onclick="mostrarPantallaDashboard()" style="padding:6px 18px;width:auto;">Reintentar</button>
+  </div>
   <div id="panelAlertasDashboard" style="margin-bottom:16px;"></div>
 
   <div id="kpisDashboard" class="grilla-4" style="margin-bottom:16px;"></div>
@@ -23610,15 +23614,27 @@
     const hace60 = new Date(Date.now() - 60 * 86400000);
     const fmt = (d) => d.toISOString().slice(0, 10);
 
-    await cargarAlertasDashboard();
-    await cargarBannerAlertasWhatsapp();
-    await cargarAvisoCopiaSeguridad();
+    // Cada parte se carga por separado: si una falla, las demás siguen y lo ya mostrado se conserva.
+    let fallo = false;
+    const seguro = async (fn, idPlaceholder) => {
+      try { await fn(); } catch (e) {
+        fallo = true;
+        console.warn('Dashboard: no se pudo cargar', e);
+        const el = idPlaceholder && document.getElementById(idPlaceholder);
+        if (el && (!el.innerHTML.trim() || /Cargando|Revisando/.test(el.textContent))) el.innerHTML = '<div class="cargando">No se pudo actualizar.</div>';
+      }
+    };
+    document.getElementById('avisoFalloDashboard').classList.add('oculto');
     await Promise.all([
-      cargarKpisYComparativo(fmt(hace30), fmt(hoy), fmt(hace60), fmt(hace30)),
-      cargarEquilibrioDashboard(fmt(hace30), fmt(hoy)),
-      cargarProyeccionDashboard(),
-      cargarCarteraAntiguedad(),
+      seguro(cargarAlertasDashboard, 'panelAlertasDashboard'),
+      seguro(cargarBannerAlertasWhatsapp),
+      seguro(cargarAvisoCopiaSeguridad),
+      seguro(() => cargarKpisYComparativo(fmt(hace30), fmt(hoy), fmt(hace60), fmt(hace30)), 'comparativoDashboard'),
+      seguro(() => cargarEquilibrioDashboard(fmt(hace30), fmt(hoy)), 'equilibrioDashboard'),
+      seguro(cargarProyeccionDashboard, 'proyeccionDashboard'),
+      seguro(cargarCarteraAntiguedad, 'carteraAntiguedadDashboard'),
     ]);
+    if (fallo) document.getElementById('avisoFalloDashboard').classList.remove('oculto');
     renderizarRosinaInsight();
   }
 
@@ -23662,7 +23678,7 @@
     const cont = document.getElementById('carteraAntiguedadDashboard');
     if (!cont) return;
     const resp = await fetch(`${WORKER_URL}/api/pos/finanzas/cuentas-pendientes?tipo=por_cobrar`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
-    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    if (!resp.ok) throw new Error('cartera ' + resp.status);
     const { cuentas } = await resp.json();
     const pendientes = (cuentas || []).filter(c => c.estado !== 'pagado');
 
@@ -23711,9 +23727,9 @@
 
   async function cargarAlertasDashboard() {
     const cont = document.getElementById('panelAlertasDashboard');
-    cont.innerHTML = '<div class="cargando">Revisando alertas...</div>';
+    if (!cont.innerHTML.trim()) cont.innerHTML = '<div class="cargando">Revisando alertas...</div>';
     const resp = await fetch(WORKER_URL + '/api/pos/finanzas/alertas', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
-    if (!resp.ok) { cont.innerHTML = ''; return; }
+    if (!resp.ok) throw new Error('alertas ' + resp.status);
     const { alertas } = await resp.json();
 
     const colores = { urgente: '#fdecea', atencion: '#fff6e0', info: '#eaf6ef' };
@@ -23731,7 +23747,7 @@
     const resp = await fetch(`${WORKER_URL}/api/pos/finanzas/comparativo-resultados?fecha_desde_a=${desdeA}&fecha_hasta_a=${hastaA}&fecha_desde_b=${desdeB}&fecha_hasta_b=${hastaB}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
     const kpisCont = document.getElementById('kpisDashboard');
     const compCont = document.getElementById('comparativoDashboard');
-    if (!resp.ok) { kpisCont.innerHTML = ''; compCont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    if (!resp.ok) throw new Error('comparativo ' + resp.status);
     const d = await resp.json();
     cacheComparativoParaInsight = d;
 
@@ -23827,7 +23843,7 @@
   async function cargarEquilibrioDashboard(desde, hasta) {
     const cont = document.getElementById('equilibrioDashboard');
     const resp = await fetch(`${WORKER_URL}/api/pos/finanzas/punto-equilibrio?fecha_desde=${desde}&fecha_hasta=${hasta}`, { headers: { Authorization: 'Bearer ' + sesionActual.token } });
-    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    if (!resp.ok) throw new Error('equilibrio ' + resp.status);
     const d = await resp.json();
     cacheEquilibrioParaInsight = d;
 
@@ -23870,7 +23886,7 @@
   async function cargarProyeccionDashboard() {
     const cont = document.getElementById('proyeccionDashboard');
     const resp = await fetch(WORKER_URL + '/api/pos/finanzas/flujo-caja-proyectado', { headers: { Authorization: 'Bearer ' + sesionActual.token } });
-    if (!resp.ok) { cont.innerHTML = '<div class="cargando">No se pudo cargar.</div>'; return; }
+    if (!resp.ok) throw new Error('proyeccion ' + resp.status);
     const d = await resp.json();
 
     let html = `<div class="resumen-fila total"><span>Saldo actual de efectivo/bancos</span><strong>${formatearMoneda(d.saldo_actual)}</strong></div>`;
