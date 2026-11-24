@@ -48,3 +48,18 @@ Preguntas nuevas para el contador (viernes 20-nov): ver `docs/PENDIENTES.md` (se
 - **Wompi** → Sara pidió el 18-nov a Wompi cambiar el desembolso a su Nequi (falta la aprobación de Wompi); mientras tanto sigue llegando a Bancolombia.
 - Traslados Nequi → Davivienda: movimiento aparte, lo registra Contabilidad.
 - **Falta para aplicarlo** (con el sí de Sara): crear la cuenta Davivienda en el ERP (necesita tipo y número), definir si el Nequi de ventas manuales y el Nequi-puente de Wompi son el mismo número, y reasignar `medios_pago_cuenta` (hoy solo existe `nequi` → Nequi inactiva 111010). Chat 2 (Pedidos) solo guarda el nombre del medio (`nequi`, `breb`); el mapeo contable lo aplica este chat.
+
+## Plan tras la reunión con el contador y la interventora (24-nov-2026) — PROPUESTA
+Orden y esfuerzo (P=pequeño, M=mediano, G=grande). Todo lo que toque libros o base de datos es 🔴 y necesita el sí de Sara.
+1. Catálogo de cuentas visible para el contador (el PUC ya está en Impuestos, PUC y ajustes → Plan de cuentas; falta vista de solo lectura + Excel/PDF si no lo tiene): **P**.
+2. Informe de gastos y compras por categoría con fecha inicio y fin (Excel/PDF): **P–M**.
+3. Cargar facturas electrónicas de compras y gastos (XML/PDF de la DIAN; borrador para revisar, como las ventas): **G**.
+4. Documento soporte electrónico DIAN: depende del Chat 4 (DIAN) y de los datos de la resolución: **M**.
+5. Conciliación con extracto en PDF: hoy el ERP importa Excel/CSV; PDF es más frágil: **G**, después de la apertura; Fondo solo pide Bancolombia.
+6. Libro fiscal y contabilidad de microempresa: preguntar al contador qué libros exige: **M**.
+7. Informes mensuales para el Fondo (Estado de situación financiera + Estado de resultados + extracto + conciliación solo del Fondo, PDF con nombre sin caracteres especiales): ya existen los estados con PDF; falta paquete mensual por cuenta del Fondo: **M**.
+8. Salario de Sara como empleada (no anticipo ni retiro 3805): cambia la decisión del 14-oct; 🔴 requiere confirmación escrita del contador (prestaciones, seguridad social, nómina) y avisar al Chat 9: **M**.
+9. Nómina electrónica obligatoria: ya hay módulo; revisar que cubra a Sara una vez decidido el punto 8: **P–M**.
+10. Soportes de pagos y seguridad social con lugar para adjuntar (enlace al Drive): **P–M**.
+Fechas: 1.er informe a la plataforma SENA (actividad 98) del 1 al 8 de cada mes; arranque domingo 6-dic → **lunes 7-dic**. Bimestral nov+dic: 2-ene-2027 es sábado y el 1-ene festivo → **jueves 31-dic** (o lunes 4-ene si la interventora lo permite).
+Alerta: la reunión dice honorarios del contador $350.000 al mes; la propuesta del 30-sep decía $600.000. Confirmar cuál quedó.
