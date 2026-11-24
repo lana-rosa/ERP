@@ -36,6 +36,7 @@ Estructura: HTML de pantallas (líneas ~1000–5800), luego un bloque grande `<s
 | Cuentas por cobrar y pagar / Activos fijos / Conciliación | 4165 / 4166 / 4252 |
 | Cotizaciones / Notas crédito-débito / Órdenes de compra / Listas de precios | 4253 / 4365 / 4434 / 4479 |
 | Transferencias internas / Panel del contador / Dashboard contable | 4508 / 4666 / 4680 |
+| Panel del contador: JS `cargarPanelContador` y sección de soportes del mes (`agregarSoporteMes`) | 19206–19400 |
 | Honorarios tejedoras | 4720 |
 | **Impuestos, plan de cuentas y ajustes (previsión de impuestos aquí)** | 4757 |
 | Calendario del equipo / Academy | 5318 / 5423 |
