@@ -232,7 +232,9 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 ## Compras SENA — acta de inicio (25-nov-2026)
 - [x] Fecha del acta de inicio corregida a 6-nov-2026 (era 24-sep) en la configuración y en el hito; plazo hasta 6-nov-2027
 - [ ] Sara: confirmar la fecha real de la primera visita de interventoría (el ERP dice 24-sep-2026)
-- [ ] Sembrar en el calendario las entregas de feb-2027 en adelante (informes contables y actas mensuales, bimestrales cada 2 meses)
+- [x] Entregas sembradas en el calendario para todo el plazo (45 hasta el 6-nov-2027): mensuales, bimestrales, visitas y fin de plazo
+- [ ] Cargar los festivos de 2027 en `fe_festivos_co` (hoy solo llega a 2026)
+- [ ] Sara: cuando la interventora fije las visitas (aprox. 6-mar y 6-jul-2027), ajustar las fechas en el calendario
 
 ## Opcionales (Claude, si se pide)
 - [ ] Enlazar soporte de compras a crédito
