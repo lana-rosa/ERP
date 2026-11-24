@@ -77,6 +77,10 @@
       <label class="de" style="font-size:13px;color:var(--suave)"><input type="checkbox" id="cumTodo"> Mostrar también lo que está al día</label>
       <div id="cumLista"></div>
     </section>
+    <details class="bloque" id="dFicha"><summary>👤 Mi ficha</summary>
+      <div class="fila" id="fichaAdmin" hidden><label>Ver la ficha de:</label><select id="fichaPersona"></select></div>
+      <div class="fila" id="fichaTabs" style="margin-top:10px"><button class="suave" data-tab="resumen">Resumen</button><button class="suave" data-tab="datos">Mis datos</button><button class="suave" data-tab="docs">Documentos</button><button class="suave" data-tab="vac">Vacaciones</button></div>
+      <div id="fichaCuerpo" class="cont"></div></details>
     <details class="bloque" id="dInduccion"><summary>🌸 Conoce Lana Rosa</summary><div id="induccion"></div></details>
     <details class="bloque" id="dOrg"><summary>🧭 Organigrama</summary><div id="org"></div>
       <div class="fila" id="orgAdmin" hidden><input id="vacCargo" placeholder="Cargo vacante" style="flex:1;border:1px solid var(--borde);border-radius:10px;padding:8px 10px"><input id="vacArea" placeholder="Área" style="width:120px;border:1px solid var(--borde);border-radius:10px;padding:8px 10px"><button id="vacAgregar" class="suave">Agregar vacante</button></div></details>
@@ -189,6 +193,44 @@
     cargarRec();
   }
 
+  var CLAVES = { contacto_emergencia_nombre: 'Contacto de emergencia (nombre)', contacto_emergencia_telefono: 'Contacto de emergencia (teléfono)', talla_camisa: 'Talla de camisa (dotación)', talla_calzado: 'Talla de calzado (dotación)' };
+  var fichaUser = null, fichaTab = 'resumen';
+  function dia(d) { return d ? new Date(d + 'T12:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'; }
+  async function pintarFicha() {
+    var el = $('#fichaCuerpo'); el.innerHTML = 'Cargando…';
+    document.querySelectorAll('#fichaTabs [data-tab]').forEach(function (b) { b.style.background = b.dataset.tab === fichaTab ? 'var(--tinte)' : '#fff'; });
+    var uid = fichaUser;
+    if (fichaTab === 'resumen') {
+      var r = await sb.rpc('gestion_colab_mi_ficha', { p_user: uid }), f = (r.data || [])[0];
+      el.innerHTML = f ? '<h3>' + esc(f.nombre) + '</h3><p>Cargo: ' + esc(f.cargo || '—') + '\nÁrea: ' + esc(f.area || '—') + '\nJornada: ' + esc(f.jornada || '—') + '\nIngreso: ' + dia(f.fecha_ingreso) + '\nContrato: ' + esc(f.tipo_contrato || '—') + (f.fecha_fin_contrato ? ' hasta ' + dia(f.fecha_fin_contrato) : '') + '</p>' : '<div class="msg">Todavía no hay una ficha de empleada conectada a esta cuenta.</div>';
+    } else if (fichaTab === 'datos') {
+      var a = await sb.from('gestion_colab_atributos').select('clave,valor').eq('user_id', uid), m = {};
+      (a.data || []).forEach(function (x) { m[x.clave] = x.valor; });
+      el.innerHTML = Object.keys(CLAVES).map(function (k) { return '<label class="sub" style="display:block;margin:8px 0 2px">' + CLAVES[k] + '</label><div class="fila" style="margin:0"><input data-attr="' + k + '" value="' + esc(m[k] || '') + '" maxlength="120" style="flex:1;border:1px solid var(--borde);border-radius:10px;padding:8px 10px"><button class="suave" data-guardar-attr="' + k + '">Guardar</button></div>'; }).join('') + '<p class="sub">Solo tú y la administración ven estos datos.</p>';
+    } else if (fichaTab === 'docs') {
+      el.innerHTML = '<div class="msg">Aquí aparecerán tus documentos cuando se active la carpeta. Por ahora la administración los guarda en la ficha del ERP.</div>';
+    } else {
+      el.innerHTML = '<p>Tus vacaciones y permisos se piden en el ERP: <a href="./index.html">Ir a Mi perfil → Vacaciones y permisos</a>.</p>';
+    }
+  }
+  async function prepararFicha() {
+    fichaUser = (await sb.auth.getSession()).data.session.user.id;
+    if (esAdmin) {
+      var us = await sb.from('usuarios_roles').select('user_id,nombre_completo').eq('activo', true).order('nombre_completo');
+      $('#fichaPersona').innerHTML = '<option value="' + fichaUser + '">Yo</option>' + (us.data || []).filter(function (u) { return u.user_id !== fichaUser; }).map(function (u) { return '<option value="' + u.user_id + '">' + esc(u.nombre_completo || 'Sin nombre') + '</option>'; }).join('');
+      $('#fichaAdmin').hidden = false;
+      $('#fichaPersona').onchange = function () { fichaUser = this.value; pintarFicha(); };
+    }
+    $('#fichaTabs').onclick = function (e) { if (e.target.dataset.tab) { fichaTab = e.target.dataset.tab; pintarFicha(); } };
+    $('#fichaCuerpo').onclick = async function (e) {
+      var k = e.target.dataset.guardarAttr; if (!k) return;
+      var v = document.querySelector('[data-attr="' + k + '"]').value;
+      var r = await sb.rpc('gestion_colab_atributo_set', { p_user: fichaUser, p_clave: k, p_valor: v });
+      e.target.textContent = r.error ? 'Error' : 'Guardado ✓'; if (r.error) alert(r.error.message);
+    };
+    $('#dFicha').addEventListener('toggle', function () { if (this.open) pintarFicha(); });
+  }
+
   async function iniciar() {
     var s = await sb.auth.getSession();
     if (!s.data || !s.data.session) { aviso('Para ver el muro, entra primero al ERP con tu cuenta.<br><br><a class="volver" href="./index.html">Ir al ERP</a>'); return; }
@@ -251,7 +293,7 @@
       if (r.error) { $('#recErr').textContent = r.error.message; $('#recErr').hidden = false; return; }
       $('#recMsg').value = ''; cargarRec();
     };
-    cargarInduccion(); cargarOrg(); prepararRec();
+    prepararFicha(); cargarInduccion(); cargarOrg(); prepararRec();
     cargarOnboarding();
     cargar();
   }
