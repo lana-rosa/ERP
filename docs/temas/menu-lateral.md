@@ -124,3 +124,11 @@
 > Eres el chat «ERP Menú/Interfaz» del ERP de Lana Rosa (repo lana-rosa/ERP; dueña Sara, español claro y sin tecnicismos). Lee CLAUDE.md, docs/temas/menu-lateral.md (sección «Estado al 24-nov») y docs/PENDIENTES.md (Chat 8); NO leas index.html completo, usa docs/mapa-index-html.md.
 > Reglas: 🟡 cambios de pantalla = foto a 390 y 1280 px y «¿Lo pongo? Sí o no» a Sara; 🔴 base, credenciales, privacidad o borrar = explica y pide sí antes; sube CACHE_NAME de sw.js con cada cambio de index.html; prueba antes de decir «listo»; no publiques el 12 ni el 13-dic.
 > Tareas abiertas: función de borde de recuperación de contraseña, cargar textos de Rosina, privatizar el repo, MFA desde el 14-dic (ver «Pendiente» arriba).
+
+
+## 24-nov-2026 — Recuperar contraseña: el servidor responde igual (sí de Jennifer)
+- **Función de borde `recuperar-clave`** (Supabase, sin JWT): recibe el correo, llama a `fn_recuperacion_decidir` (solo `service_role`), espera 1,5–2,5 s siempre y responde `{ok:true}` a todos; solo si es colaborador envía el enlace por dentro (`resetPasswordForEmail`). Tope: 3 por correo y 10 por IP cada hora (tabla `interno.intentos_recuperacion`, RLS forzado).
+- **Cerrado:** EXECUTE de `public.fn_correo_es_colaborador` e `interno.correo_es_colaborador` solo para `service_role`. El index.html ya no las llama (`sw.js` v94).
+- Probado: función SQL con rollback (colaborador sí, inexistente no, 4.º intento no, anon sin permiso). **Falta probar de punta a punta con correo real** (tarea 3; desde la nube no se alcanza Supabase por HTTP).
+- **Rosina:** cargadas `casas_lana_rosa` (horario nuevo, inauguración dom 13-dic 2:00–6:00 p. m.), `recuperar_contrasena_erp` y `marketing_erp` (solo administradora). Si Rosina sigue con el horario viejo, es el prompt del Worker (solo Sara).
+- Límite que sigue: alguien que llame directo a Supabase Auth aún puede pedir el enlace (solo le llega al dueño del correo).
