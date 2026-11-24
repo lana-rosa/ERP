@@ -168,6 +168,14 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 - [ ] Wompi en Nequi (18-nov, viernes 20-nov): ¿cómo se tratan los desembolsos de Wompi que llegan a un Nequi (ingreso por venta, comisión, retención si aplica)? ¿Qué reporta la DIAN de los pagos por pasarelas y a nombre de quién? ¿Límites de Nequi (monto por mes) y riesgo de que se mezcle con lo personal, o conviene un Nequi exclusivo? ¿Cómo se registra el traslado semanal a Davivienda?
 - [ ] Viejos: retiros 3805 vs honorarios, aportes vs deuda, arriendo mayo/junio, confirmación escrita de 27 recibos, medio de pago de 17 ventas antiguas.
 
+## Compras SENA — entregas del Fondo (24-nov-2026)
+- [x] Calendario de entregas sembrado + alerta en LAROVA + descarga .ics (sw.js v86)
+- [x] Campo "cuenta desde la que pagaste" fusionado (PR #188)
+- [ ] Sara: subir el informe contable de noviembre a la plataforma SENA el vie 4-dic (lo prepara Contabilidad, chat 7)
+- [ ] Sembrar las entregas de enero en adelante (informes mensuales, bimestral de marzo) y las de mercadeo/contrapartidas cuando haya fecha
+- [x] Alerta por correo diaria 8 a. m. (24-nov): tarea `avisos-entregas-fondo`
+- [x] Correo de prueba de la alerta recibido por Sara (24-nov); funciona de punta a punta
+
 ## Opcionales (Claude, si se pide)
 - [ ] Enlazar soporte de compras a crédito
 - [ ] Soporte para facturas manuales antiguas
