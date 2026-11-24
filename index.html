@@ -15084,6 +15084,7 @@
   let desembolsoFondoActual = null;
   const ESTADOS_DESEMBOLSO_FONDO = { solicitado: 'Solicitado', aprobado: 'Aprobado', desembolsado: 'Desembolsado', pagado: 'Pagado', legalizado: 'Legalizado', con_observaciones: 'Con observaciones' };
   const CLAUSULA_FONDO = 'El beneficiario se compromete a realizar transacciones reales, lícitas y debidamente ejecutadas, de acuerdo con el plan de negocio y los rubros aquí relacionados. Se recuerda que la gestión, retención, declaración y pago de la parte tributaria a nivel nacional, regional y municipal será responsabilidad exclusiva del beneficiario, por ser el contribuyente directo a la DIAN y/o a la Secretaria de Hacienda o quien haga sus veces donde se encuentre domiciliado el plan de negocio, eximiendo a la entidad pagadora de cualquier omisión en el cumplimiento de las obligaciones fiscales (tales como retención en la fuente, ICA, IVA o contribuciones locales) que se deriven de la contratación o compra de los rubros solicitados.';
+  const RUBROS_FONDO = ['Arrendamientos', 'Material Publicitario', 'Adecuaciones', 'Maquinaria Y Equipo', 'Equipos De Computo', 'Muebles Y Enceres', 'Vehiculo', 'Software Licencias', 'Materia Prima', 'Semovientes Y Agro', 'Empaques', 'Prestacion de servicios', 'Maquila', 'Importaciones', 'Nomina', 'Jornales', 'Honorarios', 'Licencias(invima)'];
   const numFondo = (v) => Number(v) || 0;
   // Valor pagado = base − retefuente − reteIVA − reteICA − otros descuentos (el Excel oficial de ejemplo no resta «otros»; aquí sí, porque son descuentos).
   const valorPagadoLineaFondo = (l) => numFondo(l.base) - numFondo(l.retefuente) - numFondo(l.reteiva) - numFondo(l.reteica) - numFondo(l.otros_descuentos);
@@ -15122,6 +15123,7 @@
       <div style="margin:6px 0;font-size:12px;">
         <label>Monto recibido <input type="number" id="dfMonto" value="${numFondo(d.monto)}" style="width:130px;"></label>
         <label style="margin-left:8px;">Fecha recibido <input type="date" id="dfFecha" value="${d.fecha_recibido || ''}"></label>
+        <label style="margin-left:8px;">Fecha de solicitud <input type="date" id="dfFechaSol" value="${d.fecha_solicitud || ''}" onchange="guardarFechaSolicitudFondo(this.value)"></label>
         <label style="margin-left:8px;">Fecha de legalización <input type="date" id="dfFechaLeg" value="${d.fecha_legalizacion || ''}"></label>
         <label style="margin-left:8px;">Estado <select id="dfEstado">${Object.entries(ESTADOS_DESEMBOLSO_FONDO).map(([k, v]) => `<option value="${k}" ${k === d.estado ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
         <label style="display:block;margin-top:4px;">Descripción <input type="text" id="dfDesc" value="${escaparHtml(d.descripcion || '')}" style="width:260px;"></label>
@@ -15130,13 +15132,19 @@
       <div style="font-size:11px;opacity:.7;margin-bottom:6px;">Las retenciones (retefuente, reteIVA, reteICA) las define Contabilidad según la condición tributaria; aquí empiezan en 0. Valor pagado = base − retenciones − otros descuentos.</div>
       ${L.length ? L.map((l, i) => `<div style="border-top:1px solid #eee;padding:6px 0;"><strong>${i + 1}. ${escaparHtml(l.proveedor || 'Sin proveedor')}</strong> · Factura ${escaparHtml(l.factura || '')}
         <button class="btn-mini editar" style="padding:1px 8px;font-size:11px;float:right;" onclick="quitarLineaDesembolsoFondo('${l.id}')">Quitar</button><div>
+        <label style="display:inline-block;margin:2px 8px 2px 0;font-size:11px;">Rubro (Solicitud)<br><select style="width:170px;" onchange="guardarLineaDesembolsoFondo('${l.id}','rubro',this.value,false)"><option value=""></option>${RUBROS_FONDO.map(r => `<option ${r === l.rubro ? 'selected' : ''}>${r}</option>`).join('')}</select></label>
+        ${campo(l, 'valor_total_contrato', 'Valor total del contrato o negociación', true)}${campo(l, 'observaciones', 'Observaciones / condiciones comerciales de pago', false)}
         ${campo(l, 'actividad', 'Actividad plan operativo', false)}${campo(l, 'id_solicitud_pago', 'ID solicitud de pago', false)}${campo(l, 'descripcion', 'Descripción solicitud', false)}${campo(l, 'proveedor', 'Proveedor', false)}${campo(l, 'factura', 'Factura/Doc soporte #', false)}
-        ${campo(l, 'monto_desembolsado', 'Monto desembolsado', true)}${campo(l, 'saldo_pendiente', 'Saldo pendiente por solicitar', true)}${campo(l, 'monto_legalizado', 'Monto legalizado', true)}${campo(l, 'base', 'Base', true)}
+        ${campo(l, 'monto_desembolsado', 'Monto solicitado / desembolsado', true)}${campo(l, 'saldo_pendiente', 'Saldo pendiente por solicitar', true)}${campo(l, 'monto_legalizado', 'Monto legalizado', true)}${campo(l, 'base', 'Base', true)}
         ${campo(l, 'retefuente', 'ReteFuente', true)}${campo(l, 'reteiva', 'ReteIVA', true)}${campo(l, 'reteica', 'ReteICA', true)}${campo(l, 'otros_descuentos', 'Otros descuentos', true)}</div>
         <div style="font-size:11.5px;">Reintegro: <strong>${formatearMoneda(reintegro(l))}</strong> · Valor pagado: <strong>${formatearMoneda(valorPagadoLineaFondo(l))}</strong></div></div>`).join('') : '<em>Agrega las compras que se pagaron con este desembolso.</em>'}
       <div style="margin-top:8px;font-weight:600;">Totales: desembolsado ${formatearMoneda(tot('monto_desembolsado'))} · legalizado ${formatearMoneda(tot('monto_legalizado'))} · reintegro ${formatearMoneda(L.reduce((a, l) => a + reintegro(l), 0))} · valor pagado ${formatearMoneda(L.reduce((a, l) => a + valorPagadoLineaFondo(l), 0))}</div>
       <div style="margin-top:8px;"><select id="dfCompra"><option value="">Agregar una compra del Fondo...</option>${data.compras_disponibles.map(c => `<option value="${c.id}">${c.fecha_factura} · ${escaparHtml(c.proveedor || 'sin proveedor')} · Fact. ${escaparHtml(c.numero_factura || '')} · ${formatearMoneda(c.monto)}</option>`).join('')}</select>
-        <button class="btn-mini editar" onclick="agregarCompraDesembolsoFondo()">Agregar</button></div>
+        <button class="btn-mini editar" onclick="agregarCompraDesembolsoFondo()">Agregar</button>
+        <button class="btn-mini editar" onclick="agregarFilaDesembolsoFondo()">➕ Agregar fila sin compra (para la solicitud)</button></div>
+      <div style="margin-top:8px;"><strong style="font-size:12px;">Formato 1: Solicitud de desembolso</strong><br><button class="btn-principal" style="width:auto;" onclick="descargarExcelSolicitudFondo()">⬇️ Excel de la solicitud</button> <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirSolicitudFondo()">🖨️ PDF de la solicitud</button>
+        <div style="font-size:11px;opacity:.7;margin-top:4px;">Máximo 10 filas. Si pagas por partes, escribe el valor total del contrato y las condiciones de pago en «Observaciones». Cualquier cambio de proveedor, concepto o valor se aprueba antes de pagar.</div></div>
+      <div style="margin-top:8px;"><strong style="font-size:12px;">Formato 2: Legalización desembolso</strong></div>
       <div style="margin-top:8px;"><button class="btn-principal" style="width:auto;" onclick="descargarExcelLegalizacionFondo()">⬇️ Descargar Excel</button> <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirLegalizacionFondo()">🖨️ Ver / guardar PDF</button>
         <div style="font-size:11px;opacity:.7;margin-top:4px;">Recuerda anexar el extracto o comprobante bancario de cada pago y los soportes (factura, evidencia de entrega). Se suben a mano en la pestaña PAGOS de la plataforma del SENA.</div></div></div>`;
   }
@@ -15167,6 +15175,82 @@
     const { error } = await supabaseClient.rpc('fn_fondo_desembolso_quitar_linea', { p_linea: id });
     if (error) { alert('No se pudo quitar: ' + error.message); return; }
     abrirDesembolsoFondo(desembolsoFondoActual.desembolso.id);
+  }
+
+  async function guardarFechaSolicitudFondo(valor) {
+    const { error } = await supabaseClient.rpc('fn_fondo_desembolso_fecha_solicitud', { p_id: desembolsoFondoActual.desembolso.id, p_fecha: valor || null });
+    if (error) { alert('No se pudo guardar la fecha: ' + error.message); return; }
+    desembolsoFondoActual.desembolso.fecha_solicitud = valor || null;
+  }
+
+  async function agregarFilaDesembolsoFondo() {
+    const { error } = await supabaseClient.rpc('fn_fondo_desembolso_agregar_fila', { p_id: desembolsoFondoActual.desembolso.id });
+    if (error) { alert('No se pudo agregar: ' + error.message); return; }
+    abrirDesembolsoFondo(desembolsoFondoActual.desembolso.id);
+  }
+
+  // Filas del Formato 1 con sus cálculos: si no se escribió el valor total del contrato, se toma el monto solicitado (saldo 0).
+  function filasSolicitudFondo() {
+    return desembolsoFondoActual.lineas.map((l, i) => {
+      const e = numFondo(l.monto_desembolsado), dTotal = numFondo(l.valor_total_contrato) || e;
+      return { item: i + 1, rubro: l.rubro || '', descripcion: l.descripcion || '', total: dTotal, solicitado: e, saldo: dTotal - e, obs: l.observaciones || '' };
+    });
+  }
+
+  // Revisa lo que el SENA exige en el Formato 1; devuelve un texto de error o null.
+  function validarSolicitudFondo(filas) {
+    if (!filas.length) return 'Agrega al menos una fila a la solicitud.';
+    if (filas.length > 10) return 'El formato del SENA admite máximo 10 filas; tienes ' + filas.length + '. Divide la solicitud en dos desembolsos.';
+    const sinRubro = filas.find(f => !f.rubro); if (sinRubro) return `La fila ${sinRubro.item} no tiene rubro (Actividades solicitadas).`;
+    const parcial = filas.find(f => f.saldo > 0 && !f.obs.trim()); if (parcial) return `La fila ${parcial.item} queda con saldo por solicitar: escribe en «Observaciones» el valor total comprometido y las condiciones de pago (lo exige el SENA en pagos parciales).`;
+    const neg = filas.find(f => f.saldo < 0); if (neg) return `La fila ${neg.item} solicita más que el valor total del contrato.`;
+    return null;
+  }
+
+  // Excel con la estructura del formato oficial (Anexo 2, hoja «Solicitud desembolso»): 10 filas fijas, total en la fila 18.
+  function descargarExcelSolicitudFondo() {
+    const filas = filasSolicitudFondo(), err = validarSolicitudFondo(filas);
+    if (err) { alert(err); return; }
+    const { desembolso: d, proyecto } = desembolsoFondoActual;
+    const aoa = [], put = (c, v) => { const a = XLSX.utils.decode_cell(c); (aoa[a.r] = aoa[a.r] || [])[a.c] = v; };
+    put('A1', `SOLICITUD DE DESEMBOLSO   No ${d.numero}`);
+    put('A3', 'ID/ Nombre proyecto:'); put('B3', proyecto || ''); put('D3', 'Fecha de Solicitud:'); put('E3', (d.fecha_solicitud ? new Date(d.fecha_solicitud + 'T00:00:00') : new Date()).toLocaleDateString('es-CO'));
+    put('A4', 'Monto autorizado:'); put('B4', filas.reduce((a, f) => a + f.solicitado, 0));
+    ['ITEM ', 'Actividades solicitadas', 'Descripción ', 'Valor total del contrato o negociacion ', 'Monto Solicitado plan de negocio', 'Saldo por solicitar ', 'Observaciones /condiciones comerciales de pago '].forEach((t, i) => put(String.fromCharCode(65 + i) + '7', t));
+    const formulas = { B4: 'E18' };
+    for (let i = 0; i < 10; i++) {
+      const r = 8 + i, f = filas[i]; put(`A${r}`, i + 1);
+      if (f) { put(`B${r}`, f.rubro); put(`C${r}`, f.descripcion); put(`D${r}`, f.total); put(`E${r}`, f.solicitado); put(`G${r}`, f.obs); }
+      put(`F${r}`, f ? f.saldo : 0); formulas[`F${r}`] = `D${r}-E${r}`;
+    }
+    put('A18', ' T O T A L '); put('E18', filas.reduce((a, f) => a + f.solicitado, 0)); put('F18', filas.reduce((a, f) => a + f.saldo, 0)); formulas.E18 = 'SUM(E8:E17)'; formulas.F18 = 'SUM(F8:F17)';
+    put('A20', 'Firma del  beneficiario:'); put('B20', ' _______________________'); put('A22', 'Firma del interventor:'); put('B22', '_______________________');
+    put('A28', 'CLÁUSULA DE RESPONSABILIDAD Y DECLARACIÓN TRIBUTARIA'); put('A30', CLAUSULA_FONDO);
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    Object.entries(formulas).forEach(([c, f]) => { if (ws[c]) ws[c].f = f; });
+    ws['!merges'] = ['A28:E29', 'B3:C3', 'A1:E1', 'A30:E31', 'E3:F3'].map(r => XLSX.utils.decode_range(r));
+    ws['!cols'] = [20.9, 17.9, 35.4, 17.4, 19.3, 16.4, 27.4, 20.3].map(w => ({ wch: w }));
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Solicitud desembolso');
+    XLSX.writeFile(wb, `Solicitud_desembolso_No_${d.numero}.xlsx`);
+  }
+
+  function imprimirSolicitudFondo() {
+    const filas = filasSolicitudFondo(), err = validarSolicitudFondo(filas);
+    if (err) { alert(err); return; }
+    const { desembolso: d, proyecto } = desembolsoFondoActual, m = formatearMoneda;
+    const fecha = (d.fecha_solicitud ? new Date(d.fecha_solicitud + 'T00:00:00') : new Date()).toLocaleDateString('es-CO');
+    const v = window.open('', '_blank');
+    v.document.write(`<html><head><title>Solicitud_desembolso_No_${d.numero}</title><meta charset="utf-8"><style>
+      body{font-family:Arial,sans-serif;font-size:12px;padding:28px;color:#222} h1{font-size:16px;text-align:center} table{border-collapse:collapse;width:100%;margin-top:10px} th,td{border:1px solid #999;padding:5px 6px;text-align:left} th{background:#f2f2f2} .n{text-align:right}
+      @media print{@page{margin:14mm}}</style></head><body>
+      <h1>SOLICITUD DE DESEMBOLSO No ${d.numero}</h1>
+      <p><strong>ID/ Nombre proyecto:</strong> ${escaparHtml(proyecto || '')} &nbsp;&nbsp; <strong>Fecha de Solicitud:</strong> ${fecha}<br><strong>Monto autorizado:</strong> ${m(filas.reduce((a, f) => a + f.solicitado, 0))}</p>
+      <table><tr><th>ITEM</th><th>Actividades solicitadas</th><th>Descripción</th><th>Valor total del contrato o negociación</th><th>Monto solicitado plan de negocio</th><th>Saldo por solicitar</th><th>Observaciones / condiciones comerciales de pago</th></tr>
+      ${filas.map(f => `<tr><td>${f.item}</td><td>${escaparHtml(f.rubro)}</td><td>${escaparHtml(f.descripcion)}</td><td class="n">${m(f.total)}</td><td class="n">${m(f.solicitado)}</td><td class="n">${m(f.saldo)}</td><td>${escaparHtml(f.obs)}</td></tr>`).join('')}
+      <tr><th colspan="4">T O T A L</th><th class="n">${m(filas.reduce((a, f) => a + f.solicitado, 0))}</th><th class="n">${m(filas.reduce((a, f) => a + f.saldo, 0))}</th><th></th></tr></table>
+      <p><br>Firma del beneficiario: _______________________</p><p>Firma del interventor: _______________________</p>
+      <p><strong>CLÁUSULA DE RESPONSABILIDAD Y DECLARACIÓN TRIBUTARIA</strong><br>${escaparHtml(CLAUSULA_FONDO)}</p></body></html>`);
+    v.document.close();
   }
 
   // Excel con la misma estructura del formato oficial (Anexo 2, hoja «Legalización desembolso»); K y Q con fórmulas.
