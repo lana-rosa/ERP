@@ -3028,6 +3028,8 @@
       <div id="listaComprasSinRequisitos" style="margin-top:8px;font-size:12.5px;"></div>
       <button class="btn-mini editar" style="flex:0 0 auto;padding:7px 12px;margin-top:10px;" onclick="verSoportesPagoFondo()">🧾 Ver soportes de pago de las compras con recursos del Fondo</button>
       <div id="listaSoportesPagoFondo" style="margin-top:8px;font-size:12.5px;"></div>
+      <button class="btn-mini editar" style="flex:0 0 auto;padding:7px 12px;margin-top:10px;" onclick="verDesembolsosFondo()">📑 Desembolsos y legalización del Fondo (formato del SENA)</button>
+      <div id="areaDesembolsosFondo" style="margin-top:8px;font-size:12.5px;"></div>
     </div>
     <div class="panel" style="max-width:none;max-height:none;">
       <div id="listaHistorialComprasTabla"><div class="cargando">Cargando...</div></div>
@@ -15076,6 +15078,151 @@
     if (error) { cont.innerHTML = escaparHtml(error.message); return; }
     cont.innerHTML = data.length ? `<div style="margin-bottom:6px;"><strong>${data.length}</strong> compra(s) registradas sin los documentos del instructivo (las hechas antes de que existiera este control, o desde otra pantalla):</div>` +
       data.map(g => `<div>• ${new Date(g.fecha + 'T00:00:00').toLocaleDateString('es-CO')} · ${escaparHtml(g.proveedor || 'sin proveedor')} · ${escaparHtml(g.descripcion || '')} · ${formatearMoneda(g.monto)}</div>`).join('') : '✅ Todas las compras del rango tienen sus documentos.';
+  }
+
+  // ---- Desembolsos del Fondo y formato «Legalización desembolso No.» (Anexo 2 del SENA, Fase 2) ----
+  let desembolsoFondoActual = null;
+  const ESTADOS_DESEMBOLSO_FONDO = { solicitado: 'Solicitado', aprobado: 'Aprobado', desembolsado: 'Desembolsado', pagado: 'Pagado', legalizado: 'Legalizado', con_observaciones: 'Con observaciones' };
+  const CLAUSULA_FONDO = 'El beneficiario se compromete a realizar transacciones reales, lícitas y debidamente ejecutadas, de acuerdo con el plan de negocio y los rubros aquí relacionados. Se recuerda que la gestión, retención, declaración y pago de la parte tributaria a nivel nacional, regional y municipal será responsabilidad exclusiva del beneficiario, por ser el contribuyente directo a la DIAN y/o a la Secretaria de Hacienda o quien haga sus veces donde se encuentre domiciliado el plan de negocio, eximiendo a la entidad pagadora de cualquier omisión en el cumplimiento de las obligaciones fiscales (tales como retención en la fuente, ICA, IVA o contribuciones locales) que se deriven de la contratación o compra de los rubros solicitados.';
+  const numFondo = (v) => Number(v) || 0;
+  // Valor pagado = base − retefuente − reteIVA − reteICA − otros descuentos (el Excel oficial de ejemplo no resta «otros»; aquí sí, porque son descuentos).
+  const valorPagadoLineaFondo = (l) => numFondo(l.base) - numFondo(l.retefuente) - numFondo(l.reteiva) - numFondo(l.reteica) - numFondo(l.otros_descuentos);
+
+  async function verDesembolsosFondo() {
+    const cont = document.getElementById('areaDesembolsosFondo');
+    cont.innerHTML = 'Cargando...';
+    const { data, error } = await supabaseClient.rpc('fn_fondo_desembolsos_listar');
+    if (error) { cont.innerHTML = escaparHtml(error.message); return; }
+    cont.innerHTML = `<div style="margin:6px 0;"><button class="btn-mini editar" onclick="nuevoDesembolsoFondo()">➕ Registrar desembolso recibido</button></div>` +
+      (data.length ? data.map(d => `<div style="border-top:1px solid #eee;padding:6px 0;"><strong>Desembolso No. ${d.numero}</strong> · ${d.fecha_recibido ? new Date(d.fecha_recibido + 'T00:00:00').toLocaleDateString('es-CO') : 'sin fecha'} · ${formatearMoneda(d.monto)} · ${ESTADOS_DESEMBOLSO_FONDO[d.estado] || d.estado}
+        <div style="font-size:11.5px;opacity:.75;">${escaparHtml(d.descripcion || '')} · ${d.lineas} compra(s) · legalizado ${formatearMoneda(d.legalizado)} · saldo por legalizar ${formatearMoneda(numFondo(d.monto) - numFondo(d.legalizado))}</div>
+        <button class="btn-mini editar" style="margin-top:4px;" onclick="abrirDesembolsoFondo('${d.id}')">Abrir legalización</button></div>`).join('') : '<em>Todavía no hay desembolsos registrados.</em>');
+  }
+
+  async function nuevoDesembolsoFondo() {
+    const monto = prompt('¿Cuánto dinero te desembolsó el Fondo? (solo números)'); if (monto === null) return;
+    const fecha = prompt('¿En qué fecha llegó a la cuenta? (AAAA-MM-DD)', fechaLocalIso()); if (fecha === null) return;
+    const desc = prompt('Descripción (opcional), ej: "Desembolso mes 1 y 2"', '') || '';
+    const { data, error } = await supabaseClient.rpc('fn_fondo_desembolso_crear', { p_fecha: fecha || null, p_monto: Number(monto), p_descripcion: desc });
+    if (error) { alert('No se pudo registrar: ' + error.message); return; }
+    abrirDesembolsoFondo(data.id);
+  }
+
+  async function abrirDesembolsoFondo(id) {
+    const cont = document.getElementById('areaDesembolsosFondo');
+    const { data, error } = await supabaseClient.rpc('fn_fondo_desembolso_detalle', { p_id: id });
+    if (error) { cont.innerHTML = escaparHtml(error.message); return; }
+    desembolsoFondoActual = data;
+    const d = data.desembolso, L = data.lineas;
+    const tot = (k) => L.reduce((a, l) => a + numFondo(l[k]), 0);
+    const reintegro = (l) => numFondo(l.monto_desembolsado) - numFondo(l.monto_legalizado);
+    const campo = (l, k, etiqueta, esNum) => `<label style="display:inline-block;margin:2px 8px 2px 0;font-size:11px;">${etiqueta}<br><input ${esNum ? 'type="number" step="any" style="width:110px;"' : 'type="text" style="width:170px;"'} value="${escaparHtml(l[k] == null ? '' : l[k])}" onchange="guardarLineaDesembolsoFondo('${l.id}','${k}',this.value,${esNum})"></label>`;
+    cont.innerHTML = `<div style="border:1px solid #e3d3df;border-radius:10px;padding:10px;margin-top:6px;">
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;"><strong>Legalización del desembolso No. ${d.numero}</strong><button class="btn-mini editar" onclick="verDesembolsosFondo()">← Volver a la lista</button></div>
+      <div style="margin:6px 0;font-size:12px;">
+        <label>Monto recibido <input type="number" id="dfMonto" value="${numFondo(d.monto)}" style="width:130px;"></label>
+        <label style="margin-left:8px;">Fecha recibido <input type="date" id="dfFecha" value="${d.fecha_recibido || ''}"></label>
+        <label style="margin-left:8px;">Fecha de legalización <input type="date" id="dfFechaLeg" value="${d.fecha_legalizacion || ''}"></label>
+        <label style="margin-left:8px;">Estado <select id="dfEstado">${Object.entries(ESTADOS_DESEMBOLSO_FONDO).map(([k, v]) => `<option value="${k}" ${k === d.estado ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+        <label style="display:block;margin-top:4px;">Descripción <input type="text" id="dfDesc" value="${escaparHtml(d.descripcion || '')}" style="width:260px;"></label>
+        <button class="btn-mini editar" onclick="guardarDesembolsoFondo()">Guardar datos</button>
+      </div>
+      <div style="font-size:11px;opacity:.7;margin-bottom:6px;">Las retenciones (retefuente, reteIVA, reteICA) las define Contabilidad según la condición tributaria; aquí empiezan en 0. Valor pagado = base − retenciones − otros descuentos.</div>
+      ${L.length ? L.map((l, i) => `<div style="border-top:1px solid #eee;padding:6px 0;"><strong>${i + 1}. ${escaparHtml(l.proveedor || 'Sin proveedor')}</strong> · Factura ${escaparHtml(l.factura || '')}
+        <button class="btn-mini editar" style="padding:1px 8px;font-size:11px;float:right;" onclick="quitarLineaDesembolsoFondo('${l.id}')">Quitar</button><div>
+        ${campo(l, 'actividad', 'Actividad plan operativo', false)}${campo(l, 'id_solicitud_pago', 'ID solicitud de pago', false)}${campo(l, 'descripcion', 'Descripción solicitud', false)}${campo(l, 'proveedor', 'Proveedor', false)}${campo(l, 'factura', 'Factura/Doc soporte #', false)}
+        ${campo(l, 'monto_desembolsado', 'Monto desembolsado', true)}${campo(l, 'saldo_pendiente', 'Saldo pendiente por solicitar', true)}${campo(l, 'monto_legalizado', 'Monto legalizado', true)}${campo(l, 'base', 'Base', true)}
+        ${campo(l, 'retefuente', 'ReteFuente', true)}${campo(l, 'reteiva', 'ReteIVA', true)}${campo(l, 'reteica', 'ReteICA', true)}${campo(l, 'otros_descuentos', 'Otros descuentos', true)}</div>
+        <div style="font-size:11.5px;">Reintegro: <strong>${formatearMoneda(reintegro(l))}</strong> · Valor pagado: <strong>${formatearMoneda(valorPagadoLineaFondo(l))}</strong></div></div>`).join('') : '<em>Agrega las compras que se pagaron con este desembolso.</em>'}
+      <div style="margin-top:8px;font-weight:600;">Totales: desembolsado ${formatearMoneda(tot('monto_desembolsado'))} · legalizado ${formatearMoneda(tot('monto_legalizado'))} · reintegro ${formatearMoneda(L.reduce((a, l) => a + reintegro(l), 0))} · valor pagado ${formatearMoneda(L.reduce((a, l) => a + valorPagadoLineaFondo(l), 0))}</div>
+      <div style="margin-top:8px;"><select id="dfCompra"><option value="">Agregar una compra del Fondo...</option>${data.compras_disponibles.map(c => `<option value="${c.id}">${c.fecha_factura} · ${escaparHtml(c.proveedor || 'sin proveedor')} · Fact. ${escaparHtml(c.numero_factura || '')} · ${formatearMoneda(c.monto)}</option>`).join('')}</select>
+        <button class="btn-mini editar" onclick="agregarCompraDesembolsoFondo()">Agregar</button></div>
+      <div style="margin-top:8px;"><button class="btn-principal" style="width:auto;" onclick="descargarExcelLegalizacionFondo()">⬇️ Descargar Excel</button> <button class="btn-secundario" style="width:auto;margin-top:0;" onclick="imprimirLegalizacionFondo()">🖨️ Ver / guardar PDF</button>
+        <div style="font-size:11px;opacity:.7;margin-top:4px;">Recuerda anexar el extracto o comprobante bancario de cada pago y los soportes (factura, evidencia de entrega). Se suben a mano en la pestaña PAGOS de la plataforma del SENA.</div></div></div>`;
+  }
+
+  async function guardarDesembolsoFondo() {
+    const d = desembolsoFondoActual.desembolso;
+    const { error } = await supabaseClient.rpc('fn_fondo_desembolso_actualizar', { p_id: d.id, p_fecha: document.getElementById('dfFecha').value || null, p_monto: Number(document.getElementById('dfMonto').value) || 0,
+      p_descripcion: document.getElementById('dfDesc').value, p_estado: document.getElementById('dfEstado').value, p_fecha_legalizacion: document.getElementById('dfFechaLeg').value || null });
+    if (error) { alert('No se pudo guardar: ' + error.message); return; }
+    abrirDesembolsoFondo(d.id);
+  }
+
+  async function agregarCompraDesembolsoFondo() {
+    const c = document.getElementById('dfCompra').value; if (!c) return;
+    const { error } = await supabaseClient.rpc('fn_fondo_desembolso_agregar_compra', { p_id: desembolsoFondoActual.desembolso.id, p_compra: c });
+    if (error) { alert('No se pudo agregar: ' + error.message); return; }
+    abrirDesembolsoFondo(desembolsoFondoActual.desembolso.id);
+  }
+
+  async function guardarLineaDesembolsoFondo(id, campo, valor, esNum) {
+    const { error } = await supabaseClient.rpc('fn_fondo_desembolso_actualizar_linea', { p_linea: id, p_datos: { [campo]: esNum ? (Number(valor) || 0) : valor } });
+    if (error) { alert('No se pudo guardar: ' + error.message); return; }
+    abrirDesembolsoFondo(desembolsoFondoActual.desembolso.id);
+  }
+
+  async function quitarLineaDesembolsoFondo(id) {
+    if (!confirm('¿Quitar esta compra de la legalización? La compra no se borra.')) return;
+    const { error } = await supabaseClient.rpc('fn_fondo_desembolso_quitar_linea', { p_linea: id });
+    if (error) { alert('No se pudo quitar: ' + error.message); return; }
+    abrirDesembolsoFondo(desembolsoFondoActual.desembolso.id);
+  }
+
+  // Excel con la misma estructura del formato oficial (Anexo 2, hoja «Legalización desembolso»); K y Q con fórmulas.
+  function descargarExcelLegalizacionFondo() {
+    const { desembolso: d, proyecto, lineas } = desembolsoFondoActual;
+    const aoa = [], put = (c, v) => { const a = XLSX.utils.decode_cell(c); (aoa[a.r] = aoa[a.r] || [])[a.c] = v; };
+    const n = Math.max(lineas.length, 1), first = 10, last = first + n - 1, tot = last + 1;
+    const fechaLeg = d.fecha_legalizacion ? new Date(d.fecha_legalizacion + 'T00:00:00') : new Date();
+    put('C3', `LEGALIZACIÓN DESEMBOLSO   No ${d.numero}`);
+    put('C5', 'ID/ Nombre proyecto:'); put('E5', proyecto || ''); put('K5', 'Fecha de Legalización:'); put('L5', fechaLeg.toLocaleDateString('es-CO'));
+    put('C6', 'Valor total legalización: '); put('E6', lineas.reduce((a, l) => a + numFondo(l.monto_legalizado), 0));
+    put('C8', ' Actividades Legalizadas'); put('F8', 'Documento legalización'); put('H8', 'Monto desembolsado'); put('J8', 'Monto legalizado'); put('K8', 'Reintegro de recursos '); put('L8', 'Base'); put('M8', 'Descuentos y retenciones'); put('Q8', 'ValorPagado');
+    put('C9', 'Actividades plan operativo'); put('D9', 'ID Solicitud de pago'); put('E9', 'Descripción solicitud'); put('F9', 'Proveedor'); put('G9', 'Factura/Doc soporte #');
+    put('I9', 'Saldo pendiente por solicitar según condiciones pactadas'); put('M9', 'ValorReteFuente'); put('N9', 'ValorReteIVA'); put('O9', 'ValorReteICA'); put('P9', 'Otros descuentos');
+    const formulas = {};
+    lineas.forEach((l, i) => {
+      const r = first + i;
+      put(`C${r}`, l.actividad || ''); put(`D${r}`, l.id_solicitud_pago || ''); put(`E${r}`, l.descripcion || ''); put(`F${r}`, l.proveedor || ''); put(`G${r}`, l.factura || '');
+      put(`H${r}`, numFondo(l.monto_desembolsado)); put(`I${r}`, numFondo(l.saldo_pendiente)); put(`J${r}`, numFondo(l.monto_legalizado)); put(`K${r}`, numFondo(l.monto_desembolsado) - numFondo(l.monto_legalizado));
+      put(`L${r}`, numFondo(l.base)); put(`M${r}`, numFondo(l.retefuente)); put(`N${r}`, numFondo(l.reteiva)); put(`O${r}`, numFondo(l.reteica)); put(`P${r}`, numFondo(l.otros_descuentos)); put(`Q${r}`, valorPagadoLineaFondo(l));
+      formulas[`K${r}`] = `H${r}-J${r}`; formulas[`Q${r}`] = `L${r}-M${r}-N${r}-O${r}-P${r}`;
+    });
+    put(`C${tot}`, 'TOTAL LEGALIZACIÓN');
+    const sumas = { H: 'monto_desembolsado', J: 'monto_legalizado', L: 'base', M: 'retefuente', N: 'reteiva', O: 'reteica', P: 'otros_descuentos' };
+    Object.entries(sumas).forEach(([c, k]) => { put(`${c}${tot}`, lineas.reduce((a, l) => a + numFondo(l[k]), 0)); formulas[`${c}${tot}`] = `SUM(${c}${first}:${c}${last})`; });
+    put(`K${tot}`, lineas.reduce((a, l) => a + numFondo(l.monto_desembolsado) - numFondo(l.monto_legalizado), 0)); formulas[`K${tot}`] = `SUM(K${first}:K${last})`;
+    put(`Q${tot}`, lineas.reduce((a, l) => a + valorPagadoLineaFondo(l), 0)); formulas[`Q${tot}`] = `SUM(Q${first}:Q${last})`;
+    formulas.E6 = `J${tot}`;
+    put(`C${tot + 3}`, 'NOTA se debe anexar extracto o comprobante Bancario del pago realizado');
+    put(`C${tot + 6}`, ' Elaborado por beneficiario: '); put(`C${tot + 7}`, 'Aprobado por: ');
+    put(`C${tot + 14}`, 'CLÁUSULA DE RESPONSABILIDAD Y DECLARACIÓN TRIBUTARIA'); put(`C${tot + 16}`, CLAUSULA_FONDO); put(`C${tot + 21}`, 'Notas: Anexar soportes de desembolso ');
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    Object.entries(formulas).forEach(([c, f]) => { if (ws[c]) ws[c].f = f; });
+    const m = (s) => XLSX.utils.decode_range(s);
+    ws['!merges'] = ['C3:Q3', 'C5:D5', 'E5:H5', 'L5:M5', 'C6:D6', 'E6:H6', 'C8:E8', 'F8:G8', 'H8:H9', 'J8:J9', 'K8:K9', 'L8:L9', 'M8:P8', 'Q8:Q9', `C${tot}:G${tot}`, `C${tot + 14}:F${tot + 15}`, `C${tot + 16}:F${tot + 19}`].map(m);
+    ws['!cols'] = [{ wch: 2 }, { wch: 2.3 }, { wch: 25.6 }, { wch: 13.3 }, { wch: 26.3 }, { wch: 18 }, { wch: 13.6 }, { wch: 20.1 }, { wch: 22 }, { wch: 19.3 }, { wch: 14.1 }, { wch: 15.3 }, { wch: 15.3 }, { wch: 13.4 }, { wch: 12.7 }, { wch: 14.4 }, { wch: 15.3 }];
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Legalización desembolso');
+    XLSX.writeFile(wb, `Legalizacion_desembolso_No_${d.numero}.xlsx`);
+  }
+
+  function imprimirLegalizacionFondo() {
+    const { desembolso: d, proyecto, lineas } = desembolsoFondoActual;
+    const t = (k) => lineas.reduce((a, l) => a + numFondo(l[k]), 0), m = formatearMoneda;
+    const fechaLeg = (d.fecha_legalizacion ? new Date(d.fecha_legalizacion + 'T00:00:00') : new Date()).toLocaleDateString('es-CO');
+    const v = window.open('', '_blank');
+    v.document.write(`<html><head><title>Legalizacion_desembolso_No_${d.numero}</title><meta charset="utf-8"><style>
+      body{font-family:Arial,sans-serif;font-size:11px;padding:24px;color:#222} h1{font-size:16px;text-align:center} table{border-collapse:collapse;width:100%;margin-top:10px} th,td{border:1px solid #999;padding:4px 5px;text-align:left} th{background:#f2f2f2} .n{text-align:right}
+      @media print{@page{size:landscape;margin:12mm}}</style></head><body>
+      <h1>LEGALIZACIÓN DESEMBOLSO No ${d.numero}</h1>
+      <p><strong>ID/ Nombre proyecto:</strong> ${escaparHtml(proyecto || '')} &nbsp;&nbsp; <strong>Fecha de Legalización:</strong> ${fechaLeg}<br><strong>Valor total legalización:</strong> ${m(t('monto_legalizado'))}</p>
+      <table><tr><th>Actividades plan operativo</th><th>ID Solicitud de pago</th><th>Descripción solicitud</th><th>Proveedor</th><th>Factura/Doc soporte #</th><th>Monto desembolsado</th><th>Saldo pendiente por solicitar</th><th>Monto legalizado</th><th>Reintegro de recursos</th><th>Base</th><th>ReteFuente</th><th>ReteIVA</th><th>ReteICA</th><th>Otros descuentos</th><th>Valor pagado</th></tr>
+      ${lineas.map(l => `<tr><td>${escaparHtml(l.actividad || '')}</td><td>${escaparHtml(l.id_solicitud_pago || '')}</td><td>${escaparHtml(l.descripcion || '')}</td><td>${escaparHtml(l.proveedor || '')}</td><td>${escaparHtml(l.factura || '')}</td><td class="n">${m(l.monto_desembolsado)}</td><td class="n">${m(l.saldo_pendiente)}</td><td class="n">${m(l.monto_legalizado)}</td><td class="n">${m(numFondo(l.monto_desembolsado) - numFondo(l.monto_legalizado))}</td><td class="n">${m(l.base)}</td><td class="n">${m(l.retefuente)}</td><td class="n">${m(l.reteiva)}</td><td class="n">${m(l.reteica)}</td><td class="n">${m(l.otros_descuentos)}</td><td class="n">${m(valorPagadoLineaFondo(l))}</td></tr>`).join('')}
+      <tr><th colspan="5">TOTAL LEGALIZACIÓN</th><th class="n">${m(t('monto_desembolsado'))}</th><th></th><th class="n">${m(t('monto_legalizado'))}</th><th class="n">${m(lineas.reduce((a, l) => a + numFondo(l.monto_desembolsado) - numFondo(l.monto_legalizado), 0))}</th><th class="n">${m(t('base'))}</th><th class="n">${m(t('retefuente'))}</th><th class="n">${m(t('reteiva'))}</th><th class="n">${m(t('reteica'))}</th><th class="n">${m(t('otros_descuentos'))}</th><th class="n">${m(lineas.reduce((a, l) => a + valorPagadoLineaFondo(l), 0))}</th></tr></table>
+      <p>NOTA: se debe anexar extracto o comprobante bancario del pago realizado.</p><p><br>Elaborado por beneficiario: ______________________ &nbsp;&nbsp;&nbsp; Aprobado por: ______________________</p>
+      <p><strong>CLÁUSULA DE RESPONSABILIDAD Y DECLARACIÓN TRIBUTARIA</strong><br>${escaparHtml(CLAUSULA_FONDO)}</p><p>Notas: Anexar soportes de desembolso.</p></body></html>`);
+    v.document.close();
   }
 
   // Compras pagadas con recursos del Fondo: ver los soportes guardados y subir el comprobante/extracto que falte (nuevo modelo 2026).
