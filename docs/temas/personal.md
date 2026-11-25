@@ -234,3 +234,5 @@ El contador de Lana Rosa ahora es **Oscar** (antes Hernando Franco, cuya cuenta 
 - **Inducción, organigrama y reconocimientos (24-nov, PR 228):** en `colaboradores.html`. Tablas `gestion_colab_contenidos` (6 textos, casi todos borrador), `_vacantes`, `_valores` (5) y `_reconocimientos`; el organigrama solo muestra nombre, cargo y área. Falta: que Jennifer corrija los textos; siguen ficha con pestañas (ítem 3), manual de funciones (4) y capacitaciones (5). Probado solo con datos de ejemplo.
 
 - **Mi ficha con pestañas (24-nov, PR 229):** `gestion_colab_atributos` (contacto de emergencia y tallas) y funciones `gestion_colab_atributo_set` y `gestion_colab_mi_ficha`; pestañas Resumen, Mis datos, Documentos (aún sin archivos) y Vacaciones (enlace al ERP). Sin salario. No cargar datos reales hasta la revisión de la abogada (Ley 1581). Probado solo con datos de ejemplo.
+
+- **Entrada como lista de secciones (25-nov, PR 245):** `colaboradores.html` abre con una lista (Mi ficha, Conoce Lana Rosa, Muro, Mis tareas de bienvenida, Organigrama, Reconocimientos y, solo administradora y contador, Centro de cumplimiento) y «Volver a la lista» en cada sección. Solo pantalla.
