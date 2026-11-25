@@ -136,3 +136,8 @@
 ## 24-nov-2026 — Dashboard del ERP ya no queda en blanco (sí de Jennifer)
 - Causa probable: si el Worker no responde o rechaza la dirección, `fetch` fallaba y la primera carga (alertas) cancelaba todo; las demás partes borraban lo mostrado. Pantalla: cada parte carga por separado (`seguro`), se conserva lo mostrado y sale «No se pudo actualizar» + botón Reintentar. `sw.js` v95.
 - Causa de fondo (Sara, Worker): revisar logs al abrir el Dashboard, lista de orígenes permitidos (`https://larova.lanarosacrochet.com`) y sesión.
+
+## 25-nov-2026 — Marketing por persona (sí de Jennifer)
+- Base: `fn_puede_marketing()` (administradora activa, o permiso `mkt-marketing` otorgado=true en `permisos_modulos_usuario`); políticas `mkt_piezas_con_permiso` y `mkt_metricas_con_permiso` reemplazan a `*_solo_admin`. Probado con rollback (admin sí, sin permiso no, con permiso sí, revocado no, anon sin ejecución).
+- Pantalla: casilla «Marketing y comunicación» en Usuarios → Permisos, SIN marcar por defecto (`PERMISOS_SIN_DEFECTO`; también en roles personalizados y «Restablecer»). `marketing.html` usa `fn_puede_marketing`. Tarjeta de Marketing también en la vista Equipo de `larova.html` (cosmético; el control real es la base). `sw.js` v99.
+- Por probar: que el Worker acepte guardar la clave `mkt-marketing` (si no, guardar el permiso directo en la base). Gestión: sin cambios; falta decidir si se quita el acceso a Gerencia SO/Taller SO.
