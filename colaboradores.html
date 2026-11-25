@@ -52,45 +52,39 @@
   .cont{margin-top:10px}.cont h3{font-size:14px;margin-bottom:2px}.cont p{white-space:pre-wrap;margin-bottom:10px}
   .orgA{font-weight:700;margin:12px 0 4px;color:var(--rosa)}.orgP{padding:6px 0;border-bottom:1px solid var(--borde)}.vac{color:var(--suave);font-style:italic}
   .rec{padding:8px 0;border-bottom:1px solid var(--borde)}
+  #menu{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+  .item{display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;background:#fff;color:var(--texto);border:1px solid var(--borde);border-radius:14px;padding:15px 16px;font-size:16px;font-weight:600;box-shadow:0 1px 6px #d8017c14}
+  .item span{color:var(--rosa);font-size:20px}
+  .atras{margin-bottom:6px}
   [hidden]{display:none!important}
 </style>
 </head>
 <body>
 <div class="env">
   <header><img src="./icon-192.png" alt=""><h1>Gestión Colaboradores</h1><a class="volver" href="./larova.html#equipo">‹ Volver</a></header>
-  <p class="sub">Muro del equipo: avisos de Lana Rosa para todas.</p>
+  <p class="sub">Elige una sección.</p>
   <div id="aviso" class="msg">Cargando…</div>
   <div id="app" hidden>
-    <section id="onb" hidden>
-      <h2 class="h2">🌸 Mis tareas de bienvenida</h2>
-      <div id="onbLista"></div>
-    </section>
-    <section id="onbAdmin" class="nuevo" hidden>
-      <h2 class="h2">Bienvenida de una persona nueva</h2>
-      <div class="fila"><select id="onbPersona"></select><button id="onbAsignar">Asignar tareas</button></div>
-      <p id="onbMsg" class="sub"></p>
-      <div id="onbResumen"></div>
-    </section>
-    <section id="cump" hidden>
-      <h2 class="h2">✅ Centro de cumplimiento</h2>
-      <div id="cumResumen" class="fila"></div>
-      <label class="de" style="font-size:13px;color:var(--suave)"><input type="checkbox" id="cumTodo"> Mostrar también lo que está al día</label>
-      <div id="cumLista"></div>
-    </section>
-    <details class="bloque" id="dFicha"><summary>👤 Mi ficha</summary>
+    <nav id="menu">
+      <button class="item" data-ir="ficha">👤 Mi ficha<span>›</span></button>
+      <button class="item" data-ir="induccion">🌸 Conoce Lana Rosa<span>›</span></button>
+      <button class="item" data-ir="muro">📣 Muro<span>›</span></button>
+      <button class="item" data-ir="bienvenida">🧺 Mis tareas de bienvenida<span>›</span></button>
+      <button class="item" data-ir="org">🧭 Organigrama<span>›</span></button>
+      <button class="item" data-ir="rec">⭐ Reconocimientos<span>›</span></button>
+      <button class="item" data-ir="cumplimiento" id="itemCump" hidden>✅ Centro de cumplimiento<span>›</span></button>
+    </nav>
+    <section class="vista" id="v-ficha" hidden><button class="suave atras" data-atras="1">‹ Volver a la lista</button><h2 class="h2">👤 Mi ficha</h2>
+
       <div class="fila" id="fichaAdmin" hidden><label>Ver la ficha de:</label><select id="fichaPersona"></select></div>
       <div class="fila" id="fichaTabs" style="margin-top:10px"><button class="suave" data-tab="resumen">Resumen</button><button class="suave" data-tab="datos">Mis datos</button><button class="suave" data-tab="docs">Documentos</button><button class="suave" data-tab="vac">Vacaciones</button></div>
-      <div id="fichaCuerpo" class="cont"></div></details>
-    <details class="bloque" id="dInduccion"><summary>🌸 Conoce Lana Rosa</summary><div id="induccion"></div></details>
-    <details class="bloque" id="dOrg"><summary>🧭 Organigrama</summary><div id="org"></div>
-      <div class="fila" id="orgAdmin" hidden><input id="vacCargo" placeholder="Cargo vacante" style="flex:1;border:1px solid var(--borde);border-radius:10px;padding:8px 10px"><input id="vacArea" placeholder="Área" style="width:120px;border:1px solid var(--borde);border-radius:10px;padding:8px 10px"><button id="vacAgregar" class="suave">Agregar vacante</button></div></details>
-    <details class="bloque" id="dRec"><summary>⭐ Reconocimientos</summary>
-      <div class="nuevo" style="margin-top:10px"><div class="fila"><select id="recPara"></select><select id="recValor"></select></div>
-        <textarea id="recMsg" maxlength="500" placeholder="Cuéntale por qué (gracias por…)" style="min-height:60px;margin-top:8px"></textarea>
-        <div class="fila"><span style="flex:1"></span><button id="recEnviar">Reconocer</button></div><p id="recErr" class="sub" style="color:#a12d2d" hidden></p></div>
-      <div id="recLista"></div></details>
-    <h2 class="h2">📣 Muro</h2>
-    <div class="nuevo" id="nuevo" hidden>
+      <div id="fichaCuerpo" class="cont"></div>
+    </section>
+    <section class="vista" id="v-induccion" hidden><button class="suave atras" data-atras="1">‹ Volver a la lista</button><h2 class="h2">🌸 Conoce Lana Rosa</h2>
+<div id="induccion"></div>
+    </section>
+    <section class="vista" id="v-muro" hidden><button class="suave atras" data-atras="1">‹ Volver a la lista</button><h2 class="h2">📣 Muro</h2>
+<div class="nuevo" id="nuevo" hidden>
       <textarea id="texto" maxlength="2000" placeholder="Escribe un aviso para el equipo…"></textarea>
       <div class="fila">
         <label><input type="checkbox" id="fijar"> 📌 Fijar arriba</label>
@@ -99,6 +93,40 @@
       <p id="error" class="sub" style="color:#a12d2d" hidden></p>
     </div>
     <div id="lista"></div>
+
+    </section>
+    <section class="vista" id="v-bienvenida" hidden><button class="suave atras" data-atras="1">‹ Volver a la lista</button><h2 class="h2">🧺 Mis tareas de bienvenida</h2>
+<p id="onbVacio" class="sub" hidden>Todavía no tienes tareas de bienvenida.</p>
+      <section id="onb" hidden>
+      
+      <div id="onbLista"></div>
+    </section>
+<section id="onbAdmin" class="nuevo" hidden>
+      <h2 class="h2">Bienvenida de una persona nueva</h2>
+      <div class="fila"><select id="onbPersona"></select><button id="onbAsignar">Asignar tareas</button></div>
+      <p id="onbMsg" class="sub"></p>
+      <div id="onbResumen"></div>
+    </section>
+    </section>
+    <section class="vista" id="v-org" hidden><button class="suave atras" data-atras="1">‹ Volver a la lista</button><h2 class="h2">🧭 Organigrama</h2>
+<div id="org"></div>
+      <div class="fila" id="orgAdmin" hidden><input id="vacCargo" placeholder="Cargo vacante" style="flex:1;border:1px solid var(--borde);border-radius:10px;padding:8px 10px"><input id="vacArea" placeholder="Área" style="width:120px;border:1px solid var(--borde);border-radius:10px;padding:8px 10px"><button id="vacAgregar" class="suave">Agregar vacante</button></div>
+    </section>
+    <section class="vista" id="v-rec" hidden><button class="suave atras" data-atras="1">‹ Volver a la lista</button><h2 class="h2">⭐ Reconocimientos</h2>
+
+      <div class="nuevo" style="margin-top:10px"><div class="fila"><select id="recPara"></select><select id="recValor"></select></div>
+        <textarea id="recMsg" maxlength="500" placeholder="Cuéntale por qué (gracias por…)" style="min-height:60px;margin-top:8px"></textarea>
+        <div class="fila"><span style="flex:1"></span><button id="recEnviar">Reconocer</button></div><p id="recErr" class="sub" style="color:#a12d2d" hidden></p></div>
+      <div id="recLista"></div>
+    </section>
+    <section class="vista" id="v-cumplimiento" hidden><button class="suave atras" data-atras="1">‹ Volver a la lista</button><h2 class="h2">✅ Centro de cumplimiento</h2>
+<section id="cump">
+      
+      <div id="cumResumen" class="fila"></div>
+      <label class="de" style="font-size:13px;color:var(--suave)"><input type="checkbox" id="cumTodo"> Mostrar también lo que está al día</label>
+      <div id="cumLista"></div>
+    </section>
+    </section>
   </div>
 </div>
 <script>
@@ -134,7 +162,7 @@
     var uid = (await sb.auth.getSession()).data.session.user.id;
     var r = await sb.from('gestion_colab_onboarding_tareas').select('*').order('vence_en');
     var todas = r.data || [], mias = todas.filter(function (t) { return t.user_id === uid; });
-    $('#onb').hidden = !mias.length;
+    $('#onb').hidden = !mias.length; $('#onbVacio').hidden = !!mias.length;
     $('#onbLista').innerHTML = mias.map(function (t) {
       var propia = t.responsable === 'colaboradora';
       return '<div class="tarea' + (t.estado === 'hecha' ? ' hecha' : '') + '"><input type="checkbox" data-tarea="' + t.id + '"' + (t.estado === 'hecha' ? ' checked' : '') + (propia ? '' : ' disabled') + '><div><div class="tt">' + esc(t.titulo) + '</div><div class="de">' + (propia ? 'Te toca a ti' : 'Lo hace la administración') + (t.vence_en ? ' · para el ' + fecha(t.vence_en + 'T12:00:00').split(',')[0] : '') + '</div></div></div>';
@@ -228,8 +256,13 @@
       var r = await sb.rpc('gestion_colab_atributo_set', { p_user: fichaUser, p_clave: k, p_valor: v });
       e.target.textContent = r.error ? 'Error' : 'Guardado ✓'; if (r.error) alert(r.error.message);
     };
-    $('#dFicha').addEventListener('toggle', function () { if (this.open) pintarFicha(); });
   }
+
+  function ir(v) {
+    $('#menu').hidden = true; document.querySelectorAll('.vista').forEach(function (x) { x.hidden = x.id !== 'v-' + v; });
+    if (v === 'ficha') pintarFicha(); window.scrollTo(0, 0);
+  }
+  function volverLista() { document.querySelectorAll('.vista').forEach(function (x) { x.hidden = true; }); $('#menu').hidden = false; window.scrollTo(0, 0); }
 
   async function iniciar() {
     var s = await sb.auth.getSession();
@@ -266,7 +299,7 @@
       cargarOnboarding();
     };
     var verCump = esAdmin || rol.data === 'contador';
-    $('#cump').hidden = !verCump;
+    $('#itemCump').hidden = !verCump;
     if (verCump) {
       $('#cumTodo').onchange = pintarCumplimiento;
       $('#cumLista').onclick = async function (e) {
@@ -277,6 +310,7 @@
       };
       cargarCumplimiento();
     }
+    document.addEventListener('click', function (e) { var b = e.target.closest('[data-ir],[data-atras]'); if (!b) return; if (b.dataset.ir) ir(b.dataset.ir); else volverLista(); });
     $('#orgAdmin').hidden = !esAdmin;
     $('#induccion').onclick = async function (e) {
       var slug = e.target.dataset.edit; if (!slug) return;
