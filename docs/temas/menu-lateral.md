@@ -141,3 +141,6 @@
 - Base: `fn_puede_marketing()` (administradora activa, o permiso `mkt-marketing` otorgado=true en `permisos_modulos_usuario`); políticas `mkt_piezas_con_permiso` y `mkt_metricas_con_permiso` reemplazan a `*_solo_admin`. Probado con rollback (admin sí, sin permiso no, con permiso sí, revocado no, anon sin ejecución).
 - Pantalla: casilla «Marketing y comunicación» en Usuarios → Permisos, SIN marcar por defecto (`PERMISOS_SIN_DEFECTO`; también en roles personalizados y «Restablecer»). `marketing.html` usa `fn_puede_marketing`. Tarjeta de Marketing también en la vista Equipo de `larova.html` (cosmético; el control real es la base). `sw.js` v99.
 - Por probar: que el Worker acepte guardar la clave `mkt-marketing` (si no, guardar el permiso directo en la base). Gestión: sin cambios; falta decidir si se quita el acceso a Gerencia SO/Taller SO.
+
+## 25-nov-2026 — Roles «Gerencia SO» y «Taller SO» retirados
+El chat «SO · Fase 0» (con el sí de Jennifer) los borró (0 usuarios) y dejó Gestión/SO solo para administradoras. Ya no existen: lo que este archivo dice arriba sobre `ROLES_PERSONALIZADOS_SO` y esos dos roles quedó obsoleto. Quedan los roles personalizados Contador y Líder de Tienda.
