@@ -648,9 +648,9 @@
       bloquear('Para ver Marketing, entra primero al ERP con tu cuenta. <br><br><a class="volver" href="./index.html">Ir al ERP</a>');
       return;
     }
-    var rol = await sb.rpc('fn_rol_actual');
-    if (rol.error || rol.data !== 'administrador') {
-      bloquear('Marketing y comunicación es solo para administradoras.');
+    var puede = await sb.rpc('fn_puede_marketing');
+    if (puede.error || puede.data !== true) {
+      bloquear('Marketing y comunicación es solo para administradoras o personas con el permiso de Marketing.');
       return;
     }
     $('#app').hidden = false;

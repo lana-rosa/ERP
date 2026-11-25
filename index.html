@@ -15749,7 +15749,10 @@
   // ============================================================
   // USUARIOS Y PERMISOS
   // ============================================================
+  // Permisos que NO se dan por defecto: solo quedan marcados si se otorgan expresamente.
+  const PERMISOS_SIN_DEFECTO = ['mkt-marketing'];
   const CATALOGO_MODULOS = [
+    { clave: 'mkt-marketing', etiqueta: '📣 Marketing y comunicación (LAROVA) — solo calendario y estadísticas' },
     { clave: 'deptoVentasGrupo', etiqueta: '🛍️ Punto de Venta (grupo completo)' },
     { clave: 'nav-clientes-dir', etiqueta: '　　Clientes' },
     { clave: 'nav-cotizaciones', etiqueta: '　　Cotizaciones' },
@@ -16855,7 +16858,7 @@
     if (!form.classList.contains('oculto')) {
       document.getElementById('listaPermisosNuevoRol').innerHTML = CATALOGO_MODULOS.map(m => `
         <label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12.5px;font-weight:400;">
-          <input type="checkbox" class="chkPermisoNuevoRol" data-clave="${m.clave}" style="width:auto;" checked>
+          <input type="checkbox" class="chkPermisoNuevoRol" data-clave="${m.clave}" style="width:auto;" ${PERMISOS_SIN_DEFECTO.includes(m.clave) ? '' : 'checked'}>
           <span style="white-space:pre;">${m.etiqueta}</span>
         </label>
       `).join('');
@@ -17624,7 +17627,7 @@
 
     document.getElementById('listaPermisosModulos').innerHTML = CATALOGO_MODULOS.map(m => `
       <label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:12.5px;font-weight:400;border-bottom:1px solid #f4eef2;">
-        <input type="checkbox" class="chkPermisoModulo" data-clave="${m.clave}" style="width:auto;" ${permisosActuales[m.clave] === false ? '' : 'checked'}>
+        <input type="checkbox" class="chkPermisoModulo" data-clave="${m.clave}" style="width:auto;" ${(PERMISOS_SIN_DEFECTO.includes(m.clave) ? permisosActuales[m.clave] === true : permisosActuales[m.clave] !== false) ? 'checked' : ''}>
         <span style="white-space:pre;">${m.etiqueta}</span>
       </label>
     `).join('');
@@ -17657,7 +17660,7 @@
       body: JSON.stringify({ user_id: usuarioPermisosAbiertoId, permisos: [] })
     });
     if (!resp.ok) { mostrarMensaje('mensajePermisosUsuario', 'No se pudo restablecer.', 'error'); return; }
-    document.querySelectorAll('.chkPermisoModulo').forEach(chk => chk.checked = true);
+    document.querySelectorAll('.chkPermisoModulo').forEach(chk => chk.checked = !PERMISOS_SIN_DEFECTO.includes(chk.dataset.clave));
     mostrarMensaje('mensajePermisosUsuario', '✅ Permisos personalizados eliminados. Ahora se rige solo por su rol.', 'exito');
   }
 
