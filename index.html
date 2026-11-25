@@ -4503,7 +4503,7 @@
   </div>
 
   <div id="avisoFalloDashboard" class="oculto" style="background:#fff6e0;border:1px solid #f0d58a;border-radius:9px;padding:10px 14px;margin-bottom:16px;font-size:13px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-    <span style="flex:1;min-width:200px;">⚠️ No se pudo actualizar. Lo que ves puede estar desactualizado.</span>
+    <span style="flex:1;min-width:200px;">⚠️ No se pudo actualizar. Lo que ves puede estar desactualizado.<br><small id="motivoFalloDashboard" style="opacity:.75;"></small></span>
     <button class="btn-secundario" onclick="mostrarPantallaDashboard()" style="padding:6px 18px;width:auto;">Reintentar</button>
   </div>
   <div id="panelAlertasDashboard" style="margin-bottom:16px;"></div>
@@ -23616,9 +23616,12 @@
 
     // Cada parte se carga por separado: si una falla, las demás siguen y lo ya mostrado se conserva.
     let fallo = false;
+    const motivos = new Set();
     const seguro = async (fn, idPlaceholder) => {
       try { await fn(); } catch (e) {
         fallo = true;
+        const st = (String(e && e.message).match(/\b(\d{3})\b/) || [])[1];
+        motivos.add(st === '401' || st === '403' ? 'Sesión o permiso no válido (' + st + ')' : st ? 'El servidor respondió con error (' + st + ')' : 'Sin conexión con el servidor');
         console.warn('Dashboard: no se pudo cargar', e);
         const el = idPlaceholder && document.getElementById(idPlaceholder);
         if (el && (!el.innerHTML.trim() || /Cargando|Revisando/.test(el.textContent))) el.innerHTML = '<div class="cargando">No se pudo actualizar.</div>';
@@ -23634,7 +23637,10 @@
       seguro(cargarProyeccionDashboard, 'proyeccionDashboard'),
       seguro(cargarCarteraAntiguedad, 'carteraAntiguedadDashboard'),
     ]);
-    if (fallo) document.getElementById('avisoFalloDashboard').classList.remove('oculto');
+    if (fallo) {
+      document.getElementById('motivoFalloDashboard').textContent = 'Motivo: ' + [...motivos].join(' · ');
+      document.getElementById('avisoFalloDashboard').classList.remove('oculto');
+    }
     renderizarRosinaInsight();
   }
 
