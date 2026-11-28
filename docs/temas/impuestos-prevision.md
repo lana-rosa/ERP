@@ -8,3 +8,13 @@ Motivo: el contador dice que como persona natural se pagan impuestos más altos;
 - Pendiente del contador: UVT, tarifas SIMPLE, escenario de provisión, tabla de renta (art. 241), verificar ICA.
 - **12-nov-2026:** lista de 22 preguntas para Hernando con los números actuales del ERP en `docs/temas/impuestos-preguntas-contador.md`. Hallazgos: la pestaña Impuesto SIMPLE no tiene UVT ni tarifas cargadas (el ERP usa UVT 2026 = $52.374 en la previsión, sin confirmar), por eso el SIMPLE sale "—"; con $150 M de ventas y 20 % de utilidad la renta ordinaria da $0 y el ICA ≈ $1,5 M. Nada tributario se cambió: todo queda a confirmar por el contador.
 KB: `prevision_impuestos_erp`, `impuesto_simple_erp`.
+
+## Texto de arranque para un chat NUEVO de Impuestos
+```
+TEMA: Impuestos (docs/temas/impuestos-prevision.md). Responde en español claro; soy la dueña, no programadora.
+Lee CLAUDE.md, ese archivo, docs/temas/impuestos-preguntas-contador.md y la sección "Chat 5 · Impuestos" de docs/PENDIENTES.md. No leas index.html completo (usa docs/mapa-index-html.md).
+Estado: régimen SIMPLE; el ERP compara SIMPLE vs renta ordinaria + ICA de Villamaría (Contabilidad → Impuestos). 22 preguntas listas para el contador (hoy Oscar).
+Faltan sus respuestas: UVT 2026, tarifas SIMPLE 2026/2027, ICA, renta 2027, exógena. Con ellas, cargar datos en la pestaña Impuesto SIMPLE y en parámetros del ICA.
+Provisión mensual (5405/2404) EN ESPERA hasta la fecha de inauguración del almacén: no activarla antes.
+No decidas tarifas, UVT, ICA ni tabla de renta: pregúntame o déjalo para el contador. Impuestos/dinero: pregúntame antes de fusionar.
+```

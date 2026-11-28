@@ -73,7 +73,8 @@ Dos chats no deben cambiar `index.html` en la misma zona a la vez.
 
 ### Chat 5 · Impuestos
 - [x] 12-nov: lista de 22 preguntas para Hernando con los números del ERP, en `docs/temas/impuestos-preguntas-contador.md` (PR #113). Sara dio el "sí".
-- [ ] Provisión mensual en espera de la fecha de inauguración del almacén.
+- [ ] Provisión mensual en espera de la fecha de inauguración del almacén (decide: dueña; no activar antes).
+- Pendientes del chat (28-nov, sin trabajo nuevo). Los decide el **contador (hoy Oscar; Hernando quedó inactivo)** con las 22 preguntas de `docs/temas/impuestos-preguntas-contador.md`, que aún hay que enviarle (decide cuándo: la dueña): [ ] UVT 2026 · [ ] tarifas SIMPLE 2026/2027 (hoy 0 cargadas, el SIMPLE sale "—") · [ ] verificar ICA Villamaría (preguntas 15–19) · [ ] renta de Sara 2027 (SIMPLE vs ordinaria; topes 2026: patrimonio $235.683.000, ingresos $73.323.600) · [ ] exógena (qué formatos aplican) · [ ] industria y comercio 2027 (municipio, mínimo, grupos). Cuando respondan: cargar UVT y tarifas en Contabilidad → Impuestos → Impuesto SIMPLE y parámetros del ICA.
 
 ### Chat 6 · Producción e inventario (en cola, después del chat 2)
 - [x] La administradora asigna cada pedido/orden a una tejedora (reusa tejedoras del plan; v43).
