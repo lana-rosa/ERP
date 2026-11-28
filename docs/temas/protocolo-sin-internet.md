@@ -48,7 +48,7 @@ Jennifer · Sara · proveedor de internet: *(poner nombre y teléfono)* · conta
 | ¿Qué falla con datos de cliente? | Si el cliente aceptó guardar sus datos, el ERP primero llama a `/api/pos/clientes` **sin protección de red**: sin internet esa llamada falla y la venta **ni se registra ni se encola** (aparece un error). Hay que vender sin guardar datos del cliente y anotarlos en el cuaderno. |
 | ¿Qué pantallas dejan de funcionar? | Todas las que consultan Supabase o el Worker: historial, reportes, pedidos, compras, inventario, cierre de turno, factura. Solo se ve lo ya cargado. |
 | ¿El service worker abre la app sin red? | **Solo en parte.** `sw.js` guarda `index.html` (red primero, copia como respaldo). Pero las librerías vienen de internet (`supabase-js`, xlsx, Chart.js… en index.html líneas 20-25) y **no están en el caché**: recargar sin internet puede dejar la app sin arrancar. Por eso la regla de oro: no recargar. |
-| 🔴 **Regresión mía (PR #143)** | Si se recarga con la sesión guardada y **sin internet**, `obtenerRolUsuario` no puede leer el rol, queda `null` y el nuevo bloqueo de "cuenta sin rol" **cierra la sesión** diciendo "no tiene acceso al ERP" (probado con simulación). Debe distinguir "sin internet" de "sin rol". |
+| 🔴 **Regresión mía (PR #143)** | Si se recarga con la sesión guardada y **sin internet**, `obtenerRolUsuario` no puede leer el rol, queda `null` y el nuevo bloqueo de "cuenta sin rol" **cierra la sesión** diciendo "no tiene acceso al ERP" (probado con simulación). **Corregido en la rama (sw v100, pendiente de publicar con el sí de Jennifer/Sara):** solo bloquea si la base respondió "0 filas" (PGRST116); cualquier otro error (sin internet) no cierra la sesión. Probado antes/después a 1280 y 390 px. |
 
 ### Pagos
 - **Efectivo:** funciona (se cobra y se registra en el ERP al volver).
@@ -60,7 +60,7 @@ Hoy se emite en el portal gratuito de la DIAN (necesita internet) y se registra 
 
 ---
 ## 3. LO QUE FALTA EN EL ERP (propuestas; cada cambio necesita el "sí" de Sara/Jennifer)
-1. 🟡 **Corregir mi regresión** (urgente): que sin internet la recarga no cierre la sesión (solo bloquear si la consulta respondió y de verdad no hay rol).
+1. ✅ (en rama, v100) **Corregir mi regresión**: que sin internet la recarga no cierre la sesión (solo bloquear si la consulta respondió y de verdad no hay rol).
 2. 🔴 **Anti-duplicado al sincronizar:** poner una marca única en cada venta en espera (p. ej. en `referencia` del pago) y, antes de reenviar, revisar en Supabase si ya existe. El Worker no se puede editar.
 3. 🟡 **Que guardar datos del cliente no bloquee la venta sin internet** (poner la llamada a `/api/pos/clientes` con su propio manejo de error).
 4. 🟡 **Guardar las librerías en el service worker** para que recargar sin internet sí abra la app.

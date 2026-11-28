@@ -6490,6 +6490,7 @@
   });
   let politicaTratamientoDatosCache = null;
   let rolActual = null;
+  let rolConsultaFallida = false; // true si no se pudo consultar el rol (p. ej. sin internet): no es lo mismo que "sin rol"
   let nombreRolPersonalizadoActual = null; // nombre del rol personalizado asignado (ej. "Taller SO"), si tiene
   let turnoActivoActual = null;
   let centroCostoTiendaId = null;
@@ -6887,7 +6888,7 @@
     // Una cuenta sin rol (y que no sea tejedora) no tiene acceso al ERP — p. ej.
     // la cuenta de la tienda web. Antes la dejaba pasar a "Abrir turno" y fallaba
     // con mensajes confusos del Worker.
-    if (!rolActual && !miTejedora.vinculada) {
+    if (!rolActual && !miTejedora.vinculada && !rolConsultaFallida) {
       const correoSinAcceso = sesionActual ? sesionActual.email : '';
       await cerrarSesion();
       mostrarMensaje('mensajeLogin', 'La cuenta ' + correoSinAcceso + ' no tiene acceso al ERP. Entra con la cuenta que usas para el ERP (si no la recuerdas, pregúntale a la administradora).', 'error');
@@ -7365,8 +7366,13 @@
       .eq('activo', true)
       .single();
 
+    rolConsultaFallida = false;
     if (error || !data) {
       rolActual = null;
+      // Solo es "cuenta sin rol" si la base RESPONDIÓ y no hay fila (código PGRST116).
+      // Cualquier otro error (sin internet, servidor caído, sesión vencida) NO prueba
+      // que no tenga rol: en ese caso no se le cierra la sesión.
+      rolConsultaFallida = !!error && error.code !== 'PGRST116';
       return;
     }
     rolActual = data.rol;
