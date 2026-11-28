@@ -57,3 +57,14 @@ Reglas: español claro, sin tecnicismos; respuestas cortas; nunca me pidas pegar
 ## Notas
 - Si varios chats editan `PENDIENTES.md` a la vez puede haber conflicto: cada chat toca solo sus líneas; el Orquestador lo ordena.
 - El Orquestador lee poco (solo `docs/`), así se gasta poco con Opus.
+
+## Arranque de un chat NUEVO de Pedidos y anticipos (28-nov-2026)
+```
+TEMA: Pedidos y anticipos (docs/temas/pedidos-anticipo.md). Soy la dueña (español claro, sin tecnicismos).
+Lee CLAUDE.md, docs/temas/pedidos-anticipo.md y la sección "Chat 2" de docs/PENDIENTES.md. No leas index.html completo (usa docs/mapa-index-html.md).
+Ya hecho: anticipo al crear el pedido, política de anticipos (campo vacío), OP por línea, editar cliente/domicilio, cambiar fecha de entrega con historial, pago manual de pedidos web (solo Transferencia hasta que haya cuentas de Nequi/Bre-B).
+Abierto: cobro con el Worker real, texto de la abogada, tablero de cumplimiento, cuentas Nequi/Bre-B (lo aplica Contabilidad).
+Reglas: publicar sin preguntar si está probado; preguntar antes de fusionar si toca dinero/anticipos/contabilidad o borrar datos.
+Una sola pregunta corta al final si necesitas algo de mí.
+```
+
